@@ -6,10 +6,10 @@
     "back"
   ],
   "scripts": {
-    "dev": "bun --filter ./front run dev & bun --filter ./back run start:dev",
-    "lint": "bun --filter ./front run lint && bun --filter ./back run lint",
-    "test": "bun --filter ./front run test && bun --filter ./back run test",
-    "build": "bun --filter ./front run build && bun --filter ./back run build",
+    "dev": "bun --filter front run dev & bun --filter back run start:dev",
+    "lint": "bun --filter front run lint && bun --filter back run lint",
+    "test": "bun --filter front run test && bun --filter back run test",
+    "build": "bun --filter front run build && bun --filter back run build",
     "prepare": "husky"
   },
   "devDependencies": {
