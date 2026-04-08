@@ -6,17 +6,18 @@
     "back"
   ],
   "scripts": {
-    "dev": "bun --filter ./front run dev & bun --filter ./back run start:dev",
-    "lint": "bun --filter ./front run lint && bun --filter ./back run lint",
-    "test": "bun --filter ./front run test && bun --filter ./back run test",
-    "build": "bun --filter ./front run build && bun --filter ./back run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "build": "turbo run build",
     "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
     "@commitlint/cli": "latest",
     "@commitlint/config-conventional": "latest",
-    "husky": "latest"
+    "husky": "latest",
+    "turbo": "latest"
   },
-  "packageManager": "bun@latest"
+  "packageManager": "bun@1.3.11"
 }
