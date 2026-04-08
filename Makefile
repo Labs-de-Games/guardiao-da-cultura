@@ -15,3 +15,13 @@ build-back:
 
 build-prod:
 	docker compose -f compose.production.yaml build
+
+down:
+	docker compose -f compose.development.yaml down
+
+clean:
+	docker compose -f compose.development.yaml down -v
+
+fclean:
+	docker compose -f compose.development.yaml down -v --rmi local
+	docker system prune -f
