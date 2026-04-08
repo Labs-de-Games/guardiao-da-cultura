@@ -1,24 +1,30 @@
 {
-  "name": "front",
-  "private": true,
-  "scripts": {
-    "dev": "next dev -p 3000",
-    "build": "next build",
-    "start": "next start -p 3000",
-    "lint": "biome check .",
-    "test": "echo \"no tests yet\""
+  "name": "template-vite-ts",
+  "description": "A Phaser 3 TypeScript template using Vite.",
+  "version": "1.4.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phaserjs/template-vite-ts.git"
   },
-  "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "zod": "latest"
+  "author": "Phaser Studio <support@phaser.io> (https://phaser.io/)",
+  "license": "MIT",
+  "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
+  "bugs": {
+    "url": "https://github.com/phaserjs/template-vite-ts/issues"
+  },
+  "homepage": "https://github.com/phaserjs/template-vite-ts#readme",
+  "scripts": {
+    "dev": "node log.js dev & vite --config vite/config.dev.mjs",
+    "build": "node log.js build & vite build --config vite/config.prod.mjs",
+    "dev-nolog": "vite --config vite/config.dev.mjs",
+    "build-nolog": "vite build --config vite/config.prod.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest"
+    "typescript": "~5.7.2",
+    "vite": "^6.3.1"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0",
+    "terser": "^5.39.0"
   }
 }

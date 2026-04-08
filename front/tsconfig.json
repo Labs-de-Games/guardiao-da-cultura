@@ -1,32 +1,21 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
     "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "lib": ["dom", "dom.iterable", "es2022"],
-    "jsx": "react-jsx",
-    "allowJs": false,
-    "incremental": true,
-    "noEmit": true,
-    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strictPropertyInitialization": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/dev/types/**/*.ts",
-    ".next/dev/dev/types/**/*.ts",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["src/game", "src/main.ts", "src/vite-env.d.ts"]
 }

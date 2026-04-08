@@ -1,17 +1,23 @@
-FROM oven/bun:1-alpine AS deps
-WORKDIR /app
-COPY package.json .
-RUN bun install
+# Estágio único: Node.js
+FROM node:lts-alpine
 
-FROM oven/bun:1-alpine AS build
+# Define o diretório
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copia arquivos de dependência
+COPY package*.json ./
+
+# Instala as dependências e o pacote 'serve' (servidor estático leve)
+RUN npm install && npm install -g serve
+
+# Copia o restante do código
 COPY . .
-RUN bun run build
 
-FROM oven/bun:1-alpine
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=build /app ./
+# Faz o build do projeto (ex: gera a pasta dist)
+RUN npm run build
+
 EXPOSE 3000
-CMD ["bun", "run", "start"]
+
+# Comando para rodar o servidor na pasta 'dist' (ou 'build')
+# O parâmetro -s serve para Single Page Applications (SPA)
+CMD ["serve", "-s", "dist", "-l", "3000"]

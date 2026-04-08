@@ -1,5 +1,4 @@
 node_modules
-.next
+npm-debug.log
 dist
-coverage
-*.log
+.git

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "phaser-gamedev": {
+      "source": "chongdashu/phaserjs-tinyswords",
+      "sourceType": "github",
+      "computedHash": "784c91cd1cd227a46500435d24a5e7dd157c2cc61ff37e4683ebdc0a6ed21b1a"
+    }
+  }
+}
