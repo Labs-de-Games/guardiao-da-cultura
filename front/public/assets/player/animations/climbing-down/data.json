@@ -1,0 +1,153 @@
+{
+  "brushes": [],
+  "color_mode": 5,
+  "current_frame": 8,
+  "current_layer": 0,
+  "export_file_format": 0,
+  "export_file_name": "frame_008",
+  "fps": 6.0,
+  "frames": [
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    },
+    {
+      "cels": [
+        {
+          "metadata": {},
+          "opacity": 1.0,
+          "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+          "z_index": 0
+        }
+      ],
+      "duration": 1.0,
+      "metadata": {}
+    }
+  ],
+  "guides": [],
+  "layers": [
+    {
+      "blend_mode": 0,
+      "clipping_mask": false,
+      "effects": [],
+      "locked": false,
+      "metadata": {},
+      "name": "Camada 1",
+      "new_cels_linked": false,
+      "opacity": 1.0,
+      "parent": -1,
+      "type": 0,
+      "ui_color": "(0.0, 0.0, 0.0, 0.0)",
+      "visible": true
+    }
+  ],
+  "metadata": {},
+  "palettes": [],
+  "pixelorama_version": "v1.1.8-stable",
+  "project_current_palette_name": "",
+  "pxo_version": 5,
+  "reference_images": [],
+  "size_x": 48,
+  "size_y": 48,
+  "symmetry_points": [47.0, 47.0],
+  "tags": [],
+  "tile_mode_x_basis_x": 48,
+  "tile_mode_x_basis_y": 0,
+  "tile_mode_y_basis_x": 0,
+  "tile_mode_y_basis_y": 48,
+  "tilesets": [],
+  "user_data": "",
+  "vanishing_points": []
+}
