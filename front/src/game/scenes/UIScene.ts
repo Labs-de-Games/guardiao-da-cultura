@@ -180,7 +180,7 @@ export class UIScene extends Scene {
       this.input.keyboard?.off("keydown-Q");
 
       // Unregister gameScene events (vazamento de memória evitado)
-      if (gameScene && gameScene.events) {
+      if (gameScene?.events) {
         gameScene.events.off(GameEvents.MISSION_ACCEPTED);
         gameScene.events.off(GameEvents.MISSION_PROGRESS_CHANGED);
         gameScene.events.off(GameEvents.MISSION_STATUS_CHANGED);
@@ -232,7 +232,9 @@ export class UIScene extends Scene {
 
   private refreshAll() {
     this.statusPanel.refresh();
-    this.activeMissionIds.forEach((id) => this.refreshMissionSteps(id));
+    this.activeMissionIds.forEach((id) => {
+      this.refreshMissionSteps(id);
+    });
     if (this.inventoryPanel.isVisible) this.inventoryPanel.refresh();
   }
 

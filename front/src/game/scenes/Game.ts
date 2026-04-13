@@ -42,12 +42,12 @@ export class Game extends Scene {
     this.load.tilemapTiledJSON(LEVEL_ASSETS.MAP.key, LEVEL_ASSETS.MAP.json);
     this.load.image(LEVEL_ASSETS.MAP.tileset, LEVEL_ASSETS.MAP.tilesetImg);
 
-    LEVEL_ASSETS.RELICS.forEach((asset) =>
-      this.load.image(asset.key, asset.path),
-    );
-    LEVEL_ASSETS.OTHERS.forEach((asset) =>
-      this.load.image(asset.key, asset.path),
-    );
+    LEVEL_ASSETS.RELICS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+    LEVEL_ASSETS.OTHERS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
 
     this.load.spritesheet("sparkle", "sparkle.png", {
       frameWidth: 32,
@@ -71,7 +71,7 @@ export class Game extends Scene {
     if (tileset) {
       mapData = MapManager.setupMap(this, map, tileset, 6);
 
-      this.stairsLayer = mapData.tileLayers["Stairs"] || null;
+      this.stairsLayer = mapData.tileLayers.Stairs || null;
     }
 
     // Initialize Systems
@@ -194,8 +194,8 @@ export class Game extends Scene {
     let spawnX = PLAYER_SPAWN.X;
     let spawnY = PLAYER_SPAWN.Y;
 
-    const spawnLayer = mapData.objectLayers["PlayerSpawn"];
-    if (spawnLayer && spawnLayer.objects) {
+    const spawnLayer = mapData.objectLayers.PlayerSpawn;
+    if (spawnLayer?.objects) {
       const spawnPoint = spawnLayer.objects.find(
         (obj: any) => obj.name === "SpawnPoint",
       );
@@ -225,12 +225,12 @@ export class Game extends Scene {
     );
 
     // Track items globally
-    Object.values(interactiveItems).forEach((item) =>
-      item.setPlayerTracking(this.player),
-    );
+    Object.values(interactiveItems).forEach((item) => {
+      item.setPlayerTracking(this.player);
+    });
 
     // 5. Phase Complete Decoration (Special behavior for portal)
-    const endPhase_btn = interactiveItems["phase_complete_portal"];
+    const endPhase_btn = interactiveItems.phase_complete_portal;
 
     if (endPhase_btn) {
       endPhase_btn.interaction.onInteract = () => {

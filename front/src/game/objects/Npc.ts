@@ -150,7 +150,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
             this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
 
             this.missionAccepted = true;
-            if (this.exclamationIcon && this.exclamationIcon.active) {
+            if (this.exclamationIcon?.active) {
               this.exclamationIcon.destroy();
             }
           },

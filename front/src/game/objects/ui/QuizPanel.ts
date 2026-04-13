@@ -106,7 +106,9 @@ export class QuizPanel extends BasePanel {
     const question = this.questions[this.currentQuestionIndex];
     this.questionText.setText(question.text);
 
-    this.optionTexts.forEach((t) => t.destroy());
+    this.optionTexts.forEach((t) => {
+      t.destroy();
+    });
     this.optionTexts = [];
     this.selectedOptionIndex = 0;
 
@@ -170,10 +172,12 @@ export class QuizPanel extends BasePanel {
 
   private flash(color: number | string) {
     const hexColor =
-      typeof color === "string" ? parseInt(color.replace("#", "0x")) : color;
+      typeof color === "string"
+        ? parseInt(color.replace("#", "0x"), 16)
+        : color;
     this.bg.setStrokeStyle(6, hexColor);
     this.scene.time.delayedCall(300, () => {
-      if (this.bg && this.bg.active) this.bg.setStrokeStyle(6, 0xffffff);
+      if (this.bg?.active) this.bg.setStrokeStyle(6, 0xffffff);
     });
   }
 }

@@ -55,9 +55,9 @@ export abstract class BasePanel extends Phaser.GameObjects.Container {
   }
 
   private clearKeys() {
-    this.keyListeners.forEach((l) =>
-      this.scene.input.keyboard?.off(l.key, l.fn),
-    );
+    this.keyListeners.forEach((l) => {
+      this.scene.input.keyboard?.off(l.key, l.fn);
+    });
     this.keyListeners = [];
   }
 
