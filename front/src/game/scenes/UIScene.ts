@@ -1,0 +1,446 @@
+import { Scene } from "phaser";
+import { GameEvents } from "../constants/GameEvents";
+import { LayoutConfig } from "../constants/LayoutConfig";
+import { SceneNames } from "../constants/SceneNames";
+import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
+import { DialoguePanel } from "../objects/ui/DialoguePanel";
+import { InventoryPanel } from "../objects/ui/InventoryPanel";
+// Novos componentes SRP
+import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
+import { QuizPanel } from "../objects/ui/QuizPanel";
+import { ToastNotification } from "../objects/ui/ToastNotification";
+import { TutorialOverlay } from "../objects/ui/TutorialOverlay";
+import type {
+  MissionDef,
+  MissionStepDef,
+  QuizQuestion,
+  UIInitData,
+} from "../types/GameDataTypes";
+
+/**
+ * UIScene.ts - Orquestrador de Interface.
+ * Deixou de ser uma God Class (+1000 linhas) para se tornar um orquestrador leve
+ * que gerencia a comunicação entre sistemas de jogo e componentes de UI.
+ */
+export class UIScene extends Scene {
+  // Estado e Dados
+  private questManager!: QuestManager;
+  private missionDefs: Record<string, MissionDef> = {};
+  private missionsTotal: number = 0;
+
+  // Componentes Especialistas
+  private root!: Phaser.GameObjects.Container;
+  private statusPanel!: PhaseStatusPanel;
+  private inventoryPanel!: InventoryPanel;
+  private controlsOverlay!: ControlsOverlay;
+  private tutorialOverlay!: TutorialOverlay;
+  private dialoguePanel!: DialoguePanel;
+  private quizPanel!: QuizPanel;
+  private toast!: ToastNotification;
+
+  // Gestão de Missões (Individual Cards - candidate for further extraction)
+  private activeMissionIds: string[] = [];
+  private missionPanels: Phaser.GameObjects.Container[] = [];
+  private missionStepTexts: Map<string, Phaser.GameObjects.Text[]> = new Map();
+  private lastMissionStatuses: Map<string, QuestStatus> = new Map();
+  private pendingMissionCompleteToastCount: number = 0;
+
+  // Prompt de Interação (tracking para bloquear overlays)
+  private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
+    new Set();
+
+  constructor() {
+    super(SceneNames.UI);
+  }
+
+  init(data: UIInitData) {
+    this.questManager = data.questManager;
+    this.missionDefs = data.missionDefs || {};
+    this.missionsTotal = data.missionsTotal || 0;
+  }
+
+  create() {
+    // 1. Inicialização do Root (Offset padrão do protótipo)
+    this.root = this.add.container(-20, 0);
+    this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
+
+    // 2. Instanciação de Componentes
+    this.statusPanel = new PhaseStatusPanel(
+      this,
+      "Museu antigo",
+      this.missionsTotal,
+      this.questManager,
+    );
+    this.inventoryPanel = new InventoryPanel(
+      this,
+      this.questManager,
+      this.missionDefs,
+    );
+    this.controlsOverlay = new ControlsOverlay(this);
+    this.tutorialOverlay = new TutorialOverlay(this);
+    this.dialoguePanel = new DialoguePanel(this);
+    this.quizPanel = new QuizPanel(this);
+    this.toast = new ToastNotification(this);
+
+    this.root.add(this.statusPanel);
+    // Overlays e Toasts são adicionados diretamente à cena via add.existing no construtor
+
+    // 3. Configuração de Eventos
+    this.setupEventListeners();
+    this.setupKeyboardListeners();
+
+    // 4. Estado Inicial
+    this.seedInitialState();
+    this.layout();
+    this.refreshAll();
+
+    // Exibe controles na entrada
+    this.controlsOverlay.show();
+  }
+
+  // --- ORQUESTRAÇÃO E EVENTOS ---
+
+  private setupEventListeners() {
+    const gameScene = this.scene.get(SceneNames.GAME);
+
+    // Mudanças de Missão
+    gameScene.events.on(GameEvents.MISSION_ACCEPTED, (id: string) =>
+      this.onMissionAccepted(id),
+    );
+    gameScene.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () =>
+      this.refreshAll(),
+    );
+    gameScene.events.on(GameEvents.MISSION_STATUS_CHANGED, () =>
+      this.onMissionStatusChanged(),
+    );
+    gameScene.events.on(GameEvents.DIALOGUE_ENDED, () =>
+      this.onDialogueEnded(),
+    );
+
+    // Overlays flow
+    gameScene.events.on(GameEvents.CONTROLS_OVERLAY_CLOSED, () => {
+      if (!this.tutorialOverlay.hasBeenShown) {
+        this.tutorialOverlay.show();
+      }
+    });
+
+    gameScene.events.on(
+      GameEvents.INSPECT_MODE_TOGGLED,
+      (isInspecting: boolean) => {
+        if (
+          isInspecting &&
+          !this.tutorialOverlay.hasBeenShown &&
+          !this.controlsOverlay.isVisible
+        ) {
+          this.tutorialOverlay.show();
+        }
+      },
+    );
+
+    // Requisiçōes de UI
+    gameScene.events.on(
+      GameEvents.SHOW_DIALOGUE_REQUEST,
+      (lines: string[], onComplete?: () => void) => {
+        if (this.dialoguePanel) {
+          this.dialoguePanel.showDialogue(lines, onComplete);
+        }
+      },
+    );
+
+    gameScene.events.on(
+      GameEvents.SHOW_QUIZ_REQUEST,
+      (questions: QuizQuestion[], onComplete: (score: number) => void) => {
+        if (this.quizPanel) {
+          this.quizPanel.startQuiz(questions, onComplete);
+        }
+      },
+    );
+
+    // Prompts de Interação (bloqueio de overlays)
+    gameScene.events.on(
+      GameEvents.INTERACTION_PROMPT_SHOWN,
+      (obj: Phaser.GameObjects.GameObject) => {
+        this.activeInteractionPrompts.add(obj);
+      },
+    );
+    gameScene.events.on(
+      GameEvents.INTERACTION_PROMPT_HIDDEN,
+      (obj: Phaser.GameObjects.GameObject) => {
+        this.activeInteractionPrompts.delete(obj);
+      },
+    );
+
+    // Responsividade
+    this.scale.on("resize", () => this.layout());
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off("resize");
+      this.input.keyboard?.off("keydown-TAB");
+      this.input.keyboard?.off("keydown-Q");
+
+      // Unregister gameScene events (vazamento de memória evitado)
+      if (gameScene && gameScene.events) {
+        gameScene.events.off(GameEvents.MISSION_ACCEPTED);
+        gameScene.events.off(GameEvents.MISSION_PROGRESS_CHANGED);
+        gameScene.events.off(GameEvents.MISSION_STATUS_CHANGED);
+        gameScene.events.off(GameEvents.DIALOGUE_ENDED);
+        gameScene.events.off(GameEvents.CONTROLS_OVERLAY_CLOSED);
+        gameScene.events.off(GameEvents.INSPECT_MODE_TOGGLED);
+        gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
+        gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
+        gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
+      }
+    });
+  }
+
+  private setupKeyboardListeners() {
+    this.input.keyboard?.on("keydown-TAB", (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.toggleInventory();
+    });
+
+    this.input.keyboard?.on("keydown-Q", (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.toggleControls();
+    });
+  }
+
+  private seedInitialState() {
+    // Registra status iniciais para detectar transições (Toasts)
+    for (const id in this.missionDefs) {
+      this.lastMissionStatuses.set(id, this.questManager.getStatus(id));
+    }
+  }
+
+  // --- LÓGICA DE NEGÓCIO DA UI ---
+
+  private layout() {
+    const { width: w, height: h } = this.scale;
+
+    this.statusPanel.layout(w, h);
+    this.inventoryPanel.layout(w, h);
+    this.controlsOverlay.layout(w, h);
+    this.tutorialOverlay.layout(w, h);
+    this.dialoguePanel.layout(w, h);
+    this.quizPanel.layout(w, h);
+    this.toast.layout(w, h);
+
+    this.positionMissionPanels();
+  }
+
+  private refreshAll() {
+    this.statusPanel.refresh();
+    this.activeMissionIds.forEach((id) => this.refreshMissionSteps(id));
+    if (this.inventoryPanel.isVisible) this.inventoryPanel.refresh();
+  }
+
+  private toggleInventory() {
+    if (this.inventoryPanel.isVisible) {
+      this.inventoryPanel.hide();
+      return;
+    }
+
+    if (this.canShowOverlay()) {
+      this.inventoryPanel.show();
+    }
+  }
+
+  private toggleControls() {
+    if (this.controlsOverlay.isVisible) {
+      this.controlsOverlay.hide();
+      return;
+    }
+
+    if (this.canShowOverlay()) {
+      this.controlsOverlay.show();
+    }
+  }
+
+  private canShowOverlay(): boolean {
+    if (this.activeInteractionPrompts.size > 0) return false;
+
+    // Regra: não abrir se algum painel crítico (dialog/quiz) estiver visível
+    if (this.dialoguePanel?.isVisible || this.quizPanel?.isVisible)
+      return false;
+
+    return true;
+  }
+
+  private onMissionAccepted(missionId: string) {
+    if (this.activeMissionIds.includes(missionId)) return;
+
+    const mission = this.missionDefs[missionId];
+    if (!mission) return;
+
+    this.activeMissionIds.push(missionId);
+    const panel = this.createMissionPanel(mission);
+    this.missionPanels.push(panel);
+    this.root.add(panel);
+
+    this.layout();
+    this.refreshAll();
+  }
+
+  private onMissionStatusChanged() {
+    for (const id in this.missionDefs) {
+      const prev = this.lastMissionStatuses.get(id);
+      const next = this.questManager.getStatus(id);
+
+      if (next === QuestStatus.COMPLETED && prev !== QuestStatus.COMPLETED) {
+        this.pendingMissionCompleteToastCount++;
+      }
+      this.lastMissionStatuses.set(id, next);
+    }
+    this.refreshAll();
+  }
+
+  private onDialogueEnded() {
+    if (this.pendingMissionCompleteToastCount > 0) {
+      this.pendingMissionCompleteToastCount = 0;
+      this.time.delayedCall(120, () => {
+        this.toast.show("Missão concluída!\nAperte TAB para ver as relíquias");
+      });
+    }
+
+    // Trigger tutorial se necessário
+    if (!this.tutorialOverlay.hasBeenShown && !this.controlsOverlay.isVisible) {
+      // Apenas mostra se for o momento certo (após controles iniciais)
+      // Nota: lógica original era no onComplete dos controles.
+    }
+  }
+
+  // --- MÉTODOS DE SUPORTE (Simplificados) ---
+
+  private positionMissionPanels() {
+    const padding = LayoutConfig.UI.PADDING;
+    const x = this.scale.width - padding;
+    let y = padding + 110 + 10; // Abaixo do status panel
+
+    this.missionPanels.forEach((panel) => {
+      panel.setPosition(x, y);
+      const bg = panel.getAt(0) as Phaser.GameObjects.Rectangle;
+      y += bg.height + 10;
+    });
+  }
+
+  private createMissionPanel(
+    mission: MissionDef,
+  ): Phaser.GameObjects.Container {
+    const padding = LayoutConfig.UI.PADDING;
+    const panel = this.add.container(0, 0);
+
+    const bg = this.add.rectangle(
+      0,
+      0,
+      LayoutConfig.UI.PANEL_WIDTH,
+      100,
+      0x000000,
+      0.65,
+    );
+    bg.setOrigin(1, 0).setStrokeStyle(3, 0xffffff, 0.75);
+
+    const title = this.add
+      .text(-padding, padding, mission.title, {
+        fontSize: "18px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(1, 0);
+
+    let currentY = padding + 28;
+    const stepTexts: Phaser.GameObjects.Text[] = [];
+
+    mission.steps.forEach((_step: MissionStepDef) => {
+      const t = this.add
+        .text(-padding, currentY, "", {
+          fontSize: "16px",
+          color: "#ffffff",
+          wordWrap: { width: LayoutConfig.UI.PANEL_WIDTH - padding * 2 },
+        })
+        .setOrigin(1, 0);
+
+      stepTexts.push(t);
+      currentY += t.displayHeight + 6;
+    });
+
+    bg.setSize(LayoutConfig.UI.PANEL_WIDTH, currentY + padding / 2);
+    this.missionStepTexts.set(mission.id, stepTexts);
+    panel.add([bg, title, ...stepTexts]);
+
+    return panel;
+  }
+
+  private refreshMissionSteps(missionId: string) {
+    const mission = this.missionDefs[missionId];
+    const texts = this.missionStepTexts.get(missionId);
+    if (!mission || !texts) return;
+
+    mission.steps.forEach((step: MissionStepDef, idx: number) => {
+      const done = this.questManager.hasInfo(missionId, step.infoKey);
+      const checkbox = done ? "[✓]" : "[ ]";
+      texts[idx].setText(`${checkbox} ${step.text}`);
+      texts[idx].setColor(
+        done ? LayoutConfig.COLORS.SUCCESS_GREEN : LayoutConfig.COLORS.WHITE,
+      );
+    });
+  }
+
+  // --- MÉTODOS PÚBLICOS (EndGame) ---
+
+  private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
+
+  public showPhaseCompleteUI(collectedStars: number, maxStars: number) {
+    if (this.phaseCompletePanel) this.phaseCompletePanel.destroy();
+
+    const { width: cx, height: cy } = this.scale;
+    this.phaseCompletePanel = this.add
+      .container(cx / 2, cy / 2)
+      .setDepth(10000);
+
+    const bg = this.add
+      .rectangle(0, 0, 800, 500, 0x000000, 0.95)
+      .setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
+    const title = this.add
+      .text(0, -210, "Fase concluída!", {
+        fontSize: "52px",
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    const message = this.add
+      .text(0, 150, "Parabéns, você completou sua exploração no museu!", {
+        fontSize: "28px",
+        color: "#ffffff",
+        wordWrap: { width: 700 },
+        align: "center",
+      })
+      .setOrigin(0.5);
+
+    const stars = this.add.container(0, -30);
+    const starSpacing = 140;
+    const startX = -((maxStars - 1) * starSpacing) / 2;
+
+    for (let i = 0; i < maxStars; i++) {
+      const star = this.add
+        .image(startX + i * starSpacing, 0, "star")
+        .setScale(8);
+      if (i >= collectedStars)
+        star.setTint(LayoutConfig.COLORS.DARK_STAR_TINT).setAlpha(0.5);
+      stars.add(star);
+    }
+
+    this.phaseCompletePanel.add([bg, title, stars, message]);
+
+    // ESC para fechar (simples)
+    this.input.keyboard?.once("keydown-ESC", () => this.hidePhaseCompleteUI());
+  }
+
+  public hidePhaseCompleteUI() {
+    if (this.phaseCompletePanel) {
+      this.phaseCompletePanel.destroy();
+      this.phaseCompletePanel = null;
+    }
+  }
+}
