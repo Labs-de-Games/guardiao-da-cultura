@@ -1,0 +1,16 @@
+Hi there!
+
+This export targets Phaser through JSON.
+
+1. Extract the zip file content
+2. Load map.json with this.load.tilemapTiledJSON(...)
+3. Load spritesheet.png as the tileset texture
+4. Create layers from the loaded tilemap
+
+Done!
+
+If you need help, ask on Discord: https://discord.gg/8sCEAspmBV
+
+Have fun building your game!
+
+Hugo from www.spritefusion.com

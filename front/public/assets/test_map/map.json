@@ -1,0 +1,79 @@
+{
+  "compressionlevel": -1,
+  "height": 4,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "Collision",
+      "opacity": 1.0,
+      "type": "tilelayer",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "width": 18,
+      "height": 4,
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+        10, 10, 10, 10, 10
+      ],
+      "properties": [
+        {
+          "name": "collider",
+          "type": "bool",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Background",
+      "opacity": 1.0,
+      "type": "tilelayer",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "width": 18,
+      "height": 4,
+      "data": [
+        1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 2, 5, 5, 5, 5, 5,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 8, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        6, 6, 6, 6, 6, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "properties": [
+        {
+          "name": "collider",
+          "type": "bool",
+          "value": false
+        }
+      ]
+    }
+  ],
+  "nextlayerid": 3,
+  "nextobjectid": 1,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.11.0",
+  "tileheight": 16,
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "spritefusion",
+      "tilewidth": 16,
+      "tileheight": 16,
+      "margin": 0,
+      "spacing": 0,
+      "columns": 8,
+      "tilecount": 16,
+      "image": "spritesheet.png",
+      "imagewidth": 128,
+      "imageheight": 32
+    }
+  ],
+  "tilewidth": 16,
+  "type": "map",
+  "version": "1.10",
+  "width": 18
+}
