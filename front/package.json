@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "next": "latest",
+    "phaser": "3.90.0",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"
