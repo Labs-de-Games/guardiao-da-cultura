@@ -1,58 +1,58 @@
 # AGENTS Governance
 
-Este repositorio usa agentes de IA como suporte ao desenvolvimento.  
-O objetivo e acelerar tarefas operacionais sem substituir revisao humana.
+This repository uses AI agents as development support.  
+The goal is to accelerate operational tasks without replacing human review.
 
-## Escopo do repositorio
+## Repository Scope
 
-- Este projeto e um template inicial.
-- `front` e `back` devem permanecer em estado base de bootstrap.
-- Nao implementar dominio de produto neste momento.
-- Nao configurar PR preview environments por enquanto.
+- This project is a starter template.
+- `front` and `back` must remain in bootstrap base state.
+- Do not implement product domain at this time.
+- Do not configure PR preview environments for now.
 
-## Principios de uso de agentes
+## Agent Usage Principles
 
-- Agentes podem sugerir e aplicar mudancas tecnicas de baixo risco.
-- Toda mudanca relevante deve passar por PR e revisao humana.
-- Commits devem seguir Conventional Commits.
-- Nao commitar segredos, tokens ou credenciais.
+- Agents may suggest and apply low-risk technical changes.
+- All relevant changes must go through PR and human review.
+- Commits must follow Conventional Commits.
+- Do not commit secrets, tokens, or credentials.
 
-## Responsabilidades
+## Responsibilities
 
-- Humanos:
-  - definir escopo
-  - validar arquitetura
-  - aprovar PRs
-- Agentes:
+- Humans:
+  - define scope
+  - validate architecture
+  - approve PRs
+- Agents:
   - scaffolding
-  - ajustes de configuracao
-  - automacao repetitiva
-  - documentacao operacional
+  - configuration adjustments
+  - repetitive automation
+  - operational documentation
 
-## Limites atuais
+## Current Limitations
 
-- Sem implementacao de regras de negocio do `docs/SPEC.md`.
-- Sem configuracao de PR previews.
-- Sem automacao OpenCode adicional alem do que ja existe no repositorio.
+- No implementation of business rules from `docs/SPEC.md`.
+- No PR preview configuration.
+- No additional OpenCode automation beyond what already exists in the repository.
 
-## Fluxo recomendado
+## Recommended Workflow
 
-1. Abrir issue com objetivo claro.
-2. Criar branch curta a partir de `main`.
-3. Executar mudancas pequenas e verificaveis.
-4. Abrir PR com descricao objetiva.
-5. Validar CI antes do merge.
+1. Open issue with clear objective.
+2. Create short branch from `main`.
+3. Execute small and verifiable changes.
+4. Open PR with objective description.
+5. Validate CI before merge.
 
-## Seguranca e compliance
+## Security and Compliance
 
-- Nunca expor secrets em codigo, logs ou documentacao.
-- Manter variaveis sensiveis apenas em secrets do provedor (GitHub/Coolify).
-- Evitar comandos destrutivos sem aprovacao explicita.
+- Never expose secrets in code, logs, or documentation.
+- Keep sensitive variables only in provider secrets (GitHub/Coolify).
+- Avoid destructive commands without explicit approval.
 
-## Evolucao futura
+## Future Evolution
 
-Quando o bootstrap estiver estavel, este arquivo pode ser expandido com:
+When bootstrap is stable, this file can be expanded with:
 
-- papeis de agentes por area (`front`, `back`, `infra`, `docs`)
-- politicas de aprovacao por tipo de mudanca
-- checklist de release
+- agent roles by area (`front`, `back`, `infra`, `docs`)
+- approval policies by change type
+- release checklist
