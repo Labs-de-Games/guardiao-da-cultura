@@ -14,7 +14,7 @@ export class Player
   extends Phaser.Physics.Arcade.Sprite
   implements IPlayerState
 {
-  keys: any;
+  keys: PlayerKeys;
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
@@ -155,7 +155,7 @@ export class Player
       space: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SPACE],
       E: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.E],
       shift: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SHIFT],
-    }) as any;
+    }) as PlayerKeys;
 
     this.setScale(PLAYER_PHYSICS.SCALE);
     this.setDamping(PLAYER_PHYSICS.DAMPING);
@@ -329,3 +329,17 @@ export class Player
     }
   }
 }
+
+type PlayerKeys = {
+  up: Phaser.Input.Keyboard.Key;
+  down: Phaser.Input.Keyboard.Key;
+  left: Phaser.Input.Keyboard.Key;
+  right: Phaser.Input.Keyboard.Key;
+  w: Phaser.Input.Keyboard.Key;
+  a: Phaser.Input.Keyboard.Key;
+  s: Phaser.Input.Keyboard.Key;
+  d: Phaser.Input.Keyboard.Key;
+  space: Phaser.Input.Keyboard.Key;
+  E: Phaser.Input.Keyboard.Key;
+  shift: Phaser.Input.Keyboard.Key;
+};

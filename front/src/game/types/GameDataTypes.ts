@@ -1,3 +1,5 @@
+import type { QuestManager } from "../objects/QuestManager";
+
 /**
  * Conjunto de Tipos de Dados e DTOs (Data Transfer Objects)
  * utilizados para transportar informações entre Sistemas de Jogo, Dados e UI.
@@ -36,6 +38,6 @@ export interface MissionDef {
 export interface UIInitData {
   phaseTitle: string;
   missionsTotal: number;
-  questManager: any; // Tipado como 'any' temporariamente para evitar circular dependency ou importar QuestManager se necessário
+  questManager: QuestManager;
   missionDefs: Record<string, MissionDef>;
 }

@@ -5,11 +5,13 @@ import { NPC_CONFIGS } from "./Dialog";
 import { InteractiveButton } from "./InteractiveButton";
 import { Npc } from "./Npc";
 
-/** Interface helper para propriedades do Tiled */
+/** Interface helper to Tiled properties */
+type TiledPropertyValue = unknown;
+
 interface TiledProperty {
   name: string;
   type: string;
-  value: any;
+  value: TiledPropertyValue;
 }
 
 export interface MapData {
@@ -18,12 +20,12 @@ export interface MapData {
   colliders: Phaser.Tilemaps.TilemapLayer[]; // Added to track all layers with collision
 }
 
-export class MapManager {
+export namespace MapManager {
   /**
    * Dynamically creates all tile layers and extracts object layers from the map,
    * relying on Tiled custom properties (e.g., 'collider' and 'oneWay').
    */
-  static setupMap(
+  export function setupMap(
     _scene: Phaser.Scene,
     map: Phaser.Tilemaps.Tilemap,
     tileset: Phaser.Tilemaps.Tileset,
@@ -46,10 +48,12 @@ export class MapManager {
       const properties = layerData.properties as TiledProperty[] | undefined;
 
       const colliderProp = properties?.find((p) => p.name === "collider");
-      const hasCollider = colliderProp ? colliderProp.value : false;
+      const hasCollider = colliderProp
+        ? (colliderProp.value as boolean)
+        : false;
 
       const oneWayProp = properties?.find((p) => p.name === "oneWay");
-      const isOneWay = oneWayProp ? oneWayProp.value : false;
+      const isOneWay = oneWayProp ? (oneWayProp.value as boolean) : false;
 
       if (hasCollider || isOneWay) {
         // Apply collisions to all tiles except empty ones (-1)
@@ -74,7 +78,7 @@ export class MapManager {
       // Optional: Support for dynamically setting depth (Z-Index)
       const depthProp = properties?.find((p) => p.name === "depth");
       if (depthProp !== undefined) {
-        layer.setDepth(depthProp.value);
+        layer.setDepth(depthProp.value as number);
       }
 
       result.tileLayers[layerData.name] = layer;
@@ -93,7 +97,7 @@ export class MapManager {
   /**
    * Dynamically loads NPCs from the object layers in the map data.
    */
-  static createNpcs(
+  export function createNpcs(
     scene: Phaser.Scene,
     mapData: MapData,
     scale: number = 6,
@@ -110,13 +114,13 @@ export class MapManager {
           obj.y !== undefined
         ) {
           const properties = obj.properties as TiledProperty[] | undefined;
-          const missionId = properties?.find(
-            (p) => p.name === "missionId",
-          )?.value;
+          const missionId = properties?.find((p) => p.name === "missionId")
+            ?.value as string | undefined;
           const flipX =
-            properties?.find((p) => p.name === "flipX")?.value || false;
+            (properties?.find((p) => p.name === "flipX")?.value as boolean) ||
+            false;
 
-          const config = NPC_CONFIGS[missionId];
+          const config = missionId ? NPC_CONFIGS[missionId] : undefined;
           if (config) {
             const npc = new Npc(scene, obj.x * scale, obj.y * scale, config);
             npc.setFlipX(flipX);
@@ -137,7 +141,7 @@ export class MapManager {
    * Creates interactive items based on Tiled objects and ObjectRegistry.
    * (Task 38 - Data-Driven approach)
    */
-  static createInteractiveObjects(
+  export function createInteractiveObjects(
     scene: Phaser.Scene,
     mapData: MapData,
     scale: number = 6,
