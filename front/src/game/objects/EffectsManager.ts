@@ -55,7 +55,11 @@ export class EffectsManager {
   }
 
   /** Efeito de Vinheta (Tweens o objeto externo) */
-  public setVignette(vignette: any, radius: number, duration: number = 500) {
+  public setVignette(
+    vignette: Phaser.FX.Vignette | undefined,
+    radius: number,
+    duration: number = 500,
+  ) {
     if (!vignette) return;
     this.scene.tweens.add({
       targets: vignette,

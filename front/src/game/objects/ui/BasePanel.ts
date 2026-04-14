@@ -8,7 +8,7 @@ import { LayoutConfig } from "../../constants/LayoutConfig";
 export abstract class BasePanel extends Phaser.GameObjects.Container {
   protected _isVisible: boolean = false;
   protected bg!: Phaser.GameObjects.Rectangle;
-  private keyListeners: { key: string; fn: Function }[] = [];
+  private keyListeners: { key: string; fn: () => void }[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);

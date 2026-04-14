@@ -197,7 +197,7 @@ export class Game extends Scene {
     const spawnLayer = mapData.objectLayers.PlayerSpawn;
     if (spawnLayer?.objects) {
       const spawnPoint = spawnLayer.objects.find(
-        (obj: any) => obj.name === "SpawnPoint",
+        (obj: Phaser.Types.Tilemaps.TiledObject) => obj.name === "SpawnPoint",
       );
       if (spawnPoint) {
         spawnX = (spawnPoint.x || 0) * 6;
