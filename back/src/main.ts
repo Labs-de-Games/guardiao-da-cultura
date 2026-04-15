@@ -7,6 +7,7 @@ import { env } from "./env";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix("api/v1");
   await app.listen(env.PORT);
 }
 
