@@ -1,21 +1,24 @@
 services:
   front:
-    build:
-      context: ./front
-      dockerfile: Dockerfile
+    extends:
+      file: compose.base.yaml
+      service: front
     command: sh -c "bun install && bun run dev"
     ports:
       - "3000:3000"
     volumes:
       - ./front:/app
       - front_node_modules:/app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
     depends_on:
-      - back
+      back:
+        condition: service_healthy
 
   back:
-    build:
-      context: ./back
-      dockerfile: Dockerfile
+    extends:
+      file: compose.base.yaml
+      service: back
     command: sh -c "bun install && bun run start:dev"
     ports:
       - "3001:3001"
@@ -23,20 +26,29 @@ services:
       - ./back:/app
       - back_node_modules:/app/node_modules
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/template
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/template
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   postgres:
-    image: postgres:16-alpine
+    extends:
+      file: compose.base.yaml
+      service: postgres
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: template
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - front
+      - back
 
 volumes:
   postgres_data:
