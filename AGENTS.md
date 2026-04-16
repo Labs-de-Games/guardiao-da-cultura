@@ -1,58 +1,147 @@
 # AGENTS Governance
 
-This repository uses AI agents as development support.  
-The goal is to accelerate operational tasks without replacing human review.
+This document defines how AI agents collaborate on this repository. It establishes boundaries, responsibilities, and workflows for human-AI cooperation.
+
+## Purpose
+
+AI agents accelerate development by handling scaffolding, configuration, and repetitive tasks. They do not replace human judgment for architecture decisions, security reviews, or product direction.
 
 ## Repository Scope
 
-- This project is a starter template.
-- `front` and `back` must remain in bootstrap base state.
-- Do not implement product domain at this time.
-- Do not configure PR preview environments for now.
+This is a **starter template** for 2D web games with the following constraints:
 
-## Agent Usage Principles
+- `front/` and `back/` must remain in bootstrap/base state
+- No product domain implementation (auth, game logic, etc.)
+- No PR preview environment configuration
+- Focus on infrastructure, tooling, and documentation
 
-- Agents may suggest and apply low-risk technical changes.
-- All relevant changes must go through PR and human review.
-- Commits must follow Conventional Commits.
-- Do not commit secrets, tokens, or credentials.
+## Agent Responsibilities
 
-## Responsibilities
+### What Agents Can Do
 
-- Humans:
-  - define scope
-  - validate architecture
-  - approve PRs
-- Agents:
-  - scaffolding
-  - configuration adjustments
-  - repetitive automation
-  - operational documentation
+| Category | Examples |
+|----------|----------|
+| **Scaffolding** | Generate boilerplate components, modules, tests |
+| **Configuration** | Update Docker, CI/CD, linting configs |
+| **Refactoring** | Rename variables, extract functions, simplify code |
+| **Documentation** | Update README, add JSDoc, write guides |
+| **Automation** | Scripts, Makefile targets, GitHub Actions |
+| **Formatting** | Apply Biome fixes, organize imports |
 
-## Current Limitations
+### What Agents Cannot Do
 
-- No implementation of business rules from `docs/SPEC.md`.
-- No PR preview configuration.
-- No additional OpenCode automation beyond what already exists in the repository.
+| Category | Examples |
+|----------|----------|
+| **Architecture** | Change project structure, add new services |
+| **Security** | Modify auth flows, JWT handling, secrets management |
+| **Business Logic** | Implement game mechanics, user workflows |
+| **Dependencies** | Add new major dependencies without approval |
+| **Destructive Ops** | Database migrations, production data changes |
 
-## Recommended Workflow
+## Decision Matrix
 
-1. Open issue with clear objective.
-2. Create short branch from `main`.
-3. Execute small and verifiable changes.
-4. Open PR with objective description.
-5. Validate CI before merge.
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Task Type          │  Agent Action    │  Human Review      │
+├─────────────────────────────────────────────────────────────┤
+│  Fix lint errors    │  Apply directly  │  PR review only      │
+│  Update docs        │  Apply directly  │  PR review only      │
+│  Refactor code      │  Suggest in PR   │  Required            │
+│  Add dependencies   │  Ask first       │  Required            │
+│  Change architecture│  Not allowed     │  Human only          │
+│  Security changes   │  Not allowed     │  Human only          │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## Security and Compliance
+## Workflow Guidelines
 
-- Never expose secrets in code, logs, or documentation.
-- Keep sensitive variables only in provider secrets (GitHub/Coolify).
-- Avoid destructive commands without explicit approval.
+### Branch Strategy
+
+1. Create short-lived branches from `master`:
+
+   ```bash
+   git checkout -b docs/readme-improvements
+   git checkout -b chore/update-dependencies
+   git checkout -b fix/lint-errors
+   ```
+
+2. Keep changes atomic and focused
+
+3. Open PR with clear description of what and why
+
+### Commit Standards
+
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+Scopes: `front`, `back`, `infra`, `docs`, `ci`
+
+Examples:
+
+```
+feat(front): add phaser game scene
+fix(back): correct database connection string
+docs(readme): update quickstart instructions
+chore(ci): add test coverage reporting
+```
+
+### Communication
+
+When working with agents:
+
+1. **Be specific** - "Update README" → "Add troubleshooting section for Docker port conflicts"
+2. **Provide context** - Reference related issues, PRs, or documentation
+3. **Iterate** - Review agent output and provide feedback
+4. **Verify** - Test changes before merging
+
+## Security & Compliance
+
+### Secrets Management
+
+- **Never** commit secrets, tokens, or credentials
+- Use environment variables (`.env` files, not committed)
+- Store production secrets in GitHub/Coolify secret managers
+- Rotate credentials if accidentally exposed
+
+### Code Quality
+
+- All code must pass `make lint`
+- All code must pass `make test`
+- PRs require green CI before merge
+- No force pushes to `master`
+
+## Escalation Paths
+
+When agents encounter:
+
+| Situation | Action |
+|-----------|--------|
+| Unclear requirements | Ask human for clarification |
+| Security implications | Stop and escalate to human |
+| Breaking changes | Flag in PR description |
+| Test failures | Attempt fix once, then escalate |
+| Conflicting instructions | Ask human to resolve |
 
 ## Future Evolution
 
-When bootstrap is stable, this file can be expanded with:
+When bootstrap is stable, this document may expand to include:
 
-- agent roles by area (`front`, `back`, `infra`, `docs`)
-- approval policies by change type
-- release checklist
+- **Agent roles by area**: `front-agent`, `back-agent`, `infra-agent`
+- **Approval policies**: Auto-merge criteria for low-risk changes
+- **Release checklist**: Pre-deployment validation steps
+- **Performance budgets**: Bundle size limits, test coverage thresholds
+
+## References
+
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [docs/SPEC.md](./docs/SPEC.md) - Technical specification
+- [README.md](./README.md) - Project overview
