@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\""
+    "test": "echo \"no tests yet\"",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "latest",

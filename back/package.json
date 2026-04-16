@@ -6,7 +6,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\""
+    "test": "echo \"no tests yet\"",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@nestjs/common": "latest",
