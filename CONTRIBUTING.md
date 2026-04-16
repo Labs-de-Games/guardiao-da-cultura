@@ -1,30 +1,207 @@
-# Contributing
+# Development Guide
 
-## Setup
+This document describes the internal development workflow for team members working on this project.
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+
+- Bun (latest version)
+- Docker and Docker Compose
+- Git
+
+### Initial Setup
 
 ```bash
-cp .env.example .env
+# Clone the repository
+git clone <repository-url>
+cd gameplate
+
+# Install dependencies
 bun install
+
+# Start development environment
 make dev
 ```
 
-Serviços: `front` (3000), `back` (3001), `postgres` (5432)
+The development stack includes:
 
-## Workflow
+- **Frontend** (Next.js): <http://localhost:3000>
+- **Backend** (NestJS): <http://localhost:3001>
+- **PostgreSQL**: localhost:5432
 
-1. Branch curta: `feat/42-auth-login`
-2. Commit: `type(scope): descrição`
-3. PR para `main` → CI verde → merge
+## Development Workflow
 
-## Commits
+### 1. Branch Creation
 
-Formato: `type(scope): descrição`
+Create short-lived branches from `master` using descriptive names:
 
-Types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `build`, `chore`
+```bash
+# Feature branch
+git checkout -b feat/42-user-authentication
 
-## Comandos
+# Bug fix branch
+git checkout -b fix/login-error-handling
 
-- `make dev` - ambiente local
-- `make lint` - lint/format
-- `make test` - testes
-- `make build-prod` - validação produção
+# Documentation branch
+git checkout -b docs/api-endpoints
+
+# Chore/maintenance branch
+git checkout -b chore/update-dependencies
+```
+
+Branch naming conventions:
+
+- `feat/<id>-<description>` — New features
+- `fix/<id>-<description>` — Bug fixes
+- `docs/<description>` — Documentation updates
+- `chore/<description>` — Maintenance tasks
+- `refactor/<description>` — Code refactoring
+
+### 2. Making Changes
+
+- Keep changes atomic and focused on a single concern
+- Follow existing code style and patterns
+- Run `make lint` before committing
+- Run `make test` to verify tests pass
+
+### 3. Commit Messages
+
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+
+- `feat` — New feature
+- `fix` — Bug fix
+- `docs` — Documentation changes
+- `style` — Code style changes (formatting, semicolons, etc.)
+- `refactor` — Code refactoring
+- `test` — Adding or updating tests
+- `chore` — Maintenance tasks
+
+**Scopes:**
+
+- `front` — Frontend changes
+- `back` — Backend changes
+- `infra` — Infrastructure/Docker changes
+- `docs` — Documentation changes
+- `ci` — CI/CD changes
+
+**Examples:**
+
+```
+feat(front): add phaser game scene loader
+fix(back): correct JWT token expiration handling
+docs(readme): update environment setup instructions
+refactor(front): extract game loop into separate hook
+chore(ci): add test coverage reporting
+```
+
+### 4. Pull Request Process
+
+1. Push your branch to the remote
+2. Open a Pull Request to `master`
+3. Ensure CI checks pass (lint, build, test)
+4. Request review from team members
+5. Address feedback and update PR
+6. Merge using "Squash and merge" or "Rebase and merge"
+
+### 5. Post-Merge
+
+- Delete your branch after merging
+- Verify deployment succeeds
+- Monitor for any issues
+
+## Code Standards
+
+### Linting and Formatting
+
+This project uses Biome for linting and formatting:
+
+```bash
+# Check linting
+make lint
+
+# Fix auto-fixable issues
+bun run lint --write
+```
+
+Pre-commit hooks are configured to run Biome automatically.
+
+### Testing
+
+```bash
+# Run all tests
+make test
+
+# Run tests in watch mode (during development)
+bun test --watch
+```
+
+### Type Safety
+
+- Use TypeScript strict mode
+- Avoid `any` types
+- Define interfaces for API contracts
+
+## Environment Variables
+
+Copy `.env.example` to `.env` for local development:
+
+```bash
+cp .env.example .env
+```
+
+Required variables for local development are pre-configured in `compose.development.yaml`.
+
+## Troubleshooting
+
+### Docker Issues
+
+```bash
+# Reset development environment
+make clean
+make dev
+
+# Full reset (removes images)
+make fclean
+make dev
+```
+
+### Port Conflicts
+
+If ports 3000, 3001, or 5432 are already in use:
+
+1. Stop conflicting services, or
+2. Modify port mappings in `compose.development.yaml`
+
+### Dependency Issues
+
+```bash
+# Clean install
+rm -rf node_modules front/node_modules back/node_modules
+rm -rf bun.lockb front/bun.lockb back/bun.lockb
+bun install
+```
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [Phaser 3 Documentation](https://phaser.io/docs/)
+- [Bun Documentation](https://bun.sh/docs)
+- [Biome Documentation](https://biomejs.dev/)
+
+## Questions?
+
+Reach out to the team lead or check the [AGENTS.md](./AGENTS.md) for AI agent collaboration guidelines.
