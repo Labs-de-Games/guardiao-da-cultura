@@ -97,7 +97,10 @@ export class PlaceholderSystem {
     return null;
   }
 
-  public handleDrop(item: DraggableItem): { snapped: boolean; mismatch?: boolean } {
+  public handleDrop(item: DraggableItem): {
+    snapped: boolean;
+    mismatch?: boolean;
+  } {
     const placeholder = this.isOverPlaceholder(item.x, item.y, item);
 
     if (placeholder) {
@@ -121,7 +124,12 @@ export class PlaceholderSystem {
     // Secondary check: was it at least near a placeholder but with wrong ID?
     let nearbyMismatch = false;
     for (const p of this.placeholders) {
-      const dist = Phaser.Math.Distance.Between(item.x, item.y, p.centerX, p.centerY);
+      const dist = Phaser.Math.Distance.Between(
+        item.x,
+        item.y,
+        p.centerX,
+        p.centerY,
+      );
       if (dist < 150) {
         nearbyMismatch = true;
         break;
@@ -129,7 +137,9 @@ export class PlaceholderSystem {
     }
 
     if (nearbyMismatch) {
-      console.log(`[PlaceholderSystem] MISMATCH: Item ${item.itemId} is not accepted here.`);
+      console.log(
+        `[PlaceholderSystem] MISMATCH: Item ${item.itemId} is not accepted here.`,
+      );
       return { snapped: false, mismatch: true };
     }
 

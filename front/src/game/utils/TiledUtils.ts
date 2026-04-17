@@ -30,7 +30,7 @@ export class TiledUtils {
     obj: Phaser.Types.Tilemaps.TiledObject,
     name: string,
   ): boolean {
-    const val = this.getProperty(obj, name);
+    const val = TiledUtils.getProperty(obj, name);
     return val === true || val === "true";
   }
 

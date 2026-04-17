@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
+import { LayoutConfig } from "../constants/LayoutConfig";
 import type { IObjectFactory } from "../factories/IObjectFactory";
 import { SculptureFactory } from "../factories/SculptureFactory";
-import { LayoutConfig } from "../constants/LayoutConfig";
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
 import type { MapData } from "./TiledMapLoader";
 
