@@ -42,4 +42,9 @@ export const LayoutConfig = {
       INVENTORY: 9000,
     },
   },
+
+  // Configurações do Jogo
+  GAME: {
+    MAP_SCALE: 6,
+  },
 } as const;

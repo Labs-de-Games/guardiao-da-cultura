@@ -77,3 +77,16 @@ export const NPC_CONFIGS: Record<string, NpcConfig> = {
     },
   },
 };
+
+export const SYSTEM_DIALOGUES = {
+  SCULPTURE: {
+    SUCCESS: [
+      "Excelente! A escultura foi posicionada corretamente.",
+      "A exposição está ficando cada vez mais bonita!",
+    ],
+    ERROR: [
+      "Ops! Esta escultura não parece pertencer a este local.",
+      "Procure o local correto para a exposição.",
+    ],
+  },
+};
