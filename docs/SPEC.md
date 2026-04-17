@@ -12,7 +12,11 @@ Single source of truth para workflow, comandos e estrutura do repositório.
 ├── AGENTS.md                   # Governança de agentes
 ├── back/                       # API NestJS
 ├── front/                      # Next.js + Phaser
+├── nginx/                      # Reverse proxy configuration
+│   ├── nginx.dev.conf
+│   └── nginx.prod.conf
 ├── Makefile                    # Comandos locais
+├── compose.base.yaml           # Shared service definitions
 ├── compose.development.yaml    # Stack local
 ├── compose.production.yaml     # Stack produção (Coolify)
 └── package.json                # Workspace root (Bun)
@@ -26,6 +30,7 @@ Single source of truth para workflow, comandos e estrutura do repositório.
 - **Frontend**: Next.js + React + Phaser
 - **Backend**: NestJS
 - **Lint/Format**: Biome
+- **Reverse Proxy**: nginx (alpine)
 
 ---
 
