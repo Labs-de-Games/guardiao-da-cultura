@@ -5,16 +5,22 @@ import { SceneNames } from "../constants/SceneNames";
 import { LEVEL_ASSETS, PHASE_SETTINGS } from "../data/LevelConfig";
 import { LevelQuizData } from "../data/LevelQuizData";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { SYSTEM_DIALOGUES } from "../objects/Dialog";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
+import { DraggableItem } from "../objects/interactables/DraggableItem";
 import { LevelManager } from "../objects/LevelManager";
-import { type MapData, MapManager } from "../objects/MapManager";
+import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { NPC_ANIMS } from "../objects/NpcConfig";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
+import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
+import { PlaceholderSystem } from "../systems/PlaceholderSystem";
+import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import type { INpcEntity } from "../types/EntityTypes";
+import { TiledUtils } from "../utils/TiledUtils";
 
 export class Game extends Scene {
   player!: Player;
@@ -27,6 +33,9 @@ export class Game extends Scene {
   private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
   private isInspectTutorialOpen: boolean = false;
+  private objectLayerProcessor!: ObjectLayerProcessor;
+  public placeholderSystem!: PlaceholderSystem;
+  private draggableItems: DraggableItem[] = [];
 
   constructor() {
     super(SceneNames.GAME);
@@ -46,6 +55,9 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
     LEVEL_ASSETS.OTHERS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+    LEVEL_ASSETS.SCULPTURES.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -69,7 +81,7 @@ export class Game extends Scene {
     const tileset = map.addTilesetImage("dungeon", LEVEL_ASSETS.MAP.tileset);
 
     if (tileset) {
-      mapData = MapManager.setupMap(this, map, tileset, 6);
+      mapData = TiledMapLoader.loadMap(this, map, tileset, 6);
 
       this.stairsLayer = mapData.tileLayers.Stairs || null;
     }
@@ -93,9 +105,63 @@ export class Game extends Scene {
     });
     this.scene.bringToTop(SceneNames.UI);
 
+    this.objectLayerProcessor = new ObjectLayerProcessor();
+    this.placeholderSystem = new PlaceholderSystem(this);
+
     if (mapData) {
       this.createEntities(mapData);
       this.setupCollisions(mapData.colliders);
+
+      // Case-insensitive lookup for PlaceHolder layer
+      const placeholderLayer =
+        mapData.objectLayers.PlaceHolder ||
+        mapData.objectLayers.placeholder ||
+        mapData.objectLayers.Placeholder;
+
+      if (placeholderLayer?.objects) {
+        placeholderLayer.objects.forEach((obj: any) => {
+          // Extract "sculptures" or "sculpture" properties from Tiled
+          const isSculpturePlaceholder =
+            TiledUtils.getBoolProperty(obj, "sculptures") ||
+            TiledUtils.getBoolProperty(obj, "sculpture");
+
+          const sculptureId = TiledUtils.getProperty(obj, "sculptureId");
+          const scaled = TiledUtils.scaleCoords(
+            obj,
+            LayoutConfig.GAME.MAP_SCALE,
+          );
+
+          this.placeholderSystem.registerPlaceholder({
+            x: scaled.x,
+            y: scaled.y,
+            width: scaled.width,
+            height: scaled.height,
+            id: obj.name || Phaser.Math.RND.uuid(),
+            acceptedType: isSculpturePlaceholder ? "sculpture" : undefined,
+            sculptureId: sculptureId?.toString(),
+          });
+        });
+      }
+
+      const createdItems = this.objectLayerProcessor.process(
+        this,
+        mapData,
+        LayoutConfig.GAME.MAP_SCALE,
+      );
+      this.draggableItems = createdItems.filter(
+        (item) => item instanceof DraggableItem,
+      ) as DraggableItem[];
+
+      if (this.player) {
+        this.player.setDraggableRegistry(this.draggableItems);
+      }
+
+      this.events.on("item-dropped", this.handleItemDropped, this);
+
+      // Memory cleanup
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.events.off("item-dropped", this.handleItemDropped, this);
+      });
     }
     this.setupCameras();
 
@@ -206,6 +272,7 @@ export class Game extends Scene {
     }
 
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
+    this.player.setDepth(20);
     this.player.stairsLayer = this.stairsLayer;
 
     for (const npc of this.npcs) {
@@ -361,4 +428,23 @@ export class Game extends Scene {
   }
 
   update(_time: number, _delta: number) {}
+
+  /**
+   * Handles visual and textual feedback after an item interaction.
+   */
+  private handleItemDropped(item: DraggableItem) {
+    const result = this.placeholderSystem.handleDrop(item);
+
+    if (result.snapped) {
+      this.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        SYSTEM_DIALOGUES.SCULPTURE.SUCCESS,
+      );
+    } else if (result.mismatch) {
+      this.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        SYSTEM_DIALOGUES.SCULPTURE.ERROR,
+      );
+    }
+  }
 }
