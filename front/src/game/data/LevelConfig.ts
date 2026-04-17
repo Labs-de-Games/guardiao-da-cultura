@@ -21,6 +21,22 @@ export const LEVEL_ASSETS = {
     { key: "star", path: "star.png" },
     { key: "inspect_example", path: "inspect_example.png" },
   ],
+  SCULPTURES: [
+    { key: "sprite_01", path: "sculptures/sprite_01.png" },
+    { key: "sprite_02", path: "sculptures/sprite_02.png" },
+    { key: "sprite_03", path: "sculptures/sprite_03.png" },
+    { key: "sprite_04", path: "sculptures/sprite_04.png" },
+    { key: "sprite_05", path: "sculptures/sprite_05.png" },
+    { key: "sprite_06", path: "sculptures/sprite_06.png" },
+    { key: "sprite_07", path: "sculptures/sprite_07.png" },
+    { key: "sprite_08", path: "sculptures/sprite_08.png" },
+    { key: "sprite_09", path: "sculptures/sprite_09.png" },
+    { key: "sprite_10", path: "sculptures/sprite_10.png" },
+    { key: "sprite_11", path: "sculptures/sprite_11.png" },
+    { key: "sprite_12", path: "sculptures/sprite_12.png" },
+    { key: "sprite_13", path: "sculptures/sprite_13.png" },
+    { key: "sprite_14", path: "sculptures/sprite_14.png" },
+  ],
 } as const;
 
 export const PHASE_SETTINGS = {
