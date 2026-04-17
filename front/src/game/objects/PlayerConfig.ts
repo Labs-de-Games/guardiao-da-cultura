@@ -56,7 +56,7 @@ export const PLAYER_ASSETS = {
 // ------------------------------------------------------------
 export const PLAYER_SPAWN = {
   X: 300,
-  Y: 3000,
+  Y: 400, // Adjusted for a more reasonable starting Y in museum scenes
   TEXTURE: PLAYER_ASSETS.WALK_SPRITESHEET.key, // texture used in the constructor
 } as const;
 
@@ -115,6 +115,12 @@ export const PLAYER_MOVEMENT = {
 
   /** Vertical speed when climbing ladders */
   CLIMB_SPEED_Y: 600,
+
+  /** Acceleration when pushing/pulling items */
+  PUSH_ACCELERATION: 30,
+
+  /** Maximum distance to grab an item */
+  GRAB_DISTANCE: 80,
 } as const;
 
 // ------------------------------------------------------------
@@ -186,6 +192,29 @@ export const PLAYER_ANIMS = {
     spritesheet: "player_climb",
     frames: [4, 3, 2, 1, 0],
     frameRate: 5,
+    repeat: -1,
+  },
+
+  /** Grabbing / Pushing animations */
+  GRAB_IDLE: {
+    key: "grab_idle",
+    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
+    frames: [0], // Placeholder
+    frameRate: 10,
+    repeat: -1,
+  },
+  PUSH: {
+    key: "push",
+    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
+    frames: [0, 1, 2, 3], // Placeholder
+    frameRate: 10,
+    repeat: -1,
+  },
+  PULL: {
+    key: "pull",
+    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
+    frames: [3, 2, 1, 0], // Placeholder
+    frameRate: 10,
     repeat: -1,
   },
 
