@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type { DraggableItem } from "../objects/interactables/DraggableItem";
+import { CarryableItem } from "../objects/interactables/CarryableItem";
 
 interface ExtendedRectangle extends Phaser.Geom.Rectangle {
   id: string;
@@ -65,7 +66,7 @@ export class PlaceholderSystem {
   public isOverPlaceholder(
     x: number,
     y: number,
-    item: DraggableItem,
+    item: DraggableItem | CarryableItem,
   ): ExtendedRectangle | null {
     const SNAP_THRESHOLD = 150; // Pixels distance to consider a match
 

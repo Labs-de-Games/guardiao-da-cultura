@@ -1,28 +1,27 @@
 import type * as Phaser from "phaser";
-import { DraggableItem } from "../objects/interactables/DraggableItem";
+// import { DraggableItem } from "../objects/interactables/DraggableItem";
+import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
-export class SculptureFactory implements IObjectFactory {
+export class PictureFactory implements IObjectFactory {
   create(
     scene: Phaser.Scene,
     objData: Phaser.Types.Tilemaps.TiledObject,
     scale: number,
-  ): DraggableItem | null {
+  ): CarryableItem | null {
     if (objData.x === undefined || objData.y === undefined) return null;
 
     const name = objData.name || "";
-    let texture = name;
+    let index = 0;
 
-    // Mapping: S1 -> sprite_01, S2 -> sprite_02, etc.
-    if (name.match(/^S\d+$/)) {
-      const num = name.substring(1).padStart(2, "0");
-      texture = `sprite_${num}`;
+    if (name.match(/^P\d+$/)) {
+      index = Math.max(0, parseInt(name.substring(1), 10) - 1);
     }
 
-    if (!texture || texture === "") texture = "default_sculpture";
+    const textureIndex = index + 1;
+    const texture = `painting_${textureIndex.toString().padStart(2, "0")}`;
 
-    // Use TiledUtils to prioritize custom 'id' property
     const customId = TiledUtils.getProperty(objData, "id");
     const finalId = customId ? customId.toString() : name || undefined;
 
@@ -36,6 +35,11 @@ export class SculptureFactory implements IObjectFactory {
       id: finalId,
     };
 
-    return new DraggableItem(scene, config);
+    // const item = new PictureItem(scene, config);
+
+    // item.setOrigin(0.5, 0.5);
+    // item.setScale(1);
+    // return item;
+	return new CarryableItem(scene, config)	
   }
 }
