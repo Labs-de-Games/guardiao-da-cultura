@@ -1,17 +1,24 @@
 FROM oven/bun:1-alpine AS deps
 WORKDIR /app
-COPY package.json .
-RUN bun install
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile --production
 
 FROM oven/bun:1-alpine AS build
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build
 
-FROM oven/bun:1-alpine
+FROM oven/bun:1-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app ./
+
+# Copy standalone output
+COPY --from=build /app/.next/standalone/front ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
+
 EXPOSE 3000
-CMD ["bun", "run", "start"]
+
+CMD ["bun", "server.js"]

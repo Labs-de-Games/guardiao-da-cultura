@@ -4,9 +4,9 @@
   "scripts": {
     "start:dev": "bun run --watch src/main.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/main.js",
+    "start": "bun dist/main.js",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\"",
+    "test": "bun test --preload ./test-setup.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
+    "@nestjs/testing": "latest",
     "@types/node": "latest",
     "typescript": "latest"
   }
