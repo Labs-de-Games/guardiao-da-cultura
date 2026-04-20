@@ -2,6 +2,8 @@
 
 This document describes the internal development workflow for team members working on this project.
 
+For AI agent collaboration guidelines, see [AGENTS.md](./AGENTS.md).
+
 ## Getting Started
 
 ### Prerequisites
@@ -121,6 +123,44 @@ chore(ci): add test coverage reporting
 - Delete your branch after merging
 - Verify deployment succeeds
 - Monitor for any issues
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and Coolify for continuous deployment.
+
+### Continuous Integration (CI)
+
+Every Pull Request triggers the following checks:
+
+| Stage | Description |
+|-------|-------------|
+| **Lint** | Run Biome linting and formatting checks (`make lint`) |
+| **Build** | Validate frontend and backend builds (`bun run build`) |
+| **Test** | Execute test suites (`make test`) |
+
+All checks must pass before merging.
+
+### Continuous Deployment (CD)
+
+Merges to `master` automatically trigger deployment:
+
+1. GitHub webhook notifies Coolify
+2. Coolify pulls latest code
+3. Production containers are rebuilt and redeployed
+4. Health checks verify deployment success
+
+### Git Hooks
+
+Pre-commit hooks are configured to ensure code quality:
+
+- **pre-commit**: Runs Biome check on staged files
+- **commit-msg**: Validates commit message format using commitlint
+
+To bypass hooks in emergencies (not recommended):
+
+```bash
+git commit --no-verify -m "your message"
+```
 
 ## Code Standards
 
