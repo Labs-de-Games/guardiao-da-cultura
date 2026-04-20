@@ -2,6 +2,7 @@ import type * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import type { IObjectFactory } from "../factories/IObjectFactory";
 import { SculptureFactory } from "../factories/SculptureFactory";
+import { PictureFactory } from "../factories/PictureFactory"
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
 import type { MapData } from "./TiledMapLoader";
 
@@ -10,6 +11,7 @@ export class ObjectLayerProcessor {
 
   constructor() {
     this.factories.set("sculpture", new SculptureFactory());
+	this.factories.set("painting", new PictureFactory());
   }
 
   public registerFactory(type: string, factory: IObjectFactory) {

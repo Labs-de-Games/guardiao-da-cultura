@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import type { IPlayerState } from "../types/EntityTypes";
 import type { DraggableItem } from "./interactables/DraggableItem";
+import type { CarryableItem } from "./interactables/CarryableItem";
 import {
   PLAYER_ANIMS,
   PLAYER_ASSETS,
@@ -24,9 +25,13 @@ export class Player
 
   // Grab mechanics
   private draggableRegistry: DraggableItem[] = [];
+  private carryableRegistry: CarryableItem[] = [];
   private grabbedItem: DraggableItem | null = null;
+	private carriedItem: CarryableItem | null = null;
   public isGrabbing: boolean = false;
+	public isCarrying: boolean = false;
   private grabOffset: number = 0;
+  private carryOffset: number = 60;
 
   // Preload player assets
   static preload(scene: Phaser.Scene) {
@@ -221,6 +226,10 @@ export class Player
     this.draggableRegistry = items;
   }
 
+	setCarryableRegistry(items: CarryableItem[]) {
+		this.carryableRegistry = items
+	}
+
   // Player damage
   takeDamage(dirX: number) {
     if (this.isDead || this.isHit) return;
@@ -300,6 +309,7 @@ export class Player
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
     const spaceDown = this.keys.space.isDown;
+    const spacePress =Phaser.Input.Keyboard.JustDown(this.keys.space);
 
     // 2.5 GRAB LOGIC
     if (spaceDown && !this.isGrabbing && body?.blocked.down) {
@@ -307,6 +317,15 @@ export class Player
     } else if (!spaceDown && this.isGrabbing) {
       this.releaseGrab();
     }
+	
+	// 2.5 CARRY LOGIC
+	if (spacePress && body?.blocked.down) {
+		this.tryToggleCarry()
+	}
+	// } else if (!spacePress && this.isCarrying) {
+	// 	this.releaseCarry()		
+	// }
+	 
 
     if (body) {
       const accel = this.getMovementAcceleration();
@@ -401,7 +420,15 @@ export class Player
         }
       }
     }
-  }
+
+
+	if (this.isCarrying && this.carriedItem) {
+		const offsetY = 60; // pick a value you like
+		this.carriedItem.x = this.x;
+		this.carriedItem.y = this.y - offsetY;
+		this.carriedItem.setDepth(this.depth + 1); // optional, keep above player
+	}
+}
 
   private tryGrab() {
     const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
@@ -429,6 +456,35 @@ export class Player
     }
   }
 
+	private tryToggleCarry() {
+		
+		if (this.isCarrying && this.carriedItem) {
+			this.carriedItem.setCarried(false);
+			this.scene.events.emit("item-dropped", this.carriedItem);
+			this.carriedItem = null;
+			this.isCarrying = false;
+			return;
+		}
+
+		const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE
+		let closestItem: CarryableItem | null = null;
+		let minDist: number = GRAB_DIST
+
+		for (const item of this.carryableRegistry) {
+			const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
+			if (dist < minDist) {
+				minDist = dist;
+				closestItem = item;
+			}
+		}
+
+		if (closestItem) {
+			this.isCarrying = true;
+			this.carriedItem = closestItem;
+			this.carriedItem.setCarried(true);
+		}
+	}
+
   private releaseGrab() {
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
@@ -436,6 +492,14 @@ export class Player
     this.isGrabbing = false;
     this.grabbedItem = null;
   }
+  
+	private releaseCarry() {
+		if (this.carriedItem) {
+			this.carriedItem.setCarried(false)
+		}
+		this.isCarrying = false
+		this.carriedItem = null
+	}
 
   /**
    * Calculates current horizontal acceleration based on player state.
