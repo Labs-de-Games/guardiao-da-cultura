@@ -3,6 +3,10 @@ services:
     extends:
       file: compose.base.yaml
       service: front
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      target: build
     command: sh -c "bun install && bun run dev"
     ports:
       - "3000:3000"
