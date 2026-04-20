@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render } from "@testing-library/react";
 import PhaserGame from "./PhaserGame";
 
@@ -16,7 +16,9 @@ describe("PhaserGame", () => {
 
   it("applies correct styles to container", () => {
     const { container } = render(<PhaserGame />);
-    const gameContainer = container.querySelector("#game-container") as HTMLElement;
+    const gameContainer = container.querySelector(
+      "#game-container",
+    ) as HTMLElement;
 
     expect(gameContainer).toBeDefined();
     if (gameContainer) {
@@ -25,6 +27,4 @@ describe("PhaserGame", () => {
       expect(gameContainer.style.overflow).toBe("hidden");
     }
   });
-
-
 });

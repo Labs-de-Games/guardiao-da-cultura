@@ -1,6 +1,6 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { INestApplication } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 
 describe("AppController (e2e)", () => {
