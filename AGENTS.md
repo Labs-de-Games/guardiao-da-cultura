@@ -8,12 +8,18 @@ AI agents accelerate development by handling scaffolding, configuration, and rep
 
 ## Repository Scope
 
-This is a **starter template** for 2D web games with the following constraints:
+This is an **active game development project** being built by a squad. We are developing a 2D browser-based game using Next.js, NestJS, and Phaser.
 
-- `front/` and `back/` must remain in bootstrap/base state
-- No product domain implementation (auth, game logic, etc.)
-- No PR preview environment configuration
-- Focus on infrastructure, tooling, and documentation
+### Project Status
+
+The game is currently in active development. Core infrastructure is in place, and the squad is implementing game features and mechanics.
+
+### Development Focus
+
+- **Frontend**: Game scenes, UI components, and player interactions
+- **Backend**: Game state management, APIs, and database operations
+- **Infrastructure**: Deployment, monitoring, and tooling
+- **Documentation**: Keeping docs updated as the project evolves
 
 ## Agent Responsibilities
 
@@ -37,21 +43,6 @@ This is a **starter template** for 2D web games with the following constraints:
 | **Business Logic** | Implement game mechanics, user workflows |
 | **Dependencies** | Add new major dependencies without approval |
 | **Destructive Ops** | Database migrations, production data changes |
-
-## Decision Matrix
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Task Type          │  Agent Action    │  Human Review      │
-├─────────────────────────────────────────────────────────────┤
-│  Fix lint errors    │  Apply directly  │  PR review only      │
-│  Update docs        │  Apply directly  │  PR review only      │
-│  Refactor code      │  Suggest in PR   │  Required            │
-│  Add dependencies   │  Ask first       │  Required            │
-│  Change architecture│  Not allowed     │  Human only          │
-│  Security changes   │  Not allowed     │  Human only          │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ## Workflow Guidelines
 
@@ -131,17 +122,59 @@ When agents encounter:
 | Test failures | Attempt fix once, then escalate |
 | Conflicting instructions | Ask human to resolve |
 
-## Future Evolution
+## Quality Checks
 
-When bootstrap is stable, this document may expand to include:
+When working with AI-generated code, always verify:
 
-- **Agent roles by area**: `front-agent`, `back-agent`, `infra-agent`
-- **Approval policies**: Auto-merge criteria for low-risk changes
-- **Release checklist**: Pre-deployment validation steps
-- **Performance budgets**: Bundle size limits, test coverage thresholds
+### Before Committing
+
+- [ ] Code follows existing patterns and conventions
+- [ ] No hardcoded values or magic numbers
+- [ ] Proper error handling is in place
+- [ ] TypeScript types are correct (no `any`)
+- [ ] No secrets or credentials in code
+- [ ] Biome linting passes (`make lint`)
+- [ ] Tests pass (`make test`)
+
+### Code Review Checklist
+
+- [ ] Logic is correct and handles edge cases
+- [ ] No unnecessary complexity or over-engineering
+- [ ] Performance implications considered
+- [ ] Security best practices followed
+- [ ] Documentation updated if needed
+
+## AI Code Review
+
+When reviewing AI-assisted code:
+
+### What to Look For
+
+1. **Correctness**: Does the code actually solve the problem?
+2. **Completeness**: Are all edge cases handled?
+3. **Idiomatic**: Does it follow language/framework conventions?
+4. **Efficiency**: Are there unnecessary computations or API calls?
+5. **Security**: Any injection risks, XSS vulnerabilities, or data leaks?
+
+### Review Process
+
+1. **Read the PR description** - Understand what changed and why
+2. **Check the diff** - Look for suspicious patterns or obvious issues
+3. **Test locally** - Run the code to verify it works
+4. **Ask questions** - If something is unclear, ask the author
+5. **Approve or request changes** - Be specific about what needs fixing
+
+### Red Flags
+
+- Large PRs with many unrelated changes
+- Code that "looks right" but hasn't been tested
+- Missing error handling
+- Copy-paste without adaptation
+- Generated comments that don't match the code
 
 ## References
 
 - [Conventional Commits](https://www.conventionalcommits.org/)
-- [docs/SPEC.md](./docs/SPEC.md) - Technical specification
 - [README.md](./README.md) - Project overview
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Development workflow and standards
+- [GitHub Issues](https://github.com/Labs-de-Games/gameplate/issues) - Issue tracker and project board
