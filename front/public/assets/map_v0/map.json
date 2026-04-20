@@ -146,8 +146,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":689.559200432036,
-                 "y":368.139598853289
+                 "x":640,
+                 "y":496
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -342,6 +342,17 @@
                  "name":"P3",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"sculpture",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"sculptureId",
+                         "type":"string",
+                         "value":"S3"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -355,11 +366,22 @@
                  "name":"P2",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"sculpture",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"sculptureId",
+                         "type":"string",
+                         "value":"S2"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":448,
+                 "x":560,
                  "y":496
                 }, 
                 {
@@ -368,6 +390,17 @@
                  "name":"P1",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"sculpture",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"sculptureId",
+                         "type":"string",
+                         "value":"S1"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -381,6 +414,17 @@
                  "name":"H1",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"painting",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"paintingId",
+                         "type":"string",
+                         "value":"P1"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -394,6 +438,17 @@
                  "name":"H2",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"painting",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"paintingId",
+                         "type":"string",
+                         "value":"P2"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -407,6 +462,17 @@
                  "name":"H3",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"painting",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"paintingId",
+                         "type":"string",
+                         "value":"P3"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -420,6 +486,17 @@
                  "name":"H4",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"painting",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"paintingId",
+                         "type":"string",
+                         "value":"P4"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,

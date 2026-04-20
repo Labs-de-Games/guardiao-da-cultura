@@ -142,7 +142,6 @@ export class Game extends Scene {
 				? obj.name.replace("H", "P")
 				: undefined)
 
-
           const scaled = TiledUtils.scaleCoords(
             obj,
             LayoutConfig.GAME.MAP_SCALE,
@@ -154,6 +153,11 @@ export class Game extends Scene {
             width: scaled.width,
             height: scaled.height,
             id: obj.name || Phaser.Math.RND.uuid(),
+			acceptedType: isSculpturePlaceholder ? "sculpture" :
+				isPaintingPlaceholder ? "painting" :
+				undefined,
+            sculptureId: sculptureId?.toString(),
+            paintingId: paintingId?.toString(),
           });
         });
       }

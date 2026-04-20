@@ -6,6 +6,7 @@ interface ExtendedRectangle extends Phaser.Geom.Rectangle {
   id: string;
   acceptedType?: string;
   sculptureId?: string;
+  paintingId?: string;
   hintSprite?: Phaser.GameObjects.Sprite;
 }
 
@@ -17,6 +18,7 @@ export interface PlaceholderConfig {
   id: string;
   acceptedType?: string;
   sculptureId?: string;
+  paintingId?: string;
 }
 
 export class PlaceholderSystem {
@@ -43,6 +45,7 @@ export class PlaceholderSystem {
     rect.id = config.id;
     rect.acceptedType = config.acceptedType;
     rect.sculptureId = config.sculptureId;
+    rect.paintingId = config.paintingId;
 
     // Create Hint (Sparkle)
     const sparkle = this.scene.add.sprite(
@@ -77,21 +80,16 @@ export class PlaceholderSystem {
       // 2. Check distance to center (better for point-based placeholders)
       const dist = Phaser.Math.Distance.Between(x, y, p.centerX, p.centerY);
       const isCloseEnough = dist < SNAP_THRESHOLD;
+		
 
       if (isInside || isCloseEnough) {
-        // Check accepted type (e.g. "sculpture")
-        if (p.acceptedType && p.acceptedType !== "sculpture") {
-          continue;
-        }
-
-        // Check specific sculptureId if defined
-        if (p.sculptureId && item.itemId !== p.sculptureId) {
+		if (p.acceptedType && p.acceptedType !== "sculpture" && p.acceptedType !== "painting") continue;
+		if ((p.sculptureId && item.itemId !== p.sculptureId) || (p.paintingId && item.itemId !== p.paintingId)) {
           console.log(
             `[PlaceholderSystem] ID mismatch at ${p.id}: expected "${p.sculptureId}", got "${item.itemId}"`,
           );
-          continue;
-        }
-
+		  continue;
+		}
         return p;
       }
     }
