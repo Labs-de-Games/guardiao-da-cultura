@@ -15,7 +15,8 @@ import {
 
 export class Player
   extends Phaser.Physics.Arcade.Sprite
-  implements IPlayerState {
+  implements IPlayerState
+{
   keys: PlayerKeys;
   isDead: boolean = false;
   isHit: boolean = false;
