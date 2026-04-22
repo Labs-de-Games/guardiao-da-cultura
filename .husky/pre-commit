@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 if command -v bun >/dev/null 2>&1; then
   bun run typecheck
-  bunx biome check --write .
+  bun run lint:fix
 elif command -v npx >/dev/null 2>&1; then
   npm run typecheck
-  npx --no-install @biomejs/biome check --write . || echo "Skipping Biome: dependencies not installed yet."
+  npm run lint:fix || echo "Skipping lint: dependencies not installed yet."
 else
   echo "Skipping hooks: bun/npx not available."
 fi
