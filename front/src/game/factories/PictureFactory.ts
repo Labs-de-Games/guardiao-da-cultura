@@ -1,6 +1,6 @@
 import type * as Phaser from "phaser";
-// import { DraggableItem } from "../objects/interactables/DraggableItem";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
+import { InteractableType } from "../types/InteractableTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
@@ -12,18 +12,8 @@ export class PictureFactory implements IObjectFactory {
   ): CarryableItem | null {
     if (objData.x === undefined || objData.y === undefined) return null;
 
-    const name = objData.name || "";
-    let index = 0;
-
-    if (name.match(/^P\d+$/)) {
-      index = Math.max(0, parseInt(name.substring(1), 10) - 1);
-    }
-
-    const textureIndex = index + 1;
-    const texture = `painting_${textureIndex.toString().padStart(2, "0")}`;
-
-    const customId = TiledUtils.getProperty(objData, "id");
-    const finalId = customId ? customId.toString() : name || undefined;
+    const name = objData.name || "chunk_unknown";
+    const texture = name;
 
     const scaled = TiledUtils.scaleCoords(objData, scale);
 
@@ -32,14 +22,10 @@ export class PictureFactory implements IObjectFactory {
       y: scaled.y,
       texture: texture,
       name: name,
-      id: finalId,
+      id: name,
+      type: InteractableType.PICTURE_CHUNK,
     };
 
-    // const item = new PictureItem(scene, config);
-
-    // item.setOrigin(0.5, 0.5);
-    // item.setScale(1);
-    // return item;
-	return new CarryableItem(scene, config)	
+    return new CarryableItem(scene, config);
   }
 }
