@@ -8,14 +8,13 @@ export const TiledUtils = {
    * Safely gets a property from a Tiled object's properties array.
    * Handles both Array and Object formats of Tiled properties.
    */
-  getProperty(
-    obj: Phaser.Types.Tilemaps.TiledObject,
-    name: string,
-  ): unknown {
+  getProperty(obj: Phaser.Types.Tilemaps.TiledObject, name: string): unknown {
     if (!obj.properties) return undefined;
 
     if (Array.isArray(obj.properties)) {
-      const prop = obj.properties.find((p: Record<string, unknown>) => p.name === name);
+      const prop = obj.properties.find(
+        (p: Record<string, unknown>) => p.name === name,
+      );
       return prop ? prop.value : undefined;
     }
 
@@ -37,15 +36,12 @@ export const TiledUtils = {
   /**
    * Scales all positional and dimensional properties of a Tiled object.
    */
-  scaleCoords(
-    obj: Phaser.Types.Tilemaps.TiledObject,
-    scale: number,
-  ) {
+  scaleCoords(obj: Phaser.Types.Tilemaps.TiledObject, scale: number) {
     return {
       x: (obj.x || 0) * scale,
       y: (obj.y || 0) * scale,
       width: (obj.width || 0) * scale,
       height: (obj.height || 0) * scale,
     };
-  }
+  },
 };
