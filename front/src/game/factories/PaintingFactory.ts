@@ -1,26 +1,27 @@
 import type * as Phaser from "phaser";
-import { DraggableItem } from "../objects/interactables/DraggableItem";
+// import { DraggableItem } from "../objects/interactables/DraggableItem";
+import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { InteractableType } from "../types/InteractableTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
-export class SculptureFactory implements IObjectFactory {
+export class PaintingFactory implements IObjectFactory {
   create(
     scene: Phaser.Scene,
     objData: Phaser.Types.Tilemaps.TiledObject,
     scale: number,
-  ): DraggableItem | null {
+  ): CarryableItem | null {
     if (objData.x === undefined || objData.y === undefined) return null;
 
     const name = objData.name || "";
-    let texture = name;
+    let index = 0;
 
-    if (name.match(/^S\d+$/)) {
-      const num = name.substring(1).padStart(2, "0");
-      texture = `sprite_${num}`;
+    if (name.match(/^P\d+$/)) {
+      index = Math.max(0, parseInt(name.substring(1), 10) - 1);
     }
 
-    if (!texture || texture === "") texture = "default_sculpture";
+    const textureIndex = index + 1;
+    const texture = `painting_${textureIndex.toString().padStart(2, "0")}`;
 
     const scaled = TiledUtils.scaleCoords(objData, scale);
 
@@ -30,9 +31,9 @@ export class SculptureFactory implements IObjectFactory {
       texture: texture,
       name: name,
       id: name,
-      type: InteractableType.SCULPTURE,
+      type: InteractableType.PAINTING,
     };
 
-    return new DraggableItem(scene, config);
+    return new CarryableItem(scene, config);
   }
 }

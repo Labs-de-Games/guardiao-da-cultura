@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
+import type { CarryableItem } from "../objects/interactables/CarryableItem";
 import type { DraggableItem } from "../objects/interactables/DraggableItem";
-import { CarryableItem } from "../objects/interactables/CarryableItem";
 
 interface ExtendedRectangle extends Phaser.Geom.Rectangle {
   id: string;
@@ -80,16 +80,23 @@ export class PlaceholderSystem {
       // 2. Check distance to center (better for point-based placeholders)
       const dist = Phaser.Math.Distance.Between(x, y, p.centerX, p.centerY);
       const isCloseEnough = dist < SNAP_THRESHOLD;
-		
 
       if (isInside || isCloseEnough) {
-		if (p.acceptedType && p.acceptedType !== "sculpture" && p.acceptedType !== "painting") continue;
-		if ((p.sculptureId && item.itemId !== p.sculptureId) || (p.paintingId && item.itemId !== p.paintingId)) {
+        if (
+          p.acceptedType &&
+          p.acceptedType !== "sculpture" &&
+          p.acceptedType !== "painting"
+        )
+          continue;
+        if (
+          (p.sculptureId && item.itemId !== p.sculptureId) ||
+          (p.paintingId && item.itemId !== p.paintingId)
+        ) {
           console.log(
             `[PlaceholderSystem] ID mismatch at ${p.id}: expected "${p.sculptureId}", got "${item.itemId}"`,
           );
-		  continue;
-		}
+          continue;
+        }
         return p;
       }
     }

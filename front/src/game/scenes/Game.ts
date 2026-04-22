@@ -8,8 +8,8 @@ import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
 import { SYSTEM_DIALOGUES } from "../objects/Dialog";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
-import { DraggableItem } from "../objects/interactables/DraggableItem";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
+import { DraggableItem } from "../objects/interactables/DraggableItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
@@ -130,17 +130,17 @@ export class Game extends Scene {
             TiledUtils.getBoolProperty(obj, "sculptures") ||
             TiledUtils.getBoolProperty(obj, "sculpture");
 
-			const isPaintingPlaceholder =
-			  TiledUtils.getBoolProperty(obj, "paintings") ||
-			  TiledUtils.getBoolProperty(obj, "painting") ||
-			  /^H\d+$/.test(obj.name || "");
+          const isPaintingPlaceholder =
+            TiledUtils.getBoolProperty(obj, "paintings") ||
+            TiledUtils.getBoolProperty(obj, "painting") ||
+            /^H\d+$/.test(obj.name || "");
 
           const sculptureId = TiledUtils.getProperty(obj, "sculptureId");
-		 const paintingId =
-			  TiledUtils.getProperty(obj, "paintingId") ||
-			  (obj.name && /^H\d+$/.test(obj.name)
-				? obj.name.replace("H", "P")
-				: undefined)
+          const paintingId =
+            TiledUtils.getProperty(obj, "paintingId") ||
+            (obj.name && /^H\d+$/.test(obj.name)
+              ? obj.name.replace("H", "P")
+              : undefined);
 
           const scaled = TiledUtils.scaleCoords(
             obj,
@@ -153,9 +153,11 @@ export class Game extends Scene {
             width: scaled.width,
             height: scaled.height,
             id: obj.name || Phaser.Math.RND.uuid(),
-			acceptedType: isSculpturePlaceholder ? "sculpture" :
-				isPaintingPlaceholder ? "painting" :
-				undefined,
+            acceptedType: isSculpturePlaceholder
+              ? "sculpture"
+              : isPaintingPlaceholder
+                ? "painting"
+                : undefined,
             sculptureId: sculptureId?.toString(),
             paintingId: paintingId?.toString(),
           });
@@ -171,14 +173,14 @@ export class Game extends Scene {
       this.draggableItems = createdItems.filter(
         (item) => item instanceof DraggableItem,
       ) as DraggableItem[];
-	
-		this.carryableItems = createdItems.filter(
-			(item) => item instanceof CarryableItem
-		) as CarryableItem[]
+
+      this.carryableItems = createdItems.filter(
+        (item) => item instanceof CarryableItem,
+      ) as CarryableItem[];
 
       if (this.player) {
         this.player.setDraggableRegistry(this.draggableItems);
-		this.player.setCarryableRegistry(this.carryableItems)
+        this.player.setCarryableRegistry(this.carryableItems);
       }
 
       this.events.on("item-dropped", this.handleItemDropped, this);
