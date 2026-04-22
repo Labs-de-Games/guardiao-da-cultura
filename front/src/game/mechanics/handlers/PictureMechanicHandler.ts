@@ -40,7 +40,9 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
       }
     });
 
-    const filledSlots = placeholder.state?.filledSlots as (string | null)[] | undefined;
+    const filledSlots = placeholder.state?.filledSlots as
+      | (string | null)[]
+      | undefined;
     const filledCount =
       filledSlots?.filter((s: string | null) => s !== null).length || 0;
     if (filledCount < expectedIds.length) allCorrect = false;
@@ -70,7 +72,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     gameScene.player.removeFromInventory(itemId);
 
     if (!placeholder.state) placeholder.state = {};
-    
+
     if (!placeholder.state.filledSlots) {
       placeholder.state.filledSlots = [null, null, null, null];
     }
