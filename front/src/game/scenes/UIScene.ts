@@ -3,6 +3,7 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { InventoryPanel } from "../objects/ui/InventoryPanel";
@@ -37,6 +38,7 @@ export class UIScene extends Scene {
   private tutorialOverlay!: TutorialOverlay;
   private dialoguePanel!: DialoguePanel;
   private quizPanel!: QuizPanel;
+  private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
 
   // Gestão de Missões (Individual Cards - candidate for further extraction)
@@ -81,6 +83,7 @@ export class UIScene extends Scene {
     this.tutorialOverlay = new TutorialOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
     this.quizPanel = new QuizPanel(this);
+    this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
 
     this.root.add(this.statusPanel);
@@ -157,6 +160,24 @@ export class UIScene extends Scene {
       },
     );
 
+    gameScene.events.on(
+      GameEvents.OPEN_INTERACTION_UI_REQUEST,
+      (data: {
+        instanceId: string;
+        type: string;
+        availableItems: { id: string; name: string }[];
+        state?: Record<string, any>;
+      }) => {
+        if (this.chunkSelector) {
+          this.chunkSelector.show(
+            data.instanceId,
+            data.availableItems,
+            data.state?.filledSlots || [],
+          );
+        }
+      },
+    );
+
     // Prompts de Interação (bloqueio de overlays)
     gameScene.events.on(
       GameEvents.INTERACTION_PROMPT_SHOWN,
@@ -225,6 +246,7 @@ export class UIScene extends Scene {
     this.tutorialOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
     this.quizPanel.layout(w, h);
+    this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
 
     this.positionMissionPanels();
