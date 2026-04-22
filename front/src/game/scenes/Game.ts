@@ -529,7 +529,7 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, _delta: number) { }
+  update(_time: number, _delta: number) {}
 
   /**
    * Handles visual and textual feedback after an item interaction.
