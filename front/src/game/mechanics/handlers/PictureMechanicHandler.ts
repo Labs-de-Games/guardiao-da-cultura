@@ -40,9 +40,9 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
       }
     });
 
+    const filledSlots = placeholder.state?.filledSlots as (string | null)[] | undefined;
     const filledCount =
-      placeholder.state?.filledSlots?.filter((s: string | null) => s !== null)
-        .length || 0;
+      filledSlots?.filter((s: string | null) => s !== null).length || 0;
     if (filledCount < expectedIds.length) allCorrect = false;
 
     this.emitFeedback(gameScene, placeholder, allCorrect, anyCorrect);
@@ -70,10 +70,13 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     gameScene.player.removeFromInventory(itemId);
 
     if (!placeholder.state) placeholder.state = {};
-    if (!placeholder.state.filledSlots)
+    
+    if (!placeholder.state.filledSlots) {
       placeholder.state.filledSlots = [null, null, null, null];
+    }
 
-    placeholder.state.filledSlots[index] = itemId;
+    const filledSlots = placeholder.state.filledSlots as (string | null)[];
+    filledSlots[index] = itemId;
     console.log(
       `[PictureMechanic] ✅ Sucesso no slot ${index}. Salvo permanentemente.`,
     );
