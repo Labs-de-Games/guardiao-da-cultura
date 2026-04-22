@@ -21,6 +21,6 @@ export interface BaseMechanicHandler {
   handleInteraction(
     scene: Phaser.Scene,
     placeholder: PlaceholderInstance,
-    data: any,
+    data: Record<string, unknown>,
   ): boolean;
 }

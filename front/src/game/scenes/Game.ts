@@ -124,7 +124,7 @@ export class Game extends Scene {
         mapData.objectLayers.Placeholder;
 
       if (placeholderLayer?.objects) {
-        placeholderLayer.objects.forEach((obj: any) => {
+        placeholderLayer.objects.forEach((obj: Record<string, unknown>) => {
           // Extract "sculptures" or "sculpture" properties from Tiled
           const isSculpturePlaceholder =
             TiledUtils.getBoolProperty(obj, "sculptures") ||

@@ -27,7 +27,7 @@ export class MechanicsManager {
   public handleInteraction(
     scene: Phaser.Scene,
     placeholder: PlaceholderInstance,
-    data: any,
+    data: Record<string, unknown>,
   ): boolean {
     const handler = this.handlers.get(placeholder.type);
 
