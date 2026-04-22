@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { InteractableType } from "../../types/InteractableTypes";
 
 export interface InteractableConfig {
   x: number;
@@ -7,17 +8,20 @@ export interface InteractableConfig {
   frame?: string | number;
   id?: string;
   name?: string;
+  type?: InteractableType;
 }
 
 export abstract class InteractableItem extends Phaser.GameObjects.Sprite {
   public itemId: string;
   public itemName: string;
+  public interactableType: InteractableType;
 
   constructor(scene: Phaser.Scene, config: InteractableConfig) {
     super(scene, config.x, config.y, config.texture, config.frame);
 
     this.itemId = config.id || Phaser.Math.RND.uuid();
     this.itemName = config.name || "Interactable";
+    this.interactableType = config.type || InteractableType.SCULPTURE;
 
     scene.add.existing(this);
 

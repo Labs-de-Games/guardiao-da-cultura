@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type { IPlayerState } from "../types/EntityTypes";
+import { InteractableType } from "../types/InteractableTypes";
 import type { CarryableItem } from "./interactables/CarryableItem";
 import type { DraggableItem } from "./interactables/DraggableItem";
 import {
@@ -14,8 +15,7 @@ import {
 
 export class Player
   extends Phaser.Physics.Arcade.Sprite
-  implements IPlayerState
-{
+  implements IPlayerState {
   keys: PlayerKeys;
   isDead: boolean = false;
   isHit: boolean = false;
@@ -26,6 +26,7 @@ export class Player
   // Grab mechanics
   private draggableRegistry: DraggableItem[] = [];
   private carryableRegistry: CarryableItem[] = [];
+  private inventory: CarryableItem[] = []; // Simple inventory for chunks/items
   private grabbedItem: DraggableItem | null = null;
   private carriedItem: CarryableItem | null = null;
   public isGrabbing: boolean = false;
@@ -320,11 +321,11 @@ export class Player
 
     // 2.5 CARRY LOGIC
     if (spacePress && body?.blocked.down) {
-      this.tryToggleCarry();
+      const handled = this.tryToggleCarry();
+      if (!handled && !this.isCarrying) {
+        this.emit("interact-placeholder");
+      }
     }
-    // } else if (!spacePress && this.isCarrying) {
-    // 	this.releaseCarry()
-    // }
 
     if (body) {
       const accel = this.getMovementAcceleration();
@@ -434,6 +435,9 @@ export class Player
     let minDist: number = GRAB_DIST;
 
     for (const item of this.draggableRegistry) {
+      // Skip items that are already placed/locked
+      if (!item.input?.enabled) continue;
+
       const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
       if (dist < minDist) {
         // Check if facing the item
@@ -454,13 +458,13 @@ export class Player
     }
   }
 
-  private tryToggleCarry() {
+  private tryToggleCarry(): boolean {
     if (this.isCarrying && this.carriedItem) {
       this.carriedItem.setCarried(false);
       this.scene.events.emit("item-dropped", this.carriedItem);
       this.carriedItem = null;
       this.isCarrying = false;
-      return;
+      return true;
     }
 
     const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
@@ -468,6 +472,9 @@ export class Player
     let minDist: number = GRAB_DIST;
 
     for (const item of this.carryableRegistry) {
+      // Skip items that are already placed/locked
+      if (!item.input?.enabled) continue;
+
       const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
       if (dist < minDist) {
         minDist = dist;
@@ -476,10 +483,29 @@ export class Player
     }
 
     if (closestItem) {
+      // Logic for Chunks: They go to inventory instead of hands
+      if (closestItem.interactableType === InteractableType.PICTURE_CHUNK) {
+        this.inventory.push(closestItem);
+        closestItem.setCarried(true); // Visually "collected"
+        closestItem.setVisible(false); // Hide it from map
+        console.log(`[Player] Chunk ${closestItem.itemId} added to inventory.`);
+        return true;
+      }
+
       this.isCarrying = true;
       this.carriedItem = closestItem;
       this.carriedItem.setCarried(true);
+      return true;
     }
+    return false;
+  }
+
+  public getInventory(): CarryableItem[] {
+    return this.inventory;
+  }
+
+  public removeFromInventory(itemId: string) {
+    this.inventory = this.inventory.filter((item) => item.itemId !== itemId);
   }
 
   private releaseGrab() {
