@@ -2,11 +2,14 @@ import * as Phaser from "phaser";
 import type { CarryableItem } from "../objects/interactables/CarryableItem";
 import type { DraggableItem } from "../objects/interactables/DraggableItem";
 
-interface ExtendedRectangle extends Phaser.Geom.Rectangle {
-  id: string;
-  acceptedType?: string;
-  sculptureId?: string;
-  paintingId?: string;
+import type { InteractableType } from "../types/InteractableTypes";
+
+export interface PlaceholderInstance {
+  area: Phaser.Geom.Rectangle;
+  instanceId: string;
+  type: InteractableType;
+  id: string | string[]; // Can be a single ID or a list of accepted fragment IDs
+  state?: Record<string, unknown>; // Estado genérico para qualquer mecânica (ex: filledSlots, currentRotation)
   hintSprite?: Phaser.GameObjects.Sprite;
 }
 
@@ -15,14 +18,14 @@ export interface PlaceholderConfig {
   y: number;
   width: number;
   height: number;
-  id: string;
-  acceptedType?: string;
-  sculptureId?: string;
-  paintingId?: string;
+  instanceId: string;
+  type: InteractableType;
+  id: string | string[];
+  state?: Record<string, unknown>;
 }
 
 export class PlaceholderSystem {
-  private placeholders: ExtendedRectangle[] = [];
+  private placeholders: PlaceholderInstance[] = [];
   private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
@@ -40,12 +43,15 @@ export class PlaceholderSystem {
       config.y - (config.height === 0 ? finalHeight / 2 : 0),
       finalWidth,
       finalHeight,
-    ) as ExtendedRectangle;
+    );
 
-    rect.id = config.id;
-    rect.acceptedType = config.acceptedType;
-    rect.sculptureId = config.sculptureId;
-    rect.paintingId = config.paintingId;
+    const instance: PlaceholderInstance = {
+      area: rect,
+      instanceId: config.instanceId,
+      type: config.type,
+      id: config.id,
+      state: config.state || {},
+    };
 
     // Create Hint (Sparkle)
     const sparkle = this.scene.add.sprite(
@@ -62,38 +68,41 @@ export class PlaceholderSystem {
       sparkle.play("sparkle_hint_anim", true);
     }
 
-    rect.hintSprite = sparkle;
-    this.placeholders.push(rect);
+    instance.hintSprite = sparkle;
+    this.placeholders.push(instance);
   }
 
   public isOverPlaceholder(
     x: number,
     y: number,
     item: DraggableItem | CarryableItem,
-  ): ExtendedRectangle | null {
+  ): PlaceholderInstance | null {
     const SNAP_THRESHOLD = 150; // Pixels distance to consider a match
 
     for (const p of this.placeholders) {
       // 1. Check if inside the rectangle area
-      const isInside = Phaser.Geom.Rectangle.Contains(p, x, y);
+      const isInside = Phaser.Geom.Rectangle.Contains(p.area, x, y);
 
       // 2. Check distance to center (better for point-based placeholders)
-      const dist = Phaser.Math.Distance.Between(x, y, p.centerX, p.centerY);
+      const dist = Phaser.Math.Distance.Between(
+        x,
+        y,
+        p.area.centerX,
+        p.area.centerY,
+      );
       const isCloseEnough = dist < SNAP_THRESHOLD;
 
       if (isInside || isCloseEnough) {
-        if (
-          p.acceptedType &&
-          p.acceptedType !== "sculpture" &&
-          p.acceptedType !== "painting"
-        )
-          continue;
-        if (
-          (p.sculptureId && item.itemId !== p.sculptureId) ||
-          (p.paintingId && item.itemId !== p.paintingId)
-        ) {
+        // Validation logic using type and id
+        if (item.interactableType !== p.type) continue;
+
+        const isMatch = Array.isArray(p.id)
+          ? p.id.includes(item.itemId)
+          : item.itemId === p.id;
+
+        if (!isMatch) {
           console.log(
-            `[PlaceholderSystem] ID mismatch at ${p.id}: expected "${p.sculptureId}", got "${item.itemId}"`,
+            `[PlaceholderSystem] ID mismatch at ${p.instanceId}: expected ${Array.isArray(p.id) ? p.id.join(", ") : p.id}, got "${item.itemId}"`,
           );
           continue;
         }
@@ -103,7 +112,7 @@ export class PlaceholderSystem {
     return null;
   }
 
-  public handleDrop(item: DraggableItem): {
+  public handleDrop(item: DraggableItem | CarryableItem): {
     snapped: boolean;
     mismatch?: boolean;
   } {
@@ -111,8 +120,11 @@ export class PlaceholderSystem {
 
     if (placeholder) {
       // Snap item to center
-      item.x = placeholder.centerX;
-      item.y = placeholder.centerY;
+      item.x = placeholder.area.centerX;
+      item.y = placeholder.area.centerY;
+
+      // Lock the item: it cannot be moved or interacted with anymore
+      item.disableInteractive();
 
       // Stop and remove hint sparkle
       if (placeholder.hintSprite) {
@@ -133,8 +145,8 @@ export class PlaceholderSystem {
       const dist = Phaser.Math.Distance.Between(
         item.x,
         item.y,
-        p.centerX,
-        p.centerY,
+        p.area.centerX,
+        p.area.centerY,
       );
       if (dist < 150) {
         nearbyMismatch = true;
@@ -153,5 +165,55 @@ export class PlaceholderSystem {
       `[PlaceholderSystem] No matching placeholder found at (${Math.round(item.x)}, ${Math.round(item.y)}) for item ${item.itemId}`,
     );
     return { snapped: false };
+  }
+
+  /**
+   * Finds a placeholder near the given coordinates, filtered by type.
+   * Useful for active interactions (e.g. opening a selection UI).
+   */
+  public getNearbyPlaceholder(
+    x: number,
+    y: number,
+    maxDistance: number = 100,
+    type?: InteractableType,
+  ): PlaceholderInstance | null {
+    let closest: PlaceholderInstance | null = null;
+    let minDist = maxDistance;
+
+    for (const p of this.placeholders) {
+      if (type && p.type !== type) continue;
+
+      const dist = Phaser.Math.Distance.Between(
+        x,
+        y,
+        p.area.centerX,
+        p.area.centerY,
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        closest = p;
+      }
+    }
+    return closest;
+  }
+
+  public getPlaceholderByInstanceId(
+    instanceId: string,
+  ): PlaceholderInstance | null {
+    return this.placeholders.find((p) => p.instanceId === instanceId) || null;
+  }
+
+  public lockPlaceholder(instanceId: string) {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (p) {
+      if (p.hintSprite) {
+        p.hintSprite.destroy();
+        p.hintSprite = undefined;
+      }
+      // Remove from active list or mark as filled
+      this.placeholders = this.placeholders.filter(
+        (item) => item.instanceId !== instanceId,
+      );
+    }
   }
 }

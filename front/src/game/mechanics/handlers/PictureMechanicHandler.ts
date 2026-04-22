@@ -11,7 +11,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
   public handleInteraction(
     scene: Phaser.Scene,
     placeholder: PlaceholderInstance,
-    data: any,
+    data: Record<string, unknown>,
   ): boolean {
     const gameScene = scene as Game;
     const placedItems = data.placedItems as (string | null)[];
@@ -65,10 +65,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
   ) {
     const { posX, posY } = this.calculateSpritePosition(placeholder, index);
 
-    const sprite = gameScene.add
-      .sprite(posX, posY, itemId)
-      .setScale(1)
-      .setDepth(1);
+    gameScene.add.sprite(posX, posY, itemId).setScale(1).setDepth(1);
 
     gameScene.player.removeFromInventory(itemId);
 

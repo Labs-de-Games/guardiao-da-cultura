@@ -33,7 +33,6 @@ export class Player
   public isGrabbing: boolean = false;
   public isCarrying: boolean = false;
   private grabOffset: number = 0;
-  private carryOffset: number = 60;
 
   // Preload player assets
   static preload(scene: Phaser.Scene) {
@@ -515,14 +514,6 @@ export class Player
     }
     this.isGrabbing = false;
     this.grabbedItem = null;
-  }
-
-  private releaseCarry() {
-    if (this.carriedItem) {
-      this.carriedItem.setCarried(false);
-    }
-    this.isCarrying = false;
-    this.carriedItem = null;
   }
 
   /**
