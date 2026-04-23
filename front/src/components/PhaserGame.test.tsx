@@ -1,6 +1,10 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { render } from "@testing-library/react";
 import PhaserGame from "./PhaserGame";
+
+mock.module("../game/main", () => ({
+  default: () => ({ destroy: () => {} }),
+}));
 
 describe("PhaserGame", () => {
   it("renders without crashing", () => {
