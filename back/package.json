@@ -13,8 +13,11 @@
     "@nestjs/common": "latest",
     "@nestjs/core": "latest",
     "@nestjs/platform-express": "latest",
+    "@nestjs/typeorm": "^11.0.1",
+    "pg": "^8.20.0",
     "reflect-metadata": "latest",
     "rxjs": "latest",
+    "typeorm": "^0.3.28",
     "zod": "latest"
   },
   "devDependencies": {

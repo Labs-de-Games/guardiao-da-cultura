@@ -13,6 +13,9 @@ dev-back:
 	bun run dev --filter=back
 
 # --- DOCKER RUN ---
+dev:
+	docker compose -f compose.development.yaml up --build -d
+
 docker-all:
 	docker compose -f compose.base.yaml -f compose.development.yaml up --build
 
@@ -31,23 +34,23 @@ test:
 
 # --- DOCKER BUILD (Only builds images, doesn't run) ---
 build-front:
-	docker compose -f compose.base.yaml -f compose.development.yaml build front
+	docker compose -f compose.development.yaml build front
 
 build-back:
-	docker compose -f compose.base.yaml -f compose.development.yaml build back
+	docker compose -f compose.development.yaml build back
 
 build-prod:
-	docker compose -f compose.base.yaml -f compose.production.yaml build
+	docker compose -f compose.production.yaml build
 
 # --- CLEANUP ---
 down:
-	docker compose -f compose.base.yaml -f compose.development.yaml down
+	docker compose -f compose.development.yaml down
 
 clean:
-	docker compose -f compose.base.yaml -f compose.development.yaml down -v
+	docker compose -f compose.development.yaml down -v
 
 fclean:
-	docker compose -f compose.base.yaml -f compose.development.yaml down -v --rmi local
+	docker compose -f compose.development.yaml down -v --rmi local
 	docker system prune -f
 
 help:
@@ -59,6 +62,7 @@ help:
 	@echo "  make dev-back    - Run ONLY back locally"
 	@echo ""
 	@echo "--- Docker Run ---"
+	@echo "  make dev         - Start all services in detached mode via dev compose"
 	@echo "  make docker-all  - Start all services via Docker Compose"
 	@echo "  make docker-front- Start ONLY front via Docker Compose"
 	@echo "  make docker-back - Start ONLY back via Docker Compose"

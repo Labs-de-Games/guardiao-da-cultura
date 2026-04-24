@@ -1,24 +1,23 @@
 import "reflect-metadata";
-
 import { NestFactory } from "@nestjs/core";
-
 import { AppModule } from "./app.module";
-import { env } from "./env";
+import { ConfigService } from "./config/config.service";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
+
   app.setGlobalPrefix("api/v1");
 
-  // Enable CORS for frontend communication
   app.enableCors({
     origin:
-      process.env.NODE_ENV === "production"
+      config.nodeEnv === "production"
         ? ["https://yourdomain.com"]
         : ["http://localhost:3000", "http://localhost"],
     credentials: true,
   });
 
-  await app.listen(env.PORT);
+  await app.listen(config.port);
 }
 
 bootstrap();
