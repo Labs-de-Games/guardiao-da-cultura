@@ -151,9 +151,16 @@ Merges to `master` automatically trigger deployment:
 
 ### Git Hooks
 
-Pre-commit hooks are configured to ensure code quality:
+Git hooks are configured to ensure code quality at different stages:
 
-- **pre-commit**: Runs Biome check on staged files
+**Pre-commit:**
+- **typecheck**: Validates TypeScript types across the project
+- **lint-staged**: Runs Biome only on staged files (faster than full-repo lint)
+
+**Pre-push:**
+- **test**: Runs the test suite before pushing to remote
+
+**Commit message:**
 - **commit-msg**: Validates commit message format using commitlint
 
 To bypass hooks in emergencies (not recommended):
@@ -176,7 +183,7 @@ make lint
 bun run lint --write
 ```
 
-Pre-commit hooks are configured to run Biome automatically.
+Pre-commit hooks use lint-staged to run Biome only on staged files.
 
 ### Testing
 
