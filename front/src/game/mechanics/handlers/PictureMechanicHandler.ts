@@ -21,22 +21,37 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     let anyCorrect = false;
     let allCorrect = true;
 
+    // Get a copy of the inventory to track what's being "consumed" during this processing
+    const availableInventory = [...gameScene.player.getInventory()];
+
     placedItems.forEach((placedId, index) => {
       const cleanPlaced = String(placedId || "").trim();
+      if (!cleanPlaced) return;
+
+      // Check if the item is actually in the inventory
+      const invIndex = availableInventory.findIndex(
+        (item) => item.itemId === cleanPlaced,
+      );
+
+      if (invIndex === -1) {
+        console.warn(
+          `[PictureMechanic] ⚠️ Item "${cleanPlaced}" não encontrado no inventário ou já utilizado.`,
+        );
+        return;
+      }
+
       const cleanExpected = String(expectedIds[index] || "").trim();
 
-      if (!cleanExpected) return;
-
       if (cleanPlaced === cleanExpected) {
+        // "Consume" the item from the local list so it can't be used again in this loop
+        availableInventory.splice(invIndex, 1);
         this.placeCorrectChunk(gameScene, placeholder, cleanPlaced, index);
         anyCorrect = true;
       } else {
         allCorrect = false;
-        if (cleanPlaced) {
-          console.log(
-            `[PictureMechanic] ❌ Erro no slot ${index}: Esperado "${cleanExpected}", recebido "${cleanPlaced}"`,
-          );
-        }
+        console.log(
+          `[PictureMechanic] ❌ Erro no slot ${index}: Esperado "${cleanExpected}", recebido "${cleanPlaced}"`,
+        );
       }
     });
 

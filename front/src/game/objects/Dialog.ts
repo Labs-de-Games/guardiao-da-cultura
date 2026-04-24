@@ -89,4 +89,14 @@ export const SYSTEM_DIALOGUES = {
       "Procure o local correto para a exposição.",
     ],
   },
+  PAINTING: {
+    SUCCESS: [
+      "Excelente! A pintura foi posicionada corretamente.",
+      "A exposição está ficando cada vez mais bonita!",
+    ],
+    ERROR: [
+      "Ops! Esta pintura não parece pertencer a este local.",
+      "Procure o local correto para a exposição.",
+    ],
+  },
 };

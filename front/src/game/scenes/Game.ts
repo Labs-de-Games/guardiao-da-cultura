@@ -23,6 +23,7 @@ import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import type { INpcEntity } from "../types/EntityTypes";
+import type { InteractionSubmittedData } from "../types/GameDataTypes";
 import { InteractableType } from "../types/InteractableTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 
@@ -37,6 +38,8 @@ export class Game extends Scene {
   private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
   private isInspectTutorialOpen: boolean = false;
+  private isChunkSelectorOpen: boolean = false;
+  private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
   public placeholderSystem!: PlaceholderSystem;
   public mechanicsManager!: MechanicsManager;
@@ -133,7 +136,7 @@ export class Game extends Scene {
         mapData.objectLayers.Placeholder;
 
       if (placeholderLayer?.objects) {
-        placeholderLayer.objects.forEach((obj: any) => {
+        placeholderLayer.objects.forEach((obj) => {
           const typeStr = TiledUtils.getProperty(obj, "type");
           const rawProp = TiledUtils.getProperty(obj, "id");
           let targetId: string | string[] = "";
@@ -152,7 +155,11 @@ export class Game extends Scene {
             // Se for uma string única (possivelmente com vírgulas)
             const targetIdRaw =
               rawProp && typeof rawProp === "object"
-                ? String((rawProp as any).value || (rawProp as any).id || "")
+                ? String(
+                  (rawProp as { value?: string; id?: string }).value ||
+                  (rawProp as { value?: string; id?: string }).id ||
+                  "",
+                )
                 : String(rawProp || "");
 
             targetId = targetIdRaw.includes(",")
@@ -233,6 +240,7 @@ export class Game extends Scene {
                   item.interactableType === InteractableType.PICTURE_CHUNK,
               );
 
+            this.isChunkSelectorOpen = true;
             this.events.emit(GameEvents.OPEN_INTERACTION_UI_REQUEST, {
               placeholderId: nearby.id,
               instanceId: nearby.instanceId,
@@ -247,14 +255,19 @@ export class Game extends Scene {
         });
       }
 
-      this.events.on(GameEvents.INTERACTION_SUBMITTED, (data: any) => {
-        const p = this.placeholderSystem.getPlaceholderByInstanceId(
-          data.instanceId,
-        );
-        if (p) {
-          this.mechanicsManager.handleInteraction(this, p, data);
-        }
-      });
+      this.events.on(
+        GameEvents.INTERACTION_SUBMITTED,
+        (data: InteractionSubmittedData) => {
+          this.isChunkSelectorOpen = false;
+          const p = this.placeholderSystem.getPlaceholderByInstanceId(
+            data.instanceId,
+          );
+          if (p) {
+            this.mechanicsManager.handleInteraction(this, p, data);
+          }
+          this.checkDialogState();
+        },
+      );
 
       this.events.on("item-dropped", this.handleItemDropped, this);
 
@@ -274,13 +287,19 @@ export class Game extends Scene {
 
   private setupEvents() {
     this.events.on(GameEvents.DIALOGUE_STARTED, () => {
-      if (this.player) this.player.isInDialogue = true;
+      this.isDialogueOpen = true;
+      if (this.player) {
+        this.player.isInDialogue = true;
+        this.player.setVelocity(0, 0);
+      }
       this.effects.setZoom(1.2, 400);
     });
 
     this.events.on(GameEvents.DIALOGUE_ENDED, () => {
+      this.isChunkSelectorOpen = false;
+      this.isDialogueOpen = false;
       this.time.delayedCall(200, () => {
-        if (this.player) this.player.isInDialogue = false;
+        this.checkDialogState();
 
         if (this.npcs) {
           for (const npc of this.npcs) {
@@ -506,7 +525,9 @@ export class Game extends Scene {
     if (
       !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
-      !this.isInspectTutorialOpen
+      !this.isInspectTutorialOpen &&
+      !this.isChunkSelectorOpen &&
+      !this.isDialogueOpen
     ) {
       if (this.player) this.player.isInDialogue = false;
     }
@@ -529,7 +550,7 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, _delta: number) {}
+  update(_time: number, _delta: number) { }
 
   /**
    * Handles visual and textual feedback after an item interaction.
@@ -537,15 +558,20 @@ export class Game extends Scene {
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
+    const typeKey =
+      item.interactableType === InteractableType.PAINTING
+        ? "PAINTING"
+        : "SCULPTURE";
+
     if (result.snapped) {
       this.events.emit(
         GameEvents.SHOW_DIALOGUE_REQUEST,
-        SYSTEM_DIALOGUES.SCULPTURE.SUCCESS,
+        SYSTEM_DIALOGUES[typeKey].SUCCESS,
       );
     } else if (result.mismatch) {
       this.events.emit(
         GameEvents.SHOW_DIALOGUE_REQUEST,
-        SYSTEM_DIALOGUES.SCULPTURE.ERROR,
+        SYSTEM_DIALOGUES[typeKey].ERROR,
       );
     }
   }

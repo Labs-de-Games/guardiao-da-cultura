@@ -430,6 +430,7 @@ export class Player
   }
 
   private tryGrab() {
+    if (this.isCarrying) return;
     const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
     let closestItem: DraggableItem | null = null;
     let minDist: number = GRAB_DIST;
@@ -467,13 +468,15 @@ export class Player
       return true;
     }
 
+    if (this.isGrabbing) return false;
+
     const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
     let closestItem: CarryableItem | null = null;
     let minDist: number = GRAB_DIST;
 
     for (const item of this.carryableRegistry) {
-      // Skip items that are already placed/locked
-      if (!item.input?.enabled) continue;
+      // Skip items that are already placed/locked or already carried
+      if (!item.input?.enabled || item.isCarried) continue;
 
       const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
       if (dist < minDist) {

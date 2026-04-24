@@ -13,6 +13,7 @@ import { QuizPanel } from "../objects/ui/QuizPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import { TutorialOverlay } from "../objects/ui/TutorialOverlay";
 import type {
+  InteractionUIData,
   MissionDef,
   MissionStepDef,
   QuizQuestion,
@@ -162,12 +163,7 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
-      (data: {
-        instanceId: string;
-        type: string;
-        availableItems: { id: string; name: string }[];
-        state?: Record<string, any>;
-      }) => {
+      (data: InteractionUIData) => {
         if (this.chunkSelector) {
           this.chunkSelector.show(
             data.instanceId,
