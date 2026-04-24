@@ -18,6 +18,7 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   private selectedInventoryIndex: number = 0;
   private selectedGridIndex: number = 0;
   private pickedItemIndex: number | null = null;
+  private usedInventoryIndices: (number | null)[] = [null, null, null, null];
   private lockedSlots: boolean[] = [false, false, false, false];
 
   private currentInstanceId: string = "";
@@ -51,7 +52,7 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
 
   private createTitle() {
     this.title = this.scene.add
-      .text(0, -210, "RESTAURAÇÃO DE QUADRO", {
+      .text(0, -210, "RESTAURAÇÃO DE OBRA", {
         fontSize: "32px",
         color: LayoutConfig.COLORS.GOLD,
         fontStyle: "bold",
@@ -82,6 +83,7 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
     this.slots = [...filledSlots];
     this.lockedSlots = filledSlots.map((s) => s !== null);
     this.pickedItemIndex = null;
+    this.usedInventoryIndices = [null, null, null, null];
     this.cursorMode = "inventory";
     this.selectedInventoryIndex = 0;
 
@@ -120,13 +122,27 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
         this.cursorMode === "inventory" &&
         this.selectedInventoryIndex === index;
       const isPicked = this.pickedItemIndex === index;
+      const isAlreadyUsed = this.usedInventoryIndices.includes(index);
 
-      const bgColor = isSelected ? 0x665500 : isPicked ? 0x444444 : 0x222222;
+      const bgColor = isSelected
+        ? 0x665500
+        : isPicked
+          ? 0x444444
+          : isAlreadyUsed
+            ? 0x111111
+            : 0x222222;
+
       const box = this.scene.add
         .rectangle(0, index * 60, 220, 50, bgColor)
-        .setStrokeStyle(2, isSelected ? 0xffd700 : 0x555555);
+        .setStrokeStyle(
+          2,
+          isSelected ? 0xffd700 : isAlreadyUsed ? 0x333333 : 0x555555,
+        );
 
       const img = this.scene.add.image(0, index * 60, item.id).setScale(0.3);
+      if (isAlreadyUsed && !isSelected) {
+        img.setAlpha(0.3);
+      }
 
       this.inventoryContainer.add([box, img]);
     });
@@ -287,6 +303,11 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
 
   private handleAction() {
     if (this.cursorMode === "inventory") {
+      const isAlreadyUsed = this.usedInventoryIndices.includes(
+        this.selectedInventoryIndex,
+      );
+      if (isAlreadyUsed) return;
+
       this.pickedItemIndex = this.selectedInventoryIndex;
       this.cursorMode = "grid";
     } else if (this.cursorMode === "grid") {
@@ -296,10 +317,13 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
       if (this.pickedItemIndex !== null) {
         const item = this.availableItems[this.pickedItemIndex];
         this.slots[this.selectedGridIndex] = item.id;
+        this.usedInventoryIndices[this.selectedGridIndex] =
+          this.pickedItemIndex;
         this.pickedItemIndex = null;
         this.cursorMode = "inventory";
       } else {
         this.slots[this.selectedGridIndex] = null;
+        this.usedInventoryIndices[this.selectedGridIndex] = null;
       }
     } else if (this.cursorMode === "confirm") {
       this.confirmSelection();
