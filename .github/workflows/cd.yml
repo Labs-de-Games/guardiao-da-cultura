@@ -17,7 +17,14 @@ jobs:
           COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
         run: |
           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
-            echo "COOLIFY_WEBHOOK_URL is not set"
+            echo "::error::COOLIFY_WEBHOOK_URL is not configured."
+            echo "To enable deployments:"
+            echo "1. Open your Coolify dashboard and go to the project settings."
+            echo "2. Copy the Webhook URL for automatic deployments."
+            echo "3. In this GitHub repository, go to Settings > Secrets and variables > Actions."
+            echo "4. Create a new Repository Secret named COOLIFY_WEBHOOK_URL with the copied URL."
+            echo "5. Push to main again to trigger the deployment."
             exit 1
           fi
+          echo "Triggering Coolify deployment..."
           curl -X POST "$COOLIFY_WEBHOOK_URL"

@@ -1,3 +1,12 @@
+# Required environment variables for this stack:
+#   DATABASE_URL  - PostgreSQL connection string
+#   JWT_SECRET    - Secret key for JWT signing
+#   POSTGRES_USER     - PostgreSQL username
+#   POSTGRES_PASSWORD - PostgreSQL password
+#   POSTGRES_DB       - PostgreSQL database name
+#
+# You can set them in a .env file in the project root.
+
 services:
   front:
     extends:
@@ -65,6 +74,19 @@ services:
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - frontend
       - backend
