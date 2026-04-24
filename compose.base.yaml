@@ -8,6 +8,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      back:
+        condition: service_healthy
 
   back:
     build:
@@ -21,6 +24,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:16-alpine
@@ -34,7 +40,24 @@ services:
       timeout: 5s
       retries: 5
 
+  nginx:
+    image: nginx:alpine
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      front:
+        condition: service_healthy
+      back:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   front_node_modules:
   back_node_modules:
+
+networks:
+  frontend:
+  backend:
