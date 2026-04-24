@@ -5,8 +5,7 @@ RUN bun install --frozen-lockfile
 
 FROM oven/bun:1-alpine AS build
 WORKDIR /app
-COPY package.json ./
-RUN bun install
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
 
