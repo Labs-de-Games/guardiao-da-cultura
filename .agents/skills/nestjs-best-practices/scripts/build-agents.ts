@@ -12,10 +12,10 @@
  * 4. Generates a consolidated AGENTS.md file
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import * as fs from "fs";
+import * as path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -97,7 +97,7 @@ function parseFrontmatter(content: string): {
         // Might be start of array
         inArray = true;
       } else {
-        (frontmatter as Record<string, unknown>)[currentKey] = value;
+        (frontmatter as any)[currentKey] = value;
       }
     } else if (inArray && line.trim().startsWith("-")) {
       arrayItems.push(line.trim().replace(/^-\s*/, ""));
@@ -126,7 +126,7 @@ function getCategoryForFile(
   return null;
 }
 
-function readMetadata(): Record<string, unknown> {
+function readMetadata(): any {
   const metadataPath = path.join(__dirname, "..", "metadata.json");
   return JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
 }
@@ -190,10 +190,7 @@ function generateTableOfContents(rulesByCategory: Map<string, Rule[]>): string {
   return toc;
 }
 
-function generateAgentsMd(
-  rules: Rule[],
-  metadata: Record<string, unknown>,
-): string {
+function generateAgentsMd(rules: Rule[], metadata: any): string {
   // Group rules by category
   const rulesByCategory = new Map<string, Rule[]>();
 
@@ -201,11 +198,11 @@ function generateAgentsMd(
     if (!rulesByCategory.has(rule.category)) {
       rulesByCategory.set(rule.category, []);
     }
-    rulesByCategory.get(rule.category)?.push(rule);
+    rulesByCategory.get(rule.category)!.push(rule);
   }
 
   // Sort rules within each category alphabetically
-  for (const [_category, categoryRules] of rulesByCategory) {
+  for (const [category, categoryRules] of rulesByCategory) {
     categoryRules.sort((a, b) => a.filename.localeCompare(b.filename));
   }
 
