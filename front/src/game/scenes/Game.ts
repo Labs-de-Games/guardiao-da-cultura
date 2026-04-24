@@ -156,10 +156,10 @@ export class Game extends Scene {
             const targetIdRaw =
               rawProp && typeof rawProp === "object"
                 ? String(
-                  (rawProp as { value?: string; id?: string }).value ||
-                  (rawProp as { value?: string; id?: string }).id ||
-                  "",
-                )
+                    (rawProp as { value?: string; id?: string }).value ||
+                      (rawProp as { value?: string; id?: string }).id ||
+                      "",
+                  )
                 : String(rawProp || "");
 
             targetId = targetIdRaw.includes(",")
@@ -550,7 +550,7 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, _delta: number) { }
+  update(_time: number, _delta: number) {}
 
   /**
    * Handles visual and textual feedback after an item interaction.
