@@ -25,4 +25,8 @@ export const GameEvents = {
   MISSION_PROGRESS_CHANGED: "mission-progress-changed",
   MISSION_STATUS_CHANGED: "mission-status-changed",
   INFO_COLLECTED: "info-collected",
+
+  // Interações Genéricas (Substituindo Chunks)
+  OPEN_INTERACTION_UI_REQUEST: "open-interaction-ui-request",
+  INTERACTION_SUBMITTED: "interaction-submitted",
 } as const;

@@ -5,16 +5,27 @@ import { SceneNames } from "../constants/SceneNames";
 import { LEVEL_ASSETS, PHASE_SETTINGS } from "../data/LevelConfig";
 import { LevelQuizData } from "../data/LevelQuizData";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHandler";
+import { MechanicsManager } from "../mechanics/MechanicsManager";
+import { SYSTEM_DIALOGUES } from "../objects/Dialog";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
+import { CarryableItem } from "../objects/interactables/CarryableItem";
+import { DraggableItem } from "../objects/interactables/DraggableItem";
 import { LevelManager } from "../objects/LevelManager";
-import { type MapData, MapManager } from "../objects/MapManager";
+import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { NPC_ANIMS } from "../objects/NpcConfig";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
+import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
+import { PlaceholderSystem } from "../systems/PlaceholderSystem";
+import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import type { INpcEntity } from "../types/EntityTypes";
+import type { InteractionSubmittedData } from "../types/GameDataTypes";
+import { InteractableType } from "../types/InteractableTypes";
+import { TiledUtils } from "../utils/TiledUtils";
 
 export class Game extends Scene {
   player!: Player;
@@ -27,6 +38,13 @@ export class Game extends Scene {
   private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
   private isInspectTutorialOpen: boolean = false;
+  private isChunkSelectorOpen: boolean = false;
+  private isDialogueOpen: boolean = false;
+  private objectLayerProcessor!: ObjectLayerProcessor;
+  public placeholderSystem!: PlaceholderSystem;
+  public mechanicsManager!: MechanicsManager;
+  private draggableItems: DraggableItem[] = [];
+  private carryableItems: CarryableItem[] = [];
 
   constructor() {
     super(SceneNames.GAME);
@@ -46,6 +64,15 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
     LEVEL_ASSETS.OTHERS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+    LEVEL_ASSETS.SCULPTURES.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+    LEVEL_ASSETS.PAINTINGS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+    LEVEL_ASSETS.CHUNKS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -69,7 +96,7 @@ export class Game extends Scene {
     const tileset = map.addTilesetImage("dungeon", LEVEL_ASSETS.MAP.tileset);
 
     if (tileset) {
-      mapData = MapManager.setupMap(this, map, tileset, 6);
+      mapData = TiledMapLoader.loadMap(this, map, tileset, 6);
 
       this.stairsLayer = mapData.tileLayers.Stairs || null;
     }
@@ -93,26 +120,186 @@ export class Game extends Scene {
     });
     this.scene.bringToTop(SceneNames.UI);
 
+    this.objectLayerProcessor = new ObjectLayerProcessor();
+    this.placeholderSystem = new PlaceholderSystem(this);
+    this.mechanicsManager = new MechanicsManager();
+    this.mechanicsManager.registerHandler(new PictureMechanicHandler());
+
     if (mapData) {
       this.createEntities(mapData);
       this.setupCollisions(mapData.colliders);
+
+      // Case-insensitive lookup for PlaceHolder layer
+      const placeholderLayer =
+        mapData.objectLayers.PlaceHolder ||
+        mapData.objectLayers.placeholder ||
+        mapData.objectLayers.Placeholder;
+
+      if (placeholderLayer?.objects) {
+        placeholderLayer.objects.forEach((obj) => {
+          const typeStr = TiledUtils.getProperty(obj, "type");
+          const rawProp = TiledUtils.getProperty(obj, "id");
+          let targetId: string | string[] = "";
+
+          if (Array.isArray(rawProp)) {
+            // Se for uma lista do Tiled (Array de objetos ou strings)
+            targetId = rawProp
+              .map((item) => {
+                if (item && typeof item === "object") {
+                  return String(item.value || item.id || item.name || "");
+                }
+                return String(item);
+              })
+              .filter((s) => s !== "");
+          } else {
+            // Se for uma string única (possivelmente com vírgulas)
+            const targetIdRaw =
+              rawProp && typeof rawProp === "object"
+                ? String(
+                    (rawProp as { value?: string; id?: string }).value ||
+                      (rawProp as { value?: string; id?: string }).id ||
+                      "",
+                  )
+                : String(rawProp || "");
+
+            targetId = targetIdRaw.includes(",")
+              ? targetIdRaw.split(",").map((s: string) => s.trim())
+              : targetIdRaw;
+          }
+
+          console.log(
+            `[DEBUG] ID final processado para placeholder:`,
+            targetId,
+          );
+
+          const scaled = TiledUtils.scaleCoords(
+            obj,
+            LayoutConfig.GAME.MAP_SCALE,
+          );
+
+          this.placeholderSystem.registerPlaceholder({
+            x: scaled.x,
+            y: scaled.y,
+            width: scaled.width,
+            height: scaled.height,
+            instanceId: obj.name || Phaser.Math.RND.uuid(),
+            type: typeStr as InteractableType,
+            id: targetId,
+            state:
+              typeStr === InteractableType.PICTURE
+                ? { filledSlots: [null, null, null, null] }
+                : {},
+          });
+        });
+      }
+
+      const createdItems = this.objectLayerProcessor.process(
+        this,
+        mapData,
+        LayoutConfig.GAME.MAP_SCALE,
+      );
+
+      this.draggableItems = createdItems.filter(
+        (item) => item instanceof DraggableItem,
+      ) as DraggableItem[];
+
+      this.carryableItems = createdItems.filter(
+        (item) => item instanceof CarryableItem,
+      ) as CarryableItem[];
+
+      if (this.player) {
+        this.player.setDraggableRegistry(this.draggableItems);
+        this.player.setCarryableRegistry(this.carryableItems);
+
+        // Picture Chunks interaction
+        this.player.on("interact-placeholder", () => {
+          const nearby = this.placeholderSystem.getNearbyPlaceholder(
+            this.player.x,
+            this.player.y,
+            120,
+            InteractableType.PICTURE,
+          );
+
+          if (nearby) {
+            const filled = nearby.state?.filledSlots || [
+              null,
+              null,
+              null,
+              null,
+            ];
+            console.log(
+              `[MEMÓRIA] Enviando slots preenchidos para a UI:`,
+              filled,
+            );
+
+            // Get only the items in inventory that are of type PICTURE_CHUNK
+            const availableChunks = this.player
+              .getInventory()
+              .filter(
+                (item) =>
+                  item.interactableType === InteractableType.PICTURE_CHUNK,
+              );
+
+            this.isChunkSelectorOpen = true;
+            this.events.emit(GameEvents.OPEN_INTERACTION_UI_REQUEST, {
+              placeholderId: nearby.id,
+              instanceId: nearby.instanceId,
+              type: nearby.type,
+              availableItems: availableChunks.map((item) => ({
+                id: item.itemId,
+                name: item.itemName,
+              })),
+              state: nearby.state || { filledSlots: filled },
+            });
+          }
+        });
+      }
+
+      this.events.on(
+        GameEvents.INTERACTION_SUBMITTED,
+        (data: InteractionSubmittedData) => {
+          this.isChunkSelectorOpen = false;
+          const p = this.placeholderSystem.getPlaceholderByInstanceId(
+            data.instanceId,
+          );
+          if (p) {
+            this.mechanicsManager.handleInteraction(this, p, data);
+          }
+          this.checkDialogState();
+        },
+      );
+
+      this.events.on("item-dropped", this.handleItemDropped, this);
+
+      // Memory cleanup
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.events.off("item-dropped", this.handleItemDropped, this);
+      });
     }
     this.setupCameras();
 
     if (this.isControlsOverlayOpen && this.player) {
       this.player.isInDialogue = true;
     }
+
+    this.setupEvents();
   }
 
   private setupEvents() {
     this.events.on(GameEvents.DIALOGUE_STARTED, () => {
-      if (this.player) this.player.isInDialogue = true;
+      this.isDialogueOpen = true;
+      if (this.player) {
+        this.player.isInDialogue = true;
+        this.player.setVelocity(0, 0);
+      }
       this.effects.setZoom(1.2, 400);
     });
 
     this.events.on(GameEvents.DIALOGUE_ENDED, () => {
+      this.isChunkSelectorOpen = false;
+      this.isDialogueOpen = false;
       this.time.delayedCall(200, () => {
-        if (this.player) this.player.isInDialogue = false;
+        this.checkDialogState();
 
         if (this.npcs) {
           for (const npc of this.npcs) {
@@ -206,6 +393,7 @@ export class Game extends Scene {
     }
 
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
+    this.player.setDepth(20);
     this.player.stairsLayer = this.stairsLayer;
 
     for (const npc of this.npcs) {
@@ -337,7 +525,9 @@ export class Game extends Scene {
     if (
       !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
-      !this.isInspectTutorialOpen
+      !this.isInspectTutorialOpen &&
+      !this.isChunkSelectorOpen &&
+      !this.isDialogueOpen
     ) {
       if (this.player) this.player.isInDialogue = false;
     }
@@ -361,4 +551,30 @@ export class Game extends Scene {
   }
 
   update(_time: number, _delta: number) {}
+
+  /**
+   * Handles visual and textual feedback after an item interaction.
+   */
+  private handleItemDropped(item: DraggableItem) {
+    const result = this.placeholderSystem.handleDrop(item);
+
+    const typeKey =
+      item.interactableType === InteractableType.PAINTING
+        ? "PAINTING"
+        : "SCULPTURE";
+
+    if (result.snapped) {
+      this.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        SYSTEM_DIALOGUES[typeKey].SUCCESS,
+      );
+    } else if (result.mismatch) {
+      this.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        SYSTEM_DIALOGUES[typeKey].ERROR,
+      );
+    }
+  }
+
+  // Removed handleChunkSelected as logic is now handled by MechanicsManager and handlers
 }
