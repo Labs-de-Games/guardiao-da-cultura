@@ -14,7 +14,6 @@ export class QuizPanel extends BasePanel {
 
   private questionText: Phaser.GameObjects.Text;
   private optionTexts: Phaser.GameObjects.Text[] = [];
-  private escHint: Phaser.GameObjects.Text;
 
   private readonly panelWidth = 1100;
   private readonly panelHeight = 750;
@@ -51,7 +50,6 @@ export class QuizPanel extends BasePanel {
     this.bindKey("DOWN", () => this.moveSelection(1));
     this.bindKey("SPACE", () => this.selectOption());
     this.bindKey("ENTER", () => this.selectOption());
-    this.bindKey("ESC", () => this.hide());
   }
 
   public startQuiz(
