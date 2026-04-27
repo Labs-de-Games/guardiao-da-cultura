@@ -1,9 +1,35 @@
-# Dependencies
+# deps
 node_modules
 front/node_modules
 back/node_modules
 .turbo
 front/.next
 back/dist
+coverage
+
+# git / editor / tooling
 .git
+.github
+.husky
+.agents
+.vscode
+.idea
+
+# docs / meta
+*.md
+LICENSE
+compose.*.yaml
+Makefile
+
+# env / logs
+.env
+.env.*
 *.log
+
+# tests
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+
+# nginx
+nginx/
