@@ -4,8 +4,8 @@ services:
       file: compose.base.yaml
       service: front
     build:
-      context: ./front
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./front/Dockerfile
       target: build
     command: sh -c "bun install && bun run dev"
     ports:
