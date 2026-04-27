@@ -1,15 +1,27 @@
 # Run 'make help' to see available commands
 
-.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean help
+PROJECT_NAME = gameplate
+
+.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup help
+
+# --- SETUP & INSTALLATION ---
+install:
+	@echo "Installing dependencies with Bun..."
+	bun install --frozen-lockfile
+
+setup: install
+	@echo "Setup complete. You can now run:"
+	@echo "  make dev-all     - Start local development (Turbo)"
+	@echo "  make docker-all  - Start Docker development"
 
 # --- NATIVE RUN (Bun/Turbo) ---
-dev-all:
+dev-all: install
 	bun run dev
 
-dev-front:
+dev-front: install
 	bun run dev --filter=front
 
-dev-back:
+dev-back: install
 	bun run dev --filter=back
 
 # --- DOCKER RUN ---
@@ -32,7 +44,6 @@ lint:
 test:
 	bun run test
 
-# --- DOCKER BUILD (Only builds images, doesn't run) ---
 build-front:
 	docker compose -f compose.development.yaml build front
 
@@ -42,6 +53,15 @@ build-back:
 build-prod:
 	docker compose -f compose.production.yaml build
 
+# --- SYNC ---
+sync:
+	@echo "Syncing node_modules..."
+	@echo "Removing existing node_modules..."
+	rm -rf node_modules front/node_modules back/node_modules
+	@echo "Reinstalling with Bun..."
+	bun install --frozen-lockfile
+	@echo "Sync complete. node_modules are now aligned with host."
+
 # --- CLEANUP ---
 down:
 	docker compose -f compose.development.yaml down
@@ -49,34 +69,50 @@ down:
 clean:
 	docker compose -f compose.development.yaml down -v
 
-fclean:
-	docker compose -f compose.development.yaml down -v --rmi local
+fclean: clean fclean-images
+	@echo "Full cleanup completed for $(PROJECT_NAME)"
 
+fclean-images:
+	@echo "Removing $(PROJECT_NAME) project images"
+	@docker images --format '{{.Repository}}:{{.Tag}}' | grep "$(PROJECT_NAME)" | xargs -r docker rmi -f 2>/dev/null || true
+	@docker images --format '{{.Repository}}:{{.Tag}}' | grep "<none>" | xargs -r docker rmi -f 2>/dev/null || true
+	@echo "Project images removed."
+
+# --- HELP ---
 help:
 	@echo "Available commands:"
 	@echo ""
-	@echo "--- Native Run (Bun/Turbo) ---"
+	@echo "=== SETUP ==="
+	@echo "  make setup       - Initial setup (install dependencies)"
+	@echo "  make install     - Install dependencies with Bun"
+	@echo "  make sync        - Reinstall node_modules (fix conflicts)"
+	@echo ""
+	@echo "=== Native Development (Bun/Turbo) ==="
 	@echo "  make dev-all     - Run both front and back locally via Turbo"
 	@echo "  make dev-front   - Run ONLY front locally"
 	@echo "  make dev-back    - Run ONLY back locally"
 	@echo ""
-	@echo "--- Docker Run ---"
-	@echo "  make dev         - Start all services in detached mode via dev compose"
+	@echo "=== Docker Development ==="
+	@echo "  make dev         - Start all services in detached mode"
 	@echo "  make docker-all  - Start all services via Docker Compose"
-	@echo "  make docker-front- Start ONLY front via Docker Compose"
-	@echo "  make docker-back - Start ONLY back via Docker Compose"
+	@echo "  make docker-front- Start ONLY front via Docker"
+	@echo "  make docker-back - Start ONLY back via Docker"
 	@echo ""
-	@echo "--- QA & Tests ---"
-	@echo "  make lint        - Run Biome (lint + format) via Turbo"
+	@echo "=== Production Builds ==="
+	@echo "  make build-front - Build front Docker image"
+	@echo "  make build-back  - Build back Docker image"
+	@echo "  make build-prod  - Build production images"
+	@echo ""
+	@echo "=== QA & Tests ==="
+	@echo "  make lint        - Run Biome (lint + format)"
 	@echo "  make test        - Run tests via Turbo"
 	@echo ""
-	@echo "--- Docker Build (No Run) ---"
-	@echo "  make build-front - Build front Docker image (dev)"
-	@echo "  make build-back  - Build back Docker image (dev)"
-	@echo "  make build-prod  - Build production Docker images"
-	@echo ""
-	@echo "--- Cleanup ---"
-	@echo "  make down        - Stop all Docker containers"
+	@echo "=== Cleanup ==="
+	@echo "  make down        - Stop Docker containers"
 	@echo "  make clean       - Stop containers and remove volumes"
-	@echo "  make fclean      - Full cleanup (images and prune)"
-	@echo "  make help        - Show this help message"
+	@echo "  make fclean      - Full cleanup (containers, volumes, project images only)"
+	@echo ""
+	@echo "=== IMPORTANT NOTES ==="
+	@echo "  - Use EITHER 'make dev-all' (local) OR 'make docker-all' (Docker)"
+	@echo "  - If switching between them, run 'make sync' first"
+	@echo "  - 'make build-front/back' are for production images only"
