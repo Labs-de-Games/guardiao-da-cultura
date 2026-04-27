@@ -1,5 +1,8 @@
 import * as Phaser from "phaser";
 import type { IPlayerState } from "../types/EntityTypes";
+import { InteractableType } from "../types/InteractableTypes";
+import type { CarryableItem } from "./interactables/CarryableItem";
+import type { DraggableItem } from "./interactables/DraggableItem";
 import {
   PLAYER_ANIMS,
   PLAYER_ASSETS,
@@ -20,6 +23,16 @@ export class Player
   isInDialogue: boolean = false;
   isInspecting: boolean = false;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+
+  // Grab mechanics
+  private draggableRegistry: DraggableItem[] = [];
+  private carryableRegistry: CarryableItem[] = [];
+  private inventory: CarryableItem[] = []; // Simple inventory for chunks/items
+  private grabbedItem: DraggableItem | null = null;
+  private carriedItem: CarryableItem | null = null;
+  public isGrabbing: boolean = false;
+  public isCarrying: boolean = false;
+  private grabOffset: number = 0;
 
   // Preload player assets
   static preload(scene: Phaser.Scene) {
@@ -134,6 +147,34 @@ export class Player
       frameRate: PLAYER_ANIMS.CLIMB_DOWN.frameRate,
       repeat: PLAYER_ANIMS.CLIMB_DOWN.repeat,
     });
+
+    scene.anims.create({
+      key: PLAYER_ANIMS.GRAB_IDLE.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.GRAB_IDLE.spritesheet,
+        { frames: [...PLAYER_ANIMS.GRAB_IDLE.frames] },
+      ),
+      frameRate: PLAYER_ANIMS.GRAB_IDLE.frameRate,
+      repeat: PLAYER_ANIMS.GRAB_IDLE.repeat,
+    });
+
+    scene.anims.create({
+      key: PLAYER_ANIMS.PUSH.key,
+      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.PUSH.spritesheet, {
+        frames: [...PLAYER_ANIMS.PUSH.frames],
+      }),
+      frameRate: PLAYER_ANIMS.PUSH.frameRate,
+      repeat: PLAYER_ANIMS.PUSH.repeat,
+    });
+
+    scene.anims.create({
+      key: PLAYER_ANIMS.PULL.key,
+      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.PULL.spritesheet, {
+        frames: [...PLAYER_ANIMS.PULL.frames],
+      }),
+      frameRate: PLAYER_ANIMS.PULL.frameRate,
+      repeat: PLAYER_ANIMS.PULL.repeat,
+    });
   }
 
   // Create player
@@ -180,6 +221,14 @@ export class Player
       this,
     );
     this.play(PLAYER_ANIMS.INITIAL_ANIM);
+  }
+
+  setDraggableRegistry(items: DraggableItem[]) {
+    this.draggableRegistry = items;
+  }
+
+  setCarryableRegistry(items: CarryableItem[]) {
+    this.carryableRegistry = items;
   }
 
   // Player damage
@@ -242,9 +291,9 @@ export class Player
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
-    const isClimbing = isOnStairs && (upDown || downDown);
+    const isClimbing = isOnStairs && (upDown || downDown) && !this.isGrabbing;
 
-    if (isOnStairs) {
+    if (isOnStairs && !this.isGrabbing) {
       body.setAllowGravity(false);
       if (upDown) {
         body.setVelocityY(-PLAYER_MOVEMENT.CLIMB_SPEED_Y);
@@ -260,51 +309,95 @@ export class Player
     // 2. INPUT & HORIZONTAL MOVEMENT
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
-    const jumpDown =
-      this.keys.space.isDown || this.keys.up.isDown || this.keys.w.isDown;
+    const spaceDown = this.keys.space.isDown;
+    const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
 
-    if (leftDown && this.body) {
-      if (
-        !this.isInspecting &&
-        !isStopInspectPlaying &&
-        !isJumpPlaying &&
-        !isOnStairs
-      ) {
-        this.anims.play(PLAYER_ANIMS.WALK.key, true);
-      }
-      this.body.velocity.x -= this.isInspecting
-        ? PLAYER_MOVEMENT.INSPECT_ACCELERATION
-        : PLAYER_MOVEMENT.WALK_ACCELERATION;
-      this.setFlipX(true);
-    } else if (rightDown && this.body) {
-      if (
-        !this.isInspecting &&
-        !isStopInspectPlaying &&
-        !isJumpPlaying &&
-        !isOnStairs
-      ) {
-        this.anims.play(PLAYER_ANIMS.WALK.key, true);
-      }
-      this.body.velocity.x += this.isInspecting
-        ? PLAYER_MOVEMENT.INSPECT_ACCELERATION
-        : PLAYER_MOVEMENT.WALK_ACCELERATION;
-      this.setFlipX(false);
-    } else if (
-      !this.isInspecting &&
-      !isStopInspectPlaying &&
-      !isJumpPlaying &&
-      !isOnStairs
-    ) {
-      this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+    // 2.5 GRAB LOGIC
+    if (spaceDown && !this.isGrabbing && body?.blocked.down) {
+      this.tryGrab();
+    } else if (!spaceDown && this.isGrabbing) {
+      this.releaseGrab();
     }
 
-    // 3. JUMP LOGIC
+    // 2.5 CARRY LOGIC
+    if (spacePress && body?.blocked.down) {
+      const handled = this.tryToggleCarry();
+      if (!handled && !this.isCarrying) {
+        this.emit("interact-placeholder");
+      }
+    }
+
+    if (body) {
+      const accel = this.getMovementAcceleration();
+
+      if (leftDown) {
+        if (
+          !this.isMovementRestricted(
+            isStopInspectPlaying,
+            isJumpPlaying,
+            isOnStairs,
+          )
+        ) {
+          this.anims.play(PLAYER_ANIMS.WALK.key, true);
+        }
+        body.velocity.x -= accel;
+        if (!this.isGrabbing) this.setFlipX(true);
+      } else if (rightDown) {
+        if (
+          !this.isMovementRestricted(
+            isStopInspectPlaying,
+            isJumpPlaying,
+            isOnStairs,
+          )
+        ) {
+          this.anims.play(PLAYER_ANIMS.WALK.key, true);
+        }
+        body.velocity.x += accel;
+        if (!this.isGrabbing) this.setFlipX(false);
+      } else if (
+        !this.isMovementRestricted(
+          isStopInspectPlaying,
+          isJumpPlaying,
+          isOnStairs,
+        )
+      ) {
+        this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+      }
+    }
+
+    // GRABBING ANIMATION & POS SYNC
+    if (this.isGrabbing && this.grabbedItem) {
+      // Sync item position
+      this.grabbedItem.x = this.x + this.grabOffset;
+      this.grabbedItem.y = this.y; // Keep on same vertical line as player anchor
+
+      // Animation logic
+      const isMoving = Math.abs(body.velocity.x) > 10;
+      if (isMoving) {
+        const isPushing =
+          (body.velocity.x > 0 && this.grabOffset > 0) ||
+          (body.velocity.x < 0 && this.grabOffset < 0);
+        if (isPushing) {
+          this.anims.play(PLAYER_ANIMS.PUSH.key, true);
+        } else {
+          this.anims.play(PLAYER_ANIMS.PULL.key, true);
+        }
+      } else {
+        this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
+      }
+    }
+
+    const jumpDown = this.keys.up.isDown || this.keys.w.isDown;
+
+    // 3. JUMP LOGIC (Space removed for Grab mechanic, but Up/W kept)
     if (
       this.body &&
       jumpDown &&
       this.body.blocked.down &&
+      !this.isGrabbing &&
       !this.isInspecting &&
-      !isStopInspectPlaying
+      !isStopInspectPlaying &&
+      !isOnStairs // Added to prevent jump while starting to climb
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
       this.anims.play(PLAYER_ANIMS.JUMP.key, true);
@@ -327,6 +420,129 @@ export class Player
         }
       }
     }
+
+    if (this.isCarrying && this.carriedItem) {
+      const offsetY = 60; // pick a value you like
+      this.carriedItem.x = this.x;
+      this.carriedItem.y = this.y - offsetY;
+      this.carriedItem.setDepth(this.depth + 1); // optional, keep above player
+    }
+  }
+
+  private tryGrab() {
+    if (this.isCarrying) return;
+    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
+    let closestItem: DraggableItem | null = null;
+    let minDist: number = GRAB_DIST;
+
+    for (const item of this.draggableRegistry) {
+      // Skip items that are already placed/locked
+      if (!item.input?.enabled) continue;
+
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
+      if (dist < minDist) {
+        // Check if facing the item
+        const isFacingItem =
+          (this.flipX && item.x < this.x) || (!this.flipX && item.x > this.x);
+        if (isFacingItem) {
+          minDist = dist;
+          closestItem = item;
+        }
+      }
+    }
+
+    if (closestItem) {
+      this.isGrabbing = true;
+      this.grabbedItem = closestItem;
+      this.grabOffset = closestItem.x - this.x;
+      this.grabbedItem.setGrabbed(true);
+    }
+  }
+
+  private tryToggleCarry(): boolean {
+    if (this.isCarrying && this.carriedItem) {
+      this.carriedItem.setCarried(false);
+      this.scene.events.emit("item-dropped", this.carriedItem);
+      this.carriedItem = null;
+      this.isCarrying = false;
+      return true;
+    }
+
+    if (this.isGrabbing) return false;
+
+    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
+    let closestItem: CarryableItem | null = null;
+    let minDist: number = GRAB_DIST;
+
+    for (const item of this.carryableRegistry) {
+      // Skip items that are already placed/locked or already carried
+      if (!item.input?.enabled || item.isCarried) continue;
+
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
+      if (dist < minDist) {
+        minDist = dist;
+        closestItem = item;
+      }
+    }
+
+    if (closestItem) {
+      // Logic for Chunks: They go to inventory instead of hands
+      if (closestItem.interactableType === InteractableType.PICTURE_CHUNK) {
+        this.inventory.push(closestItem);
+        closestItem.setCarried(true); // Visually "collected"
+        closestItem.setVisible(false); // Hide it from map
+        console.log(`[Player] Chunk ${closestItem.itemId} added to inventory.`);
+        return true;
+      }
+
+      this.isCarrying = true;
+      this.carriedItem = closestItem;
+      this.carriedItem.setCarried(true);
+      return true;
+    }
+    return false;
+  }
+
+  public getInventory(): CarryableItem[] {
+    return this.inventory;
+  }
+
+  public removeFromInventory(itemId: string) {
+    this.inventory = this.inventory.filter((item) => item.itemId !== itemId);
+  }
+
+  private releaseGrab() {
+    if (this.grabbedItem) {
+      this.grabbedItem.setGrabbed(false);
+    }
+    this.isGrabbing = false;
+    this.grabbedItem = null;
+  }
+
+  /**
+   * Calculates current horizontal acceleration based on player state.
+   */
+  private getMovementAcceleration(): number {
+    if (this.isGrabbing) return PLAYER_MOVEMENT.PUSH_ACCELERATION;
+    if (this.isInspecting) return PLAYER_MOVEMENT.INSPECT_ACCELERATION;
+    return PLAYER_MOVEMENT.WALK_ACCELERATION;
+  }
+
+  /**
+   * Checks if base movement animations (Walk/Idle) should be suppressed.
+   */
+  private isMovementRestricted(
+    isStopInspectPlaying: boolean,
+    isJumpPlaying: boolean,
+    isOnStairs: boolean,
+  ): boolean {
+    return (
+      this.isGrabbing ||
+      this.isInspecting ||
+      isStopInspectPlaying ||
+      isJumpPlaying ||
+      isOnStairs
+    );
   }
 }
 

@@ -92,7 +92,7 @@
         339, 339, 316, 316, 339, 339, 339, 339, 339, 339, 339, 339, 339, 339,
         339, 339, 339, 339, 339, 339, 339, 339, 340, 316, 316, 316, 316, 316,
         316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316,
-        316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316,
+        316, 316, 316, 316, 316, 214, 316, 214, 214, 316, 316, 214, 316, 316,
         316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316, 316,
         316, 316, 316, 316, 316, 298, 299, 299, 299, 299, 299, 299, 299, 299,
         299, 299, 299, 299, 299, 299, 299, 299, 299, 299, 299, 299, 299, 299,
@@ -282,8 +282,8 @@
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 56.7689393939398,
-          "y": 497.992424242424
+          "x": 96.5,
+          "y": 169
         }
       ],
       "opacity": 1,
@@ -304,11 +304,11 @@
           "opacity": 1,
           "point": true,
           "rotation": 0,
-          "type": " Asset",
+          "type": "",
           "visible": true,
           "width": 0,
-          "x": 59.0611187319006,
-          "y": 283.112330437433
+          "x": 61.96827153912,
+          "y": 265.669413594116
         },
         {
           "height": 0,
@@ -320,8 +320,8 @@
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 645.5,
-          "y": 284
+          "x": 207.5,
+          "y": 369
         },
         {
           "height": 0,
@@ -339,20 +339,20 @@
         {
           "height": 0,
           "id": 33,
-          "name": "P4 ",
+          "name": "P4",
           "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 301.333333333333,
-          "y": 238
+          "x": 313.930995497951,
+          "y": 217.649930349464
         }
       ],
       "opacity": 1,
       "type": "objectgroup",
-      "visible": true,
+      "visible": false,
       "x": 0,
       "y": 0
     },
@@ -403,14 +403,14 @@
       ],
       "opacity": 1,
       "type": "objectgroup",
-      "visible": true,
+      "visible": false,
       "x": 0,
       "y": 0
     },
     {
       "draworder": "topdown",
       "id": 14,
-      "name": "Chunks",
+      "name": "Pictures",
       "objects": [
         {
           "height": 0,
@@ -420,7 +420,7 @@
           "point": true,
           "rotation": 0,
           "type": "",
-          "visible": false,
+          "visible": true,
           "width": 0,
           "x": 139,
           "y": 169.5
@@ -482,12 +482,24 @@
           "name": "P3",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "S3"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sculpture"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 700,
-          "y": 498.25
+          "x": 352,
+          "y": 496
         },
         {
           "height": 0,
@@ -495,12 +507,24 @@
           "name": "P2",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "S2"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sculpture"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 761.5,
-          "y": 502.75
+          "x": 560,
+          "y": 496
         },
         {
           "height": 0,
@@ -508,12 +532,166 @@
           "name": "P1",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "S1"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sculpture"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 641,
-          "y": 501.75
+          "x": 288,
+          "y": 496
+        },
+        {
+          "height": 0,
+          "id": 44,
+          "name": "H1",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "P1"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "painting"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 230,
+          "y": 366
+        },
+        {
+          "height": 0,
+          "id": 45,
+          "name": "H2",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "P2"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "painting"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 272,
+          "y": 368
+        },
+        {
+          "height": 0,
+          "id": 46,
+          "name": "H3",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "P3"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "painting"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 320,
+          "y": 368
+        },
+        {
+          "height": 0,
+          "id": 47,
+          "name": "H4",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "P4"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "painting"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 368,
+          "y": 368
+        },
+        {
+          "height": 0,
+          "id": 48,
+          "name": "PH1",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "id",
+              "type": "list",
+              "value": [
+                {
+                  "type": "string",
+                  "value": "C1"
+                },
+                {
+                  "type": "string",
+                  "value": "C2"
+                },
+                {
+                  "type": "string",
+                  "value": "C3"
+                },
+                {
+                  "type": "string",
+                  "value": "C4"
+                }
+              ]
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "picture"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 685,
+          "y": 47
         }
       ],
       "opacity": 1,
@@ -798,7 +976,7 @@
     }
   ],
   "nextlayerid": 16,
-  "nextobjectid": 44,
+  "nextobjectid": 51,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",

@@ -32,12 +32,31 @@ export interface MissionDef {
   steps: MissionStepDef[];
 }
 
-/**
- * Dados iniciais para configurar a UIScene.
- */
 export interface UIInitData {
   phaseTitle: string;
   missionsTotal: number;
   questManager: QuestManager;
   missionDefs: Record<string, MissionDef>;
+}
+
+/**
+ * Dados para abrir uma interface de interação.
+ */
+export interface InteractionUIData {
+  instanceId: string;
+  type: string;
+  availableItems: { id: string; name: string }[];
+  state?: {
+    filledSlots?: (string | null)[];
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * Dados enviados quando uma interação é confirmada na UI.
+ */
+export interface InteractionSubmittedData {
+  instanceId: string;
+  placedItems: (string | null)[];
+  [key: string]: unknown;
 }
