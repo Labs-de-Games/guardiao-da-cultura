@@ -11,8 +11,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./front:/app
+      - ./:/app
       - front_node_modules:/app/node_modules
+      - front_node_modules:/app/front/node_modules
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:3001
     networks:
