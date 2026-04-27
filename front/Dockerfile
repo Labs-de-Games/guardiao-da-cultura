@@ -1,6 +1,8 @@
 FROM oven/bun:1-alpine AS prune
 WORKDIR /app
-COPY . .
+COPY package.json bun.lock* turbo.json ./
+COPY front/package.json ./front/
+COPY back/package.json ./back/
 RUN bunx turbo prune front --docker
 
 FROM oven/bun:1-alpine AS deps
@@ -17,6 +19,11 @@ FROM oven/bun:1-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/ ./
 COPY --from=prune /app/out/full/ ./
+COPY front/tsconfig.json ./front/
+COPY front/next.config.ts ./front/
+COPY front/next-env.d.ts ./front/
+COPY front/src ./front/src
+COPY front/public ./front/public
 RUN bun run build --filter=front
 
 FROM oven/bun:1-alpine AS runner
