@@ -51,7 +51,6 @@ clean:
 
 fclean:
 	docker compose -f compose.development.yaml down -v --rmi local
-	docker system prune -f
 
 help:
 	@echo "Available commands:"
