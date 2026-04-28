@@ -1,10 +1,6 @@
 import type * as Phaser from "phaser";
 
-export interface TiledProperty {
-  name: string;
-  type: string;
-  value: unknown;
-}
+import type { TiledProperty } from "../utils/TiledUtils";
 
 export interface MapData {
   tileLayers: Record<string, Phaser.Tilemaps.TilemapLayer>;
@@ -25,7 +21,6 @@ export namespace TiledMapLoader {
       colliders: [],
     };
 
-    // 1. Process Tilemap Layers dynamically
     for (const layerData of map.layers) {
       const layer = map.createLayer(layerData.name, tileset, 0, 0);
       if (!layer) continue;
@@ -65,7 +60,6 @@ export namespace TiledMapLoader {
       result.tileLayers[layerData.name] = layer;
     }
 
-    // 2. Process Object Layers purely saving data
     if (map.objects) {
       for (const objLayer of map.objects) {
         result.objectLayers[objLayer.name] = objLayer;
