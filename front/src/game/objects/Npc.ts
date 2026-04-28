@@ -1,25 +1,18 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../constants/GameEvents";
 import type { Game } from "../scenes/Game";
+import type { NpcDialogues, QuizQuestion } from "../types/GameDataTypes";
 import { InteractionComponent } from "./InteractionComponent";
 import { NPC_ANIMS, NPC_ASSETS, NPC_PHYSICS } from "./NpcConfig";
 import { type QuestManager, QuestStatus } from "./QuestManager";
 
 export interface NpcConfig {
   missionId: string;
-  dialogues: {
-    intro: string[];
-    collecting: string[];
-    ready: string[];
-    completed: string[];
-    success: string[]; // Diálogo após acertar o quiz
-    failure: string[]; // Diálogo após errar o quiz
-  };
+  dialogues: NpcDialogues;
+  quiz?: QuizQuestion[];
+  name?: string;
 }
 
-/**
- * Npc gerencia a lógica de interação, missões e animações para os mentores no mapa.
- */
 export class Npc extends Phaser.Physics.Arcade.Sprite {
   interaction: InteractionComponent;
   private questManager: QuestManager | null = null;
@@ -109,6 +102,18 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       },
       this,
     );
+
+    if (config.name) {
+      this.setData("name", config.name);
+    }
+  }
+
+  public getQuiz() {
+    return this.config.quiz;
+  }
+
+  public getName() {
+    return this.config.name || "Mentor";
   }
 
   public getDialogues() {
@@ -120,71 +125,63 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
   }
 
   private handleInteraction() {
-    if (!this.questManager) return;
+    if (!this.questManager) {
+      console.warn("[Npc] QuestManager not found!");
+      return;
+    }
 
-    const status = this.questManager.getStatus(this.config.missionId);
+    const missionId = this.config.missionId;
+    const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;
 
-    const pending = this.questManager.getPendingResult(this.config.missionId);
+    const pending = this.questManager.getPendingResult(missionId);
     if (pending) {
       this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, pending, () => {
-        this.questManager?.clearPendingResult(this.config.missionId);
+        this.questManager?.clearPendingResult(missionId);
       });
       return;
     }
 
+    const lines = this.getDialogueLines(status);
+    if (!lines || lines.length === 0) {
+      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
+        "Olá! No momento não tenho nada para dizer.",
+      ]);
+      return;
+    }
+
+    this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, lines, () => {
+      this.onDialogueComplete(status, game);
+    });
+  }
+
+  private getDialogueLines(status: QuestStatus): string[] {
+    const d = this.config.dialogues;
     switch (status) {
       case QuestStatus.IDLE:
-        this.scene.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          this.config.dialogues.intro,
-          () => {
-            this.questManager?.setStatus(
-              this.config.missionId,
-              QuestStatus.COLLECTING,
-            );
-            this.scene.events.emit(
-              GameEvents.MISSION_ACCEPTED,
-              this.config.missionId,
-            );
-            this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-            this.missionAccepted = true;
-            if (this.exclamationIcon?.active) {
-              this.exclamationIcon.destroy();
-            }
-          },
-        );
-        break;
-
+        return d.intro;
       case QuestStatus.COLLECTING:
-        this.scene.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          this.config.dialogues.collecting,
-        );
-        break;
-
+        return d.collecting;
       case QuestStatus.READY_FOR_QUIZ:
-        this.scene.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          this.config.dialogues.ready,
-          () => {
-            this.questManager?.setStatus(
-              this.config.missionId,
-              QuestStatus.QUIZ_ACTIVE,
-            );
-            this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-            game.startQuiz(this.config.missionId);
-          },
-        );
-        break;
-
+        return d.ready;
       case QuestStatus.COMPLETED:
-        this.scene.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          this.config.dialogues.completed,
-        );
-        break;
+        return d.completed;
+      default:
+        return [];
+    }
+  }
+
+  private onDialogueComplete(status: QuestStatus, game: Game) {
+    const missionId = this.config.missionId;
+
+    if (status === QuestStatus.IDLE) {
+      this.questManager?.setStatus(missionId, QuestStatus.COLLECTING);
+      this.scene.events.emit(GameEvents.MISSION_ACCEPTED, missionId);
+      this.missionAccepted = true;
+      if (this.exclamationIcon?.active) this.exclamationIcon.destroy();
+    } else if (status === QuestStatus.READY_FOR_QUIZ) {
+      this.questManager?.setStatus(missionId, QuestStatus.QUIZ_ACTIVE);
+      game.startQuiz(missionId);
     }
   }
 
@@ -195,7 +192,6 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
   update(_ts: number, _dt: number) {
     this.interaction.update();
 
-    // Toggle exclamation visibility while mission not accepted
     if (
       !this.missionAccepted &&
       this.exclamationIcon &&

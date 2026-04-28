@@ -1,3 +1,5 @@
+import * as Phaser from "phaser";
+
 export enum QuestStatus {
   IDLE = "IDLE",
   INTRO_DIALOGUE = "INTRO_DIALOGUE",
@@ -14,11 +16,12 @@ export interface QuestData {
   status: QuestStatus;
 }
 
-export class QuestManager {
+export class QuestManager extends Phaser.Events.EventEmitter {
   private quests: Map<string, QuestData> = new Map();
   private pendingResultLines: Map<string, string[]> = new Map();
 
   constructor(initialQuests: { id: string; requiredInfos: string[] }[]) {
+    super();
     for (const q of initialQuests) {
       this.quests.set(q.id, {
         id: q.id,
@@ -35,8 +38,17 @@ export class QuestManager {
 
   setStatus(missionId: string, status: QuestStatus) {
     const q = this.quests.get(missionId);
-    if (q) {
+    if (q && q.status !== status) {
+      const oldStatus = q.status;
       q.status = status;
+      this.emit("status-changed", { missionId, status, oldStatus });
+
+      if (
+        status === QuestStatus.COLLECTING &&
+        this.hasCollectedAll(missionId)
+      ) {
+        this.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
+      }
     }
   }
 
@@ -44,9 +56,9 @@ export class QuestManager {
     let changedAny = false;
 
     for (const [id, q] of this.quests.entries()) {
-      if (q.status !== QuestStatus.COLLECTING) continue;
+      if (q.status !== QuestStatus.IDLE && q.status !== QuestStatus.COLLECTING)
+        continue;
 
-      // Only collect if the quest actually requires this infoKey
       if (q.requiredInfos.includes(infoKey)) {
         const before = q.collectedInfos.size;
         q.collectedInfos.add(infoKey);
@@ -54,7 +66,9 @@ export class QuestManager {
 
         if (changed) {
           changedAny = true;
-          if (this.hasCollectedAll(id)) {
+          this.emit("info-collected", { missionId: id, infoKey });
+
+          if (q.status === QuestStatus.COLLECTING && this.hasCollectedAll(id)) {
             this.setStatus(id, QuestStatus.READY_FOR_QUIZ);
           }
         }
@@ -89,7 +103,6 @@ export class QuestManager {
   getTotalRequiredCount(): number {
     let total = 0;
     for (const q of this.quests.values()) {
-      // Only count if mission is accepted (i.e. not IDLE)
       if (q.status !== QuestStatus.IDLE) {
         total += q.requiredInfos.length;
       }
