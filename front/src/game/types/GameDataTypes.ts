@@ -6,30 +6,95 @@ import type { QuestManager } from "../objects/QuestManager";
  * Segue o princípio de Separation of Concerns (SoC).
  */
 
-/**
- * Definição de uma pergunta de Quiz.
- */
 export interface QuizQuestion {
-  text: string;
+  question: string;
   options: string[];
-  correctIndex: number;
+  correctOptionIndex: number;
 }
 
-/**
- * Definição de um passo individual de uma missão.
- */
 export interface MissionStepDef {
   infoKey: string;
   text: string;
 }
 
-/**
- * Estrutura completa de uma missão (Missão Ativa/Definição).
- */
 export interface MissionDef {
   id: string;
   title: string;
   steps: MissionStepDef[];
+}
+
+export interface ContentMetadata {
+  title: string;
+  author?: string;
+  year?: string;
+  period?: string;
+  part?: string;
+  description?: string;
+}
+
+export interface ContentEducational {
+  opinion?: string;
+  feedbackError?: string;
+  hint?: string;
+}
+
+export interface ContentAssets {
+  sprite: string;
+}
+
+export interface WorkData {
+  id: string;
+  type: string;
+  metadata: ContentMetadata;
+  educational: ContentEducational;
+  assets: ContentAssets;
+}
+
+export interface NpcDialogues {
+  intro: string[];
+  collecting: string[];
+  ready: string[];
+  completed: string[];
+  success: string[];
+  failure: string[];
+}
+
+export interface NpcData {
+  name: string;
+  missionId?: string;
+  dialogues?: NpcDialogues;
+}
+
+export interface WorksJson {
+  PAINTINGS: Record<string, WorkData>;
+  SCULPTURES: Record<string, WorkData>;
+  PICTURES: Record<string, WorkData>;
+  [key: string]: Record<string, WorkData> | undefined;
+}
+
+export interface QuizzesJson {
+  [missionId: string]: QuizQuestion[];
+}
+
+export interface NpcsJson {
+  npcs: Record<string, NpcData>;
+}
+
+export interface MessagesJson {
+  SYSTEM_DIALOGUES: {
+    [category: string]: {
+      SUCCESS: string[];
+      ERROR: string[];
+    };
+  };
+  [key: string]: unknown;
+}
+
+export interface ContentJson {
+  works: WorksJson;
+  quizzes: QuizzesJson;
+  npcs: Record<string, NpcData>;
+  messages: MessagesJson;
 }
 
 export interface UIInitData {
@@ -39,10 +104,8 @@ export interface UIInitData {
   missionDefs: Record<string, MissionDef>;
 }
 
-/**
- * Dados para abrir uma interface de interação.
- */
 export interface InteractionUIData {
+  placeholderId: string | string[];
   instanceId: string;
   type: string;
   availableItems: { id: string; name: string }[];
@@ -52,9 +115,6 @@ export interface InteractionUIData {
   };
 }
 
-/**
- * Dados enviados quando uma interação é confirmada na UI.
- */
 export interface InteractionSubmittedData {
   instanceId: string;
   placedItems: (string | null)[];
