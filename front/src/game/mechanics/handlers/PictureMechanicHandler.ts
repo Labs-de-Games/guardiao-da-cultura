@@ -1,5 +1,6 @@
 import type * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
 import type { Game } from "../../scenes/Game";
 import type { PlaceholderInstance } from "../../systems/PlaceholderSystem";
 import { InteractableType } from "../../types/InteractableTypes";
@@ -21,14 +22,12 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     let anyCorrect = false;
     let allCorrect = true;
 
-    // Get a copy of the inventory to track what's being "consumed" during this processing
     const availableInventory = [...gameScene.player.getInventory()];
 
     placedItems.forEach((placedId, index) => {
       const cleanPlaced = String(placedId || "").trim();
       if (!cleanPlaced) return;
 
-      // Check if the item is actually in the inventory
       const invIndex = availableInventory.findIndex(
         (item) => item.itemId === cleanPlaced,
       );
@@ -43,15 +42,11 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
       const cleanExpected = String(expectedIds[index] || "").trim();
 
       if (cleanPlaced === cleanExpected) {
-        // "Consume" the item from the local list so it can't be used again in this loop
         availableInventory.splice(invIndex, 1);
         this.placeCorrectChunk(gameScene, placeholder, cleanPlaced, index);
         anyCorrect = true;
       } else {
         allCorrect = false;
-        console.log(
-          `[PictureMechanic] ❌ Erro no slot ${index}: Esperado "${cleanExpected}", recebido "${cleanPlaced}"`,
-        );
       }
     });
 
@@ -94,9 +89,6 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
 
     const filledSlots = placeholder.state.filledSlots as (string | null)[];
     filledSlots[index] = itemId;
-    console.log(
-      `[PictureMechanic] ✅ Sucesso no slot ${index}. Salvo permanentemente.`,
-    );
   }
 
   private calculateSpritePosition(
@@ -130,6 +122,10 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Incrível! Você restaurou o quadro perfeitamente.",
       ]);
+      gameScene.events.emit(GameEvents.INFO_COLLECTED, {
+        missionId: MissionIds.CURATOR,
+        infoKey: MissionKeys.PHOTO_DONE,
+      });
       gameScene.placeholderSystem.lockPlaceholder(placeholder.instanceId);
     } else if (anyCorrect) {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
