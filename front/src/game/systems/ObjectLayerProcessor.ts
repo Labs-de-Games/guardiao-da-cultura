@@ -5,6 +5,9 @@ import { PaintingFactory } from "../factories/PaintingFactory";
 import { PictureFactory } from "../factories/PictureFactory";
 import { SculptureFactory } from "../factories/SculptureFactory";
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
+import type { ContentJson, WorkData } from "../types/GameDataTypes";
+
+import { TiledUtils } from "../utils/TiledUtils";
 import type { MapData } from "./TiledMapLoader";
 
 export class ObjectLayerProcessor {
@@ -26,19 +29,18 @@ export class ObjectLayerProcessor {
   public process(
     scene: Phaser.Scene,
     mapData: MapData,
+    contentJson?: ContentJson,
     scale: number = LayoutConfig.GAME.MAP_SCALE,
   ): InteractableItem[] {
     const items: InteractableItem[] = [];
 
     for (const [layerName, layer] of Object.entries(mapData.objectLayers)) {
       layer.objects.forEach((obj: Phaser.Types.Tilemaps.TiledObject) => {
-        // Priority: 1. Object Type, 2. Object Class (Tiled 1.9+), 3. Layer Name (singularized)
         let type = String(
           obj.type || (obj as Record<string, unknown>).class || "",
         ).toLowerCase();
 
         if (!type) {
-          // Fallback to layer name (e.g. "Sculptures" -> "sculpture")
           type = layerName.toLowerCase();
           if (type.endsWith("s")) type = type.slice(0, -1);
         }
@@ -46,8 +48,33 @@ export class ObjectLayerProcessor {
         if (this.factories.has(type)) {
           const factory = this.factories.get(type);
           if (factory) {
-            const item = factory.create(scene, obj, scale);
+            let contentID = (TiledUtils.getProperty(obj, "contentID") ||
+              TiledUtils.getProperty(obj, "contentId") ||
+              TiledUtils.getProperty(obj, "contenteId")) as string;
+
+            if (!contentID || contentID === "") {
+              contentID = obj.name;
+            }
+
+            const category =
+              layerName.toUpperCase() as keyof ContentJson["works"];
+            const works = contentJson?.works;
+
+            const data =
+              (works?.[category] as Record<string, WorkData>)?.[contentID] ||
+              works?.["PAINTINGS"]?.[contentID] ||
+              works?.["SCULPTURES"]?.[contentID] ||
+              works?.["PICTURES"]?.[contentID];
+
+            const item = factory.create(scene, obj, scale, data);
             if (item) {
+              if (data) {
+                item.setData("payload", data);
+              } else {
+                console.warn(
+                  `[ObjectLayerProcessor] No data found for "${contentID}" in category "${category}"`,
+                );
+              }
               items.push(item);
             }
           }
