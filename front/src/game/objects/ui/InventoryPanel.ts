@@ -19,12 +19,7 @@ export class InventoryPanel extends BasePanel {
   private panelW: number = LayoutConfig.UI.INVENTORY.MAX_WIDTH;
   private panelH: number = LayoutConfig.UI.INVENTORY.MAX_HEIGHT;
 
-  private readonly relicTextureByInfoKey: Record<string, string> = {
-    statue_info: "relic_statue",
-    painting_info: "relic_painting",
-    sarcophagus_info: "relic_sarcophagus",
-    fossil_info: "relic_fossil",
-  };
+  private readonly relicTextureByInfoKey: Record<string, string> = {};
 
   constructor(
     scene: Phaser.Scene,
