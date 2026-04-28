@@ -1,13 +1,41 @@
 import type * as Phaser from "phaser";
 
-/**
- * Utility class to handle Tiled object data extraction and transformation.
- */
+export type TiledPropertyValue = unknown;
+
+export interface TiledProperty {
+  name: string;
+  type: string;
+  value: TiledPropertyValue;
+}
+
 export const TiledUtils = {
-  /**
-   * Safely gets a property from a Tiled object's properties array.
-   * Handles both Array and Object formats of Tiled properties.
-   */
+  parseTargetIds(rawProp: unknown): string | string[] {
+    if (!rawProp) return "";
+
+    if (Array.isArray(rawProp)) {
+      return rawProp
+        .map((item) => {
+          if (item && typeof item === "object") {
+            return String(item.value || item.id || item.name || "");
+          }
+          return String(item);
+        })
+        .filter((s) => s !== "");
+    }
+
+    const targetIdRaw =
+      typeof rawProp === "object"
+        ? String(
+            (rawProp as { value?: string; id?: string }).value ||
+              (rawProp as { value?: string; id?: string }).id ||
+              "",
+          )
+        : String(rawProp);
+
+    return targetIdRaw.includes(",")
+      ? targetIdRaw.split(",").map((s: string) => s.trim())
+      : targetIdRaw;
+  },
   getProperty(obj: Phaser.Types.Tilemaps.TiledObject, name: string): unknown {
     if (!obj.properties) return undefined;
 
@@ -18,13 +46,9 @@ export const TiledUtils = {
       return prop ? prop.value : undefined;
     }
 
-    // Fallback for cases where properties is a plain object
     return (obj.properties as Record<string, unknown>)[name];
   },
 
-  /**
-   * Gets a property and ensures it's treated as a boolean.
-   */
   getBoolProperty(
     obj: Phaser.Types.Tilemaps.TiledObject,
     name: string,
@@ -33,9 +57,6 @@ export const TiledUtils = {
     return val === true || val === "true";
   },
 
-  /**
-   * Scales all positional and dimensional properties of a Tiled object.
-   */
   scaleCoords(obj: Phaser.Types.Tilemaps.TiledObject, scale: number) {
     return {
       x: (obj.x || 0) * scale,
