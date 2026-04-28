@@ -19,6 +19,7 @@ export const GameEvents = {
   // Requisiçōes de UI
   SHOW_DIALOGUE_REQUEST: "show-dialogue-request",
   SHOW_QUIZ_REQUEST: "show-quiz-request",
+  SHOW_CONFIRMATION_REQUEST: "show-confirmation-request",
 
   // Missões / Quests
   MISSION_ACCEPTED: "mission-accepted",

@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../constants/GameEvents";
 import type { Game } from "../scenes/Game";
-import type { NpcDialogues, QuizQuestion } from "../types/GameDataTypes";
+import { QUIZ_DIALOGUES } from "./Dialog";
 import { InteractionComponent } from "./InteractionComponent";
 import { NPC_ANIMS, NPC_ASSETS, NPC_PHYSICS } from "./NpcConfig";
 import { type QuestManager, QuestStatus } from "./QuestManager";
@@ -130,8 +130,6 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    const missionId = this.config.missionId;
-    const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;
 
     const pending = this.questManager.getPendingResult(missionId);
@@ -146,12 +144,23 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       GameEvents.SHOW_DIALOGUE_REQUEST,
       this.config.dialogues.ready,
       () => {
-        this.questManager?.setStatus(
-          this.config.missionId,
-          QuestStatus.QUIZ_ACTIVE,
+        this.scene.events.emit(
+          GameEvents.SHOW_CONFIRMATION_REQUEST,
+          QUIZ_DIALOGUES.CONFIRMATION,
+          () => {
+            this.questManager?.setStatus(
+              this.config.missionId,
+              QuestStatus.QUIZ_ACTIVE,
+            );
+            this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+            game.startQuiz(this.config.missionId);
+          },
+          () => {
+            this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
+              QUIZ_DIALOGUES.CANCELLED,
+            ]);
+          },
         );
-        this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-        game.startQuiz(this.config.missionId);
       },
     );
 
