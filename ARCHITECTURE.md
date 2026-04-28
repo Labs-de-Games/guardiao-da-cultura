@@ -1,0 +1,75 @@
+# Architecture Overview
+
+This document outlines the architectural decisions, structural boundaries, and technology stack for the Gameplate project. It serves as the single source of truth for the system's technical design, replacing older structural drafts to reflect the current, modernized tooling and practical constraints of the project.
+
+## 1. Context & Requirements
+
+### Functional Requirements
+The scope of the project is a web-based educational game. Core features include:
+- **Free Public Access:** Barrier-free entry for general users.
+- **Game Mechanics:** Quiz-based gameplay integrated with thematic content.
+- **Progression System:** Levels, achievements, and badges.
+- **Thematic Tracks:** Curated content paths focused on art and culture.
+- **Role-Based Access:** Distinct areas and permissions for General Users, Educators/Institutions, and Administrators.
+- **Institutional Dashboard:** Aggregated data visualization for educators to track player progress.
+
+### Non-Functional Requirements
+- **Accessibility:** Native compliance in UI and content design.
+- **Performance:** Fast loading times on mobile networks and compatibility with modern browsers.
+- **Privacy & Security:** Minimal personal data collection, strict LGPD compliance.
+- **Scale:** Moderate complexity, targeting ~5,000 users in the first year without the immediate need for heavy distributed systems.
+- **Open-Source Readiness:** The codebase structure must be clean and modular enough to support a future open-source release.
+
+## 2. Domain Architecture
+
+The system is designed around specific business domains. While physically structured as a monolith, logically, these domains remain isolated to prevent tight coupling:
+
+1. **Gameplay & Engine:** The core interactive experience, scene management, and game loop.
+2. **Progression Engine:** State management for user levels, points, and unlockables.
+4. **Identity & Access (Pending):** User authentication, session management, and role-based access control (RBAC).
+5. **Analytics & Dashboard (Pending):** Aggregation of gameplay data for institutional insights.
+
+## 3. Technology Stack
+
+### Workspace & Tooling
+- **Package Manager & Runtime:** [Bun](https://bun.sh/) (replaces npm/yarn/Node for faster execution and dependency management).
+- **Monorepo Orchestration:** [Turborepo](https://turbo.build/) for task caching and parallel execution.
+- **Linting & Formatting:** [Biome](https://biomejs.dev/) (replaces ESLint and Prettier for unified, fast code validation).
+- **Testing:** `bun test` acting as the universal test runner across the workspace.
+
+### Frontend (`/front`)
+- **Framework:** Next.js with React.
+- **Game Engine:** Phaser 3 (encapsulated entirely within `src/game`).
+- **Styling:** Tailwind CSS is planned.
+
+### Backend (`/back`)
+- **Framework:** NestJS.
+- **Database:** PostgreSQL.
+- **ORM:** TypeORM.
+- **Infrastructure:** Docker & Docker Compose for local environments; GitHub Actions & Coolify for CI/CD.
+
+## 4. Architectural Patterns & Boundaries
+
+### The Modular Monolith Approach
+The codebase is structured as a **Modular Monolith**.
+
+- The repository is split top-level into `front/` and `back/`.
+- Inside the backend (`/back/src`), features are grouped into logical, domain-driven folders (e.g., `users`, `health`, `database`).
+- Inside the frontend (`/front/src`), the web UI and the Phaser game logic (`/game`) are strictly separated. The game communicates with the outer React shell, which in turn communicates with the backend.
+
+### Simplified Backend Strategy (Current Pivot)
+To accelerate development and reduce unnecessary complexity, **the Next.js frontend will handle the heavy lifting for the initial iterations of the game.** 
+The NestJS backend will be heavily simplified for now. Its primary responsibilities will be restricted to:
+1. Data persistence (TypeORM/PostgreSQL).
+2. Analytics aggregation for the Educator/Admin dashboards.
+3. Cross-cutting project scaffolding (global state validation that cannot be trusted to the client).
+
+The gameplay itself will operate mostly as a client-side application (Next.js + Phaser) with periodic state synchronization to the backend.
+
+## 5. Pending Architecture Decisions
+
+The following architectural components are intentionally deferred until the foundational structure is solidified:
+
+- **Authentication Module:** The strategy and provider for identity management (e.g., Auth.js vs. custom JWT vs. external provider) are pending. This will impact both `/front` and `/back` identity domains.
+- **Observability & Analytics:** The tooling for tracking gameplay events and platform telemetry (e.g., PostHog) is pending evaluation.
+- **Shared Contracts:** How to share TypeScript types and interfaces between `/front` and `/back` (e.g., creating a `packages/shared` workspace in Turborepo vs. duplication) is yet to be established.
