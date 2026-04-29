@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: ./front/Dockerfile
       target: build
-    command: sh -c "bun install && bun run dev"
+    command: sh -c "bun install --ignore-scripts && bun run dev"
     ports:
       - "3000:3000"
     volumes:
@@ -28,7 +28,7 @@ services:
       context: .
       dockerfile: ./back/Dockerfile
       target: build
-    command: sh -c "bun install && cd back && bun run start:dev"
+    command: sh -c "bun install --ignore-scripts && cd back && bun run start:dev"
     ports:
       - "3001:3001"
     volumes:
