@@ -22,12 +22,12 @@ The scope of the project is a web-based educational game. Core features include:
 
 ## 2. Domain Architecture
 
-The system is designed around specific business domains. While physically structured as a monolith, logically, these domains remain isolated to prevent tight coupling:
+The system is designed around specific business domains. While physically structured as a monolith, logically, these domains remain isolated and communicate via events (Event-Driven Architecture) to prevent tight coupling:
 
-1. **Gameplay & Engine:** The core interactive experience, scene management, and game loop.
-2. **Progression Engine:** State management for user levels, points, and unlockables.
-4. **Identity & Access (Pending):** User authentication, session management, and role-based access control (RBAC).
-5. **Analytics & Dashboard (Pending):** Aggregation of gameplay data for institutional insights.
+1. **Identity & Access (Auth):** User authentication, session management, and basic identity.
+2. **Game Ingestion:** Receives "consummated facts" (events like `LEVEL_COMPLETED`, `ITEM_COLLECTED`) from the frontend via HTTP and dispatches them as internal backend events.
+3. **Progression Engine:** Listens to game events to calculate and store the player's rewards (e.g., fractional Stars) and chapter completion status.
+4. **Analytics:** Listens to all system events to store raw event logs (append-only) for calculating funnel metrics and dashboards.
 
 ## 3. Technology Stack
 
@@ -56,6 +56,44 @@ The codebase is structured as a **Modular Monolith**.
 - The repository is split top-level into `front/` and `back/`.
 - Inside the backend (`/back/src`), features are grouped into logical, domain-driven folders (e.g., `users`, `health`, `database`).
 - Inside the frontend (`/front/src`), the web UI and the Phaser game logic (`/game`) are strictly separated. The game communicates with the outer React shell, which in turn communicates with the backend.
+
+### Directory Structure
+
+```text
+gameplate/
+├── front/
+│   ├── src/
+│   │   ├── app/              # Next.js App Router (UI, Auth, Future Dashboards)
+│   │   ├── components/       # React Components (UI outside the game)
+│   │   └── game/             # Game Domain (Phaser 3)
+│   │       ├── scenes/
+│   │       ├── entities/
+│   │       └── services/     # API Clients to send events to the Backend
+│
+└── back/
+    ├── src/
+    │   ├── core/             # Global configurations, Guards, Interceptors
+    │   │   ├── config/
+    │   │   ├── database/
+    │   │   └── health/
+    │   ├── shared/           # Shared Types, DTOs, and Event Definitions
+    │   │   └── events/       # E.g.: GameEventTypes (LEVEL_COMPLETED, etc)
+    │   │
+    │   ├── modules/          # Our Bounded Contexts (Domains)
+    │   │   │
+    │   │   ├── users/        # Domain 1: Identity and Access (Auth/Users)
+    │   │   │   ├── user.entity.ts
+    │   │   │   └── users.module.ts
+    │   │   │
+    │   │   ├── game/         # Domain 2: Simple Gameplay Ingestion
+    │   │   ├── progression/  # Domain 3: Progression Engine (Stars)
+    │   │   └── analytics/    # Domain 4: Tracking & Telemetry
+    │   │
+    │   ├── app.module.ts
+    │   └── main.ts
+    │
+    └── package.json
+```
 
 ### Simplified Backend Strategy (Current Pivot)
 To accelerate development and reduce unnecessary complexity, **the Next.js frontend will handle the heavy lifting for the initial iterations of the game.** 
