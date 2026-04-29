@@ -231,7 +231,6 @@ export class PlaceholderSystem {
     );
     if (categoryPlaceholders.length === 0) return true;
 
-    const filledCount = categoryPlaceholders.filter((p) => p.isFilled).length;
     return categoryPlaceholders.every((p) => p.isFilled);
   }
 }

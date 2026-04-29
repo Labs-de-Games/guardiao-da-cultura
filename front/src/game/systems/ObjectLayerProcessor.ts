@@ -10,6 +10,12 @@ import type { ContentJson, WorkData } from "../types/GameDataTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { MapData } from "./TiledMapLoader";
 
+enum WORKS {
+  PAINTINGS = "PAINTINGS",
+  SCULPTURES = "SCULPTURES",
+  PICTURES = "PICTURES",
+}
+
 export class ObjectLayerProcessor {
   private factories: Map<string, IObjectFactory> = new Map();
 
@@ -62,9 +68,9 @@ export class ObjectLayerProcessor {
 
             const data =
               (works?.[category] as Record<string, WorkData>)?.[contentID] ||
-              works?.["PAINTINGS"]?.[contentID] ||
-              works?.["SCULPTURES"]?.[contentID] ||
-              works?.["PICTURES"]?.[contentID];
+              works?.[WORKS.PAINTINGS]?.[contentID] ||
+              works?.[WORKS.SCULPTURES]?.[contentID] ||
+              works?.[WORKS.PICTURES]?.[contentID];
 
             const item = factory.create(scene, obj, scale, data);
             if (item) {
