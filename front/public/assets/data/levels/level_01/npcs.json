@@ -1,0 +1,38 @@
+{
+  "npcs": {
+    "professor_curador": {
+      "name": "Dra. Cremilda",
+      "missionId": "missao_curador",
+      "dialogues": {
+        "intro": [
+          "Olá, Curador! Sou a Dra. Cremilda, responsável por esta ala do museu.",
+          "O Grande Esquecimento bagunçou todas as nossas obras-primas.",
+          "Preciso que você organize todas as Pinturas e Esculturas em seus devidos lugares.",
+          "Ah, e não se esqueça da Fotografia antiga que foi fragmentada! Ela guarda o segredo da restauração.",
+          "Quando tudo estiver em ordem, venha falar comigo para o teste final de cores."
+        ],
+        "collecting": [
+          "Ainda vejo molduras vazias e pedestais sem obras, Curador.",
+          "Certifique-se de organizar todas as pinturas, esculturas e remontar a fotografia."
+        ],
+        "ready": [
+          "Incrível! O salão recuperou sua harmonia visual.",
+          "As pinturas e esculturas estão em seus lugares e a fotografia foi restaurada.",
+          "Agora, vamos ao seu desafio final. Prove que você realmente entende a alma destas obras!"
+        ],
+        "completed": [
+          "Você é um mestre da restauração! O museu brilha novamente.",
+          "Obrigado por preservar nossa história e arte."
+        ],
+        "success": [
+          "Conhecimento impecável! Você é digno do título de Mestre Curador.",
+          "As cores voltaram para ficar! Pegue esta estrela como prova do seu mérito."
+        ],
+        "failure": [
+          "Hmm... Parece que você se confundiu com alguns detalhes históricos.",
+          "Dê uma olhada nas obras novamente e venha tentar o quiz quando estiver pronto."
+        ]
+      }
+    }
+  }
+}

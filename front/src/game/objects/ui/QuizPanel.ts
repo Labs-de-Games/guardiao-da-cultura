@@ -5,9 +5,6 @@ import { SceneNames } from "../../constants/SceneNames";
 import type { QuizQuestion } from "../../types/GameDataTypes";
 import { BasePanel } from "./BasePanel";
 
-/**
- * QuizPanel gerencia a interface de perguntas e respostas.
- */
 export class QuizPanel extends BasePanel {
   private questions: QuizQuestion[] = [];
   private currentQuestionIndex: number = 0;
@@ -26,7 +23,6 @@ export class QuizPanel extends BasePanel {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.QUIZ || 2000);
 
-    // Fundo Padronizado (Centralizado)
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
     this.bg.setOrigin(0.5, 0.5);
     this.bg.setStrokeStyle(6, 0xffffff, 1);
@@ -40,7 +36,6 @@ export class QuizPanel extends BasePanel {
       })
       .setOrigin(0.5, 0);
 
-    // Hint Padronizado
     this.escHint = this.createKeyHint("ESC para fechar");
     this.escHint.setOrigin(0, 1);
     this.escHint.setPosition(
@@ -50,7 +45,6 @@ export class QuizPanel extends BasePanel {
 
     this.add([this.bg, this.questionText, this.escHint]);
 
-    // Input Nativo
     this.bindKey("W", () => this.moveSelection(-1));
     this.bindKey("UP", () => this.moveSelection(-1));
     this.bindKey("S", () => this.moveSelection(1));
@@ -104,7 +98,7 @@ export class QuizPanel extends BasePanel {
 
   private showQuestion() {
     const question = this.questions[this.currentQuestionIndex];
-    this.questionText.setText(question.text);
+    this.questionText.setText(question.question);
 
     this.optionTexts.forEach((t) => {
       t.destroy();
@@ -150,7 +144,7 @@ export class QuizPanel extends BasePanel {
   private selectOption() {
     if (!this._isVisible) return;
     const question = this.questions[this.currentQuestionIndex];
-    const isCorrect = this.selectedOptionIndex === question.correctIndex;
+    const isCorrect = this.selectedOptionIndex === question.correctOptionIndex;
 
     if (isCorrect) {
       this.score++;

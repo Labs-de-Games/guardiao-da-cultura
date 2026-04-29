@@ -262,10 +262,8 @@ export class Player
         this.isInspecting,
       );
       if (this.isInspecting) {
-        //this.anims.play(PLAYER_ANIMS.INSPECT.key, true);
         this.scene.sound.play(PLAYER_ASSETS.SOUNDS.MAGNIFYING_UP.key);
       } else {
-        //this.anims.play(PLAYER_ANIMS.STOP_INSPECT.key, true);
         this.scene.sound.play(PLAYER_ASSETS.SOUNDS.MAGNIFYING_DOWN.key);
       }
     }
@@ -278,7 +276,6 @@ export class Player
       this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
       this.anims.isPlaying;
 
-    // 1. STAIRS/CLIMBING LOGIC
     let isOnStairs = false;
     if (this.stairsLayer && body) {
       const tile = this.stairsLayer.getTileAtWorldXY(
@@ -306,20 +303,16 @@ export class Player
       body.setAllowGravity(true);
     }
 
-    // 2. INPUT & HORIZONTAL MOVEMENT
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
     const spaceDown = this.keys.space.isDown;
     const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
-
-    // 2.5 GRAB LOGIC
     if (spaceDown && !this.isGrabbing && body?.blocked.down) {
       this.tryGrab();
     } else if (!spaceDown && this.isGrabbing) {
       this.releaseGrab();
     }
 
-    // 2.5 CARRY LOGIC
     if (spacePress && body?.blocked.down) {
       const handled = this.tryToggleCarry();
       if (!handled && !this.isCarrying) {
@@ -365,14 +358,11 @@ export class Player
       }
     }
 
-    // GRABBING ANIMATION & POS SYNC
     if (this.isGrabbing && this.grabbedItem) {
-      // Sync item position
       this.grabbedItem.x = this.x + this.grabOffset;
-      this.grabbedItem.y = this.y; // Keep on same vertical line as player anchor
-
-      // Animation logic
+      this.grabbedItem.y = this.y;
       const isMoving = Math.abs(body.velocity.x) > 10;
+
       if (isMoving) {
         const isPushing =
           (body.velocity.x > 0 && this.grabOffset > 0) ||
@@ -389,7 +379,6 @@ export class Player
 
     const jumpDown = this.keys.up.isDown || this.keys.w.isDown;
 
-    // 3. JUMP LOGIC (Space removed for Grab mechanic, but Up/W kept)
     if (
       this.body &&
       jumpDown &&
@@ -397,13 +386,12 @@ export class Player
       !this.isGrabbing &&
       !this.isInspecting &&
       !isStopInspectPlaying &&
-      !isOnStairs // Added to prevent jump while starting to climb
+      !isOnStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
       this.anims.play(PLAYER_ANIMS.JUMP.key, true);
     }
 
-    // 4. CLIMBING ANIMATION (Final override if on stairs)
     if (isOnStairs) {
       if (isClimbing) {
         if (downDown) {
@@ -422,10 +410,10 @@ export class Player
     }
 
     if (this.isCarrying && this.carriedItem) {
-      const offsetY = 60; // pick a value you like
+      const offsetY = 60;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
-      this.carriedItem.setDepth(this.depth + 1); // optional, keep above player
+      this.carriedItem.setDepth(this.depth + 1);
     }
   }
 
@@ -436,12 +424,10 @@ export class Player
     let minDist: number = GRAB_DIST;
 
     for (const item of this.draggableRegistry) {
-      // Skip items that are already placed/locked
       if (!item.input?.enabled) continue;
 
       const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
       if (dist < minDist) {
-        // Check if facing the item
         const isFacingItem =
           (this.flipX && item.x < this.x) || (!this.flipX && item.x > this.x);
         if (isFacingItem) {
@@ -456,6 +442,8 @@ export class Player
       this.grabbedItem = closestItem;
       this.grabOffset = closestItem.x - this.x;
       this.grabbedItem.setGrabbed(true);
+
+      this.emit("item-interacted", closestItem);
     }
   }
 
@@ -475,7 +463,6 @@ export class Player
     let minDist: number = GRAB_DIST;
 
     for (const item of this.carryableRegistry) {
-      // Skip items that are already placed/locked or already carried
       if (!item.input?.enabled || item.isCarried) continue;
 
       const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
@@ -486,18 +473,20 @@ export class Player
     }
 
     if (closestItem) {
-      // Logic for Chunks: They go to inventory instead of hands
       if (closestItem.interactableType === InteractableType.PICTURE_CHUNK) {
         this.inventory.push(closestItem);
-        closestItem.setCarried(true); // Visually "collected"
-        closestItem.setVisible(false); // Hide it from map
-        console.log(`[Player] Chunk ${closestItem.itemId} added to inventory.`);
+        closestItem.setCarried(true);
+        closestItem.setVisible(false);
+
+        this.emit("item-interacted", closestItem);
         return true;
       }
 
       this.isCarrying = true;
       this.carriedItem = closestItem;
       this.carriedItem.setCarried(true);
+
+      this.emit("item-interacted", closestItem);
       return true;
     }
     return false;
@@ -519,18 +508,12 @@ export class Player
     this.grabbedItem = null;
   }
 
-  /**
-   * Calculates current horizontal acceleration based on player state.
-   */
   private getMovementAcceleration(): number {
     if (this.isGrabbing) return PLAYER_MOVEMENT.PUSH_ACCELERATION;
     if (this.isInspecting) return PLAYER_MOVEMENT.INSPECT_ACCELERATION;
     return PLAYER_MOVEMENT.WALK_ACCELERATION;
   }
 
-  /**
-   * Checks if base movement animations (Walk/Idle) should be suppressed.
-   */
   private isMovementRestricted(
     isStopInspectPlaying: boolean,
     isJumpPlaying: boolean,

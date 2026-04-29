@@ -1,17 +1,22 @@
 import { Scene } from "phaser";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import { MissionIds, MissionKeys } from "../constants/MissionConstants";
 import { SceneNames } from "../constants/SceneNames";
-import { LEVEL_ASSETS, PHASE_SETTINGS } from "../data/LevelConfig";
-import { LevelQuizData } from "../data/LevelQuizData";
+import {
+  LEVEL_ASSETS,
+  LEVEL_REGISTRY,
+  type LevelDefinition,
+  PHASE_SETTINGS,
+} from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
 import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
-import { SYSTEM_DIALOGUES } from "../objects/Dialog";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { DraggableItem } from "../objects/interactables/DraggableItem";
+import type { InteractableItem } from "../objects/interactables/InteractableItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
@@ -23,9 +28,13 @@ import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import type { INpcEntity } from "../types/EntityTypes";
-import type { InteractionSubmittedData } from "../types/GameDataTypes";
+import type {
+  ContentJson,
+  InteractionSubmittedData,
+  WorkData,
+} from "../types/GameDataTypes";
 import { InteractableType } from "../types/InteractableTypes";
-import { TiledUtils } from "../utils/TiledUtils";
+import { DataUtils } from "../utils/DataUtils";
 
 export class Game extends Scene {
   player!: Player;
@@ -45,9 +54,31 @@ export class Game extends Scene {
   public mechanicsManager!: MechanicsManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
+  private itemsInteracted: Set<string> = new Set();
+
+  private levelId: string = "level_01";
+  private levelDef!: LevelDefinition;
+  private contentData: ContentJson = {
+    works: { PAINTINGS: {}, SCULPTURES: {}, PICTURES: {} },
+    quizzes: {},
+    npcs: {},
+    messages: { SYSTEM_DIALOGUES: {} },
+  };
 
   constructor() {
     super(SceneNames.GAME);
+  }
+
+  init(data?: { levelId: string }) {
+    this.levelId = data?.levelId || "level_01";
+    this.levelDef = LEVEL_REGISTRY[this.levelId];
+
+    if (!this.levelDef) {
+      console.error(
+        `[Game] Level definition not found for ID: ${this.levelId}`,
+      );
+      this.levelDef = LEVEL_REGISTRY.level_01;
+    }
   }
 
   preload() {
@@ -56,13 +87,9 @@ export class Game extends Scene {
     Npc.preload(this);
     Enemy.preload(this);
 
-    // Assets dinâmicos do nível (Task 40)
-    this.load.tilemapTiledJSON(LEVEL_ASSETS.MAP.key, LEVEL_ASSETS.MAP.json);
-    this.load.image(LEVEL_ASSETS.MAP.tileset, LEVEL_ASSETS.MAP.tilesetImg);
+    this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
+    this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
-    LEVEL_ASSETS.RELICS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
     LEVEL_ASSETS.OTHERS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
@@ -76,44 +103,100 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
 
+    this.levelDef.data.works.forEach((path, index) => {
+      this.load.json(`works_${index}`, path);
+    });
+    this.levelDef.data.quizzes.forEach((path, index) => {
+      this.load.json(`quizzes_${index}`, path);
+    });
+    this.levelDef.data.npcs.forEach((path, index) => {
+      this.load.json(`npcs_${index}`, path);
+    });
+    this.levelDef.data.messages.forEach((path, index) => {
+      this.load.json(`messages_${index}`, path);
+    });
+
     this.load.spritesheet("sparkle", "sparkle.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
   }
 
+  private processModularData() {
+    this.levelDef.data.works.forEach((path, i) => {
+      const data = this.cache.json.get(`works_${i}`);
+      if (data) {
+        DataUtils.deepMerge(
+          this.contentData.works as unknown as Record<string, unknown>,
+          data as unknown as Record<string, unknown>,
+        );
+      } else {
+        console.warn(`[Game] Could not load works data from: ${path}`);
+      }
+    });
+
+    this.levelDef.data.quizzes.forEach((path, i) => {
+      const data = this.cache.json.get(`quizzes_${i}`);
+      if (data) {
+        DataUtils.deepMerge(this.contentData.quizzes, data);
+      } else {
+        console.warn(`[Game] Could not load quiz data from: ${path}`);
+      }
+    });
+
+    this.levelDef.data.npcs.forEach((path, i) => {
+      const data = this.cache.json.get(`npcs_${i}`);
+      if (data?.npcs) {
+        DataUtils.deepMerge(this.contentData.npcs, data.npcs);
+      } else {
+        console.warn(`[Game] Could not load NPC data from: ${path}`);
+      }
+    });
+
+    this.levelDef.data.messages.forEach((path, i) => {
+      const data = this.cache.json.get(`messages_${i}`);
+      if (data) {
+        DataUtils.deepMerge(
+          this.contentData.messages as unknown as Record<string, unknown>,
+          data as unknown as Record<string, unknown>,
+        );
+      } else {
+        console.warn(`[Game] Could not load messages data from: ${path}`);
+      }
+    });
+  }
+
   create() {
+    this.processModularData();
     this.effects = new EffectsManager(this);
     this.createAnimations();
 
     const map = this.make.tilemap({
-      key: LEVEL_ASSETS.MAP.key,
+      key: this.levelDef.map.key,
       tileWidth: 16,
       tileHeight: 16,
     });
 
     let mapData: MapData | null = null;
-    const tileset = map.addTilesetImage("dungeon", LEVEL_ASSETS.MAP.tileset);
+    const tileset = map.addTilesetImage("dungeon", this.levelDef.map.tileset);
 
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, 6);
-
       this.stairsLayer = mapData.tileLayers.Stairs || null;
     }
 
-    // Initialize Systems
     this.questManager = new QuestManager(MissionRequirements);
     this.levelManager = new LevelManager(
       this,
       this.questManager,
       this.effects,
-      PHASE_SETTINGS.MAX_STARS,
+      this.levelDef.maxStars,
     );
 
     this.setupEvents();
 
     this.scene.launch(SceneNames.UI, {
-      phaseTitle: PHASE_SETTINGS.TITLE,
+      phaseTitle: this.levelDef.title,
       missionsTotal: Object.keys(MissionRegistry).length,
       questManager: this.questManager,
       missionDefs: MissionRegistry,
@@ -126,161 +209,44 @@ export class Game extends Scene {
     this.mechanicsManager.registerHandler(new PictureMechanicHandler());
 
     if (mapData) {
-      this.createEntities(mapData);
+      this.createEntities(mapData, this.contentData);
       this.setupCollisions(mapData.colliders);
 
-      // Case-insensitive lookup for PlaceHolder layer
       const placeholderLayer =
         mapData.objectLayers.PlaceHolder ||
         mapData.objectLayers.placeholder ||
         mapData.objectLayers.Placeholder;
 
-      if (placeholderLayer?.objects) {
-        placeholderLayer.objects.forEach((obj) => {
-          const typeStr = TiledUtils.getProperty(obj, "type");
-          const rawProp = TiledUtils.getProperty(obj, "id");
-          let targetId: string | string[] = "";
-
-          if (Array.isArray(rawProp)) {
-            // Se for uma lista do Tiled (Array de objetos ou strings)
-            targetId = rawProp
-              .map((item) => {
-                if (item && typeof item === "object") {
-                  return String(item.value || item.id || item.name || "");
-                }
-                return String(item);
-              })
-              .filter((s) => s !== "");
-          } else {
-            // Se for uma string única (possivelmente com vírgulas)
-            const targetIdRaw =
-              rawProp && typeof rawProp === "object"
-                ? String(
-                    (rawProp as { value?: string; id?: string }).value ||
-                      (rawProp as { value?: string; id?: string }).id ||
-                      "",
-                  )
-                : String(rawProp || "");
-
-            targetId = targetIdRaw.includes(",")
-              ? targetIdRaw.split(",").map((s: string) => s.trim())
-              : targetIdRaw;
-          }
-
-          console.log(
-            `[DEBUG] ID final processado para placeholder:`,
-            targetId,
-          );
-
-          const scaled = TiledUtils.scaleCoords(
-            obj,
-            LayoutConfig.GAME.MAP_SCALE,
-          );
-
-          this.placeholderSystem.registerPlaceholder({
-            x: scaled.x,
-            y: scaled.y,
-            width: scaled.width,
-            height: scaled.height,
-            instanceId: obj.name || Phaser.Math.RND.uuid(),
-            type: typeStr as InteractableType,
-            id: targetId,
-            state:
-              typeStr === InteractableType.PICTURE
-                ? { filledSlots: [null, null, null, null] }
-                : {},
-          });
-        });
+      if (placeholderLayer) {
+        this.placeholderSystem.registerAllFromLayer(placeholderLayer);
       }
-
-      const createdItems = this.objectLayerProcessor.process(
-        this,
-        mapData,
-        LayoutConfig.GAME.MAP_SCALE,
-      );
-
-      this.draggableItems = createdItems.filter(
-        (item) => item instanceof DraggableItem,
-      ) as DraggableItem[];
-
-      this.carryableItems = createdItems.filter(
-        (item) => item instanceof CarryableItem,
-      ) as CarryableItem[];
-
-      if (this.player) {
-        this.player.setDraggableRegistry(this.draggableItems);
-        this.player.setCarryableRegistry(this.carryableItems);
-
-        // Picture Chunks interaction
-        this.player.on("interact-placeholder", () => {
-          const nearby = this.placeholderSystem.getNearbyPlaceholder(
-            this.player.x,
-            this.player.y,
-            120,
-            InteractableType.PICTURE,
-          );
-
-          if (nearby) {
-            const filled = nearby.state?.filledSlots || [
-              null,
-              null,
-              null,
-              null,
-            ];
-            console.log(
-              `[MEMÓRIA] Enviando slots preenchidos para a UI:`,
-              filled,
-            );
-
-            // Get only the items in inventory that are of type PICTURE_CHUNK
-            const availableChunks = this.player
-              .getInventory()
-              .filter(
-                (item) =>
-                  item.interactableType === InteractableType.PICTURE_CHUNK,
-              );
-
-            this.isChunkSelectorOpen = true;
-            this.events.emit(GameEvents.OPEN_INTERACTION_UI_REQUEST, {
-              placeholderId: nearby.id,
-              instanceId: nearby.instanceId,
-              type: nearby.type,
-              availableItems: availableChunks.map((item) => ({
-                id: item.itemId,
-                name: item.itemName,
-              })),
-              state: nearby.state || { filledSlots: filled },
-            });
-          }
-        });
-      }
-
-      this.events.on(
-        GameEvents.INTERACTION_SUBMITTED,
-        (data: InteractionSubmittedData) => {
-          this.isChunkSelectorOpen = false;
-          const p = this.placeholderSystem.getPlaceholderByInstanceId(
-            data.instanceId,
-          );
-          if (p) {
-            this.mechanicsManager.handleInteraction(this, p, data);
-          }
-          this.checkDialogState();
-        },
-      );
-
-      this.events.on("item-dropped", this.handleItemDropped, this);
-
-      // Memory cleanup
-      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-        this.events.off("item-dropped", this.handleItemDropped, this);
-      });
     }
     this.setupCameras();
 
     if (this.isControlsOverlayOpen && this.player) {
       this.player.isInDialogue = true;
     }
+    this.events.on(
+      GameEvents.INFO_COLLECTED,
+      (payload: string | { infoKey: string }) => {
+        const infoKey = typeof payload === "string" ? payload : payload.infoKey;
+        this.questManager.collectInfo(infoKey);
+      },
+    );
+
+    this.questManager.on(
+      "info-collected",
+      (_data: { missionId: string; infoKey: string }) => {
+        this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      },
+    );
+
+    this.questManager.on(
+      "status-changed",
+      (_data: { missionId: string; status: QuestStatus }) => {
+        this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+      },
+    );
 
     this.setupEvents();
   }
@@ -371,13 +337,11 @@ export class Game extends Scene {
     }
   }
 
-  private createEntities(mapData: MapData) {
-    this.npcs = MapManager.createNpcs(this, mapData, 6);
+  private createEntities(mapData: MapData, contentJson?: ContentJson) {
+    this.npcs = MapManager.createNpcs(this, mapData, contentJson, 6);
 
-    // 2. Static placements (Rat could be in Tiled too, but keeping one example for now)
     this.rat = new Enemy(this, 2000, 315, 1);
 
-    // 3. Player Spawn
     let spawnX = PLAYER_SPAWN.X;
     let spawnY = PLAYER_SPAWN.Y;
 
@@ -401,24 +365,41 @@ export class Game extends Scene {
       npc.setQuestManager(this.questManager);
     }
 
-    // 4. Interactive Items (Task 38 - Data-Driven)
-    const interactiveItems = MapManager.createInteractiveObjects(
+    const createdItems = this.objectLayerProcessor.process(
       this,
       mapData,
-      6,
-      (key) => {
-        const changed = this.questManager.collectInfo(key);
-        if (changed) this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-      },
+      contentJson,
+      LayoutConfig.GAME.MAP_SCALE,
     );
 
-    // Track items globally
-    Object.values(interactiveItems).forEach((item) => {
-      item.setPlayerTracking(this.player);
+    this.draggableItems = createdItems.filter(
+      (item): item is DraggableItem => item instanceof DraggableItem,
+    );
+    this.carryableItems = createdItems.filter(
+      (item): item is CarryableItem => item instanceof CarryableItem,
+    );
+    this.player.setDraggableRegistry(this.draggableItems);
+    this.player.setCarryableRegistry(this.carryableItems);
+
+    Object.values(createdItems).forEach((item) => {
+      if ("setPlayerTracking" in item) {
+        const trackable = item as unknown as {
+          setPlayerTracking: (p: Player) => void;
+        };
+        trackable.setPlayerTracking(this.player);
+      }
     });
 
-    // 5. Phase Complete Decoration (Special behavior for portal)
-    const endPhase_btn = interactiveItems.phase_complete_portal;
+    type PortalItem = InteractableItem & {
+      interaction: { onInteract: (() => void) | null };
+      add: (child: Phaser.GameObjects.Container) => void;
+    };
+
+    const endPhase_btn = (createdItems as InteractableItem[]).find(
+      (item) =>
+        item.itemId === "phase_complete_portal" ||
+        item.itemName === "phase_complete_portal",
+    ) as PortalItem | undefined;
 
     if (endPhase_btn) {
       endPhase_btn.interaction.onInteract = () => {
@@ -445,16 +426,94 @@ export class Game extends Scene {
         const collected = this.questManager.getTotalCompletedMissions();
         endPhase_floatText.setText(`${collected}/${PHASE_SETTINGS.MAX_STARS}`);
 
-        if (collected >= PHASE_SETTINGS.MAX_STARS && !isEndPhaseActive) {
+        if (
+          collected >= PHASE_SETTINGS.MAX_STARS &&
+          !isEndPhaseActive &&
+          endPhase_btn
+        ) {
           isEndPhaseActive = true;
+          this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
+            "O portal de restauração foi ativado! Vá até ele para concluir a fase.",
+          ]);
+          endPhase_btn.setVisible(true);
         }
       });
     }
+
+    this.player.on("interact-placeholder", () => {
+      const nearby = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        120,
+        InteractableType.PICTURE,
+      );
+
+      if (nearby) {
+        const filled = nearby.state?.filledSlots || [null, null, null, null];
+        const availableChunks = this.player
+          .getInventory()
+          .filter(
+            (item) => item.interactableType === InteractableType.PICTURE_CHUNK,
+          );
+
+        this.isChunkSelectorOpen = true;
+        this.events.emit(GameEvents.OPEN_INTERACTION_UI_REQUEST, {
+          placeholderId: nearby.id,
+          instanceId: nearby.instanceId,
+          type: nearby.type,
+          availableItems: availableChunks.map((item) => ({
+            id: item.itemId,
+            name: item.itemName,
+          })),
+          state: nearby.state || { filledSlots: filled },
+        });
+      }
+    });
+
+    this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
+      if (!this.itemsInteracted.has(item.itemId)) {
+        this.itemsInteracted.add(item.itemId);
+        const payload = item.getData("payload");
+        const opinion = payload?.educational?.opinion;
+
+        if (opinion) {
+          this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [opinion]);
+        }
+      }
+    });
+
+    this.events.on(
+      GameEvents.INTERACTION_SUBMITTED,
+      (data: InteractionSubmittedData) => {
+        this.isChunkSelectorOpen = false;
+        const p = this.placeholderSystem.getPlaceholderByInstanceId(
+          data.instanceId,
+        );
+        if (p) {
+          this.mechanicsManager.handleInteraction(this, p, data);
+        }
+        this.checkDialogState();
+      },
+    );
+
+    this.events.on("item-dropped", this.handleItemDropped, this);
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.events.off("item-dropped", this.handleItemDropped, this);
+    });
+
+    this.setupCameras();
   }
 
   public startQuiz(missionId: string) {
     try {
-      const questions = LevelQuizData[missionId];
+      const npc = this.npcs.find((n) => {
+        const ent = n as unknown as INpcEntity;
+        return ent.config && ent.config.missionId === missionId;
+      });
+
+      const questions = npc?.getQuiz();
+
       if (!questions || questions.length === 0) {
         console.error(
           `[Game] Quiz data missing or empty for missionId: ${missionId}`,
@@ -487,7 +546,6 @@ export class Game extends Scene {
             return;
           }
 
-          // Obtém diálogos dinamicamente da config do NPC (Task 37)
           const dialogues = npc.getDialogues();
           const lines = isSuccess ? dialogues.success : dialogues.failure;
 
@@ -552,9 +610,6 @@ export class Game extends Scene {
 
   update(_time: number, _delta: number) {}
 
-  /**
-   * Handles visual and textual feedback after an item interaction.
-   */
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
@@ -563,18 +618,53 @@ export class Game extends Scene {
         ? "PAINTING"
         : "SCULPTURE";
 
+    const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
+
     if (result.snapped) {
       this.events.emit(
         GameEvents.SHOW_DIALOGUE_REQUEST,
-        SYSTEM_DIALOGUES[typeKey].SUCCESS,
+        sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
       );
+      const missionId = MissionIds.CURATOR;
+      if (item.interactableType === InteractableType.PAINTING) {
+        if (
+          this.placeholderSystem.checkCategoryCompletion(
+            InteractableType.PAINTING,
+          )
+        ) {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId,
+            infoKey: MissionKeys.PAINTINGS_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        }
+      } else if (item.interactableType === InteractableType.SCULPTURE) {
+        if (
+          this.placeholderSystem.checkCategoryCompletion(
+            InteractableType.SCULPTURE,
+          )
+        ) {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId,
+            infoKey: MissionKeys.SCULPTURES_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        }
+      }
     } else if (result.mismatch) {
-      this.events.emit(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        SYSTEM_DIALOGUES[typeKey].ERROR,
-      );
+      const payload = result.payload as WorkData | undefined;
+      const feedback = payload?.educational?.feedbackError;
+
+      if (feedback) {
+        this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [feedback]);
+      } else {
+        this.events.emit(
+          GameEvents.SHOW_DIALOGUE_REQUEST,
+          sysDialogs[typeKey]?.ERROR || [
+            "Esta obra não pertence a este local.",
+          ],
+        );
+      }
     }
   }
-
-  // Removed handleChunkSelected as logic is now handled by MechanicsManager and handlers
 }
