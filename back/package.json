@@ -12,6 +12,7 @@
   "dependencies": {
     "@nestjs/common": "latest",
     "@nestjs/core": "latest",
+    "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "latest",
     "@nestjs/typeorm": "^11.0.1",
     "pg": "^8.20.0",
