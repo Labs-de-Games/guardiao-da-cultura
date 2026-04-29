@@ -122,19 +122,26 @@ export class QuizPanel extends BasePanel {
       .setOrigin(0.5, 0)
       .setVisible(false);
 
-    this.escHint = this.createKeyHint("ESC para fechar");
-    this.escHint.setOrigin(0, 1);
-    this.escHint.setPosition(
-      -this.panelWidth / 2 + 40,
-      this.panelHeight / 2 - 40,
-    );
+    this.add([
+      this.bg,
+      this.questionText,
+      this.scoreText,
+      this.questionCounterText,
+      this.questionTitleText,
+      this.footerHintText,
+      this.resultTitleText,
+      this.resultSummaryText,
+    ]);
 
-    this.add([this.bg, this.questionText, this.escHint]);
-
-    this.bindKey("W", () => this.moveSelection(-1));
-    this.bindKey("UP", () => this.moveSelection(-1));
-    this.bindKey("S", () => this.moveSelection(1));
-    this.bindKey("DOWN", () => this.moveSelection(1));
+    this.bindKey("W", () => this.moveVertical(-1));
+    this.bindKey("UP", () => this.moveVertical(-1));
+    this.bindKey("S", () => this.moveVertical(1));
+    this.bindKey("DOWN", () => this.moveVertical(1));
+    this.bindKey("A", () => this.moveHorizontal(-1));
+    this.bindKey("LEFT", () => this.moveHorizontal(-1));
+    this.bindKey("D", () => this.moveHorizontal(1));
+    this.bindKey("RIGHT", () => this.moveHorizontal(1));
+    this.bindKey("ESC", () => this.hide());
     this.bindKey("SPACE", () => this.selectOption());
     this.bindKey("ENTER", () => this.selectOption());
   }
@@ -192,13 +199,10 @@ export class QuizPanel extends BasePanel {
     this.setPosition(w / 2, h / 2);
   }
 
-  private showQuestion() {
-    const question = this.questions[this.currentQuestionIndex];
-    this.questionText.setText(question.question);
-
-    this.optionTexts.forEach((t) => {
-      t.destroy();
-    });
+  private createProgressTracker(count: number) {
+    for (const g of this.progressIndicators) {
+      g.destroy();
+    }
     this.progressIndicators = [];
 
     for (let i = 0; i < count; i++) {
@@ -206,10 +210,6 @@ export class QuizPanel extends BasePanel {
       this.progressIndicators.push(g);
       this.add(g);
     }
-
-    this.positionProgressTracker();
-
-    this.updateProgressTracker();
   }
 
   private positionProgressTracker() {
@@ -389,7 +389,7 @@ export class QuizPanel extends BasePanel {
     this.questionTitleText.setText(
       `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
     );
-    this.questionText.setText(question.text);
+    this.questionText.setText(question.question);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
       `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}/${String(this.questions.length).padStart(2, "0")}`,

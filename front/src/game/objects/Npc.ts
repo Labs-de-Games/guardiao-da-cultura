@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../constants/GameEvents";
 import type { Game } from "../scenes/Game";
-import { QUIZ_DIALOGUES } from "./Dialog";
+import type { NpcDialogues, QuizQuestion } from "../types/GameDataTypes";
 import { InteractionComponent } from "./InteractionComponent";
 import { NPC_ANIMS, NPC_ASSETS, NPC_PHYSICS } from "./NpcConfig";
 import { type QuestManager, QuestStatus } from "./QuestManager";
@@ -130,6 +130,8 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
+    const missionId = this.config.missionId;
+    const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;
 
     const pending = this.questManager.getPendingResult(missionId);
@@ -140,62 +142,47 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    this.scene.events.emit(
-      GameEvents.SHOW_DIALOGUE_REQUEST,
-      this.config.dialogues.ready,
-      () => {
-        this.scene.events.emit(
-          GameEvents.SHOW_CONFIRMATION_REQUEST,
-          QUIZ_DIALOGUES.CONFIRMATION,
-          () => {
-            this.questManager?.setStatus(
-              this.config.missionId,
-              QuestStatus.QUIZ_ACTIVE,
-            );
-            this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-            game.startQuiz(this.config.missionId);
-          },
-          () => {
-            this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-              QUIZ_DIALOGUES.CANCELLED,
-            ]);
-          },
-        );
-      },
-    );
+    const lines = this.getDialogueLines(status);
+    if (!lines || lines.length === 0) {
+      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
+        "Olá! No momento não tenho nada para dizer.",
+      ]);
+      return;
+    }
 
-    /*
-        switch (status) {
-            case QuestStatus.IDLE:
-                this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, this.config.dialogues.intro, () => {
-                    this.questManager?.setStatus(this.config.missionId, QuestStatus.COLLECTING);
-                    this.scene.events.emit(GameEvents.MISSION_ACCEPTED, this.config.missionId);
-                    this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+    this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, lines, () => {
+      this.onDialogueComplete(status, game);
+    });
+  }
 
-                    this.missionAccepted = true;
-                    if (this.exclamationIcon && this.exclamationIcon.active) {
-                        this.exclamationIcon.destroy();
-                    }
-                });
-                break;
+  private getDialogueLines(status: QuestStatus): string[] {
+    const d = this.config.dialogues;
+    switch (status) {
+      case QuestStatus.IDLE:
+        return d.intro;
+      case QuestStatus.COLLECTING:
+        return d.collecting;
+      case QuestStatus.READY_FOR_QUIZ:
+        return d.ready;
+      case QuestStatus.COMPLETED:
+        return d.completed;
+      default:
+        return [];
+    }
+  }
 
-            case QuestStatus.COLLECTING:
-                this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, this.config.dialogues.collecting);
-                break;
+  private onDialogueComplete(status: QuestStatus, game: Game) {
+    const missionId = this.config.missionId;
 
-            case QuestStatus.READY_FOR_QUIZ:
-                this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, this.config.dialogues.ready, () => {
-                    this.questManager?.setStatus(this.config.missionId, QuestStatus.QUIZ_ACTIVE);
-                    this.scene.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-                    game.startQuiz(this.config.missionId);
-                });
-                break;
-
-            case QuestStatus.COMPLETED:
-                this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, this.config.dialogues.completed);
-                break;
-        }
-    */
+    if (status === QuestStatus.IDLE) {
+      this.questManager?.setStatus(missionId, QuestStatus.COLLECTING);
+      this.scene.events.emit(GameEvents.MISSION_ACCEPTED, missionId);
+      this.missionAccepted = true;
+      if (this.exclamationIcon?.active) this.exclamationIcon.destroy();
+    } else if (status === QuestStatus.READY_FOR_QUIZ) {
+      this.questManager?.setStatus(missionId, QuestStatus.QUIZ_ACTIVE);
+      game.startQuiz(missionId);
+    }
   }
 
   setPlayerTracking(player: Phaser.Physics.Arcade.Sprite) {
