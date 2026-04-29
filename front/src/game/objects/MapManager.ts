@@ -1,9 +1,8 @@
 import type * as Phaser from "phaser";
-import { GameEvents } from "../constants/GameEvents";
 import { MissionIds } from "../constants/MissionConstants";
 import type { MapData } from "../systems/TiledMapLoader";
 import type { ContentJson } from "../types/GameDataTypes";
-import { type TiledProperty, TiledUtils } from "../utils/TiledUtils";
+import type { TiledProperty } from "../utils/TiledUtils";
 import { Npc, type NpcConfig } from "./Npc";
 
 export namespace MapManager {
