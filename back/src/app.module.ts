@@ -1,11 +1,18 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "./config/config.module";
-import { DatabaseModule } from "./database/database.module";
-import { HealthModule } from "./health/health.module";
-import { UsersModule } from "./users/users.module";
+import { EventEmitterModule } from "@nestjs/event-emitter";
+import { ConfigModule } from "./core/config/config.module";
+import { DatabaseModule } from "./core/database/database.module";
+import { HealthModule } from "./core/health/health.module";
+import { UsersModule } from "./modules/users/users.module";
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, UsersModule, HealthModule],
+  imports: [
+    EventEmitterModule.forRoot(),
+    ConfigModule,
+    DatabaseModule,
+    UsersModule,
+    HealthModule,
+  ],
   controllers: [],
   providers: [],
 })
