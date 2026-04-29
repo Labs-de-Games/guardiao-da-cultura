@@ -111,3 +111,51 @@ The following architectural components are intentionally deferred until the foun
 - **Authentication Module:** The strategy and provider for identity management (e.g., Auth.js vs. custom JWT vs. external provider) are pending. This will impact both `/front` and `/back` identity domains.
 - **Observability & Analytics:** The tooling for tracking gameplay events and platform telemetry (e.g., PostHog) is pending evaluation.
 - **Shared Contracts:** How to share TypeScript types and interfaces between `/front` and `/back` (e.g., creating a `packages/shared` workspace in Turborepo vs. duplication) is yet to be established.
+
+## 6. API Contracts (Draft)
+
+### Módulo de Identidade & Acesso (Auth)
+Responsável pelo fluxo de login e gerenciamento de sessões.
+
+- **`POST /auth/register`**
+  - **Descrição:** Realiza o cadastro de novos usuários (Jogador, Instituição ou Admin).
+  - **Payload:** `{ "email": "string", "password": "string", "role": "string" }`
+
+- **`POST /auth/login`**
+  - **Descrição:** Autentica o usuário e retorna o token de acesso.
+  - **Payload:** `{ "email": "string", "password": "string" }`
+  - **Resposta:** `{ "access_token": "string", "user": { "id": "uuid", "role": "string" } }`
+
+### Módulo de Progressão (Gameplay)
+Gerencia o estado do jogo, selos e pistas coletadas.
+
+- **`GET /progression/state`**
+  - **Descrição:** Recupera o estado atual do jogador (andar atual, selos e pistas).
+
+- **`POST /progression/level-complete`**
+  - **Descrição:** Registra a conclusão de um andar e salva automaticamente o status de "Selos" e "Pistas".
+  - **Payload:** `{ "level_id": "number", "stars": "number", "badges": ["string"], "clues": ["string"] }`
+
+- **`GET /progression/inventory`**
+  - **Descrição:** Consulta informações coletadas sobre obras de arte e "O Vândalo" para o Quiz Final.
+
+### Módulo de Analytics & Telemetria
+Ingestão de eventos para monitoramento de atividade.
+
+- **`POST /analytics/events`**
+  - **Descrição:** Recebe logs de eventos brutos do frontend via HTTPModule.
+  - **Payload:** `{ "event_type": "USER_LOGIN" | "LEVEL_COMPLETED", "timestamp": "ISO8601", "metadata": "object" }`
+
+### Módulo de Quiz Final
+Validação de conhecimento ao fim da jornada.
+
+- **`POST /quiz/submit`**
+  - **Descrição:** Valida se as respostas do jogador coincidem com as informações apresentadas durante as fases.
+  - **Payload:** `{ "answers": [{ "question_id": "uuid", "option_id": "uuid" }] }`
+  - **Resposta:** `{ "score": "number", "passed": "boolean" }`
+
+### Observações Técnicas
+
+- **Persistência:** Os dados serão armazenados em banco PostgreSQL.
+- **Eventos:** O backend utiliza um Internal Event Bus para publicar eventos após a persistência.
+- **Segurança:** O NPC Final (Quiz) deve permanecer bloqueado via contrato até que os desafios dos três andares sejam concluídos.
