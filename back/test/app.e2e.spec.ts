@@ -3,8 +3,8 @@ import type { INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { AppModule } from "../src/app.module";
-import { DatabaseModule } from "../src/database/database.module";
-import { User } from "../src/users/user.entity";
+import { DatabaseModule } from "../src/core/database/database.module";
+import { User } from "../src/modules/users/user.entity";
 
 class MockDatabaseModule {}
 
