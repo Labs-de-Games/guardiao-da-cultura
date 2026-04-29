@@ -1,16 +1,18 @@
 import * as Phaser from "phaser";
+import { LayoutConfig } from "../constants/LayoutConfig";
 import type { CarryableItem } from "../objects/interactables/CarryableItem";
 import type { DraggableItem } from "../objects/interactables/DraggableItem";
-
-import type { InteractableType } from "../types/InteractableTypes";
+import { InteractableType } from "../types/InteractableTypes";
+import { TiledUtils } from "../utils/TiledUtils";
 
 export interface PlaceholderInstance {
   area: Phaser.Geom.Rectangle;
   instanceId: string;
   type: InteractableType;
-  id: string | string[]; // Can be a single ID or a list of accepted fragment IDs
-  state?: Record<string, unknown>; // Estado genérico para qualquer mecânica (ex: filledSlots, currentRotation)
+  id: string | string[];
+  state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.Sprite;
+  isFilled?: boolean;
 }
 
 export interface PlaceholderConfig {
@@ -32,9 +34,36 @@ export class PlaceholderSystem {
     this.scene = scene;
   }
 
+  public registerAllFromLayer(
+    layer: Phaser.Tilemaps.ObjectLayer,
+    scale: number = LayoutConfig.GAME.MAP_SCALE,
+  ) {
+    if (!layer?.objects) return;
+
+    layer.objects.forEach((obj) => {
+      const typeStr = TiledUtils.getProperty(obj, "type");
+      const rawProp = TiledUtils.getProperty(obj, "id");
+      const targetId = TiledUtils.parseTargetIds(rawProp);
+      const scaled = TiledUtils.scaleCoords(obj, scale);
+
+      this.registerPlaceholder({
+        x: scaled.x,
+        y: scaled.y,
+        width: scaled.width,
+        height: scaled.height,
+        instanceId: obj.name || Phaser.Math.RND.uuid(),
+        type: typeStr as InteractableType,
+        id: targetId,
+        state:
+          typeStr === InteractableType.PICTURE
+            ? { filledSlots: [null, null, null, null] }
+            : {},
+      });
+    });
+  }
+
   public registerPlaceholder(config: PlaceholderConfig) {
-    // If it's a point object (width/height 0), give it a default hit area
-    const minSize = 128; // Increased from 64 for better detection scale
+    const minSize = 128;
     const finalWidth = config.width || minSize;
     const finalHeight = config.height || minSize;
 
@@ -51,9 +80,9 @@ export class PlaceholderSystem {
       type: config.type,
       id: config.id,
       state: config.state || {},
+      isFilled: false,
     };
 
-    // Create Hint (Sparkle)
     const sparkle = this.scene.add.sprite(
       rect.centerX,
       rect.centerY,
@@ -77,13 +106,11 @@ export class PlaceholderSystem {
     y: number,
     item: DraggableItem | CarryableItem,
   ): PlaceholderInstance | null {
-    const SNAP_THRESHOLD = 150; // Pixels distance to consider a match
+    const SNAP_THRESHOLD = 150;
 
     for (const p of this.placeholders) {
-      // 1. Check if inside the rectangle area
       const isInside = Phaser.Geom.Rectangle.Contains(p.area, x, y);
 
-      // 2. Check distance to center (better for point-based placeholders)
       const dist = Phaser.Math.Distance.Between(
         x,
         y,
@@ -93,7 +120,6 @@ export class PlaceholderSystem {
       const isCloseEnough = dist < SNAP_THRESHOLD;
 
       if (isInside || isCloseEnough) {
-        // Validation logic using type and id
         if (item.interactableType !== p.type) continue;
 
         const isMatch = Array.isArray(p.id)
@@ -101,9 +127,6 @@ export class PlaceholderSystem {
           : item.itemId === p.id;
 
         if (!isMatch) {
-          console.log(
-            `[PlaceholderSystem] ID mismatch at ${p.instanceId}: expected ${Array.isArray(p.id) ? p.id.join(", ") : p.id}, got "${item.itemId}"`,
-          );
           continue;
         }
         return p;
@@ -115,31 +138,27 @@ export class PlaceholderSystem {
   public handleDrop(item: DraggableItem | CarryableItem): {
     snapped: boolean;
     mismatch?: boolean;
+    payload?: unknown;
   } {
     const placeholder = this.isOverPlaceholder(item.x, item.y, item);
 
     if (placeholder) {
-      // Snap item to center
       item.x = placeholder.area.centerX;
       item.y = placeholder.area.centerY;
 
-      // Lock the item: it cannot be moved or interacted with anymore
       item.disableInteractive();
 
-      // Stop and remove hint sparkle
       if (placeholder.hintSprite) {
         placeholder.hintSprite.stop();
         placeholder.hintSprite.destroy();
         placeholder.hintSprite = undefined;
       }
 
-      console.log(
-        `[PlaceholderSystem] SUCCESS: Item ${item.itemName} (${item.itemId}) matched slot ${placeholder.id}`,
-      );
+      placeholder.isFilled = true;
+
       return { snapped: true };
     }
 
-    // Secondary check: was it at least near a placeholder but with wrong ID?
     let nearbyMismatch = false;
     for (const p of this.placeholders) {
       const dist = Phaser.Math.Distance.Between(
@@ -155,22 +174,13 @@ export class PlaceholderSystem {
     }
 
     if (nearbyMismatch) {
-      console.log(
-        `[PlaceholderSystem] MISMATCH: Item ${item.itemId} is not accepted here.`,
-      );
-      return { snapped: false, mismatch: true };
+      const payload = item.getData("payload");
+      return { snapped: false, mismatch: true, payload };
     }
 
-    console.log(
-      `[PlaceholderSystem] No matching placeholder found at (${Math.round(item.x)}, ${Math.round(item.y)}) for item ${item.itemId}`,
-    );
     return { snapped: false };
   }
 
-  /**
-   * Finds a placeholder near the given coordinates, filtered by type.
-   * Useful for active interactions (e.g. opening a selection UI).
-   */
   public getNearbyPlaceholder(
     x: number,
     y: number,
@@ -210,10 +220,17 @@ export class PlaceholderSystem {
         p.hintSprite.destroy();
         p.hintSprite = undefined;
       }
-      // Remove from active list or mark as filled
       this.placeholders = this.placeholders.filter(
         (item) => item.instanceId !== instanceId,
       );
     }
+  }
+  public checkCategoryCompletion(type: InteractableType): boolean {
+    const categoryPlaceholders = this.placeholders.filter(
+      (p) => p.type === type,
+    );
+    if (categoryPlaceholders.length === 0) return true;
+
+    return categoryPlaceholders.every((p) => p.isFilled);
   }
 }

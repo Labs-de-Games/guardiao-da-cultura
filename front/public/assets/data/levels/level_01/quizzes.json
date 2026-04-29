@@ -1,0 +1,30 @@
+{
+  "missao_curador": [
+    {
+      "id": "q1",
+      "question": "Qual destes artistas representa o auge do drama e luz no Barroco?",
+      "options": ["Rafael", "Caravaggio", "Da Vinci", "Donatello"],
+      "correctOptionIndex": 1,
+      "explanation": "Caravaggio revolucionou a arte com o uso de sombras profundas e luz dramática (Tenebrismo)."
+    },
+    {
+      "id": "q2",
+      "question": "O que caracteriza a escultura 'David' de Michelangelo como Renascentista?",
+      "options": [
+        "A emoção exagerada",
+        "O mármore colorido",
+        "O equilíbrio e estudo anatômico",
+        "O movimento frenético"
+      ],
+      "correctOptionIndex": 2,
+      "explanation": "O Renascimento focava na proporção, simetria e no ideal de beleza clássica humana."
+    },
+    {
+      "id": "q3",
+      "question": "Quem é o autor do 'Fragmento de História'?",
+      "options": ["Michelangelo", "Caravaggio", "Da Vinci", "Desconhecido"],
+      "correctOptionIndex": 3,
+      "explanation": "O Fragmento de História é uma obra de autor desconhecido encontrada nos arquivos do museu."
+    }
+  ]
+}

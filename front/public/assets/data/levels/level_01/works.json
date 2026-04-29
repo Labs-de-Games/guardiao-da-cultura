@@ -1,0 +1,168 @@
+{
+  "PAINTINGS": {
+    "monalisa": {
+      "id": "monalisa",
+      "type": "Painting",
+      "metadata": {
+        "title": "Monalisa",
+        "author": "Leonardo da Vinci",
+        "year": "1503",
+        "period": "Renascimento"
+      },
+      "educational": {
+        "opinion": "Essa pintura parece me observar de volta... é fascinante e um pouco inquietante.",
+        "feedbackError": "A Monalisa busca o equilíbrio perfeito do Renascimento. Este slot parece ter a iluminação dramática do Barroco.",
+        "hint": "O sfumato de Da Vinci precisa de um lugar sereno."
+      },
+      "assets": {
+        "sprite": "painting_01"
+      }
+    },
+    "escola_atenas": {
+      "id": "escola_atenas",
+      "type": "Painting",
+      "metadata": {
+        "title": "A Escola de Atenas",
+        "author": "Rafael Sanzio",
+        "year": "1509",
+        "period": "Renascimento"
+      },
+      "educational": {
+        "opinion": "Tanta sabedoria reunida em um só lugar. Posso quase ouvir os filósofos discutindo.",
+        "feedbackError": "Rafael usou perspectiva matemática rigorosa aqui. Slots Barrocos são muito caóticos para esta obra.",
+        "hint": "Procure um espaço que valorize a filosofia e a simetria."
+      },
+      "assets": {
+        "sprite": "painting_02"
+      }
+    },
+    "vocacao_mateus": {
+      "id": "vocacao_mateus",
+      "type": "Painting",
+      "metadata": {
+        "title": "A Vocação de São Mateus",
+        "author": "Caravaggio",
+        "year": "1600",
+        "period": "Barroco"
+      },
+      "educational": {
+        "opinion": "A luz nessa obra é tão intensa que parece que os personagens vão sair da tela.",
+        "feedbackError": "Caravaggio é o mestre do Tenebrismo. Colocá-lo em um slot Renascentista apaga o seu drama.",
+        "hint": "Luz e sombra intensas pedem um slot de alto contraste."
+      },
+      "assets": {
+        "sprite": "painting_03"
+      }
+    },
+    "as_meninas": {
+      "id": "as_meninas",
+      "type": "Painting",
+      "metadata": {
+        "title": "As Meninas",
+        "author": "Diego Velázquez",
+        "year": "1556",
+        "period": "Barroco"
+      },
+      "educational": {
+        "opinion": "Quem está pintando quem? Esse quadro me faz questionar a realidade.",
+        "feedbackError": "Esta obra barroca brinca com o espaço e o olhar. O slot Renascentista é estático demais para ela.",
+        "hint": "Procure a galeria da corte espanhola."
+      },
+      "assets": {
+        "sprite": "painting_04"
+      }
+    }
+  },
+  "SCULPTURES": {
+    "david_michelangelo": {
+      "id": "david_michelangelo",
+      "type": "Sculpture",
+      "metadata": {
+        "title": "David",
+        "author": "Michelangelo",
+        "year": "1504",
+        "period": "Renascimento"
+      },
+      "educational": {
+        "opinion": "A perfeição anatômica desse mármore é de tirar o fôlego. Michelangelo era um gênio.",
+        "feedbackError": "David representa o repouso antes da ação. Slots Barrocos sugerem movimento demais para o mármore de Michelangelo.",
+        "hint": "Procure um pedestal central que exalte a anatomia clássica."
+      },
+      "assets": {
+        "sprite": "sprite_01"
+      }
+    },
+    "extase_teresa": {
+      "id": "extase_teresa",
+      "type": "Sculpture",
+      "metadata": {
+        "title": "O Êxtase de Santa Teresa",
+        "author": "Bernini",
+        "year": "1652",
+        "period": "Barroco"
+      },
+      "educational": {
+        "opinion": "Dá para sentir o mármore se transformando em carne e luz. É transcendental.",
+        "feedbackError": "Bernini esculpiu o movimento e a emoção extrema. O Renascimento é calmo demais para esta peça.",
+        "hint": "Encontre um slot com ornamentação teatral."
+      },
+      "assets": {
+        "sprite": "sprite_02"
+      }
+    },
+    "pieta_michelangelo": {
+      "id": "pieta_michelangelo",
+      "type": "Sculpture",
+      "metadata": {
+        "title": "Pietá",
+        "author": "Michelangelo",
+        "year": "1499",
+        "period": "Renascimento"
+      },
+      "educational": {
+        "opinion": "A serenidade de Maria diante da dor é comovente. Uma harmonia divina.",
+        "feedbackError": "A Pietá é a definição de harmonia piramidal. Não a confunda com a agitação do Barroco.",
+        "hint": "Procure um local de contemplação silenciosa."
+      },
+      "assets": {
+        "sprite": "sprite_03"
+      }
+    }
+  },
+  "PICTURES": {
+    "chunk_01": {
+      "id": "chunk_01",
+      "type": "Picture",
+      "metadata": { "title": "Fragmento 1", "part": "1/4" },
+      "educational": { "opinion": "Um pedaço de um quadro moderno? Estranho!" },
+      "assets": { "sprite": "chunk_01" }
+    },
+    "chunk_02": {
+      "id": "chunk_02",
+      "type": "Picture",
+      "metadata": { "title": "Fragmento 2", "part": "2/4" },
+      "educational": {
+        "opinion": "Outro pedaço estranho... Onde está o resto?"
+      },
+      "assets": { "sprite": "chunk_02" }
+    },
+    "chunk_03": {
+      "id": "chunk_03",
+      "type": "Picture",
+      "metadata": { "title": "Fragmento 3", "part": "3/4" },
+      "educational": {
+        "opinion": "Cada vez mais estranho... O que será que acontece quando eu juntar todos?"
+      },
+      "assets": { "sprite": "chunk_03" }
+    },
+    "chunk_04": {
+      "id": "chunk_04",
+      "type": "Picture",
+      "metadata": { "title": "Fragmento 4", "part": "4/4" },
+      "educational": {
+        "opinion": "Deve ser a última peça! Tomara que faça sentido quando eu montar."
+      },
+      "assets": { "sprite": "chunk_04" }
+    }
+  }
+}
