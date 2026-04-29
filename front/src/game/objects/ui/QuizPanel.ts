@@ -12,11 +12,31 @@ export class QuizPanel extends BasePanel {
   private score: number = 0;
   private onComplete: ((score: number) => void) | null = null;
 
-  private questionText: Phaser.GameObjects.Text;
-  private optionTexts: Phaser.GameObjects.Text[] = [];
+  private mode: "quiz" | "results" = "quiz";
 
-  private readonly panelWidth = 1100;
-  private readonly panelHeight = 750;
+  private answers: ("correct" | "wrong" | null)[] = [];
+  private isProcessingAnswer: boolean = false;
+
+  private optionButtons: {
+    container: Phaser.GameObjects.Container;
+    bg: Phaser.GameObjects.Graphics;
+    label: Phaser.GameObjects.Text;
+    checkmark: Phaser.GameObjects.Graphics;
+    cross: Phaser.GameObjects.Graphics;
+  }[] = [];
+
+  private scoreText: Phaser.GameObjects.Text;
+  private questionCounterText: Phaser.GameObjects.Text;
+  private progressIndicators: Phaser.GameObjects.Graphics[] = [];
+  private questionTitleText: Phaser.GameObjects.Text;
+  private questionText: Phaser.GameObjects.Text;
+  private footerHintText: Phaser.GameObjects.Text;
+
+  private resultTitleText: Phaser.GameObjects.Text;
+  private resultSummaryText: Phaser.GameObjects.Text;
+
+  private readonly panelWidth = 1200;
+  private readonly panelHeight = 800;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
@@ -24,16 +44,83 @@ export class QuizPanel extends BasePanel {
 
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
     this.bg.setOrigin(0.5, 0.5);
-    this.bg.setStrokeStyle(6, 0xffffff, 1);
+    this.bg.setFillStyle(0x1a1a1a, 0.95);
+    this.bg.setStrokeStyle(4, 0xffffff, 1);
+
+    this.scoreText = scene.add
+      .text(
+        -this.panelWidth / 2 + 40,
+        -this.panelHeight / 2 + 30,
+        "Pontos: 0",
+        {
+          fontSize: "20px",
+          color: LayoutConfig.COLORS.GOLD,
+          fontStyle: "bold",
+        },
+      )
+      .setOrigin(0, 0);
+
+    this.questionCounterText = scene.add
+      .text(
+        -this.panelWidth / 2 + 40,
+        -this.panelHeight / 2 + 58,
+        "Pergunta 01/01",
+        {
+          fontSize: "20px",
+          color: LayoutConfig.COLORS.GOLD,
+          fontStyle: "bold",
+        },
+      )
+      .setOrigin(0, 0);
+
+    this.questionTitleText = scene.add
+      .text(0, -this.panelHeight / 2 + 110, "Pergunta 01", {
+        fontSize: "36px",
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0);
 
     this.questionText = scene.add
-      .text(0, -this.panelHeight / 2 + 60, "", {
-        fontSize: "40px",
+      .text(0, -this.panelHeight / 2 + 170, "", {
+        fontSize: "28px",
+        color: LayoutConfig.COLORS.WHITE,
+        align: "center",
+        wordWrap: { width: 1000, useAdvancedWrap: true },
+        lineSpacing: 6,
+      })
+      .setOrigin(0.5, 0);
+
+    this.footerHintText = scene.add
+      .text(
+        0,
+        this.panelHeight / 2 - 40,
+        "Use as setas e pressione Espaço para confirmar",
+        {
+          fontSize: "18px",
+          color: "#888888",
+        },
+      )
+      .setOrigin(0.5, 1);
+
+    this.resultTitleText = scene.add
+      .text(0, -this.panelHeight / 2 + 110, "Resultado", {
+        fontSize: "48px",
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0)
+      .setVisible(false);
+
+    this.resultSummaryText = scene.add
+      .text(0, -this.panelHeight / 2 + 190, "", {
+        fontSize: "32px",
         color: LayoutConfig.COLORS.WHITE,
         align: "center",
         wordWrap: { width: 1000, useAdvancedWrap: true },
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(0.5, 0)
+      .setVisible(false);
 
     this.escHint = this.createKeyHint("ESC para fechar");
     this.escHint.setOrigin(0, 1);
@@ -61,6 +148,17 @@ export class QuizPanel extends BasePanel {
     this.currentQuestionIndex = 0;
     this.score = 0;
     this.selectedOptionIndex = 0;
+    this.isProcessingAnswer = false;
+    this.mode = "quiz";
+
+    this.answers = new Array(questions.length).fill(null);
+    this.createProgressTracker(questions.length);
+
+    this.setQuizUiVisible(true);
+    this.setResultsUiVisible(false);
+    this.footerHintText.setText(
+      "Use as setas e pressione Espaço para confirmar",
+    );
 
     this.showQuestion();
     this.show();
@@ -101,75 +199,343 @@ export class QuizPanel extends BasePanel {
     this.optionTexts.forEach((t) => {
       t.destroy();
     });
-    this.optionTexts = [];
-    this.selectedOptionIndex = 0;
+    this.progressIndicators = [];
 
-    const startY = -60;
-    const spacing = 85;
+    for (let i = 0; i < count; i++) {
+      const g = this.scene.add.graphics();
+      this.progressIndicators.push(g);
+      this.add(g);
+    }
 
-    question.options.forEach((opt, idx) => {
-      const optText = this.scene.add
-        .text(0, startY + idx * spacing, opt, {
-          fontSize: "32px",
-          color:
-            idx === 0 ? LayoutConfig.COLORS.GOLD : LayoutConfig.COLORS.WHITE,
-        })
-        .setOrigin(0.5);
+    this.positionProgressTracker();
 
-      this.optionTexts.push(optText);
-      this.add(optText);
+    this.updateProgressTracker();
+  }
+
+  private positionProgressTracker() {
+    const count = this.progressIndicators.length;
+    if (count === 0) return;
+
+    const size = 24;
+    const gap = 8;
+    const totalWidth = count * size + (count - 1) * gap;
+
+    // Align progress to the right of the (Pontos/Pergunta) block (like the reference).
+    const leftX = -this.panelWidth / 2 + 40;
+    const leftBlockWidth = Math.max(
+      this.scoreText.displayWidth,
+      this.questionCounterText.displayWidth,
+    );
+    const desiredStartX = leftX + leftBlockWidth + 30;
+    const maxStartX = this.panelWidth / 2 - 40 - totalWidth;
+    const startX = Math.min(desiredStartX, maxStartX);
+    const y = -this.panelHeight / 2 + 30;
+
+    for (let i = 0; i < count; i++) {
+      this.progressIndicators[i].setPosition(startX + i * (size + gap), y);
+    }
+  }
+
+  private updateProgressTracker() {
+    const size = 24;
+    for (let i = 0; i < this.progressIndicators.length; i++) {
+      const g = this.progressIndicators[i];
+      g.clear();
+
+      const state = this.answers[i];
+      const fill =
+        state === "correct"
+          ? 0x4caf50
+          : state === "wrong"
+            ? 0xf44336
+            : 0x4a4a4a;
+
+      g.fillStyle(fill, 1);
+      g.fillRoundedRect(0, 0, size, size, 4);
+    }
+  }
+
+  private drawRibbon(
+    g: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    color: number,
+  ) {
+    const taper = 30;
+    const radius = 4;
+    const halfH = height / 2;
+    const bodyWidth = width - taper * 2;
+
+    g.clear();
+    g.fillStyle(color, 1);
+
+    // Main rectangular body
+    g.fillRoundedRect(-bodyWidth / 2, -halfH, bodyWidth, height, radius);
+
+    // Left tapered end (pointing outward)
+    g.fillTriangle(
+      -bodyWidth / 2,
+      -halfH,
+      -bodyWidth / 2 - taper,
+      0,
+      -bodyWidth / 2,
+      halfH,
+    );
+
+    // Right tapered end (pointing outward)
+    g.fillTriangle(
+      bodyWidth / 2,
+      -halfH,
+      bodyWidth / 2 + taper,
+      0,
+      bodyWidth / 2,
+      halfH,
+    );
+  }
+
+  private createCheckmark(): Phaser.GameObjects.Graphics {
+    const g = this.scene.add.graphics();
+    g.lineStyle(5, 0x4caf50);
+    g.lineBetween(-14, 0, -2, 14);
+    g.lineBetween(-2, 14, 18, -12);
+    return g;
+  }
+
+  private createCross(): Phaser.GameObjects.Graphics {
+    const g = this.scene.add.graphics();
+    g.lineStyle(5, 0xf44336);
+    g.lineBetween(-12, -12, 12, 12);
+    g.lineBetween(12, -12, -12, 12);
+    return g;
+  }
+
+  private createRibbonButton(x: number, y: number, text: string) {
+    const container = this.scene.add.container(x, y);
+
+    const width = 460;
+    const height = 68;
+
+    const bg = this.scene.add.graphics();
+    this.drawRibbon(bg, width, height, 0xd4a853);
+
+    const label = this.scene.add
+      .text(0, 0, text, {
+        fontSize: "24px",
+        color: LayoutConfig.COLORS.WHITE,
+      })
+      .setOrigin(0.5);
+
+    const checkmark = this.createCheckmark().setVisible(false);
+    const cross = this.createCross().setVisible(false);
+
+    container.add([bg, label, checkmark, cross]);
+    this.add(container);
+
+    return { container, bg, label, checkmark, cross };
+  }
+
+  private updateSelectionVisuals() {
+    const width = 460;
+    const height = 68;
+    for (let i = 0; i < this.optionButtons.length; i++) {
+      const b = this.optionButtons[i];
+      const selected = i === this.selectedOptionIndex;
+      const color = selected ? 0xf0c060 : 0xd4a853;
+      this.drawRibbon(b.bg, width, height, color);
+      b.container.setScale(selected ? 1.05 : 1);
+    }
+  }
+
+  private showCorrectFeedback(optionIndex: number) {
+    const b = this.optionButtons[optionIndex];
+    b.checkmark.setPosition(-80, 0).setVisible(true);
+    b.cross.setVisible(false);
+    this.drawRibbon(b.bg, 460, 68, 0x4caf50);
+    this.scene.tweens.add({
+      targets: b.container,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 150,
+      yoyo: true,
+      repeat: 1,
     });
   }
 
-  private moveSelection(dir: number) {
-    if (!this._isVisible) return;
-    this.selectedOptionIndex = Phaser.Math.Wrap(
-      this.selectedOptionIndex + dir,
-      0,
-      this.optionTexts.length,
+  private showWrongFeedback(optionIndex: number) {
+    const b = this.optionButtons[optionIndex];
+    b.cross.setPosition(-80, 0).setVisible(true);
+    b.checkmark.setVisible(false);
+    this.drawRibbon(b.bg, 460, 68, 0xf44336);
+    this.scene.tweens.add({
+      targets: b.container,
+      x: "-=8",
+      duration: 50,
+      yoyo: true,
+      repeat: 3,
+    });
+  }
+
+  private showQuestion() {
+    const question = this.questions[this.currentQuestionIndex];
+    if (!question) return;
+
+    this.selectedOptionIndex = 0;
+
+    this.optionButtons.forEach((b) => {
+      b.container.destroy(true);
+    });
+    this.optionButtons = [];
+
+    this.questionTitleText.setText(
+      `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
+    );
+    this.questionText.setText(question.text);
+    this.scoreText.setText(`Pontos: ${this.score}`);
+    this.questionCounterText.setText(
+      `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}/${String(this.questions.length).padStart(2, "0")}`,
     );
 
-    this.optionTexts.forEach((text, idx) => {
-      text.setColor(
-        idx === this.selectedOptionIndex
-          ? LayoutConfig.COLORS.GOLD
-          : LayoutConfig.COLORS.WHITE,
+    this.positionProgressTracker();
+
+    this.updateProgressTracker();
+
+    // Phase 2: Create 2×2 ribbon buttons
+    const options = question.options.slice(0, 4);
+    const btnW = 460;
+    const btnH = 68;
+    const colGap = 50;
+    const rowGap = 22;
+
+    const leftX = -btnW / 2 - colGap / 2;
+    const rightX = btnW / 2 + colGap / 2;
+    const startY = this.questionText.y + this.questionText.displayHeight + 100;
+    const topY = startY;
+    const bottomY = startY + btnH + rowGap;
+
+    // Layout matches reference: 0/2 on top row, 1/3 on bottom row.
+    const positions: { x: number; y: number }[] = [
+      { x: leftX, y: topY },
+      { x: leftX, y: bottomY },
+      { x: rightX, y: topY },
+      { x: rightX, y: bottomY },
+    ];
+
+    for (let i = 0; i < options.length; i++) {
+      const pos = positions[i];
+      this.optionButtons.push(
+        this.createRibbonButton(pos.x, pos.y, options[i]),
       );
-      text.setScale(idx === this.selectedOptionIndex ? 1.1 : 1);
-    });
+    }
+
+    this.updateSelectionVisuals();
+  }
+
+  private moveHorizontal(dir: number) {
+    if (!this._isVisible) return;
+    if (this.isProcessingAnswer) return;
+    if (this.optionButtons.length === 0) return;
+
+    // Grid mapping (matches our positions array):
+    // 0 = top-left, 1 = bottom-left, 2 = top-right, 3 = bottom-right
+    const row = this.selectedOptionIndex % 2;
+    const col = this.selectedOptionIndex >= 2 ? 1 : 0;
+
+    const nextCol = Phaser.Math.Wrap(col + dir, 0, 2);
+    const nextIndex = nextCol * 2 + row;
+    if (nextIndex < this.optionButtons.length) {
+      this.selectedOptionIndex = nextIndex;
+      this.updateSelectionVisuals();
+    }
+  }
+
+  private moveVertical(dir: number) {
+    if (!this._isVisible) return;
+    if (this.isProcessingAnswer) return;
+    if (this.optionButtons.length === 0) return;
+
+    const row = this.selectedOptionIndex % 2;
+    const col = this.selectedOptionIndex >= 2 ? 1 : 0;
+
+    const nextRow = Phaser.Math.Wrap(row + dir, 0, 2);
+    const nextIndex = col * 2 + nextRow;
+    if (nextIndex < this.optionButtons.length) {
+      this.selectedOptionIndex = nextIndex;
+      this.updateSelectionVisuals();
+    }
   }
 
   private selectOption() {
     if (!this._isVisible) return;
+    if (this.isProcessingAnswer) return;
+
+    if (this.mode === "results") {
+      this.hide();
+      return;
+    }
+
+    if (this.optionButtons.length === 0) return;
+
     const question = this.questions[this.currentQuestionIndex];
     const isCorrect = this.selectedOptionIndex === question.correctOptionIndex;
 
     if (isCorrect) {
       this.score++;
-      this.flash(LayoutConfig.COLORS.SUCCESS_GREEN || 0x00ff00);
+      this.answers[this.currentQuestionIndex] = "correct";
+      this.showCorrectFeedback(this.selectedOptionIndex);
     } else {
-      this.flash(LayoutConfig.COLORS.DANGER_RED || 0xff0000);
+      this.answers[this.currentQuestionIndex] = "wrong";
+      this.showWrongFeedback(this.selectedOptionIndex);
     }
 
+    this.isProcessingAnswer = true;
+
     this.scene.time.delayedCall(500, () => {
-      if (!this._isVisible) return;
+      this.isProcessingAnswer = false;
       this.currentQuestionIndex++;
       if (this.currentQuestionIndex < this.questions.length) {
         this.showQuestion();
       } else {
-        this.hide();
+        this.showResults();
       }
     });
   }
 
-  private flash(color: number | string) {
-    const hexColor =
-      typeof color === "string"
-        ? parseInt(color.replace("#", "0x"), 16)
-        : color;
-    this.bg.setStrokeStyle(6, hexColor);
-    this.scene.time.delayedCall(300, () => {
-      if (this.bg?.active) this.bg.setStrokeStyle(6, 0xffffff);
+  private setQuizUiVisible(visible: boolean) {
+    this.scoreText.setVisible(visible);
+    this.questionCounterText.setVisible(visible);
+    this.questionTitleText.setVisible(visible);
+    this.questionText.setVisible(visible);
+    // optionButtons are managed via destroy/recreate per question
+  }
+
+  private setResultsUiVisible(visible: boolean) {
+    this.resultTitleText.setVisible(visible);
+    this.resultSummaryText.setVisible(visible);
+  }
+
+  private showResults() {
+    this.mode = "results";
+
+    // Remove answer buttons from the stage.
+    this.optionButtons.forEach((b) => {
+      b.container.destroy(true);
     });
+    this.optionButtons = [];
+
+    const total = this.questions.length;
+    const required = Math.ceil(total * 0.7);
+    const passed = this.score >= required;
+
+    this.setQuizUiVisible(false);
+    this.setResultsUiVisible(true);
+
+    this.footerHintText.setText("Pressione Espaço ou ESC para fechar");
+
+    this.resultTitleText.setText("Resultado");
+    this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");
+    this.resultSummaryText.setText(`Você acertou ${this.score} de ${total}`);
+
+    this.positionProgressTracker();
+    this.updateProgressTracker();
   }
 }

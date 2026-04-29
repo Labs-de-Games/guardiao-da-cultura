@@ -532,7 +532,8 @@ export class Game extends Scene {
         GameEvents.SHOW_QUIZ_REQUEST,
         questions,
         (score: number) => {
-          const isSuccess = score >= questions.length;
+          const required = Math.ceil(questions.length * 0.7);
+          const isSuccess = score >= required;
 
           const npc = this.npcs.find((n) => {
             const ent = n as unknown as INpcEntity;
