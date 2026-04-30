@@ -30,4 +30,7 @@ export const GameEvents = {
   // Interações Genéricas (Substituindo Chunks)
   OPEN_INTERACTION_UI_REQUEST: "open-interaction-ui-request",
   INTERACTION_SUBMITTED: "interaction-submitted",
+
+  // Badges
+  SHOW_BADGE_TOAST: "show-badge-toast",
 } as const;
