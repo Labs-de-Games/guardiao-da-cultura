@@ -30,9 +30,9 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     initialGrayscale: 0.82,
     map: {
       key: "map",
-      json: "map_v0/map.json",
+      json: "maps/museum-mvp/map.json",
       tileset: "tiles",
-      tilesetImg: "map_v0/spritesheet.png",
+      tilesetImg: "maps/museum-mvp/spritesheet.png",
     },
     data: {
       works: ["data/levels/level_01/works.json"],
