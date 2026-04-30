@@ -47,9 +47,18 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
 export const LEVEL_ASSETS = {
   MAP: LEVEL_REGISTRY.level_01.map,
   SCULPTURES: [
-    { key: "sprite_01", path: "artworks/sculptures/sprite_01.png" },
-    { key: "sprite_02", path: "artworks/sculptures/sprite_02.png" },
-    { key: "sprite_03", path: "artworks/sculptures/sprite_03.png" },
+    {
+      key: "fundidos",
+      path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
+    },
+    {
+      key: "flexao",
+      path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
+    },
+    {
+      key: "em_pe",
+      path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
+    },
   ],
   PAINTINGS: [
     { key: "painting_01", path: "artworks/paintings/painting01.png" },
