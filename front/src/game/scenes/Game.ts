@@ -528,7 +528,6 @@ export class Game extends Scene {
         return;
       }
 
-      // Ask for confirmation before starting the quiz.
       this.events.emit(
         GameEvents.SHOW_CONFIRMATION_REQUEST,
         "Pronto para iniciar o quiz?",
@@ -586,7 +585,6 @@ export class Game extends Scene {
           );
         },
         () => {
-          // If user cancels, revert from QUIZ_ACTIVE back to READY_FOR_QUIZ.
           this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
           this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
         },
