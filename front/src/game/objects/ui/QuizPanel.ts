@@ -141,7 +141,12 @@ export class QuizPanel extends BasePanel {
     this.bindKey("LEFT", () => this.moveHorizontal(-1));
     this.bindKey("D", () => this.moveHorizontal(1));
     this.bindKey("RIGHT", () => this.moveHorizontal(1));
-    this.bindKey("ESC", () => this.hide());
+    // ESC should not close during quiz questions; only allow closing on results.
+    this.bindKey("ESC", () => {
+      if (!this._isVisible) return;
+      if (this.mode !== "results") return;
+      this.hide();
+    });
     this.bindKey("SPACE", () => this.selectOption());
     this.bindKey("ENTER", () => this.selectOption());
   }
@@ -216,9 +221,10 @@ export class QuizPanel extends BasePanel {
     const count = this.progressIndicators.length;
     if (count === 0) return;
 
-    const size = 24;
+    const width = 24;
+    const _height = 48;
     const gap = 8;
-    const totalWidth = count * size + (count - 1) * gap;
+    const totalWidth = count * width + (count - 1) * gap;
 
     // Align progress to the right of the (Pontos/Pergunta) block (like the reference).
     const leftX = -this.panelWidth / 2 + 40;
@@ -232,12 +238,17 @@ export class QuizPanel extends BasePanel {
     const y = -this.panelHeight / 2 + 30;
 
     for (let i = 0; i < count; i++) {
-      this.progressIndicators[i].setPosition(startX + i * (size + gap), y);
+      // Align by top-left like our previous square implementation.
+      this.progressIndicators[i].setPosition(startX + i * (width + gap), y);
     }
   }
 
   private updateProgressTracker() {
-    const size = 24;
+    const width = 24;
+    const height = 48;
+    const notchDepth = 6;
+    const notchHeight = 6;
+
     for (let i = 0; i < this.progressIndicators.length; i++) {
       const g = this.progressIndicators[i];
       g.clear();
@@ -251,7 +262,42 @@ export class QuizPanel extends BasePanel {
             : 0x4a4a4a;
 
       g.fillStyle(fill, 1);
-      g.fillRoundedRect(0, 0, size, size, 4);
+
+      // Draw a vertical notched banner (similar style to option buttons).
+      // Note: progress indicators are positioned using their top-left corner.
+      const halfW = width / 2;
+      const halfH = height / 2;
+      const cx = halfW;
+      const cy = halfH;
+
+      const points = [
+        { x: cx - halfW + notchDepth, y: cy - halfH },
+        {
+          x: cx - halfW + notchDepth,
+          y: cy - halfH + notchHeight,
+        },
+        { x: cx - halfW, y: cy - halfH + notchHeight },
+        { x: cx - halfW, y: cy + halfH - notchHeight },
+        {
+          x: cx - halfW + notchDepth,
+          y: cy + halfH - notchHeight,
+        },
+        { x: cx - halfW + notchDepth, y: cy + halfH },
+        { x: cx + halfW - notchDepth, y: cy + halfH },
+        {
+          x: cx + halfW - notchDepth,
+          y: cy + halfH - notchHeight,
+        },
+        { x: cx + halfW, y: cy + halfH - notchHeight },
+        { x: cx + halfW, y: cy - halfH + notchHeight },
+        {
+          x: cx + halfW - notchDepth,
+          y: cy - halfH + notchHeight,
+        },
+        { x: cx + halfW - notchDepth, y: cy - halfH },
+      ];
+
+      g.fillPoints(points, true);
     }
   }
 
