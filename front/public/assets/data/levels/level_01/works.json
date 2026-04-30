@@ -6,10 +6,11 @@
       "metadata": {
         "title": "Sem título (Dor de cabeça I)",
         "author": "Edgard de Souza",
-        "year": "2000"
+        "year": "2000",
+        "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "A transfiguração é um elemento presente em seus trabalhos, como, por exemplo, esculturas de bronze nas quais troncos sem cabeças aparecem conectados, mesas de madeira que assumem características antropomórficas ou sequências fotográficas nas quais o artista se retrata em luta e interação consigo mesmo. Esta escultura remete à fusão de corpos. Desde o início de sua trajetória, o artista estabelece um compromisso consistente com a tridimensionalidade",
+        "description": "A transfiguração é um elemento presente em seus trabalhos, como, por exemplo, esculturas de bronze nas quais troncos sem cabeças aparecem conectados, mesas de madeira que assumem características antropomórficas ou sequências fotográficas nas quais o artista se retrata em luta e interação consigo mesmo. Esta escultura remete à fusão de corpos. Desde o início de sua trajetória, o artista estabelece um compromisso consistente com a tridimensionalidade.",
         "medium": "Bronze fundido",
         "opinion": "Uma escultura de duas pessoas que se fundiram. Não sei se estão num abraço, ou tentando se livrar um do outro.",
         "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à fusão de corpos, ou mais de um corpo.",
@@ -25,7 +26,8 @@
       "metadata": {
         "title": "Sem título (Dor de cabeça II)",
         "author": "Edgard de Souza",
-        "year": "2002"
+        "year": "2002",
+        "place": "São Paulo, SP"
       },
       "educational": {
         "description": "Edgard de Souza estudou artes plásticas em sua cidade natal, São Paulo, onde teve contato com a arte conceitual. A sua produção é permeada por questões ligadas ao corpo e à sua representação. Esta escultura remete à pulsão. No universo de Edgard de Souza, as coisas manifestam traços de figuração do corpo, uma prostração ou excitação que vai além (e fica aquém) da semelhança anatômica com braços, cabeças e pernas.",
@@ -44,7 +46,8 @@
       "metadata": {
         "title": "Sem título (Dor de cabeça III)",
         "author": "Edgard de Souza",
-        "year": "2005"
+        "year": "2005",
+        "place": "São Paulo, SP"
       },
       "educational": {
         "description": "Essas três esculturas de Edgard de Souza são parte de uma série desenvolvida ao longo dos anos 2000. A silhueta faz referência a uma figura masculina, baseada no corpo do próprio artista. Esta escultura remete à introspecção. Dispostas linearmente, as esculturas sugerem, num primeiro momento, a leitura de um movimento contínuo. Um segundo olhar, mais minucioso, revela uma ação fragmentada e sem relação direta entre causa e efeito em cada uma das poses, impossíveis e imaginárias.",
@@ -73,8 +76,8 @@
         "description": "Produzida durante o exílio de Abdias, refletindo sua conexão com a teogonia afrobrasileira e a luta política por meio da estética. A visualidade é inspirada nos pontos riscados do candomblé, com cores fortes e grafismos representativos de Xangô, orixá da justiça, equilíbrio, força e poder, em homenagem ao companheiro de militância e ativismo contra a discriminação racial. Durante seu exílio do regime militar, foi professor em universidades nos EUA e na Nigéria. De volta ao Brasil, foi deputado federal e senador da República, além de secretário do governo do Estado do Rio de Janeiro.",
         "dimensions": "154 x 102 cm",
         "medium": "Acrílica sobre linho",
-        "opinion": "XXXXX",
-        "feedbackError": "XXXXX",
+        "opinion": "Cores fortes. Me lembra uma máscara negra com uma coroa de prata, dividida por um grande machado duplo vermelho. Um símbolo de justiça, justamente o que falta a esse vândalo.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado a Xangô.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -91,10 +94,10 @@
         "period": "Contemporâneo"
       },
       "educational": {
-        "description": "Homenagem ao companheiro de escrita; remete à memória dos poetas da La Santa Hermandad de la Orquídea. Abdias Nascimento foi poeta, escritor, dramaturgo, curador, artista plástico, professor universitário, pan-africanista e parlamentar. Indicado oficialmente ao prêmio Nobel da Paz em 2010, teve uma longa trajetória trilhada no ativismo e na valorização social do negro e da cultura afro-brasileira, por meio da arte e da educação.",
+        "description": "Homenagem ao companheiro de escrita; remete à memória dos poetas da La Santa Hermandad de la Orquídea. Abdias Nascimento foi poeta, escritor, dramaturgo, curador, artista plástico, professor universitário, pan-africanista e parlamentar. Indicado oficialmente ao Prêmio Nobel da Paz em 2010, teve uma longa trajetória trilhada no ativismo e na valorização social do negro e da cultura afro-brasileira, por meio da arte e da educação.",
         "dimensions": "152 x 102 cm",
         "medium": "Acrílica sobre tela",
-        "opinion": "XXXXX",
+        "opinion": "Muito poético. Vejo o céu em diferentes tons de azul, com um pássaro voando, um arco e flecha apontando para cima.",
         "feedbackError": "XXXXX",
         "hint": "XXXXX"
       },
@@ -102,7 +105,6 @@
         "sprite": "abdiasn_invocacao_noturna_oxossi"
       }
     },
-
     "abdiasn_oke_oxossi": {
       "id": "abdiasn_oke_oxossi",
       "type": "Painting",
@@ -113,10 +115,10 @@
         "period": "Contemporâneo"
       },
       "educational": {
-        "description": "Criada durante seu exílio nos EUA; ressignifica a bandeira brasileira com símbolos do candomblé, substituindo 'Ordem e Progresso' por saudação a Oxóssi.",
+        "description": "Criada durante seu exílio nos EUA, a obra é uma crítica à ditadura militar e uma afirmação da resistência e identidade nacional. Ressignifica a bandeira brasileira com símbolos do candomblé, substituindo o ufanismo do lema "Ordem e Progresso" pela saudação a Oxóssi "Okê" e o ofá (arco e flecha), propondo uma nação sob a proteção da ancestralidade africana. O ofá vermelho, arma de Oxóssi, orixá da caça, fartura e conhecimento, aponta para cima em sentido vertical, sugerindo direção e firmeza.",
         "dimensions": "65 x 96 cm",
         "medium": "Acrílica sobre tela",
-        "opinion": "XXXXX",
+        "opinion": "Parece muito a bandeira do Brasil varada por uma flecha, mas tem poucas estrelas. Está escrito “okê” várias vezes, mas “okê” isso significa?",
         "feedbackError": "XXXXX",
         "hint": "XXXXX"
       },
@@ -124,7 +126,6 @@
         "sprite": "abdiasn_oke_oxossi"
       }
     },
-
     "abdiasn_oxum_em_extase": {
       "id": "abdiasn_oxum_em_extase",
       "type": "Painting",
@@ -135,10 +136,10 @@
         "period": "Contemporâneo"
       },
       "educational": {
-        "description": "Pintada em Buffalo, Nova Iorque, durante exílio; retrata a orixá das águas doces em estado de êxtase, com cores vibrantes. Abdias Nascimento fundou projetos pioneiros, como o Teatro Experimental do Negro (TEN) e o Museu da Arte Negra (MAN) — uma iniciativa que reuniu obras de artistas nacionais e internacionais, com a missão de divulgar a influência africana na arte moderna ocidental e a pluralidade da produção artística negra",
+        "description": "Pintada em Búfalo, Nova Iorque, durante o exílio de Abdias Nascimento, retrata a orixá das águas doces com cores vibrantes, simbolizando a força da ancestralidade e espiritualidade, num estado de êxtase ou dança, conectada à natureza. Abdias Nascimento fundou projetos pioneiros, como o Teatro Experimental do Negro (TEN) e o Museu da Arte Negra (MAN) — uma iniciativa que reuniu obras de artistas nacionais e internacionais, com a missão de divulgar a influência africana na arte moderna ocidental e a pluralidade da produção artística negra.",
         "dimensions": "106 x 157 cm",
         "medium": "Acrílica sobre tela",
-        "opinion": "XXXXX",
+        "opinion": "Que pintura colorida! Mostra uma moça coroada, com os olhos cobertos e estrelas multicor em seu peito.",
         "feedbackError": "XXXXX",
         "hint": "XXXXX"
       },
@@ -172,7 +173,6 @@
       "metadata": { "title": "Sem título (Yanomami)", "part": "4/4" },
       "educational": { "feedbackError": "Um pedaço de fotografia mostrando XXXXX" }
     },
-
     "candujar_sem_titulo_yanomami": {
       "id": "candujar_sem_titulo_yanomami",
       "type": "Picture",
@@ -185,7 +185,7 @@
         "description": "Da série 'A casa'.",
         "dimensions": "90 x 60 cm",
         "medium": "Gelatina de prata sobre papel Ilford Multigrade",
-        "opinion": "XXXXX",
+        "opinion": "Essa é uma foto muito legal! A luz do sol invade a oca comunitária pelas frestas e ilumina um curumim.",
         "feedbackError": "XXXXX",
         "hint": "XXXXX"
       },
