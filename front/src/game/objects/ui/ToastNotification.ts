@@ -8,6 +8,7 @@ import { LayoutConfig } from "../../constants/LayoutConfig";
 export class ToastNotification extends Phaser.GameObjects.Container {
   private bg: Phaser.GameObjects.Rectangle;
   private text: Phaser.GameObjects.Text;
+  private icon: Phaser.GameObjects.Image;
   private hideTimer: Phaser.Time.TimerEvent | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -36,7 +37,9 @@ export class ToastNotification extends Phaser.GameObjects.Container {
       })
       .setOrigin(0.5);
 
-    this.add([this.bg, this.text]);
+    this.icon = scene.add.image(0, 0, "badge_explorer").setVisible(false);
+
+    this.add([this.bg, this.icon, this.text]);
     scene.add.existing(this);
   }
 
@@ -57,7 +60,7 @@ export class ToastNotification extends Phaser.GameObjects.Container {
   /**
    * Exibe o toast com uma mensagem e duração específica.
    */
-  public show(message: string, duration: number = 3200) {
+  public show(message: string, duration: number = 3200, iconKey?: string) {
     // Cancela timer anterior se existir
     if (this.hideTimer) {
       this.hideTimer.remove(false);
@@ -68,6 +71,26 @@ export class ToastNotification extends Phaser.GameObjects.Container {
     this.setVisible(true);
     this.setAlpha(0);
     this.setScale(0.98);
+
+    if (iconKey) {
+      this.icon.setTexture(iconKey);
+      this.icon.setVisible(true);
+      this.icon.setScale(0.08);
+
+      const iconWidth = this.icon.displayWidth;
+      const textWidth = this.text.width;
+      const gap = 16;
+      const totalWidth = iconWidth + gap + textWidth;
+
+      this.icon.setPosition(-totalWidth / 2 + iconWidth / 2, 0);
+      this.text.setPosition(
+        this.icon.x + iconWidth / 2 + gap + textWidth / 2,
+        0,
+      );
+    } else {
+      this.icon.setVisible(false);
+      this.text.setPosition(0, 0);
+    }
 
     // Animação de Entrada
     this.scene.tweens.add({
