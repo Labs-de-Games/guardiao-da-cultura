@@ -47,21 +47,21 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
 export const LEVEL_ASSETS = {
   MAP: LEVEL_REGISTRY.level_01.map,
   SCULPTURES: [
-    { key: "sprite_01", path: "sculptures/sprite_01.png" },
-    { key: "sprite_02", path: "sculptures/sprite_02.png" },
-    { key: "sprite_03", path: "sculptures/sprite_03.png" },
+    { key: "sprite_01", path: "artworks/sculptures/sprite_01.png" },
+    { key: "sprite_02", path: "artworks/sculptures/sprite_02.png" },
+    { key: "sprite_03", path: "artworks/sculptures/sprite_03.png" },
   ],
   PAINTINGS: [
-    { key: "painting_01", path: "paintings/painting01.png" },
-    { key: "painting_02", path: "paintings/painting02.png" },
-    { key: "painting_03", path: "paintings/painting03.png" },
-    { key: "painting_04", path: "paintings/painting04.png" },
+    { key: "painting_01", path: "artworks/paintings/painting01.png" },
+    { key: "painting_02", path: "artworks/paintings/painting02.png" },
+    { key: "painting_03", path: "artworks/paintings/painting03.png" },
+    { key: "painting_04", path: "artworks/paintings/painting04.png" },
   ],
   CHUNKS: [
-    { key: "chunk_01", path: "pictures/chunk_1.png" },
-    { key: "chunk_02", path: "pictures/chunk_2.png" },
-    { key: "chunk_03", path: "pictures/chunk_3.png" },
-    { key: "chunk_04", path: "pictures/chunk_4.png" },
+    { key: "chunk_01", path: "artworks/pictures/chunk_1.png" },
+    { key: "chunk_02", path: "artworks/pictures/chunk_2.png" },
+    { key: "chunk_03", path: "artworks/pictures/chunk_3.png" },
+    { key: "chunk_04", path: "artworks/pictures/chunk_4.png" },
   ],
   OTHERS: [
     { key: "exclamation", path: "exclamation.png" },
