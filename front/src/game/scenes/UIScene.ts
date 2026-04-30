@@ -3,6 +3,7 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
@@ -41,6 +42,7 @@ export class UIScene extends Scene {
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
+  private badgeGalleryPanel!: BadgeGalleryPanel;
 
   // Gestão de Missões (Individual Cards - candidate for further extraction)
   private activeMissionIds: string[] = [];
@@ -86,6 +88,7 @@ export class UIScene extends Scene {
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
+    this.badgeGalleryPanel = new BadgeGalleryPanel(this);
 
     this.root.add(this.statusPanel);
     // Overlays e Toasts são adicionados diretamente à cena via add.existing no construtor
@@ -183,6 +186,19 @@ export class UIScene extends Scene {
       },
     );
 
+    gameScene.events.on(
+      GameEvents.SHOW_BADGE_TOAST,
+      (badge: { name: string; icon_key: string }) => {
+        if (this.toast) {
+          this.toast.show(
+            `Conquista Desbloqueada:\n${badge.name}`,
+            4000,
+            badge.icon_key,
+          );
+        }
+      },
+    );
+
     // Prompts de Interação (bloqueio de overlays)
     gameScene.events.on(
       GameEvents.INTERACTION_PROMPT_SHOWN,
@@ -218,6 +234,7 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
+        gameScene.events.off(GameEvents.SHOW_BADGE_TOAST);
       }
     });
   }
@@ -231,6 +248,11 @@ export class UIScene extends Scene {
     this.input.keyboard?.on("keydown-Q", (e: KeyboardEvent) => {
       e.preventDefault();
       this.toggleControls();
+    });
+
+    this.input.keyboard?.on("keydown-B", (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.toggleBadgeGallery();
     });
   }
 
@@ -254,6 +276,7 @@ export class UIScene extends Scene {
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
+    this.badgeGalleryPanel.layout(w, h);
 
     this.positionMissionPanels();
   }
@@ -285,6 +308,17 @@ export class UIScene extends Scene {
 
     if (this.canShowOverlay()) {
       this.controlsOverlay.show();
+    }
+  }
+
+  private toggleBadgeGallery() {
+    if (this.badgeGalleryPanel.visibleState) {
+      this.badgeGalleryPanel.hide();
+      return;
+    }
+
+    if (this.canShowOverlay()) {
+      this.badgeGalleryPanel.show();
     }
   }
 
