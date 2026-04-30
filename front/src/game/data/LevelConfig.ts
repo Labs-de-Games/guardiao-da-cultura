@@ -61,10 +61,19 @@ export const LEVEL_ASSETS = {
     },
   ],
   PAINTINGS: [
-    { key: "painting_01", path: "artworks/paintings/painting01.png" },
-    { key: "painting_02", path: "artworks/paintings/painting02.png" },
-    { key: "painting_03", path: "artworks/paintings/painting03.png" },
-    { key: "painting_04", path: "artworks/paintings/painting04.png" },
+    {
+      key: "painting_01",
+      path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi.png",
+    },
+    { key: "painting_02", path: "artworks/paintings/abdiasn_oke_oxossi.png" },
+    {
+      key: "painting_03",
+      path: "artworks/paintings/abdiasn_oxum_em_extase.png",
+    },
+    {
+      key: "painting_04",
+      path: "artworks/paintings/abdiasn_xango_rodrigues_alves.png",
+    },
   ],
   CHUNKS: [
     { key: "chunk_01", path: "artworks/pictures/chunk-0.png" },
