@@ -6,6 +6,16 @@ import type { QuizQuestion } from "../../types/GameDataTypes";
 import { BasePanel } from "./BasePanel";
 
 export class QuizPanel extends BasePanel {
+  private readonly optionButtonWidth = 460;
+  private readonly optionButtonHeight = 68;
+  private readonly optionNotchDepth = 30;
+  private readonly optionNotchHeight = 20;
+
+  private readonly progressIndicatorWidth = 24;
+  private readonly progressIndicatorHeight = 48;
+  private readonly progressNotchDepth = 6;
+  private readonly progressNotchHeight = 6;
+
   private questions: QuizQuestion[] = [];
   private currentQuestionIndex: number = 0;
   private selectedOptionIndex: number = 0;
@@ -151,6 +161,42 @@ export class QuizPanel extends BasePanel {
     this.bindKey("ENTER", () => this.selectOption());
   }
 
+  private getNotchedRectPoints(
+    centerX: number,
+    centerY: number,
+    halfW: number,
+    halfH: number,
+    notchDepth: number,
+    notchHeight: number,
+  ): { x: number; y: number }[] {
+    return [
+      { x: centerX - halfW + notchDepth, y: centerY - halfH },
+      {
+        x: centerX - halfW + notchDepth,
+        y: centerY - halfH + notchHeight,
+      },
+      { x: centerX - halfW, y: centerY - halfH + notchHeight },
+      { x: centerX - halfW, y: centerY + halfH - notchHeight },
+      {
+        x: centerX - halfW + notchDepth,
+        y: centerY + halfH - notchHeight,
+      },
+      { x: centerX - halfW + notchDepth, y: centerY + halfH },
+      { x: centerX + halfW - notchDepth, y: centerY + halfH },
+      {
+        x: centerX + halfW - notchDepth,
+        y: centerY + halfH - notchHeight,
+      },
+      { x: centerX + halfW, y: centerY + halfH - notchHeight },
+      { x: centerX + halfW, y: centerY - halfH + notchHeight },
+      {
+        x: centerX + halfW - notchDepth,
+        y: centerY - halfH + notchHeight,
+      },
+      { x: centerX + halfW - notchDepth, y: centerY - halfH },
+    ];
+  }
+
   public startQuiz(
     questions: QuizQuestion[],
     onComplete: (score: number) => void,
@@ -221,12 +267,8 @@ export class QuizPanel extends BasePanel {
     const count = this.progressIndicators.length;
     if (count === 0) return;
 
-    const width = 24;
-    const _height = 48;
     const gap = 8;
-    const totalWidth = count * width + (count - 1) * gap;
-
-    // Align progress to the right of the (Pontos/Pergunta) block (like the reference).
+    const totalWidth = count * this.progressIndicatorWidth + (count - 1) * gap;
     const leftX = -this.panelWidth / 2 + 40;
     const leftBlockWidth = Math.max(
       this.scoreText.displayWidth,
@@ -238,17 +280,14 @@ export class QuizPanel extends BasePanel {
     const y = -this.panelHeight / 2 + 30;
 
     for (let i = 0; i < count; i++) {
-      // Align by top-left like our previous square implementation.
-      this.progressIndicators[i].setPosition(startX + i * (width + gap), y);
+      this.progressIndicators[i].setPosition(
+        startX + i * (this.progressIndicatorWidth + gap),
+        y,
+      );
     }
   }
 
   private updateProgressTracker() {
-    const width = 24;
-    const height = 48;
-    const notchDepth = 6;
-    const notchHeight = 6;
-
     for (let i = 0; i < this.progressIndicators.length; i++) {
       const g = this.progressIndicators[i];
       g.clear();
@@ -260,44 +299,22 @@ export class QuizPanel extends BasePanel {
           : state === "wrong"
             ? 0xf44336
             : 0x4a4a4a;
-
       g.fillStyle(fill, 1);
-
-      // Draw a vertical notched banner (similar style to option buttons).
-      // Note: progress indicators are positioned using their top-left corner.
-      const halfW = width / 2;
-      const halfH = height / 2;
+      const halfW = this.progressIndicatorWidth / 2;
+      const halfH = this.progressIndicatorHeight / 2;
       const cx = halfW;
       const cy = halfH;
-
-      const points = [
-        { x: cx - halfW + notchDepth, y: cy - halfH },
-        {
-          x: cx - halfW + notchDepth,
-          y: cy - halfH + notchHeight,
-        },
-        { x: cx - halfW, y: cy - halfH + notchHeight },
-        { x: cx - halfW, y: cy + halfH - notchHeight },
-        {
-          x: cx - halfW + notchDepth,
-          y: cy + halfH - notchHeight,
-        },
-        { x: cx - halfW + notchDepth, y: cy + halfH },
-        { x: cx + halfW - notchDepth, y: cy + halfH },
-        {
-          x: cx + halfW - notchDepth,
-          y: cy + halfH - notchHeight,
-        },
-        { x: cx + halfW, y: cy + halfH - notchHeight },
-        { x: cx + halfW, y: cy - halfH + notchHeight },
-        {
-          x: cx + halfW - notchDepth,
-          y: cy - halfH + notchHeight,
-        },
-        { x: cx + halfW - notchDepth, y: cy - halfH },
-      ];
-
-      g.fillPoints(points, true);
+      g.fillPoints(
+        this.getNotchedRectPoints(
+          cx,
+          cy,
+          halfW,
+          halfH,
+          this.progressNotchDepth,
+          this.progressNotchHeight,
+        ),
+        true,
+      );
     }
   }
 
@@ -309,28 +326,20 @@ export class QuizPanel extends BasePanel {
   ) {
     const halfW = width / 2;
     const halfH = height / 2;
-    const notchDepth = 30;
-    const notchHeight = 20;
 
     g.clear();
     g.fillStyle(color, 1);
-
-    const points = [
-      { x: -halfW + notchDepth, y: -halfH },
-      { x: -halfW + notchDepth, y: -halfH + notchHeight },
-      { x: -halfW, y: -halfH + notchHeight },
-      { x: -halfW, y: halfH - notchHeight },
-      { x: -halfW + notchDepth, y: halfH - notchHeight },
-      { x: -halfW + notchDepth, y: halfH },
-      { x: halfW - notchDepth, y: halfH },
-      { x: halfW - notchDepth, y: halfH - notchHeight },
-      { x: halfW, y: halfH - notchHeight },
-      { x: halfW, y: -halfH + notchHeight },
-      { x: halfW - notchDepth, y: -halfH + notchHeight },
-      { x: halfW - notchDepth, y: -halfH },
-    ];
-
-    g.fillPoints(points, true);
+    g.fillPoints(
+      this.getNotchedRectPoints(
+        0,
+        0,
+        halfW,
+        halfH,
+        this.optionNotchDepth,
+        this.optionNotchHeight,
+      ),
+      true,
+    );
   }
 
   private createCheckmark(): Phaser.GameObjects.Graphics {
@@ -352,11 +361,13 @@ export class QuizPanel extends BasePanel {
   private createRibbonButton(x: number, y: number, text: string) {
     const container = this.scene.add.container(x, y);
 
-    const width = 460;
-    const height = 68;
-
     const bg = this.scene.add.graphics();
-    this.drawRibbon(bg, width, height, 0xd4a853);
+    this.drawRibbon(
+      bg,
+      this.optionButtonWidth,
+      this.optionButtonHeight,
+      0xd4a853,
+    );
 
     const label = this.scene.add
       .text(0, 0, text, {
@@ -375,37 +386,44 @@ export class QuizPanel extends BasePanel {
   }
 
   private updateSelectionVisuals() {
-    const width = 460;
-    const height = 68;
     for (let i = 0; i < this.optionButtons.length; i++) {
       const b = this.optionButtons[i];
       const selected = i === this.selectedOptionIndex;
       const color = selected ? 0xf0c060 : 0xd4a853;
-      this.drawRibbon(b.bg, width, height, color);
+      this.drawRibbon(
+        b.bg,
+        this.optionButtonWidth,
+        this.optionButtonHeight,
+        color,
+      );
       b.container.setScale(selected ? 1.05 : 1);
     }
   }
 
-  private showCorrectFeedback(optionIndex: number) {
+  private showAnswerFeedback(optionIndex: number, isCorrect: boolean) {
     const b = this.optionButtons[optionIndex];
-    b.checkmark.setPosition(-80, 0).setVisible(true);
-    b.cross.setVisible(false);
-    this.drawRibbon(b.bg, 460, 68, 0x4caf50);
-    this.scene.tweens.add({
-      targets: b.container,
-      scaleX: 1.1,
-      scaleY: 1.1,
-      duration: 150,
-      yoyo: true,
-      repeat: 1,
-    });
-  }
+    b.checkmark.setPosition(-80, 0).setVisible(isCorrect);
+    b.cross.setPosition(-80, 0).setVisible(!isCorrect);
 
-  private showWrongFeedback(optionIndex: number) {
-    const b = this.optionButtons[optionIndex];
-    b.cross.setPosition(-80, 0).setVisible(true);
-    b.checkmark.setVisible(false);
-    this.drawRibbon(b.bg, 460, 68, 0xf44336);
+    this.drawRibbon(
+      b.bg,
+      this.optionButtonWidth,
+      this.optionButtonHeight,
+      isCorrect ? 0x4caf50 : 0xf44336,
+    );
+
+    if (isCorrect) {
+      this.scene.tweens.add({
+        targets: b.container,
+        scaleX: 1.1,
+        scaleY: 1.1,
+        duration: 150,
+        yoyo: true,
+        repeat: 1,
+      });
+      return;
+    }
+
     this.scene.tweens.add({
       targets: b.container,
       x: "-=8",
@@ -439,20 +457,15 @@ export class QuizPanel extends BasePanel {
 
     this.updateProgressTracker();
 
-    // Phase 2: Create 2×2 ribbon buttons
     const options = question.options.slice(0, 4);
-    const btnW = 460;
-    const btnH = 68;
     const colGap = 50;
     const rowGap = 22;
 
-    const leftX = -btnW / 2 - colGap / 2;
-    const rightX = btnW / 2 + colGap / 2;
+    const leftX = -this.optionButtonWidth / 2 - colGap / 2;
+    const rightX = this.optionButtonWidth / 2 + colGap / 2;
     const startY = this.questionText.y + this.questionText.displayHeight + 100;
     const topY = startY;
-    const bottomY = startY + btnH + rowGap;
-
-    // Layout matches reference: 0/2 on top row, 1/3 on bottom row.
+    const bottomY = startY + this.optionButtonHeight + rowGap;
     const positions: { x: number; y: number }[] = [
       { x: leftX, y: topY },
       { x: leftX, y: bottomY },
@@ -471,24 +484,14 @@ export class QuizPanel extends BasePanel {
   }
 
   private moveHorizontal(dir: number) {
-    if (!this._isVisible) return;
-    if (this.isProcessingAnswer) return;
-    if (this.optionButtons.length === 0) return;
-
-    // Grid mapping (matches our positions array):
-    // 0 = top-left, 1 = bottom-left, 2 = top-right, 3 = bottom-right
-    const row = this.selectedOptionIndex % 2;
-    const col = this.selectedOptionIndex >= 2 ? 1 : 0;
-
-    const nextCol = Phaser.Math.Wrap(col + dir, 0, 2);
-    const nextIndex = nextCol * 2 + row;
-    if (nextIndex < this.optionButtons.length) {
-      this.selectedOptionIndex = nextIndex;
-      this.updateSelectionVisuals();
-    }
+    this.moveSelection(0, dir);
   }
 
   private moveVertical(dir: number) {
+    this.moveSelection(dir, 0);
+  }
+
+  private moveSelection(dRow: number, dCol: number) {
     if (!this._isVisible) return;
     if (this.isProcessingAnswer) return;
     if (this.optionButtons.length === 0) return;
@@ -496,12 +499,13 @@ export class QuizPanel extends BasePanel {
     const row = this.selectedOptionIndex % 2;
     const col = this.selectedOptionIndex >= 2 ? 1 : 0;
 
-    const nextRow = Phaser.Math.Wrap(row + dir, 0, 2);
-    const nextIndex = col * 2 + nextRow;
-    if (nextIndex < this.optionButtons.length) {
-      this.selectedOptionIndex = nextIndex;
-      this.updateSelectionVisuals();
-    }
+    const nextRow = Phaser.Math.Wrap(row + dRow, 0, 2);
+    const nextCol = Phaser.Math.Wrap(col + dCol, 0, 2);
+    const nextIndex = nextCol * 2 + nextRow;
+
+    if (nextIndex >= this.optionButtons.length) return;
+    this.selectedOptionIndex = nextIndex;
+    this.updateSelectionVisuals();
   }
 
   private selectOption() {
@@ -521,11 +525,11 @@ export class QuizPanel extends BasePanel {
     if (isCorrect) {
       this.score++;
       this.answers[this.currentQuestionIndex] = "correct";
-      this.showCorrectFeedback(this.selectedOptionIndex);
     } else {
       this.answers[this.currentQuestionIndex] = "wrong";
-      this.showWrongFeedback(this.selectedOptionIndex);
     }
+
+    this.showAnswerFeedback(this.selectedOptionIndex, isCorrect);
 
     this.isProcessingAnswer = true;
 
@@ -545,7 +549,6 @@ export class QuizPanel extends BasePanel {
     this.questionCounterText.setVisible(visible);
     this.questionTitleText.setVisible(visible);
     this.questionText.setVisible(visible);
-    // optionButtons are managed via destroy/recreate per question
   }
 
   private setResultsUiVisible(visible: boolean) {
@@ -556,7 +559,6 @@ export class QuizPanel extends BasePanel {
   private showResults() {
     this.mode = "results";
 
-    // Remove answer buttons from the stage.
     this.optionButtons.forEach((b) => {
       b.container.destroy(true);
     });
