@@ -89,7 +89,7 @@
         "hint": "Procure um pedestal central que exalte a anatomia clássica."
       },
       "assets": {
-        "sprite": "fundidos"
+        "sprite": "sculpture_01"
       }
     },
     "extase_teresa": {
@@ -107,7 +107,7 @@
         "hint": "Encontre um slot com ornamentação teatral."
       },
       "assets": {
-        "sprite": "flexao"
+        "sprite": "sculpture_02"
       }
     },
     "pieta_michelangelo": {
@@ -125,7 +125,7 @@
         "hint": "Procure um local de contemplação silenciosa."
       },
       "assets": {
-        "sprite": "em_pe"
+        "sprite": "sculpture_03"
       }
     }
   },
