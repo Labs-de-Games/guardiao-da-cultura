@@ -261,36 +261,30 @@ export class QuizPanel extends BasePanel {
     height: number,
     color: number,
   ) {
-    const taper = 30;
-    const radius = 4;
+    const halfW = width / 2;
     const halfH = height / 2;
-    const bodyWidth = width - taper * 2;
+    const notchDepth = 30;
+    const notchHeight = 20;
 
     g.clear();
     g.fillStyle(color, 1);
 
-    // Main rectangular body
-    g.fillRoundedRect(-bodyWidth / 2, -halfH, bodyWidth, height, radius);
+    const points = [
+      { x: -halfW + notchDepth, y: -halfH },
+      { x: -halfW + notchDepth, y: -halfH + notchHeight },
+      { x: -halfW, y: -halfH + notchHeight },
+      { x: -halfW, y: halfH - notchHeight },
+      { x: -halfW + notchDepth, y: halfH - notchHeight },
+      { x: -halfW + notchDepth, y: halfH },
+      { x: halfW - notchDepth, y: halfH },
+      { x: halfW - notchDepth, y: halfH - notchHeight },
+      { x: halfW, y: halfH - notchHeight },
+      { x: halfW, y: -halfH + notchHeight },
+      { x: halfW - notchDepth, y: -halfH + notchHeight },
+      { x: halfW - notchDepth, y: -halfH },
+    ];
 
-    // Left tapered end (pointing outward)
-    g.fillTriangle(
-      -bodyWidth / 2,
-      -halfH,
-      -bodyWidth / 2 - taper,
-      0,
-      -bodyWidth / 2,
-      halfH,
-    );
-
-    // Right tapered end (pointing outward)
-    g.fillTriangle(
-      bodyWidth / 2,
-      -halfH,
-      bodyWidth / 2 + taper,
-      0,
-      bodyWidth / 2,
-      halfH,
-    );
+    g.fillPoints(points, true);
   }
 
   private createCheckmark(): Phaser.GameObjects.Graphics {
