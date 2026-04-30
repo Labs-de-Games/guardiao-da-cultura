@@ -76,10 +76,10 @@ export const LEVEL_ASSETS = {
     },
   ],
   CHUNKS: [
-    { key: "chunk_01", path: "artworks/pictures/chunk-0.png" },
-    { key: "chunk_02", path: "artworks/pictures/chunk-1.png" },
-    { key: "chunk_03", path: "artworks/pictures/chunk-2.png" },
-    { key: "chunk_04", path: "artworks/pictures/chunk-3.png" },
+    { key: "chunk_01", path: "artworks/photos/chunk-0.png" },
+    { key: "chunk_02", path: "artworks/photos/chunk-1.png" },
+    { key: "chunk_03", path: "artworks/photos/chunk-2.png" },
+    { key: "chunk_04", path: "artworks/photos/chunk-3.png" },
   ],
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
