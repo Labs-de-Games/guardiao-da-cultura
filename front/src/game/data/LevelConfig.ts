@@ -92,6 +92,14 @@ export const LEVEL_ASSETS = {
   },
 } as const;
 
+export const BADGE_ASSETS = [
+  { key: "badge_explorer", path: "data/badges/badge_explorer.png" },
+  { key: "badge_restorer", path: "data/badges/badge_restorer.png" },
+  { key: "badge_curator", path: "data/badges/badge_curator.png" },
+  { key: "badge_detective", path: "data/badges/badge_detective.png" },
+  { key: "badge_persistent", path: "data/badges/badge_persistent.png" },
+] as const;
+
 export const PHASE_SETTINGS = {
   TITLE: LEVEL_REGISTRY.level_01.title,
   MAX_STARS: LEVEL_REGISTRY.level_01.maxStars,

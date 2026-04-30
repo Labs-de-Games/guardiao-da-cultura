@@ -4,6 +4,7 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
 import { SceneNames } from "../constants/SceneNames";
 import {
+  BADGE_ASSETS,
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
@@ -24,6 +25,7 @@ import { NPC_ANIMS } from "../objects/NpcConfig";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
+import { BadgeSystem } from "../systems/BadgeSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
@@ -51,6 +53,7 @@ export class Game extends Scene {
   private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
   public placeholderSystem!: PlaceholderSystem;
+  public badgeSystem!: BadgeSystem;
   public mechanicsManager!: MechanicsManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
@@ -100,6 +103,10 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
     LEVEL_ASSETS.CHUNKS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+
+    BADGE_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -205,6 +212,10 @@ export class Game extends Scene {
 
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
+
+    this.badgeSystem = new BadgeSystem(this);
+    this.badgeSystem.initialize();
+
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PictureMechanicHandler());
 
@@ -231,6 +242,16 @@ export class Game extends Scene {
       (payload: string | { infoKey: string }) => {
         const infoKey = typeof payload === "string" ? payload : payload.infoKey;
         this.questManager.collectInfo(infoKey);
+
+        // Badge: Detetive
+        if (
+          infoKey.toLowerCase().includes("secret") ||
+          infoKey.toLowerCase().includes("pista")
+        ) {
+          const currentSecrets =
+            this.registry.get("secret_clues_collected") || 0;
+          this.registry.set("secret_clues_collected", currentSecrets + 1);
+        }
       },
     );
 
@@ -473,6 +494,10 @@ export class Game extends Scene {
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
+
+        // Badge: Explorador
+        const currentInspected = this.registry.get("objects_inspected") || 0;
+        this.registry.set("objects_inspected", currentInspected + 1);
         const payload = item.getData("payload");
         const opinion = payload?.educational?.opinion;
 
@@ -500,6 +525,7 @@ export class Game extends Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
+      this.badgeSystem.destroy();
     });
 
     this.setupCameras();
@@ -538,6 +564,20 @@ export class Game extends Scene {
             (score: number) => {
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
+
+              const npc = this.npcs.find((n) => {
+                const ent = n as unknown as INpcEntity;
+                return ent.config && ent.config.missionId === missionId;
+              });
+              console.log(
+                `[Game] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
+              );
+
+              // Badge: Curador
+              if (isSuccess) {
+                console.log(`[Game] Setting quiz_perfect_score = 1`);
+                this.registry.set("quiz_perfect_score", 1);
+              }
 
               const npc = this.npcs.find((n) => {
                 const ent = n as unknown as INpcEntity;
@@ -626,7 +666,7 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, _delta: number) {}
+  update(_time: number, _delta: number) { }
 
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
@@ -639,6 +679,11 @@ export class Game extends Scene {
     const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
 
     if (result.snapped) {
+      // Badge: Restaurador
+      const currentFlawless =
+        this.registry.get("puzzles_solved_flawlessly") || 0;
+      this.registry.set("puzzles_solved_flawlessly", currentFlawless + 1);
+
       this.events.emit(
         GameEvents.SHOW_DIALOGUE_REQUEST,
         sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
