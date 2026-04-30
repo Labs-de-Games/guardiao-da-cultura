@@ -48,15 +48,15 @@ export const LEVEL_ASSETS = {
   MAP: LEVEL_REGISTRY.level_01.map,
   SCULPTURES: [
     {
-      key: "fundidos",
+      key: "sculpture_01",
       path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
     },
     {
-      key: "flexao",
+      key: "sculpture_02",
       path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
     },
     {
-      key: "em_pe",
+      key: "sculpture_03",
       path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
     },
   ],
