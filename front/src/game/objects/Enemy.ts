@@ -6,7 +6,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   isDead: boolean = false;
 
   static preload(scene: Phaser.Scene) {
-    scene.load.spritesheet("enemy_walking", "Rat-DarkGrey-Walk.png", {
+    scene.load.spritesheet("enemy_walking", "animals/rat-walk.png", {
       frameWidth: 32,
       frameHeight: 32,
     });

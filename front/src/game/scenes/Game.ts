@@ -116,7 +116,7 @@ export class Game extends Scene {
       this.load.json(`messages_${index}`, path);
     });
 
-    this.load.spritesheet("sparkle", "sparkle.png", {
+    this.load.spritesheet("sparkle", "misc/sparkle.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
