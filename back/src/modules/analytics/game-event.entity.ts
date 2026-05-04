@@ -12,7 +12,7 @@ export class GameEvent {
   id!: string;
 
   @Column({ nullable: true })
-  userId!: string | null;
+  userId?: string;
 
   @Column({
     type: "enum",
