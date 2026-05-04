@@ -11,10 +11,10 @@ export const NPC_ASSETS = {
     frameHeight: 48,
   },
   GIVING_STAR_SPRITESHEET: {
-    key: "npc_giving_star", // Changed to avoid collision with generic 'npc' key
-    path: "npc-giving-star.png",
-    frameWidth: 64,
-    frameHeight: 64,
+    key: "npc_giving_star",
+    path: "npcs/04_npc_female/idle.png", // Fallback pois o giving-star foi deletado
+    frameWidth: 48,
+    frameHeight: 48,
   },
 } as const;
 
@@ -29,7 +29,7 @@ export const NPC_ANIMS = {
   GIVING_STAR: {
     key: "npc_giving_star_anim", // Changed for clarity
     spritesheet: NPC_ASSETS.GIVING_STAR_SPRITESHEET.key,
-    frames: { start: 0, end: 9 },
+    frames: { start: 0, end: 3 },
     frameRate: 9,
     repeat: 0,
   },

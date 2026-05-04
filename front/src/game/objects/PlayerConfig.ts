@@ -17,9 +17,9 @@ export const PLAYER_ASSETS = {
   },
   INSPECT_SPRITESHEET: {
     key: "player_inspect",
-    path: "player-inspect.png",
-    frameWidth: 32,
-    frameHeight: 32,
+    path: "player/animations/walking.png", // Fallback pois o inspect foi deletado
+    frameWidth: 48,
+    frameHeight: 48,
   },
   JUMP_SPRITESHEET: {
     key: "player_jump",
