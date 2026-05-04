@@ -21,7 +21,6 @@ import type { InteractableItem } from "../objects/interactables/InteractableItem
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
-import { NPC_ANIMS } from "../objects/NpcConfig";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
@@ -215,6 +214,10 @@ export class Game extends Scene {
 
     this.badgeSystem = new BadgeSystem(this);
     this.badgeSystem.initialize();
+
+    // Reset de flags de badge para a nova tentativa/fase
+    this.registry.set("has_failed_quiz", 0);
+    this.registry.set("quiz_solved_after_failure", 0);
 
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PictureMechanicHandler());
@@ -598,7 +601,7 @@ export class Game extends Scene {
                 this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
                 this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
 
-                npc.play(NPC_ANIMS.GIVING_STAR.key);
+                //npc.play(NPC_ANIMS.GIVING_STAR.key);
 
                 this.questManager.setPendingResult(missionId, lines);
                 this.levelManager.updateProgress();
@@ -627,6 +630,59 @@ export class Game extends Scene {
         () => {
           this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
           this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+
+          // Badge: Curador
+          if (isSuccess) {
+            console.log(`[Game] Setting quiz_perfect_score = 1`);
+            this.registry.set("quiz_perfect_score", 1);
+            this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+
+            // Badge: Persistente (Sucesso após falha)
+            if (this.registry.get("has_failed_quiz") === 1) {
+              this.registry.set("quiz_solved_after_failure", 1);
+              this.badgeSystem.checkRequirements(
+                "quiz_solved_after_failure",
+                1,
+              );
+            }
+          } else {
+            // Marca que o jogador falhou para o badge Persistente
+            this.registry.set("has_failed_quiz", 1);
+          }
+
+          const npc = this.npcs.find((n) => {
+            const ent = n as unknown as INpcEntity;
+            return ent.config && ent.config.missionId === missionId;
+          });
+
+          if (!npc) {
+            console.error(
+              `[Game] NPC não encontrado para a missão: ${missionId}`,
+            );
+            return;
+          }
+
+          const dialogues = npc.getDialogues();
+          const lines = isSuccess ? dialogues.success : dialogues.failure;
+
+          if (isSuccess) {
+            this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
+            this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+
+            this.questManager.setPendingResult(missionId, lines);
+            this.levelManager.updateProgress();
+            this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [...lines], () =>
+              this.questManager.clearPendingResult(missionId),
+            );
+          } else {
+            this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
+            this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+
+            this.questManager.setPendingResult(missionId, lines);
+            this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [...lines], () =>
+              this.questManager.clearPendingResult(missionId),
+            );
+          }
         },
       );
     } catch (error) {
