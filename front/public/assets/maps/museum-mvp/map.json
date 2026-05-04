@@ -173,8 +173,8 @@
           "type": "Npc",
           "visible": true,
           "width": 0,
-          "x": 321.479543540266,
-          "y": 231.803944371064
+          "x": 143.415309325715,
+          "y": 501.631342229924
         }
       ],
       "opacity": 1,
@@ -287,8 +287,8 @@
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 276.5,
-          "y": 235
+          "x": 88.8530696963076,
+          "y": 501.095258903212
         }
       ],
       "opacity": 1,
@@ -1061,7 +1061,7 @@
   "nextobjectid": 52,
   "orientation": "orthogonal",
   "renderorder": "right-down",
-  "tiledversion": "1.12.1",
+  "tiledversion": "1.12.0",
   "tileheight": 16,
   "tilesets": [
     {

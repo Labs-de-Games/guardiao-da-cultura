@@ -162,6 +162,15 @@ export class UIScene extends Scene {
     );
 
     gameScene.events.on(
+      GameEvents.SHOW_CONFIRMATION_REQUEST,
+      (message: string, onYes: () => void, onNo: () => void) => {
+        if (this.dialoguePanel) {
+          this.dialoguePanel.showConfirmation(message, onYes, onNo);
+        }
+      },
+    );
+
+    gameScene.events.on(
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
@@ -206,6 +215,7 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.INSPECT_MODE_TOGGLED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
       }

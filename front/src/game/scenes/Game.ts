@@ -507,6 +507,10 @@ export class Game extends Scene {
 
   public startQuiz(missionId: string) {
     try {
+      if (!this.questManager) {
+        throw new Error("QuestManager não inicializado");
+      }
+
       const npc = this.npcs.find((n) => {
         const ent = n as unknown as INpcEntity;
         return ent.config && ent.config.missionId === missionId;
@@ -524,51 +528,65 @@ export class Game extends Scene {
         return;
       }
 
-      if (!this.questManager) {
-        throw new Error("QuestManager não inicializado");
-      }
-
       this.events.emit(
-        GameEvents.SHOW_QUIZ_REQUEST,
-        questions,
-        (score: number) => {
-          const isSuccess = score >= questions.length;
+        GameEvents.SHOW_CONFIRMATION_REQUEST,
+        "Pronto para iniciar o quiz?",
+        () => {
+          this.events.emit(
+            GameEvents.SHOW_QUIZ_REQUEST,
+            questions,
+            (score: number) => {
+              const required = Math.ceil(questions.length * 0.7);
+              const isSuccess = score >= required;
 
-          const npc = this.npcs.find((n) => {
-            const ent = n as unknown as INpcEntity;
-            return ent.config && ent.config.missionId === missionId;
-          });
+              const npc = this.npcs.find((n) => {
+                const ent = n as unknown as INpcEntity;
+                return ent.config && ent.config.missionId === missionId;
+              });
 
-          if (!npc) {
-            console.error(
-              `[Game] NPC não encontrado para a missão: ${missionId}`,
-            );
-            return;
-          }
+              if (!npc) {
+                console.error(
+                  `[Game] NPC não encontrado para a missão: ${missionId}`,
+                );
+                return;
+              }
 
-          const dialogues = npc.getDialogues();
-          const lines = isSuccess ? dialogues.success : dialogues.failure;
+              const dialogues = npc.getDialogues();
+              const lines = isSuccess ? dialogues.success : dialogues.failure;
 
-          if (isSuccess) {
-            this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-            this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+              if (isSuccess) {
+                this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
+                this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
 
-            npc.play(NPC_ANIMS.GIVING_STAR.key);
+                npc.play(NPC_ANIMS.GIVING_STAR.key);
 
-            this.questManager.setPendingResult(missionId, lines);
-            this.levelManager.updateProgress();
-            this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [...lines], () =>
-              this.questManager.clearPendingResult(missionId),
-            );
-          } else {
-            this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
-            this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+                this.questManager.setPendingResult(missionId, lines);
+                this.levelManager.updateProgress();
+                this.events.emit(
+                  GameEvents.SHOW_DIALOGUE_REQUEST,
+                  [...lines],
+                  () => this.questManager.clearPendingResult(missionId),
+                );
+              } else {
+                this.questManager.setStatus(
+                  missionId,
+                  QuestStatus.READY_FOR_QUIZ,
+                );
+                this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
 
-            this.questManager.setPendingResult(missionId, lines);
-            this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [...lines], () =>
-              this.questManager.clearPendingResult(missionId),
-            );
-          }
+                this.questManager.setPendingResult(missionId, lines);
+                this.events.emit(
+                  GameEvents.SHOW_DIALOGUE_REQUEST,
+                  [...lines],
+                  () => this.questManager.clearPendingResult(missionId),
+                );
+              }
+            },
+          );
+        },
+        () => {
+          this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
+          this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
         },
       );
     } catch (error) {
