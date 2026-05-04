@@ -27,11 +27,11 @@ export class UserProgress {
   @Column({ default: 0 })
   totalStars!: number;
 
-  @Column({ type: "jsonb", default: {} })
-  completedLevels!: Record<string, unknown>;
+  @Column({ type: "jsonb", default: "{}" })
+  completedLevels = "{}";
 
-  @Column({ type: "jsonb", default: {} })
-  clues!: Record<string, unknown>;
+  @Column({ type: "jsonb", default: "{}" })
+  clues = "{}";
 
   @CreateDateColumn()
   createdAt!: Date;

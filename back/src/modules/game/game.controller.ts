@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from "@nestjs/common";
 import type { GameEventPayload } from "../../shared/events/game-events";
-import type { GameService } from "./game.service";
+import { GameService } from "./game.service";
 
 @Controller("events")
 export class GameController {

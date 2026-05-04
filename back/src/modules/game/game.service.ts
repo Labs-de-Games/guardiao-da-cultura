@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { EventEmitter2 } from "@nestjs/event-emitter";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import type { GameEventPayload } from "../../shared/events/game-events";
 
 @Injectable()
