@@ -30,9 +30,9 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     initialGrayscale: 0.82,
     map: {
       key: "map",
-      json: "map_v0/map.json",
+      json: "maps/museum-mvp/map.json",
       tileset: "tiles",
-      tilesetImg: "map_v0/spritesheet.png",
+      tilesetImg: "maps/museum-mvp/spritesheet.png",
     },
     data: {
       works: ["data/levels/level_01/works.json"],
@@ -47,25 +47,43 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
 export const LEVEL_ASSETS = {
   MAP: LEVEL_REGISTRY.level_01.map,
   SCULPTURES: [
-    { key: "sprite_01", path: "sculptures/sprite_01.png" },
-    { key: "sprite_02", path: "sculptures/sprite_02.png" },
-    { key: "sprite_03", path: "sculptures/sprite_03.png" },
+    {
+      key: "sculpture_01",
+      path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
+    },
+    {
+      key: "sculpture_02",
+      path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
+    },
+    {
+      key: "sculpture_03",
+      path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
+    },
   ],
   PAINTINGS: [
-    { key: "painting_01", path: "paintings/painting01.png" },
-    { key: "painting_02", path: "paintings/painting02.png" },
-    { key: "painting_03", path: "paintings/painting03.png" },
-    { key: "painting_04", path: "paintings/painting04.png" },
+    {
+      key: "painting_01",
+      path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi.png",
+    },
+    { key: "painting_02", path: "artworks/paintings/abdiasn_oke_oxossi.png" },
+    {
+      key: "painting_03",
+      path: "artworks/paintings/abdiasn_oxum_em_extase.png",
+    },
+    {
+      key: "painting_04",
+      path: "artworks/paintings/abdiasn_xango_rodrigues_alves.png",
+    },
   ],
   CHUNKS: [
-    { key: "chunk_01", path: "pictures/chunk_1.png" },
-    { key: "chunk_02", path: "pictures/chunk_2.png" },
-    { key: "chunk_03", path: "pictures/chunk_3.png" },
-    { key: "chunk_04", path: "pictures/chunk_4.png" },
+    { key: "chunk_01", path: "artworks/photos/chunk-0.png" },
+    { key: "chunk_02", path: "artworks/photos/chunk-1.png" },
+    { key: "chunk_03", path: "artworks/photos/chunk-2.png" },
+    { key: "chunk_04", path: "artworks/photos/chunk-3.png" },
   ],
   OTHERS: [
-    { key: "exclamation", path: "exclamation.png" },
-    { key: "star", path: "star.png" },
+    { key: "exclamation", path: "misc/exclamation.png" },
+    { key: "star", path: "misc/star.png" },
     { key: "inspect_example", path: "inspect_example.png" },
   ],
   CONTENT: {
