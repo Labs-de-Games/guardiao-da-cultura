@@ -1,11 +1,25 @@
 import type { Scene } from "phaser";
-import {
-  type BadgeConfig,
-  fetchBadges,
-  unlockBadgeOnServer,
-} from "../../lib/badgesApi";
+import { fetchBadges, unlockBadgeOnServer } from "../../lib/badgesApi";
 import { GameEvents } from "../constants/GameEvents";
+import type { BadgeCondition, BadgeConfig } from "../types/BadgeTypes";
 
+/**
+ * Strategy handlers for different comparison conditions.
+ */
+const CONDITION_HANDLERS: Record<
+  string,
+  (val: number, goal: number) => boolean
+> = {
+  ">=": (val, goal) => val >= goal,
+  "<=": (val, goal) => val <= goal,
+  "==": (val, goal) => val === goal,
+  ">": (val, goal) => val > goal,
+  "<": (val, goal) => val < goal,
+};
+
+/**
+ * BadgeSystem manages the detection and unlocking of achievements based on game statistics.
+ */
 export class BadgeSystem {
   private scene: Scene;
   private badges: BadgeConfig[] = [];
@@ -18,57 +32,45 @@ export class BadgeSystem {
     this.scene.registry.events.on("changedata", this.onRegistryChange, this);
   }
 
+  /**
+   * Loads badges configuration and synchronizes initial state.
+   */
   public async initialize() {
     try {
       this.badges = await fetchBadges();
+
+      // Re-check existing registry values for all badge stats in case they were set before init
+      this.badges.forEach((badge) => {
+        const currentValue = this.scene.registry.get(badge.stat_required);
+        if (typeof currentValue === "number") {
+          this.checkRequirements(badge.stat_required, currentValue);
+        }
+      });
     } catch (e) {
-      console.error("[BadgeSystem] Error fetching badges", e);
+      console.error("[BadgeSystem] Error initializing badges", e);
     }
   }
 
   private onRegistryChange(_parent: unknown, key: string, value: unknown) {
-    console.log(`[BadgeSystem] Registry changed: ${key} = ${value}`);
-    this.checkRequirements(key, value);
+    if (typeof value === "number") {
+      this.checkRequirements(key, value);
+    }
   }
 
-  private checkRequirements(statName: string, value: unknown) {
-    const numericValue = typeof value === "number" ? value : 0;
-    console.log(`[BadgeSystem] Checking stat: ${statName} = ${numericValue}`);
+  /**
+   * Validates if any badge requirements are met for a given statistic change.
+   */
+  public checkRequirements(statName: string, numericValue: number) {
     for (const badge of this.badges) {
-      if (
-        badge.stat_required === statName &&
-        !this.unlockedBadges.has(badge.id)
-      ) {
-        console.log(
-          `[BadgeSystem] Found matching badge: ${badge.id}, goal: ${badge.goal_value}, condition: ${badge.condition}`,
-        );
-        let conditionMet = false;
+      const isCorrectStat = badge.stat_required === statName;
+      const isNotUnlocked = !this.unlockedBadges.has(badge.id);
 
-        switch (badge.condition) {
-          case ">=":
-            conditionMet = numericValue >= badge.goal_value;
-            break;
-          case "<=":
-            conditionMet = numericValue <= badge.goal_value;
-            break;
-          case "==":
-            conditionMet = numericValue === badge.goal_value;
-            break;
-          case ">":
-            conditionMet = numericValue > badge.goal_value;
-            break;
-          case "<":
-            conditionMet = numericValue < badge.goal_value;
-            break;
-        }
+      if (isCorrectStat && isNotUnlocked) {
+        const handler = CONDITION_HANDLERS[badge.condition];
 
-        if (conditionMet) {
-          console.log(
-            `[BadgeSystem] Condition met! Unlocking badge: ${badge.id}`,
-          );
+        if (handler && handler(numericValue, badge.goal_value)) {
+          console.log(`[BadgeSystem] Condition met for: ${badge.id}`);
           this.unlockBadge(badge);
-        } else {
-          console.log(`[BadgeSystem] Condition NOT met for badge: ${badge.id}`);
         }
       }
     }
@@ -77,28 +79,37 @@ export class BadgeSystem {
   private unlockBadge(badge: BadgeConfig) {
     this.unlockedBadges.add(badge.id);
 
-    // Save to local storage for React Gallery
-    if (typeof window !== "undefined") {
-      const unlocked = JSON.parse(
-        localStorage.getItem("unlocked_badges") || "[]",
-      );
-      if (!unlocked.includes(badge.id)) {
-        unlocked.push(badge.id);
-        localStorage.setItem("unlocked_badges", JSON.stringify(unlocked));
-      }
-      // Notify React component
-      window.dispatchEvent(
-        new CustomEvent("badge-unlocked", { detail: badge.id }),
-      );
-    }
+    // Save to local storage for React Gallery persistence
+    this.persistToLocalStorage(badge.id);
 
-    // Emit event to show visual feedback
+    // Emit event for Phaser visual feedback
     this.scene.events.emit(GameEvents.SHOW_BADGE_TOAST, badge);
 
-    // Save to backend
+    // Async sync with backend
     unlockBadgeOnServer(badge.id).catch((err) => {
       console.error(`[BadgeSystem] Failed to sync unlock for ${badge.id}`, err);
     });
+  }
+
+  private persistToLocalStorage(badgeId: string) {
+    if (typeof window === "undefined") return;
+
+    try {
+      const storageKey = "unlocked_badges";
+      const unlocked = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+      if (!unlocked.includes(badgeId)) {
+        unlocked.push(badgeId);
+        localStorage.setItem(storageKey, JSON.stringify(unlocked));
+      }
+
+      // Notify React components (e.g., BadgeGallery)
+      window.dispatchEvent(
+        new CustomEvent("badge-unlocked", { detail: badgeId }),
+      );
+    } catch (e) {
+      console.error("[BadgeSystem] LocalStorage persistence error", e);
+    }
   }
 
   public destroy() {
