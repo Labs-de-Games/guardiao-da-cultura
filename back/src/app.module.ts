@@ -3,6 +3,7 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
 import { ConfigModule } from "./core/config/config.module";
 import { DatabaseModule } from "./core/database/database.module";
 import { HealthModule } from "./core/health/health.module";
+import { GameModule } from "./modules/game/game.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
@@ -11,6 +12,7 @@ import { UsersModule } from "./modules/users/users.module";
     ConfigModule,
     DatabaseModule,
     UsersModule,
+    GameModule,
     HealthModule,
   ],
   controllers: [],
