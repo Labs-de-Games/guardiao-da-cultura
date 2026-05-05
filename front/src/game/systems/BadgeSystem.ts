@@ -54,7 +54,7 @@ export class BadgeSystem {
       if (isCorrectStat && isNotUnlocked) {
         const handler = CONDITION_HANDLERS[badge.condition];
 
-        if (handler && handler(numericValue, badge.goal_value)) {
+        if (handler?.(numericValue, badge.goal_value)) {
           console.log(`[BadgeSystem] Condition met for: ${badge.id}`);
           this.unlockBadge(badge);
         }
