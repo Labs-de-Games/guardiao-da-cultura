@@ -143,6 +143,70 @@
     },
     {
       "draworder": "topdown",
+      "id": 16,
+      "name": "Interactibles",
+      "objects": [
+        {
+          "height": 0,
+          "id": 52,
+          "name": "I4",
+          "opacity": 1,
+          "point": true,
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 371.006756193177,
+          "y": 48.0440403703395
+        },
+        {
+          "height": 0,
+          "id": 53,
+          "name": "I3",
+          "opacity": 1,
+          "point": true,
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 88.0807406789557,
+          "y": 165.48502794228
+        },
+        {
+          "height": 0,
+          "id": 54,
+          "name": "I2",
+          "opacity": 1,
+          "point": true,
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 612.561514721828,
+          "y": 229.543748436066
+        },
+        {
+          "height": 0,
+          "id": 55,
+          "name": "I1",
+          "opacity": 1,
+          "point": true,
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 459.087496872133,
+          "y": 496.455083826841
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
       "id": 10,
       "name": "NPCS",
       "objects": [
@@ -1057,11 +1121,11 @@
       "y": 0
     }
   ],
-  "nextlayerid": 16,
-  "nextobjectid": 52,
+  "nextlayerid": 17,
+  "nextobjectid": 56,
   "orientation": "orthogonal",
   "renderorder": "right-down",
-  "tiledversion": "1.12.0",
+  "tiledversion": "1.12.1",
   "tileheight": 16,
   "tilesets": [
     {

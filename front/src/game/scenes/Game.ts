@@ -15,6 +15,7 @@ import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHan
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
+import { InteractiveButton } from "../objects/InteractiveButton";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { DraggableItem } from "../objects/interactables/DraggableItem";
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
@@ -374,6 +375,29 @@ export class Game extends Scene {
     this.player.setDepth(20);
     this.player.stairsLayer = this.stairsLayer;
 
+    // MVP scoring: 4 silent interactibles (no on-screen message), sourced from
+    // Tiled object layer "Interactibles" (points I1..I4).
+    const interactiblesLayer = mapData.objectLayers.Interactibles;
+    if (interactiblesLayer?.objects?.length) {
+      for (const obj of interactiblesLayer.objects) {
+        const x = (obj.x ?? 0) * 6;
+        const y = (obj.y ?? 0) * 6;
+        const btn = new InteractiveButton(this, x, y, {
+          // Prevent InteractionComponent from auto-showing a dialogue.
+          dialogueLines: [],
+          onInteract: () => {
+            this.scoreManager.recordInteractible();
+            console.log(
+              "[ScoreManager] interactible used",
+              this.scoreManager.getPayload(),
+            );
+            btn.destroy();
+          },
+        });
+        btn.setPlayerTracking(this.player);
+      }
+    }
+
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
@@ -554,6 +578,13 @@ export class Game extends Scene {
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
             (score: number) => {
+              // Scoring: latest attempt wins (overwrite prior result).
+              this.scoreManager.recordQuizResult(score, questions.length);
+              console.log(
+                "[ScoreManager] quiz completed",
+                this.scoreManager.getPayload(),
+              );
+
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
 
