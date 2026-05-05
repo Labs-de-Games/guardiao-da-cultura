@@ -78,7 +78,7 @@ sequenceDiagram
 
     F-->>U: Render authenticated game page
 
-    Note over U,F,B: Later: Access token expires (15min)
+    Note right of B: Access token expires (15min)
     F->>B: GET /api/v1/auth/me<br/>Bearer: <expired_token>
     B-->>F: 401 Unauthorized
 
