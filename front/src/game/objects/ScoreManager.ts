@@ -24,7 +24,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
   private readonly startedAt: IsoTimestamp;
   private updatedAt: IsoTimestamp;
 
-  private floors: FloorScore[];
+  private floors: [FloorScore, FloorScore, FloorScore];
   private interactibles: InteractiblesScore;
   private quiz: QuizScore;
   private events: ScoringEventRecord[];
@@ -35,18 +35,21 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.floorsTotal = options.floorsTotal ?? 3;
     this.interactiblesTotal = options.interactiblesTotal ?? 4;
 
+    if (this.floorsTotal !== 3) {
+      throw new Error(
+        `[ScoreManager] MVP expects floorsTotal=3, got ${this.floorsTotal}`,
+      );
+    }
+
     this.startedAt = this.nowIso();
     this.updatedAt = this.startedAt;
 
-    this.floors = Array.from({ length: this.floorsTotal }, (_v, i) => {
-      const floor: FloorScore = {
-        floorIndex: i,
-        errors: 0,
-        quartersEarned: 0,
-        completedAt: null,
-      };
-      return floor;
-    });
+    this.floors = [0, 1, 2].map((i) => ({
+      floorIndex: i,
+      errors: 0,
+      quartersEarned: 0,
+      completedAt: null,
+    })) as [FloorScore, FloorScore, FloorScore];
 
     this.interactibles = {
       total: this.interactiblesTotal,
@@ -75,12 +78,13 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     const occurredAt = this.touch();
     this.events.push({ type: "floor-error", floorIndex, occurredAt });
 
+    const payload = this.getPayload();
     this.emit(ScoringEvents.FLOOR_ERROR_RECORDED, {
       floorIndex,
       errors: floor.errors,
-      payload: this.getPayload(),
+      payload,
     });
-    this.emit(ScoringEvents.SCORE_UPDATED, this.getPayload());
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
   completeFloor(floorIndex: number) {
@@ -100,13 +104,14 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       occurredAt: floor.completedAt,
     });
 
+    const payload = this.getPayload();
     this.emit(ScoringEvents.FLOOR_COMPLETED, {
       floorIndex,
       errors: floor.errors,
       quartersEarned,
-      payload: this.getPayload(),
+      payload,
     });
-    this.emit(ScoringEvents.SCORE_UPDATED, this.getPayload());
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
   recordInteractible() {
@@ -123,11 +128,12 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       occurredAt: this.interactibles.lastInteractionAt,
     });
 
-    this.emit(ScoringEvents.INTERACTABLE_USED, {
+    const payload = this.getPayload();
+    this.emit(ScoringEvents.INTERACTIBLE_USED, {
       interactionsCount: this.interactibles.interactionsCount,
-      payload: this.getPayload(),
+      payload,
     });
-    this.emit(ScoringEvents.SCORE_UPDATED, this.getPayload());
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
   recordQuizResult(correctAnswers: number, totalQuestions: number) {
@@ -152,27 +158,23 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       occurredAt: this.quiz.completedAt,
     });
 
+    const payload = this.getPayload();
     this.emit(ScoringEvents.QUIZ_COMPLETED, {
       correctAnswers: correct,
       totalQuestions: total,
       accuracyPercent,
       quartersEarned,
-      payload: this.getPayload(),
+      payload,
     });
-    this.emit(ScoringEvents.SCORE_UPDATED, this.getPayload());
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
   getPayload(): ScoringPayload {
-    const floors = this.floors as unknown as [
-      FloorScore,
-      FloorScore,
-      FloorScore,
-    ];
     const totalQuarters = this.computeTotalQuarters();
     return {
       levelId: this.levelId,
       startedAt: this.startedAt,
-      floors,
+      floors: this.floors,
       interactibles: { ...this.interactibles },
       quiz: { ...this.quiz },
       totalQuarters,

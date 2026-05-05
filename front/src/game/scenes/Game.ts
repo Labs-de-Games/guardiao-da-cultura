@@ -138,6 +138,12 @@ export class Game extends Scene {
       frameWidth: 32,
       frameHeight: 32,
     });
+
+    // UI stars (quarter fractions) for quiz results.
+    this.load.image("ui_star_full", "ui/stars/star_full.png");
+    this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
+    this.load.image("ui_star_2q", "ui/stars/star_two_quarter.png");
+    this.load.image("ui_star_1q", "ui/stars/star_one_quarter.png");
   }
 
   private processModularData() {
@@ -712,6 +718,10 @@ export class Game extends Scene {
 
   public completePhotoFloor() {
     this.completeFloor(this.scoringFloors.photo);
+  }
+
+  public getScoringPayload(): ScoringPayload {
+    return this.scoreManager.getPayload();
   }
 
   private handleItemDropped(item: DraggableItem) {
