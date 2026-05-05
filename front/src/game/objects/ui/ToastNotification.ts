@@ -55,6 +55,14 @@ export class ToastNotification extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
+  public destroy(fromScene?: boolean) {
+    if (this.hideTimer) {
+      this.hideTimer.remove();
+      this.hideTimer = null;
+    }
+    super.destroy(fromScene);
+  }
+
   /**
    * Adjusts the notification positioning for responsiveness.
    */
