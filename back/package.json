@@ -13,8 +13,14 @@
     "@nestjs/common": "latest",
     "@nestjs/core": "latest",
     "@nestjs/event-emitter": "^3.1.0",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "latest",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
+    "cookie-parser": "^1.4.7",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",
     "reflect-metadata": "latest",
     "rxjs": "latest",
@@ -24,7 +30,9 @@
   "devDependencies": {
     "@biomejs/biome": "latest",
     "@nestjs/testing": "latest",
+    "@types/cookie-parser": "^1.4.10",
     "@types/node": "latest",
+    "@types/passport-jwt": "^4.0.1",
     "typescript": "latest"
   }
 }
