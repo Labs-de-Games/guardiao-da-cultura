@@ -47,7 +47,6 @@ export class Game extends Scene {
   private levelManager!: LevelManager;
   private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
-  private isInspectTutorialOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
@@ -317,27 +316,6 @@ export class Game extends Scene {
     this.events.on(GameEvents.CONTROLS_OVERLAY_CLOSED, () => {
       this.isControlsOverlayOpen = false;
       this.checkDialogState();
-    });
-
-    this.events.on(GameEvents.INSPECT_TUTORIAL_OPENED, () => {
-      this.isInspectTutorialOpen = true;
-      if (this.player) this.player.isInDialogue = true;
-    });
-
-    this.events.on(GameEvents.INSPECT_TUTORIAL_CLOSED, () => {
-      this.isInspectTutorialOpen = false;
-      this.checkDialogState();
-    });
-
-    this.events.on("inspect-mode-toggled", (isInspecting: boolean) => {
-      this.effects.setZoom(isInspecting ? 1.8 : 1.0, 500);
-      if (this.effects.vignetteEffect) {
-        this.effects.setVignette(
-          this.effects.vignetteEffect,
-          isInspecting ? 0.6 : 0.9,
-          500,
-        );
-      }
     });
   }
 
@@ -640,7 +618,6 @@ export class Game extends Scene {
     if (
       !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
-      !this.isInspectTutorialOpen &&
       !this.isChunkSelectorOpen &&
       !this.isDialogueOpen
     ) {

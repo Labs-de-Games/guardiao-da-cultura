@@ -12,7 +12,6 @@ import { InventoryPanel } from "../objects/ui/InventoryPanel";
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
-import { TutorialOverlay } from "../objects/ui/TutorialOverlay";
 import type {
   InteractionUIData,
   MissionDef,
@@ -37,7 +36,6 @@ export class UIScene extends Scene {
   private statusPanel!: PhaseStatusPanel;
   private inventoryPanel!: InventoryPanel;
   private controlsOverlay!: ControlsOverlay;
-  private tutorialOverlay!: TutorialOverlay;
   private dialoguePanel!: DialoguePanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
@@ -83,7 +81,6 @@ export class UIScene extends Scene {
       this.missionDefs,
     );
     this.controlsOverlay = new ControlsOverlay(this);
-    this.tutorialOverlay = new TutorialOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
@@ -126,24 +123,6 @@ export class UIScene extends Scene {
     );
 
     // Overlays flow
-    gameScene.events.on(GameEvents.CONTROLS_OVERLAY_CLOSED, () => {
-      if (!this.tutorialOverlay.hasBeenShown) {
-        this.tutorialOverlay.show();
-      }
-    });
-
-    gameScene.events.on(
-      GameEvents.INSPECT_MODE_TOGGLED,
-      (isInspecting: boolean) => {
-        if (
-          isInspecting &&
-          !this.tutorialOverlay.hasBeenShown &&
-          !this.controlsOverlay.isVisible
-        ) {
-          this.tutorialOverlay.show();
-        }
-      },
-    );
 
     // Requisiçōes de UI
     gameScene.events.on(
@@ -228,7 +207,6 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.MISSION_STATUS_CHANGED);
         gameScene.events.off(GameEvents.DIALOGUE_ENDED);
         gameScene.events.off(GameEvents.CONTROLS_OVERLAY_CLOSED);
-        gameScene.events.off(GameEvents.INSPECT_MODE_TOGGLED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
@@ -271,7 +249,6 @@ export class UIScene extends Scene {
     this.statusPanel.layout(w, h);
     this.inventoryPanel.layout(w, h);
     this.controlsOverlay.layout(w, h);
-    this.tutorialOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
@@ -366,12 +343,6 @@ export class UIScene extends Scene {
       this.time.delayedCall(120, () => {
         this.toast.show("Missão concluída!\nAperte TAB para ver as relíquias");
       });
-    }
-
-    // Trigger tutorial se necessário
-    if (!this.tutorialOverlay.hasBeenShown && !this.controlsOverlay.isVisible) {
-      // Apenas mostra se for o momento certo (após controles iniciais)
-      // Nota: lógica original era no onComplete dos controles.
     }
   }
 
