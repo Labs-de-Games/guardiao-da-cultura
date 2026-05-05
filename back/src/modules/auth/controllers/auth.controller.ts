@@ -1,0 +1,217 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import type { Request, Response } from "express";
+import { ConfigService } from "../../../core/config/config.service";
+import type { User } from "../../users/user.entity";
+import { CurrentUser } from "../decorators/current-user.decorator";
+import { Public } from "../decorators/public.decorator";
+import type { AuthUserDto } from "../dto/auth-response.dto";
+import type { LoginDto } from "../dto/login.dto";
+import type { LoginConfirmDto } from "../dto/login-confirm.dto";
+import type { RegisterDto } from "../dto/register.dto";
+import type { ResendVerificationDto } from "../dto/resend-verification.dto";
+import type { VerifyEmailConfirmDto } from "../dto/verify-email-confirm.dto";
+import { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
+import { JwtAuthGuard } from "../guards/jwt-auth.guard";
+import { AuthService } from "../services/auth.service";
+import { MagicLinkService } from "../services/magic-link.service";
+import { TokenService } from "../services/token.service";
+
+@Controller("auth")
+export class AuthController {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenService: TokenService,
+    private readonly magicLinkService: MagicLinkService,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  private getJtiFromHeader(req: Request): string | undefined {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) return undefined;
+    const token = authHeader.slice(7);
+    try {
+      const payload = this.jwtService.decode(token);
+      if (
+        payload &&
+        typeof payload === "object" &&
+        "jti" in payload &&
+        typeof payload.jti === "string"
+      ) {
+        return payload.jti;
+      }
+    } catch {
+      // ignore decode errors
+    }
+    return undefined;
+  }
+
+  @Public()
+  @Post("register")
+  async register(@Body() dto: RegisterDto): Promise<{ message: string }> {
+    return this.authService.register(dto);
+  }
+
+  @Public()
+  @Post("login")
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    return this.authService.login(dto, res);
+  }
+
+  @Public()
+  @Get("login")
+  async loginPreview(
+    @Query("token") rawToken: string,
+    @Query("nonce") nonce: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    if (!rawToken || !nonce) {
+      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
+      return;
+    }
+
+    const cookieData = this.authService.readLoginAttemptCookie(req);
+    if (!cookieData || cookieData.nonce !== nonce) {
+      res.redirect(
+        `${this.configService.frontendUrl}/login?error=wrong_device`,
+      );
+      return;
+    }
+
+    const token = await this.magicLinkService.validateTokenPreview(
+      rawToken,
+      MagicLinkTokenType.MagicLink,
+    );
+    if (!token) {
+      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
+      return;
+    }
+
+    res.redirect(
+      `${this.configService.frontendUrl}/auth/confirm-login?token=${rawToken}`,
+    );
+  }
+
+  @Public()
+  @Post("login/confirm")
+  async confirmLogin(
+    @Body() dto: LoginConfirmDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ redirectTo: string }> {
+    return this.authService.confirmMagicLinkLogin(dto.token, req, res);
+  }
+
+  @Public()
+  @Post("logout")
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const refreshToken = req.cookies?.refresh_token as string | undefined;
+    const jti = this.getJtiFromHeader(req);
+    return this.authService.logout(refreshToken, jti, res);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("logout-all")
+  async logoutAll(
+    @CurrentUser() user: User & { jti?: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const refreshToken = req.cookies?.refresh_token as string | undefined;
+    await this.authService.logoutAll(user.id, user.jti, res);
+    if (refreshToken) {
+      await this.tokenService.revokeRefreshToken(refreshToken);
+    }
+    return { message: "Logged out from all devices" };
+  }
+
+  @Public()
+  @Post("refresh")
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string }> {
+    const refreshToken = req.cookies?.refresh_token as string | undefined;
+    if (!refreshToken) {
+      throw new UnauthorizedException("No refresh token provided");
+    }
+
+    const result = await this.tokenService.rotateRefreshToken(refreshToken);
+    this.authService.setAuthCookies(res, result.refreshToken);
+    return { accessToken: result.accessToken };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("me")
+  async me(@CurrentUser() user: User): Promise<AuthUserDto> {
+    return {
+      id: user.id,
+      email: user.email,
+      nickname: user.nickname,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+    };
+  }
+
+  @Public()
+  @Get("verify-email")
+  async verifyEmailPreview(
+    @Query("token") rawToken: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    if (!rawToken) {
+      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
+      return;
+    }
+
+    const token = await this.magicLinkService.validateTokenPreview(
+      rawToken,
+      MagicLinkTokenType.Verification,
+    );
+    if (!token) {
+      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
+      return;
+    }
+
+    res.redirect(
+      `${this.configService.frontendUrl}/auth/confirm-verification?token=${rawToken}`,
+    );
+  }
+
+  @Public()
+  @Post("verify-email/confirm")
+  async confirmVerifyEmail(
+    @Body() dto: VerifyEmailConfirmDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ redirectTo: string }> {
+    return this.authService.confirmVerifyEmail(dto.token, res);
+  }
+
+  @Public()
+  @Post("resend-verification")
+  async resendVerification(
+    @Body() dto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
+    return this.authService.resendVerificationEmail(dto.email);
+  }
+}
