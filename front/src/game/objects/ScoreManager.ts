@@ -185,7 +185,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
 
   private computeTotalQuarters(): number {
     const floorsQuarters = this.floors.reduce(
-      (sum, f) => sum + (f.quartersEarned || 0),
+      (sum, floorScore) => sum + (floorScore.quartersEarned || 0),
       0,
     );
     return (
