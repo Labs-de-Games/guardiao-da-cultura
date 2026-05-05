@@ -6,7 +6,6 @@ import type { NpcConfig } from "../objects/Npc";
  */
 export interface IPlayerState {
   isInDialogue: boolean;
-  isInspecting: boolean;
 }
 
 /**
