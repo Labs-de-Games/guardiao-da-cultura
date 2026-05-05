@@ -1,5 +1,46 @@
 # Authentication & Authorization Implementation Plan
 
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Diagrams](#diagrams)
+  - [Magic Link Login Flow (Sequence)](#1-magic-link-login-flow-sequence)
+  - [Registration Flow (Sequence)](#2-registration-flow-sequence)
+  - [Database Schema (ER Diagram)](#3-database-schema-er-diagram)
+  - [User Authentication State Machine](#4-user-authentication-state-machine)
+  - [Next.js Middleware Route Protection (Flowchart)](#5-nextjs-middleware-route-protection-flowchart)
+- [Phase 1: Backend — Dependencies & Config](#phase-1-backend--dependencies--config)
+- [Phase 2: Backend — Database Schema & Migrations](#phase-2-backend--database-schema--migrations)
+- [Phase 3: Backend — Auth Module](#phase-3-backend--auth-module)
+- [Phase 4: Backend — Admin Module](#phase-4-backend--admin-module)
+- [Phase 5: Backend — Integration](#phase-5-backend--integration)
+- [Phase 6: Frontend — Dependencies & Config](#phase-6-frontend--dependencies--config)
+- [Phase 7: Frontend — Auth Types & Validation](#phase-7-frontend--auth-types--validation)
+- [Phase 8: Frontend — API Client & Auth Context](#phase-8-frontend--api-client--auth-context)
+- [Phase 9: Frontend — Auth Pages (MUI)](#phase-9-frontend--auth-pages-mui)
+- [Phase 10: Frontend — Middleware & Route Protection](#phase-10-frontend--middleware--route-protection)
+- [Phase 11: Testing](#phase-11-testing)
+- [Implementation Order](#implementation-order)
+- [Verification](#verification)
+- [Architecture & Trade-offs](#architecture--trade-offs)
+  - [Passwordless Magic Link vs. Password-Based Authentication](#1-passwordless-magic-link-vs-password-based-authentication)
+  - [Device-Bound Magic Links vs. Universal Magic Links](#2-device-bound-magic-links-vs-universal-magic-links)
+  - [Verification Link Auto-Login vs. Redirect to Login Page](#3-verification-link-auto-login-vs-redirect-to-login-page)
+  - [Access Token in Memory vs. localStorage](#4-access-token-in-memory-vs-localstorage)
+  - [`auth_status` Cookie vs. Access Token in Middleware](#5-auth_status-cookie-vs-access-token-in-middleware)
+  - [In-Memory Token Blocklist vs. Redis](#6-in-memory-token-blocklist-vs-redis)
+  - [Separate `magic_link_tokens` Table vs. Extending `refresh_tokens`](#7-separate-magic_link_tokens-table-vs-extending-refresh_tokens)
+  - [JWT Access + Refresh Cookie vs. Session Cookies](#8-jwt-access--refresh-cookie-vs-session-cookies)
+  - [Email-Based Rate Limiting Only (No IP Limit)](#9-email-based-rate-limiting-only-no-ip-limit)
+  - [Profile Immutability vs. Editable Profiles](#10-profile-immutability-vs-editable-profiles)
+  - [No Password Reset Flow](#11-no-password-reset-flow)
+  - [Cookie SameSite Strategy](#12-cookie-samesite-strategy)
+  - [Email as Immutable Identifier](#13-email-as-immutable-identifier)
+  - [Threat Model Summary](#14-threat-model-summary)
+- [Key Design Decisions](#key-design-decisions)
+
+---
+
 ## Architecture Overview
 
 **Token Strategy:** Access token (JWT, 15min) stored in JS memory + Refresh token (7d) stored in httpOnly/Secure/SameSite=Strict cookie with rotation on each use. A lightweight `auth_status` cookie (non-httpOnly, SameSite=Lax) enables Next.js middleware route protection.
