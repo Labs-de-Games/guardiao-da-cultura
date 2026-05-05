@@ -215,7 +215,6 @@ export class Game extends Scene {
     this.badgeSystem = new BadgeSystem(this);
     this.badgeSystem.initialize();
 
-    // Reset de flags de badge para a nova tentativa/fase
     this.registry.set("has_failed_quiz", 0);
     this.registry.set("quiz_solved_after_failure", 0);
 
@@ -246,7 +245,6 @@ export class Game extends Scene {
         const infoKey = typeof payload === "string" ? payload : payload.infoKey;
         this.questManager.collectInfo(infoKey);
 
-        // Badge: Detetive
         if (
           infoKey.toLowerCase().includes("secret") ||
           infoKey.toLowerCase().includes("pista")
@@ -498,7 +496,6 @@ export class Game extends Scene {
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
 
-        // Badge: Explorador
         const currentInspected = this.registry.get("objects_inspected") || 0;
         this.registry.set("objects_inspected", currentInspected + 1);
         const payload = item.getData("payload");
@@ -568,18 +565,23 @@ export class Game extends Scene {
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
 
-              const npc = this.npcs.find((n) => {
-                const ent = n as unknown as INpcEntity;
-                return ent.config && ent.config.missionId === missionId;
-              });
               console.log(
                 `[Game] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
               );
 
-              // Badge: Curador
               if (isSuccess) {
-                console.log(`[Game] Setting quiz_perfect_score = 1`);
                 this.registry.set("quiz_perfect_score", 1);
+                this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+
+                if (this.registry.get("has_failed_quiz") === 1) {
+                  this.registry.set("quiz_solved_after_failure", 1);
+                  this.badgeSystem.checkRequirements(
+                    "quiz_solved_after_failure",
+                    1,
+                  );
+                }
+              } else {
+                this.registry.set("has_failed_quiz", 1);
               }
 
               const npc = this.npcs.find((n) => {
@@ -599,90 +601,31 @@ export class Game extends Scene {
 
               if (isSuccess) {
                 this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-                this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-                //npc.play(NPC_ANIMS.GIVING_STAR.key);
-
-                this.questManager.setPendingResult(missionId, lines);
-                this.levelManager.updateProgress();
-                this.events.emit(
-                  GameEvents.SHOW_DIALOGUE_REQUEST,
-                  [...lines],
-                  () => this.questManager.clearPendingResult(missionId),
-                );
               } else {
                 this.questManager.setStatus(
                   missionId,
                   QuestStatus.READY_FOR_QUIZ,
                 );
-                this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-                this.questManager.setPendingResult(missionId, lines);
-                this.events.emit(
-                  GameEvents.SHOW_DIALOGUE_REQUEST,
-                  [...lines],
-                  () => this.questManager.clearPendingResult(missionId),
-                );
               }
+
+              this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+              this.questManager.setPendingResult(missionId, lines);
+
+              if (isSuccess) {
+                this.levelManager.updateProgress();
+              }
+
+              this.events.emit(
+                GameEvents.SHOW_DIALOGUE_REQUEST,
+                [...lines],
+                () => this.questManager.clearPendingResult(missionId),
+              );
             },
           );
         },
         () => {
           this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
           this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-          // Badge: Curador
-          if (isSuccess) {
-            console.log(`[Game] Setting quiz_perfect_score = 1`);
-            this.registry.set("quiz_perfect_score", 1);
-            this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
-
-            // Badge: Persistente (Sucesso após falha)
-            if (this.registry.get("has_failed_quiz") === 1) {
-              this.registry.set("quiz_solved_after_failure", 1);
-              this.badgeSystem.checkRequirements(
-                "quiz_solved_after_failure",
-                1,
-              );
-            }
-          } else {
-            // Marca que o jogador falhou para o badge Persistente
-            this.registry.set("has_failed_quiz", 1);
-          }
-
-          const npc = this.npcs.find((n) => {
-            const ent = n as unknown as INpcEntity;
-            return ent.config && ent.config.missionId === missionId;
-          });
-
-          if (!npc) {
-            console.error(
-              `[Game] NPC não encontrado para a missão: ${missionId}`,
-            );
-            return;
-          }
-
-          const dialogues = npc.getDialogues();
-          const lines = isSuccess ? dialogues.success : dialogues.failure;
-
-          if (isSuccess) {
-            this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-            this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-            this.questManager.setPendingResult(missionId, lines);
-            this.levelManager.updateProgress();
-            this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [...lines], () =>
-              this.questManager.clearPendingResult(missionId),
-            );
-          } else {
-            this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
-            this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-            this.questManager.setPendingResult(missionId, lines);
-            this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [...lines], () =>
-              this.questManager.clearPendingResult(missionId),
-            );
-          }
         },
       );
     } catch (error) {
@@ -722,7 +665,7 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, _delta: number) { }
+  update(_time: number, _delta: number) {}
 
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
