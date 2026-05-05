@@ -25,6 +25,7 @@ import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { BadgeSystem } from "../systems/BadgeSystem";
+import { ScoreManager } from "../objects/ScoreManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
@@ -42,6 +43,7 @@ export class Game extends Scene {
   rat!: Enemy;
   npcs: Npc[] = [];
   questManager!: QuestManager;
+  private scoreManager!: ScoreManager;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
@@ -191,6 +193,11 @@ export class Game extends Scene {
     }
 
     this.questManager = new QuestManager(MissionRequirements);
+    this.scoreManager = new ScoreManager({ levelId: this.levelId });
+    console.log(
+      "[ScoreManager] initial payload",
+      this.scoreManager.getPayload(),
+    );
     this.levelManager = new LevelManager(
       this,
       this.questManager,
