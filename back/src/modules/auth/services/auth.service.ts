@@ -1,0 +1,262 @@
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
+import type { Response } from "express";
+import { ConfigService } from "../../../core/config/config.service";
+import { EMAIL_SERVICE } from "../../../core/email/email.constants";
+import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
+import { UsersService } from "../../users/users.service";
+import type { RegisterDto } from "../dto/register.dto";
+import { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
+import { MagicLinkService } from "./magic-link.service";
+import { TokenService } from "./token.service";
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly tokenService: TokenService,
+    private readonly magicLinkService: MagicLinkService,
+    private readonly configService: ConfigService,
+    @Inject(EMAIL_SERVICE)
+    private readonly emailService: IEmailService,
+  ) {}
+
+  private signLoginAttempt(nonce: string, email: string): string {
+    const exp = Math.floor(Date.now() / 1000) + 15 * 60;
+    const payload = `${nonce}:${email}:${exp}`;
+    const signature = createHmac("sha256", this.configService.magicLinkSecret)
+      .update(payload)
+      .digest("hex");
+    return `${payload}:${signature}`;
+  }
+
+  private verifyLoginAttempt(
+    cookieValue: string,
+  ): { nonce: string; email: string } | null {
+    const parts = cookieValue.split(":");
+    if (parts.length !== 4) return null;
+    const [nonce, email, expStr, signature] = parts;
+    const exp = Number.parseInt(expStr, 10);
+    if (Number.isNaN(exp) || exp < Math.floor(Date.now() / 1000)) return null;
+
+    const payload = `${nonce}:${email}:${exp}`;
+    const expectedSig = createHmac("sha256", this.configService.magicLinkSecret)
+      .update(payload)
+      .digest("hex");
+
+    if (
+      signature.length !== expectedSig.length ||
+      !timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))
+    ) {
+      return null;
+    }
+
+    return { nonce, email };
+  }
+
+  setAuthCookies(res: Response, refreshToken: string): void {
+    const isProd = this.configService.nodeEnv === "production";
+    const maxAgeDays = 7 * 24 * 60 * 60 * 1000;
+
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "strict",
+      path: "/api/v1/auth",
+      maxAge: maxAgeDays,
+    });
+
+    res.cookie("auth_status", "authenticated", {
+      httpOnly: false,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/",
+      maxAge: maxAgeDays,
+    });
+  }
+
+  clearAuthCookies(res: Response): void {
+    res.clearCookie("refresh_token", { path: "/api/v1/auth" });
+    res.clearCookie("auth_status", { path: "/" });
+    res.clearCookie("login_attempt", { path: "/api/v1/auth" });
+  }
+
+  private setLoginAttemptCookie(
+    res: Response,
+    nonce: string,
+    email: string,
+  ): void {
+    const isProd = this.configService.nodeEnv === "production";
+    const value = this.signLoginAttempt(nonce, email);
+    res.cookie("login_attempt", value, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/api/v1/auth",
+      maxAge: 15 * 60 * 1000,
+    });
+  }
+
+  readLoginAttemptCookie(req: {
+    cookies?: Record<string, string>;
+  }): { nonce: string; email: string } | null {
+    const cookieValue = req.cookies?.login_attempt;
+    if (!cookieValue) return null;
+    return this.verifyLoginAttempt(cookieValue);
+  }
+
+  async register(dto: RegisterDto): Promise<{ message: string }> {
+    const existingUser = await this.usersService.findByEmail(dto.email);
+    if (existingUser) {
+      return { message: "Check your email" };
+    }
+
+    const user = await this.usersService.create({
+      email: dto.email,
+      nickname: dto.nickname,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      dateOfBirth: new Date(dto.dateOfBirth),
+      isEmailVerified: false,
+      isActive: true,
+    });
+
+    const { rawToken } = await this.magicLinkService.createMagicLink(
+      user.id,
+      MagicLinkTokenType.Verification,
+    );
+
+    const verificationUrl = `${this.configService.frontendUrl}/api/v1/auth/verify-email?token=${rawToken}`;
+    await this.emailService.sendVerificationEmail(dto.email, verificationUrl);
+
+    return { message: "Check your email" };
+  }
+
+  async login(
+    dto: { email: string },
+    res: Response,
+  ): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user?.isActive || !user.isEmailVerified) {
+      return { message: "Check your email" };
+    }
+
+    const nonce = randomBytes(32).toString("base64url");
+    const { rawToken } = await this.magicLinkService.createMagicLink(
+      user.id,
+      MagicLinkTokenType.MagicLink,
+      nonce,
+      this.configService.magicLinkExpirationMin,
+    );
+
+    this.setLoginAttemptCookie(res, nonce, user.email);
+
+    const magicLinkUrl = `${this.configService.frontendUrl}/api/v1/auth/login?token=${rawToken}&nonce=${nonce}`;
+    await this.emailService.sendMagicLinkEmail(user.email, magicLinkUrl);
+
+    return { message: "Check your email" };
+  }
+
+  async confirmMagicLinkLogin(
+    rawToken: string,
+    req: { cookies?: Record<string, string> },
+    res: Response,
+  ): Promise<{ redirectTo: string }> {
+    const cookieData = this.readLoginAttemptCookie(req);
+    if (!cookieData) {
+      throw new UnauthorizedException("Invalid or expired login attempt");
+    }
+
+    const token = await this.magicLinkService.validateTokenConsumption(
+      rawToken,
+      MagicLinkTokenType.MagicLink,
+    );
+    if (!token) {
+      throw new UnauthorizedException("Invalid or expired magic link");
+    }
+
+    if (token.deviceNonce !== cookieData.nonce) {
+      throw new UnauthorizedException("Invalid login attempt");
+    }
+
+    const refreshToken = await this.tokenService.generateRefreshToken(
+      token.user.id,
+    );
+    this.setAuthCookies(res, refreshToken);
+    await this.emailService.sendLoginNotificationEmail(token.user.email);
+
+    return { redirectTo: "/" };
+  }
+
+  async confirmVerifyEmail(
+    rawToken: string,
+    res: Response,
+  ): Promise<{ redirectTo: string }> {
+    const token = await this.magicLinkService.validateTokenConsumption(
+      rawToken,
+      MagicLinkTokenType.Verification,
+    );
+    if (!token) {
+      throw new UnauthorizedException("Invalid or expired verification link");
+    }
+
+    const user = token.user;
+    user.isEmailVerified = true;
+    await this.usersService.save(user);
+
+    const refreshToken = await this.tokenService.generateRefreshToken(user.id);
+    this.setAuthCookies(res, refreshToken);
+    await this.emailService.sendWelcomeEmail(user.email, user.nickname);
+
+    return { redirectTo: "/" };
+  }
+
+  async logout(
+    rawRefreshToken: string | undefined,
+    accessTokenJti: string | undefined,
+    res: Response,
+  ): Promise<{ message: string }> {
+    if (rawRefreshToken) {
+      await this.tokenService.revokeRefreshToken(rawRefreshToken);
+    }
+    if (accessTokenJti) {
+      const exp = Math.floor(Date.now() / 1000) + 15 * 60;
+      this.tokenService.addToBlacklist(accessTokenJti, exp);
+    }
+    this.clearAuthCookies(res);
+    return { message: "Logged out successfully" };
+  }
+
+  async logoutAll(
+    userId: string,
+    accessTokenJti: string | undefined,
+    res: Response,
+  ): Promise<{ message: string }> {
+    await this.tokenService.revokeAllUserTokens(userId);
+    if (accessTokenJti) {
+      const exp = Math.floor(Date.now() / 1000) + 15 * 60;
+      this.tokenService.addToBlacklist(accessTokenJti, exp);
+    }
+    this.clearAuthCookies(res);
+    return { message: "Logged out from all devices" };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user || user.isEmailVerified) {
+      return { message: "Check your email" };
+    }
+
+    await this.magicLinkService.cleanupExpired();
+
+    const { rawToken } = await this.magicLinkService.createMagicLink(
+      user.id,
+      MagicLinkTokenType.Verification,
+    );
+
+    const verificationUrl = `${this.configService.frontendUrl}/api/v1/auth/verify-email?token=${rawToken}`;
+    await this.emailService.sendVerificationEmail(email, verificationUrl);
+
+    return { message: "Check your email" };
+  }
+}
