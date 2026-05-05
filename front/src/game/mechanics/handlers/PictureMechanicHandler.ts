@@ -67,7 +67,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     // Scoring: any non-perfect attempt counts as an error for this floor.
     // Completion is handled inside emitFeedback when allCorrect.
     if (attempted && !allCorrect) {
-      gameScene.recordFloorError(2);
+      gameScene.recordPhotoFloorError();
     }
 
     return anyCorrect;
@@ -130,7 +130,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     anyCorrect: boolean,
   ) {
     if (allCorrect) {
-      gameScene.completeFloor(2);
+      gameScene.completePhotoFloor();
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Incrível! Você restaurou o quadro perfeitamente.",
       ]);

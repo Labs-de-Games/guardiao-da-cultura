@@ -3,6 +3,7 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
 import { SceneNames } from "../constants/SceneNames";
+import { ScoringEvents } from "../constants/ScoringEvents";
 import {
   BADGE_ASSETS,
   LEVEL_ASSETS,
@@ -37,6 +38,7 @@ import type {
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractableType } from "../types/InteractableTypes";
+import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
 export class Game extends Scene {
@@ -45,6 +47,7 @@ export class Game extends Scene {
   npcs: Npc[] = [];
   questManager!: QuestManager;
   private scoreManager!: ScoreManager;
+  private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
 
   // Scoring floors (0..2) for MVP: paintings, sculptures, photo puzzle.
   private readonly scoringFloors = {
@@ -196,12 +199,21 @@ export class Game extends Scene {
     const tileset = map.addTilesetImage("dungeon", this.levelDef.map.tileset);
 
     if (tileset) {
-      mapData = TiledMapLoader.loadMap(this, map, tileset, 6);
+      mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
     }
 
     this.questManager = new QuestManager(MissionRequirements);
     this.scoreManager = new ScoreManager({ levelId: this.levelId });
+
+    // Debug: always log the full payload on every scoring update.
+    this.scoreManager.on(
+      ScoringEvents.SCORE_UPDATED,
+      (payload: ScoringPayload) => {
+        console.log("[ScoreManager] payload", payload);
+      },
+    );
+
     console.log(
       "[ScoreManager] initial payload",
       this.scoreManager.getPayload(),
@@ -353,7 +365,12 @@ export class Game extends Scene {
   }
 
   private createEntities(mapData: MapData, contentJson?: ContentJson) {
-    this.npcs = MapManager.createNpcs(this, mapData, contentJson, 6);
+    this.npcs = MapManager.createNpcs(
+      this,
+      mapData,
+      contentJson,
+      this.mapScale,
+    );
 
     this.rat = new Enemy(this, 2000, 315, 1);
 
@@ -366,8 +383,8 @@ export class Game extends Scene {
         (obj: Phaser.Types.Tilemaps.TiledObject) => obj.name === "SpawnPoint",
       );
       if (spawnPoint) {
-        spawnX = (spawnPoint.x || 0) * 6;
-        spawnY = (spawnPoint.y || 0) * 6;
+        spawnX = (spawnPoint.x || 0) * this.mapScale;
+        spawnY = (spawnPoint.y || 0) * this.mapScale;
       }
     }
 
@@ -380,17 +397,13 @@ export class Game extends Scene {
     const interactiblesLayer = mapData.objectLayers.Interactibles;
     if (interactiblesLayer?.objects?.length) {
       for (const obj of interactiblesLayer.objects) {
-        const x = (obj.x ?? 0) * 6;
-        const y = (obj.y ?? 0) * 6;
+        const x = (obj.x ?? 0) * this.mapScale;
+        const y = (obj.y ?? 0) * this.mapScale;
         const btn = new InteractiveButton(this, x, y, {
           // Prevent InteractionComponent from auto-showing a dialogue.
           dialogueLines: [],
           onInteract: () => {
             this.scoreManager.recordInteractible();
-            console.log(
-              "[ScoreManager] interactible used",
-              this.scoreManager.getPayload(),
-            );
             btn.destroy();
           },
         });
@@ -580,10 +593,6 @@ export class Game extends Scene {
             (score: number) => {
               // Scoring: latest attempt wins (overwrite prior result).
               this.scoreManager.recordQuizResult(score, questions.length);
-              console.log(
-                "[ScoreManager] quiz completed",
-                this.scoreManager.getPayload(),
-              );
 
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
@@ -691,18 +700,18 @@ export class Game extends Scene {
 
   public recordFloorError(floorIndex: number) {
     this.scoreManager.recordFloorError(floorIndex);
-    console.log(
-      `[ScoreManager] floor ${floorIndex} error recorded`,
-      this.scoreManager.getPayload(),
-    );
   }
 
   public completeFloor(floorIndex: number) {
     this.scoreManager.completeFloor(floorIndex);
-    console.log(
-      `[ScoreManager] floor ${floorIndex} completed`,
-      this.scoreManager.getPayload(),
-    );
+  }
+
+  public recordPhotoFloorError() {
+    this.recordFloorError(this.scoringFloors.photo);
+  }
+
+  public completePhotoFloor() {
+    this.completeFloor(this.scoringFloors.photo);
   }
 
   private handleItemDropped(item: DraggableItem) {
