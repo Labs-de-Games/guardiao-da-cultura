@@ -12,6 +12,7 @@ const schema = z.object({
   JWT_ISSUER: z.string().default("gameplate"),
   MAGIC_LINK_SECRET: z.string().min(1),
   MAGIC_LINK_EXPIRATION_MIN: z.coerce.number().default(15),
+  FRONTEND_URL: z.string().url().default("http://localhost:3000"),
 });
 
 @Injectable()
@@ -28,6 +29,7 @@ export class ConfigService {
       JWT_ISSUER: process.env.JWT_ISSUER,
       MAGIC_LINK_SECRET: process.env.MAGIC_LINK_SECRET,
       MAGIC_LINK_EXPIRATION_MIN: process.env.MAGIC_LINK_EXPIRATION_MIN,
+      FRONTEND_URL: process.env.FRONTEND_URL,
     });
   }
 
@@ -54,5 +56,8 @@ export class ConfigService {
   }
   get magicLinkExpirationMin() {
     return this.config.MAGIC_LINK_EXPIRATION_MIN;
+  }
+  get frontendUrl() {
+    return this.config.FRONTEND_URL;
   }
 }
