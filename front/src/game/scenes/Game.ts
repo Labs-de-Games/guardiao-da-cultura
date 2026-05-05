@@ -4,6 +4,7 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
 import { SceneNames } from "../constants/SceneNames";
 import {
+  BADGE_ASSETS,
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
@@ -20,10 +21,10 @@ import type { InteractableItem } from "../objects/interactables/InteractableItem
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
-import { NPC_ANIMS } from "../objects/NpcConfig";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
+import { BadgeSystem } from "../systems/BadgeSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
@@ -46,11 +47,11 @@ export class Game extends Scene {
   private levelManager!: LevelManager;
   private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
-  private isInspectTutorialOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
   public placeholderSystem!: PlaceholderSystem;
+  public badgeSystem!: BadgeSystem;
   public mechanicsManager!: MechanicsManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
@@ -100,6 +101,10 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
     LEVEL_ASSETS.CHUNKS.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+
+    BADGE_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -205,6 +210,13 @@ export class Game extends Scene {
 
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
+
+    this.badgeSystem = new BadgeSystem(this);
+    this.badgeSystem.initialize();
+
+    this.registry.set("has_failed_quiz", 0);
+    this.registry.set("quiz_solved_after_failure", 0);
+
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PictureMechanicHandler());
 
@@ -231,6 +243,15 @@ export class Game extends Scene {
       (payload: string | { infoKey: string }) => {
         const infoKey = typeof payload === "string" ? payload : payload.infoKey;
         this.questManager.collectInfo(infoKey);
+
+        if (
+          infoKey.toLowerCase().includes("secret") ||
+          infoKey.toLowerCase().includes("pista")
+        ) {
+          const currentSecrets =
+            this.registry.get("secret_clues_collected") || 0;
+          this.registry.set("secret_clues_collected", currentSecrets + 1);
+        }
       },
     );
 
@@ -295,27 +316,6 @@ export class Game extends Scene {
     this.events.on(GameEvents.CONTROLS_OVERLAY_CLOSED, () => {
       this.isControlsOverlayOpen = false;
       this.checkDialogState();
-    });
-
-    this.events.on(GameEvents.INSPECT_TUTORIAL_OPENED, () => {
-      this.isInspectTutorialOpen = true;
-      if (this.player) this.player.isInDialogue = true;
-    });
-
-    this.events.on(GameEvents.INSPECT_TUTORIAL_CLOSED, () => {
-      this.isInspectTutorialOpen = false;
-      this.checkDialogState();
-    });
-
-    this.events.on("inspect-mode-toggled", (isInspecting: boolean) => {
-      this.effects.setZoom(isInspecting ? 1.8 : 1.0, 500);
-      if (this.effects.vignetteEffect) {
-        this.effects.setVignette(
-          this.effects.vignetteEffect,
-          isInspecting ? 0.6 : 0.9,
-          500,
-        );
-      }
     });
   }
 
@@ -473,6 +473,9 @@ export class Game extends Scene {
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
+
+        const currentInspected = this.registry.get("objects_inspected") || 0;
+        this.registry.set("objects_inspected", currentInspected + 1);
         const payload = item.getData("payload");
         const opinion = payload?.educational?.opinion;
 
@@ -500,6 +503,7 @@ export class Game extends Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
+      this.badgeSystem.destroy();
     });
 
     this.setupCameras();
@@ -539,6 +543,25 @@ export class Game extends Scene {
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
 
+              console.log(
+                `[Game] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
+              );
+
+              if (isSuccess) {
+                this.registry.set("quiz_perfect_score", 1);
+                this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+
+                if (this.registry.get("has_failed_quiz") === 1) {
+                  this.registry.set("quiz_solved_after_failure", 1);
+                  this.badgeSystem.checkRequirements(
+                    "quiz_solved_after_failure",
+                    1,
+                  );
+                }
+              } else {
+                this.registry.set("has_failed_quiz", 1);
+              }
+
               const npc = this.npcs.find((n) => {
                 const ent = n as unknown as INpcEntity;
                 return ent.config && ent.config.missionId === missionId;
@@ -556,31 +579,25 @@ export class Game extends Scene {
 
               if (isSuccess) {
                 this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-                this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-                npc.play(NPC_ANIMS.GIVING_STAR.key);
-
-                this.questManager.setPendingResult(missionId, lines);
-                this.levelManager.updateProgress();
-                this.events.emit(
-                  GameEvents.SHOW_DIALOGUE_REQUEST,
-                  [...lines],
-                  () => this.questManager.clearPendingResult(missionId),
-                );
               } else {
                 this.questManager.setStatus(
                   missionId,
                   QuestStatus.READY_FOR_QUIZ,
                 );
-                this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-
-                this.questManager.setPendingResult(missionId, lines);
-                this.events.emit(
-                  GameEvents.SHOW_DIALOGUE_REQUEST,
-                  [...lines],
-                  () => this.questManager.clearPendingResult(missionId),
-                );
               }
+
+              this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+              this.questManager.setPendingResult(missionId, lines);
+
+              if (isSuccess) {
+                this.levelManager.updateProgress();
+              }
+
+              this.events.emit(
+                GameEvents.SHOW_DIALOGUE_REQUEST,
+                [...lines],
+                () => this.questManager.clearPendingResult(missionId),
+              );
             },
           );
         },
@@ -601,7 +618,6 @@ export class Game extends Scene {
     if (
       !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
-      !this.isInspectTutorialOpen &&
       !this.isChunkSelectorOpen &&
       !this.isDialogueOpen
     ) {
@@ -639,6 +655,11 @@ export class Game extends Scene {
     const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
 
     if (result.snapped) {
+      // Badge: Restaurador
+      const currentFlawless =
+        this.registry.get("puzzles_solved_flawlessly") || 0;
+      this.registry.set("puzzles_solved_flawlessly", currentFlawless + 1);
+
       this.events.emit(
         GameEvents.SHOW_DIALOGUE_REQUEST,
         sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],

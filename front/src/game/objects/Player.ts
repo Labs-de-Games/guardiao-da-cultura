@@ -21,7 +21,6 @@ export class Player
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
-  isInspecting: boolean = false;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 
   // Grab mechanics
@@ -42,14 +41,6 @@ export class Player
       {
         frameWidth: PLAYER_ASSETS.WALK_SPRITESHEET.frameWidth,
         frameHeight: PLAYER_ASSETS.WALK_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.INSPECT_SPRITESHEET.key,
-      PLAYER_ASSETS.INSPECT_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.INSPECT_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.INSPECT_SPRITESHEET.frameHeight,
       },
     );
     scene.load.spritesheet(
@@ -76,14 +67,6 @@ export class Player
         frameHeight: PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.frameHeight,
       },
     );
-    scene.load.audio(
-      PLAYER_ASSETS.SOUNDS.MAGNIFYING_UP.key,
-      PLAYER_ASSETS.SOUNDS.MAGNIFYING_UP.path,
-    );
-    scene.load.audio(
-      PLAYER_ASSETS.SOUNDS.MAGNIFYING_DOWN.key,
-      PLAYER_ASSETS.SOUNDS.MAGNIFYING_DOWN.path,
-    );
   }
 
   // Create player animations
@@ -103,24 +86,6 @@ export class Player
       }),
       frameRate: PLAYER_ANIMS.WALK.frameRate,
       repeat: PLAYER_ANIMS.WALK.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.INSPECT.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.INSPECT.spritesheet,
-        { frames: [...PLAYER_ANIMS.INSPECT.frames] },
-      ),
-      frameRate: PLAYER_ANIMS.INSPECT.frameRate,
-      repeat: PLAYER_ANIMS.INSPECT.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.STOP_INSPECT.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.STOP_INSPECT.spritesheet,
-        { frames: [...PLAYER_ANIMS.STOP_INSPECT.frames] },
-      ),
-      frameRate: PLAYER_ANIMS.STOP_INSPECT.frameRate,
-      repeat: PLAYER_ANIMS.STOP_INSPECT.repeat,
     });
     scene.anims.create({
       key: PLAYER_ANIMS.JUMP.key,
@@ -195,7 +160,6 @@ export class Player
       d: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.D],
       space: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SPACE],
       E: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.E],
-      shift: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SHIFT],
     }) as PlayerKeys;
 
     this.setScale(PLAYER_PHYSICS.SCALE);
@@ -231,22 +195,6 @@ export class Player
     this.carryableRegistry = items;
   }
 
-  // Player damage
-  takeDamage(dirX: number) {
-    if (this.isDead || this.isHit) return;
-
-    this.isHit = true;
-    this.setVelocityY(PLAYER_DAMAGE.KNOCKBACK_VELOCITY_Y);
-    this.setVelocityX(dirX * PLAYER_DAMAGE.KNOCKBACK_VELOCITY_X);
-
-    this.setTint(PLAYER_DAMAGE.HIT_TINT);
-
-    this.scene.time.delayedCall(PLAYER_DAMAGE.HIT_STUN_DURATION_MS, () => {
-      this.clearTint();
-      this.isHit = false;
-    });
-  }
-
   // Player update logic (runs once per frame)
   update(_ts: number, _dt: number) {
     if (this.isDead || this.isInDialogue) return;
@@ -255,23 +203,7 @@ export class Player
       return;
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.shift)) {
-      this.isInspecting = !this.isInspecting;
-      this.scene.events.emit(
-        PLAYER_EVENTS.INSPECT_MODE_TOGGLED,
-        this.isInspecting,
-      );
-      if (this.isInspecting) {
-        this.scene.sound.play(PLAYER_ASSETS.SOUNDS.MAGNIFYING_UP.key);
-      } else {
-        this.scene.sound.play(PLAYER_ASSETS.SOUNDS.MAGNIFYING_DOWN.key);
-      }
-    }
-
     const body = this.body as Phaser.Physics.Arcade.Body;
-    const isStopInspectPlaying =
-      this.anims.currentAnim?.key === PLAYER_ANIMS.STOP_INSPECT.key &&
-      this.anims.isPlaying;
     const isJumpPlaying =
       this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
       this.anims.isPlaying;
@@ -324,36 +256,18 @@ export class Player
       const accel = this.getMovementAcceleration();
 
       if (leftDown) {
-        if (
-          !this.isMovementRestricted(
-            isStopInspectPlaying,
-            isJumpPlaying,
-            isOnStairs,
-          )
-        ) {
+        if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
           this.anims.play(PLAYER_ANIMS.WALK.key, true);
         }
         body.velocity.x -= accel;
         if (!this.isGrabbing) this.setFlipX(true);
       } else if (rightDown) {
-        if (
-          !this.isMovementRestricted(
-            isStopInspectPlaying,
-            isJumpPlaying,
-            isOnStairs,
-          )
-        ) {
+        if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
           this.anims.play(PLAYER_ANIMS.WALK.key, true);
         }
         body.velocity.x += accel;
         if (!this.isGrabbing) this.setFlipX(false);
-      } else if (
-        !this.isMovementRestricted(
-          isStopInspectPlaying,
-          isJumpPlaying,
-          isOnStairs,
-        )
-      ) {
+      } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
         this.anims.play(PLAYER_ANIMS.IDLE.key, true);
       }
     }
@@ -384,8 +298,6 @@ export class Player
       jumpDown &&
       this.body.blocked.down &&
       !this.isGrabbing &&
-      !this.isInspecting &&
-      !isStopInspectPlaying &&
       !isOnStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
@@ -510,22 +422,14 @@ export class Player
 
   private getMovementAcceleration(): number {
     if (this.isGrabbing) return PLAYER_MOVEMENT.PUSH_ACCELERATION;
-    if (this.isInspecting) return PLAYER_MOVEMENT.INSPECT_ACCELERATION;
     return PLAYER_MOVEMENT.WALK_ACCELERATION;
   }
 
   private isMovementRestricted(
-    isStopInspectPlaying: boolean,
     isJumpPlaying: boolean,
     isOnStairs: boolean,
   ): boolean {
-    return (
-      this.isGrabbing ||
-      this.isInspecting ||
-      isStopInspectPlaying ||
-      isJumpPlaying ||
-      isOnStairs
-    );
+    return this.isGrabbing || isJumpPlaying || isOnStairs;
   }
 }
 
@@ -540,5 +444,4 @@ type PlayerKeys = {
   d: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
   E: Phaser.Input.Keyboard.Key;
-  shift: Phaser.Input.Keyboard.Key;
 };

@@ -15,12 +15,6 @@ export const PLAYER_ASSETS = {
     frameWidth: 48,
     frameHeight: 48,
   },
-  INSPECT_SPRITESHEET: {
-    key: "player_inspect",
-    path: "player-inspect.png",
-    frameWidth: 32,
-    frameHeight: 32,
-  },
   JUMP_SPRITESHEET: {
     key: "player_jump",
     path: "player/animations/jump.png",
@@ -39,16 +33,7 @@ export const PLAYER_ASSETS = {
     frameWidth: 48,
     frameHeight: 48,
   },
-  SOUNDS: {
-    MAGNIFYING_UP: {
-      key: "magnifying_up",
-      path: "sound/magnifying_up.mp3",
-    },
-    MAGNIFYING_DOWN: {
-      key: "magnifying_down",
-      path: "sound/magnifying_down.mp3",
-    },
-  },
+  SOUNDS: {},
 } as const;
 
 // ------------------------------------------------------------
@@ -107,9 +92,6 @@ export const PLAYER_MOVEMENT = {
   /** Normal horizontal acceleration */
   WALK_ACCELERATION: 90,
 
-  /** Horizontal acceleration in inspect mode */
-  INSPECT_ACCELERATION: 25,
-
   /** Vertical jump velocity */
   JUMP_VELOCITY_Y: -1200,
 
@@ -157,20 +139,6 @@ export const PLAYER_ANIMS = {
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
     frameRate: 15,
     repeat: -1,
-  },
-  INSPECT: {
-    key: "inspect",
-    spritesheet: PLAYER_ASSETS.INSPECT_SPRITESHEET.key,
-    frames: [0, 1, 2, 3, 4, 5],
-    frameRate: 14,
-    repeat: 0,
-  },
-  STOP_INSPECT: {
-    key: "stop_inspect",
-    spritesheet: PLAYER_ASSETS.INSPECT_SPRITESHEET.key,
-    frames: [3, 2, 1, 0],
-    frameRate: 14,
-    repeat: 0,
   },
   JUMP: {
     key: "jump",
@@ -236,12 +204,9 @@ export const PLAYER_KEYS = {
   D: "D",
   SPACE: "SPACE",
   E: "E",
-  SHIFT: "SHIFT",
 } as const;
 
 // ------------------------------------------------------------
 // EVENTS (scene.events.emit / on)
 // ------------------------------------------------------------
-export const PLAYER_EVENTS = {
-  INSPECT_MODE_TOGGLED: "inspect-mode-toggled",
-} as const;
+export const PLAYER_EVENTS = {} as const;
