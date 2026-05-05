@@ -17,6 +17,7 @@
         "@commitlint/cli": "latest",
         "@commitlint/config-conventional": "latest",
         "@types/cookie-parser": "^1.4.10",
+        "@types/express": "^5.0.6",
         "@types/passport-jwt": "^4.0.1",
         "husky": "latest",
         "lint-staged": "latest",
