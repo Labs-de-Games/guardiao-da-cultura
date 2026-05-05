@@ -12,7 +12,6 @@ export interface InteractionOptions {
   gapY?: number;
   onInteract?: () => void;
   onInfoCollected?: (infoKey: string) => void;
-  requireInspectionMode?: boolean;
 
   // Hint system (sparkle animation after inactivity)
   enableHint?: boolean;
@@ -37,7 +36,6 @@ export class InteractionComponent {
   private infoKey: string | null = null;
   public onInteract: (() => void) | null = null;
   private onInfoCollected: ((key: string) => void) | null = null;
-  private requireInspectionMode: boolean;
 
   private keyHandler: (event: KeyboardEvent) => void;
   private lastInteractionTime: number = 0;
@@ -65,7 +63,6 @@ export class InteractionComponent {
     this.infoKey = options?.infoKey ?? null;
     this.onInteract = options?.onInteract ?? null;
     this.onInfoCollected = options?.onInfoCollected ?? null;
-    this.requireInspectionMode = options?.requireInspectionMode ?? false;
 
     this.hintEnabled = options?.enableHint ?? false;
     this.hintDelayMs = options?.hintDelayMs ?? 15000;
@@ -100,12 +97,7 @@ export class InteractionComponent {
         const now = Date.now();
         if (now - this.lastInteractionTime < this.INTERACTION_COOLDOWN) return;
 
-        const isPlayerInspecting = player?.isInspecting;
-        const canInteract = this.requireInspectionMode
-          ? isPlayerInspecting
-          : !isPlayerInspecting;
-
-        if (this.isPromptVisible && canInteract) {
+        if (this.isPromptVisible) {
           this.lastInteractionTime = now;
           this.markInteracted();
 
@@ -157,24 +149,11 @@ export class InteractionComponent {
       this.playerRef.y,
     );
 
-    const player = this.playerRef as unknown as IPlayerState;
-    const isPlayerInspecting = player.isInspecting;
-    const canInteract = this.requireInspectionMode
-      ? isPlayerInspecting
-      : !isPlayerInspecting;
-
-    if (
-      dist <= this.interactionDistance &&
-      !this.isPromptVisible &&
-      canInteract
-    ) {
+    if (dist <= this.interactionDistance && !this.isPromptVisible) {
       this.isPromptVisible = true;
       this.promptContainer.setVisible(true);
       this.scene.events.emit(GameEvents.INTERACTION_PROMPT_SHOWN, this.parent);
-    } else if (
-      (dist > this.interactionDistance || !canInteract) &&
-      this.isPromptVisible
-    ) {
+    } else if (dist > this.interactionDistance && this.isPromptVisible) {
       this.isPromptVisible = false;
       this.promptContainer.setVisible(false);
       this.scene.events.emit(GameEvents.INTERACTION_PROMPT_HIDDEN, this.parent);

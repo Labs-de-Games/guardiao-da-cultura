@@ -10,12 +10,6 @@ export const NPC_ASSETS = {
     frameWidth: 48,
     frameHeight: 48,
   },
-  GIVING_STAR_SPRITESHEET: {
-    key: "npc_giving_star", // Changed to avoid collision with generic 'npc' key
-    path: "npc-giving-star.png",
-    frameWidth: 64,
-    frameHeight: 64,
-  },
 } as const;
 
 export const NPC_ANIMS = {
@@ -25,13 +19,6 @@ export const NPC_ANIMS = {
     frames: [0, 1, 2, 3],
     frameRate: 3,
     repeat: -1,
-  },
-  GIVING_STAR: {
-    key: "npc_giving_star_anim", // Changed for clarity
-    spritesheet: NPC_ASSETS.GIVING_STAR_SPRITESHEET.key,
-    frames: { start: 0, end: 9 },
-    frameRate: 9,
-    repeat: 0,
   },
 } as const;
 
