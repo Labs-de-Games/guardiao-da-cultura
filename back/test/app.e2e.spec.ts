@@ -4,6 +4,8 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { AppModule } from "../src/app.module";
 import { DatabaseModule } from "../src/core/database/database.module";
+import { MagicLinkToken } from "../src/modules/auth/entities/magic-link-token.entity";
+import { RefreshToken } from "../src/modules/auth/entities/refresh-token.entity";
 import { User } from "../src/modules/users/user.entity";
 
 class MockDatabaseModule {}
@@ -18,6 +20,10 @@ describe("AppController (e2e)", () => {
       .overrideModule(DatabaseModule)
       .useModule({ module: MockDatabaseModule })
       .overrideProvider(getRepositoryToken(User))
+      .useValue({})
+      .overrideProvider(getRepositoryToken(RefreshToken))
+      .useValue({})
+      .overrideProvider(getRepositoryToken(MagicLinkToken))
       .useValue({})
       .compile();
 
