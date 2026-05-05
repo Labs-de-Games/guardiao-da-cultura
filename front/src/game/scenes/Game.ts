@@ -44,6 +44,13 @@ export class Game extends Scene {
   npcs: Npc[] = [];
   questManager!: QuestManager;
   private scoreManager!: ScoreManager;
+
+  // Scoring floors (0..2) for MVP: paintings, sculptures, photo puzzle.
+  private readonly scoringFloors = {
+    paintings: 0,
+    sculptures: 1,
+    photo: 2,
+  } as const;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
@@ -651,6 +658,22 @@ export class Game extends Scene {
 
   update(_time: number, _delta: number) {}
 
+  public recordFloorError(floorIndex: number) {
+    this.scoreManager.recordFloorError(floorIndex);
+    console.log(
+      `[ScoreManager] floor ${floorIndex} error recorded`,
+      this.scoreManager.getPayload(),
+    );
+  }
+
+  public completeFloor(floorIndex: number) {
+    this.scoreManager.completeFloor(floorIndex);
+    console.log(
+      `[ScoreManager] floor ${floorIndex} completed`,
+      this.scoreManager.getPayload(),
+    );
+  }
+
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
@@ -678,6 +701,7 @@ export class Game extends Scene {
             InteractableType.PAINTING,
           )
         ) {
+          this.completeFloor(this.scoringFloors.paintings);
           this.events.emit(GameEvents.INFO_COLLECTED, {
             missionId,
             infoKey: MissionKeys.PAINTINGS_DONE,
@@ -690,6 +714,7 @@ export class Game extends Scene {
             InteractableType.SCULPTURE,
           )
         ) {
+          this.completeFloor(this.scoringFloors.sculptures);
           this.events.emit(GameEvents.INFO_COLLECTED, {
             missionId,
             infoKey: MissionKeys.SCULPTURES_DONE,
@@ -698,6 +723,12 @@ export class Game extends Scene {
         }
       }
     } else if (result.mismatch) {
+      if (item.interactableType === InteractableType.PAINTING) {
+        this.recordFloorError(this.scoringFloors.paintings);
+      } else if (item.interactableType === InteractableType.SCULPTURE) {
+        this.recordFloorError(this.scoringFloors.sculptures);
+      }
+
       const payload = result.payload as WorkData | undefined;
       const feedback = payload?.educational?.feedbackError;
 
