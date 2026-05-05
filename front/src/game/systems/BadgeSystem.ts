@@ -1,11 +1,8 @@
 import type { Scene } from "phaser";
 import { fetchBadges, unlockBadgeOnServer } from "../../lib/badgesApi";
 import { GameEvents } from "../constants/GameEvents";
-import type { BadgeCondition, BadgeConfig } from "../types/BadgeTypes";
+import type { BadgeConfig } from "../types/BadgeTypes";
 
-/**
- * Strategy handlers for different comparison conditions.
- */
 const CONDITION_HANDLERS: Record<
   string,
   (val: number, goal: number) => boolean
@@ -17,9 +14,6 @@ const CONDITION_HANDLERS: Record<
   "<": (val, goal) => val < goal,
 };
 
-/**
- * BadgeSystem manages the detection and unlocking of achievements based on game statistics.
- */
 export class BadgeSystem {
   private scene: Scene;
   private badges: BadgeConfig[] = [];
@@ -28,18 +22,13 @@ export class BadgeSystem {
   constructor(scene: Scene) {
     this.scene = scene;
 
-    // Subscribe to registry changes
     this.scene.registry.events.on("changedata", this.onRegistryChange, this);
   }
 
-  /**
-   * Loads badges configuration and synchronizes initial state.
-   */
   public async initialize() {
     try {
       this.badges = await fetchBadges();
 
-      // Re-check existing registry values for all badge stats in case they were set before init
       this.badges.forEach((badge) => {
         const currentValue = this.scene.registry.get(badge.stat_required);
         if (typeof currentValue === "number") {
@@ -57,9 +46,6 @@ export class BadgeSystem {
     }
   }
 
-  /**
-   * Validates if any badge requirements are met for a given statistic change.
-   */
   public checkRequirements(statName: string, numericValue: number) {
     for (const badge of this.badges) {
       const isCorrectStat = badge.stat_required === statName;
@@ -79,13 +65,10 @@ export class BadgeSystem {
   private unlockBadge(badge: BadgeConfig) {
     this.unlockedBadges.add(badge.id);
 
-    // Save to local storage for React Gallery persistence
     this.persistToLocalStorage(badge.id);
 
-    // Emit event for Phaser visual feedback
     this.scene.events.emit(GameEvents.SHOW_BADGE_TOAST, badge);
 
-    // Async sync with backend
     unlockBadgeOnServer(badge.id).catch((err) => {
       console.error(`[BadgeSystem] Failed to sync unlock for ${badge.id}`, err);
     });
@@ -103,7 +86,6 @@ export class BadgeSystem {
         localStorage.setItem(storageKey, JSON.stringify(unlocked));
       }
 
-      // Notify React components (e.g., BadgeGallery)
       window.dispatchEvent(
         new CustomEvent("badge-unlocked", { detail: badgeId }),
       );

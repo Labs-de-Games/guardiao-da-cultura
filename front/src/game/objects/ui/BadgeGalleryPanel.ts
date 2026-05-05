@@ -2,9 +2,6 @@ import * as Phaser from "phaser";
 import { type BadgeConfig, fetchBadges } from "../../../lib/badgesApi";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 
-/**
- * UI Panel that displays all available badges and their unlock status.
- */
 export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
   private bg: Phaser.GameObjects.Rectangle;
   private titleText: Phaser.GameObjects.Text;
@@ -13,7 +10,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
   private badges: BadgeConfig[] = [];
   private unlockedIds: string[] = [];
 
-  // Layout Constants
   private readonly CARD_WIDTH = 200;
   private readonly CARD_HEIGHT = 160;
   private readonly COLS = 4;
@@ -25,11 +21,10 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     this.setDepth(LayoutConfig.UI.DEPTHS.INVENTORY);
     this.setVisible(false);
 
-    // Dark overlay background
     this.bg = scene.add.rectangle(0, 0, 1000, 650, 0x111111, 0.95);
     this.bg.setStrokeStyle(4, 0xd4af37, 1);
     this.bg.setOrigin(0.5);
-    this.bg.setInteractive(); // Block clicks through panel
+    this.bg.setInteractive();
 
     this.titleText = scene.add
       .text(0, -280, "Galeria de Conquistas", {
@@ -68,9 +63,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     }
   }
 
-  /**
-   * Re-renders the badge grid based on current unlock status.
-   */
   public refresh() {
     this.syncUnlockedStatus();
     this.badgesContainer.removeAll(true);
@@ -102,9 +94,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     }
   }
 
-  /**
-   * Creates a single badge card with icon and description.
-   */
   private createBadgeCard(
     x: number,
     y: number,
@@ -113,7 +102,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
   ) {
     const cardElements: Phaser.GameObjects.GameObject[] = [];
 
-    // Card Background
     const cardBg = this.scene.add.rectangle(
       x,
       y,
@@ -125,7 +113,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     cardBg.setStrokeStyle(2, isUnlocked ? 0xd4af37 : 0x333333);
     cardElements.push(cardBg);
 
-    // Icon Circle
     const iconBg = this.scene.add.circle(
       x,
       y - 30,
@@ -135,7 +122,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     iconBg.setStrokeStyle(2, isUnlocked ? 0xd4af37 : 0x444444);
     cardElements.push(iconBg);
 
-    // Badge Icon or Mystery Mark
     if (isUnlocked && this.scene.textures.exists(badge.icon_key)) {
       const icon = this.scene.add
         .image(x, y - 30, badge.icon_key)
@@ -152,7 +138,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
       cardElements.push(mystery);
     }
 
-    // Badge Name
     const nameText = this.scene.add
       .text(x, y + 25, badge.name, {
         fontFamily: "Outfit",
@@ -165,7 +150,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
       .setOrigin(0.5);
     cardElements.push(nameText);
 
-    // Badge Description
     const descText = this.scene.add
       .text(x, y + 55, badge.description, {
         fontFamily: "Outfit",
