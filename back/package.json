@@ -7,7 +7,10 @@
     "start": "bun dist/main.js",
     "lint": "biome check .",
     "test": "bun test --preload ./test-setup.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/core/database/data-source.ts"
   },
   "dependencies": {
     "@nestjs/common": "latest",
