@@ -11,7 +11,7 @@ export interface InteractableConfig {
   type?: InteractableType;
 }
 
-export abstract class InteractableItem extends Phaser.GameObjects.Sprite {
+export abstract class InteractableItem extends Phaser.Physics.Arcade.Sprite {
   public itemId: string;
   public itemName: string;
   public interactableType: InteractableType;
@@ -24,6 +24,15 @@ export abstract class InteractableItem extends Phaser.GameObjects.Sprite {
     this.interactableType = config.type || InteractableType.SCULPTURE;
 
     scene.add.existing(this);
+    scene.physics.add.existing(this);
+
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (body) {
+      if (this.interactableType === InteractableType.SCULPTURE) {
+        body.setAllowGravity(true);
+        body.setGravity(0, 4000);
+      }
+    }
 
     this.setInteractive({ useHandCursor: true });
 

@@ -6,10 +6,21 @@ export class DraggableItem extends InteractableItem {
 
   public setGrabbed(grabbed: boolean) {
     this.isGrabbed = grabbed;
+    const body = this.body as Phaser.Physics.Arcade.Body;
+
     if (grabbed) {
       this.setTint(0xaaaaaa);
+      if (body) {
+        body.setAllowGravity(false);
+        body.checkCollision.none = true;
+      }
     } else {
       this.clearTint();
+      if (body) {
+        body.setAllowGravity(true);
+        body.checkCollision.none = false;
+        body.setVelocity(0, 0);
+      }
       this.scene.events.emit("item-dropped", this);
     }
   }

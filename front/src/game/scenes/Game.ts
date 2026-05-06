@@ -728,6 +728,12 @@ export class Game extends Scene {
         for (const npc of this.npcs) {
           this.physics.add.collider(npc, layer);
         }
+        for (const item of this.draggableItems) {
+          this.physics.add.collider(item, layer);
+        }
+        for (const item of this.carryableItems) {
+          this.physics.add.collider(item, layer);
+        }
       }
     });
   }
