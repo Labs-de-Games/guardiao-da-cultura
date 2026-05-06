@@ -73,7 +73,7 @@ export class Game extends Scene {
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
   private contentData: ContentJson = {
-    works: { PAINTINGS: {}, SCULPTURES: {}, PICTURES: {} },
+    works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
     quizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
@@ -202,7 +202,7 @@ export class Game extends Scene {
     });
 
     let mapData: MapData | null = null;
-    const tileset = map.addTilesetImage("dungeon", this.levelDef.map.tileset);
+    const tileset = map.addTilesetImage("museum", this.levelDef.map.tileset);
 
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);

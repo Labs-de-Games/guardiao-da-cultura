@@ -68,7 +68,7 @@ export interface NpcData {
 export interface WorksJson {
   PAINTINGS: Record<string, WorkData>;
   SCULPTURES: Record<string, WorkData>;
-  PICTURES: Record<string, WorkData>;
+  PHOTOS: Record<string, WorkData>;
   [key: string]: Record<string, WorkData> | undefined;
 }
 
