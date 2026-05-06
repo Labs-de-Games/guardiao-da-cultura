@@ -5,6 +5,7 @@ import { ConfigService } from "../../../core/config/config.service";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
 import { UsersService } from "../../users/users.service";
+import { getCookieConfig } from "../config/cookie.config";
 import type { RegisterDto } from "../dto/register.dto";
 import { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
 import { MagicLinkService } from "./magic-link.service";
@@ -56,23 +57,10 @@ export class AuthService {
 
   setAuthCookies(res: Response, refreshToken: string): void {
     const isProd = this.configService.nodeEnv === "production";
-    const maxAgeDays = 7 * 24 * 60 * 60 * 1000;
+    const cfg = getCookieConfig(isProd);
 
-    res.cookie("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: "strict",
-      path: "/api/v1/auth",
-      maxAge: maxAgeDays,
-    });
-
-    res.cookie("auth_status", "authenticated", {
-      httpOnly: false,
-      secure: isProd,
-      sameSite: "lax",
-      path: "/",
-      maxAge: maxAgeDays,
-    });
+    res.cookie("refresh_token", refreshToken, cfg.refreshToken);
+    res.cookie("auth_status", "authenticated", cfg.authStatus);
   }
 
   clearAuthCookies(res: Response): void {
@@ -87,14 +75,9 @@ export class AuthService {
     email: string,
   ): void {
     const isProd = this.configService.nodeEnv === "production";
+    const cfg = getCookieConfig(isProd);
     const value = this.signLoginAttempt(nonce, email);
-    res.cookie("login_attempt", value, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: "lax",
-      path: "/api/v1/auth",
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("login_attempt", value, cfg.loginAttempt);
   }
 
   readLoginAttemptCookie(req: {
