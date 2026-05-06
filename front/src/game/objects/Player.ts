@@ -30,6 +30,7 @@ export class Player
   public isGrabbing: boolean = false;
   public isCarrying: boolean = false;
   private grabOffset: number = 0;
+  private grabOffsetY: number = 0;
 
   // Preload player assets
   static preload(scene: Phaser.Scene) {
@@ -272,7 +273,7 @@ export class Player
 
     if (this.isGrabbing && this.grabbedItem) {
       this.grabbedItem.x = this.x + this.grabOffset;
-      this.grabbedItem.y = this.y;
+      this.grabbedItem.y = this.y + this.grabOffsetY;
       const isMoving = Math.abs(body.velocity.x) > 10;
 
       if (isMoving) {
@@ -351,6 +352,7 @@ export class Player
       this.isGrabbing = true;
       this.grabbedItem = closestItem;
       this.grabOffset = closestItem.x - this.x;
+      this.grabOffsetY = closestItem.y - this.y;
       this.grabbedItem.setGrabbed(true);
 
       this.emit("item-interacted", closestItem);
