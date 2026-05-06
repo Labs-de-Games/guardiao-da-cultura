@@ -42,6 +42,7 @@ export class GameService {
       }
     }
 
+    console.log(`[GameService] Received event: ${payload.type}`, payload);
     const event: GameEventPayload = {
       ...payload,
       timestamp: payload.timestamp ?? new Date(),
