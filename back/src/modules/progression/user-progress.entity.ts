@@ -33,6 +33,9 @@ export class UserProgress {
   @Column({ type: "jsonb", default: "{}" })
   clues = "{}";
 
+  @Column({ type: "jsonb", default: "{}" })
+  quizResults = "{}";
+
   @CreateDateColumn()
   createdAt!: Date;
 
