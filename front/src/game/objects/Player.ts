@@ -66,6 +66,14 @@ export class Player
         frameHeight: PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.frameHeight,
       },
     );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.DRAGGING_SPRITESHEET.key,
+      PLAYER_ASSETS.DRAGGING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameHeight,
+      },
+    );
   }
 
   // Create player animations
@@ -303,7 +311,7 @@ export class Player
       this.anims.play(PLAYER_ANIMS.JUMP.key, true);
     }
 
-    if (isOnStairs) {
+    if (isOnStairs && !this.isGrabbing) {
       if (isClimbing) {
         if (downDown) {
           this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
@@ -354,6 +362,16 @@ export class Player
       this.grabOffset = closestItem.x - this.x;
       this.grabOffsetY = closestItem.y - this.y;
       this.grabbedItem.setGrabbed(true);
+
+      this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+      this.setSize(
+        PLAYER_PHYSICS.DRAGGING_HITBOX.WIDTH,
+        PLAYER_PHYSICS.DRAGGING_HITBOX.HEIGHT,
+      );
+      this.setOffset(
+        PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET.X,
+        PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET.Y,
+      );
 
       this.emit("item-interacted", closestItem);
     }
@@ -418,6 +436,13 @@ export class Player
     }
     this.isGrabbing = false;
     this.grabbedItem = null;
+
+    this.setScale(PLAYER_PHYSICS.SCALE);
+    this.setSize(PLAYER_PHYSICS.HITBOX.WIDTH, PLAYER_PHYSICS.HITBOX.HEIGHT);
+    this.setOffset(
+      PLAYER_PHYSICS.HITBOX_OFFSET.X,
+      PLAYER_PHYSICS.HITBOX_OFFSET.Y,
+    );
   }
 
   private getMovementAcceleration(): number {
