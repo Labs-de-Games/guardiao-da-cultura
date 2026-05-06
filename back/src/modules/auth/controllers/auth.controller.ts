@@ -7,14 +7,15 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import { ConfigService } from "../../../core/config/config.service";
 import type { User } from "../../users/user.entity";
 import { CurrentUser } from "../decorators/current-user.decorator";
 import { Public } from "../decorators/public.decorator";
+import { ThrottleByEmail } from "../decorators/throttle-by-email.decorator";
 import type { AuthUserDto } from "../dto/auth-response.dto";
 import type { LoginDto } from "../dto/login.dto";
 import type { LoginConfirmDto } from "../dto/login-confirm.dto";
@@ -22,7 +23,6 @@ import type { RegisterDto } from "../dto/register.dto";
 import type { ResendVerificationDto } from "../dto/resend-verification.dto";
 import type { VerifyEmailConfirmDto } from "../dto/verify-email-confirm.dto";
 import { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
-import { JwtAuthGuard } from "../guards/jwt-auth.guard";
 import { AuthService } from "../services/auth.service";
 import { MagicLinkService } from "../services/magic-link.service";
 import { TokenService } from "../services/token.service";
@@ -58,12 +58,14 @@ export class AuthController {
   }
 
   @Public()
+  @ThrottleByEmail(3, 3600000)
   @Post("register")
   async register(@Body() dto: RegisterDto): Promise<{ message: string }> {
     return this.authService.register(dto);
   }
 
   @Public()
+  @ThrottleByEmail(5, 3600000)
   @Post("login")
   async login(
     @Body() dto: LoginDto,
@@ -128,7 +130,6 @@ export class AuthController {
     return this.authService.logout(refreshToken, jti, res);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post("logout-all")
   async logoutAll(
     @CurrentUser() user: User & { jti?: string },
@@ -144,6 +145,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post("refresh")
   async refresh(
     @Req() req: Request,
@@ -159,7 +161,6 @@ export class AuthController {
     return { accessToken: result.accessToken };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get("me")
   async me(@CurrentUser() user: User): Promise<AuthUserDto> {
     return {
@@ -208,6 +209,7 @@ export class AuthController {
   }
 
   @Public()
+  @ThrottleByEmail(3, 3600000)
   @Post("resend-verification")
   async resendVerification(
     @Body() dto: ResendVerificationDto,
