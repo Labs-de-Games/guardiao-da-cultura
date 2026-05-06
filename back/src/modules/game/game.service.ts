@@ -7,6 +7,7 @@ export class GameService {
   constructor(private readonly eventEmitter: EventEmitter2) {}
 
   async processEvent(payload: GameEventPayload): Promise<void> {
+    console.log(`[GameService] Received event: ${payload.type}`, payload);
     const event: GameEventPayload = {
       ...payload,
       timestamp: payload.timestamp ?? new Date(),
