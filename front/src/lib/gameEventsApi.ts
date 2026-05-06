@@ -30,6 +30,11 @@ type QueuedEvent = {
 
 const STORAGE_KEY = "gameplate:eventQueue:v1";
 
+// Prevent unbounded localStorage growth if the backend stays unavailable.
+const MAX_QUEUE_SIZE = 200;
+const MAX_ATTEMPTS = 25;
+const MAX_EVENT_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
@@ -87,6 +92,12 @@ function enqueue(payload: GameEventPayload): void {
     attempts: 0,
     payload,
   });
+
+  // Drop oldest items if the queue grows too large.
+  while (queue.length > MAX_QUEUE_SIZE) {
+    queue.shift();
+  }
+
   setQueue(queue);
 }
 
@@ -103,6 +114,11 @@ export async function flushGameEventQueue(): Promise<void> {
 
     const remaining: QueuedEvent[] = [];
     for (const item of queue) {
+      // Drop events that are unlikely to ever succeed.
+      const ageMs = nowMs() - item.createdAt;
+      if (item.attempts >= MAX_ATTEMPTS) continue;
+      if (ageMs > MAX_EVENT_AGE_MS) continue;
+
       try {
         await postEvent(item.payload);
       } catch {
