@@ -43,6 +43,21 @@ export class GameService {
     }
 
     console.log(`[GameService] Received event: ${payload.type}`, payload);
+    // Validate quiz events with Zod
+    if (payload.type === "quiz.completed" || payload.type === "quiz.failed") {
+      try {
+        quizEventSchema.parse(payload);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const messages = error.issues.map(
+            (issue) => `${issue.path.join(".")}: ${issue.message}`,
+          );
+          throw new Error(`Invalid quiz event payload: ${messages.join(", ")}`);
+        }
+        throw error;
+      }
+    }
+
     const event: GameEventPayload = {
       ...payload,
       timestamp: payload.timestamp ?? new Date(),
