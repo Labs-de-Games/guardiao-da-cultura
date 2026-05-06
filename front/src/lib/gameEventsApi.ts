@@ -156,7 +156,7 @@ export function initGameEventQueue(): void {
 
 export function getStoredUserId(): string | undefined {
   if (typeof window === "undefined") return undefined;
-  const raw = window.localStorage.getItem("gameplate:userId");
+  const raw = window.localStorage.getItem("@gameplate:guest_user_id");
   if (!raw) return undefined;
   return isUuid(raw) ? raw : undefined;
 }
