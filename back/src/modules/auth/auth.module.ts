@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
-import { ThrottlerModule } from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { EmailModule } from "../../core/email/email.module";
 import { UsersModule } from "../users/users.module";
@@ -20,14 +19,6 @@ import { JwtAccessStrategy } from "./strategies/jwt-access.strategy";
     TypeOrmModule.forFeature([RefreshToken, MagicLinkToken]),
     UsersModule,
     EmailModule,
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          ttl: 60000,
-          limit: 100,
-        },
-      ],
-    }),
   ],
   controllers: [AuthController],
   providers: [AuthService, TokenService, MagicLinkService, JwtAccessStrategy],
