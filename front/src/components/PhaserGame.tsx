@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getCurrentUserId } from "../lib/session";
 
 export default function PhaserGame() {
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -9,6 +10,9 @@ export default function PhaserGame() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return;
+
+    // DEBUG: exposed for debugging purposes only
+    getCurrentUserId().catch((err) => console.error("[debug init erro]", err));
 
     // Dynamically import game code only on client side
     const initGame = async () => {
