@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { ConfigService } from "./core/config/config.service";
 
@@ -8,12 +9,13 @@ async function bootstrap() {
   const config = app.get(ConfigService);
 
   app.setGlobalPrefix("api/v1");
+  app.use(cookieParser());
 
   app.enableCors({
     origin:
       config.nodeEnv === "production"
-        ? ["https://yourdomain.com"]
-        : ["http://localhost:3000", "http://localhost"],
+        ? [config.frontendUrl]
+        : [config.frontendUrl, "http://localhost:3000", "http://localhost"],
     credentials: true,
   });
 
