@@ -626,6 +626,123 @@ new Phaser.Game(config);
 
 ---
 
+## Typography & Branding
+
+All Phaser game UI must follow the project's branding standards for typography, colors, and visual hierarchy.
+
+### Google Fonts Integration
+
+The project uses two typefaces from Google Fonts:
+
+#### Jockey One
+- **Use for**: Titles, section headers, achievement names, menu titles, and UI elements that need visual emphasis
+- **Weight**: Regular (400)
+- **How to import**: Added via `layout.tsx` with `family=Jockey+One`
+- **Phaser usage**:
+  ```javascript
+  this.add.text(x, y, "Game Title", {
+    fontFamily: "Jockey One",
+    fontSize: "48px",
+    color: "#D9AD56"  // Bright gold
+  });
+  ```
+
+#### Inter
+- **Use for**: Body text, descriptions, dialogue, instructions, scores, inventory labels, and all regular UI content
+- **Weights**: 400 (regular), 500 (medium), 700 (bold)
+- **How to import**: Added via `layout.tsx` with `family=Inter:wght@400;500;700`
+- **Phaser usage**:
+  ```javascript
+  this.add.text(x, y, "Points: 1000", {
+    fontFamily: "Inter",
+    fontSize: "16px",
+    fontStyle: "700",  // Bold
+    color: "#252726"   // Near-black
+  });
+  ```
+
+### Typography Rules
+
+1. **Never mix fonts arbitrarily**—Use Jockey One for highlights/titles, Inter for everything else
+2. **Hierarchy first**—Establish emphasis through font choice, size, weight, and color
+3. **Accessibility**—Maintain 4.5:1 contrast ratio for body text (WCAG 2.1 AA)
+4. **Consistency**—Similar UI elements should use identical font styling
+
+### Official Color Palette
+
+The project has a carefully chosen palette. **Always use these exact hex values**:
+
+#### Greens (Progress, Success, Positive Feedback)
+- `#165925` – Dark green accents
+- `#216831` – Forest green, secondary highlights
+- `#3B8C45` – Bright green, **primary action**, success states
+- `#5EB669` – Light green, hover states, secondary actions
+
+#### Yellows (Highlights, Titles, Cultural Emphasis)
+- `#AF7E2F` – Dark gold, rich accents
+- `#D9AD56` – Bright gold, **primary yellow for titles**
+- `#F1CD77` – Light gold, secondary highlights
+- `#F4EEDE` – Pale cream, text backgrounds
+
+#### Blues (Information, Links, Secondary Interactions)
+- `#035378` – Dark navy, deep backgrounds
+- `#3088B9` – Bright blue, links and info
+- `#65C0F4` – Sky blue, hover/focus states
+
+#### Reds (Errors, Warnings, Destructive Actions)
+- `#A84528` – Dark red, errors and warnings
+- `#D17155` – Medium red, alert highlights
+- `#DE9D8A` – Light red, error backgrounds
+
+#### Neutrals (Black to White)
+- `#252726` – Near-black, **primary text color**
+- `#F5F5F5` – Off-white, light text backgrounds
+- `#FFFFFF` – Pure white, contrast, interactive elements
+
+### Color Usage in Phaser Text
+
+```javascript
+// Title (Jockey One + gold)
+this.add.text(centerX, 50, "Level 1", {
+  fontFamily: "Jockey One",
+  fontSize: "48px",
+  color: "#D9AD56"
+});
+
+// Status text (Inter + near-black)
+this.add.text(16, 16, "Score: 1000", {
+  fontFamily: "Inter",
+  fontSize: "16px",
+  color: "#252726"
+});
+
+// Success message (Inter + bright green)
+this.add.text(centerX, centerY, "Puzzle solved!", {
+  fontFamily: "Inter",
+  fontSize: "24px",
+  color: "#3B8C45"
+});
+
+// Error message (Inter + dark red)
+this.add.text(centerX, centerY, "Invalid move!", {
+  fontFamily: "Inter",
+  fontSize: "24px",
+  color: "#A84528"
+});
+```
+
+### Accessibility Standards
+
+- **Contrast**: All text must have at least 4.5:1 contrast on its background
+- **Color alone**: Never rely on color alone to convey state—add text or icons
+- **Tested combinations**:
+  - Dark text (`#252726`) on light backgrounds (`#F5F5F5`, `#FFFFFF`) ✅
+  - Gold text (`#D9AD56`) on dark backgrounds (`#252726`) ✅
+  - Green text (`#3B8C45`) on light backgrounds ✅
+  - Red text (`#A84528`) on light backgrounds ✅
+
+---
+
 ## Quick Reference
 
 ### Common Physics Properties
