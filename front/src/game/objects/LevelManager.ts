@@ -38,7 +38,6 @@ export class LevelManager {
     const completed = this.questManager.getTotalCompletedMissions();
     const progress = completed / this.maxMissions;
 
-    // Visual Progress: Gray to Color
     const grayscaleValue = Phaser.Math.Linear(
       this.initialGrayscale,
       0.0,
@@ -47,9 +46,6 @@ export class LevelManager {
     this.effects.setGrayscale(grayscaleValue);
   }
 
-  /**
-   * Mostra o resultado final da fase.
-   */
   public completePhase() {
     const collected = this.questManager.getTotalCompletedMissions();
     const uiScene = this.scene.scene.get(SceneNames.UI) as UIScene;
