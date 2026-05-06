@@ -107,27 +107,28 @@ export class MapIntroScene extends Scene {
     this.createInfoBox();
 
     this.input.keyboard?.on("keydown-SPACE", this.beginGame, this);
-    this.input.keyboard?.on("keydown-UP", this.cycleMarkerBackward, this);
-    this.input.keyboard?.on("keydown-DOWN", this.cycleMarkerForward, this);
+    this.input.keyboard?.on("keydown-UP", this.cycleMarkerForward, this);
     this.input.keyboard?.on("keydown-LEFT", this.cycleMarkerBackward, this);
+    this.input.keyboard?.on("keydown-DOWN", this.cycleMarkerBackward, this);
     this.input.keyboard?.on("keydown-RIGHT", this.cycleMarkerForward, this);
-    this.input.keyboard?.on("keydown-W", this.cycleMarkerBackward, this);
+    this.input.keyboard?.on("keydown-W", this.cycleMarkerForward, this);
     this.input.keyboard?.on("keydown-A", this.cycleMarkerBackward, this);
-    this.input.keyboard?.on("keydown-S", this.cycleMarkerForward, this);
+    this.input.keyboard?.on("keydown-S", this.cycleMarkerBackward, this);
     this.input.keyboard?.on("keydown-D", this.cycleMarkerForward, this);
 
-    this.scale.on("resize", this.handleResize);
+    this.scale.on("resize", this.handleResize); // Listens for resize events and calls the handleResize method when the game is resized.
 
+    // Clean up listeners when the scene is shutdown to prevent memory leaks and unintended behavior if the scene is restarted.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
       this.input.keyboard?.off("keydown-SPACE", this.beginGame, this);
-      this.input.keyboard?.off("keydown-UP", this.cycleMarkerBackward, this);
-      this.input.keyboard?.off("keydown-DOWN", this.cycleMarkerForward, this);
+      this.input.keyboard?.off("keydown-UP", this.cycleMarkerForward, this);
+      this.input.keyboard?.off("keydown-DOWN", this.cycleMarkerBackward, this);
       this.input.keyboard?.off("keydown-LEFT", this.cycleMarkerBackward, this);
       this.input.keyboard?.off("keydown-RIGHT", this.cycleMarkerForward, this);
-      this.input.keyboard?.off("keydown-W", this.cycleMarkerBackward, this);
+      this.input.keyboard?.off("keydown-W", this.cycleMarkerForward, this);
       this.input.keyboard?.off("keydown-A", this.cycleMarkerBackward, this);
-      this.input.keyboard?.off("keydown-S", this.cycleMarkerForward, this);
+      this.input.keyboard?.off("keydown-S", this.cycleMarkerBackward, this);
       this.input.keyboard?.off("keydown-D", this.cycleMarkerForward, this);
     });
 
@@ -193,10 +194,10 @@ export class MapIntroScene extends Scene {
     this.infoLocation.setText(marker.location);
 
     if (this.activeMarkerIndex === 0) {
-      this.infoCta.setText("Pressione ESPAÇO para jogar");
+      this.infoCta.setText("Aperte ESPAÇO para jogar");
       this.infoCta.setColor("#3B8C45");
     } else {
-      this.infoCta.setText("Em construção");
+      this.infoCta.setText("Em reforma");
       this.infoCta.setColor("#A84528");
     }
   }
