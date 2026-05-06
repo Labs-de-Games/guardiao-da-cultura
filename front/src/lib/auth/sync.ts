@@ -1,5 +1,3 @@
-import { clearAuthStatusCookie } from "./cookies";
-
 type SyncEventType = "LOGIN" | "LOGOUT" | "LOGOUT_ALL";
 
 interface SyncEvent {

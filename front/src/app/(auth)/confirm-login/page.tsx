@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 
 function ConfirmLoginContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const _router = useRouter();
   const { confirmLogin } = useAuth();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);

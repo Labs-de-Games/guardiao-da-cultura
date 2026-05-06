@@ -1,7 +1,6 @@
 import { clearAuthStatusCookie, setAuthStatusCookie } from "@/lib/auth/cookies";
 import { broadcastAuthEvent } from "@/lib/auth/sync";
 import type {
-  AuthResponse,
   LoginConfirmData,
   LoginCredentials,
   RegisterCredentials,
