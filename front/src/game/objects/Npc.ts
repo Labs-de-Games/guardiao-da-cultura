@@ -102,7 +102,6 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       console.warn("[Npc] QuestManager not found!");
       return;
     }
-
     const missionId = this.config.missionId;
     const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;

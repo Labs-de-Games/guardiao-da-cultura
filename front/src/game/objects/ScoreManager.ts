@@ -1,0 +1,221 @@
+import * as Phaser from "phaser";
+import { ScoringEvents } from "../constants/ScoringEvents";
+import type {
+  FloorScore,
+  InteractiblesScore,
+  IsoTimestamp,
+  QuizScore,
+  ScoringEventRecord,
+  ScoringPayload,
+  ScoringRatingPTBR,
+} from "../types/ScoringTypes";
+
+export interface ScoreManagerOptions {
+  levelId: string;
+  floorsTotal?: number;
+  interactiblesTotal?: number;
+}
+
+export class ScoreManager extends Phaser.Events.EventEmitter {
+  private readonly levelId: string;
+  private readonly floorsTotal: number;
+  private readonly interactiblesTotal: number;
+
+  private readonly startedAt: IsoTimestamp;
+  private updatedAt: IsoTimestamp;
+
+  private floors: [FloorScore, FloorScore, FloorScore];
+  private interactibles: InteractiblesScore;
+  private quiz: QuizScore;
+  private events: ScoringEventRecord[];
+
+  constructor(options: ScoreManagerOptions) {
+    super();
+    this.levelId = options.levelId;
+    this.floorsTotal = options.floorsTotal ?? 3;
+    this.interactiblesTotal = options.interactiblesTotal ?? 4;
+
+    if (this.floorsTotal !== 3) {
+      throw new Error(
+        `[ScoreManager] MVP expects floorsTotal=3, got ${this.floorsTotal}`,
+      );
+    }
+
+    this.startedAt = this.nowIso();
+    this.updatedAt = this.startedAt;
+
+    this.floors = [0, 1, 2].map((i) => ({
+      floorIndex: i,
+      errors: 0,
+      quartersEarned: 0,
+      completedAt: null,
+    })) as [FloorScore, FloorScore, FloorScore];
+
+    this.interactibles = {
+      total: this.interactiblesTotal,
+      interactionsCount: 0,
+      quartersEarned: 0,
+      lastInteractionAt: null,
+    };
+
+    this.quiz = {
+      totalQuestions: 0,
+      correctAnswers: 0,
+      accuracyPercent: 0,
+      quartersEarned: 0,
+      completedAt: null,
+    };
+
+    this.events = [{ type: "level-started", occurredAt: this.startedAt }];
+  }
+
+  recordFloorError(floorIndex: number) {
+    const floor = this.floors[floorIndex];
+    if (!floor) return;
+    if (floor.completedAt) return;
+
+    floor.errors += 1;
+    const occurredAt = this.touch();
+    this.events.push({ type: "floor-error", floorIndex, occurredAt });
+
+    const payload = this.getPayload();
+    this.emit(ScoringEvents.FLOOR_ERROR_RECORDED, {
+      floorIndex,
+      errors: floor.errors,
+      payload,
+    });
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
+  }
+
+  completeFloor(floorIndex: number) {
+    const floor = this.floors[floorIndex];
+    if (!floor) return;
+    if (floor.completedAt) return;
+
+    const quartersEarned = this.computeFloorQuarters(floor.errors);
+    floor.quartersEarned = quartersEarned;
+    floor.completedAt = this.touch();
+
+    this.events.push({
+      type: "floor-completed",
+      floorIndex,
+      errors: floor.errors,
+      quartersEarned,
+      occurredAt: floor.completedAt,
+    });
+
+    const payload = this.getPayload();
+    this.emit(ScoringEvents.FLOOR_COMPLETED, {
+      floorIndex,
+      errors: floor.errors,
+      quartersEarned,
+      payload,
+    });
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
+  }
+
+  recordInteractible() {
+    if (this.interactibles.interactionsCount >= this.interactibles.total) {
+      return;
+    }
+
+    this.interactibles.interactionsCount += 1;
+    this.interactibles.quartersEarned = this.interactibles.interactionsCount;
+    this.interactibles.lastInteractionAt = this.touch();
+
+    this.events.push({
+      type: "interactible",
+      occurredAt: this.interactibles.lastInteractionAt,
+    });
+
+    const payload = this.getPayload();
+    this.emit(ScoringEvents.INTERACTIBLE_USED, {
+      interactionsCount: this.interactibles.interactionsCount,
+      payload,
+    });
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
+  }
+
+  recordQuizResult(correctAnswers: number, totalQuestions: number) {
+    const total = Math.max(0, Math.floor(totalQuestions));
+    const correct = Math.min(Math.max(0, Math.floor(correctAnswers)), total);
+
+    const accuracyPercent = total > 0 ? Math.floor((correct / total) * 100) : 0;
+    const quartersEarned = Math.min(4, Math.floor(accuracyPercent / 25));
+
+    this.quiz.totalQuestions = total;
+    this.quiz.correctAnswers = correct;
+    this.quiz.accuracyPercent = accuracyPercent;
+    this.quiz.quartersEarned = quartersEarned;
+    this.quiz.completedAt = this.touch();
+
+    this.events.push({
+      type: "quiz-completed",
+      totalQuestions: total,
+      correctAnswers: correct,
+      accuracyPercent,
+      quartersEarned,
+      occurredAt: this.quiz.completedAt,
+    });
+
+    const payload = this.getPayload();
+    this.emit(ScoringEvents.QUIZ_COMPLETED, {
+      correctAnswers: correct,
+      totalQuestions: total,
+      accuracyPercent,
+      quartersEarned,
+      payload,
+    });
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
+  }
+
+  getPayload(): ScoringPayload {
+    const totalQuarters = this.computeTotalQuarters();
+    return {
+      levelId: this.levelId,
+      startedAt: this.startedAt,
+      floors: this.floors,
+      interactibles: { ...this.interactibles },
+      quiz: { ...this.quiz },
+      totalQuarters,
+      totalStars: totalQuarters / 4,
+      rating: this.computeRating(totalQuarters),
+      events: [...this.events],
+      updatedAt: this.updatedAt,
+    };
+  }
+
+  private computeTotalQuarters(): number {
+    const floorsQuarters = this.floors.reduce(
+      (sum, floorScore) => sum + (floorScore.quartersEarned || 0),
+      0,
+    );
+    return (
+      floorsQuarters +
+      this.interactibles.quartersEarned +
+      this.quiz.quartersEarned
+    );
+  }
+
+  private computeFloorQuarters(errors: number): number {
+    // 0 errors: 4/4; 1: 3/4; 2: 2/4; >=3: 1/4
+    return Math.max(1, Math.min(4, 4 - Math.max(0, Math.floor(errors))));
+  }
+
+  private computeRating(totalQuarters: number): ScoringRatingPTBR {
+    if (totalQuarters >= 20) return "perfeito";
+    if (totalQuarters >= 16) return "ótimo";
+    if (totalQuarters >= 12) return "bom";
+    if (totalQuarters >= 8) return "regular";
+    return "mínimo";
+  }
+
+  private touch(): IsoTimestamp {
+    this.updatedAt = this.nowIso();
+    return this.updatedAt;
+  }
+
+  private nowIso(): IsoTimestamp {
+    return new Date().toISOString();
+  }
+}
