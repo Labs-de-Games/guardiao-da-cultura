@@ -169,6 +169,10 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
+  getLevelId(): string {
+    return this.levelId;
+  }
+
   getPayload(): ScoringPayload {
     const totalQuarters = this.computeTotalQuarters();
     return {
