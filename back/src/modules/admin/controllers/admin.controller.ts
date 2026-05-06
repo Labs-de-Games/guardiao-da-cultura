@@ -1,22 +1,13 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Query,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Query } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { Roles } from "../../auth/decorators/roles.decorator";
-import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../../auth/guards/roles.guard";
 import { Role } from "../../users/enums/role.enum";
 import { ListUsersQueryDto } from "../dto/list-users-query.dto";
 import { ToggleUserStatusDto } from "../dto/toggle-user-status.dto";
 import { UpdateRoleDto } from "../dto/update-role.dto";
 import { AdminService } from "../services/admin.service";
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@Throttle({ default: { limit: 30, ttl: 60000 } })
 @Roles(Role.Admin)
 @Controller("admin")
 export class AdminController {
