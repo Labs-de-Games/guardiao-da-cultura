@@ -6,8 +6,6 @@ import type { DraggableItem } from "./interactables/DraggableItem";
 import {
   PLAYER_ANIMS,
   PLAYER_ASSETS,
-  PLAYER_DAMAGE,
-  PLAYER_EVENTS,
   PLAYER_KEYS,
   PLAYER_MOVEMENT,
   PLAYER_PHYSICS,

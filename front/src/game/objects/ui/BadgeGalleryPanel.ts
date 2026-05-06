@@ -89,6 +89,7 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
           localStorage.getItem("unlocked_badges") || "[]",
         );
       } catch (e) {
+        console.error("[BadgeGallery] Error parsing unlocked badges", e);
         this.unlockedIds = [];
       }
     }

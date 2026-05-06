@@ -18,6 +18,11 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     const placedItems = data.placedItems as (string | null)[];
     if (!placedItems) return false;
 
+    const attempted = placedItems.some((placedId) => {
+      const cleanPlaced = String(placedId || "").trim();
+      return Boolean(cleanPlaced);
+    });
+
     const expectedIds = this.normalizeExpectedIds(placeholder.id);
     let anyCorrect = false;
     let allCorrect = true;
@@ -58,6 +63,12 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     if (filledCount < expectedIds.length) allCorrect = false;
 
     this.emitFeedback(gameScene, placeholder, allCorrect, anyCorrect);
+
+    // Scoring: any non-perfect attempt counts as an error for this floor.
+    // Completion is handled inside emitFeedback when allCorrect.
+    if (attempted && !allCorrect) {
+      gameScene.recordPhotoFloorError();
+    }
 
     return anyCorrect;
   }
@@ -119,6 +130,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     anyCorrect: boolean,
   ) {
     if (allCorrect) {
+      gameScene.completePhotoFloor();
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Incrível! Você restaurou o quadro perfeitamente.",
       ]);

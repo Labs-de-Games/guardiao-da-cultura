@@ -3,6 +3,7 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
 import { SceneNames } from "../constants/SceneNames";
+import { ScoringEvents } from "../constants/ScoringEvents";
 import {
   BADGE_ASSETS,
   LEVEL_ASSETS,
@@ -15,6 +16,7 @@ import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHan
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
+import { InteractiveButton } from "../objects/InteractiveButton";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { DraggableItem } from "../objects/interactables/DraggableItem";
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
@@ -24,6 +26,7 @@ import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
+import { ScoreManager } from "../objects/ScoreManager";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -35,6 +38,7 @@ import type {
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractableType } from "../types/InteractableTypes";
+import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
 export class Game extends Scene {
@@ -42,6 +46,15 @@ export class Game extends Scene {
   rat!: Enemy;
   npcs: Npc[] = [];
   questManager!: QuestManager;
+  private scoreManager!: ScoreManager;
+  private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
+
+  // Scoring floors (0..2) for MVP: paintings, sculptures, photo puzzle.
+  private readonly scoringFloors = {
+    paintings: 0,
+    sculptures: 1,
+    photo: 2,
+  } as const;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
@@ -125,6 +138,12 @@ export class Game extends Scene {
       frameWidth: 32,
       frameHeight: 32,
     });
+
+    // UI stars (quarter fractions) for quiz results.
+    this.load.image("ui_star_full", "ui/stars/star_full.png");
+    this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
+    this.load.image("ui_star_2q", "ui/stars/star_two_quarter.png");
+    this.load.image("ui_star_1q", "ui/stars/star_one_quarter.png");
   }
 
   private processModularData() {
@@ -186,11 +205,25 @@ export class Game extends Scene {
     const tileset = map.addTilesetImage("dungeon", this.levelDef.map.tileset);
 
     if (tileset) {
-      mapData = TiledMapLoader.loadMap(this, map, tileset, 6);
+      mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
     }
 
     this.questManager = new QuestManager(MissionRequirements);
+    this.scoreManager = new ScoreManager({ levelId: this.levelId });
+
+    // Debug: always log the full payload on every scoring update.
+    this.scoreManager.on(
+      ScoringEvents.SCORE_UPDATED,
+      (payload: ScoringPayload) => {
+        console.log("[ScoreManager] payload", payload);
+      },
+    );
+
+    console.log(
+      "[ScoreManager] initial payload",
+      this.scoreManager.getPayload(),
+    );
     this.levelManager = new LevelManager(
       this,
       this.questManager,
@@ -338,7 +371,12 @@ export class Game extends Scene {
   }
 
   private createEntities(mapData: MapData, contentJson?: ContentJson) {
-    this.npcs = MapManager.createNpcs(this, mapData, contentJson, 6);
+    this.npcs = MapManager.createNpcs(
+      this,
+      mapData,
+      contentJson,
+      this.mapScale,
+    );
 
     this.rat = new Enemy(this, 2000, 315, 1);
 
@@ -351,14 +389,33 @@ export class Game extends Scene {
         (obj: Phaser.Types.Tilemaps.TiledObject) => obj.name === "SpawnPoint",
       );
       if (spawnPoint) {
-        spawnX = (spawnPoint.x || 0) * 6;
-        spawnY = (spawnPoint.y || 0) * 6;
+        spawnX = (spawnPoint.x || 0) * this.mapScale;
+        spawnY = (spawnPoint.y || 0) * this.mapScale;
       }
     }
 
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
     this.player.setDepth(20);
     this.player.stairsLayer = this.stairsLayer;
+
+    // MVP scoring: 4 silent interactibles (no on-screen message), sourced from
+    // Tiled object layer "Interactibles" (points I1..I4).
+    const interactiblesLayer = mapData.objectLayers.Interactibles;
+    if (interactiblesLayer?.objects?.length) {
+      for (const obj of interactiblesLayer.objects) {
+        const x = (obj.x ?? 0) * this.mapScale;
+        const y = (obj.y ?? 0) * this.mapScale;
+        const btn = new InteractiveButton(this, x, y, {
+          // Prevent InteractionComponent from auto-showing a dialogue.
+          dialogueLines: [],
+          onInteract: () => {
+            this.scoreManager.recordInteractible();
+            btn.destroy();
+          },
+        });
+        btn.setPlayerTracking(this.player);
+      }
+    }
 
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
@@ -540,6 +597,9 @@ export class Game extends Scene {
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
             (score: number) => {
+              // Scoring: latest attempt wins (overwrite prior result).
+              this.scoreManager.recordQuizResult(score, questions.length);
+
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
 
@@ -644,6 +704,26 @@ export class Game extends Scene {
 
   update(_time: number, _delta: number) {}
 
+  public recordFloorError(floorIndex: number) {
+    this.scoreManager.recordFloorError(floorIndex);
+  }
+
+  public completeFloor(floorIndex: number) {
+    this.scoreManager.completeFloor(floorIndex);
+  }
+
+  public recordPhotoFloorError() {
+    this.recordFloorError(this.scoringFloors.photo);
+  }
+
+  public completePhotoFloor() {
+    this.completeFloor(this.scoringFloors.photo);
+  }
+
+  public getScoringPayload(): ScoringPayload {
+    return this.scoreManager.getPayload();
+  }
+
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
@@ -671,6 +751,7 @@ export class Game extends Scene {
             InteractableType.PAINTING,
           )
         ) {
+          this.completeFloor(this.scoringFloors.paintings);
           this.events.emit(GameEvents.INFO_COLLECTED, {
             missionId,
             infoKey: MissionKeys.PAINTINGS_DONE,
@@ -683,6 +764,7 @@ export class Game extends Scene {
             InteractableType.SCULPTURE,
           )
         ) {
+          this.completeFloor(this.scoringFloors.sculptures);
           this.events.emit(GameEvents.INFO_COLLECTED, {
             missionId,
             infoKey: MissionKeys.SCULPTURES_DONE,
@@ -691,6 +773,12 @@ export class Game extends Scene {
         }
       }
     } else if (result.mismatch) {
+      if (item.interactableType === InteractableType.PAINTING) {
+        this.recordFloorError(this.scoringFloors.paintings);
+      } else if (item.interactableType === InteractableType.SCULPTURE) {
+        this.recordFloorError(this.scoringFloors.sculptures);
+      }
+
       const payload = result.payload as WorkData | undefined;
       const feedback = payload?.educational?.feedbackError;
 
