@@ -13,7 +13,7 @@ export const PLAYER_ASSETS = {
     key: "player_walk",
     path: "player/animations/walking.png",
     frameWidth: 48,
-    frameHeight: 48,
+    frameHeight: 37,
   },
   JUMP_SPRITESHEET: {
     key: "player_jump",
@@ -32,6 +32,12 @@ export const PLAYER_ASSETS = {
     path: "player/animations/climbing_up.png",
     frameWidth: 48,
     frameHeight: 48,
+  },
+  DRAGGING_SPRITESHEET: {
+    key: "player_dragging",
+    path: "player/animations/dragging.png",
+    frameWidth: 162,
+    frameHeight: 183,
   },
   SOUNDS: {},
 } as const;
@@ -68,7 +74,18 @@ export const PLAYER_PHYSICS = {
   /** Hitbox offset (setOffset) */
   HITBOX_OFFSET: {
     X: 18,
-    Y: 5,
+    Y: -1,
+  },
+
+  /** Scale and Hitbox for the dragging animation */
+  DRAGGING_SCALE: 1,
+  DRAGGING_HITBOX: {
+    WIDTH: 45,
+    HEIGHT: 145,
+  },
+  DRAGGING_HITBOX_OFFSET: {
+    X: 60,
+    Y: 30,
   },
 
   DAMPING: true,
@@ -166,23 +183,23 @@ export const PLAYER_ANIMS = {
   /** Grabbing / Pushing animations */
   GRAB_IDLE: {
     key: "grab_idle",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [0], // Placeholder
-    frameRate: 10,
+    spritesheet: "player_dragging",
+    frames: [0],
+    frameRate: 13,
     repeat: -1,
   },
   PUSH: {
     key: "push",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [0, 1, 2, 3], // Placeholder
-    frameRate: 10,
+    spritesheet: "player_dragging",
+    frames: [0, 1, 2, 3],
+    frameRate: 13,
     repeat: -1,
   },
   PULL: {
     key: "pull",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [3, 2, 1, 0], // Placeholder
-    frameRate: 10,
+    spritesheet: "player_dragging",
+    frames: [3, 2, 1, 0],
+    frameRate: 13,
     repeat: -1,
   },
 
