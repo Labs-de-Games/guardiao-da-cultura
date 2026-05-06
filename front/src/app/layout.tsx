@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ margin: 0, padding: 0, height: "100%" }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -15,7 +15,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body
+        style={{ margin: 0, padding: 0, height: "100vh", overflow: "hidden" }}
+      >
+        {children}
+      </body>
     </html>
   );
 }
