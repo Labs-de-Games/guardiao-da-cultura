@@ -5,7 +5,7 @@ import { InteractableType } from "../types/InteractableTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
-export class PictureFactory implements IObjectFactory {
+export class PhotoFactory implements IObjectFactory {
   create(
     scene: Phaser.Scene,
     objData: Phaser.Types.Tilemaps.TiledObject,

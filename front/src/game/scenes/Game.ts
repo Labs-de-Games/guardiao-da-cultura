@@ -73,7 +73,7 @@ export class Game extends Scene {
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
   private contentData: ContentJson = {
-    works: { PAINTINGS: {}, SCULPTURES: {}, PICTURES: {} },
+    works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
     quizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
