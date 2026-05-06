@@ -1,19 +1,19 @@
 {
   "npcs": {
     "professor_curador": {
-      "name": "Dra. Cremilda",
+      "name": "Jarbas",
       "missionId": "missao_curador",
       "dialogues": {
         "intro": [
-          "Olá, Curador! Sou a Dra. Cremilda, responsável por esta ala do museu.",
-          "O Grande Esquecimento bagunçou todas as nossas obras-primas.",
-          "Preciso que você organize todas as Pinturas e Esculturas em seus devidos lugares.",
-          "Ah, e não se esqueça da Fotografia antiga que foi fragmentada! Ela guarda o segredo da restauração.",
-          "Quando tudo estiver em ordem, venha falar comigo para o teste final de cores."
+          "A estrada até aqui foi mais tranquila do que eu esperava. Como te avisei no caminho, esse é o Inhotim. Um museu a céu aberto aqui em Brumadinho, Minas Gerais.",
+          "As obras vandalizadas estavam todas em manutenção, reunidas nesse prédio em vez de suas respectivas galerias.",
+          "Isso pode ter sido frustrante para o vândalo, ou exatamente o que ele, ou ela, queria; encontrar tudo junto num lugar só.",
+          "Dê uma olhada nas esculturas desse andar e averigue o estrago feito."
         ],
         "collecting": [
-          "Ainda vejo molduras vazias e pedestais sem obras, Curador.",
-          "Certifique-se de organizar todas as pinturas, esculturas e remontar a fotografia."
+          "Entendo sua confusão, mas essa obra é assim mesmo, uma escultura sem cabeça. Não é obra de nenhum vândalo.",
+          "Parece que ele não danificou as obras aqui do Inhotim, apenas tirou tudo do lugar. Observe as plaquinhas informativas.",
+          "Cada uma fala sobre uma obra em exposição. Leia sobre as obras em questão, encontre-as e leve-as até seus respectivo lugares."
         ],
         "ready": [
           "Incrível! O salão recuperou sua harmonia visual.",

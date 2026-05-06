@@ -15,7 +15,7 @@ const config: Types.Core.GameConfig = {
     default: "arcade",
     arcade: {
       debug: false,
-      tileBias: 128, // Prevents "tunneling" (passing through tiles) at high speeds
+      tileBias: 64, // Prevents "tunneling" (passing through tiles) at high speeds
     },
   },
   scale: {

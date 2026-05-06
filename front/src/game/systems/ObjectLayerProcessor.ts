@@ -2,7 +2,7 @@ import type * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import type { IObjectFactory } from "../factories/IObjectFactory";
 import { PaintingFactory } from "../factories/PaintingFactory";
-import { PictureFactory } from "../factories/PictureFactory";
+import { PhotoFactory } from "../factories/PhotoFactory";
 import { SculptureFactory } from "../factories/SculptureFactory";
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
 import type { ContentJson, WorkData } from "../types/GameDataTypes";
@@ -13,7 +13,7 @@ import type { MapData } from "./TiledMapLoader";
 enum WORKS {
   PAINTINGS = "PAINTINGS",
   SCULPTURES = "SCULPTURES",
-  PICTURES = "PICTURES",
+  PHOTOS = "PHOTOS",
 }
 
 export class ObjectLayerProcessor {
@@ -22,10 +22,12 @@ export class ObjectLayerProcessor {
   constructor() {
     this.factories.set("sculpture", new SculptureFactory());
     this.factories.set("painting", new PaintingFactory());
-    this.factories.set("picture", new PictureFactory());
-    this.factories.set("pictures", new PictureFactory());
-    this.factories.set("picture_chunk", new PictureFactory());
-    this.factories.set("chunk", new PictureFactory());
+    this.factories.set("photo", new PhotoFactory());
+    this.factories.set("photos", new PhotoFactory());
+    this.factories.set("picture", new PhotoFactory());
+    this.factories.set("pictures", new PhotoFactory());
+    this.factories.set("picture_chunk", new PhotoFactory());
+    this.factories.set("chunk", new PhotoFactory());
   }
 
   public registerFactory(type: string, factory: IObjectFactory) {
@@ -70,7 +72,7 @@ export class ObjectLayerProcessor {
               (works?.[category] as Record<string, WorkData>)?.[contentID] ||
               works?.[WORKS.PAINTINGS]?.[contentID] ||
               works?.[WORKS.SCULPTURES]?.[contentID] ||
-              works?.[WORKS.PICTURES]?.[contentID];
+              works?.[WORKS.PHOTOS]?.[contentID];
 
             const item = factory.create(scene, obj, scale, data);
             if (item) {
