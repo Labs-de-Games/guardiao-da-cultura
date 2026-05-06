@@ -1,5 +1,6 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
 import { Game as MainGame } from "./scenes/Game";
+import { MapIntroScene } from "./scenes/MapIntroScene";
 import { UIScene } from "./scenes/UIScene";
 
 // Find out more information about the Game Config at:
@@ -22,7 +23,7 @@ const config: Types.Core.GameConfig = {
     mode: Scale.EXPAND,
     autoCenter: Scale.CENTER_BOTH,
   },
-  scene: [MainGame, UIScene],
+  scene: [MapIntroScene, MainGame, UIScene],
 };
 
 const StartGame = (parent: string) => {
