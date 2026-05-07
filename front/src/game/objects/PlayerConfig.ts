@@ -80,12 +80,12 @@ export const PLAYER_PHYSICS = {
   /** Scale and Hitbox for the dragging animation */
   DRAGGING_SCALE: 0.9,
   DRAGGING_HITBOX: {
-    WIDTH: 45,
-    HEIGHT: 155,
+    WIDTH: 12,
+    HEIGHT: 38,
   },
   DRAGGING_HITBOX_OFFSET: {
-    X: 60,
-    Y: 30,
+    X: 10,
+    Y: -1,
   },
 
   DAMPING: true,
