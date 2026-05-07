@@ -14,6 +14,8 @@ type UserRegisterResponse = {
 
 const isBrowser = () => typeof window !== "undefined";
 
+let pendingRegistration: Promise<string> | null = null;
+
 const safeRandomId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -50,52 +52,46 @@ const setStoredUserId = (userId: string) => {
 export async function getCurrentUserId(): Promise<string> {
   if (!isBrowser()) return "";
 
-  console.log(
-    "[session debug] Verificando se já existe um guest user salvo...",
-  );
   const existing = getStoredUserId();
-  if (existing) {
-    console.log("[session debug] Usuário já existe! ID:", existing);
-    return existing;
-  }
+  if (existing) return existing;
 
-  console.log(
-    "[session debug] Nenhum usuário encontrado. Gerando dados fictícios...",
-  );
-  const payload = createGuestPayload();
-  console.log("[session debug] Dados gerados:", payload);
+  if (pendingRegistration) return pendingRegistration;
 
-  const endpoint = `${env.NEXT_PUBLIC_API_URL}/api/v1/users/register`;
-  console.log(`[session debug] Enviando request para ${endpoint}...`);
+  pendingRegistration = (async () => {
+    try {
+      const payload = createGuestPayload();
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+      const endpoint = `${env.NEXT_PUBLIC_API_URL}/api/v1/users/register`;
 
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => "");
-    console.error(
-      `[session debug] Falha na requisição: ${response.status}`,
-      errorBody,
-    );
-    throw new Error(
-      `[session] Failed to register guest user: ${response.status} ${errorBody}`,
-    );
-  }
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-  const data = (await response.json()) as UserRegisterResponse;
-  console.log("[session debug] Sucesso! Resposta do backend:", data);
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => "");
+        throw new Error(
+          `[session] Failed to register guest user: ${response.status} ${errorBody}`,
+        );
+      }
 
-  if (!data.id) {
-    console.error("[session debug] Backend não retornou um ID válido!");
-    throw new Error("[session] Guest registration response missing user id");
-  }
+      const data = (await response.json()) as UserRegisterResponse;
 
-  console.log("[session debug] Salvando novo ID no localStorage:", data.id);
-  setStoredUserId(data.id);
-  return data.id;
+      if (!data.id) {
+        throw new Error(
+          "[session] Guest registration response missing user id",
+        );
+      }
+
+      setStoredUserId(data.id);
+      return data.id;
+    } finally {
+      pendingRegistration = null;
+    }
+  })();
+
+  return pendingRegistration;
 }
