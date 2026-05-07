@@ -645,8 +645,10 @@ export class Game extends Scene {
               );
 
               if (isSuccess) {
-                this.registry.set("quiz_perfect_score", 1);
-                this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+                if (score === questions.length) {
+                  this.registry.set("quiz_perfect_score", 1);
+                  this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+                }
 
                 if (this.registry.get("has_failed_quiz") === 1) {
                   this.registry.set("quiz_solved_after_failure", 1);
