@@ -4,6 +4,11 @@ import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import type { QuizQuestion } from "../../types/GameDataTypes";
 import { BasePanel } from "./BasePanel";
+import { QuizProgressTracker } from "./quiz/QuizProgressTracker";
+import {
+  QuizRibbonButton,
+  type QuizRibbonButtonConfig,
+} from "./quiz/QuizRibbonButton";
 
 export class QuizPanel extends BasePanel {
   private readonly optionButtonWidth = 460;
@@ -27,18 +32,12 @@ export class QuizPanel extends BasePanel {
   private answers: ("correct" | "wrong" | null)[] = [];
   private isProcessingAnswer: boolean = false;
 
-  private optionButtons: {
-    container: Phaser.GameObjects.Container;
-    bg: Phaser.GameObjects.Graphics;
-    label: Phaser.GameObjects.Text;
-    checkmark: Phaser.GameObjects.Graphics;
-    cross: Phaser.GameObjects.Graphics;
-  }[] = [];
+  private optionButtons: QuizRibbonButton[] = [];
 
   private scoreText: Phaser.GameObjects.Text;
   private questionCounterText: Phaser.GameObjects.Text;
-  private progressIndicators: Phaser.GameObjects.Graphics[] = [];
-  private questionTitleText: Phaser.GameObjects.Text;
+  private progressTracker: QuizProgressTracker;
+  private questionTitle: Phaser.GameObjects.Text;
   private questionText: Phaser.GameObjects.Text;
   private footerHintText: Phaser.GameObjects.Text;
 
@@ -70,6 +69,14 @@ export class QuizPanel extends BasePanel {
       1,
     );
 
+    const topPanel = this.scene.add
+      .container(0, -this.bg.height / 2 + 120)
+      .setSize(1150, 150);
+    const topPanelBg = this.scene.add
+      .rectangle(0, 0, 1150, 150, 0x000000)
+      .setOrigin(0.5, 0.7)
+      .setRounded(16);
+
     this.scoreText = scene.add
       .text(
         -this.panelWidth / 2 + 40,
@@ -98,7 +105,7 @@ export class QuizPanel extends BasePanel {
       )
       .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
-    this.questionTitleText = scene.add
+    this.questionTitle = scene.add
       .text(0, -this.panelHeight / 2 + 110, "Pergunta 01", {
         fontSize: LayoutConfig.FONTS.SIZES.TITLE,
         fontFamily: LayoutConfig.FONTS.TITLE,
@@ -131,6 +138,14 @@ export class QuizPanel extends BasePanel {
       )
       .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
 
+    this.progressTracker = new QuizProgressTracker(scene, 0, 0, {
+      indicatorWidth: this.progressIndicatorWidth,
+      indicatorHeight: this.progressIndicatorHeight,
+      notchDepth: this.progressNotchDepth,
+      notchHeight: this.progressNotchHeight,
+      gap: 8,
+    });
+
     this.resultTitleText = scene.add
       .text(0, -this.panelHeight / 2 + 110, "Resultado", {
         fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
@@ -160,12 +175,17 @@ export class QuizPanel extends BasePanel {
     this.resultStarsContainer.setVisible(false);
     this.createResultsStars();
 
-    this.add([
-      this.bg,
-      this.questionText,
+    topPanel.add([
+      topPanelBg,
       this.scoreText,
       this.questionCounterText,
-      this.questionTitleText,
+      this.progressTracker,
+    ]);
+
+    this.add([
+      this.bg,
+      topPanel,
+      this.questionText,
       this.footerHintText,
       this.resultTitleText,
       this.resultSummaryText,
@@ -190,42 +210,6 @@ export class QuizPanel extends BasePanel {
     this.bindKey("ENTER", () => this.selectOption());
   }
 
-  private getNotchedRectPoints(
-    centerX: number,
-    centerY: number,
-    halfW: number,
-    halfH: number,
-    notchDepth: number,
-    notchHeight: number,
-  ): { x: number; y: number }[] {
-    return [
-      { x: centerX - halfW + notchDepth, y: centerY - halfH },
-      {
-        x: centerX - halfW + notchDepth,
-        y: centerY - halfH + notchHeight,
-      },
-      { x: centerX - halfW, y: centerY - halfH + notchHeight },
-      { x: centerX - halfW, y: centerY + halfH - notchHeight },
-      {
-        x: centerX - halfW + notchDepth,
-        y: centerY + halfH - notchHeight,
-      },
-      { x: centerX - halfW + notchDepth, y: centerY + halfH },
-      { x: centerX + halfW - notchDepth, y: centerY + halfH },
-      {
-        x: centerX + halfW - notchDepth,
-        y: centerY + halfH - notchHeight,
-      },
-      { x: centerX + halfW, y: centerY + halfH - notchHeight },
-      { x: centerX + halfW, y: centerY - halfH + notchHeight },
-      {
-        x: centerX + halfW - notchDepth,
-        y: centerY - halfH + notchHeight,
-      },
-      { x: centerX + halfW - notchDepth, y: centerY - halfH },
-    ];
-  }
-
   public startQuiz(
     questions: QuizQuestion[],
     onComplete: (score: number) => void,
@@ -239,7 +223,8 @@ export class QuizPanel extends BasePanel {
     this.mode = "quiz";
 
     this.answers = new Array(questions.length).fill(null);
-    this.createProgressTracker(questions.length);
+    this.progressTracker.setCount(questions.length);
+    this.progressTracker.setAnswers(this.answers);
 
     this.setQuizUiVisible(true);
     this.setResultsUiVisible(false);
@@ -294,7 +279,7 @@ export class QuizPanel extends BasePanel {
       h,
     );
     this.applyScaledFontSize(
-      this.questionTitleText,
+      this.questionTitle,
       LayoutConfig.FONTS.SIZES.TITLE,
       w,
       h,
@@ -325,192 +310,32 @@ export class QuizPanel extends BasePanel {
     );
   }
 
-  private createProgressTracker(count: number) {
-    for (const g of this.progressIndicators) {
-      g.destroy();
-    }
-    this.progressIndicators = [];
-
-    for (let i = 0; i < count; i++) {
-      const g = this.scene.add.graphics();
-      this.progressIndicators.push(g);
-      this.add(g);
-    }
-  }
-
   private positionProgressTracker() {
-    const count = this.progressIndicators.length;
-    if (count === 0) return;
-
-    const gap = 8;
-    const totalWidth = count * this.progressIndicatorWidth + (count - 1) * gap;
-    const leftX = -this.panelWidth / 2 + 40;
+    const totalWidth = this.progressTracker.getTotalWidth();
+    if (totalWidth === 0) return;
     const leftBlockWidth = Math.max(
       this.scoreText.displayWidth,
       this.questionCounterText.displayWidth,
     );
-    const desiredStartX = leftX + leftBlockWidth + 30;
-    const maxStartX = this.panelWidth / 2 - 40 - totalWidth;
-    const startX = Math.min(desiredStartX, maxStartX);
-    const y = -this.panelHeight / 2 + 30;
+    const startX = -500 + leftBlockWidth + 30;
+    const y = -60;
 
-    for (let i = 0; i < count; i++) {
-      this.progressIndicators[i].setPosition(
-        startX + i * (this.progressIndicatorWidth + gap),
-        y,
-      );
-    }
+    this.progressTracker.layout(startX, y);
   }
 
   private updateProgressTracker() {
-    for (let i = 0; i < this.progressIndicators.length; i++) {
-      const g = this.progressIndicators[i];
-      g.clear();
-
-      const state = this.answers[i];
-      const fill =
-        state === "correct"
-          ? 0x4caf50
-          : state === "wrong"
-            ? 0xf44336
-            : 0x4a4a4a;
-      g.fillStyle(fill, 1);
-      const halfW = this.progressIndicatorWidth / 2;
-      const halfH = this.progressIndicatorHeight / 2;
-      const cx = halfW;
-      const cy = halfH;
-      g.fillPoints(
-        this.getNotchedRectPoints(
-          cx,
-          cy,
-          halfW,
-          halfH,
-          this.progressNotchDepth,
-          this.progressNotchHeight,
-        ),
-        true,
-      );
-    }
-  }
-
-  private drawRibbon(
-    g: Phaser.GameObjects.Graphics,
-    width: number,
-    height: number,
-    color: number,
-  ) {
-    const halfW = width / 2;
-    const halfH = height / 2;
-
-    g.clear();
-    g.fillStyle(color, 1);
-    g.fillPoints(
-      this.getNotchedRectPoints(
-        0,
-        0,
-        halfW,
-        halfH,
-        this.optionNotchDepth,
-        this.optionNotchHeight,
-      ),
-      true,
-    );
-  }
-
-  private createCheckmark(): Phaser.GameObjects.Graphics {
-    const g = this.scene.add.graphics();
-    g.lineStyle(5, 0x4caf50);
-    g.lineBetween(-14, 0, -2, 14);
-    g.lineBetween(-2, 14, 18, -12);
-    return g;
-  }
-
-  private createCross(): Phaser.GameObjects.Graphics {
-    const g = this.scene.add.graphics();
-    g.lineStyle(5, 0xf44336);
-    g.lineBetween(-12, -12, 12, 12);
-    g.lineBetween(12, -12, -12, 12);
-    return g;
-  }
-
-  private createRibbonButton(x: number, y: number, text: string) {
-    const container = this.scene.add.container(x, y);
-
-    const bg = this.scene.add.graphics();
-    this.drawRibbon(
-      bg,
-      this.optionButtonWidth,
-      this.optionButtonHeight,
-      LayoutConfig.COLORS.RIBBON_GOLD,
-    );
-
-    const label = this.scene.add
-      .text(0, 0, text, {
-        fontSize: Math.round(
-          LayoutConfig.FONTS.SIZES.METADATA * this.currentFontScale,
-        ),
-        fontFamily: LayoutConfig.FONTS.BODY,
-        color: LayoutConfig.COLORS.WHITE,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-
-    const checkmark = this.createCheckmark().setVisible(false);
-    const cross = this.createCross().setVisible(false);
-
-    container.add([bg, label, checkmark, cross]);
-    this.add(container);
-
-    return { container, bg, label, checkmark, cross };
+    this.progressTracker.setAnswers(this.answers);
   }
 
   private updateSelectionVisuals() {
     for (let i = 0; i < this.optionButtons.length; i++) {
       const b = this.optionButtons[i];
-      const selected = i === this.selectedOptionIndex;
-      const color = selected
-        ? LayoutConfig.COLORS.RIBBON_GOLD_SELECTED
-        : LayoutConfig.COLORS.RIBBON_GOLD;
-      this.drawRibbon(
-        b.bg,
-        this.optionButtonWidth,
-        this.optionButtonHeight,
-        color,
-      );
-      b.container.setScale(selected ? 1.05 : 1);
+      b.setSelected(i === this.selectedOptionIndex);
     }
   }
 
   private showAnswerFeedback(optionIndex: number, isCorrect: boolean) {
-    const b = this.optionButtons[optionIndex];
-    b.checkmark.setPosition(-80, 0).setVisible(isCorrect);
-    b.cross.setPosition(-80, 0).setVisible(!isCorrect);
-
-    this.drawRibbon(
-      b.bg,
-      this.optionButtonWidth,
-      this.optionButtonHeight,
-      isCorrect ? 0x4caf50 : 0xf44336,
-    );
-
-    if (isCorrect) {
-      this.scene.tweens.add({
-        targets: b.container,
-        scaleX: 1.1,
-        scaleY: 1.1,
-        duration: 150,
-        yoyo: true,
-        repeat: 1,
-      });
-      return;
-    }
-
-    this.scene.tweens.add({
-      targets: b.container,
-      x: "-=8",
-      duration: 50,
-      yoyo: true,
-      repeat: 3,
-    });
+    this.optionButtons[optionIndex]?.showFeedback(isCorrect);
   }
 
   private showQuestion() {
@@ -520,13 +345,13 @@ export class QuizPanel extends BasePanel {
     this.selectedOptionIndex = 0;
 
     this.optionButtons.forEach((b) => {
-      b.container.destroy(true);
+      b.destroy(true);
     });
     this.optionButtons = [];
 
-    this.questionTitleText.setText(
-      `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
-    );
+    // this.questionTitleText.setText(
+    //   `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
+    // );
     this.questionText.setText(question.question);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
@@ -553,11 +378,22 @@ export class QuizPanel extends BasePanel {
       { x: rightX, y: bottomY },
     ];
 
+    const buttonCfg: QuizRibbonButtonConfig = {
+      width: this.optionButtonWidth,
+      height: this.optionButtonHeight,
+      notchDepth: this.optionNotchDepth,
+      notchHeight: this.optionNotchHeight,
+      baseColor: 0xd4a853,
+      selectedColor: 0xf0c060,
+    };
+
     for (let i = 0; i < options.length; i++) {
       const pos = positions[i];
-      this.optionButtons.push(
-        this.createRibbonButton(pos.x, pos.y, options[i]),
-      );
+      const btn = new QuizRibbonButton(this.scene, pos.x, pos.y, options[i], {
+        ...buttonCfg,
+      });
+      this.optionButtons.push(btn);
+      this.add(btn);
     }
 
     this.updateSelectionVisuals();
@@ -627,7 +463,7 @@ export class QuizPanel extends BasePanel {
   private setQuizUiVisible(visible: boolean) {
     this.scoreText.setVisible(visible);
     this.questionCounterText.setVisible(visible);
-    this.questionTitleText.setVisible(visible);
+    // this.questionTitleText.setVisible(visible);
     this.questionText.setVisible(visible);
   }
 
@@ -641,7 +477,7 @@ export class QuizPanel extends BasePanel {
     this.mode = "results";
 
     this.optionButtons.forEach((b) => {
-      b.container.destroy(true);
+      b.destroy(true);
     });
     this.optionButtons = [];
 
