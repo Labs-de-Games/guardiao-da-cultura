@@ -1,5 +1,9 @@
 import * as Phaser from "phaser";
-import { type BadgeConfig, fetchBadges } from "../../../lib/badgesApi";
+import {
+  type BadgeConfig,
+  fetchBadges,
+  fetchUserBadges,
+} from "../../../lib/badgesApi";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 
 export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
@@ -57,14 +61,31 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
   private async loadData() {
     try {
       this.badges = await fetchBadges();
+      await this.syncUnlockedFromServer();
       this.refresh();
     } catch (e) {
       console.error("[BadgeGallery] Error loading badges", e);
+      this.unlockedIds = [];
+      this.refresh();
+    }
+  }
+
+  private async syncUnlockedFromServer() {
+    const userId = this.scene.registry.get("userId");
+    if (!userId) {
+      this.unlockedIds = [];
+      return;
+    }
+
+    try {
+      const userBadges = await fetchUserBadges(userId);
+      this.unlockedIds = userBadges.map((ub) => ub.badgeId);
+    } catch {
+      this.unlockedIds = [];
     }
   }
 
   public refresh() {
-    this.syncUnlockedStatus();
     this.badgesContainer.removeAll(true);
 
     const startX = -((this.COLS - 1) * this.SPACING_X) / 2;
@@ -80,19 +101,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
       const isUnlocked = this.unlockedIds.includes(badge.id);
       this.createBadgeCard(x, y, badge, isUnlocked);
     });
-  }
-
-  private syncUnlockedStatus() {
-    if (typeof window !== "undefined") {
-      try {
-        this.unlockedIds = JSON.parse(
-          localStorage.getItem("unlocked_badges") || "[]",
-        );
-      } catch (e) {
-        console.error("[BadgeGallery] Error parsing unlocked badges", e);
-        this.unlockedIds = [];
-      }
-    }
   }
 
   private createBadgeCard(
