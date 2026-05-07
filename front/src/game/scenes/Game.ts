@@ -408,6 +408,7 @@ export class Game extends Scene {
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
     this.player.setDepth(20);
     this.player.stairsLayer = this.stairsLayer;
+    this.player.setCollisionLayers(mapData.colliders);
 
     const interactiblesLayer = mapData.objectLayers.Interactibles;
     if (interactiblesLayer?.objects?.length) {
@@ -727,6 +728,12 @@ export class Game extends Scene {
         this.physics.add.collider(this.rat, layer);
         for (const npc of this.npcs) {
           this.physics.add.collider(npc, layer);
+        }
+        for (const item of this.draggableItems) {
+          this.physics.add.collider(item, layer);
+        }
+        for (const item of this.carryableItems) {
+          this.physics.add.collider(item, layer);
         }
       }
     });
