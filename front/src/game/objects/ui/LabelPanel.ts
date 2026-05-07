@@ -144,6 +144,15 @@ export class LabelPanel extends BasePanel {
 
     this.titleText.setPosition(left + padding, top + padding);
     this.titleText.setWordWrapWidth(this.panelWidth - padding * 2, true);
+
+    // Reduce font size if title exceeds 50 characters
+    const titleLength = this.labelData.title.length;
+    if (titleLength > 50) {
+      this.titleText.setFontSize("45px");
+    } else {
+      this.titleText.setFontSize("60px");
+    }
+
     this.titleText.setText(this.labelData.title);
 
     this.escHint.setPosition(right - 12, top + 12);
