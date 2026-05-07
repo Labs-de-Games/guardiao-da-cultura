@@ -2,7 +2,7 @@
 
 PROJECT_NAME = gameplate
 
-.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup help
+.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db:migrate db:migrate:generate help
 
 # --- SETUP & INSTALLATION ---
 install:
@@ -62,6 +62,15 @@ sync:
 	bun install --frozen-lockfile
 	@echo "Sync complete. node_modules are now aligned with host."
 
+# --- DATABASE ---
+db\:migrate:
+	@echo "Running TypeORM migrations inside back container..."
+	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && node_modules/.bin/typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
+
+db\:migrate\:generate:
+	@if [ -z "$(NAME)" ]; then echo "Usage: make db:migrate:generate NAME=MigrationName"; exit 1; fi
+	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && node_modules/.bin/typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
+
 # --- CLEANUP ---
 down:
 	docker compose -f compose.development.yaml down
@@ -102,6 +111,10 @@ help:
 	@echo "  make build-front - Build front Docker image"
 	@echo "  make build-back  - Build back Docker image"
 	@echo "  make build-prod  - Build production images"
+	@echo ""
+	@echo "=== Database ==="
+	@echo "  make db:migrate           - Run pending TypeORM migrations in Docker"
+	@echo "  make db:migrate:generate  - Generate new migration (NAME=MigrationName)"
 	@echo ""
 	@echo "=== QA & Tests ==="
 	@echo "  make lint        - Run Biome (lint + format)"
