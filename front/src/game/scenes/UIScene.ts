@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
@@ -445,7 +446,7 @@ export class UIScene extends Scene {
 
   private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
 
-  public showPhaseCompleteUI(collectedStars: number, maxStars: number) {
+  public async showPhaseCompleteUI(collectedStars: number, maxStars: number) {
     if (this.phaseCompletePanel) this.phaseCompletePanel.destroy();
 
     const { width: cx, height: cy } = this.scale;
@@ -487,8 +488,70 @@ export class UIScene extends Scene {
 
     this.phaseCompletePanel.add([bg, title, stars, message]);
 
-    // ESC para fechar (simples)
     this.input.keyboard?.once("keydown-ESC", () => this.hidePhaseCompleteUI());
+
+    await this.submitScoreToBackend();
+  }
+
+  private async submitScoreToBackend() {
+    try {
+      const gameScene = this.scene.get("Game") as Phaser.Scene & {
+        scoreManager?: { getPayload: () => unknown };
+      };
+      const userId = this.registry.get("userId");
+      const levelId = this.registry.get("levelId");
+
+      if (!gameScene?.scoreManager || !userId || !levelId) return;
+
+      const payload = gameScene.scoreManager.getPayload() as {
+        levelId: string;
+        totalQuarters: number;
+        totalStars: number;
+        rating: string;
+        floors: Array<{
+          floorIndex: number;
+          errors: number;
+          quartersEarned: number;
+        }>;
+        quiz: {
+          totalQuestions: number;
+          correctAnswers: number;
+          accuracyPercent: number;
+          quartersEarned: number;
+        };
+        interactibles: {
+          total: number;
+          interactionsCount: number;
+          quartersEarned: number;
+        };
+      };
+
+      await submitScore({
+        userId,
+        levelId: payload.levelId,
+        totalQuarters: payload.totalQuarters,
+        totalStars: payload.totalStars,
+        rating: payload.rating,
+        floors: payload.floors.map((f) => ({
+          floorIndex: f.floorIndex,
+          errors: f.errors,
+          quartersEarned: f.quartersEarned,
+        })),
+        quiz: {
+          totalQuestions: payload.quiz.totalQuestions,
+          correctAnswers: payload.quiz.correctAnswers,
+          accuracyPercent: payload.quiz.accuracyPercent,
+          quartersEarned: payload.quiz.quartersEarned,
+        },
+        interactibles: {
+          total: payload.interactibles.total,
+          interactionsCount: payload.interactibles.interactionsCount,
+          quartersEarned: payload.interactibles.quartersEarned,
+        },
+      });
+    } catch (err) {
+      console.error("[UIScene] Failed to submit score:", err);
+    }
   }
 
   public hidePhaseCompleteUI() {
