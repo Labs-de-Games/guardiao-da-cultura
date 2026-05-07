@@ -408,6 +408,7 @@ export class Game extends Scene {
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
     this.player.setDepth(20);
     this.player.stairsLayer = this.stairsLayer;
+    this.player.setCollisionLayers(mapData.colliders);
 
     const interactiblesLayer = mapData.objectLayers.Interactibles;
     if (interactiblesLayer?.objects?.length) {

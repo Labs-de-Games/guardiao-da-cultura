@@ -11,16 +11,10 @@ export class DraggableItem extends InteractableItem {
     if (grabbed) {
       this.setTint(0xaaaaaa);
       if (body) {
-        body.setAllowGravity(false);
-        body.checkCollision.none = true;
+        body.moves = false;
       }
     } else {
       this.clearTint();
-      if (body) {
-        body.setAllowGravity(true);
-        body.checkCollision.none = false;
-        body.setVelocity(0, 0);
-      }
       this.scene.events.emit("item-dropped", this);
     }
   }
