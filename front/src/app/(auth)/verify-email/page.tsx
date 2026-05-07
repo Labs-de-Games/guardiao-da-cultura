@@ -1,8 +1,15 @@
 "use client";
 
-import { Alert, Box, Button, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Typography,
+} from "@mui/material";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -45,5 +52,15 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
-  return <VerifyEmailContent />;
+  return (
+    <Suspense
+      fallback={
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
+  );
 }
