@@ -592,7 +592,7 @@ export class QuizPanel extends BasePanel {
     this.setQuizUiVisible(false);
     this.setResultsUiVisible(true);
 
-    this.footerHintText.setText("Pressione Espaço ou ESC para fechar");
+    this.footerHintText.setText("Aperte ESC para fechar");
 
     this.resultTitleText.setText("Resultado");
     this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");

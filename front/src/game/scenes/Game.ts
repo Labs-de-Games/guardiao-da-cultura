@@ -30,6 +30,7 @@ import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
+import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
@@ -38,6 +39,7 @@ import type { INpcEntity } from "../types/EntityTypes";
 import type {
   ContentJson,
   InteractionSubmittedData,
+  LabelInfoData,
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractableType } from "../types/InteractableTypes";
@@ -66,6 +68,7 @@ export class Game extends Scene {
   private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
   public placeholderSystem!: PlaceholderSystem;
+  public labelSystem!: LabelSystem;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
@@ -141,6 +144,8 @@ export class Game extends Scene {
       frameWidth: 32,
       frameHeight: 32,
     });
+
+    this.load.image("label", "misc/label.png");
 
     this.load.image("ui_star_full", "ui/stars/star_full.png");
     this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
@@ -244,6 +249,7 @@ export class Game extends Scene {
 
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
+    this.labelSystem = new LabelSystem(this);
 
     this.badgeSystem = new BadgeSystem(this);
     this.badgeSystem.initialize();
@@ -270,6 +276,7 @@ export class Game extends Scene {
 
       if (placeholderLayer) {
         this.placeholderSystem.registerAllFromLayer(placeholderLayer);
+        this.labelSystem.registerAllFromLayer(placeholderLayer);
       }
 
       this.analyticsSystem.trackLevelEvent(
@@ -507,6 +514,28 @@ export class Game extends Scene {
     }
 
     this.player.on("interact-placeholder", () => {
+      if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
+
+      const label = this.labelSystem.getNearbyLabel(
+        this.player.x,
+        this.player.y,
+        120,
+      );
+
+      if (label) {
+        const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
+          label.placeholderId,
+        );
+        const workId = this.resolveWorkIdFromPlaceholder(placeholder?.id);
+        const work = workId ? this.findWorkDataById(workId) : null;
+
+        if (work) {
+          const payload = this.buildLabelInfo(work);
+          this.events.emit(GameEvents.SHOW_LABEL_REQUEST, payload);
+          return;
+        }
+      }
+
       const nearby = this.placeholderSystem.getNearbyPlaceholder(
         this.player.x,
         this.player.y,
@@ -742,6 +771,52 @@ export class Game extends Scene {
   private setupCameras() {
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
     this.levelManager.updateProgress();
+  }
+
+  private resolveWorkIdFromPlaceholder(
+    rawId?: string | string[],
+  ): string | null {
+    if (!rawId) return null;
+
+    const ids = Array.isArray(rawId) ? rawId : [rawId];
+    for (const id of ids) {
+      if (this.findWorkDataById(id)) return id;
+    }
+
+    return ids[0] || null;
+  }
+
+  private findWorkDataById(id: string): WorkData | null {
+    const groups = Object.values(this.contentData.works);
+    for (const group of groups) {
+      if (!group) continue;
+      const match = group[id];
+      if (match) return match;
+    }
+    return null;
+  }
+
+  private buildLabelInfo(work: WorkData): LabelInfoData {
+    const metadata = work.metadata || {};
+    // Cast to access fields from educational (actual JSON structure)
+    const educational = (work.educational || {}) as Record<string, unknown>;
+
+    // These fields are in educational in the actual works.json
+    const description = (educational.description as string | undefined) || "";
+    const dimensions =
+      (educational.dimensions as string | undefined) || metadata.dimensions;
+    const medium =
+      (educational.medium as string | undefined) || metadata.medium;
+
+    return {
+      title: metadata.title || work.id,
+      author: metadata.author || "",
+      description,
+      year: metadata.year,
+      dimensions,
+      medium,
+      place: metadata.place,
+    };
   }
 
   update(_time: number, _delta: number) {}
