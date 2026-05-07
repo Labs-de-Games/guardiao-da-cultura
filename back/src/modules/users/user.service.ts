@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import type { Repository } from "typeorm";
+import { QueryFailedError, type Repository } from "typeorm";
 import { User } from "./user.entity";
 
 @Injectable()
@@ -14,7 +14,19 @@ export class UserService {
     data: Pick<User, "username" | "email" | "password">,
   ): Promise<User> {
     const user = this.userRepository.create(data);
-    return this.userRepository.save(user);
+
+    try {
+      return await this.userRepository.save(user);
+    } catch (err) {
+      // Postgres unique violation (e.g. duplicate email).
+      if (err instanceof QueryFailedError) {
+        const code = (err as unknown as { code?: string }).code;
+        if (code === "23505") {
+          throw new ConflictException("Email already registered");
+        }
+      }
+      throw err;
+    }
   }
 
   async findByEmail(email: string): Promise<User | null> {

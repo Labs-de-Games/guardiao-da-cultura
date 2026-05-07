@@ -14,6 +14,9 @@ export enum GameEventType {
   CLUE_UNLOCKED = "clue.unlocked",
   PROGRESSION_UPDATED = "progression.updated",
 
+  QUIZ_COMPLETED = "quiz.completed",
+  QUIZ_FAILED = "quiz.failed",
+
   BADGE_EARNED = "badge.earned",
   BADGE_VIEWED = "badge.viewed",
 
@@ -50,4 +53,16 @@ export interface ClueEventMetadata {
 export interface BadgeEarnedMetadata {
   badgeId: string;
   badgeName?: string;
+}
+
+export interface QuizCompletedMetadata {
+  missionId: string;
+  score: number;
+  totalQuestions: number;
+  accuracyPercent: number;
+  quartersEarned: number;
+  passed: boolean;
+  timeSpentMs?: number;
+  attempts?: number;
+  payload?: Record<string, unknown>;
 }
