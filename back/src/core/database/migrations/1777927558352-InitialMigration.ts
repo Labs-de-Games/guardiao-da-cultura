@@ -5,7 +5,7 @@ export class InitialMigration1777927558352 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TYPE "public"."game_event_type_enum" AS ENUM('game.started', 'game.paused', 'game.resumed', 'session.end', 'level.started', 'level.completed', 'level.failed', 'level.restarted', 'star.collected', 'clue.used', 'clue.unlocked', 'progression.updated', 'badge.earned', 'badge.viewed', 'event.logged')`,
+      `CREATE TYPE "public"."game_event_type_enum" AS ENUM('game.started', 'game.paused', 'game.resumed', 'session.end', 'level.started', 'level.completed', 'level.failed', 'level.restarted', 'star.collected', 'clue.used', 'clue.unlocked', 'progression.updated', 'badge.earned', 'badge.viewed', 'event.logged', 'quiz.completed', 'quiz.failed')`,
     );
     await queryRunner.query(
       `CREATE TABLE "game_event" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "userId" character varying, "type" "public"."game_event_type_enum" NOT NULL, "metadata" jsonb NOT NULL DEFAULT '{}', "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_d979b8a4d47b02b8f87322f33e0" PRIMARY KEY ("id"))`,

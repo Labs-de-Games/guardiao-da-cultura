@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -641,6 +642,20 @@ export class Game extends Scene {
               } else {
                 this.registry.set("has_failed_quiz", 1);
               }
+
+              const scoringPayload = this.scoreManager.getPayload();
+              void sendQuizOutcomeEvent({
+                type: isSuccess ? "quiz.completed" : "quiz.failed",
+                metadata: {
+                  missionId,
+                  score,
+                  totalQuestions: questions.length,
+                  accuracyPercent: scoringPayload.quiz.accuracyPercent,
+                  quartersEarned: scoringPayload.quiz.quartersEarned,
+                  passed: isSuccess,
+                  payload: scoringPayload as unknown as Record<string, unknown>,
+                },
+              });
 
               const npc = this.npcs.find((n) => {
                 const ent = n as unknown as INpcEntity;

@@ -116,6 +116,16 @@ export class ProgressionService {
     });
   }
 
+  @OnEvent("quiz.completed")
+  async handleQuizCompleted(payload: GameEventPayload): Promise<void> {
+    await this.handleQuizEvent(payload);
+  }
+
+  @OnEvent("quiz.failed")
+  async handleQuizFailed(payload: GameEventPayload): Promise<void> {
+    await this.handleQuizEvent(payload);
+  }
+
   async findByUserId(userId: string): Promise<UserProgress | null> {
     return this.progressRepository.findOne({ where: { userId } });
   }
@@ -129,5 +139,32 @@ export class ProgressionService {
 
     const created = this.progressRepository.create({ userId });
     return this.progressRepository.save(created);
+  }
+
+  private async handleQuizEvent(payload: GameEventPayload): Promise<void> {
+    if (!payload.userId) return;
+
+    const progress = await this.findOrCreate(payload.userId);
+    const meta = payload.metadata ?? {};
+
+    const quizResults = parseJson(progress.quizResults);
+    const missionId = String(meta.missionId ?? "");
+    if (!missionId) return;
+
+    quizResults[missionId] = {
+      completedAt: payload.timestamp,
+      passed: meta.passed ?? false,
+      score: meta.score ?? 0,
+      totalQuestions: meta.totalQuestions ?? 0,
+      accuracyPercent: meta.accuracyPercent ?? 0,
+      quartersEarned: meta.quartersEarned ?? 0,
+      timeSpentMs: meta.timeSpentMs ?? null,
+      attempts: meta.attempts ?? null,
+      payload: meta.payload ?? null,
+    };
+
+    await this.progressRepository.update(progress.id, {
+      quizResults: JSON.stringify(quizResults),
+    });
   }
 }

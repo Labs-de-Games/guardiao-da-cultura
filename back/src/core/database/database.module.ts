@@ -16,7 +16,9 @@ import { ConfigService } from "../config/config.service";
           password: url.password,
           database: url.pathname.slice(1),
           autoLoadEntities: true,
-          synchronize: config.nodeEnv === "development",
+          // We manage schema via explicit TypeORM migrations.
+          // `synchronize` causes the DB to drift and breaks migration runs.
+          synchronize: false,
         };
       },
     }),
