@@ -6,10 +6,14 @@ import { getCurrentUserId } from "../lib/session";
 export default function PhaserGame({ userId }: { userId?: string }) {
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isInitializingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return;
+    if (isInitializingRef.current || gameRef.current) return;
+
+    isInitializingRef.current = true;
 
     const initGame = async () => {
       try {
@@ -23,6 +27,7 @@ export default function PhaserGame({ userId }: { userId?: string }) {
         setIsLoading(false);
       } catch (err) {
         console.error("[PhaserGame] Error initializing game:", err);
+        isInitializingRef.current = false;
       }
     };
 
@@ -32,6 +37,7 @@ export default function PhaserGame({ userId }: { userId?: string }) {
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
+        isInitializingRef.current = false;
       }
     };
   }, []);
