@@ -434,6 +434,11 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_iii_em_pe"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.2
             }
           ],
           "rotation": 0,
@@ -454,6 +459,11 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_ii_flexao"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.2
             }
           ],
           "rotation": 0,
@@ -474,6 +484,11 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_i_fundidos"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.2
             }
           ],
           "rotation": 0,
