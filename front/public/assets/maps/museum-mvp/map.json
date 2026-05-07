@@ -316,8 +316,8 @@
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 172.694034795006,
-          "y": 504.268309455612
+          "x": 58.3607014616727,
+          "y": 484.268309455612
         }
       ],
       "opacity": 1,
@@ -434,14 +434,19 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_iii_em_pe"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.2
             }
           ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 219.333333333333,
-          "y": 504.166666666666
+          "x": 230.333333333333,
+          "y": 484.416666666666
         },
         {
           "height": 0,
@@ -454,14 +459,19 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_ii_flexao"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.2
             }
           ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 592.333333333333,
-          "y": 506.166666666667
+          "x": 592.833333333333,
+          "y": 485.666666666667
         },
         {
           "height": 0,
@@ -474,14 +484,19 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_i_fundidos"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.2
             }
           ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 681.333333333333,
-          "y": 505.666666666667
+          "x": 682.583333333333,
+          "y": 484.666666666667
         }
       ],
       "opacity": 1,

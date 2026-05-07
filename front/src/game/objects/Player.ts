@@ -30,6 +30,28 @@ export class Player
   public isGrabbing: boolean = false;
   public isCarrying: boolean = false;
   private grabOffset: number = 0;
+  private grabOffsetY: number = 0;
+
+  // Tile layers that have collision enabled (walls/floor/etc).
+  private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
+
+  private setPhysicsBodyForVisualScale(scale: number) {
+    const isDragging = scale === PLAYER_PHYSICS.DRAGGING_SCALE;
+    const hitbox = isDragging
+      ? PLAYER_PHYSICS.DRAGGING_HITBOX
+      : PLAYER_PHYSICS.HITBOX;
+    const hitboxOffset = isDragging
+      ? PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET
+      : PLAYER_PHYSICS.HITBOX_OFFSET;
+
+    const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
+    const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
+    const worldOffX = hitboxOffset.X * PLAYER_PHYSICS.SCALE;
+    const worldOffY = hitboxOffset.Y * PLAYER_PHYSICS.SCALE;
+
+    this.setSize(worldW / scale, worldH / scale);
+    this.setOffset(worldOffX / scale, worldOffY / scale);
+  }
 
   // Preload player assets
   static preload(scene: Phaser.Scene) {
@@ -63,6 +85,14 @@ export class Player
       {
         frameWidth: PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.frameWidth,
         frameHeight: PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.DRAGGING_SPRITESHEET.key,
+      PLAYER_ASSETS.DRAGGING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameHeight,
       },
     );
   }
@@ -193,8 +223,69 @@ export class Player
     this.carryableRegistry = items;
   }
 
+  setCollisionLayers(layers: Phaser.Tilemaps.TilemapLayer[]) {
+    this.collisionLayers = layers;
+  }
+
+  private wouldGrabbedPedestalHitWall(
+    dirX: -1 | 1,
+    dtMs: number,
+    accel: number,
+  ): boolean {
+    if (
+      !this.isGrabbing ||
+      !this.grabbedItem ||
+      this.collisionLayers.length === 0
+    ) {
+      return false;
+    }
+
+    const playerBody = this.body as Phaser.Physics.Arcade.Body;
+    const itemBody = this.grabbedItem.body as
+      | Phaser.Physics.Arcade.Body
+      | undefined;
+    if (!playerBody || !itemBody) return false;
+
+    // Predict a conservative next X for the pedestal based on next velocity.
+    // Note: this codebase applies per-frame velocity changes directly.
+    const nextVelX = playerBody.velocity.x + dirX * accel;
+    const dx = (nextVelX * dtMs) / 1000;
+
+    const pedCenterX = this.x + this.grabOffset + dx;
+    const pedBottomY = this.y + this.grabOffsetY;
+    const pedHalfW = itemBody.width / 2;
+    const pedH = itemBody.height;
+
+    // Sample a few vertical points along the pedestal footprint.
+    const ySamples = [
+      pedBottomY - 2,
+      pedBottomY - pedH / 2,
+      pedBottomY - pedH + 2,
+    ];
+
+    // Check the tile at the leading edge.
+    const edgeX =
+      (dirX > 0 ? pedCenterX + pedHalfW : pedCenterX - pedHalfW) + dirX * 2;
+
+    for (const layer of this.collisionLayers) {
+      for (const y of ySamples) {
+        const tile = layer.getTileAtWorldXY(edgeX, y, true);
+        if (!tile || tile.index === -1) continue;
+
+        // Respect one-way/platform layers: only block if the relevant side is collidable.
+        if (dirX > 0) {
+          if (tile.collideLeft) return true;
+        } else {
+          if (tile.collideRight) return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   // Player update logic (runs once per frame)
-  update(_ts: number, _dt: number) {
+  update(_ts: number, dt: number) {
     if (this.isDead || this.isInDialogue) return;
 
     if (this.isHit) {
@@ -254,17 +345,25 @@ export class Player
       const accel = this.getMovementAcceleration();
 
       if (leftDown) {
-        if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-          this.anims.play(PLAYER_ANIMS.WALK.key, true);
+        if (this.wouldGrabbedPedestalHitWall(-1, dt, accel)) {
+          body.setVelocityX(0);
+        } else {
+          if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
+            this.anims.play(PLAYER_ANIMS.WALK.key, true);
+          }
+          body.velocity.x -= accel;
+          if (!this.isGrabbing) this.setFlipX(true);
         }
-        body.velocity.x -= accel;
-        if (!this.isGrabbing) this.setFlipX(true);
       } else if (rightDown) {
-        if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-          this.anims.play(PLAYER_ANIMS.WALK.key, true);
+        if (this.wouldGrabbedPedestalHitWall(1, dt, accel)) {
+          body.setVelocityX(0);
+        } else {
+          if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
+            this.anims.play(PLAYER_ANIMS.WALK.key, true);
+          }
+          body.velocity.x += accel;
+          if (!this.isGrabbing) this.setFlipX(false);
         }
-        body.velocity.x += accel;
-        if (!this.isGrabbing) this.setFlipX(false);
       } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
         this.anims.play(PLAYER_ANIMS.IDLE.key, true);
       }
@@ -272,7 +371,11 @@ export class Player
 
     if (this.isGrabbing && this.grabbedItem) {
       this.grabbedItem.x = this.x + this.grabOffset;
-      this.grabbedItem.y = this.y;
+      this.grabbedItem.y = this.y + this.grabOffsetY;
+      const itemBody = this.grabbedItem.body as
+        | Phaser.Physics.Arcade.Body
+        | undefined;
+      itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
       if (isMoving) {
@@ -302,7 +405,7 @@ export class Player
       this.anims.play(PLAYER_ANIMS.JUMP.key, true);
     }
 
-    if (isOnStairs) {
+    if (isOnStairs && !this.isGrabbing) {
       if (isClimbing) {
         if (downDown) {
           this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
@@ -336,10 +439,14 @@ export class Player
     for (const item of this.draggableRegistry) {
       if (!item.input?.enabled) continue;
 
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
+      const itemBody = item.body as Phaser.Physics.Arcade.Body | undefined;
+      const itemX = itemBody?.center?.x ?? item.x;
+      const itemY = itemBody?.center?.y ?? item.y;
+
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, itemX, itemY);
       if (dist < minDist) {
         const isFacingItem =
-          (this.flipX && item.x < this.x) || (!this.flipX && item.x > this.x);
+          (this.flipX && itemX < this.x) || (!this.flipX && itemX > this.x);
         if (isFacingItem) {
           minDist = dist;
           closestItem = item;
@@ -350,7 +457,35 @@ export class Player
     if (closestItem) {
       this.isGrabbing = true;
       this.grabbedItem = closestItem;
+
+      const body = this.body as Phaser.Physics.Arcade.Body;
+      const prevBodyX = body?.x;
+      const prevBodyY = body?.y;
+
+      // Switch player to the dragging pose (visual), but keep the physics
+      // body stable to avoid collision ejection.
+      this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+      this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+
+      // Swap to the dragging spritesheet immediately so we can compensate any
+      // body shift caused by the new (bigger) animation frame size.
+      this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
+
+      // Keep the Arcade body world position stable across scale/animation changes.
+      if (
+        body &&
+        typeof prevBodyX === "number" &&
+        typeof prevBodyY === "number"
+      ) {
+        body.updateFromGameObject();
+        this.x += prevBodyX - body.x;
+        this.y += prevBodyY - body.y;
+        body.updateFromGameObject();
+      }
+
+      // Preserve the sculpture position and keep a rigid constraint.
       this.grabOffset = closestItem.x - this.x;
+      this.grabOffsetY = closestItem.y - this.y;
       this.grabbedItem.setGrabbed(true);
 
       this.emit("item-interacted", closestItem);
@@ -411,11 +546,26 @@ export class Player
   }
 
   private releaseGrab() {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+
+    // Zero player velocity BEFORE releasing the sculpture so the physics
+    // engine doesn't slide the player into the sculpture on the same frame,
+    // which would trigger Arcade separation and push it sideways.
+    if (body) {
+      body.setVelocity(0, 0);
+    }
+
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
     }
     this.isGrabbing = false;
     this.grabbedItem = null;
+
+    this.setScale(PLAYER_PHYSICS.SCALE);
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
+
+    // Swap back to the walking spritesheet immediately for the same reason as above.
+    this.anims.play(PLAYER_ANIMS.IDLE.key, true);
   }
 
   private getMovementAcceleration(): number {
