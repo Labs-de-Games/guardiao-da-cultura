@@ -57,7 +57,7 @@ export class LabelPanel extends BasePanel {
     this.descMaskGraphics = scene.add.graphics();
     this.descMaskGraphics.setVisible(false);
 
-    this.escHint = this.createKeyHint("ESC para fechar", "#000000");
+    this.escHint = this.createKeyHint("Aperte ESC para fechar", "#000000");
     this.escHint.setOrigin(1, 0);
     this.escHint.setFontSize("16px");
     this.escHint.setFontFamily("Inter");
