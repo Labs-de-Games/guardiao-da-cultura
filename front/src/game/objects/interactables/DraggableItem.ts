@@ -7,6 +7,7 @@ export class DraggableItem extends InteractableItem {
   public setGrabbed(grabbed: boolean) {
     this.isGrabbed = grabbed;
     const body = this.body as Phaser.Physics.Arcade.Body;
+    this.setDepth(10);
 
     if (grabbed) {
       this.setTint(0xaaaaaa);

@@ -109,11 +109,16 @@ export class PlaceholderSystem {
     const SNAP_THRESHOLD = 150;
 
     for (const p of this.placeholders) {
-      const isInside = Phaser.Geom.Rectangle.Contains(p.area, x, y);
+      let checkY = y;
+      if (item.interactableType === InteractableType.PAINTING) {
+        checkY = y + item.displayHeight / 2;
+      }
+
+      const isInside = Phaser.Geom.Rectangle.Contains(p.area, x, checkY);
 
       const dist = Phaser.Math.Distance.Between(
         x,
-        y,
+        checkY,
         p.area.centerX,
         p.area.centerY,
       );
@@ -172,9 +177,14 @@ export class PlaceholderSystem {
 
     let nearbyMismatch = false;
     for (const p of this.placeholders) {
+      let checkY = item.y;
+      if (item.interactableType === InteractableType.PAINTING) {
+        checkY = item.y + item.displayHeight / 2;
+      }
+
       const dist = Phaser.Math.Distance.Between(
         item.x,
-        item.y,
+        checkY,
         p.area.centerX,
         p.area.centerY,
       );
