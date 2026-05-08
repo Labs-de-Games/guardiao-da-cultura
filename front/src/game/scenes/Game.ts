@@ -797,6 +797,18 @@ export class Game extends Scene {
   }
 
   private buildLabelInfo(work: WorkData): LabelInfoData {
+    // Check if this work has a parent_id (for chunks that belong to a larger work)
+    const workAny = work as unknown as Record<string, unknown>;
+    const parentId = workAny.parent_id as string | undefined;
+
+    // If there's a parent, use the parent's data for the label
+    if (parentId) {
+      const parentWork = this.findWorkDataById(parentId);
+      if (parentWork) {
+        return this.buildLabelInfo(parentWork);
+      }
+    }
+
     const metadata = work.metadata || {};
     // Cast to access fields from educational (actual JSON structure)
     const educational = (work.educational || {}) as Record<string, unknown>;
