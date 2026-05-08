@@ -21,7 +21,9 @@ export class AdminService {
   ) {}
 
   async listUsers(query: ListUsersQueryDto): Promise<PaginatedUsersResult> {
-    const { page, limit, search, role, isActive } = query;
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const { search, role, isActive } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.userRepository.createQueryBuilder("user");
