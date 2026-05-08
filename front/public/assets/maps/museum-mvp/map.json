@@ -114,7 +114,7 @@
     {
       "draworder": "topdown",
       "id": 16,
-      "name": "Interactibles",
+      "name": "collectibles",
       "objects": [
         {
           "height": 0,
@@ -122,12 +122,24 @@
           "name": "I4",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "collectible_id",
+              "type": "string",
+              "value": "xotehe"
+            },
+            {
+              "name": "collectible_type",
+              "type": "string",
+              "value": "collect"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 222.006756193177,
-          "y": 86.0440403703395
+          "x": 222.756756193177,
+          "y": 82.0440403703395
         },
         {
           "height": 0,
@@ -135,12 +147,24 @@
           "name": "I3",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "collectible_id",
+              "type": "string",
+              "value": "cachimbo"
+            },
+            {
+              "name": "collectible_type",
+              "type": "string",
+              "value": "clue_villain"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "x": 30.0807406789557,
-          "y": 170.48502794228
+          "y": 177.48502794228
         },
         {
           "height": 0,
@@ -148,12 +172,24 @@
           "name": "I2",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "collectible_id",
+              "type": "string",
+              "value": "abebe"
+            },
+            {
+              "name": "collectible_type",
+              "type": "string",
+              "value": "collect"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "x": 774.061514721828,
-          "y": 378.877081769399
+          "y": 383.877081769399
         },
         {
           "height": 0,
@@ -161,12 +197,49 @@
           "name": "I1",
           "opacity": 1,
           "point": true,
+          "properties": [
+            {
+              "name": "collectible_id",
+              "type": "string",
+              "value": "fusca"
+            },
+            {
+              "name": "collectible_type",
+              "type": "string",
+              "value": "collect"
+            }
+          ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "x": 757.587496872133,
-          "y": 505.955083826841
+          "y": 512.955083826841
+        },
+        {
+          "height": 0,
+          "id": 56,
+          "name": "I5",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "collectible_id",
+              "type": "string",
+              "value": "chimarrao"
+            },
+            {
+              "name": "collectible_type",
+              "type": "string",
+              "value": "clue_next"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 376.75,
+          "y": 225
         }
       ],
       "opacity": 1,
@@ -316,8 +389,8 @@
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 58.3607014616727,
-          "y": 484.268309455612
+          "x": 172.694034795006,
+          "y": 504.268309455612
         }
       ],
       "opacity": 1,
@@ -434,19 +507,14 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_iii_em_pe"
-            },
-            {
-              "name": "scale",
-              "type": "float",
-              "value": 1.2
             }
           ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 230.333333333333,
-          "y": 484.416666666666
+          "x": 219.333333333333,
+          "y": 504.166666666666
         },
         {
           "height": 0,
@@ -459,19 +527,14 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_ii_flexao"
-            },
-            {
-              "name": "scale",
-              "type": "float",
-              "value": 1.2
             }
           ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 592.833333333333,
-          "y": 485.666666666667
+          "x": 592.333333333333,
+          "y": 506.166666666667
         },
         {
           "height": 0,
@@ -484,19 +547,14 @@
               "name": "contentId",
               "type": "string",
               "value": "edgards_sem_titulo_i_fundidos"
-            },
-            {
-              "name": "scale",
-              "type": "float",
-              "value": 1.2
             }
           ],
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 682.583333333333,
-          "y": 484.666666666667
+          "x": 681.333333333333,
+          "y": 505.666666666667
         }
       ],
       "opacity": 1,
@@ -1272,7 +1330,7 @@
     }
   ],
   "nextlayerid": 17,
-  "nextobjectid": 56,
+  "nextobjectid": 57,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",

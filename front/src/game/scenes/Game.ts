@@ -83,6 +83,7 @@ export class Game extends Scene {
     quizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
+    collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
   };
 
   constructor() {
@@ -123,6 +124,10 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
 
+    LEVEL_ASSETS.COLLECTIBLES.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+
     BADGE_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
@@ -138,6 +143,9 @@ export class Game extends Scene {
     });
     this.levelDef.data.messages.forEach((path, index) => {
       this.load.json(`messages_${index}`, path);
+    });
+    this.levelDef.data.collectibles.forEach((path, index) => {
+      this.load.json(`collectibles_${index}`, path);
     });
 
     this.load.spritesheet("sparkle", "misc/sparkle.png", {
@@ -193,6 +201,18 @@ export class Game extends Scene {
         );
       } else {
         console.warn(`[Game] Could not load messages data from: ${path}`);
+      }
+    });
+
+    this.levelDef.data.collectibles.forEach((path, i) => {
+      const data = this.cache.json.get(`collectibles_${i}`);
+      if (data?.collectibles) {
+        DataUtils.deepMerge(
+          this.contentData.collectibles as unknown as Record<string, unknown>,
+          data.collectibles as unknown as Record<string, unknown>,
+        );
+      } else {
+        console.warn(`[Game] Could not load collectibles data from: ${path}`);
       }
     });
   }
@@ -417,15 +437,51 @@ export class Game extends Scene {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
-    const interactiblesLayer = mapData.objectLayers.Interactibles;
-    if (interactiblesLayer?.objects?.length) {
-      for (const obj of interactiblesLayer.objects) {
+    const collectiblesLayer = mapData.objectLayers.collectibles;
+    if (collectiblesLayer?.objects?.length) {
+      for (const obj of collectiblesLayer.objects) {
         const x = (obj.x ?? 0) * this.mapScale;
         const y = (obj.y ?? 0) * this.mapScale;
+
+        // Extract collectible_id and collectible_type from properties
+        const props = (
+          obj as unknown as { properties?: { name: string; value: string }[] }
+        ).properties;
+        const collectibleId = props?.find(
+          (p) => p.name === "collectible_id",
+        )?.value;
+        const collectibleType = props?.find(
+          (p) => p.name === "collectible_type",
+        )?.value;
+
+        // Find the collectible data from contentData and create sprite
+        let sprite: Phaser.GameObjects.Sprite | null = null;
+        if (collectibleId && collectibleType) {
+          const typeKey = collectibleType.toUpperCase() as
+            | "COLLECT"
+            | "CLUE_VILLAIN"
+            | "CLUE_NEXT";
+          const collectibleData =
+            this.contentData.collectibles[typeKey]?.[collectibleId];
+          if (collectibleData) {
+            const scale = collectibleData.assets.scaleOnMap ?? 2;
+            sprite = this.add
+              .sprite(x, y, collectibleData.assets.sprite)
+              .setScale(scale)
+              .setOrigin(0.5, 1)
+              .setDepth(10);
+          } else {
+            console.warn(
+              `[Game] Collectible data not found for id: ${collectibleId}, type: ${collectibleType}`,
+            );
+          }
+        }
+
         const btn = new InteractiveButton(this, x, y, {
           dialogueLines: [],
           onInteract: () => {
             this.scoreManager.recordInteractible();
+            if (sprite) sprite.destroy();
             btn.destroy();
           },
         });
