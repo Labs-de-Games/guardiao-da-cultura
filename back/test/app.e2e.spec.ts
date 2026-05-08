@@ -10,9 +10,10 @@ import { RefreshToken } from "../src/modules/auth/entities/refresh-token.entity"
 import { Badge } from "../src/modules/badges/badge.entity";
 import { UserBadge } from "../src/modules/badges/user-badge.entity";
 import { UserProgress } from "../src/modules/progression/user-progress.entity";
+import { UserScore } from "../src/modules/scoring/user-score.entity";
 import { User } from "../src/modules/users/user.entity";
 
-class MockDatabaseModule {}
+class MockDatabaseModule { }
 
 describe("AppController (e2e)", () => {
   let app: INestApplication;
@@ -44,6 +45,8 @@ describe("AppController (e2e)", () => {
       .overrideProvider(getRepositoryToken(MagicLinkToken))
       .useValue(repo)
       .overrideProvider(getRepositoryToken(RefreshToken))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(UserScore))
       .useValue(repo)
       .compile();
 
