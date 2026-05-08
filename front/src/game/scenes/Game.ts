@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
+import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -218,6 +219,10 @@ export class Game extends Scene {
 
     this.questManager = new QuestManager(MissionRequirements);
     this.scoreManager = new ScoreManager({ levelId: this.levelId });
+
+    this.registry.set("scoreManager", this.scoreManager);
+
+    this.registry.set("scoreManager", this.scoreManager);
 
     this.scoreManager.on(
       ScoringEvents.SCORE_UPDATED,
@@ -670,9 +675,12 @@ export class Game extends Scene {
                   },
                 );
 
+                void this.submitScoreToBackend();
+
                 //this.levelManager.completePhase();
               } else {
                 this.registry.set("has_failed_quiz", 1);
+                void this.submitScoreToBackend();
               }
 
               const scoringPayload = this.scoreManager.getPayload();
@@ -853,6 +861,41 @@ export class Game extends Scene {
 
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
+  }
+
+  private async submitScoreToBackend() {
+    try {
+      const userId = this.registry.get("userId");
+      if (!userId) return;
+
+      const payload = this.scoreManager.getPayload();
+
+      await submitScore({
+        userId,
+        levelId: payload.levelId,
+        totalQuarters: payload.totalQuarters,
+        totalStars: payload.totalStars,
+        rating: payload.rating,
+        floors: payload.floors.map((f) => ({
+          floorIndex: f.floorIndex,
+          errors: f.errors,
+          quartersEarned: f.quartersEarned,
+        })),
+        quiz: {
+          totalQuestions: payload.quiz.totalQuestions,
+          correctAnswers: payload.quiz.correctAnswers,
+          accuracyPercent: payload.quiz.accuracyPercent,
+          quartersEarned: payload.quiz.quartersEarned,
+        },
+        interactibles: {
+          total: payload.interactibles.total,
+          interactionsCount: payload.interactibles.interactionsCount,
+          quartersEarned: payload.interactibles.quartersEarned,
+        },
+      });
+    } catch (err) {
+      console.error("[Game] Failed to submit score:", err);
+    }
   }
 
   private handleItemDropped(item: DraggableItem) {
