@@ -39,6 +39,12 @@ export const PLAYER_ASSETS = {
     frameWidth: 162,
     frameHeight: 183,
   },
+  CARRYING_SPRITESHEET: {
+    key: "player_carrying",
+    path: "player/animations/carrying.png",
+    frameWidth: 48,
+    frameHeight: 37,
+  },
   SOUNDS: {},
 } as const;
 
@@ -153,6 +159,20 @@ export const PLAYER_ANIMS = {
   WALK: {
     key: "walk",
     spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 15,
+    repeat: -1,
+  },
+  CARRY_IDLE: {
+    key: "carry_idle",
+    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
+    frames: [0],
+    frameRate: 10,
+    repeat: -1,
+  },
+  CARRY_WALK: {
+    key: "carry_walk",
+    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
     frameRate: 15,
     repeat: -1,
