@@ -16,31 +16,31 @@ import { ProgressionModule } from "./modules/progression/progression.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
-	imports: [
-		EventEmitterModule.forRoot(),
-		ConfigModule,
-		DatabaseModule,
-		UsersModule,
-		AuthModule,
-		AdminModule,
-		GameModule,
-		ProgressionModule,
-		BadgesModule,
-		AnalyticsModule,
-		HealthModule,
-		ThrottlerModule.forRoot({
-			throttlers: [
-				{
-					ttl: 60000,
-					limit: 100,
-				},
-			],
-		}),
-	],
-	controllers: [],
-	providers: [
-		GlobalJwtGuardProvider,
-		{ provide: APP_GUARD, useClass: RolesGuard },
-	],
+  imports: [
+    EventEmitterModule.forRoot(),
+    ConfigModule,
+    DatabaseModule,
+    UsersModule,
+    AuthModule,
+    AdminModule,
+    GameModule,
+    ProgressionModule,
+    BadgesModule,
+    AnalyticsModule,
+    HealthModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 100,
+        },
+      ],
+    }),
+  ],
+  controllers: [],
+  providers: [
+    GlobalJwtGuardProvider,
+    { provide: APP_GUARD, useClass: RolesGuard },
+  ],
 })
 export class AppModule {}
