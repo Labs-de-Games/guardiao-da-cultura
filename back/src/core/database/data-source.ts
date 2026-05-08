@@ -5,6 +5,7 @@ import { RefreshToken } from "../../modules/auth/entities/refresh-token.entity";
 import { Badge } from "../../modules/badges/badge.entity";
 import { UserBadge } from "../../modules/badges/user-badge.entity";
 import { UserProgress } from "../../modules/progression/user-progress.entity";
+import { UserScore } from "../../modules/scoring/user-score.entity";
 import { User } from "../../modules/users/user.entity";
 
 export const AppDataSource = new DataSource({
@@ -18,6 +19,7 @@ export const AppDataSource = new DataSource({
     GameEvent,
     MagicLinkToken,
     RefreshToken,
+    UserScore,
   ],
   migrations: ["src/core/database/migrations/*.ts"],
   migrationsTableName: "migrations",

@@ -19,7 +19,7 @@ export class UserScore {
   @Column({ type: "int" })
   totalQuarters!: number;
 
-  @Column({ type: "int" })
+  @Column({ type: "float" })
   totalStars!: number;
 
   @Column()
