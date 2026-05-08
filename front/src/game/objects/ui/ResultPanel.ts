@@ -3,6 +3,7 @@ import { GameEvents } from "../../constants/GameEvents";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import { BasePanel } from "./BasePanel";
+import type { QuizProgressTracker } from "./quiz/QuizProgressTracker";
 
 export class ResultPanel extends BasePanel {
   private resultStarsContainer: Phaser.GameObjects.Container;
@@ -18,6 +19,8 @@ export class ResultPanel extends BasePanel {
 
   private textGreeting: Phaser.GameObjects.Text;
   private textScore: Phaser.GameObjects.Text;
+  private topPanel: Phaser.GameObjects.Container;
+  private progressTracker: QuizProgressTracker | null = null;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
@@ -28,7 +31,7 @@ export class ResultPanel extends BasePanel {
     this.bg.setFillStyle(0x1a1a1a, 0.95);
     this.bg.setStrokeStyle(4, 0xffffff, 1);
 
-    const topPanel = this.scene.add
+    this.topPanel = this.scene.add
       .container(0, -this.bg.height / 2 + 120)
       .setSize(1150, 150);
     const topPanelBg = this.scene.add
@@ -77,11 +80,11 @@ export class ResultPanel extends BasePanel {
     );
     this.createResultsStars();
 
-    topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
+    this.topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
 
     this.add([
       this.bg,
-      topPanel,
+      this.topPanel,
       // this.textGreeting,
       // this.textScore,
       // this.resultTitleText,
@@ -102,13 +105,19 @@ export class ResultPanel extends BasePanel {
     this.layoutResultsStarsRow();
   }
 
-  public showResults(score: number, total: number) {
+  public showResults(
+    score: number,
+    total: number,
+    progressTracker: QuizProgressTracker,
+  ) {
     // const required = Math.ceil(total * 0.7);
     // const passed = score >= required;
 
     // this.resultTitleText.setText("Resultado");
     // this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");
     // this.resultSummaryText.setText(`Você acertou ${score} de ${total}`);
+    this.progressTracker = progressTracker;
+    this.topPanel.add(progressTracker);
 
     this.positionResultsStarsContainer();
     this.updateResultsStars(score, total);

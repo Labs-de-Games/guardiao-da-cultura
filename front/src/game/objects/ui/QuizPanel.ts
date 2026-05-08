@@ -372,6 +372,7 @@ export class QuizPanel extends BasePanel {
           GameEvents.SHOW_QUIZ_RESULTS,
           this.score,
           this.questions.length,
+          this.progressTracker,
         );
       }
     });
