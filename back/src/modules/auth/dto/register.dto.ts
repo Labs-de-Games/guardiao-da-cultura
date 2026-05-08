@@ -1,11 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsDateString,
-  IsEmail,
-  IsString,
-  Length,
-  Matches,
-} from "class-validator";
+import { IsEmail, IsString, Length, Matches } from "class-validator";
+import { IsValidDate } from "../../../common/validators/is-valid-date.decorator";
 
 export class RegisterDto {
   @ApiProperty({ example: "John", description: "User first name" })
@@ -20,7 +15,7 @@ export class RegisterDto {
     example: "1990-01-01",
     description: "User date of birth (ISO 8601 format)",
   })
-  @IsDateString()
+  @IsValidDate()
   dateOfBirth!: string;
 
   @ApiProperty({
