@@ -495,15 +495,22 @@ export class UIScene extends Scene {
 
   private async submitScoreToBackend() {
     try {
-      const gameScene = this.scene.get("Game") as Phaser.Scene & {
-        scoreManager?: { getPayload: () => unknown };
+      const scoreManager = this.registry.get("scoreManager") as {
+        getPayload: () => unknown;
       };
       const userId = this.registry.get("userId");
-      const levelId = this.registry.get("levelId");
+      const levelId = this.registry.get("currentLevelId");
 
-      if (!gameScene?.scoreManager || !userId || !levelId) return;
+      if (!scoreManager || !userId || !levelId) {
+        console.warn("[UIScene] Missing data for score submission:", {
+          hasScoreManager: !!scoreManager,
+          hasUserId: !!userId,
+          hasLevelId: !!levelId,
+        });
+        return;
+      }
 
-      const payload = gameScene.scoreManager.getPayload() as {
+      const payload = scoreManager.getPayload() as {
         levelId: string;
         totalQuarters: number;
         totalStars: number;
