@@ -2,7 +2,7 @@
 
 PROJECT_NAME = gameplate
 
-.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db:migrate db:migrate:generate help
+.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db\:migrate db\:migrate\:generate help
 
 # --- SETUP & INSTALLATION ---
 install:
