@@ -10,7 +10,8 @@
       "!**/node_modules",
       "!**/.next",
       "!**/dist",
-      "!**/.turbo"
+      "!**/.turbo",
+      "!**/.agents"
     ]
   },
   "overrides": [

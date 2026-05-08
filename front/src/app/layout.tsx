@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { ThemeRegistry } from "@/components/ThemeRegistry";
+import { ToastProvider } from "@/components/ToastProvider";
+import { AuthProvider } from "@/lib/auth/AuthContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -18,7 +21,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         style={{ margin: 0, padding: 0, height: "100vh", overflow: "hidden" }}
       >
-        {children}
+        <ThemeRegistry>
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );
