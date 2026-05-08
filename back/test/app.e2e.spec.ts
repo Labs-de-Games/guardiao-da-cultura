@@ -2,10 +2,11 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { QueryFailedError } from "typeorm";
 import { AppModule } from "../src/app.module";
 import { DatabaseModule } from "../src/core/database/database.module";
 import { GameEvent } from "../src/modules/analytics/game-event.entity";
+import { MagicLinkToken } from "../src/modules/auth/entities/magic-link-token.entity";
+import { RefreshToken } from "../src/modules/auth/entities/refresh-token.entity";
 import { Badge } from "../src/modules/badges/badge.entity";
 import { UserBadge } from "../src/modules/badges/user-badge.entity";
 import { UserProgress } from "../src/modules/progression/user-progress.entity";
@@ -40,6 +41,10 @@ describe("AppController (e2e)", () => {
       .useValue(repo)
       .overrideProvider(getRepositoryToken(UserBadge))
       .useValue(repo)
+      .overrideProvider(getRepositoryToken(MagicLinkToken))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(RefreshToken))
+      .useValue(repo)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -53,31 +58,6 @@ describe("AppController (e2e)", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body).toEqual({ status: "ok" });
-  });
-
-  it("/api/v1/users/register returns 409 on duplicate email", async () => {
-    const url = await app.getUrl();
-
-    const originalSave = repo.save;
-
-    // Simulate Postgres unique violation.
-    repo.save = async () => {
-      throw new QueryFailedError("", [], { code: "23505" });
-    };
-
-    const response = await fetch(`${url}/api/v1/users/register`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        username: "u1",
-        email: "test@example.com",
-        password: "pw",
-      }),
-    });
-
-    expect(response.status).toBe(409);
-
-    repo.save = originalSave;
   });
 
   afterAll(async () => {

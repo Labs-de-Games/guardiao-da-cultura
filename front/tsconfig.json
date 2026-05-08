@@ -14,6 +14,9 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": ["bun-types"],
     "plugins": [
       {
