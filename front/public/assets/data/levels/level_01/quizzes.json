@@ -40,7 +40,7 @@
         "É um recurso envolvido no processo de fotossíntese das plantas."
       ],
       "tags": ["edgards", "escultura"],
-      "difficulty": "medium"
+      "difficulty": "easy"
     },
     {
       "id": "q4",
@@ -116,18 +116,18 @@
     {
       "id": "q8",
       "category": "MVP Pintura",
-      "question": "Abdias Nascimento representou apetrechos associados aos orixás, como o oxé, o abebé e o ofá. O que são esses objetos vistos nas pinturas, respectivamente?",
+      "question": "Abdias Nascimento representou apetrechos associados aos orixás, como o oxé e o ofá. O que são esses objetos vistos nas pinturas, respectivamente?",
       "options": [
-        "catavento, escudo e cajado",
-        "lança, espelho e adaga",
-        "machado, leque e arco e flecha",
-        "atabaque, tigela e colar de contas"
+        "escudo e cajado",
+        "lança e espelho",
+        "machado e arco e flecha",
+        "atabaque e colar de contas"
       ],
       "correctOptionIndex": 2,
       "explanation": "XXXXX",
       "hint": [
         "Dois deles são instrumentos de guerra.",
-        "São instrumentos de Xangô, Oxum e Oxóssi, respectivamente."
+        "São instrumentos de Xangô e Oxóssi, respectivamente."
       ],
       "tags": ["religiao", "cultura"],
       "difficulty": "hard"
@@ -138,7 +138,7 @@
       "question": "Qual desses elementos é usado na revelação de fotografias em preto e branco?",
       "options": [
         "Pó de marfim e ébano",
-        "Pelo de urso panda",
+        "Pelos de urso panda",
         "Borra de café",
         "Gelatina de prata"
       ],
