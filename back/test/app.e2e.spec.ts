@@ -15,52 +15,52 @@ import { User } from "../src/modules/users/user.entity";
 class MockDatabaseModule {}
 
 describe("AppController (e2e)", () => {
-	let app: INestApplication;
+  let app: INestApplication;
 
-	const repo = {
-		find: async () => [],
-		findOne: async () => null,
-		create: (dto: unknown) => dto,
-		save: async (entity: unknown) => entity,
-		update: async () => ({ affected: 1 }),
-	};
+  const repo = {
+    find: async () => [],
+    findOne: async () => null,
+    create: (dto: unknown) => dto,
+    save: async (entity: unknown) => entity,
+    update: async () => ({ affected: 1 }),
+  };
 
-	beforeAll(async () => {
-		const moduleFixture: TestingModule = await Test.createTestingModule({
-			imports: [AppModule],
-		})
-			.overrideModule(DatabaseModule)
-			.useModule({ module: MockDatabaseModule })
-			.overrideProvider(getRepositoryToken(User))
-			.useValue(repo)
-			.overrideProvider(getRepositoryToken(UserProgress))
-			.useValue(repo)
-			.overrideProvider(getRepositoryToken(GameEvent))
-			.useValue(repo)
-			.overrideProvider(getRepositoryToken(Badge))
-			.useValue(repo)
-			.overrideProvider(getRepositoryToken(UserBadge))
-			.useValue(repo)
-			.overrideProvider(getRepositoryToken(MagicLinkToken))
-			.useValue(repo)
-			.overrideProvider(getRepositoryToken(RefreshToken))
-			.useValue(repo)
-			.compile();
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideModule(DatabaseModule)
+      .useModule({ module: MockDatabaseModule })
+      .overrideProvider(getRepositoryToken(User))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(UserProgress))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(GameEvent))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(Badge))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(UserBadge))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(MagicLinkToken))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(RefreshToken))
+      .useValue(repo)
+      .compile();
 
-		app = moduleFixture.createNestApplication();
-		app.setGlobalPrefix("api/v1");
-		await app.listen(0);
-	});
+    app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix("api/v1");
+    await app.listen(0);
+  });
 
-	it("/api/v1/health (GET)", async () => {
-		const url = await app.getUrl();
-		const response = await fetch(`${url}/api/v1/health`);
-		expect(response.status).toBe(200);
-		const body = await response.json();
-		expect(body).toEqual({ status: "ok" });
-	});
+  it("/api/v1/health (GET)", async () => {
+    const url = await app.getUrl();
+    const response = await fetch(`${url}/api/v1/health`);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ status: "ok" });
+  });
 
-	afterAll(async () => {
-		await app.close();
-	});
+  afterAll(async () => {
+    await app.close();
+  });
 });

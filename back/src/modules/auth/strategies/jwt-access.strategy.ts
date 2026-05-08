@@ -3,7 +3,7 @@ import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "../../../core/config/config.service";
 import type { User } from "../../users/user.entity";
-import { UsersService } from "../../users/users.service";
+import { UserService } from "../../users/user.service";
 import type { JwtPayload } from "../interfaces/jwt-payload.interface";
 import { TokenService } from "../services/token.service";
 
@@ -11,7 +11,7 @@ import { TokenService } from "../services/token.service";
 export class JwtAccessStrategy extends PassportStrategy(Strategy, "jwt") {
   constructor(
     readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    private readonly userService: UserService,
     private readonly tokenService: TokenService,
   ) {
     super({
@@ -26,7 +26,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, "jwt") {
       throw new UnauthorizedException("Token has been revoked");
     }
 
-    const user = await this.usersService.findById(payload.sub);
+    const user = await this.userService.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException("User not found");
     }

@@ -4,7 +4,7 @@ import type { Response } from "express";
 import { ConfigService } from "../../../core/config/config.service";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
-import { UsersService } from "../../users/users.service";
+import { UserService } from "../../users/user.service";
 import { getCookieConfig } from "../config/cookie.config";
 import type { RegisterDto } from "../dto/register.dto";
 import { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
@@ -14,7 +14,7 @@ import { TokenService } from "./token.service";
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly magicLinkService: MagicLinkService,
     private readonly configService: ConfigService,
@@ -102,12 +102,12 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto): Promise<{ message: string }> {
-    const existingUser = await this.usersService.findByEmail(dto.email);
+    const existingUser = await this.userService.findByEmail(dto.email);
     if (existingUser) {
       return { message: "Check your email" };
     }
 
-    const user = await this.usersService.create({
+    const user = await this.userService.create({
       email: dto.email,
       nickname: dto.nickname,
       firstName: dto.firstName,
@@ -132,7 +132,7 @@ export class AuthService {
     dto: { email: string },
     res: Response,
   ): Promise<{ message: string }> {
-    const user = await this.usersService.findByEmail(dto.email);
+    const user = await this.userService.findByEmail(dto.email);
     if (!user?.isActive || !user.isEmailVerified) {
       return { message: "Check your email" };
     }
@@ -198,7 +198,7 @@ export class AuthService {
 
     const user = token.user;
     user.isEmailVerified = true;
-    await this.usersService.save(user);
+    await this.userService.save(user);
 
     const refreshToken = await this.tokenService.generateRefreshToken(user.id);
     this.setAuthCookies(res, refreshToken);
@@ -238,7 +238,7 @@ export class AuthService {
   }
 
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.userService.findByEmail(email);
     if (!user || user.isEmailVerified) {
       return { message: "Check your email" };
     }
