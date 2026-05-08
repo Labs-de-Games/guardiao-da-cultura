@@ -10,7 +10,6 @@ import { RefreshToken } from "../src/modules/auth/entities/refresh-token.entity"
 import { Badge } from "../src/modules/badges/badge.entity";
 import { UserBadge } from "../src/modules/badges/user-badge.entity";
 import { UserProgress } from "../src/modules/progression/user-progress.entity";
-import { UserScore } from "../src/modules/scoring/user-score.entity";
 import { User } from "../src/modules/users/user.entity";
 
 class MockDatabaseModule { }
