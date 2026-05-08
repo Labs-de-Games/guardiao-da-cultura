@@ -464,7 +464,9 @@ export class Player
     }
 
     if (this.isCarrying && this.carriedItem) {
-      const offsetY = 60;
+      // Offset so the base of the item rests near the player's hands (above their head)
+      const offsetY =
+        this.displayHeight / 2 + this.carriedItem.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
       this.carriedItem.setDepth(this.depth + 1);
@@ -502,6 +504,7 @@ export class Player
       const body = this.body as Phaser.Physics.Arcade.Body;
       const prevBodyX = body?.x;
       const prevBodyY = body?.y;
+      this.grabbedItem.setDepth(11);
 
       // Switch player to the dragging pose (visual), but keep the physics
       // body stable to avoid collision ejection.
@@ -600,6 +603,7 @@ export class Player
 
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
+      this.grabbedItem.setDepth(10);
     }
     this.isGrabbing = false;
     this.grabbedItem = null;
