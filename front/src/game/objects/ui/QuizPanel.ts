@@ -11,15 +11,15 @@ import {
 } from "./quiz/QuizRibbonButton";
 
 export class QuizPanel extends BasePanel {
-  private readonly optionButtonWidth = 460;
-  private readonly optionButtonHeight = 68;
+  private readonly optionButtonWidth = 524;
+  private readonly optionButtonHeight = 100;
   private readonly optionNotchDepth = 30;
   private readonly optionNotchHeight = 20;
 
-  private readonly progressIndicatorWidth = 24;
-  private readonly progressIndicatorHeight = 48;
-  private readonly progressNotchDepth = 6;
-  private readonly progressNotchHeight = 6;
+  private readonly progressIndicatorWidth = 48;
+  private readonly progressIndicatorHeight = 84;
+  private readonly progressNotchDepth = 12;
+  private readonly progressNotchHeight = 12;
 
   private questions: QuizQuestion[] = [];
   private currentQuestionIndex: number = 0;
@@ -37,8 +37,8 @@ export class QuizPanel extends BasePanel {
   private scoreText: Phaser.GameObjects.Text;
   private questionCounterText: Phaser.GameObjects.Text;
   private progressTracker: QuizProgressTracker;
-  private questionTitle: Phaser.GameObjects.Text;
   private questionText: Phaser.GameObjects.Text;
+  private questionTitle: Phaser.GameObjects.Text;
   private footerHintText: Phaser.GameObjects.Text;
 
   private resultTitleText: Phaser.GameObjects.Text;
@@ -77,6 +77,8 @@ export class QuizPanel extends BasePanel {
       .setOrigin(0.5, 0.7)
       .setRounded(16);
 
+    const questionPanel = this.scene.add.container(0, 100).setSize(1150, 250);
+
     this.scoreText = scene.add
       .text(
         -this.panelWidth / 2 + 40,
@@ -114,6 +116,17 @@ export class QuizPanel extends BasePanel {
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
+    this.questionTitle = scene.add
+      .text(-410, -this.panelHeight / 2 + 110, "Desafio 01", {
+        fontFamily: "Jockey One",
+        fontSize: "32px",
+        color: LayoutConfig.COLORS.GOLD,
+        align: "left",
+        wordWrap: { width: 1000, useAdvancedWrap: true },
+        lineSpacing: 6,
+      })
+      .setOrigin(0.5, 0);
+
     this.questionText = scene.add
       .text(0, -this.panelHeight / 2 + 170, "", {
         fontSize: LayoutConfig.FONTS.SIZES.BODY,
@@ -138,12 +151,12 @@ export class QuizPanel extends BasePanel {
       )
       .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
 
-    this.progressTracker = new QuizProgressTracker(scene, 0, 0, {
+    this.progressTracker = new QuizProgressTracker(scene, 64, -12, {
       indicatorWidth: this.progressIndicatorWidth,
       indicatorHeight: this.progressIndicatorHeight,
       notchDepth: this.progressNotchDepth,
       notchHeight: this.progressNotchHeight,
-      gap: 8,
+      gap: 16,
     });
 
     this.resultTitleText = scene.add
@@ -182,10 +195,13 @@ export class QuizPanel extends BasePanel {
       this.progressTracker,
     ]);
 
+    questionPanel.add([this.questionTitle, this.questionText]);
+
     this.add([
       this.bg,
       topPanel,
-      this.questionText,
+      questionPanel,
+      // this.questionText,
       this.footerHintText,
       this.resultTitleText,
       this.resultSummaryText,
@@ -349,9 +365,9 @@ export class QuizPanel extends BasePanel {
     });
     this.optionButtons = [];
 
-    // this.questionTitleText.setText(
-    //   `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
-    // );
+    this.questionTitle.setText(
+      `Desafio ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
+    );
     this.questionText.setText(question.question);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
@@ -359,7 +375,7 @@ export class QuizPanel extends BasePanel {
     );
 
     this.positionProgressTracker();
-
+    this.progressTracker.setCurrentIndex(this.currentQuestionIndex);
     this.updateProgressTracker();
 
     const options = question.options.slice(0, 4);
@@ -383,9 +399,11 @@ export class QuizPanel extends BasePanel {
       height: this.optionButtonHeight,
       notchDepth: this.optionNotchDepth,
       notchHeight: this.optionNotchHeight,
-      baseColor: 0xd4a853,
-      selectedColor: 0xf0c060,
+      baseColor: LayoutConfig.COLORS.GOLD_DARK_HEX,
+      selectedColor: LayoutConfig.COLORS.GOLD_HEX,
     };
+
+    const buttonPanel = this.scene.add.container(0, 80);
 
     for (let i = 0; i < options.length; i++) {
       const pos = positions[i];
@@ -393,8 +411,9 @@ export class QuizPanel extends BasePanel {
         ...buttonCfg,
       });
       this.optionButtons.push(btn);
-      this.add(btn);
+      buttonPanel.add(btn);
     }
+    this.add(buttonPanel);
 
     this.updateSelectionVisuals();
   }
