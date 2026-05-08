@@ -95,6 +95,14 @@ export class Player
         frameHeight: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameHeight,
       },
     );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
+      PLAYER_ASSETS.CARRYING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameHeight,
+      },
+    );
   }
 
   // Create player animations
@@ -114,6 +122,28 @@ export class Player
       }),
       frameRate: PLAYER_ANIMS.WALK.frameRate,
       repeat: PLAYER_ANIMS.WALK.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.CARRY_IDLE.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.CARRY_IDLE.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.CARRY_IDLE.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.CARRY_IDLE.frameRate,
+      repeat: PLAYER_ANIMS.CARRY_IDLE.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.CARRY_WALK.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.CARRY_WALK.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.CARRY_WALK.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.CARRY_WALK.frameRate,
+      repeat: PLAYER_ANIMS.CARRY_WALK.repeat,
     });
     scene.anims.create({
       key: PLAYER_ANIMS.JUMP.key,
@@ -349,7 +379,10 @@ export class Player
           body.setVelocityX(0);
         } else {
           if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-            this.anims.play(PLAYER_ANIMS.WALK.key, true);
+            const walkAnim = this.isCarrying
+              ? PLAYER_ANIMS.CARRY_WALK.key
+              : PLAYER_ANIMS.WALK.key;
+            this.anims.play(walkAnim, true);
           }
           body.velocity.x -= accel;
           if (!this.isGrabbing) this.setFlipX(true);
@@ -359,13 +392,19 @@ export class Player
           body.setVelocityX(0);
         } else {
           if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-            this.anims.play(PLAYER_ANIMS.WALK.key, true);
+            const walkAnim = this.isCarrying
+              ? PLAYER_ANIMS.CARRY_WALK.key
+              : PLAYER_ANIMS.WALK.key;
+            this.anims.play(walkAnim, true);
           }
           body.velocity.x += accel;
           if (!this.isGrabbing) this.setFlipX(false);
         }
       } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-        this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+        const idleAnim = this.isCarrying
+          ? PLAYER_ANIMS.CARRY_IDLE.key
+          : PLAYER_ANIMS.IDLE.key;
+        this.anims.play(idleAnim, true);
       }
     }
 
@@ -402,7 +441,9 @@ export class Player
       !isOnStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
-      this.anims.play(PLAYER_ANIMS.JUMP.key, true);
+      if (!this.isCarrying) {
+        this.anims.play(PLAYER_ANIMS.JUMP.key, true);
+      }
     }
 
     if (isOnStairs && !this.isGrabbing) {
@@ -498,6 +539,7 @@ export class Player
       this.scene.events.emit("item-dropped", this.carriedItem);
       this.carriedItem = null;
       this.isCarrying = false;
+      this.anims.play(PLAYER_ANIMS.IDLE.key, true);
       return true;
     }
 
@@ -531,6 +573,7 @@ export class Player
       this.carriedItem = closestItem;
       this.carriedItem.setCarried(true);
 
+      this.anims.play(PLAYER_ANIMS.CARRY_IDLE.key, true);
       this.emit("item-interacted", closestItem);
       return true;
     }
