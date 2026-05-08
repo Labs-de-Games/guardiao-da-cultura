@@ -31,8 +31,9 @@ export class QuizRibbonButton extends Phaser.GameObjects.Container {
 
     this.label = scene.add
       .text(0, 0, text, {
+        fontFamily: "Inter",
         fontSize: "24px",
-        color: LayoutConfig.COLORS.WHITE,
+        color: LayoutConfig.COLORS.BLACK,
       })
       .setOrigin(0.5);
 

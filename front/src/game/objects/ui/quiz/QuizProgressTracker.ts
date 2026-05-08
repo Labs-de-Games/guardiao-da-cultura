@@ -14,6 +14,12 @@ export type QuizProgressTrackerConfig = {
 export class QuizProgressTracker extends Phaser.GameObjects.Container {
   private indicators: Phaser.GameObjects.Graphics[] = [];
   private answers: QuizAnswerState[] = [];
+  private currentIndex: number = -1;
+
+  private static readonly COLOR_CURRENT = 0xd0db00; // yellow - current question
+  private static readonly COLOR_CORRECT = 0x4caf50; // green - correct
+  private static readonly COLOR_WRONG = 0xf44336; // red - wrong
+  private static readonly COLOR_FUTURE = 0x4a4a4a; // grey - not yet reached
 
   constructor(
     scene: Phaser.Scene,
@@ -42,6 +48,11 @@ export class QuizProgressTracker extends Phaser.GameObjects.Container {
     this.redraw();
   }
 
+  public setCurrentIndex(index: number) {
+    this.currentIndex = index;
+    this.redraw();
+  }
+
   public layout(startX: number, y: number) {
     for (let i = 0; i < this.indicators.length; i++) {
       this.indicators[i].setPosition(
@@ -62,13 +73,18 @@ export class QuizProgressTracker extends Phaser.GameObjects.Container {
       const g = this.indicators[i];
       g.clear();
 
+      const isCurrent = i === this.currentIndex;
       const state = this.answers[i] ?? null;
-      const fill =
-        state === "correct"
-          ? 0x4caf50
+      const fill = isCurrent
+        ? QuizProgressTracker.COLOR_CURRENT
+        : state === "correct"
+          ? QuizProgressTracker.COLOR_CORRECT
           : state === "wrong"
-            ? 0xf44336
-            : 0x4a4a4a;
+            ? QuizProgressTracker.COLOR_WRONG
+            : i > this.currentIndex
+              ? QuizProgressTracker.COLOR_FUTURE
+              : QuizProgressTracker.COLOR_CURRENT; // fallback (should not happen)
+
       g.fillStyle(fill, 1);
 
       const halfW = this.config.indicatorWidth / 2;
