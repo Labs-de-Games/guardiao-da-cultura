@@ -39,6 +39,11 @@ export class QuizPanel extends BasePanel {
   private questionTitle: Phaser.GameObjects.Text;
   private footerHintText: Phaser.GameObjects.Text;
 
+  private performanceText: Phaser.GameObjects.Text;
+  private performanceStar: Phaser.GameObjects.Image;
+  private performanceContainer: Phaser.GameObjects.Container;
+  private isShowingPerformance: boolean = false;
+
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
 
@@ -154,7 +159,30 @@ export class QuizPanel extends BasePanel {
 
     questionPanel.add([this.questionTitle, this.questionText]);
 
-    this.add([this.bg, topPanel, questionPanel, this.footerHintText]);
+    // Performance display (initially hidden)
+    this.performanceContainer = this.scene.add.container(0, 80);
+    this.performanceText = this.scene.add
+      .text(0, -100, "Quiz completo!", {
+        fontFamily: "Jockey One",
+        fontSize: "48px",
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0.5);
+
+    this.performanceStar = this.scene.add
+      .image(0, 50, "ui_star_full")
+      .setScale(1);
+    this.performanceContainer.add([this.performanceText, this.performanceStar]);
+    this.performanceContainer.setVisible(false);
+
+    this.add([
+      this.bg,
+      topPanel,
+      questionPanel,
+      this.footerHintText,
+      this.performanceContainer,
+    ]);
 
     this.bindKey("W", () => this.moveVertical(-1));
     this.bindKey("UP", () => this.moveVertical(-1));
@@ -168,7 +196,13 @@ export class QuizPanel extends BasePanel {
       if (!this._isVisible) return;
       this.hide();
     });
-    this.bindKey("SPACE", () => this.selectOption());
+    this.bindKey("SPACE", () => {
+      if (this.isShowingPerformance) {
+        this.handlePerformanceSpace();
+      } else {
+        this.selectOption();
+      }
+    });
     this.bindKey("ENTER", () => this.selectOption());
   }
 
@@ -206,6 +240,12 @@ export class QuizPanel extends BasePanel {
   public override hide(duration: number = 200, onComplete?: () => void) {
     if (!this._isVisible) return;
 
+    this.isShowingPerformance = false;
+    this.performanceContainer.setVisible(false);
+    // Restore question UI visibility for next quiz
+    this.questionTitle.setVisible(true);
+    this.questionText.setVisible(true);
+
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
 
@@ -238,6 +278,94 @@ export class QuizPanel extends BasePanel {
 
   private updateProgressTracker() {
     this.progressTracker.setAnswers(this.answers);
+  }
+
+  private calculateStarFillLevel(): string {
+    const percentage = (this.score / this.questions.length) * 100;
+    if (percentage > 90) return "ui_star_full";
+    if (percentage > 70) return "ui_star_3q";
+    if (percentage > 50) return "ui_star_2q";
+    return "ui_star_1q";
+  }
+
+  private calculateResultStarScale(): number {
+    const tex = this.scene.textures.get("ui_star_full");
+    const source = tex?.getSourceImage() as
+      | { width: number; height: number }
+      | undefined;
+    const baseW = source?.width ?? 457;
+
+    const panelWidth = 1200; // Match ResultPanel.panelWidth
+    const sidePadding = 140; // Match ResultPanel.resultStarsSidePadding
+    const starCount = 5; // Match ResultPanel.resultStarsCount
+    const gapRatio = 0.18; // Match ResultPanel.resultStarsGapRatio
+
+    const maxRowWidth = Math.max(0, panelWidth - sidePadding * 2);
+    const denom = starCount + (starCount - 1) * gapRatio;
+    const targetW = denom > 0 ? maxRowWidth / denom : maxRowWidth;
+    const scale = baseW > 0 ? targetW / baseW : 1;
+
+    return scale;
+  }
+
+  private showFinalPerformance() {
+    this.isShowingPerformance = true;
+
+    // Hide question UI
+    this.questionTitle.setVisible(false);
+    this.questionText.setVisible(false);
+    this.optionButtons.forEach((b) => {
+      b.destroy(true);
+    });
+    this.optionButtons = [];
+
+    // Calculate percentage
+    const percentage = (this.score / this.questions.length) * 100;
+
+    // Update text based on performance
+    if (percentage < 70) {
+      this.scoreText.setText("Por pouco");
+      this.questionCounterText.setText("Pontuação baixa");
+      this.performanceText.setText("Quase lá...");
+    } else if (percentage < 90) {
+      // Corrected: 70% and above uses "Parabéns!" for scoreText
+      this.scoreText.setText("Parabéns!");
+      this.questionCounterText.setText("Boa pontuação");
+      this.performanceText.setText("Muito bom");
+    } else {
+      this.scoreText.setText("Parabéns!");
+      this.questionCounterText.setText("Pontuação perfeita!");
+      this.performanceText.setText("Perfeito");
+    }
+
+    // Show performance UI
+    this.performanceContainer.setVisible(true);
+    this.performanceStar.setTexture(this.calculateStarFillLevel());
+    this.performanceStar.setScale(this.calculateResultStarScale());
+
+    // Update footer hint
+    if (percentage >= 70) {
+      this.footerHintText.setText("Pressione Espaço para ver resultados");
+    } else {
+      this.footerHintText.setText("Pressione Espaço para fechar");
+    }
+  }
+
+  private handlePerformanceSpace() {
+    const percentage = (this.score / this.questions.length) * 100;
+
+    if (percentage >= 70) {
+      // Pass - go to ResultPanel
+      const gameScene = this.scene.scene.get(SceneNames.GAME);
+      gameScene.events.emit(
+        GameEvents.SHOW_QUIZ_RESULTS,
+        this.score,
+        this.questions.length,
+        this.progressTracker,
+      );
+    }
+
+    this.hide();
   }
 
   private updateSelectionVisuals() {
@@ -366,14 +494,7 @@ export class QuizPanel extends BasePanel {
       if (this.currentQuestionIndex < this.questions.length) {
         this.showQuestion();
       } else {
-        this.hide();
-        const gameScene = this.scene.scene.get(SceneNames.GAME);
-        gameScene.events.emit(
-          GameEvents.SHOW_QUIZ_RESULTS,
-          this.score,
-          this.questions.length,
-          this.progressTracker,
-        );
+        this.showFinalPerformance();
       }
     });
   }
