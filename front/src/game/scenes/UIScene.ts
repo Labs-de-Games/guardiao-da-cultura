@@ -12,6 +12,7 @@ import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
+import { ResultPanel } from "../objects/ui/ResultPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import type {
   InteractionUIData,
@@ -40,6 +41,7 @@ export class UIScene extends Scene {
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
+  private resultPanel!: ResultPanel;
   private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
   private badgeGalleryPanel!: BadgeGalleryPanel;
@@ -81,6 +83,7 @@ export class UIScene extends Scene {
     this.dialoguePanel = new DialoguePanel(this);
     this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
+    this.resultPanel = new ResultPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
@@ -137,6 +140,15 @@ export class UIScene extends Scene {
       (questions: QuizQuestion[], onComplete: (score: number) => void) => {
         if (this.quizPanel) {
           this.quizPanel.startQuiz(questions, onComplete);
+        }
+      },
+    );
+
+    gameScene.events.on(
+      GameEvents.SHOW_QUIZ_RESULTS,
+      (score: number, total: number) => {
+        if (this.resultPanel) {
+          this.resultPanel.showResults(score, total);
         }
       },
     );
@@ -216,6 +228,7 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.CONTROLS_OVERLAY_CLOSED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_QUIZ_RESULTS);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
         gameScene.events.off(GameEvents.SHOW_LABEL_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
@@ -255,6 +268,7 @@ export class UIScene extends Scene {
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
+    this.resultPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);

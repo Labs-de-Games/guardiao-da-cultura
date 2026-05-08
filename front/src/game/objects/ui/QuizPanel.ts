@@ -27,8 +27,6 @@ export class QuizPanel extends BasePanel {
   private score: number = 0;
   private onComplete: ((score: number) => void) | null = null;
 
-  private mode: "quiz" | "results" = "quiz";
-
   private answers: ("correct" | "wrong" | null)[] = [];
   private isProcessingAnswer: boolean = false;
 
@@ -41,18 +39,6 @@ export class QuizPanel extends BasePanel {
   private questionTitle: Phaser.GameObjects.Text;
   private footerHintText: Phaser.GameObjects.Text;
 
-  private resultTitleText: Phaser.GameObjects.Text;
-  private resultSummaryText: Phaser.GameObjects.Text;
-
-  private resultStarsContainer: Phaser.GameObjects.Container;
-  private resultStars: Phaser.GameObjects.Image[] = [];
-
-  private readonly resultStarsCount = 5;
-  private readonly resultStarsSidePadding = 140; // breathing room inside panel
-  private readonly resultStarsGapRatio = 0.18; // gap as a fraction of star width
-  private readonly resultStarsTopPadding = 150; // space below the summary text
-
-  private currentFontScale: number = 1;
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
 
@@ -159,35 +145,6 @@ export class QuizPanel extends BasePanel {
       gap: 16,
     });
 
-    this.resultTitleText = scene.add
-      .text(0, -this.panelHeight / 2 + 110, "Resultado", {
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-        fontFamily: LayoutConfig.FONTS.TITLE,
-        color: LayoutConfig.COLORS.WHITE,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER)
-      .setVisible(false);
-
-    this.resultSummaryText = scene.add
-      .text(0, -this.panelHeight / 2 + 190, "", {
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
-        fontFamily: LayoutConfig.FONTS.BODY,
-        color: LayoutConfig.COLORS.WHITE,
-        align: LayoutConfig.ALIGN.TEXT_CENTER,
-        wordWrap: { width: 1000, useAdvancedWrap: true },
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER)
-      .setVisible(false);
-
-    // Results stars (5 slots, quarter fractions). Created once; content updated on results.
-    this.resultStarsContainer = scene.add.container(
-      0,
-      -this.panelHeight / 2 + 310,
-    );
-    this.resultStarsContainer.setVisible(false);
-    this.createResultsStars();
-
     topPanel.add([
       topPanelBg,
       this.scoreText,
@@ -197,16 +154,7 @@ export class QuizPanel extends BasePanel {
 
     questionPanel.add([this.questionTitle, this.questionText]);
 
-    this.add([
-      this.bg,
-      topPanel,
-      questionPanel,
-      // this.questionText,
-      this.footerHintText,
-      this.resultTitleText,
-      this.resultSummaryText,
-      this.resultStarsContainer,
-    ]);
+    this.add([this.bg, topPanel, questionPanel, this.footerHintText]);
 
     this.bindKey("W", () => this.moveVertical(-1));
     this.bindKey("UP", () => this.moveVertical(-1));
@@ -216,10 +164,8 @@ export class QuizPanel extends BasePanel {
     this.bindKey("LEFT", () => this.moveHorizontal(-1));
     this.bindKey("D", () => this.moveHorizontal(1));
     this.bindKey("RIGHT", () => this.moveHorizontal(1));
-    // ESC should not close during quiz questions; only allow closing on results.
     this.bindKey("ESC", () => {
       if (!this._isVisible) return;
-      if (this.mode !== "results") return;
       this.hide();
     });
     this.bindKey("SPACE", () => this.selectOption());
@@ -236,14 +182,11 @@ export class QuizPanel extends BasePanel {
     this.score = 0;
     this.selectedOptionIndex = 0;
     this.isProcessingAnswer = false;
-    this.mode = "quiz";
 
     this.answers = new Array(questions.length).fill(null);
     this.progressTracker.setCount(questions.length);
     this.progressTracker.setAnswers(this.answers);
 
-    this.setQuizUiVisible(true);
-    this.setResultsUiVisible(false);
     this.footerHintText.setText(
       "Use as setas e pressione Espaço para confirmar",
     );
@@ -278,52 +221,6 @@ export class QuizPanel extends BasePanel {
 
   public layout(w: number, h: number) {
     this.setPosition(w / 2, h / 2);
-    this.currentFontScale = this.getFontScale(w, h);
-
-    this.layoutResultsStarsRow();
-
-    this.applyScaledFontSize(
-      this.scoreText,
-      LayoutConfig.FONTS.SIZES.METADATA,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.questionCounterText,
-      LayoutConfig.FONTS.SIZES.METADATA,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.questionTitle,
-      LayoutConfig.FONTS.SIZES.TITLE,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.questionText,
-      LayoutConfig.FONTS.SIZES.BODY,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.footerHintText,
-      LayoutConfig.FONTS.SIZES.HINT,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.resultTitleText,
-      LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.resultSummaryText,
-      LayoutConfig.FONTS.SIZES.TITLE,
-      w,
-      h,
-    );
   }
 
   private positionProgressTracker() {
@@ -447,11 +344,6 @@ export class QuizPanel extends BasePanel {
     if (!this._isVisible) return;
     if (this.isProcessingAnswer) return;
 
-    if (this.mode === "results") {
-      this.hide();
-      return;
-    }
-
     if (this.optionButtons.length === 0) return;
 
     const question = this.questions[this.currentQuestionIndex];
@@ -474,168 +366,14 @@ export class QuizPanel extends BasePanel {
       if (this.currentQuestionIndex < this.questions.length) {
         this.showQuestion();
       } else {
-        this.showResults();
+        this.hide();
+        const gameScene = this.scene.scene.get(SceneNames.GAME);
+        gameScene.events.emit(
+          GameEvents.SHOW_QUIZ_RESULTS,
+          this.score,
+          this.questions.length,
+        );
       }
     });
-  }
-
-  private setQuizUiVisible(visible: boolean) {
-    this.scoreText.setVisible(visible);
-    this.questionCounterText.setVisible(visible);
-    // this.questionTitleText.setVisible(visible);
-    this.questionText.setVisible(visible);
-  }
-
-  private setResultsUiVisible(visible: boolean) {
-    this.resultTitleText.setVisible(visible);
-    this.resultSummaryText.setVisible(visible);
-    this.resultStarsContainer.setVisible(visible);
-  }
-
-  private showResults() {
-    this.mode = "results";
-
-    this.optionButtons.forEach((b) => {
-      b.destroy(true);
-    });
-    this.optionButtons = [];
-
-    const total = this.questions.length;
-    const required = Math.ceil(total * 0.7);
-    const passed = this.score >= required;
-
-    this.setQuizUiVisible(false);
-    this.setResultsUiVisible(true);
-
-    this.footerHintText.setText("Aperte ESC para fechar");
-
-    this.resultTitleText.setText("Resultado");
-    this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");
-    this.resultSummaryText.setText(`Você acertou ${this.score} de ${total}`);
-
-    this.positionResultsStarsContainer();
-    this.updateResultsStars();
-    this.layoutResultsStarsRow();
-
-    this.positionProgressTracker();
-    this.updateProgressTracker();
-  }
-
-  private createResultsStars() {
-    // Always render 5 star slots (20 quarters total).
-    for (let i = 0; i < this.resultStarsCount; i++) {
-      const star = this.scene.add.image(0, 0, "ui_star_full").setScale(1);
-      this.resultStars.push(star);
-      this.resultStarsContainer.add(star);
-    }
-
-    this.layoutResultsStarsRow();
-  }
-
-  private positionResultsStarsContainer() {
-    // Anchor below the summary text (handles multi-line wrapping).
-    const y =
-      this.resultSummaryText.y +
-      this.resultSummaryText.displayHeight +
-      this.resultStarsTopPadding;
-    this.resultStarsContainer.setPosition(0, y);
-  }
-
-  private layoutResultsStarsRow() {
-    if (this.resultStars.length === 0) return;
-
-    const tex = this.scene.textures.get("ui_star_full");
-    const source = tex?.getSourceImage() as
-      | { width: number; height: number }
-      | undefined;
-    const baseW = source?.width ?? 457;
-
-    const maxRowWidth = Math.max(
-      0,
-      this.panelWidth - this.resultStarsSidePadding * 2,
-    );
-    const denom =
-      this.resultStarsCount +
-      (this.resultStarsCount - 1) * this.resultStarsGapRatio;
-    const targetW = denom > 0 ? maxRowWidth / denom : maxRowWidth;
-    const gap = targetW * this.resultStarsGapRatio;
-    const scale = baseW > 0 ? targetW / baseW : 1;
-
-    const step = targetW + gap;
-    const startX = -((this.resultStarsCount - 1) * step) / 2;
-
-    for (let i = 0; i < this.resultStarsCount; i++) {
-      const star = this.resultStars[i];
-      if (!star) continue;
-      star.setPosition(startX + i * step, 0);
-      star.setScale(scale);
-    }
-  }
-
-  private computeQuizQuarters(
-    correctAnswers: number,
-    totalQuestions: number,
-  ): number {
-    const total = Math.max(0, Math.floor(totalQuestions));
-    const correct = Math.min(Math.max(0, Math.floor(correctAnswers)), total);
-    const accuracyPercent = total > 0 ? Math.floor((correct / total) * 100) : 0;
-    return Math.min(4, Math.floor(accuracyPercent / 25));
-  }
-
-  private keyForQuarterFill(q: number): string {
-    if (q >= 4) return "ui_star_full";
-    if (q === 3) return "ui_star_3q";
-    if (q === 2) return "ui_star_2q";
-    return "ui_star_1q";
-  }
-
-  private updateResultsStars() {
-    const gameScene = this.scene.scene.get(SceneNames.GAME) as unknown as {
-      getScoringPayload?: () => {
-        totalQuarters: number;
-        quiz: { quartersEarned: number };
-      };
-    };
-
-    // Default to current scoring payload; in practice Game always provides this.
-    const payload = gameScene.getScoringPayload?.();
-    const currentTotalQuarters = payload?.totalQuarters ?? 0;
-    const recordedQuizQuarters = payload?.quiz?.quartersEarned ?? 0;
-
-    // Quiz quarters are only recorded when the quiz closes; compute the final value for display.
-    const quizQuartersNow = this.computeQuizQuarters(
-      this.score,
-      this.questions.length,
-    );
-    const effectiveTotalQuarters = Math.max(
-      0,
-      Math.min(
-        20,
-        currentTotalQuarters - recordedQuizQuarters + quizQuartersNow,
-      ),
-    );
-
-    for (let i = 0; i < this.resultStarsCount; i++) {
-      const quartersForStar = Math.max(
-        0,
-        Math.min(4, effectiveTotalQuarters - i * 4),
-      );
-      const star = this.resultStars[i];
-      if (!star) continue;
-
-      if (quartersForStar <= 0) {
-        // Use full star silhouette as an empty slot.
-        star
-          .setTexture("ui_star_full")
-          .setTint(LayoutConfig.COLORS.DARK_STAR_TINT)
-          .setAlpha(0.5);
-        continue;
-      }
-
-      star
-        .setTexture(this.keyForQuarterFill(quartersForStar))
-        .clearTint()
-        .setAlpha(1);
-    }
   }
 }
