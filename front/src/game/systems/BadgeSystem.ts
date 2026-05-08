@@ -1,6 +1,10 @@
 import type { Scene } from "phaser";
 import { sendGameEvent } from "../../lib/analyticsApi";
-import { fetchBadges, unlockBadgeOnServer } from "../../lib/badgesApi";
+import {
+  fetchBadges,
+  fetchUserBadges,
+  unlockBadgeOnServer,
+} from "../../lib/badgesApi";
 import { GameEvents } from "../constants/GameEvents";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { BadgeConfig } from "../types/BadgeTypes";
@@ -30,6 +34,21 @@ export class BadgeSystem {
   public async initialize() {
     try {
       this.badges = await fetchBadges();
+
+      const userId = this.scene.registry.get("userId");
+      if (userId) {
+        try {
+          const userBadges = await fetchUserBadges(userId);
+          userBadges.forEach((ub) => {
+            this.unlockedBadges.add(ub.badgeId);
+          });
+        } catch (e) {
+          console.warn(
+            "[BadgeSystem] Could not sync unlocked badges from server",
+            e,
+          );
+        }
+      }
 
       this.badges.forEach((badge) => {
         const currentValue = this.scene.registry.get(badge.stat_required);
