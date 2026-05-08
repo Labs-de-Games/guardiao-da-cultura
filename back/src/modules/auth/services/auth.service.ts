@@ -122,7 +122,7 @@ export class AuthService {
       MagicLinkTokenType.Verification,
     );
 
-    const verificationUrl = `${this.configService.frontendUrl}/api/v1/auth/verify-email?token=${rawToken}`;
+    const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
     await this.emailService.sendVerificationEmail(dto.email, verificationUrl);
 
     return { message: "Check your email" };
@@ -147,7 +147,7 @@ export class AuthService {
 
     this.setLoginAttemptCookie(res, nonce, user.email);
 
-    const magicLinkUrl = `${this.configService.frontendUrl}/api/v1/auth/login?token=${rawToken}&nonce=${nonce}`;
+    const magicLinkUrl = `${this.configService.frontendUrl}/confirm-login?token=${rawToken}`;
     await this.emailService.sendMagicLinkEmail(user.email, magicLinkUrl);
 
     return { message: "Check your email" };
@@ -250,7 +250,7 @@ export class AuthService {
       MagicLinkTokenType.Verification,
     );
 
-    const verificationUrl = `${this.configService.frontendUrl}/api/v1/auth/verify-email?token=${rawToken}`;
+    const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
     await this.emailService.sendVerificationEmail(email, verificationUrl);
 
     return { message: "Check your email" };

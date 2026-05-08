@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Post,
-  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -16,14 +15,12 @@ import {
   ApiCookieAuth,
   ApiOkResponse,
   ApiOperation,
-  ApiQuery,
   ApiTags,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
-import { ConfigService } from "../../../core/config/config.service";
 import type { User } from "../../users/user.entity";
 import { CurrentUser } from "../decorators/current-user.decorator";
 import { Public } from "../decorators/public.decorator";
@@ -34,9 +31,7 @@ import { LoginConfirmDto } from "../dto/login-confirm.dto";
 import { RegisterDto } from "../dto/register.dto";
 import { ResendVerificationDto } from "../dto/resend-verification.dto";
 import { VerifyEmailConfirmDto } from "../dto/verify-email-confirm.dto";
-import { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
 import { AuthService } from "../services/auth.service";
-import { MagicLinkService } from "../services/magic-link.service";
 import { TokenService } from "../services/token.service";
 
 @ApiTags("Authentication")
@@ -45,8 +40,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly tokenService: TokenService,
-    private readonly magicLinkService: MagicLinkService,
-    private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -105,48 +98,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
     return this.authService.login(dto, res);
-  }
-
-  @Public()
-  @Get("login")
-  @ApiOperation({ summary: "Validate magic link login preview" })
-  @ApiQuery({ name: "token", description: "Magic link token", required: true })
-  @ApiQuery({ name: "nonce", description: "Device nonce", required: true })
-  @ApiOkResponse({
-    description: "Redirects to frontend login confirmation page",
-  })
-  @ApiBadRequestResponse({ description: "Missing or invalid token/nonce" })
-  async loginPreview(
-    @Query("token") rawToken: string,
-    @Query("nonce") nonce: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (!rawToken || !nonce) {
-      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
-      return;
-    }
-
-    const cookieData = this.authService.readLoginAttemptCookie(req);
-    if (!cookieData || cookieData.nonce !== nonce) {
-      res.redirect(
-        `${this.configService.frontendUrl}/login?error=wrong_device`,
-      );
-      return;
-    }
-
-    const token = await this.magicLinkService.validateTokenPreview(
-      rawToken,
-      MagicLinkTokenType.MagicLink,
-    );
-    if (!token) {
-      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
-      return;
-    }
-
-    res.redirect(
-      `${this.configService.frontendUrl}/auth/confirm-login?token=${rawToken}`,
-    );
   }
 
   @Public()
@@ -246,41 +197,6 @@ export class AuthController {
       role: user.role,
       isEmailVerified: user.isEmailVerified,
     };
-  }
-
-  @Public()
-  @Get("verify-email")
-  @ApiOperation({ summary: "Validate email verification token preview" })
-  @ApiQuery({
-    name: "token",
-    description: "Email verification token",
-    required: true,
-  })
-  @ApiOkResponse({
-    description: "Redirects to frontend email verification page",
-  })
-  @ApiBadRequestResponse({ description: "Missing or invalid token" })
-  async verifyEmailPreview(
-    @Query("token") rawToken: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (!rawToken) {
-      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
-      return;
-    }
-
-    const token = await this.magicLinkService.validateTokenPreview(
-      rawToken,
-      MagicLinkTokenType.Verification,
-    );
-    if (!token) {
-      res.redirect(`${this.configService.frontendUrl}/login?error=expired`);
-      return;
-    }
-
-    res.redirect(
-      `${this.configService.frontendUrl}/auth/confirm-verification?token=${rawToken}`,
-    );
   }
 
   @Public()
