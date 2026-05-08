@@ -40,7 +40,8 @@ export class ControlsOverlay extends BasePanel {
           "E: interagir\n" +
           "SHIFT: modo inspecionar\n" +
           "TAB: abrir o mapa das relíquias\n" +
-          "Q: ver novamente os controles",
+          "Q: ver novamente os controles\n" +
+          "B: abrir painel de badges",
         {
           fontFamily: LayoutConfig.FONTS.BODY,
           fontSize: LayoutConfig.FONTS.SIZES.BODY,
