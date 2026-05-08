@@ -59,7 +59,7 @@ export class ControlsOverlay extends BasePanel {
       .setOrigin(0.5, 0);
 
     this.escHint = scene.add
-      .text(0, 0, "ESC para fechar", {
+      .text(0, 0, "Aperte ESC para fechar", {
         fontSize: "22px",
         color: LayoutConfig.COLORS.DANGER_RED,
       })

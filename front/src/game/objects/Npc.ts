@@ -29,14 +29,6 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
         frameHeight: NPC_ASSETS.IDLE_SPRITESHEET.frameHeight,
       },
     );
-    scene.load.spritesheet(
-      NPC_ASSETS.GIVING_STAR_SPRITESHEET.key,
-      NPC_ASSETS.GIVING_STAR_SPRITESHEET.path,
-      {
-        frameWidth: NPC_ASSETS.GIVING_STAR_SPRITESHEET.frameWidth,
-        frameHeight: NPC_ASSETS.GIVING_STAR_SPRITESHEET.frameHeight,
-      },
-    );
   }
 
   static createAnims(scene: Phaser.Scene) {
@@ -49,25 +41,6 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
         ),
         frameRate: NPC_ANIMS.IDLE.frameRate,
         repeat: NPC_ANIMS.IDLE.repeat,
-      });
-    }
-
-    if (!scene.anims.exists(NPC_ANIMS.GIVING_STAR.key)) {
-      const framesCfg = NPC_ANIMS.GIVING_STAR.frames as {
-        start: number;
-        end: number;
-      };
-      scene.anims.create({
-        key: NPC_ANIMS.GIVING_STAR.key,
-        frames: scene.anims.generateFrameNumbers(
-          NPC_ANIMS.GIVING_STAR.spritesheet as string,
-          {
-            start: framesCfg.start,
-            end: framesCfg.end,
-          },
-        ),
-        frameRate: NPC_ANIMS.GIVING_STAR.frameRate,
-        repeat: NPC_ANIMS.GIVING_STAR.repeat,
       });
     }
   }
@@ -129,7 +102,6 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       console.warn("[Npc] QuestManager not found!");
       return;
     }
-
     const missionId = this.config.missionId;
     const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;

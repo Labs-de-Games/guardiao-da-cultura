@@ -3,17 +3,19 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { InventoryPanel } from "../objects/ui/InventoryPanel";
+import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
-import { TutorialOverlay } from "../objects/ui/TutorialOverlay";
 import type {
   InteractionUIData,
+  LabelInfoData,
   MissionDef,
   MissionStepDef,
   QuizQuestion,
@@ -36,11 +38,12 @@ export class UIScene extends Scene {
   private statusPanel!: PhaseStatusPanel;
   private inventoryPanel!: InventoryPanel;
   private controlsOverlay!: ControlsOverlay;
-  private tutorialOverlay!: TutorialOverlay;
   private dialoguePanel!: DialoguePanel;
+  private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
+  private badgeGalleryPanel!: BadgeGalleryPanel;
 
   // Gestão de Missões (Individual Cards - candidate for further extraction)
   private activeMissionIds: string[] = [];
@@ -81,11 +84,12 @@ export class UIScene extends Scene {
       this.missionDefs,
     );
     this.controlsOverlay = new ControlsOverlay(this);
-    this.tutorialOverlay = new TutorialOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
+    this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
+    this.badgeGalleryPanel = new BadgeGalleryPanel(this);
 
     this.root.add(this.statusPanel);
     // Overlays e Toasts são adicionados diretamente à cena via add.existing no construtor
@@ -123,24 +127,6 @@ export class UIScene extends Scene {
     );
 
     // Overlays flow
-    gameScene.events.on(GameEvents.CONTROLS_OVERLAY_CLOSED, () => {
-      if (!this.tutorialOverlay.hasBeenShown) {
-        this.tutorialOverlay.show();
-      }
-    });
-
-    gameScene.events.on(
-      GameEvents.INSPECT_MODE_TOGGLED,
-      (isInspecting: boolean) => {
-        if (
-          isInspecting &&
-          !this.tutorialOverlay.hasBeenShown &&
-          !this.controlsOverlay.isVisible
-        ) {
-          this.tutorialOverlay.show();
-        }
-      },
-    );
 
     // Requisiçōes de UI
     gameScene.events.on(
@@ -171,6 +157,15 @@ export class UIScene extends Scene {
     );
 
     gameScene.events.on(
+      GameEvents.SHOW_LABEL_REQUEST,
+      (data: LabelInfoData) => {
+        if (this.labelPanel) {
+          this.labelPanel.showLabel(data);
+        }
+      },
+    );
+
+    gameScene.events.on(
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
@@ -178,6 +173,19 @@ export class UIScene extends Scene {
             data.instanceId,
             data.availableItems,
             data.state?.filledSlots || [],
+          );
+        }
+      },
+    );
+
+    gameScene.events.on(
+      GameEvents.SHOW_BADGE_TOAST,
+      (badge: { name: string; icon_key: string }) => {
+        if (this.toast) {
+          this.toast.show(
+            `Conquista Desbloqueada:\n${badge.name}`,
+            4000,
+            badge.icon_key,
           );
         }
       },
@@ -212,12 +220,13 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.MISSION_STATUS_CHANGED);
         gameScene.events.off(GameEvents.DIALOGUE_ENDED);
         gameScene.events.off(GameEvents.CONTROLS_OVERLAY_CLOSED);
-        gameScene.events.off(GameEvents.INSPECT_MODE_TOGGLED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_LABEL_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
+        gameScene.events.off(GameEvents.SHOW_BADGE_TOAST);
       }
     });
   }
@@ -231,6 +240,11 @@ export class UIScene extends Scene {
     this.input.keyboard?.on("keydown-Q", (e: KeyboardEvent) => {
       e.preventDefault();
       this.toggleControls();
+    });
+
+    this.input.keyboard?.on("keydown-B", (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.toggleBadgeGallery();
     });
   }
 
@@ -249,11 +263,12 @@ export class UIScene extends Scene {
     this.statusPanel.layout(w, h);
     this.inventoryPanel.layout(w, h);
     this.controlsOverlay.layout(w, h);
-    this.tutorialOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
+    this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
+    this.badgeGalleryPanel.layout(w, h);
 
     this.positionMissionPanels();
   }
@@ -288,11 +303,26 @@ export class UIScene extends Scene {
     }
   }
 
+  private toggleBadgeGallery() {
+    if (this.badgeGalleryPanel.visibleState) {
+      this.badgeGalleryPanel.hide();
+      return;
+    }
+
+    if (this.canShowOverlay()) {
+      this.badgeGalleryPanel.show();
+    }
+  }
+
   private canShowOverlay(): boolean {
     if (this.activeInteractionPrompts.size > 0) return false;
 
     // Regra: não abrir se algum painel crítico (dialog/quiz) estiver visível
-    if (this.dialoguePanel?.isVisible || this.quizPanel?.isVisible)
+    if (
+      this.dialoguePanel?.isVisible ||
+      this.labelPanel?.isVisible ||
+      this.quizPanel?.isVisible
+    )
       return false;
 
     return true;
@@ -332,12 +362,6 @@ export class UIScene extends Scene {
       this.time.delayedCall(120, () => {
         this.toast.show("Missão concluída!\nAperte TAB para ver as relíquias");
       });
-    }
-
-    // Trigger tutorial se necessário
-    if (!this.tutorialOverlay.hasBeenShown && !this.controlsOverlay.isVisible) {
-      // Apenas mostra se for o momento certo (após controles iniciais)
-      // Nota: lógica original era no onComplete dos controles.
     }
   }
 

@@ -1,5 +1,6 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
 import { Game as MainGame } from "./scenes/Game";
+import { MapIntroScene } from "./scenes/MapIntroScene";
 import { UIScene } from "./scenes/UIScene";
 
 // Find out more information about the Game Config at:
@@ -15,18 +16,22 @@ const config: Types.Core.GameConfig = {
     default: "arcade",
     arcade: {
       debug: false,
-      tileBias: 128, // Prevents "tunneling" (passing through tiles) at high speeds
+      tileBias: 64, // Prevents "tunneling" (passing through tiles) at high speeds
     },
   },
   scale: {
     mode: Scale.EXPAND,
     autoCenter: Scale.CENTER_BOTH,
   },
-  scene: [MainGame, UIScene],
+  scene: [MapIntroScene, MainGame, UIScene],
 };
 
-const StartGame = (parent: string) => {
-  return new Game({ ...config, parent });
+const StartGame = (parent: string, userId: string) => {
+  const game = new Game({ ...config, parent });
+  if (userId) {
+    game.registry.set("userId", userId);
+  }
+  return game;
 };
 
 export default StartGame;

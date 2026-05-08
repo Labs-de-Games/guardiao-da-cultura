@@ -2,29 +2,168 @@
   "missao_curador": [
     {
       "id": "q1",
-      "question": "Qual destes artistas representa o auge do drama e luz no Barroco?",
-      "options": ["Rafael", "Caravaggio", "Da Vinci", "Donatello"],
-      "correctOptionIndex": 1,
-      "explanation": "Caravaggio revolucionou a arte com o uso de sombras profundas e luz dramática (Tenebrismo)."
+      "category": "MVP Fotografia",
+      "question": "Uma das obras tradicionais dos yanomami são os cestos de cipó-titica trançados a mão com detalhes em fibras pretas de raízes ou fungos. Como eles chamam estes cestos?",
+      "options": ["cocar", "pajé", "xotehe", "maracá"],
+      "correctOptionIndex": 2,
+      "explanation": "XXXXX",
+      "hints": [
+        "É uma palavra de três sílabas.",
+        "Tem uma letra pouco usada na língua portuguesa."
+      ],
+      "tags": ["indigenas", "artesanato", "cultura"],
+      "difficulty": "medium"
     },
     {
       "id": "q2",
-      "question": "O que caracteriza a escultura 'David' de Michelangelo como Renascentista?",
-      "options": [
-        "A emoção exagerada",
-        "O mármore colorido",
-        "O equilíbrio e estudo anatômico",
-        "O movimento frenético"
+      "category": "MVP Pintura",
+      "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião de matriz africana?",
+      "options": ["Umbanda", "Kemetismo", "Santeria", "Fé bahá'í"],
+      "correctOptionIndex": 0,
+      "explanation": "XXXXX",
+      "hint": [
+        "As divindades dessa religião são chamadas orixás.",
+        "Uma das religiões mais populares do Brasil."
       ],
-      "correctOptionIndex": 2,
-      "explanation": "O Renascimento focava na proporção, simetria e no ideal de beleza clássica humana."
+      "tags": ["pintura", "religiao", "abdiasn"],
+      "difficulty": "easy"
     },
     {
       "id": "q3",
-      "question": "Quem é o autor do 'Fragmento de História'?",
-      "options": ["Michelangelo", "Caravaggio", "Da Vinci", "Desconhecido"],
+      "category": "MVP Escultura",
+      "question": "Qual dessas coisas é impossível de se esculpir?",
+      "options": ["Areia molhada", "Água congelada", "Gás carbônico", "Bronze"],
+      "correctOptionIndex": 2,
+      "explanation": "XXXXX",
+      "hints": [
+        "Remete a um elemento muito importante para o desenvolvimento da vida na Terra.",
+        "É um recurso envolvido no processo de fotossíntese das plantas."
+      ],
+      "tags": ["edgards", "escultura"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q4",
+      "category": "MVP Pintura",
+      "question": "Na obra Okê Oxóssi de Abdias Nascimento, a saudação “okê” substitui qual lema brasileiro?",
+      "options": [
+        "Ordem e progresso",
+        "Florão da América",
+        "Independência ou morte",
+        "Diga ao povo que fico"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "XXXXX",
+      "hint": [
+        "Um lema presente na bandeira nacional.",
+        "No desfile da Mangueira no ano de 2019, esse mesmo lema foi substituído por “Índios, negros e pobres”."
+      ],
+      "tags": ["pintura", "religiao", "brasil", "abdiasn"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q5",
+      "category": "MVP Escultura",
+      "question": "Qual desses temas está mais presente nas obras de Edgard de Souza?",
+      "options": [
+        "Hiperrealismo",
+        "Transfiguração",
+        "Miniaturização",
+        "Megalomania"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "XXXXX",
+      "hints": [
+        "Representa coisas incomuns no mundo real.",
+        "Também é uma matéria na Escola de Magia e Bruxaria de Hogwarts."
+      ],
+      "tags": ["edgards", "escultura"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q6",
+      "category": "MVP Fotografia",
+      "question": "Qual fotógrafa foi ativa na luta pela demarcação das terras yanomamis?",
+      "options": [
+        "Luisa Dörr",
+        "Nair Benedicto",
+        "Bárbara Wagner",
+        "Claudia Andujar"
+      ],
       "correctOptionIndex": 3,
-      "explanation": "O Fragmento de História é uma obra de autor desconhecido encontrada nos arquivos do museu."
+      "explanation": "XXXXX",
+      "hints": [
+        "Ela teve boa parte da família morta no holocausto judeu e imigrou para o Brasil ainda criança.",
+        "Nasceu na cidade de Neuchâtel, na Suíça."
+      ],
+      "tags": ["biografia", "candujar"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q7",
+      "category": "MVP Fotografia",
+      "question": "O registro de um yanomami sozinho na shabono (casa comunitária) iluminada faz parte de qual série de fotografias de Claudia Andujar?",
+      "options": ["A casa", "O homem", "Curumim", "Saudosa maloca"],
+      "correctOptionIndex": 0,
+      "explanation": "XXXXX",
+      "hints": [
+        "Tem a ver com a moradia indígena.",
+        "Há vários tipos, como palafitas, choupanas, alvenaria."
+      ],
+      "tags": ["indigenas", "cultura", "candujar", "brasil", "fotografia"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q8",
+      "category": "MVP Pintura",
+      "question": "Abdias Nascimento representou apetrechos associados aos orixás, como o oxé e o ofá. O que são esses objetos vistos nas pinturas, respectivamente?",
+      "options": [
+        "escudo e cajado",
+        "lança e espelho",
+        "machado e arco e flecha",
+        "atabaque e colar de contas"
+      ],
+      "correctOptionIndex": 2,
+      "explanation": "XXXXX",
+      "hint": [
+        "Dois deles são instrumentos de guerra.",
+        "São instrumentos de Xangô e Oxóssi, respectivamente."
+      ],
+      "tags": ["religiao", "cultura"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "q9",
+      "category": "MVP Fotografia",
+      "question": "Qual desses elementos é usado na revelação de fotografias em preto e branco?",
+      "options": [
+        "Pó de marfim e ébano",
+        "Pelos de urso panda",
+        "Borra de café",
+        "Gelatina de prata"
+      ],
+      "correctOptionIndex": 3,
+      "explanation": "XXXXX",
+      "hints": [
+        "Talvez, de outra forma, você até poderia comer.",
+        "Vem em folhas."
+      ],
+      "tags": ["fotografia", "tecnica"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q10",
+      "category": "MVP Pintura",
+      "question": "De que década são as obras de Abdias Nascimento que você viu aqui?",
+      "options": ["50", "60", "70", "80"],
+      "correctOptionIndex": 2,
+      "explanation": "XXXXX",
+      "hint": [
+        "Foi a década do declínio da ditadura militar.",
+        "Época da primeira transmissão de TV em cores."
+      ],
+      "tags": ["brasil", "cultura"],
+      "difficulty": "medium"
     }
   ]
 }

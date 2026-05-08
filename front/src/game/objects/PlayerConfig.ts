@@ -13,13 +13,7 @@ export const PLAYER_ASSETS = {
     key: "player_walk",
     path: "player/animations/walking.png",
     frameWidth: 48,
-    frameHeight: 48,
-  },
-  INSPECT_SPRITESHEET: {
-    key: "player_inspect",
-    path: "player-inspect.png",
-    frameWidth: 32,
-    frameHeight: 32,
+    frameHeight: 37,
   },
   JUMP_SPRITESHEET: {
     key: "player_jump",
@@ -39,16 +33,13 @@ export const PLAYER_ASSETS = {
     frameWidth: 48,
     frameHeight: 48,
   },
-  SOUNDS: {
-    MAGNIFYING_UP: {
-      key: "magnifying_up",
-      path: "sound/magnifying_up.mp3",
-    },
-    MAGNIFYING_DOWN: {
-      key: "magnifying_down",
-      path: "sound/magnifying_down.mp3",
-    },
+  DRAGGING_SPRITESHEET: {
+    key: "player_dragging",
+    path: "player/animations/dragging.png",
+    frameWidth: 162,
+    frameHeight: 183,
   },
+  SOUNDS: {},
 } as const;
 
 // ------------------------------------------------------------
@@ -83,7 +74,18 @@ export const PLAYER_PHYSICS = {
   /** Hitbox offset (setOffset) */
   HITBOX_OFFSET: {
     X: 18,
-    Y: 5,
+    Y: -1,
+  },
+
+  /** Scale and Hitbox for the dragging animation */
+  DRAGGING_SCALE: 0.9,
+  DRAGGING_HITBOX: {
+    WIDTH: 12,
+    HEIGHT: 38,
+  },
+  DRAGGING_HITBOX_OFFSET: {
+    X: 10,
+    Y: -1,
   },
 
   DAMPING: true,
@@ -106,9 +108,6 @@ export const PLAYER_PHYSICS = {
 export const PLAYER_MOVEMENT = {
   /** Normal horizontal acceleration */
   WALK_ACCELERATION: 90,
-
-  /** Horizontal acceleration in inspect mode */
-  INSPECT_ACCELERATION: 25,
 
   /** Vertical jump velocity */
   JUMP_VELOCITY_Y: -1200,
@@ -158,20 +157,6 @@ export const PLAYER_ANIMS = {
     frameRate: 15,
     repeat: -1,
   },
-  INSPECT: {
-    key: "inspect",
-    spritesheet: PLAYER_ASSETS.INSPECT_SPRITESHEET.key,
-    frames: [0, 1, 2, 3, 4, 5],
-    frameRate: 14,
-    repeat: 0,
-  },
-  STOP_INSPECT: {
-    key: "stop_inspect",
-    spritesheet: PLAYER_ASSETS.INSPECT_SPRITESHEET.key,
-    frames: [3, 2, 1, 0],
-    frameRate: 14,
-    repeat: 0,
-  },
   JUMP: {
     key: "jump",
     spritesheet: PLAYER_ASSETS.JUMP_SPRITESHEET.key,
@@ -198,23 +183,23 @@ export const PLAYER_ANIMS = {
   /** Grabbing / Pushing animations */
   GRAB_IDLE: {
     key: "grab_idle",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [0], // Placeholder
-    frameRate: 10,
+    spritesheet: "player_dragging",
+    frames: [0],
+    frameRate: 13,
     repeat: -1,
   },
   PUSH: {
     key: "push",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [0, 1, 2, 3], // Placeholder
-    frameRate: 10,
+    spritesheet: "player_dragging",
+    frames: [0, 1, 2, 3],
+    frameRate: 13,
     repeat: -1,
   },
   PULL: {
     key: "pull",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [3, 2, 1, 0], // Placeholder
-    frameRate: 10,
+    spritesheet: "player_dragging",
+    frames: [3, 2, 1, 0],
+    frameRate: 13,
     repeat: -1,
   },
 
@@ -236,12 +221,9 @@ export const PLAYER_KEYS = {
   D: "D",
   SPACE: "SPACE",
   E: "E",
-  SHIFT: "SHIFT",
 } as const;
 
 // ------------------------------------------------------------
 // EVENTS (scene.events.emit / on)
 // ------------------------------------------------------------
-export const PLAYER_EVENTS = {
-  INSPECT_MODE_TOGGLED: "inspect-mode-toggled",
-} as const;
+export const PLAYER_EVENTS = {} as const;

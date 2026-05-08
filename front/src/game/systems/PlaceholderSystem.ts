@@ -91,7 +91,7 @@ export class PlaceholderSystem {
     );
     sparkle.setScale(4);
     sparkle.setAlpha(0.8);
-    sparkle.setDepth(100);
+    sparkle.setDepth(10);
 
     if (this.scene.anims.exists("sparkle_hint_anim")) {
       sparkle.play("sparkle_hint_anim", true);
@@ -144,7 +144,10 @@ export class PlaceholderSystem {
 
     if (placeholder) {
       item.x = placeholder.area.centerX;
-      item.y = placeholder.area.centerY;
+
+      if (item.interactableType !== InteractableType.SCULPTURE) {
+        item.y = placeholder.area.centerY;
+      }
 
       item.disableInteractive();
 
@@ -152,6 +155,14 @@ export class PlaceholderSystem {
         placeholder.hintSprite.stop();
         placeholder.hintSprite.destroy();
         placeholder.hintSprite = undefined;
+      }
+
+      const body = item.body as Phaser.Physics.Arcade.Body;
+      if (body) {
+        body.setAllowGravity(false);
+        body.setImmovable(true);
+        body.setVelocity(0, 0);
+        body.checkCollision.none = true;
       }
 
       placeholder.isFilled = true;

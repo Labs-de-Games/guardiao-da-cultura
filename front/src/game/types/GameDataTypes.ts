@@ -25,16 +25,19 @@ export interface MissionDef {
 
 export interface ContentMetadata {
   title: string;
-  author?: string;
+  author: string;
+  description: string;
   year?: string;
   period?: string;
   part?: string;
-  description?: string;
+  dimensions?: string;
+  medium?: string;
+  place?: string;
 }
 
 export interface ContentEducational {
-  opinion?: string;
   feedbackError?: string;
+  opinion?: string;
   hint?: string;
 }
 
@@ -68,7 +71,7 @@ export interface NpcData {
 export interface WorksJson {
   PAINTINGS: Record<string, WorkData>;
   SCULPTURES: Record<string, WorkData>;
-  PICTURES: Record<string, WorkData>;
+  PHOTOS: Record<string, WorkData>;
   [key: string]: Record<string, WorkData> | undefined;
 }
 
@@ -119,4 +122,14 @@ export interface InteractionSubmittedData {
   instanceId: string;
   placedItems: (string | null)[];
   [key: string]: unknown;
+}
+
+export interface LabelInfoData {
+  title: string;
+  author: string;
+  description: string;
+  year?: string;
+  dimensions?: string;
+  medium?: string;
+  place?: string;
 }

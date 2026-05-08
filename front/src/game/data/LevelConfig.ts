@@ -48,49 +48,59 @@ export const LEVEL_ASSETS = {
   MAP: LEVEL_REGISTRY.level_01.map,
   SCULPTURES: [
     {
-      key: "sculpture_01",
+      key: "edgards_sem_titulo_i_fundidos",
       path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
     },
     {
-      key: "sculpture_02",
+      key: "edgards_sem_titulo_ii_flexao",
       path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
     },
     {
-      key: "sculpture_03",
+      key: "edgards_sem_titulo_iii_em_pe",
       path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
     },
   ],
   PAINTINGS: [
     {
-      key: "painting_01",
+      key: "abdiasn_invocacao_noturna_oxossi",
       path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi.png",
     },
-    { key: "painting_02", path: "artworks/paintings/abdiasn_oke_oxossi.png" },
     {
-      key: "painting_03",
+      key: "abdiasn_oke_oxossi",
+      path: "artworks/paintings/abdiasn_oke_oxossi.png",
+    },
+    {
+      key: "abdiasn_oxum_em_extase",
       path: "artworks/paintings/abdiasn_oxum_em_extase.png",
     },
     {
-      key: "painting_04",
+      key: "abdiasn_xango_rodrigues_alves",
       path: "artworks/paintings/abdiasn_xango_rodrigues_alves.png",
     },
   ],
   CHUNKS: [
-    { key: "chunk_01", path: "artworks/photos/chunk-0.png" },
-    { key: "chunk_02", path: "artworks/photos/chunk-1.png" },
-    { key: "chunk_03", path: "artworks/photos/chunk-2.png" },
-    { key: "chunk_04", path: "artworks/photos/chunk-3.png" },
+    { key: "chunk_1-1", path: "artworks/photos/chunk-0.png" },
+    { key: "chunk_1-2", path: "artworks/photos/chunk-1.png" },
+    { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
+    { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
   ],
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
-    { key: "inspect_example", path: "inspect_example.png" },
   ],
   CONTENT: {
     key: "content",
     path: "data/content.json",
   },
 } as const;
+
+export const BADGE_ASSETS = [
+  { key: "badge_explorer", path: "data/badges/badge_explorer.png" },
+  { key: "badge_restorer", path: "data/badges/badge_restorer.png" },
+  { key: "badge_curator", path: "data/badges/badge_curator.png" },
+  { key: "badge_detective", path: "data/badges/badge_detective.png" },
+  { key: "badge_persistent", path: "data/badges/badge_persistent.png" },
+] as const;
 
 export const PHASE_SETTINGS = {
   TITLE: LEVEL_REGISTRY.level_01.title,

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getCurrentUserId } from "../lib/session";
 
-export default function PhaserGame() {
+export default function PhaserGame({ userId }: { userId?: string }) {
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,16 +11,23 @@ export default function PhaserGame() {
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return;
 
-    // Dynamically import game code only on client side
     const initGame = async () => {
-      const { default: StartGame } = await import("../game/main");
-      gameRef.current = StartGame("game-container");
-      setIsLoading(false);
+      try {
+        let activeUserId = userId;
+        if (!activeUserId) {
+          activeUserId = await getCurrentUserId();
+        }
+
+        const { default: StartGame } = await import("../game/main");
+        gameRef.current = StartGame("game-container", activeUserId);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("[PhaserGame] Error initializing game:", err);
+      }
     };
 
     void initGame();
 
-    // Cleanup on unmount
     return () => {
       if (gameRef.current) {
         gameRef.current.destroy(true);
@@ -49,7 +57,7 @@ export default function PhaserGame() {
             backgroundColor: "#000000",
           }}
         >
-          Loading game...
+          Carregando o jogo...
         </div>
       )}
     </div>

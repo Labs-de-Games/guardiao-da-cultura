@@ -1,44 +1,46 @@
 {
-  "name": "back",
-  "private": true,
-  "scripts": {
-    "start:dev": "bun run --watch src/main.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "bun dist/main.js",
-    "lint": "biome check .",
-    "test": "bun test --preload ./test-setup.ts",
-    "typecheck": "tsc --noEmit",
-    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts",
-    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts",
-    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/core/database/data-source.ts"
-  },
-  "dependencies": {
-    "@nestjs/common": "latest",
-    "@nestjs/core": "latest",
-    "@nestjs/event-emitter": "^3.1.0",
-    "@nestjs/jwt": "^11.0.2",
-    "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "latest",
-    "@nestjs/swagger": "^11.4.2",
-    "@nestjs/throttler": "^6.5.0",
-    "@nestjs/typeorm": "^11.0.1",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.15.1",
-    "cookie-parser": "^1.4.7",
-    "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1",
-    "pg": "^8.20.0",
-    "reflect-metadata": "latest",
-    "rxjs": "latest",
-    "typeorm": "^0.3.28",
-    "zod": "latest"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "latest",
-    "@nestjs/testing": "latest",
-    "@types/cookie-parser": "^1.4.10",
-    "@types/node": "latest",
-    "@types/passport-jwt": "^4.0.1",
-    "typescript": "latest"
-  }
+	"name": "back",
+	"private": true,
+	"scripts": {
+		"start:dev": "bun run --watch src/main.ts",
+		"build": "tsc -p tsconfig.json",
+		"start": "bun dist/main.js",
+		"lint": "biome check .",
+		"test": "bun test --preload ./test-setup.ts",
+		"typecheck": "tsc --noEmit",
+		"migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts",
+		"migration:run": "typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts",
+		"migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/core/database/data-source.ts",
+		"db:drop": "typeorm-ts-node-commonjs schema:drop -d src/core/database/data-source.ts"
+	},
+	"dependencies": {
+		"@nestjs/common": "latest",
+		"@nestjs/core": "latest",
+		"@nestjs/event-emitter": "^3.1.0",
+		"@nestjs/jwt": "^11.0.2",
+		"@nestjs/passport": "^11.0.5",
+		"@nestjs/platform-express": "latest",
+		"@nestjs/swagger": "^11.4.2",
+		"@nestjs/throttler": "^6.5.0",
+		"@nestjs/typeorm": "^11.0.1",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.15.1",
+		"cookie-parser": "^1.4.7",
+		"passport": "^0.7.0",
+		"passport-jwt": "^4.0.1",
+		"pg": "^8.20.0",
+		"reflect-metadata": "latest",
+		"rxjs": "latest",
+		"typeorm": "^0.3.28",
+		"zod": "latest"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "latest",
+		"@nestjs/testing": "latest",
+		"@types/cookie-parser": "^1.4.10",
+		"@types/node": "latest",
+		"@types/passport-jwt": "^4.0.1",
+		"ts-node": "^10.9.2",
+		"typescript": "latest"
+	}
 }

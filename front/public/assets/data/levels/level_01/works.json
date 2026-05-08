@@ -1,168 +1,213 @@
 {
-  "PAINTINGS": {
-    "monalisa": {
-      "id": "monalisa",
-      "type": "Painting",
-      "metadata": {
-        "title": "Monalisa",
-        "author": "Leonardo da Vinci",
-        "year": "1503",
-        "period": "Renascimento"
-      },
-      "educational": {
-        "opinion": "Essa pintura parece me observar de volta... é fascinante e um pouco inquietante.",
-        "feedbackError": "A Monalisa busca o equilíbrio perfeito do Renascimento. Este slot parece ter a iluminação dramática do Barroco.",
-        "hint": "O sfumato de Da Vinci precisa de um lugar sereno."
-      },
-      "assets": {
-        "sprite": "painting_01"
-      }
-    },
-    "escola_atenas": {
-      "id": "escola_atenas",
-      "type": "Painting",
-      "metadata": {
-        "title": "A Escola de Atenas",
-        "author": "Rafael Sanzio",
-        "year": "1509",
-        "period": "Renascimento"
-      },
-      "educational": {
-        "opinion": "Tanta sabedoria reunida em um só lugar. Posso quase ouvir os filósofos discutindo.",
-        "feedbackError": "Rafael usou perspectiva matemática rigorosa aqui. Slots Barrocos são muito caóticos para esta obra.",
-        "hint": "Procure um espaço que valorize a filosofia e a simetria."
-      },
-      "assets": {
-        "sprite": "painting_02"
-      }
-    },
-    "vocacao_mateus": {
-      "id": "vocacao_mateus",
-      "type": "Painting",
-      "metadata": {
-        "title": "A Vocação de São Mateus",
-        "author": "Caravaggio",
-        "year": "1600",
-        "period": "Barroco"
-      },
-      "educational": {
-        "opinion": "A luz nessa obra é tão intensa que parece que os personagens vão sair da tela.",
-        "feedbackError": "Caravaggio é o mestre do Tenebrismo. Colocá-lo em um slot Renascentista apaga o seu drama.",
-        "hint": "Luz e sombra intensas pedem um slot de alto contraste."
-      },
-      "assets": {
-        "sprite": "painting_03"
-      }
-    },
-    "as_meninas": {
-      "id": "as_meninas",
-      "type": "Painting",
-      "metadata": {
-        "title": "As Meninas",
-        "author": "Diego Velázquez",
-        "year": "1556",
-        "period": "Barroco"
-      },
-      "educational": {
-        "opinion": "Quem está pintando quem? Esse quadro me faz questionar a realidade.",
-        "feedbackError": "Esta obra barroca brinca com o espaço e o olhar. O slot Renascentista é estático demais para ela.",
-        "hint": "Procure a galeria da corte espanhola."
-      },
-      "assets": {
-        "sprite": "painting_04"
-      }
-    }
-  },
   "SCULPTURES": {
-    "david_michelangelo": {
-      "id": "david_michelangelo",
+    "edgards_sem_titulo_i_fundidos": {
+      "id": "edgards_sem_titulo_i_fundidos",
       "type": "Sculpture",
       "metadata": {
-        "title": "David",
-        "author": "Michelangelo",
-        "year": "1504",
-        "period": "Renascimento"
+        "title": "Sem título (Dor de cabeça I)",
+        "author": "Edgard de Souza",
+        "year": "2000",
+        "place": "São Paulo, SP"
       },
       "educational": {
-        "opinion": "A perfeição anatômica desse mármore é de tirar o fôlego. Michelangelo era um gênio.",
-        "feedbackError": "David representa o repouso antes da ação. Slots Barrocos sugerem movimento demais para o mármore de Michelangelo.",
-        "hint": "Procure um pedestal central que exalte a anatomia clássica."
+        "description": "Edgard de Souza estudou artes plásticas em sua cidade natal, São Paulo, onde teve contato com a arte conceitual. A sua produção é permeada por questões ligadas ao corpo e à sua representação.\n\nEsta escultura remete à fusão de corpos.\n\nDesde o início de sua trajetória, o artista estabelece um compromisso consistente com a tridimensionalidade.",
+        "medium": "Bronze fundido",
+        "opinion": "Uma escultura de duas pessoas que se fundiram. Não sei se estão num abraço, ou tentando se livrar um do outro.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à fusão de corpos, ou mais de um corpo.",
+        "hint": "XXXXX"
       },
       "assets": {
-        "sprite": "sculpture_01"
+        "sprite": "edgards_sem_titulo_i_fundidos"
       }
     },
-    "extase_teresa": {
-      "id": "extase_teresa",
+    "edgards_sem_titulo_ii_flexao": {
+      "id": "edgards_sem_titulo_ii_flexao",
       "type": "Sculpture",
       "metadata": {
-        "title": "O Êxtase de Santa Teresa",
-        "author": "Bernini",
-        "year": "1652",
-        "period": "Barroco"
+        "title": "Sem título (Dor de cabeça II)",
+        "author": "Edgard de Souza",
+        "year": "2002",
+        "place": "São Paulo, SP"
       },
       "educational": {
-        "opinion": "Dá para sentir o mármore se transformando em carne e luz. É transcendental.",
-        "feedbackError": "Bernini esculpiu o movimento e a emoção extrema. O Renascimento é calmo demais para esta peça.",
-        "hint": "Encontre um slot com ornamentação teatral."
+        "description": "A transfiguração é um elemento presente em seus trabalhos, como, por exemplo, esculturas de bronze nas quais troncos sem cabeças aparecem conectados, mesas de madeira que assumem características antropomórficas ou sequências fotográficas nas quais o artista se retrata em luta e interação consigo mesmo.\n\nEsta escultura remete à pulsão.\n\nNo universo de Edgard de Souza, as coisas manifestam traços de figuração do corpo, uma prostração ou excitação que vai além (e fica aquém) da semelhança anatômica com braços, cabeças e pernas.",
+        "medium": "Bronze fundido",
+        "opinion": "Uma escultura de uma pessoa que tentou entrar de cabeça em algo. Não sei se ela quer se jogar mais ou se livrar da situação.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à pulsão, um corpo que se joga de cabeça.",
+        "hint": "XXXXX"
       },
       "assets": {
-        "sprite": "sculpture_02"
+        "sprite": "edgards_sem_titulo_ii_flexao"
       }
     },
-    "pieta_michelangelo": {
-      "id": "pieta_michelangelo",
+    "edgards_sem_titulo_iii_em_pe": {
+      "id": "edgards_sem_titulo_iii_em_pe",
       "type": "Sculpture",
       "metadata": {
-        "title": "Pietá",
-        "author": "Michelangelo",
-        "year": "1499",
-        "period": "Renascimento"
+        "title": "Sem título (Dor de cabeça III)",
+        "author": "Edgard de Souza",
+        "year": "2005",
+        "place": "São Paulo, SP"
       },
       "educational": {
-        "opinion": "A serenidade de Maria diante da dor é comovente. Uma harmonia divina.",
-        "feedbackError": "A Pietá é a definição de harmonia piramidal. Não a confunda com a agitação do Barroco.",
-        "hint": "Procure um local de contemplação silenciosa."
+        "description": "Essas três esculturas de Edgard de Souza são parte de uma série desenvolvida ao longo dos anos 2000. A silhueta faz referência a uma figura masculina, baseada no corpo do próprio artista.\n\nEsta escultura remete à introspecção.\n\nDispostas linearmente, as esculturas sugerem, num primeiro momento, a leitura de um movimento contínuo. Um segundo olhar, mais minucioso, revela uma ação fragmentada e sem relação direta entre causa e efeito em cada uma das poses, impossíveis e imaginárias.",
+        "medium": "Bronze fundido",
+        "opinion": "Uma escultura de uma pessoa totalmente curvada. Não sei se está reverenciando a si mesmo, ou tentando olhar para dentro de si.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à introspecção, um corpo que olha para dentro de si mesmo.",
+        "hint": "XXXXX"
       },
       "assets": {
-        "sprite": "sculpture_03"
+        "sprite": "edgards_sem_titulo_iii_em_pe"
       }
     }
   },
-  "PICTURES": {
-    "chunk_01": {
-      "id": "chunk_01",
-      "type": "Picture",
-      "metadata": { "title": "Fragmento 1", "part": "1/4" },
-      "educational": { "opinion": "Um pedaço de um quadro moderno? Estranho!" },
-      "assets": { "sprite": "chunk_01" }
-    },
-    "chunk_02": {
-      "id": "chunk_02",
-      "type": "Picture",
-      "metadata": { "title": "Fragmento 2", "part": "2/4" },
-      "educational": {
-        "opinion": "Outro pedaço estranho... Onde está o resto?"
+  "PAINTINGS": {
+    "abdiasn_xango_rodrigues_alves": {
+      "id": "abdiasn_xango_rodrigues_alves",
+      "type": "Painting",
+      "metadata": {
+        "title": "Xangô Rodrigues Alves",
+        "author": "Abdias Nascimento",
+        "year": "1970",
+        "period": "Contemporâneo",
+        "place": "Middletown, Connecticut, EUA"
       },
-      "assets": { "sprite": "chunk_02" }
-    },
-    "chunk_03": {
-      "id": "chunk_03",
-      "type": "Picture",
-      "metadata": { "title": "Fragmento 3", "part": "3/4" },
       "educational": {
-        "opinion": "Cada vez mais estranho... O que será que acontece quando eu juntar todos?"
+        "description": "Produzida durante o exílio de Abdias, refletindo sua conexão com a teogonia afrobrasileira e a luta política por meio da estética. A visualidade é inspirada nos pontos riscados do candomblé, com cores fortes e grafismos representativos de Xangô, orixá da justiça, equilíbrio, força e poder, em homenagem ao companheiro de militância e ativismo contra a discriminação racial.\n\nDurante seu exílio do regime militar, foi professor em universidades nos EUA e na Nigéria. De volta ao Brasil, foi deputado federal e senador da República, além de secretário do governo do Estado do Rio de Janeiro.",
+        "dimensions": "154 x 102 cm",
+        "medium": "Acrílica sobre linho",
+        "opinion": "Cores fortes. Me lembra uma máscara negra com uma coroa de prata, dividida por um grande machado duplo vermelho. Um símbolo de justiça, justamente o que falta a esse vândalo.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado a Xangô.",
+        "hint": "XXXXX"
       },
-      "assets": { "sprite": "chunk_03" }
+      "assets": {
+        "sprite": "abdiasn_xango_rodrigues_alves"
+      }
     },
-    "chunk_04": {
-      "id": "chunk_04",
-      "type": "Picture",
-      "metadata": { "title": "Fragmento 4", "part": "4/4" },
-      "educational": {
-        "opinion": "Deve ser a última peça! Tomara que faça sentido quando eu montar."
+    "abdiasn_invocacao_noturna_oxossi": {
+      "id": "abdiasn_invocacao_noturna_oxossi",
+      "type": "Painting",
+      "metadata": {
+        "title": "Invocação noturna ao poeta Gerardo Mello Mourão: Oxóssi",
+        "author": "Abdias Nascimento",
+        "year": "1972",
+        "period": "Contemporâneo",
+        "place": "Búfalo, Nova Iorque, EUA"
       },
-      "assets": { "sprite": "chunk_04" }
+      "educational": {
+        "description": "Homenagem ao companheiro de escrita, pai do artista plástico Tunga; também uma homenagem à memória dos poetas da La Santa Hermandad de la Orquídea.\n\nA obra remete à liberdade, uma vez que tanto Abdias quanto Gerardo foram perseguidos politicamente.\n\nAbdias Nascimento foi poeta, escritor, dramaturgo, curador, artista plástico, professor universitário, pan-africanista e parlamentar. Indicado oficialmente ao Prêmio Nobel da Paz em 2010, teve uma longa trajetória trilhada no ativismo e na valorização social do negro e da cultura afro-brasileira, por meio da arte e da educação.",
+        "dimensions": "152 x 102 cm",
+        "medium": "Acrílica sobre tela",
+        "opinion": "Muito poético. Vejo o céu em diferentes tons de azul, com um pássaro voando, um arco e flecha apontando para cima.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à liberdade.",
+        "hint": "XXXXX"
+      },
+      "assets": {
+        "sprite": "abdiasn_invocacao_noturna_oxossi"
+      }
+    },
+    "abdiasn_oke_oxossi": {
+      "id": "abdiasn_oke_oxossi",
+      "type": "Painting",
+      "metadata": {
+        "title": "Okê Oxóssi",
+        "author": "Abdias Nascimento",
+        "year": "1970",
+        "period": "Contemporâneo",
+        "place": "Búfalo, Nova Iorque, EUA"
+      },
+      "educational": {
+        "description": "Criada durante seu exílio nos EUA, a obra é uma crítica à ditadura militar e uma afirmação da resistência e identidade nacional.\n\nRessignifica a bandeira brasileira com símbolos do candomblé, substituindo o ufanismo do lema “Ordem e progresso” pela saudação a Oxóssi “Okê” e o ofá (arco e flecha), propondo uma nação sob a proteção da ancestralidade africana. O ofá vermelho, arma de Oxóssi, orixá da caça, fartura e conhecimento, aponta para cima em sentido vertical, sugerindo direção e firmeza.",
+        "dimensions": "65 x 96 cm",
+        "medium": "Acrílica sobre tela",
+        "opinion": "Parece muito a bandeira do Brasil varada por uma flecha, mas tem poucas estrelas. Está escrito “okê” várias vezes, mas “okê” isso significa?",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à identidade nacional.",
+        "hint": "XXXXX"
+      },
+      "assets": {
+        "sprite": "abdiasn_oke_oxossi"
+      }
+    },
+    "abdiasn_oxum_em_extase": {
+      "id": "abdiasn_oxum_em_extase",
+      "type": "Painting",
+      "metadata": {
+        "title": "Oxum em êxtase",
+        "author": "Abdias Nascimento",
+        "year": "1975",
+        "period": "Contemporâneo",
+        "place": "Búfalo, Nova Iorque, EUA"
+      },
+      "educational": {
+        "description": "Pintada em Búfalo, Nova Iorque, durante o exílio de Abdias Nascimento, retrata a orixá das águas doces com cores vibrantes, simbolizando a força da ancestralidade e espiritualidade, num estado de êxtase ou dança, conectada à natureza.\n\n\tAbdias Nascimento fundou projetos pioneiros, como o Teatro Experimental do Negro (TEN) e o Museu da Arte Negra (MAN) — uma iniciativa que reuniu obras de artistas nacionais e internacionais, com a missão de divulgar a influência africana na arte moderna ocidental e a pluralidade da produção artística negra.",
+        "dimensions": "106 x 157 cm",
+        "medium": "Acrílica sobre tela",
+        "opinion": "Que pintura colorida! Mostra uma moça coroada, com os olhos cobertos e estrelas multicor em seu peito.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter algo relacionado à Oxum",
+        "hint": "XXXXX"
+      },
+      "assets": {
+        "sprite": "abdiasn_oxum_em_extase"
+      }
+    }
+  },
+  "PHOTOS": {
+    "chunk_1-1": {
+      "id": "chunk_1-1",
+      "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
+      "metadata": { "title": "Sem título (Yanomami)", "part": "1/4" },
+      "educational": {
+        "opinion": "Uma fotografia rasgada! Está em preto e branco, não sei bem o que retrata. Parece ser o teto de algum lugar."
+      }
+    },
+    "chunk_1-2": {
+      "id": "chunk_1-2",
+      "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
+      "metadata": { "title": "Sem título (Yanomami)", "part": "2/4" },
+      "educational": {
+        "opinion": "Uma fotografia rasgada! Vejo a claridade entrando pelas frestas."
+      }
+    },
+    "chunk_1-3": {
+      "id": "chunk_1-3",
+      "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
+      "metadata": { "title": "Sem título (Yanomami)", "part": "3/4" },
+      "educational": {
+        "opinion": "Uma fotografia rasgada! Vejo a entrada de um lugar e chão de terra batida."
+      }
+    },
+    "chunk_1-4": {
+      "id": "chunk_1-4",
+      "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
+      "metadata": { "title": "Sem título (Yanomami)", "part": "4/4" },
+      "educational": {
+        "opinion": "Uma fotografia rasgada! Vejo uma criança banhada pela luz."
+      }
+    },
+    "candujar_sem_titulo_yanomami": {
+      "id": "candujar_sem_titulo_yanomami",
+      "type": "Picture",
+      "metadata": {
+        "title": "Sem título (Yanomami)",
+        "author": "Claudia Andujar",
+        "year": "1976",
+        "place": "Catrimani, RR"
+      },
+      "educational": {
+        "description": "Da série 'A casa'.\n\nMostra um curumim dentro de uma shabono (casa comunitária) yanomami. A série é composta por várias fotografias que retratam o cotidiano dos yanomami. Nos anos 70, os yanomami enfrentavam ameaças de invasão e destruição de suas terras por garimpeiros e madeireiros ilegais.",
+        "dimensions": "90 x 60 cm",
+        "medium": "Gelatina de prata sobre papel Ilford Multigrade",
+        "opinion": "Essa é uma foto muito legal! A luz do sol invade a oca comunitária pelas frestas e ilumina uma criança.",
+        "feedbackError": "Se não for essa, é porque aqui deve ter outro pedaço da fotografia.",
+        "hint": "XXXXX"
+      },
+      "assets": {
+        "sprite": "candujar_sem_titulo_yanomami"
+      }
     }
   }
 }

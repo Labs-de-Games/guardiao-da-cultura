@@ -21,7 +21,6 @@ COPY --from=deps /app/ ./
 COPY --from=prune /app/out/full/ ./
 COPY front/tsconfig.json ./front/
 COPY front/next.config.ts ./front/
-COPY front/next-env.d.ts ./front/
 COPY front/src ./front/src
 COPY front/public ./front/public
 RUN bun run build --filter=front
