@@ -93,11 +93,40 @@ export interface MessagesJson {
   [key: string]: unknown;
 }
 
+export interface CollectibleMetadata {
+  name: string;
+  category: string;
+}
+
+export interface CollectibleEducational {
+  description: string;
+}
+
+export interface CollectibleAssets {
+  sprite: string;
+  scaleOnMap?: number;
+  scaleOnInspect?: number;
+}
+
+export interface CollectibleData {
+  id: string;
+  metadata: CollectibleMetadata;
+  educational: CollectibleEducational;
+  assets: CollectibleAssets;
+}
+
+export interface CollectiblesJson {
+  COLLECT: Record<string, CollectibleData>;
+  CLUE_VILLAIN: Record<string, CollectibleData>;
+  CLUE_NEXT: Record<string, CollectibleData>;
+}
+
 export interface ContentJson {
   works: WorksJson;
   quizzes: QuizzesJson;
   npcs: Record<string, NpcData>;
   messages: MessagesJson;
+  collectibles: CollectiblesJson;
 }
 
 export interface UIInitData {
