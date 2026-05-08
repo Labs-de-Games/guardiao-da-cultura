@@ -155,6 +155,7 @@
     "chunk_1-1": {
       "id": "chunk_1-1",
       "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "1/4" },
       "educational": {
         "opinion": "Um pedaço de fotografia."
@@ -163,6 +164,7 @@
     "chunk_1-2": {
       "id": "chunk_1-2",
       "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "2/4" },
       "educational": {
         "opinion": "Um pedaço de fotografia."
@@ -171,6 +173,7 @@
     "chunk_1-3": {
       "id": "chunk_1-3",
       "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "3/4" },
       "educational": {
         "opinion": "Um pedaço de fotografia."
@@ -179,6 +182,7 @@
     "chunk_1-4": {
       "id": "chunk_1-4",
       "type": "Photo",
+      "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "4/4" },
       "educational": {
         "opinion": "Um pedaço de fotografia."
