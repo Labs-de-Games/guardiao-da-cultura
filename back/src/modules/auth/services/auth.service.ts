@@ -24,25 +24,23 @@ export class AuthService {
 
   private signLoginAttempt(nonce: string, email: string): string {
     const exp = Math.floor(Date.now() / 1000) + 15 * 60;
-    const payload = `${nonce}:${email}:${exp}`;
+    const payload = JSON.stringify({ nonce, email, exp });
+    const encoded = Buffer.from(payload).toString("base64url");
     const signature = createHmac("sha256", this.configService.magicLinkSecret)
-      .update(payload)
+      .update(encoded)
       .digest("hex");
-    return `${payload}:${signature}`;
+    return `${encoded}:${signature}`;
   }
 
   private verifyLoginAttempt(
     cookieValue: string,
   ): { nonce: string; email: string } | null {
     const parts = cookieValue.split(":");
-    if (parts.length !== 4) return null;
-    const [nonce, email, expStr, signature] = parts;
-    const exp = Number.parseInt(expStr, 10);
-    if (Number.isNaN(exp) || exp < Math.floor(Date.now() / 1000)) return null;
+    if (parts.length !== 2) return null;
+    const [encoded, signature] = parts;
 
-    const payload = `${nonce}:${email}:${exp}`;
     const expectedSig = createHmac("sha256", this.configService.magicLinkSecret)
-      .update(payload)
+      .update(encoded)
       .digest("hex");
 
     if (
@@ -52,7 +50,22 @@ export class AuthService {
       return null;
     }
 
-    return { nonce, email };
+    try {
+      const payload = JSON.parse(
+        Buffer.from(encoded, "base64url").toString(),
+      ) as { nonce: string; email: string; exp: number };
+      if (
+        typeof payload.nonce !== "string" ||
+        typeof payload.email !== "string" ||
+        typeof payload.exp !== "number"
+      ) {
+        return null;
+      }
+      if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+      return { nonce: payload.nonce, email: payload.email };
+    } catch {
+      return null;
+    }
   }
 
   setAuthCookies(res: Response, refreshToken: string): void {
