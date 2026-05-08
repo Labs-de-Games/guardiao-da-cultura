@@ -12,7 +12,10 @@ export class ResultPanel extends BasePanel {
   private readonly resultStarsCount = 5;
   private readonly resultStarsSidePadding = 140;
   private readonly resultStarsGapRatio = 0.18;
-  private readonly resultStarsTopPadding = 150;
+  private readonly resultStarsTopPadding = 0;
+  private readonly resultStarsOutlinePaddingX = 20; // Left/right padding
+  private readonly resultStarsOutlinePaddingY = 100; // Top/bottom padding
+  private resultStarsOutline: Phaser.GameObjects.Graphics | null = null;
 
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
@@ -57,45 +60,19 @@ export class ResultPanel extends BasePanel {
       })
       .setOrigin(0, 0);
 
-    // this.resultTitleText = scene.add
-    //   .text(0, -this.panelHeight / 2 + 110, "Resultado", {
-    //     fontSize: "48px",
-    //     color: LayoutConfig.COLORS.WHITE,
-    //     fontStyle: "bold",
-    //   })
-    //   .setOrigin(0.5, 0);
-
-    // this.resultSummaryText = scene.add
-    //   .text(0, -this.panelHeight / 2 + 190, "", {
-    //     fontSize: "36px",
-    //     color: LayoutConfig.COLORS.WHITE,
-    //     align: "center",
-    //     wordWrap: { width: 1000, useAdvancedWrap: true },
-    //   })
-    //   .setOrigin(0.5, 0);
-
     this.resultStarsContainer = scene.add.container(
       0,
       -this.panelHeight / 2 + 310,
     );
+    this.resultStarsOutline = this.scene.add.graphics();
+    this.resultStarsContainer.addAt(this.resultStarsOutline, 0);
     this.createResultsStars();
 
     this.topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
 
-    this.add([
-      this.bg,
-      this.topPanel,
-      // this.textGreeting,
-      // this.textScore,
-      // this.resultTitleText,
-      // this.resultSummaryText,
-      this.resultStarsContainer,
-    ]);
+    this.add([this.bg, this.topPanel, this.resultStarsContainer]);
 
     this.bindKey("ESC", () => {
-      if (this._isVisible) this.hide();
-    });
-    this.bindKey("SPACE", () => {
       if (this._isVisible) this.hide();
     });
   }
@@ -110,12 +87,19 @@ export class ResultPanel extends BasePanel {
     total: number,
     progressTracker: QuizProgressTracker,
   ) {
-    // const required = Math.ceil(total * 0.7);
-    // const passed = score >= required;
+    const required = Math.ceil(total * 0.7);
+    const great = Math.ceil(total * 1);
 
-    // this.resultTitleText.setText("Resultado");
+    const passed = score >= required;
+
+    console.log(score, required, great);
+
+    this.textGreeting.setText("Resultad");
     // this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");
     // this.resultSummaryText.setText(`Você acertou ${score} de ${total}`);
+    if (this.progressTracker) {
+      this.topPanel.remove(this.progressTracker);
+    }
     this.progressTracker = progressTracker;
     this.topPanel.add(progressTracker);
 
@@ -152,6 +136,7 @@ export class ResultPanel extends BasePanel {
       | { width: number; height: number }
       | undefined;
     const baseW = source?.width ?? 457;
+    const baseH = source?.height ?? 457;
 
     const maxRowWidth = Math.max(
       0,
@@ -173,6 +158,37 @@ export class ResultPanel extends BasePanel {
       star.setPosition(startX + i * step, 0);
       star.setScale(scale);
     }
+    this.updateResultStarsOutline(baseW, baseH, scale, step, startX);
+  }
+
+  private updateResultStarsOutline(
+    baseW: number,
+    baseH: number,
+    scale: number,
+    step: number,
+    startX: number,
+  ) {
+    if (!this.resultStarsOutline) return;
+    this.resultStarsOutline.clear();
+
+    const starW = baseW * scale;
+    const starH = baseH * scale;
+    const paddingX = this.resultStarsOutlinePaddingX;
+    const paddingY = this.resultStarsOutlinePaddingY;
+
+    const starLeftEdge = startX - starW / 2;
+    const starRightEdge =
+      startX + (this.resultStarsCount - 1) * step + starW / 2;
+    const x = starLeftEdge - paddingX;
+    const width = starRightEdge - starLeftEdge + 2 * paddingX;
+
+    const starTopEdge = -starH / 2;
+    const starBottomEdge = starH / 2;
+    const y = starTopEdge - paddingY;
+    const height = starBottomEdge - starTopEdge + 2 * paddingY;
+
+    this.resultStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
+    this.resultStarsOutline.strokeRoundedRect(x, y, width, height, 16);
   }
 
   private computeQuizQuarters(
