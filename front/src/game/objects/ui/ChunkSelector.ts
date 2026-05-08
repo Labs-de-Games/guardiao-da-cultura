@@ -60,7 +60,7 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
 
   private createTitle() {
     this.title = this.scene.add
-      .text(0, -320, "RESTAURAÇÃO DE OBRA", {
+      .text(0, -310, "RESTAURAÇÃO DE OBRA", {
         fontSize: "32px",
         color: LayoutConfig.COLORS.GOLD,
         fontStyle: "bold",
