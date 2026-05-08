@@ -177,7 +177,8 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     this.setPosition(w / 2, h / 2);
   }
 
-  public show() {
+  public async show() {
+    await this.syncUnlockedFromServer();
     this.refresh();
     this.setVisible(true);
     this.isVisible = true;
