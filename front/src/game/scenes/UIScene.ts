@@ -12,6 +12,7 @@ import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
+import type { QuizProgressTracker } from "../objects/ui/quiz/QuizProgressTracker";
 import { ResultPanel } from "../objects/ui/ResultPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import type {
@@ -146,9 +147,9 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.SHOW_QUIZ_RESULTS,
-      (score: number, total: number) => {
+      (score: number, total: number, progressTracker: QuizProgressTracker) => {
         if (this.resultPanel) {
-          this.resultPanel.showResults(score, total);
+          this.resultPanel.showResults(score, total, progressTracker);
         }
       },
     );
