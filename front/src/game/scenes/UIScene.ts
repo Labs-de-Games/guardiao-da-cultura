@@ -8,12 +8,14 @@ import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { InventoryPanel } from "../objects/ui/InventoryPanel";
+import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import type {
   InteractionUIData,
+  LabelInfoData,
   MissionDef,
   MissionStepDef,
   QuizQuestion,
@@ -37,6 +39,7 @@ export class UIScene extends Scene {
   private inventoryPanel!: InventoryPanel;
   private controlsOverlay!: ControlsOverlay;
   private dialoguePanel!: DialoguePanel;
+  private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
@@ -82,6 +85,7 @@ export class UIScene extends Scene {
     );
     this.controlsOverlay = new ControlsOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
+    this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
@@ -153,6 +157,15 @@ export class UIScene extends Scene {
     );
 
     gameScene.events.on(
+      GameEvents.SHOW_LABEL_REQUEST,
+      (data: LabelInfoData) => {
+        if (this.labelPanel) {
+          this.labelPanel.showLabel(data);
+        }
+      },
+    );
+
+    gameScene.events.on(
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
@@ -210,6 +223,7 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_LABEL_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
         gameScene.events.off(GameEvents.SHOW_BADGE_TOAST);
@@ -250,6 +264,7 @@ export class UIScene extends Scene {
     this.inventoryPanel.layout(w, h);
     this.controlsOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
+    this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
@@ -303,7 +318,11 @@ export class UIScene extends Scene {
     if (this.activeInteractionPrompts.size > 0) return false;
 
     // Regra: não abrir se algum painel crítico (dialog/quiz) estiver visível
-    if (this.dialoguePanel?.isVisible || this.quizPanel?.isVisible)
+    if (
+      this.dialoguePanel?.isVisible ||
+      this.labelPanel?.isVisible ||
+      this.quizPanel?.isVisible
+    )
       return false;
 
     return true;

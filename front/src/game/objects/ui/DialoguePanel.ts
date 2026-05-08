@@ -56,7 +56,7 @@ export class DialoguePanel extends BasePanel {
       .setOrigin(1, 1);
 
     // Hint Padronizado
-    this.escHint = this.createKeyHint("ESC para fechar");
+    this.escHint = this.createKeyHint("Aperte ESC para fechar");
     this.escHint.setOrigin(0, 1);
 
     this.nextIndicator = scene.add
@@ -201,10 +201,10 @@ export class DialoguePanel extends BasePanel {
 
     const isLastLine = this.currentLineIndex === this.lines.length - 1;
     this.continuePrompt.setText(
-      isLastLine ? "ESPAÇO para fechar" : "ESPAÇO para continuar",
+      isLastLine ? "Aperte ESPAÇO para fechar" : "Aperte ESPAÇO para continuar",
     );
     this.continuePrompt.setVisible(true);
-    this.escHint.setText("ESC para fechar");
+    this.escHint.setText("Aperte ESC para fechar");
     this.nextIndicator.setVisible(!isLastLine);
 
     this.confirmOptionTexts[0].setVisible(false);

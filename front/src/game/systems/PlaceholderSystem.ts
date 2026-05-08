@@ -91,7 +91,7 @@ export class PlaceholderSystem {
     );
     sparkle.setScale(4);
     sparkle.setAlpha(0.8);
-    sparkle.setDepth(100);
+    sparkle.setDepth(10);
 
     if (this.scene.anims.exists("sparkle_hint_anim")) {
       sparkle.play("sparkle_hint_anim", true);
