@@ -73,46 +73,39 @@ export class QuizProgressTracker extends Phaser.GameObjects.Container {
     return count * this.config.indicatorWidth + (count - 1) * this.config.gap;
   }
 
-  private shapeButton(g: Phaser.GameObjects.Graphics) {
-    const halfW = this.config.indicatorWidth / 2;
-    const halfH = this.config.indicatorHeight / 2;
-    g.fillPoints(
-      getNotchedRectPoints(
-        halfW,
-        halfH,
-        halfW,
-        halfH,
-        this.config.notchDepth,
-        this.config.notchHeight,
-      ),
-      true,
-    );
-  }
-
   private redraw() {
     for (let i = 0; i < this.indicators.length; i++) {
       const g = this.indicators[i];
       g.clear();
 
       const isCurrent = i === this.currentIndex;
-      const isFuture = i > this.currentIndex;
       const state = this.answers[i] ?? null;
+      const hasAnswer = state !== null;
 
-      if (isCurrent) g.fillStyle(QuizProgressTracker.COLOR_CURRENT, 1);
-      else if (isFuture) g.fillStyle(QuizProgressTracker.COLOR_FUTURE, 1);
-      else if (state === "correct")
-        g.fillStyle(QuizProgressTracker.COLOR_CORRECT, 1);
-      else g.fillStyle(QuizProgressTracker.COLOR_WRONG, 1);
-      this.shapeButton(g);
-    }
-    if (this.currentIndex === 10) {
-      const g = this.indicators[9];
-      g.clear();
-      const state = this.answers[9] ?? null;
-      if (state === "correct")
-        g.fillStyle(QuizProgressTracker.COLOR_CORRECT, 1);
-      else g.fillStyle(QuizProgressTracker.COLOR_WRONG, 1);
-      this.shapeButton(g);
+      const fill =
+        !isCurrent && hasAnswer
+          ? state === "correct"
+            ? QuizProgressTracker.COLOR_CORRECT
+            : QuizProgressTracker.COLOR_WRONG
+          : isCurrent
+            ? QuizProgressTracker.COLOR_CURRENT
+            : QuizProgressTracker.COLOR_FUTURE;
+
+      g.fillStyle(fill, 1);
+
+      const halfW = this.config.indicatorWidth / 2;
+      const halfH = this.config.indicatorHeight / 2;
+      g.fillPoints(
+        getNotchedRectPoints(
+          halfW,
+          halfH,
+          halfW,
+          halfH,
+          this.config.notchDepth,
+          this.config.notchHeight,
+        ),
+        true,
+      );
     }
   }
 }

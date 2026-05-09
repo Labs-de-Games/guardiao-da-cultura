@@ -422,6 +422,7 @@ export class ResultPanel extends BasePanel {
   }
 
   private selectPrevNavButton() {
+    if (!this._isVisible) return;
     if (this.selectedNavIndex > 0) {
       this.selectedNavIndex--;
       this.updateNavButtonsSelection();
@@ -429,6 +430,7 @@ export class ResultPanel extends BasePanel {
   }
 
   private selectNextNavButton() {
+    if (!this._isVisible) return;
     if (this.selectedNavIndex < 1) {
       this.selectedNavIndex++;
       this.updateNavButtonsSelection();
@@ -441,7 +443,7 @@ export class ResultPanel extends BasePanel {
   }
 
   private activateSelectedNavButton() {
-    // No action yet - placeholder
+    if (!this._isVisible) return;
     console.log(
       `Nav button ${this.selectedNavIndex === 0 ? "home" : "next"} activated`,
     );
