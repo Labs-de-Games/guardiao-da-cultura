@@ -26,6 +26,15 @@ export class ResultPanel extends BasePanel {
   private textCongrat: Phaser.GameObjects.Text;
   private textMessage: Phaser.GameObjects.Text;
   private topPanel: Phaser.GameObjects.Container;
+  private navButtonsContainer: Phaser.GameObjects.Container;
+  private navButtonHome: Phaser.GameObjects.Container =
+    this.scene.add.container(0, 0);
+  private navButtonNext: Phaser.GameObjects.Container =
+    this.scene.add.container(0, 0);
+  private selectedNavIndex: number = 1; // 0 = home, 1 = next (right selected by default)
+  private readonly navButtonWidth = 320;
+  private readonly navButtonHeight = 80;
+  private readonly navButtonGap = 30;
   private progressTracker: QuizProgressTracker | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -44,6 +53,12 @@ export class ResultPanel extends BasePanel {
       .rectangle(0, 0, 1150, 150, 0x000000)
       .setOrigin(0.5, 0.7)
       .setRounded(16);
+
+    this.navButtonsContainer = this.scene.add
+      .container(0, -this.bg.height / 2 + 700)
+      .setSize(1150, 150);
+
+    this.createNavButtons();
 
     this.textGreeting = scene.add
       .text(-540, -80, "Parabéns!", {
@@ -95,7 +110,12 @@ export class ResultPanel extends BasePanel {
 
     this.topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
 
-    this.add([this.bg, this.topPanel, this.resultStarsContainer]);
+    this.add([
+      this.bg,
+      this.topPanel,
+      this.resultStarsContainer,
+      this.navButtonsContainer,
+    ]);
 
     this.bindKey("ESC", () => {
       if (this._isVisible) this.hide();
@@ -173,6 +193,9 @@ export class ResultPanel extends BasePanel {
     this.positionResultsStarsContainer();
     this.updateResultsStars(payload);
     this.layoutResultsStarsRow();
+
+    this.selectedNavIndex = 1; // Right button (next) selected by default
+    this.updateNavButtonsSelection();
 
     this.show();
   }
@@ -325,6 +348,103 @@ export class ResultPanel extends BasePanel {
         .clearTint()
         .setAlpha(1);
     }
+  }
+
+  private createNavButtons() {
+    const containerWidth = this.navButtonWidth * 2 + this.navButtonGap;
+    const startX = -containerWidth / 2 + this.navButtonWidth / 2;
+
+    this.navButtonHome = this.createNavButton("Home", 0xffffff);
+    this.navButtonNext = this.createNavButton(
+      "Próximo",
+      LayoutConfig.COLORS.GOLD_HEX,
+    );
+
+    this.navButtonHome.setPosition(startX, 0);
+    this.navButtonNext.setPosition(
+      startX + this.navButtonWidth + this.navButtonGap,
+      0,
+    );
+
+    this.navButtonsContainer.add([this.navButtonHome, this.navButtonNext]);
+
+    this.setupNavButtonKeyboard();
+  }
+
+  private createNavButton(
+    text: string,
+    color: number,
+  ): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(color, 1);
+    bg.fillRoundedRect(
+      -this.navButtonWidth / 2,
+      -this.navButtonHeight / 2,
+      this.navButtonWidth,
+      this.navButtonHeight,
+      12,
+    );
+
+    const label = this.scene.add
+      .text(0, 0, text, {
+        fontFamily: "Inter",
+        fontSize: "24px",
+        color: LayoutConfig.COLORS.BLACK,
+      })
+      .setOrigin(0.5);
+
+    container.add([bg, label]);
+
+    return container;
+  }
+
+  private setupNavButtonKeyboard() {
+    this.scene.input.keyboard?.on("keydown-LEFT", () =>
+      this.selectPrevNavButton(),
+    );
+    this.scene.input.keyboard?.on("keydown-RIGHT", () =>
+      this.selectNextNavButton(),
+    );
+    this.scene.input.keyboard?.on("keydown-A", () =>
+      this.selectPrevNavButton(),
+    );
+    this.scene.input.keyboard?.on("keydown-D", () =>
+      this.selectNextNavButton(),
+    );
+    this.scene.input.keyboard?.on("keydown-SPACE", () =>
+      this.activateSelectedNavButton(),
+    );
+    this.scene.input.keyboard?.on("keydown-ENTER", () =>
+      this.activateSelectedNavButton(),
+    );
+  }
+
+  private selectPrevNavButton() {
+    if (this.selectedNavIndex > 0) {
+      this.selectedNavIndex--;
+      this.updateNavButtonsSelection();
+    }
+  }
+
+  private selectNextNavButton() {
+    if (this.selectedNavIndex < 1) {
+      this.selectedNavIndex++;
+      this.updateNavButtonsSelection();
+    }
+  }
+
+  private updateNavButtonsSelection() {
+    this.navButtonHome.setScale(this.selectedNavIndex === 0 ? 1.05 : 1);
+    this.navButtonNext.setScale(this.selectedNavIndex === 1 ? 1.05 : 1);
+  }
+
+  private activateSelectedNavButton() {
+    // No action yet - placeholder
+    console.log(
+      `Nav button ${this.selectedNavIndex === 0 ? "home" : "next"} activated`,
+    );
   }
 
   public override hide(duration: number = 200, onComplete?: () => void) {
