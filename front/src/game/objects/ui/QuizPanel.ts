@@ -3,6 +3,7 @@ import { GameEvents } from "../../constants/GameEvents";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import type { QuizQuestion } from "../../types/GameDataTypes";
+import type { ScoreManager } from "../ScoreManager";
 import { BasePanel } from "./BasePanel";
 import { QuizProgressTracker } from "./quiz/QuizProgressTracker";
 import {
@@ -25,6 +26,7 @@ export class QuizPanel extends BasePanel {
   private currentQuestionIndex: number = 0;
   private selectedOptionIndex: number = 0;
   private score: number = 0;
+  private scoreManager: ScoreManager | null = null;
   private onComplete: ((score: number) => void) | null = null;
 
   private answers: ("correct" | "wrong" | null)[] = [];
@@ -43,6 +45,7 @@ export class QuizPanel extends BasePanel {
   private performanceStar: Phaser.GameObjects.Image;
   private performanceContainer: Phaser.GameObjects.Container;
   private isShowingPerformance: boolean = false;
+  private shouldShowResultsAfterHide: boolean = false;
 
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
@@ -208,6 +211,7 @@ export class QuizPanel extends BasePanel {
 
   public startQuiz(
     questions: QuizQuestion[],
+    scoreManager: ScoreManager,
     onComplete: (score: number) => void,
   ) {
     this.questions = questions;
@@ -216,6 +220,7 @@ export class QuizPanel extends BasePanel {
     this.score = 0;
     this.selectedOptionIndex = 0;
     this.isProcessingAnswer = false;
+    this.scoreManager = scoreManager;
 
     this.answers = new Array(questions.length).fill(null);
     this.progressTracker.setCount(questions.length);
@@ -255,6 +260,20 @@ export class QuizPanel extends BasePanel {
         const finalScore = this.score;
         this.onComplete(finalScore);
         this.onComplete = null;
+
+        // Emit SHOW_QUIZ_RESULTS AFTER recordQuizResult has been called
+        // (recordQuizResult is called in the onComplete callback above)
+        if (this.shouldShowResultsAfterHide) {
+          this.shouldShowResultsAfterHide = false;
+          const gameScene = this.scene.scene.get(SceneNames.GAME);
+          gameScene.events.emit(
+            GameEvents.SHOW_QUIZ_RESULTS,
+            this.score,
+            this.questions.length,
+            this.progressTracker,
+            this.scoreManager,
+          );
+        }
       }
     });
   }
@@ -355,14 +374,9 @@ export class QuizPanel extends BasePanel {
     const percentage = (this.score / this.questions.length) * 100;
 
     if (percentage >= 70) {
-      // Pass - go to ResultPanel
-      const gameScene = this.scene.scene.get(SceneNames.GAME);
-      gameScene.events.emit(
-        GameEvents.SHOW_QUIZ_RESULTS,
-        this.score,
-        this.questions.length,
-        this.progressTracker,
-      );
+      // Pass - emit SHOW_QUIZ_RESULTS after QuizPanel is fully hidden
+      // The Game.ts callback will handle the emit after recordQuizResult
+      this.shouldShowResultsAfterHide = true;
     }
 
     this.hide();

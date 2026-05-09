@@ -628,6 +628,7 @@ export class Game extends Scene {
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
+            this.scoreManager,
             (score: number) => {
               this.scoreManager.recordQuizResult(score, questions.length);
 

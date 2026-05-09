@@ -2,6 +2,7 @@ import type * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
+import type { ScoreManager } from "../ScoreManager";
 import { BasePanel } from "./BasePanel";
 import type { QuizProgressTracker } from "./quiz/QuizProgressTracker";
 
@@ -22,6 +23,8 @@ export class ResultPanel extends BasePanel {
 
   private textGreeting: Phaser.GameObjects.Text;
   private textScore: Phaser.GameObjects.Text;
+  private textCongrat: Phaser.GameObjects.Text;
+  private textMessage: Phaser.GameObjects.Text;
   private topPanel: Phaser.GameObjects.Container;
   private progressTracker: QuizProgressTracker | null = null;
 
@@ -68,6 +71,28 @@ export class ResultPanel extends BasePanel {
     this.resultStarsContainer.addAt(this.resultStarsOutline, 0);
     this.createResultsStars();
 
+    // Initialize textCongrat and textMessage
+    this.textCongrat = scene.add
+      .text(0, 0, "Muito Bom", {
+        fontFamily: "Jockey One",
+        fontSize: "36px",
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0.5);
+
+    this.textMessage = scene.add
+      .text(0, 0, "Continue assim", {
+        fontFamily: "Jockey One",
+        fontSize: "28px",
+        color: LayoutConfig.COLORS.DISABLED_GREY,
+        fontStyle: "normal",
+      })
+      .setOrigin(0.5, 0.5);
+
+    // Add texts to resultStarsContainer
+    this.resultStarsContainer.add([this.textCongrat, this.textMessage]);
+
     this.topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
 
     this.add([this.bg, this.topPanel, this.resultStarsContainer]);
@@ -83,20 +108,62 @@ export class ResultPanel extends BasePanel {
   }
 
   public showResults(
-    score: number,
-    total: number,
+    _score: number,
+    _total: number,
     progressTracker: QuizProgressTracker,
+    scoreManager: ScoreManager,
   ) {
-    const required = Math.ceil(total * 0.7);
-    const great = Math.ceil(total * 1);
+    const payload = scoreManager.getPayload();
 
-    const passed = score >= required;
+    if (!payload) {
+      console.error("Failed to get scoring payload");
+      return;
+    }
 
-    console.log(score, required, great);
+    console.log("Scoring payload:", payload);
 
-    this.textGreeting.setText("Resultad");
-    // this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");
-    // this.resultSummaryText.setText(`Você acertou ${score} de ${total}`);
+    // Set textMessage (same for all levels)
+    this.textMessage.setText("Você está pronto para o próximo nível");
+
+    // Set texts based on rating from ScoreManager
+    switch (payload.rating) {
+      case "mínimo":
+        // mínimo: 0-4 quarters (0-1 star)
+        this.textGreeting.setText("Ok");
+        this.textScore.setText("Performance mínima");
+        this.textCongrat.setText("Podia ser melhor...");
+        break;
+      case "regular":
+        // regular: 5-8 quarters (1-2 stars)
+        this.textGreeting.setText("Ok");
+        this.textScore.setText("Performance regular");
+        this.textCongrat.setText("Regular");
+        break;
+      case "bom":
+        // bom: 9-12 quarters (2-3 stars)
+        this.textGreeting.setText("Parabéns!");
+        this.textScore.setText("Boa performance");
+        this.textCongrat.setText("Bom!");
+        break;
+      case "ótimo":
+        // ótimo: 13-16 quarters (3-4 stars)
+        this.textGreeting.setText("Parabéns!");
+        this.textScore.setText("Ótima performance");
+        this.textCongrat.setText("Muito Bom!");
+        break;
+      case "perfeito":
+        // perfeito: 17-20 quarters (4-5 stars)
+        this.textGreeting.setText("Parabéns!");
+        this.textScore.setText("Performance perfeita");
+        this.textCongrat.setText("Perfeito!");
+        break;
+      default:
+        // Fallback
+        this.textGreeting.setText("Resultado");
+        this.textScore.setText("Pontuação");
+        this.textCongrat.setText("");
+    }
+
     if (this.progressTracker) {
       this.topPanel.remove(this.progressTracker);
     }
@@ -104,7 +171,7 @@ export class ResultPanel extends BasePanel {
     this.topPanel.add(progressTracker);
 
     this.positionResultsStarsContainer();
-    this.updateResultsStars(score, total);
+    this.updateResultsStars(payload);
     this.layoutResultsStarsRow();
 
     this.show();
@@ -124,10 +191,9 @@ export class ResultPanel extends BasePanel {
     const y =
       // this.resultSummaryText.y +
       // this.resultSummaryText.displayHeight +
-      this.resultStarsTopPadding;
+      this.resultStarsTopPadding - 50; // Move content up by 50px
     this.resultStarsContainer.setPosition(0, y);
   }
-
   private layoutResultsStarsRow() {
     if (this.resultStars.length === 0) return;
 
@@ -159,6 +225,7 @@ export class ResultPanel extends BasePanel {
       star.setScale(scale);
     }
     this.updateResultStarsOutline(baseW, baseH, scale, step, startX);
+    this.positionResultTexts();
   }
 
   private updateResultStarsOutline(
@@ -189,16 +256,37 @@ export class ResultPanel extends BasePanel {
 
     this.resultStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
     this.resultStarsOutline.strokeRoundedRect(x, y, width, height, 16);
+
+    // Move outline down to counteract container movement (keeps it visually stationary)
+    this.resultStarsOutline.setY(this.resultStarsOutline.y + 25);
   }
 
-  private computeQuizQuarters(
-    correctAnswers: number,
-    totalQuestions: number,
-  ): number {
-    const total = Math.max(0, Math.floor(totalQuestions));
-    const correct = Math.min(Math.max(0, Math.floor(correctAnswers)), total);
-    const accuracyPercent = total > 0 ? Math.floor((correct / total) * 100) : 0;
-    return Math.min(4, Math.floor(accuracyPercent / 25));
+  private positionResultTexts() {
+    if (!this.textCongrat || !this.textMessage || this.resultStars.length === 0)
+      return;
+
+    // Get the bounds of the stars to position texts below them
+    const star = this.resultStars[0];
+    const starHeight = star.displayHeight; // displayHeight already includes scale
+
+    // Position texts below the stars with some spacing
+    const textSpacing = 20; // Space between texts
+    const starsBottom = starHeight / 2 + this.resultStarsOutlinePaddingY; // Half height + padding
+
+    // Position textCongrat below stars
+    this.textCongrat.setPosition(
+      0,
+      starsBottom + this.textCongrat.displayHeight / 2 - 50,
+    );
+
+    // Position textMessage below textCongrat
+    this.textMessage.setPosition(
+      0,
+      this.textCongrat.y +
+        this.textCongrat.displayHeight / 2 +
+        textSpacing +
+        this.textMessage.displayHeight / 2,
+    );
   }
 
   private keyForQuarterFill(q: number): string {
@@ -208,32 +296,19 @@ export class ResultPanel extends BasePanel {
     return "ui_star_1q";
   }
 
-  private updateResultsStars(score: number, total: number) {
-    const gameScene = this.scene.scene.get(SceneNames.GAME) as unknown as {
-      getScoringPayload?: () => {
-        totalQuarters: number;
-        quiz: { quartersEarned: number };
-      };
-    };
-
-    const payload = gameScene.getScoringPayload?.();
-    const currentTotalQuarters = payload?.totalQuarters ?? 0;
-    const recordedQuizQuarters = payload?.quiz?.quartersEarned ?? 0;
-
-    const quizQuartersNow = this.computeQuizQuarters(score, total);
-    const effectiveTotalQuarters = Math.max(
-      0,
-      Math.min(
-        20,
-        currentTotalQuarters - recordedQuizQuarters + quizQuartersNow,
-      ),
-    );
+  private updateResultsStars(
+    payload:
+      | {
+          totalQuarters: number;
+          quiz: { quartersEarned: number };
+        }
+      | undefined,
+  ) {
+    // Use total quarters directly from payload, fallback to 0 if not available
+    const totalQuarters = payload?.totalQuarters ?? 0;
 
     for (let i = 0; i < this.resultStarsCount; i++) {
-      const quartersForStar = Math.max(
-        0,
-        Math.min(4, effectiveTotalQuarters - i * 4),
-      );
+      const quartersForStar = Math.max(0, Math.min(4, totalQuarters - i * 4));
       const star = this.resultStars[i];
       if (!star) continue;
 

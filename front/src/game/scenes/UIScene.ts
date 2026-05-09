@@ -4,6 +4,7 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
@@ -138,18 +139,32 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.SHOW_QUIZ_REQUEST,
-      (questions: QuizQuestion[], onComplete: (score: number) => void) => {
+      (
+        questions: QuizQuestion[],
+        scoreManager: ScoreManager,
+        onComplete: (score: number) => void,
+      ) => {
         if (this.quizPanel) {
-          this.quizPanel.startQuiz(questions, onComplete);
+          this.quizPanel.startQuiz(questions, scoreManager, onComplete);
         }
       },
     );
 
     gameScene.events.on(
       GameEvents.SHOW_QUIZ_RESULTS,
-      (score: number, total: number, progressTracker: QuizProgressTracker) => {
+      (
+        score: number,
+        total: number,
+        progressTracker: QuizProgressTracker,
+        scoreManager: ScoreManager,
+      ) => {
         if (this.resultPanel) {
-          this.resultPanel.showResults(score, total, progressTracker);
+          this.resultPanel.showResults(
+            score,
+            total,
+            progressTracker,
+            scoreManager,
+          );
         }
       },
     );
