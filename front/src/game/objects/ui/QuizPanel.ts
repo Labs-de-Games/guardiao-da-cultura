@@ -508,6 +508,7 @@ export class QuizPanel extends BasePanel {
       if (this.currentQuestionIndex < this.questions.length) {
         this.showQuestion();
       } else {
+        this.progressTracker.finishTracker(this.currentQuestionIndex);
         this.showFinalPerformance();
       }
     });
