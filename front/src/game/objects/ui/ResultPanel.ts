@@ -309,7 +309,10 @@ export class ResultPanel extends BasePanel {
   private createNavButtons() {
     const containerWidth = this.navButtonWidth * 2 + this.navButtonGap;
     const startX = -containerWidth / 2 + this.navButtonWidth / 2;
-    this.navButtonHome = this.createNavButton("Home", 0xffffff);
+    this.navButtonHome = this.createNavButton(
+      "Home",
+      LayoutConfig.COLORS.WHITE_HEX,
+    );
     this.navButtonNext = this.createNavButton(
       "Próximo",
       LayoutConfig.COLORS.GOLD_HEX,
@@ -323,12 +326,8 @@ export class ResultPanel extends BasePanel {
     this.setupNavButtonKeyboard();
   }
 
-  private createNavButton(
-    text: string,
-    color: number,
-  ): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(0, 0);
-    const bg = this.scene.add.graphics();
+  private drawButtonBg(bg: Phaser.GameObjects.Graphics, color: number) {
+    bg.clear();
     bg.fillStyle(color, 1);
     bg.fillRoundedRect(
       -this.navButtonWidth / 2,
@@ -337,6 +336,15 @@ export class ResultPanel extends BasePanel {
       this.navButtonHeight,
       12,
     );
+  }
+
+  private createNavButton(
+    text: string,
+    color: number,
+  ): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const bg = this.scene.add.graphics();
+    this.drawButtonBg(bg, color);
     const label = this.scene.add
       .text(0, 0, text, {
         fontFamily: "Inter",
@@ -386,8 +394,23 @@ export class ResultPanel extends BasePanel {
   }
 
   private updateNavButtonsSelection() {
-    this.navButtonHome.setScale(this.selectedNavIndex === 0 ? 1.05 : 1);
-    this.navButtonNext.setScale(this.selectedNavIndex === 1 ? 1.05 : 1);
+    const homeBg = this.navButtonHome.getAt(0) as Phaser.GameObjects.Graphics;
+    const navBg = this.navButtonNext.getAt(0) as Phaser.GameObjects.Graphics;
+
+    this.navButtonHome.setScale(this.selectedNavIndex === 0 ? 1.1 : 1);
+    this.drawButtonBg(
+      homeBg,
+      this.selectedNavIndex === 0
+        ? LayoutConfig.COLORS.WHITE_HEX
+        : LayoutConfig.COLORS.WHITE_DARK_HEX,
+    );
+    this.navButtonNext.setScale(this.selectedNavIndex === 1 ? 1.1 : 1);
+    this.drawButtonBg(
+      navBg,
+      this.selectedNavIndex === 0
+        ? LayoutConfig.COLORS.GOLD_DARK_HEX
+        : LayoutConfig.COLORS.GOLD_HEX,
+    );
   }
 
   private activateSelectedNavButton() {

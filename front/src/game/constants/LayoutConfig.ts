@@ -3,6 +3,7 @@ export const LayoutConfig = {
   COLORS: {
     WHITE: "#ffffff",
     WHITE_HEX: 0xffffff,
+    WHITE_DARK_HEX: 0x999999,
     BLACK: "#000000",
     BLACK_HEX: 0x000000,
     STANDARD_BG: 0x1a1a1a,
