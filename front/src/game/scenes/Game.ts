@@ -667,7 +667,7 @@ export class Game extends Scene {
 
                 void this.submitScoreToBackend();
 
-                //this.levelManager.completePhase();
+                this.levelManager.completePhase();
               } else {
                 this.registry.set("has_failed_quiz", 1);
                 void this.submitScoreToBackend();
@@ -717,12 +717,6 @@ export class Game extends Scene {
               if (isSuccess) {
                 this.levelManager.updateProgress();
               }
-
-              // this.events.emit(
-              //   GameEvents.SHOW_DIALOGUE_REQUEST,
-              //   [...lines],
-              //   () => this.questManager.clearPendingResult(missionId),
-              // );
             },
           );
         },

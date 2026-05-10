@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../../../constants/LayoutConfig";
-import { getNotchedRectPoints } from "./notchedRect";
+import { getNotchedRectPoints } from "./ButtonNotchedRect";
 
 export type QuizRibbonButtonConfig = {
   width: number;
@@ -11,7 +11,7 @@ export type QuizRibbonButtonConfig = {
   selectedColor: number;
 };
 
-export class QuizRibbonButton extends Phaser.GameObjects.Container {
+export class QuizButton extends Phaser.GameObjects.Container {
   private bg: Phaser.GameObjects.Graphics;
   private label: Phaser.GameObjects.Text;
   private checkmark: Phaser.GameObjects.Graphics;
@@ -28,7 +28,6 @@ export class QuizRibbonButton extends Phaser.GameObjects.Container {
 
     this.bg = scene.add.graphics();
     this.draw(this.config.baseColor);
-
     this.label = scene.add
       .text(0, 0, text, {
         fontFamily: "Inter",
@@ -36,10 +35,8 @@ export class QuizRibbonButton extends Phaser.GameObjects.Container {
         color: LayoutConfig.COLORS.BLACK,
       })
       .setOrigin(0.5);
-
     this.checkmark = this.createCheckmark().setVisible(false);
     this.cross = this.createCross().setVisible(false);
-
     this.add([this.bg, this.label, this.checkmark, this.cross]);
     scene.add.existing(this);
   }
@@ -57,9 +54,7 @@ export class QuizRibbonButton extends Phaser.GameObjects.Container {
   public showFeedback(isCorrect: boolean) {
     this.checkmark.setPosition(-80, 0).setVisible(isCorrect);
     this.cross.setPosition(-80, 0).setVisible(!isCorrect);
-
     this.draw(isCorrect ? 0x4caf50 : 0xf44336);
-
     if (isCorrect) {
       this.scene.tweens.add({
         targets: this,
@@ -71,7 +66,6 @@ export class QuizRibbonButton extends Phaser.GameObjects.Container {
       });
       return;
     }
-
     this.scene.tweens.add({
       targets: this,
       x: "-=8",
@@ -84,7 +78,6 @@ export class QuizRibbonButton extends Phaser.GameObjects.Container {
   private draw(color: number) {
     const halfW = this.config.width / 2;
     const halfH = this.config.height / 2;
-
     this.bg.clear();
     this.bg.fillStyle(color, 1);
     this.bg.fillPoints(

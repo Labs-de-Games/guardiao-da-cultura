@@ -5,11 +5,8 @@ import { SceneNames } from "../../constants/SceneNames";
 import type { QuizQuestion } from "../../types/GameDataTypes";
 import type { ScoreManager } from "../ScoreManager";
 import { BasePanel } from "./BasePanel";
+import { QuizButton, type QuizRibbonButtonConfig } from "./quiz/QuizButton";
 import { QuizProgressTracker } from "./quiz/QuizProgressTracker";
-import {
-  QuizRibbonButton,
-  type QuizRibbonButtonConfig,
-} from "./quiz/QuizRibbonButton";
 
 export class QuizPanel extends BasePanel {
   private readonly optionButtonWidth = 524;
@@ -32,7 +29,7 @@ export class QuizPanel extends BasePanel {
   private answers: ("correct" | "wrong" | null)[] = [];
   private isProcessingAnswer: boolean = false;
 
-  private optionButtons: QuizRibbonButton[] = [];
+  private optionButtons: QuizButton[] = [];
 
   private scoreText: Phaser.GameObjects.Text;
   private questionCounterText: Phaser.GameObjects.Text;
@@ -44,7 +41,8 @@ export class QuizPanel extends BasePanel {
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
   private performanceContainer: Phaser.GameObjects.Container;
-  private questionPanel: Phaser.GameObjects.Container;
+  private questionContainer: Phaser.GameObjects.Container;
+  private topContainer: Phaser.GameObjects.Container;
   private isShowingPerformance: boolean = false;
   private shouldShowResultsAfterHide: boolean = false;
 
@@ -54,7 +52,6 @@ export class QuizPanel extends BasePanel {
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.QUIZ || 2000);
-
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
     this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.bg.setFillStyle(LayoutConfig.COLORS.STANDARD_BG, 0.95);
@@ -64,16 +61,16 @@ export class QuizPanel extends BasePanel {
       1,
     );
 
-    const topPanel = this.scene.add
-      .container(0, -this.bg.height / 2 + 120)
-      .setSize(1150, 150);
-    const topPanelBg = this.scene.add
+    const topContainerBg = this.scene.add
       .rectangle(0, 0, 1150, 150, 0x000000)
       .setOrigin(0.5, 0.7)
       .setRounded(16);
-
-    this.questionPanel = this.scene.add.container(0, 100).setSize(1150, 250);
-
+    this.topContainer = this.scene.add
+      .container(0, -this.bg.height / 2 + 120)
+      .setSize(1150, 150);
+    this.questionContainer = this.scene.add
+      .container(0, 100)
+      .setSize(1150, 250);
     this.scoreText = scene.add
       .text(
         -this.panelWidth / 2 + 40,
@@ -121,7 +118,6 @@ export class QuizPanel extends BasePanel {
         lineSpacing: 6,
       })
       .setOrigin(0.5, 0);
-
     this.questionText = scene.add
       .text(0, -this.panelHeight / 2 + 170, "", {
         fontSize: LayoutConfig.FONTS.SIZES.BODY,
@@ -153,17 +149,13 @@ export class QuizPanel extends BasePanel {
       notchHeight: this.progressNotchHeight,
       gap: 16,
     });
-
-    topPanel.add([
-      topPanelBg,
+    this.topContainer.add([
+      topContainerBg,
       this.scoreText,
       this.questionCounterText,
       this.progressTracker,
     ]);
-
-    this.questionPanel.add([this.questionTitle, this.questionText]);
-
-    // Performance display (initially hidden)
+    this.questionContainer.add([this.questionTitle, this.questionText]);
     this.performanceContainer = this.scene.add.container(0, 0);
     this.performanceText = this.scene.add
       .text(0, -100, "Quiz completo!", {
@@ -173,21 +165,18 @@ export class QuizPanel extends BasePanel {
         fontStyle: "bold",
       })
       .setOrigin(0.5, 0.5);
-
     this.performanceStar = this.scene.add
       .image(0, 50, "ui_star_full")
       .setScale(1);
     this.performanceContainer.add([this.performanceText, this.performanceStar]);
     this.performanceContainer.setVisible(false);
-
     this.add([
       this.bg,
-      topPanel,
-      this.questionPanel,
+      this.topContainer,
+      this.questionContainer,
       this.footerHintText,
       this.performanceContainer,
     ]);
-
     this.bindKey("W", () => this.moveVertical(-1));
     this.bindKey("UP", () => this.moveVertical(-1));
     this.bindKey("S", () => this.moveVertical(1));
@@ -222,23 +211,20 @@ export class QuizPanel extends BasePanel {
     this.selectedOptionIndex = 0;
     this.isProcessingAnswer = false;
     this.scoreManager = scoreManager;
-
     this.answers = new Array(questions.length).fill(null);
     this.progressTracker.setCount(questions.length);
     this.progressTracker.setAnswers(this.answers);
-
     this.footerHintText.setText(
       "Use as setas e pressione Espaço para confirmar",
     );
-
     this.showQuestion();
     this.show();
   }
 
   public override show() {
     if (this._isVisible) return;
-    super.show();
 
+    super.show();
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
   }
@@ -248,24 +234,17 @@ export class QuizPanel extends BasePanel {
 
     this.isShowingPerformance = false;
     this.performanceContainer.setVisible(false);
-    // Restore question UI visibility for next quiz
     this.questionTitle.setVisible(true);
     this.questionText.setVisible(true);
-
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
-
-    this.questionPanel.setVisible(false);
-
+    this.questionContainer.setVisible(false);
     super.hide(duration, () => {
       if (onComplete) onComplete();
       if (this.onComplete) {
         const finalScore = this.score;
         this.onComplete(finalScore);
         this.onComplete = null;
-
-        // Emit SHOW_QUIZ_RESULTS AFTER recordQuizResult has been called
-        // (recordQuizResult is called in the onComplete callback above)
         if (this.shouldShowResultsAfterHide) {
           this.shouldShowResultsAfterHide = false;
           const gameScene = this.scene.scene.get(SceneNames.GAME);
@@ -317,10 +296,10 @@ export class QuizPanel extends BasePanel {
       | undefined;
     const baseW = source?.width ?? 457;
 
-    const panelWidth = 1200; // Match ResultPanel.panelWidth
-    const sidePadding = 140; // Match ResultPanel.resultStarsSidePadding
-    const starCount = 5; // Match ResultPanel.resultStarsCount
-    const gapRatio = 0.18; // Match ResultPanel.resultStarsGapRatio
+    const panelWidth = 1200;
+    const sidePadding = 140;
+    const starCount = 5;
+    const gapRatio = 0.18;
 
     const maxRowWidth = Math.max(0, panelWidth - sidePadding * 2);
     const denom = starCount + (starCount - 1) * gapRatio;
@@ -332,25 +311,18 @@ export class QuizPanel extends BasePanel {
 
   private showFinalPerformance() {
     this.isShowingPerformance = true;
-
-    // Hide question UI
     this.questionTitle.setVisible(false);
     this.questionText.setVisible(false);
     this.optionButtons.forEach((b) => {
       b.destroy(true);
     });
-    this.optionButtons = [];
-
-    // Calculate percentage
     const percentage = (this.score / this.questions.length) * 100;
-
-    // Update text based on performance
+    this.optionButtons = [];
     if (percentage < 70) {
       this.scoreText.setText("Por pouco");
       this.questionCounterText.setText("Pontuação baixa");
       this.performanceText.setText("Quase lá...");
     } else if (percentage < 90) {
-      // Corrected: 70% and above uses "Parabéns!" for scoreText
       this.scoreText.setText("Parabéns!");
       this.questionCounterText.setText("Boa pontuação");
       this.performanceText.setText("Muito bom");
@@ -359,13 +331,9 @@ export class QuizPanel extends BasePanel {
       this.questionCounterText.setText("Pontuação perfeita!");
       this.performanceText.setText("Perfeito");
     }
-
-    // Show performance UI
     this.performanceContainer.setVisible(true);
     this.performanceStar.setTexture(this.calculateStarFillLevel());
     this.performanceStar.setScale(this.calculateResultStarScale());
-
-    // Update footer hint
     if (percentage >= 70) {
       this.footerHintText.setText("Pressione Espaço para ver resultados");
     } else {
@@ -377,8 +345,6 @@ export class QuizPanel extends BasePanel {
     const percentage = (this.score / this.questions.length) * 100;
 
     if (percentage >= 70) {
-      // Pass - emit SHOW_QUIZ_RESULTS after QuizPanel is fully hidden
-      // The Game.ts callback will handle the emit after recordQuizResult
       this.shouldShowResultsAfterHide = true;
     }
 
@@ -449,7 +415,7 @@ export class QuizPanel extends BasePanel {
 
     for (let i = 0; i < options.length; i++) {
       const pos = positions[i];
-      const btn = new QuizRibbonButton(this.scene, pos.x, pos.y, options[i], {
+      const btn = new QuizButton(this.scene, pos.x, pos.y, options[i], {
         ...buttonCfg,
       });
       this.optionButtons.push(btn);
@@ -493,18 +459,14 @@ export class QuizPanel extends BasePanel {
 
     const question = this.questions[this.currentQuestionIndex];
     const isCorrect = this.selectedOptionIndex === question.correctOptionIndex;
-
     if (isCorrect) {
       this.score++;
       this.answers[this.currentQuestionIndex] = "correct";
     } else {
       this.answers[this.currentQuestionIndex] = "wrong";
     }
-
     this.showAnswerFeedback(this.selectedOptionIndex, isCorrect);
-
     this.isProcessingAnswer = true;
-
     this.scene.time.delayedCall(500, () => {
       this.isProcessingAnswer = false;
       this.currentQuestionIndex++;

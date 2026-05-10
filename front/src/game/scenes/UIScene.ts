@@ -125,8 +125,6 @@ export class UIScene extends Scene {
       this.onDialogueEnded(),
     );
 
-    // Overlays flow
-
     // Requisiçōes de UI
     gameScene.events.on(
       GameEvents.SHOW_DIALOGUE_REQUEST,

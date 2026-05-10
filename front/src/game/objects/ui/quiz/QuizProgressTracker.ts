@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { getNotchedRectPoints } from "./notchedRect";
+import { getNotchedRectPoints } from "./ButtonNotchedRect";
 
 export type QuizAnswerState = "correct" | "wrong" | null;
 
@@ -16,10 +16,10 @@ export class QuizProgressTracker extends Phaser.GameObjects.Container {
   private answers: QuizAnswerState[] = [];
   private currentIndex: number = -1;
 
-  private static readonly COLOR_CURRENT = 0xd0db00; // yellow - current question
-  private static readonly COLOR_CORRECT = 0x4caf50; // green - correct
-  private static readonly COLOR_WRONG = 0xf44336; // red - wrong
-  private static readonly COLOR_FUTURE = 0x4a4a4a; // grey - not yet reached
+  private static readonly COLOR_CURRENT = 0xd0db00;
+  private static readonly COLOR_CORRECT = 0x4caf50;
+  private static readonly COLOR_WRONG = 0xf44336;
+  private static readonly COLOR_FUTURE = 0x4a4a4a;
 
   constructor(
     scene: Phaser.Scene,
@@ -81,7 +81,6 @@ export class QuizProgressTracker extends Phaser.GameObjects.Container {
       const isCurrent = i === this.currentIndex;
       const state = this.answers[i] ?? null;
       const hasAnswer = state !== null;
-
       const fill =
         !isCurrent && hasAnswer
           ? state === "correct"
@@ -92,7 +91,6 @@ export class QuizProgressTracker extends Phaser.GameObjects.Container {
             : QuizProgressTracker.COLOR_FUTURE;
 
       g.fillStyle(fill, 1);
-
       const halfW = this.config.indicatorWidth / 2;
       const halfH = this.config.indicatorHeight / 2;
       g.fillPoints(

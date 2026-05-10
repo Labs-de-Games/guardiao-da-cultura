@@ -14,8 +14,8 @@ export class ResultPanel extends BasePanel {
   private readonly resultStarsSidePadding = 140;
   private readonly resultStarsGapRatio = 0.18;
   private readonly resultStarsTopPadding = 0;
-  private readonly resultStarsOutlinePaddingX = 20; // Left/right padding
-  private readonly resultStarsOutlinePaddingY = 100; // Top/bottom padding
+  private readonly resultStarsOutlinePaddingX = 20;
+  private readonly resultStarsOutlinePaddingY = 100;
   private resultStarsOutline: Phaser.GameObjects.Graphics | null = null;
 
   private readonly panelWidth = 1200;
@@ -31,7 +31,7 @@ export class ResultPanel extends BasePanel {
     this.scene.add.container(0, 0);
   private navButtonNext: Phaser.GameObjects.Container =
     this.scene.add.container(0, 0);
-  private selectedNavIndex: number = 1; // 0 = home, 1 = next (right selected by default)
+  private selectedNavIndex: number = 1;
   private readonly navButtonWidth = 320;
   private readonly navButtonHeight = 80;
   private readonly navButtonGap = 30;
@@ -40,26 +40,22 @@ export class ResultPanel extends BasePanel {
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.QUIZ || 2000);
-
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
     this.bg.setOrigin(0.5, 0.5);
     this.bg.setFillStyle(0x1a1a1a, 0.95);
     this.bg.setStrokeStyle(4, 0xffffff, 1);
 
-    this.topPanel = this.scene.add
-      .container(0, -this.bg.height / 2 + 120)
-      .setSize(1150, 150);
     const topPanelBg = this.scene.add
       .rectangle(0, 0, 1150, 150, 0x000000)
       .setOrigin(0.5, 0.7)
       .setRounded(16);
-
+    this.topPanel = this.scene.add
+      .container(0, -this.bg.height / 2 + 120)
+      .setSize(1150, 150);
     this.navButtonsContainer = this.scene.add
       .container(0, -this.bg.height / 2 + 700)
       .setSize(1150, 150);
-
     this.createNavButtons();
-
     this.textGreeting = scene.add
       .text(-540, -80, "Parabéns!", {
         fontFamily: "Jockey One",
@@ -68,7 +64,6 @@ export class ResultPanel extends BasePanel {
         fontStyle: "bold",
       })
       .setOrigin(0, 0);
-
     this.textScore = scene.add
       .text(-540, -20, "Pontuação perfeita", {
         fontFamily: "Jocky One",
@@ -77,7 +72,6 @@ export class ResultPanel extends BasePanel {
         fontStyle: "bold",
       })
       .setOrigin(0, 0);
-
     this.resultStarsContainer = scene.add.container(
       0,
       -this.panelHeight / 2 + 310,
@@ -85,8 +79,6 @@ export class ResultPanel extends BasePanel {
     this.resultStarsOutline = this.scene.add.graphics();
     this.resultStarsContainer.addAt(this.resultStarsOutline, 0);
     this.createResultsStars();
-
-    // Initialize textCongrat and textMessage
     this.textCongrat = scene.add
       .text(0, 0, "Muito Bom", {
         fontFamily: "Jockey One",
@@ -104,19 +96,14 @@ export class ResultPanel extends BasePanel {
         fontStyle: "normal",
       })
       .setOrigin(0.5, 0.5);
-
-    // Add texts to resultStarsContainer
     this.resultStarsContainer.add([this.textCongrat, this.textMessage]);
-
     this.topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
-
     this.add([
       this.bg,
       this.topPanel,
       this.resultStarsContainer,
       this.navButtonsContainer,
     ]);
-
     this.bindKey("ESC", () => {
       if (this._isVisible) this.hide();
     });
@@ -134,51 +121,39 @@ export class ResultPanel extends BasePanel {
     scoreManager: ScoreManager,
   ) {
     const payload = scoreManager.getPayload();
-
     if (!payload) {
       console.error("Failed to get scoring payload");
       return;
     }
-
     console.log("Scoring payload:", payload);
-
-    // Set textMessage (same for all levels)
     this.textMessage.setText("Você está pronto para o próximo nível");
-
-    // Set texts based on rating from ScoreManager
     switch (payload.rating) {
       case "mínimo":
-        // mínimo: 0-4 quarters (0-1 star)
         this.textGreeting.setText("Ok");
         this.textScore.setText("Performance mínima");
         this.textCongrat.setText("Podia ser melhor...");
         break;
       case "regular":
-        // regular: 5-8 quarters (1-2 stars)
         this.textGreeting.setText("Ok");
         this.textScore.setText("Performance regular");
         this.textCongrat.setText("Regular");
         break;
       case "bom":
-        // bom: 9-12 quarters (2-3 stars)
         this.textGreeting.setText("Parabéns!");
         this.textScore.setText("Boa performance");
         this.textCongrat.setText("Bom!");
         break;
       case "ótimo":
-        // ótimo: 13-16 quarters (3-4 stars)
         this.textGreeting.setText("Parabéns!");
         this.textScore.setText("Ótima performance");
         this.textCongrat.setText("Muito Bom!");
         break;
       case "perfeito":
-        // perfeito: 17-20 quarters (4-5 stars)
         this.textGreeting.setText("Parabéns!");
         this.textScore.setText("Performance perfeita");
         this.textCongrat.setText("Perfeito!");
         break;
       default:
-        // Fallback
         this.textGreeting.setText("Resultado");
         this.textScore.setText("Pontuação");
         this.textCongrat.setText("");
@@ -189,14 +164,11 @@ export class ResultPanel extends BasePanel {
     }
     this.progressTracker = progressTracker;
     this.topPanel.add(progressTracker);
-
     this.positionResultsStarsContainer();
     this.updateResultsStars(payload);
     this.layoutResultsStarsRow();
-
-    this.selectedNavIndex = 1; // Right button (next) selected by default
+    this.selectedNavIndex = 1;
     this.updateNavButtonsSelection();
-
     this.show();
   }
 
@@ -213,15 +185,11 @@ export class ResultPanel extends BasePanel {
       this.resultStars.push(star);
       this.resultStarsContainer.add(star);
     }
-
     this.layoutResultsStarsRow();
   }
 
   private positionResultsStarsContainer() {
-    const y =
-      // this.resultSummaryText.y +
-      // this.resultSummaryText.displayHeight +
-      this.resultStarsTopPadding - 50; // Move content up by 50px
+    const y = this.resultStarsTopPadding - 50;
     this.resultStarsContainer.setPosition(0, y);
   }
   private layoutResultsStarsRow() {
@@ -233,7 +201,6 @@ export class ResultPanel extends BasePanel {
       | undefined;
     const baseW = source?.width ?? 457;
     const baseH = source?.height ?? 457;
-
     const maxRowWidth = Math.max(
       0,
       this.panelWidth - this.resultStarsSidePadding * 2,
@@ -244,10 +211,8 @@ export class ResultPanel extends BasePanel {
     const targetW = denom > 0 ? maxRowWidth / denom : maxRowWidth;
     const gap = targetW * this.resultStarsGapRatio;
     const scale = baseW > 0 ? targetW / baseW : 1;
-
     const step = targetW + gap;
     const startX = -((this.resultStarsCount - 1) * step) / 2;
-
     for (let i = 0; i < this.resultStarsCount; i++) {
       const star = this.resultStars[i];
       if (!star) continue;
@@ -266,50 +231,37 @@ export class ResultPanel extends BasePanel {
     startX: number,
   ) {
     if (!this.resultStarsOutline) return;
-    this.resultStarsOutline.clear();
 
+    this.resultStarsOutline.clear();
     const starW = baseW * scale;
     const starH = baseH * scale;
     const paddingX = this.resultStarsOutlinePaddingX;
     const paddingY = this.resultStarsOutlinePaddingY;
-
     const starLeftEdge = startX - starW / 2;
     const starRightEdge =
       startX + (this.resultStarsCount - 1) * step + starW / 2;
     const x = starLeftEdge - paddingX;
     const width = starRightEdge - starLeftEdge + 2 * paddingX;
-
     const starTopEdge = -starH / 2;
     const starBottomEdge = starH / 2;
     const y = starTopEdge - paddingY;
     const height = starBottomEdge - starTopEdge + 2 * paddingY;
-
     this.resultStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
     this.resultStarsOutline.strokeRoundedRect(x, y, width, height, 16);
-
-    // Move outline down to counteract container movement (keeps it visually stationary)
     this.resultStarsOutline.setY(this.resultStarsOutline.y + 25);
   }
 
   private positionResultTexts() {
     if (!this.textCongrat || !this.textMessage || this.resultStars.length === 0)
       return;
-
-    // Get the bounds of the stars to position texts below them
     const star = this.resultStars[0];
-    const starHeight = star.displayHeight; // displayHeight already includes scale
-
-    // Position texts below the stars with some spacing
+    const starHeight = star.displayHeight;
     const textSpacing = 20; // Space between texts
-    const starsBottom = starHeight / 2 + this.resultStarsOutlinePaddingY; // Half height + padding
-
-    // Position textCongrat below stars
+    const starsBottom = starHeight / 2 + this.resultStarsOutlinePaddingY;
     this.textCongrat.setPosition(
       0,
       starsBottom + this.textCongrat.displayHeight / 2 - 50,
     );
-
-    // Position textMessage below textCongrat
     this.textMessage.setPosition(
       0,
       this.textCongrat.y +
@@ -334,9 +286,7 @@ export class ResultPanel extends BasePanel {
         }
       | undefined,
   ) {
-    // Use total quarters directly from payload, fallback to 0 if not available
     const totalQuarters = payload?.totalQuarters ?? 0;
-
     for (let i = 0; i < this.resultStarsCount; i++) {
       const quartersForStar = Math.max(0, Math.min(4, totalQuarters - i * 4));
       const star = this.resultStars[i];
@@ -349,7 +299,6 @@ export class ResultPanel extends BasePanel {
           .setAlpha(0.5);
         continue;
       }
-
       star
         .setTexture(this.keyForQuarterFill(quartersForStar))
         .clearTint()
@@ -360,21 +309,17 @@ export class ResultPanel extends BasePanel {
   private createNavButtons() {
     const containerWidth = this.navButtonWidth * 2 + this.navButtonGap;
     const startX = -containerWidth / 2 + this.navButtonWidth / 2;
-
     this.navButtonHome = this.createNavButton("Home", 0xffffff);
     this.navButtonNext = this.createNavButton(
       "Próximo",
       LayoutConfig.COLORS.GOLD_HEX,
     );
-
     this.navButtonHome.setPosition(startX, 0);
     this.navButtonNext.setPosition(
       startX + this.navButtonWidth + this.navButtonGap,
       0,
     );
-
     this.navButtonsContainer.add([this.navButtonHome, this.navButtonNext]);
-
     this.setupNavButtonKeyboard();
   }
 
@@ -383,7 +328,6 @@ export class ResultPanel extends BasePanel {
     color: number,
   ): Phaser.GameObjects.Container {
     const container = this.scene.add.container(0, 0);
-
     const bg = this.scene.add.graphics();
     bg.fillStyle(color, 1);
     bg.fillRoundedRect(
@@ -393,7 +337,6 @@ export class ResultPanel extends BasePanel {
       this.navButtonHeight,
       12,
     );
-
     const label = this.scene.add
       .text(0, 0, text, {
         fontFamily: "Inter",
@@ -401,9 +344,7 @@ export class ResultPanel extends BasePanel {
         color: LayoutConfig.COLORS.BLACK,
       })
       .setOrigin(0.5);
-
     container.add([bg, label]);
-
     return container;
   }
 
@@ -458,10 +399,8 @@ export class ResultPanel extends BasePanel {
 
   public override hide(duration: number = 200, onComplete?: () => void) {
     if (!this._isVisible) return;
-
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
-
     super.hide(duration, onComplete);
   }
 }

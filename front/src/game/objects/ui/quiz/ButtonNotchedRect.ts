@@ -1,9 +1,5 @@
 export type Point = { x: number; y: number };
 
-/**
- * Returns points for a rectangle with small left/right "notches".
- * Points are ordered around the perimeter for Phaser.Graphics.fillPoints(..., true).
- */
 export function getNotchedRectPoints(
   centerX: number,
   centerY: number,
