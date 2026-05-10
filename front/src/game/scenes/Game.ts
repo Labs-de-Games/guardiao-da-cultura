@@ -718,11 +718,11 @@ export class Game extends Scene {
                 this.levelManager.updateProgress();
               }
 
-              this.events.emit(
-                GameEvents.SHOW_DIALOGUE_REQUEST,
-                [...lines],
-                () => this.questManager.clearPendingResult(missionId),
-              );
+              // this.events.emit(
+              //   GameEvents.SHOW_DIALOGUE_REQUEST,
+              //   [...lines],
+              //   () => this.questManager.clearPendingResult(missionId),
+              // );
             },
           );
         },

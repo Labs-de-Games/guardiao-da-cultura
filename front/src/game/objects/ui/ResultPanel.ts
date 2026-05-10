@@ -200,6 +200,13 @@ export class ResultPanel extends BasePanel {
     this.show();
   }
 
+  public override show(duration: number = 160) {
+    if (this._isVisible) return;
+    super.show(duration);
+    const gameScene = this.scene.scene.get(SceneNames.GAME);
+    gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+  }
+
   private createResultsStars() {
     for (let i = 0; i < this.resultStarsCount; i++) {
       const star = this.scene.add.image(0, 0, "ui_star_full").setScale(1);
