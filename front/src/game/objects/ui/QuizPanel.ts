@@ -44,6 +44,7 @@ export class QuizPanel extends BasePanel {
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
   private performanceContainer: Phaser.GameObjects.Container;
+  private questionPanel: Phaser.GameObjects.Container;
   private isShowingPerformance: boolean = false;
   private shouldShowResultsAfterHide: boolean = false;
 
@@ -71,7 +72,7 @@ export class QuizPanel extends BasePanel {
       .setOrigin(0.5, 0.7)
       .setRounded(16);
 
-    const questionPanel = this.scene.add.container(0, 100).setSize(1150, 250);
+    this.questionPanel = this.scene.add.container(0, 100).setSize(1150, 250);
 
     this.scoreText = scene.add
       .text(
@@ -160,10 +161,10 @@ export class QuizPanel extends BasePanel {
       this.progressTracker,
     ]);
 
-    questionPanel.add([this.questionTitle, this.questionText]);
+    this.questionPanel.add([this.questionTitle, this.questionText]);
 
     // Performance display (initially hidden)
-    this.performanceContainer = this.scene.add.container(0, 80);
+    this.performanceContainer = this.scene.add.container(0, 0);
     this.performanceText = this.scene.add
       .text(0, -100, "Quiz completo!", {
         fontFamily: "Jockey One",
@@ -182,7 +183,7 @@ export class QuizPanel extends BasePanel {
     this.add([
       this.bg,
       topPanel,
-      questionPanel,
+      this.questionPanel,
       this.footerHintText,
       this.performanceContainer,
     ]);
@@ -253,6 +254,8 @@ export class QuizPanel extends BasePanel {
 
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+
+    this.questionPanel.setVisible(false);
 
     super.hide(duration, () => {
       if (onComplete) onComplete();
