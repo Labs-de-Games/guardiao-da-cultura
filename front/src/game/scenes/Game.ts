@@ -63,7 +63,6 @@ export class Game extends Scene {
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
-  private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
@@ -352,16 +351,6 @@ export class Game extends Scene {
       });
 
       this.effects.setZoom(1.0, 400);
-    });
-
-    this.events.on(GameEvents.INVENTORY_OPENED, () => {
-      this.isInventoryOpen = true;
-      if (this.player) this.player.isInDialogue = true;
-    });
-
-    this.events.on(GameEvents.INVENTORY_CLOSED, () => {
-      this.isInventoryOpen = false;
-      this.checkDialogState();
     });
 
     this.events.on(GameEvents.CONTROLS_OVERLAY_OPENED, () => {
@@ -751,7 +740,6 @@ export class Game extends Scene {
 
   private checkDialogState() {
     if (
-      !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
       !this.isChunkSelectorOpen &&
       !this.isDialogueOpen
