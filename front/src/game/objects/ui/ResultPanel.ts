@@ -123,7 +123,6 @@ export class ResultPanel extends BasePanel {
       -this.topContainer.height / 2 - 15,
     );
     this.resultStarsOutline = this.scene.add.graphics();
-    this.resultStarsContainer.addAt(this.resultStarsOutline, 0);
     this.createResultsStars();
     this.textCongrat = scene.add
       .text(0, 0, "Muito Bom", {
@@ -141,7 +140,12 @@ export class ResultPanel extends BasePanel {
         fontStyle: "normal",
       })
       .setOrigin(0.5, 0.5);
-    this.resultStarsContainer.add([this.textCongrat, this.textMessage]);
+    this.resultStarsOutline.y = 60;
+    this.resultStarsContainer.add([
+      this.textCongrat,
+      this.textMessage,
+      this.resultStarsOutline,
+    ]);
     this.topContainer.add([topContainerBg, this.textGreeting, this.textScore]);
     this.add([
       this.bg,
@@ -262,7 +266,6 @@ export class ResultPanel extends BasePanel {
     const height = starBottomEdge - starTopEdge + 2 * paddingY;
     this.resultStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
     this.resultStarsOutline.strokeRoundedRect(x, y, width, height, 16);
-    this.resultStarsOutline.setY(this.resultStarsOutline.y + 25);
   }
 
   private applyRatingCopy(rating: string) {
