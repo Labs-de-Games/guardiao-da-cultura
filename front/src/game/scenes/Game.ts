@@ -767,7 +767,7 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
+    this.cameras.main.startFollow(this.player, true, 0.09, 0.09, 0, 170);
     this.levelManager.updateProgress();
   }
 
@@ -829,7 +829,7 @@ export class Game extends Scene {
     };
   }
 
-  update(_time: number, _delta: number) {}
+  update(_time: number, _delta: number) { }
 
   public recordFloorError(floorIndex: number) {
     this.scoreManager.recordFloorError(floorIndex);
