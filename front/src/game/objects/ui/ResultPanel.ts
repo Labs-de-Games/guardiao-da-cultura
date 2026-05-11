@@ -37,6 +37,41 @@ export class ResultPanel extends BasePanel {
   private readonly navButtonGap = 30;
   private progressTracker: QuizProgressTracker | null = null;
 
+  private readonly ratingCopyMap: Record<
+    string,
+    {
+      greeting: string;
+      score: string;
+      congrats: string;
+    }
+  > = {
+    mínimo: {
+      greeting: "Ok",
+      score: "Performance mínima",
+      congrats: "Podia ser melhor...",
+    },
+    regular: {
+      greeting: "Ok",
+      score: "Performance regular",
+      congrats: "Regular",
+    },
+    bom: {
+      greeting: "Parabéns!",
+      score: "Boa performance",
+      congrats: "Bom!",
+    },
+    ótimo: {
+      greeting: "Parabéns!",
+      score: "Ótima performance",
+      congrats: "Muito Bom!",
+    },
+    perfeito: {
+      greeting: "Parabéns!",
+      score: "Performance perfeita",
+      congrats: "Perfeito!",
+    },
+  };
+
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.QUIZ || 2000);
@@ -135,39 +170,8 @@ export class ResultPanel extends BasePanel {
       console.error("Failed to get scoring payload");
       return;
     }
-    console.log("Scoring payload:", payload);
     this.textMessage.setText("Você está pronto para o próximo nível");
-    switch (payload.rating) {
-      case "mínimo":
-        this.textGreeting.setText("Ok");
-        this.textScore.setText("Performance mínima");
-        this.textCongrat.setText("Podia ser melhor...");
-        break;
-      case "regular":
-        this.textGreeting.setText("Ok");
-        this.textScore.setText("Performance regular");
-        this.textCongrat.setText("Regular");
-        break;
-      case "bom":
-        this.textGreeting.setText("Parabéns!");
-        this.textScore.setText("Boa performance");
-        this.textCongrat.setText("Bom!");
-        break;
-      case "ótimo":
-        this.textGreeting.setText("Parabéns!");
-        this.textScore.setText("Ótima performance");
-        this.textCongrat.setText("Muito Bom!");
-        break;
-      case "perfeito":
-        this.textGreeting.setText("Parabéns!");
-        this.textScore.setText("Performance perfeita");
-        this.textCongrat.setText("Perfeito!");
-        break;
-      default:
-        this.textGreeting.setText("Resultado");
-        this.textScore.setText("Pontuação");
-        this.textCongrat.setText("");
-    }
+    this.applyRatingCopy(payload.rating);
 
     if (this.progressTracker) {
       this.topContainer.remove(this.progressTracker);
@@ -259,6 +263,20 @@ export class ResultPanel extends BasePanel {
     this.resultStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
     this.resultStarsOutline.strokeRoundedRect(x, y, width, height, 16);
     this.resultStarsOutline.setY(this.resultStarsOutline.y + 25);
+  }
+
+  private applyRatingCopy(rating: string) {
+    const copy = this.ratingCopyMap[rating];
+    if (!copy) {
+      this.textGreeting.setText("Resultado");
+      this.textScore.setText("Pontuação");
+      this.textCongrat.setText("");
+      return;
+    }
+
+    this.textGreeting.setText(copy.greeting);
+    this.textScore.setText(copy.score);
+    this.textCongrat.setText(copy.congrats);
   }
 
   private positionResultTexts() {
