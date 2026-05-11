@@ -366,14 +366,22 @@ export class Player
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
     const spaceDown = this.keys.space.isDown;
     const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
-    if (spacePress && body?.blocked.down) {
+    if (spacePress) {
       if (!this.isGrabbing) {
-        // Priority 1: try to grab a nearby draggable sculpture
-        const grabbed = this.tryGrab();
-        if (!grabbed) {
-          // Priority 2: toggle carry for paintings, or open placeholder UI
-          const handled = this.tryToggleCarry();
-          if (!handled && !this.isCarrying) {
+        const isGrounded = body?.blocked.down;
+
+        // Priority 1: try to grab a nearby draggable sculpture (Grounded only)
+        let handled = false;
+        if (isGrounded) {
+          handled = this.tryGrab();
+        }
+
+        if (!handled) {
+          // Priority 2: toggle carry for paintings (Allows air interaction)
+          handled = this.tryToggleCarry();
+
+          if (!handled && !this.isCarrying && isGrounded) {
+            // Priority 3: placeholder UI (Grounded only)
             this.emit("interact-placeholder");
           }
         }
@@ -566,7 +574,7 @@ export class Player
 
     if (this.isGrabbing) return false;
 
-    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
+    const GRAB_DIST = 150; // More lenient for air-pickup
     let closestItem: CarryableItem | null = null;
     let minDist: number = GRAB_DIST;
 
