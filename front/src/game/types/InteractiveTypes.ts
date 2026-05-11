@@ -1,9 +1,9 @@
 /**
  * Define os tipos de objetos interativos no jogo.
  */
-export enum InteractableType {
+export enum InteractiveType {
   SCULPTURE = "sculpture",
   PAINTING = "painting",
-  PICTURE_CHUNK = "picture_chunk",
-  PICTURE = "picture",
+  PHOTO_CHUNK = "photo_chunk",
+  PHOTO = "photo",
 }

@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
-import { CarryableItem } from "../objects/interactables/CarryableItem";
+import { CarryableItem } from "../objects/interactives/CarryableItem";
 import type { WorkData } from "../types/GameDataTypes";
-import { InteractableType } from "../types/InteractableTypes";
+import { InteractiveType } from "../types/InteractiveTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
@@ -25,7 +25,7 @@ export class PhotoFactory implements IObjectFactory {
       texture: texture,
       name: data?.metadata?.title || name,
       id: data?.id || name,
-      type: InteractableType.PICTURE_CHUNK,
+      type: InteractiveType.PHOTO_CHUNK,
     };
 
     return new CarryableItem(scene, config);
