@@ -5,12 +5,12 @@ import {
   fetchUserBadges,
 } from "../../../lib/badgesApi";
 import { LayoutConfig } from "../../constants/LayoutConfig";
+import { BasePanel } from "./BasePanel";
 
-export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
-  private bg: Phaser.GameObjects.Rectangle;
-  private titleText: Phaser.GameObjects.Text;
+export class BadgeGalleryPanel extends BasePanel {
+  private currentFontScale: number = 1;
+  private titleText!: Phaser.GameObjects.Text;
   private badgesContainer: Phaser.GameObjects.Container;
-  private isVisible: boolean = false;
   private badges: BadgeConfig[] = [];
   private unlockedIds: string[] = [];
 
@@ -19,33 +19,33 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
   private readonly COLS = 4;
   private readonly SPACING_X = 230;
   private readonly SPACING_Y = 200;
+  private readonly panelWidth = 1000;
+  private readonly panelHeight = 650;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.INVENTORY);
-    this.setVisible(false);
 
-    this.bg = scene.add.rectangle(0, 0, 1000, 650, 0x111111, 0.95);
-    this.bg.setStrokeStyle(4, 0xd4af37, 1);
-    this.bg.setOrigin(0.5);
-    this.bg.setInteractive();
+    this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
+    this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     this.titleText = scene.add
-      .text(0, -280, "Galeria de Conquistas", {
-        fontFamily: "Outfit, sans-serif",
-        fontSize: "36px",
-        color: "#D4AF37",
-        fontStyle: "bold",
+      .text(0, -this.panelHeight / 2 + 40, "Galeria de Conquistas", {
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     const closeBtn = scene.add
-      .text(460, -280, "X", {
-        fontSize: "28px",
-        color: "#ffffff",
-        fontStyle: "bold",
+      .text(this.panelWidth / 2 - 30, -this.panelHeight / 2 + 40, "X", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5)
+      .setOrigin(...LayoutConfig.ALIGN.CENTER)
       .setInteractive({ useHandCursor: true });
 
     closeBtn.on("pointerdown", () => this.hide());
@@ -53,9 +53,22 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     this.badgesContainer = scene.add.container(0, 0);
 
     this.add([this.bg, this.titleText, closeBtn, this.badgesContainer]);
-    scene.add.existing(this);
+
+    this.bindKey("ESC", () => this.hide());
 
     this.loadData();
+  }
+
+  public layout(w: number, h: number) {
+    this.setPosition(w / 2, h / 2);
+    this.currentFontScale = this.getFontScale(w, h);
+
+    this.applyScaledFontSize(
+      this.titleText,
+      LayoutConfig.FONTS.SIZES.TITLE,
+      w,
+      h,
+    );
   }
 
   private async loadData() {
@@ -110,19 +123,33 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
       y,
       this.CARD_WIDTH,
       this.CARD_HEIGHT,
-      isUnlocked ? 0x222222 : 0x0a0a0a,
+      isUnlocked
+        ? LayoutConfig.COLORS.CARD_BG_UNLOCKED
+        : LayoutConfig.COLORS.CARD_BG_LOCKED,
       1,
     );
-    cardBg.setStrokeStyle(2, isUnlocked ? 0xd4af37 : 0x333333);
+    cardBg.setStrokeStyle(
+      2,
+      isUnlocked
+        ? LayoutConfig.COLORS.GOLD_HEX
+        : LayoutConfig.COLORS.CARD_STROKE_LOCKED,
+    );
     cardElements.push(cardBg);
 
     const iconBg = this.scene.add.circle(
       x,
       y - 30,
       38,
-      isUnlocked ? 0x000000 : 0x1a1a1a,
+      isUnlocked
+        ? LayoutConfig.COLORS.BLACK_HEX
+        : LayoutConfig.COLORS.ICON_CIRCLE_LOCKED,
     );
-    iconBg.setStrokeStyle(2, isUnlocked ? 0xd4af37 : 0x444444);
+    iconBg.setStrokeStyle(
+      2,
+      isUnlocked
+        ? LayoutConfig.COLORS.GOLD_HEX
+        : LayoutConfig.COLORS.ICON_STROKE_LOCKED,
+    );
     cardElements.push(iconBg);
 
     if (isUnlocked && this.scene.textures.exists(badge.icon_key)) {
@@ -133,49 +160,53 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
     } else {
       const mystery = this.scene.add
         .text(x, y - 30, "?", {
-          fontSize: "36px",
-          color: "#444444",
-          fontStyle: "bold",
+          fontFamily: LayoutConfig.FONTS.BODY,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+          color: LayoutConfig.COLORS.TEXT_MUTED,
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         })
-        .setOrigin(0.5);
+        .setOrigin(...LayoutConfig.ALIGN.CENTER);
       cardElements.push(mystery);
     }
 
     const nameText = this.scene.add
       .text(x, y + 25, badge.name, {
-        fontFamily: "Outfit",
-        fontSize: "18px",
-        fontStyle: "bold",
-        color: isUnlocked ? "#ffffff" : "#666666",
-        align: "center",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: Math.round(
+          LayoutConfig.FONTS.SIZES.HINT * this.currentFontScale,
+        ),
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
+        color: isUnlocked
+          ? LayoutConfig.COLORS.WHITE
+          : LayoutConfig.COLORS.TEXT_DIM,
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
         wordWrap: { width: 180 },
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     cardElements.push(nameText);
 
     const descText = this.scene.add
       .text(x, y + 55, badge.description, {
-        fontFamily: "Outfit",
-        fontSize: "13px",
-        color: isUnlocked ? "#aaaaaa" : "#444444",
-        align: "center",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: Math.round(
+          LayoutConfig.FONTS.SIZES.SMALL * this.currentFontScale,
+        ),
+        color: isUnlocked
+          ? LayoutConfig.COLORS.DISABLED_GREY
+          : LayoutConfig.COLORS.TEXT_MUTED,
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
         wordWrap: { width: 180 },
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     cardElements.push(descText);
 
     this.badgesContainer.add(cardElements);
-  }
-
-  public layout(w: number, h: number) {
-    this.setPosition(w / 2, h / 2);
   }
 
   public async show() {
     await this.syncUnlockedFromServer();
     this.refresh();
     this.setVisible(true);
-    this.isVisible = true;
 
     this.setAlpha(0);
     this.setScale(0.9);
@@ -197,7 +228,6 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
       ease: "Quad.In",
       onComplete: () => {
         this.setVisible(false);
-        this.isVisible = false;
       },
     });
   }
