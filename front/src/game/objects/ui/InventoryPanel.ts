@@ -47,7 +47,7 @@ export class InventoryPanel extends BasePanel {
       .setOrigin(0.5, 0);
 
     this.hint = scene.add
-      .text(0, 0, "Aperte TAB para fechar", {
+      .text(0, 0, "[TAB] para fechar", {
         fontSize: "22px",
         color: LayoutConfig.COLORS.SECONDARY_BROWN,
       })

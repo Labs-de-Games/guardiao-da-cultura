@@ -72,26 +72,25 @@ export class InteractionComponent {
 
     this.armHint();
 
-    // Prompt UI disabled intentionally; interaction still works via spacebar.
+    // Create Prompt UI
     this.promptContainer = scene.add.container(parent.x, parent.y - 30);
+    const promptBg = scene.add
+      .rectangle(options?.gapX ?? 0, options?.gapY ?? 0, 30, 30, 0x000000, 0.8)
+      .setStrokeStyle(2, 0xffffff);
+    const promptText = scene.add
+      .text(options?.gapX ?? 0, options?.gapY ?? 0, "E", {
+        fontSize: "20px",
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    this.promptContainer.add([promptBg, promptText]);
     this.promptContainer.setVisible(false);
-    // const promptBg = scene.add
-    //   .rectangle(options?.gapX ?? 0, options?.gapY ?? 0, 30, 30, 0x000000, 0.8)
-    //   .setStrokeStyle(2, 0xffffff);
-    // const promptText = scene.add
-    //   .text(options?.gapX ?? 0, options?.gapY ?? 0, "ESPAÇO", {
-    //     fontSize: "20px",
-    //     color: LayoutConfig.COLORS.WHITE,
-    //     fontStyle: "bold",
-    //   })
-    //   .setOrigin(0.5);
-    // this.promptContainer.add([promptBg, promptText]);
 
     // Setup Key Listener
     this.keyHandler = (event: KeyboardEvent) => {
-      const isSpace =
-        event.code === "Space" || event.key === " " || event.key === "Spacebar";
-      if (isSpace) {
+      const key = event.key.toLowerCase();
+      if (key === "e") {
         const player = this.playerRef as unknown as IPlayerState;
         if (player?.isInDialogue) return;
 
