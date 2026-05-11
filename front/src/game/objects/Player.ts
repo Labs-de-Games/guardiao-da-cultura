@@ -367,7 +367,9 @@ export class Player
     const spaceDown = this.keys.space.isDown;
     const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
     if (spacePress) {
-      if (!this.isGrabbing) {
+      if (this.isGrabbing) {
+        this.releaseGrab();
+      } else {
         const isGrounded = body?.blocked.down;
 
         // Priority 1: try to grab a nearby draggable sculpture (Grounded only)
@@ -386,8 +388,6 @@ export class Player
           }
         }
       }
-    } else if (!spaceDown && this.isGrabbing) {
-      this.releaseGrab();
     }
 
     if (body) {
