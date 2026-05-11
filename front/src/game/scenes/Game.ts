@@ -488,13 +488,13 @@ export class Game extends Scene {
       const floatStar = this.add.image(-10, 0, "star").setScale(2.5);
       const endPhase_floatText = this.add
         .text(6, 0, `0/${PHASE_SETTINGS.MAX_STARS}`, {
-          fontSize: "22px",
+          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
           color: LayoutConfig.COLORS.STAR_YELLOW,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
           stroke: LayoutConfig.COLORS.BLACK,
           strokeThickness: 4,
         })
-        .setOrigin(0, 0.5);
+        .setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
 
       endPhase_container.add([floatStar, endPhase_floatText]);
       endPhase_btn.add(endPhase_container);
