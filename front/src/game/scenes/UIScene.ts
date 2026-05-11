@@ -170,7 +170,7 @@ export class UIScene extends Scene {
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
-          this.chunkSelector.show(
+          this.chunkSelector.showChunk(
             data.instanceId,
             data.availableItems,
             data.state?.filledSlots || [],
@@ -183,7 +183,7 @@ export class UIScene extends Scene {
       GameEvents.SHOW_BADGE_TOAST,
       (badge: { name: string; icon_key: string }) => {
         if (this.toast) {
-          this.toast.show(
+          this.toast.showToast(
             `Conquista Desbloqueada:\n${badge.name}`,
             4000,
             badge.icon_key,
@@ -260,6 +260,7 @@ export class UIScene extends Scene {
 
   private layout() {
     const { width: w, height: h } = this.scale;
+    this.cameras.main.setSize(w, h);
 
     this.statusPanel.layout(w, h);
     this.inventoryPanel.layout(w, h);
@@ -305,7 +306,7 @@ export class UIScene extends Scene {
   }
 
   private toggleBadgeGallery() {
-    if (this.badgeGalleryPanel.visibleState) {
+    if (this.badgeGalleryPanel.isVisible) {
       this.badgeGalleryPanel.hide();
       return;
     }
@@ -361,7 +362,9 @@ export class UIScene extends Scene {
     if (this.pendingMissionCompleteToastCount > 0) {
       this.pendingMissionCompleteToastCount = 0;
       this.time.delayedCall(120, () => {
-        this.toast.show("Missão concluída!\nAperte TAB para ver as relíquias");
+        this.toast.showToast(
+          "Missão concluída!\nAperte TAB para ver as relíquias",
+        );
       });
     }
   }
@@ -391,18 +394,22 @@ export class UIScene extends Scene {
       0,
       LayoutConfig.UI.PANEL_WIDTH,
       100,
-      0x000000,
+      LayoutConfig.COLORS.BLACK_HEX,
       0.65,
     );
-    bg.setOrigin(1, 0).setStrokeStyle(3, 0xffffff, 0.75);
+    bg.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT).setStrokeStyle(
+      3,
+      LayoutConfig.COLORS.WHITE_HEX,
+      0.75,
+    );
 
     const title = this.add
       .text(-padding, padding, mission.title, {
-        fontSize: "18px",
-        color: "#ffffff",
-        fontStyle: "bold",
+        fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(1, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 
     let currentY = padding + 28;
     const stepTexts: Phaser.GameObjects.Text[] = [];
@@ -410,11 +417,11 @@ export class UIScene extends Scene {
     mission.steps.forEach((_step: MissionStepDef) => {
       const t = this.add
         .text(-padding, currentY, "", {
-          fontSize: "16px",
-          color: "#ffffff",
+          fontSize: LayoutConfig.FONTS.SIZES.SMALL,
+          color: LayoutConfig.COLORS.WHITE,
           wordWrap: { width: LayoutConfig.UI.PANEL_WIDTH - padding * 2 },
         })
-        .setOrigin(1, 0);
+        .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 
       stepTexts.push(t);
       currentY += t.displayHeight + 6;
@@ -455,23 +462,23 @@ export class UIScene extends Scene {
       .setDepth(10000);
 
     const bg = this.add
-      .rectangle(0, 0, 800, 500, 0x000000, 0.95)
+      .rectangle(0, 0, 800, 500, LayoutConfig.COLORS.BLACK_HEX, 0.95)
       .setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
     const title = this.add
       .text(0, -210, "Fase concluída!", {
-        fontSize: "52px",
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
         color: LayoutConfig.COLORS.GOLD,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     const message = this.add
       .text(0, 150, "Parabéns, você completou sua exploração no museu!", {
-        fontSize: "28px",
-        color: "#ffffff",
+        fontSize: LayoutConfig.FONTS.SIZES.BODY,
+        color: LayoutConfig.COLORS.WHITE,
         wordWrap: { width: 700 },
-        align: "center",
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     const stars = this.add.container(0, -30);
     const starSpacing = 140;
