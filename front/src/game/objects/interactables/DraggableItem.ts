@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
-import { InteractiveItem } from "./InteractiveItem";
+import { InteractableItem } from "./InteractableItem";
 
-export class DraggableItem extends InteractiveItem {
+export class DraggableItem extends InteractableItem {
   public isGrabbed: boolean = false;
 
   public setGrabbed(grabbed: boolean) {
