@@ -8,6 +8,12 @@ import type { QuizProgressTracker } from "./quiz/QuizProgressTracker";
 
 export class ResultPanel extends BasePanel {
   private resultStarsContainer: Phaser.GameObjects.Container;
+  private topContainer: Phaser.GameObjects.Container;
+  private navButtonsContainer: Phaser.GameObjects.Container;
+  private navButtonHome: Phaser.GameObjects.Container =
+    this.scene.add.container(0, 0);
+  private navButtonNext: Phaser.GameObjects.Container =
+    this.scene.add.container(0, 0);
   private resultStars: Phaser.GameObjects.Image[] = [];
 
   private readonly resultStarsCount = 5;
@@ -25,12 +31,6 @@ export class ResultPanel extends BasePanel {
   private textScore: Phaser.GameObjects.Text;
   private textCongrat: Phaser.GameObjects.Text;
   private textMessage: Phaser.GameObjects.Text;
-  private topPanel: Phaser.GameObjects.Container;
-  private navButtonsContainer: Phaser.GameObjects.Container;
-  private navButtonHome: Phaser.GameObjects.Container =
-    this.scene.add.container(0, 0);
-  private navButtonNext: Phaser.GameObjects.Container =
-    this.scene.add.container(0, 0);
   private selectedNavIndex: number = 1;
   private readonly navButtonWidth = 320;
   private readonly navButtonHeight = 80;
@@ -45,36 +45,47 @@ export class ResultPanel extends BasePanel {
     this.bg.setFillStyle(0x1a1a1a, 0.95);
     this.bg.setStrokeStyle(4, 0xffffff, 1);
 
-    const topPanelBg = this.scene.add
+    const topContainerBg = this.scene.add
       .rectangle(0, 0, 1150, 150, 0x000000)
       .setOrigin(0.5, 0.7)
       .setRounded(16);
-    this.topPanel = this.scene.add
+    this.topContainer = this.scene.add
       .container(0, -this.bg.height / 2 + 120)
       .setSize(1150, 150);
     this.navButtonsContainer = this.scene.add
       .container(0, -this.bg.height / 2 + 700)
       .setSize(1150, 150);
     this.createNavButtons();
+
     this.textGreeting = scene.add
-      .text(-540, -80, "Parabéns!", {
-        fontFamily: "Jockey One",
-        fontSize: "48px",
-        color: LayoutConfig.COLORS.GOLD,
-        fontStyle: "bold",
-      })
+      .text(
+        -this.topContainer.width / 2 + 35,
+        -this.topContainer.height / 2 - 5,
+        "Parabéns!",
+        {
+          fontFamily: "Jockey One",
+          fontSize: "48px",
+          color: LayoutConfig.COLORS.GOLD,
+          fontStyle: "bold",
+        },
+      )
       .setOrigin(0, 0);
     this.textScore = scene.add
-      .text(-540, -20, "Pontuação perfeita", {
-        fontFamily: "Jocky One",
-        fontSize: "32px",
-        color: LayoutConfig.COLORS.WHITE,
-        fontStyle: "bold",
-      })
+      .text(
+        -this.topContainer.width / 2 + 35,
+        -this.topContainer.height / 2 + 55,
+        "Pontuação perfeita",
+        {
+          fontFamily: "Jocky One",
+          fontSize: "32px",
+          color: LayoutConfig.COLORS.WHITE,
+          fontStyle: "bold",
+        },
+      )
       .setOrigin(0, 0);
     this.resultStarsContainer = scene.add.container(
       0,
-      -this.panelHeight / 2 + 310,
+      -this.topContainer.height / 2 - 15,
     );
     this.resultStarsOutline = this.scene.add.graphics();
     this.resultStarsContainer.addAt(this.resultStarsOutline, 0);
@@ -87,7 +98,6 @@ export class ResultPanel extends BasePanel {
         fontStyle: "bold",
       })
       .setOrigin(0.5, 0.5);
-
     this.textMessage = scene.add
       .text(0, 0, "Continue assim", {
         fontFamily: "Jockey One",
@@ -97,10 +107,10 @@ export class ResultPanel extends BasePanel {
       })
       .setOrigin(0.5, 0.5);
     this.resultStarsContainer.add([this.textCongrat, this.textMessage]);
-    this.topPanel.add([topPanelBg, this.textGreeting, this.textScore]);
+    this.topContainer.add([topContainerBg, this.textGreeting, this.textScore]);
     this.add([
       this.bg,
-      this.topPanel,
+      this.topContainer,
       this.resultStarsContainer,
       this.navButtonsContainer,
     ]);
@@ -160,10 +170,10 @@ export class ResultPanel extends BasePanel {
     }
 
     if (this.progressTracker) {
-      this.topPanel.remove(this.progressTracker);
+      this.topContainer.remove(this.progressTracker);
     }
     this.progressTracker = progressTracker;
-    this.topPanel.add(progressTracker);
+    this.topContainer.add(progressTracker);
     this.positionResultsStarsContainer();
     this.updateResultsStars(payload);
     this.layoutResultsStarsRow();
