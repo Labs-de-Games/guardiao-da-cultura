@@ -5,7 +5,7 @@ export const LayoutConfig = {
     WHITE_HEX: 0xffffff,
     BLACK: "#000000",
     BLACK_HEX: 0x000000,
-    QUIZ_BG: 0x1a1a1a,
+    STANDARD_BG: 0x1a1a1a,
     PRIMARY_BROWN: "#3b2a1a",
     SECONDARY_BROWN: "#5a4634",
     BORDER_BROWN: 0x6a4b2a,
@@ -16,8 +16,7 @@ export const LayoutConfig = {
     RIBBON_GOLD: 0xd4a853,
     RIBBON_GOLD_SELECTED: 0xf0c060,
     STAR_YELLOW: "#ffff8bff",
-    INVENTORY_BG: 0xdbc8a3,
-    INVENTORY_INNER: 0xf3ead2,
+
     DISABLED_GREY: "#aaaaaa",
     DARK_STAR_TINT: 0x444444,
     HINT_GREY: "#888888",

@@ -63,7 +63,7 @@ export class QuizPanel extends BasePanel {
 
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
     this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
-    this.bg.setFillStyle(LayoutConfig.COLORS.QUIZ_BG, 0.95);
+    this.bg.setFillStyle(LayoutConfig.COLORS.STANDARD_BG, 0.95);
     this.bg.setStrokeStyle(
       LayoutConfig.UI.PANEL_BORDER_WIDTH,
       LayoutConfig.UI.PANEL_BORDER_COLOR,
