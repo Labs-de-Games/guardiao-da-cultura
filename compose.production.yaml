@@ -37,7 +37,14 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - PORT=${PORT:-3001}
+      - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-15m}
+      - JWT_ISSUER=${JWT_ISSUER:-gameplate}
+      - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET}
+      - MAGIC_LINK_EXPIRATION_MIN=${MAGIC_LINK_EXPIRATION_MIN:-15}
+      - FRONTEND_URL=${FRONTEND_URL}
     networks:
       - backend
     deploy:
