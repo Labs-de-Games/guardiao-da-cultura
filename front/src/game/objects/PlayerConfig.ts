@@ -123,7 +123,7 @@ export const PLAYER_MOVEMENT = {
   WALK_ACCELERATION: 90,
 
   /** Vertical jump velocity */
-  JUMP_VELOCITY_Y: -1200,
+  JUMP_VELOCITY_Y: -1270,
 
   /** Vertical speed when climbing ladders */
   CLIMB_SPEED_Y: 600,
