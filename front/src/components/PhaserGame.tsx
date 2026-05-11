@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getCurrentUserId } from "../lib/session";
+import { useAuth } from "../lib/auth/useAuth";
 
-export default function PhaserGame({ userId }: { userId?: string }) {
+export default function PhaserGame() {
+  const { user } = useAuth();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
@@ -17,9 +18,9 @@ export default function PhaserGame({ userId }: { userId?: string }) {
 
     const initGame = async () => {
       try {
-        let activeUserId = userId;
+        const activeUserId = user?.id;
         if (!activeUserId) {
-          activeUserId = await getCurrentUserId();
+          throw new Error("User ID is required to start the game.");
         }
 
         const { default: StartGame } = await import("../game/main");

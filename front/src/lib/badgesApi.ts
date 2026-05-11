@@ -1,9 +1,7 @@
 import type { BadgeConfig } from "../game/types/BadgeTypes";
-import { env } from "./env";
+import { apiClient } from "./api/client";
 
 export type { BadgeConfig };
-
-const API_URL = `${env.NEXT_PUBLIC_API_URL}/api/v1`;
 
 export interface ServerBadgeConfig {
   id: string;
@@ -26,12 +24,9 @@ export interface UserBadgeRecord {
 }
 
 export async function fetchBadges(): Promise<BadgeConfig[]> {
-  const res = await fetch(`${API_URL}/badges`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch badges: ${res.statusText}`);
-  }
+  const res = await apiClient.get<ServerBadgeConfig[]>("/badges");
+  const badges = res.data;
 
-  const badges: ServerBadgeConfig[] = await res.json();
   return badges.map((b) => ({
     id: b.id,
     name: b.name,
@@ -43,30 +38,12 @@ export async function fetchBadges(): Promise<BadgeConfig[]> {
   }));
 }
 
-export async function unlockBadgeOnServer(
-  userId: string,
-  badgeId: string,
-): Promise<boolean> {
-  const res = await fetch(`${API_URL}/badges/unlock`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, badgeId }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to unlock badge: ${res.statusText}`);
-  }
-
+export async function unlockBadgeOnServer(badgeId: string): Promise<boolean> {
+  await apiClient.post("/badges/unlock", { badgeId });
   return true;
 }
 
-export async function fetchUserBadges(
-  userId: string,
-): Promise<UserBadgeRecord[]> {
-  const res = await fetch(`${API_URL}/badges/${userId}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch user badges: ${res.statusText}`);
-  }
-
-  return res.json();
+export async function fetchUserBadges(): Promise<UserBadgeRecord[]> {
+  const res = await apiClient.get<UserBadgeRecord[]>("/badges/me");
+  return res.data;
 }
