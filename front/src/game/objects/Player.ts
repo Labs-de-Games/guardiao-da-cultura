@@ -187,6 +187,7 @@ export class Player
       s: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.S],
       d: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.D],
       space: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SPACE],
+      shift: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SHIFT],
       E: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.E],
     }) as PlayerKeys;
 
@@ -326,15 +327,15 @@ export class Player
 
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
-    const spaceDown = this.keys.space.isDown;
-    const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
-    if (spaceDown && !this.isGrabbing && body?.blocked.down) {
+    const shiftDown = this.keys.shift.isDown;
+    const shiftPress = Phaser.Input.Keyboard.JustDown(this.keys.shift);
+    if (shiftDown && !this.isGrabbing && body?.blocked.down) {
       this.tryGrab();
-    } else if (!spaceDown && this.isGrabbing) {
+    } else if (!shiftDown && this.isGrabbing) {
       this.releaseGrab();
     }
 
-    if (spacePress && body?.blocked.down) {
+    if (shiftPress && body?.blocked.down) {
       const handled = this.tryToggleCarry();
       if (!handled && !this.isCarrying) {
         this.emit("interact-placeholder");
@@ -392,7 +393,7 @@ export class Player
       }
     }
 
-    const jumpDown = this.keys.up.isDown || this.keys.w.isDown;
+    const jumpDown = this.keys.space.isDown;
 
     if (
       this.body &&
@@ -591,5 +592,6 @@ type PlayerKeys = {
   s: Phaser.Input.Keyboard.Key;
   d: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
+  shift: Phaser.Input.Keyboard.Key;
   E: Phaser.Input.Keyboard.Key;
 };
