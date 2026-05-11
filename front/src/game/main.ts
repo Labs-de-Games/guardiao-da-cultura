@@ -20,7 +20,7 @@ const config: Types.Core.GameConfig = {
     },
   },
   scale: {
-    mode: Scale.EXPAND,
+    mode: Scale.RESIZE,
     autoCenter: Scale.CENTER_BOTH,
   },
   scene: [MapIntroScene, MainGame, UIScene],
