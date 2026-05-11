@@ -1,4 +1,5 @@
 import type { GameEventPayload } from "../game/types/AnalyticsTypes";
+import { apiClient } from "./api/client";
 import { env } from "./env";
 
 const API_URL = env.NEXT_PUBLIC_API_URL;
@@ -20,22 +21,7 @@ export async function sendGameEvent(
   }
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      console.error(
-        `[AnalyticsAPI] Failed to send event ${payload.type}:`,
-        response.statusText,
-      );
-      return false;
-    }
-
+    await apiClient.post("/events", payload);
     return true;
   } catch (error) {
     console.error(`[AnalyticsAPI] Error sending event ${payload.type}:`, error);

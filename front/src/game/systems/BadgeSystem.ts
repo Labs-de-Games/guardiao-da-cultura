@@ -35,19 +35,16 @@ export class BadgeSystem {
     try {
       this.badges = await fetchBadges();
 
-      const userId = this.scene.registry.get("userId");
-      if (userId) {
-        try {
-          const userBadges = await fetchUserBadges(userId);
-          userBadges.forEach((ub) => {
-            this.unlockedBadges.add(ub.badgeId);
-          });
-        } catch (e) {
-          console.warn(
-            "[BadgeSystem] Could not sync unlocked badges from server",
-            e,
-          );
-        }
+      try {
+        const userBadges = await fetchUserBadges();
+        userBadges.forEach((ub) => {
+          this.unlockedBadges.add(ub.badgeId);
+        });
+      } catch (e) {
+        console.warn(
+          "[BadgeSystem] Could not sync unlocked badges from server",
+          e,
+        );
       }
 
       this.badges.forEach((badge) => {
@@ -88,9 +85,9 @@ export class BadgeSystem {
 
     this.scene.events.emit(GameEvents.SHOW_BADGE_TOAST, badge);
 
+    this.syncUnlockToServer(badge.id);
     const userId = this.scene.registry.get("userId");
     if (userId) {
-      this.syncUnlockToServer(userId, badge.id);
       this.emitBadgeEarnedEvent(userId, badge);
     }
   }
@@ -108,26 +105,26 @@ export class BadgeSystem {
     });
   }
 
-  private async syncUnlockToServer(userId: string, badgeId: string) {
+  private async syncUnlockToServer(badgeId: string) {
     try {
-      await unlockBadgeOnServer(userId, badgeId);
+      await unlockBadgeOnServer(badgeId);
     } catch (err) {
       console.error(`[BadgeSystem] Failed to sync unlock for ${badgeId}`, err);
-      this.retryUnlock(userId, badgeId);
+      this.retryUnlock(badgeId);
     }
   }
 
-  private retryUnlock(userId: string, badgeId: string, attempt = 1) {
+  private retryUnlock(badgeId: string, attempt = 1) {
     if (attempt > 3) return;
 
     setTimeout(() => {
-      unlockBadgeOnServer(userId, badgeId)
+      unlockBadgeOnServer(badgeId)
         .then(() =>
           console.log(
             `[BadgeSystem] Retry ${attempt} succeeded for ${badgeId}`,
           ),
         )
-        .catch(() => this.retryUnlock(userId, badgeId, attempt + 1));
+        .catch(() => this.retryUnlock(badgeId, attempt + 1));
     }, attempt * 1000);
   }
 

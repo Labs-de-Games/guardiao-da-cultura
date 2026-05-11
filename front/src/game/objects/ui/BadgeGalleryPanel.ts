@@ -71,14 +71,8 @@ export class BadgeGalleryPanel extends Phaser.GameObjects.Container {
   }
 
   private async syncUnlockedFromServer() {
-    const userId = this.scene.registry.get("userId");
-    if (!userId) {
-      this.unlockedIds = [];
-      return;
-    }
-
     try {
-      const userBadges = await fetchUserBadges(userId);
+      const userBadges = await fetchUserBadges();
       this.unlockedIds = userBadges.map((ub) => ub.badgeId);
     } catch {
       this.unlockedIds = [];
