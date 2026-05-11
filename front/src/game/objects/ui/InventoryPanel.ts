@@ -16,6 +16,7 @@ export class InventoryPanel extends BasePanel {
   private hint: Phaser.GameObjects.Text;
   private content: Phaser.GameObjects.Container;
 
+  private currentFontScale: number = 1;
   private panelW: number = LayoutConfig.UI.INVENTORY.MAX_WIDTH;
   private panelH: number = LayoutConfig.UI.INVENTORY.MAX_HEIGHT;
 
@@ -30,8 +31,15 @@ export class InventoryPanel extends BasePanel {
     this.setDepth(LayoutConfig.UI.DEPTHS.INVENTORY);
 
     // Fundo escurecido (Dimmer)
-    this.dimmer = scene.add.rectangle(0, 0, 10, 10, 0x000000, 0.55);
-    this.dimmer.setOrigin(0.5);
+    this.dimmer = scene.add.rectangle(
+      0,
+      0,
+      10,
+      10,
+      LayoutConfig.COLORS.BLACK_HEX,
+      0.55,
+    );
+    this.dimmer.setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.dimmer.setInteractive();
 
     // Container do painel central
@@ -40,18 +48,28 @@ export class InventoryPanel extends BasePanel {
 
     this.title = scene.add
       .text(0, 0, "Mapa das Relíquias", {
-        fontSize: "42px",
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
         color: LayoutConfig.COLORS.PRIMARY_BROWN,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
       .setOrigin(0.5, 0);
 
     this.hint = scene.add
       .text(0, 0, "[TAB] para fechar", {
-        fontSize: "22px",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
         color: LayoutConfig.COLORS.SECONDARY_BROWN,
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
+
+    this.hint = scene.add
+      .text(0, 0, "[TAB] para fechar", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
+        color: LayoutConfig.COLORS.SECONDARY_BROWN,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
     this.content = scene.add.container(0, 0);
 
@@ -73,6 +91,7 @@ export class InventoryPanel extends BasePanel {
     );
 
     this.panel.setPosition(w / 2, h / 2);
+    this.currentFontScale = this.getFontScale(w, h);
 
     this.redrawBg();
 
@@ -84,6 +103,14 @@ export class InventoryPanel extends BasePanel {
     const contentX = -this.panelW / 2 + padding;
     const contentY = topY + 110;
     this.content.setPosition(contentX, contentY);
+
+    this.applyScaledFontSize(this.title, LayoutConfig.FONTS.SIZES.TITLE, w, h);
+    this.applyScaledFontSize(
+      this.hint,
+      LayoutConfig.FONTS.SIZES.METADATA,
+      w,
+      h,
+    );
 
     if (this._isVisible) {
       this.refresh();
@@ -106,7 +133,7 @@ export class InventoryPanel extends BasePanel {
     this.bgGraphics.lineStyle(6, LayoutConfig.COLORS.BORDER_BROWN, 0.85);
     this.bgGraphics.strokeRoundedRect(x + 3, y + 3, w - 6, h - 6, 18);
 
-    this.bgGraphics.lineStyle(2, 0x000000, 0.12);
+    this.bgGraphics.lineStyle(2, LayoutConfig.COLORS.BLACK_HEX, 0.12);
     this.bgGraphics.strokeRoundedRect(x + 14, y + 14, w - 28, h - 28, 14);
   }
 
@@ -129,11 +156,14 @@ export class InventoryPanel extends BasePanel {
       sections++;
       const header = this.scene.add
         .text(0, y, mission.title, {
-          fontSize: "28px",
-          color: "#3b2a1a",
-          fontStyle: "bold",
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: Math.round(
+            LayoutConfig.FONTS.SIZES.BODY * this.currentFontScale,
+          ),
+          color: LayoutConfig.COLORS.PRIMARY_BROWN,
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         })
-        .setOrigin(0, 0);
+        .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
       this.content.add(header);
       y += header.displayHeight + 14;
 
@@ -148,7 +178,7 @@ export class InventoryPanel extends BasePanel {
           sy + slot / 2,
           slot,
           slot,
-          0x000000,
+          LayoutConfig.COLORS.BLACK_HEX,
           0.07,
         );
         slotBg.setStrokeStyle(4, LayoutConfig.COLORS.BORDER_BROWN, 0.78);
@@ -158,10 +188,10 @@ export class InventoryPanel extends BasePanel {
           sy + slot / 2,
           slot - 14,
           slot - 14,
-          0xffffff,
+          LayoutConfig.COLORS.WHITE_HEX,
           0.16,
         );
-        inner.setStrokeStyle(2, 0x000000, 0.1);
+        inner.setStrokeStyle(2, LayoutConfig.COLORS.BLACK_HEX, 0.1);
 
         const textureKey = this.relicTextureByInfoKey[step.infoKey];
         if (textureKey && this.scene.textures.exists(textureKey)) {
@@ -181,9 +211,12 @@ export class InventoryPanel extends BasePanel {
               sy + slot / 2,
               this.getPlaceholderLabel(step.infoKey),
               {
-                fontSize: "18px",
-                color: "#3b2a1a",
-                fontStyle: "bold",
+                fontFamily: LayoutConfig.FONTS.BODY,
+                fontSize: Math.round(
+                  LayoutConfig.FONTS.SIZES.HINT * this.currentFontScale,
+                ),
+                color: LayoutConfig.COLORS.PRIMARY_BROWN,
+                fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
               },
             )
             .setOrigin(0.5);
@@ -202,13 +235,16 @@ export class InventoryPanel extends BasePanel {
           140,
           "Complete uma missão para revelar relíquias no mapa.",
           {
-            fontSize: "26px",
-            color: "#4b3a2a",
+            fontFamily: LayoutConfig.FONTS.BODY,
+            fontSize: Math.round(
+              LayoutConfig.FONTS.SIZES.BODY * this.currentFontScale,
+            ),
+            color: LayoutConfig.COLORS.EMPTY_TEXT,
             wordWrap: { width: Math.min(900, contentW), useAdvancedWrap: true },
-            align: "center",
+            align: LayoutConfig.ALIGN.TEXT_CENTER,
           },
         )
-        .setOrigin(0.5);
+        .setOrigin(...LayoutConfig.ALIGN.CENTER);
       this.content.add(empty);
     }
   }
