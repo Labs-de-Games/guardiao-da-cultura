@@ -767,7 +767,7 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09, 0, 170);
+    this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 170);
     this.levelManager.updateProgress();
   }
 
