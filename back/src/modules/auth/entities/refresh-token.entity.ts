@@ -24,15 +24,15 @@ export class RefreshToken {
   @Column({ type: "timestamp", nullable: true })
   revokedAt!: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   replacedByToken!: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   userAgent!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   ipAddress!: string | null;
 }
