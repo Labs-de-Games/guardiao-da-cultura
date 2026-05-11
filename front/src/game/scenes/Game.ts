@@ -17,7 +17,6 @@ import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHan
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
-import { InteractiveButton } from "../objects/InteractiveButton";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { DraggableItem } from "../objects/interactables/DraggableItem";
 import type { InteractableItem } from "../objects/interactables/InteractableItem";
@@ -30,6 +29,7 @@ import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
+import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -67,6 +67,7 @@ export class Game extends Scene {
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
+  private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   public badgeSystem!: BadgeSystem;
@@ -274,6 +275,12 @@ export class Game extends Scene {
     this.badgeSystem = new BadgeSystem(this);
     this.badgeSystem.initialize();
 
+    this.collectibleSystem = new CollectibleSystem(
+      this,
+      this.scoreManager,
+      this.mapScale,
+    );
+
     this.registry.set("currentLevelId", this.levelId);
     this.analyticsSystem = new AnalyticsSystem(this);
     this.analyticsSystem.track(GameEventType.GAME_STARTED);
@@ -437,62 +444,16 @@ export class Game extends Scene {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
-    const collectiblesLayer = mapData.objectLayers.collectibles;
-    if (collectiblesLayer?.objects?.length) {
-      for (const obj of collectiblesLayer.objects) {
-        const x = (obj.x ?? 0) * this.mapScale;
-        const y = (obj.y ?? 0) * this.mapScale;
-
-        // Extract collectible_id and collectible_type from properties
-        const props = (
-          obj as unknown as { properties?: { name: string; value: string }[] }
-        ).properties;
-        const collectibleId = props?.find(
-          (p) => p.name === "collectible_id",
-        )?.value;
-        const collectibleType = props?.find(
-          (p) => p.name === "collectible_type",
-        )?.value;
-
-        // Find the collectible data from contentData and create sprite
-        let sprite: Phaser.GameObjects.Sprite | null = null;
-        if (collectibleId && collectibleType) {
-          const typeKey = collectibleType.toUpperCase() as
-            | "COLLECT"
-            | "CLUE_VILLAIN"
-            | "CLUE_NEXT";
-          const collectibleData =
-            this.contentData.collectibles[typeKey]?.[collectibleId];
-          if (collectibleData) {
-            const scale = collectibleData.assets.scaleOnMap ?? 2;
-            sprite = this.add
-              .sprite(x, y, collectibleData.assets.sprite)
-              .setScale(scale)
-              .setOrigin(0.5, 1)
-              .setDepth(10);
-          } else {
-            console.warn(
-              `[Game] Collectible data not found for id: ${collectibleId}, type: ${collectibleType}`,
-            );
-          }
-        }
-
-        const btn = new InteractiveButton(this, x, y, {
-          dialogueLines: [],
-          onInteract: () => {
-            this.scoreManager.recordInteractible();
-            if (sprite) sprite.destroy();
-            btn.destroy();
-          },
-        });
-        btn.setPlayerTracking(this.player);
-      }
-    }
-
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
     }
+
+    this.collectibleSystem.registerAllFromLayer(
+      mapData.objectLayers.collectibles,
+      this.contentData,
+      this.player,
+    );
 
     const createdItems = this.objectLayerProcessor.process(
       this,
