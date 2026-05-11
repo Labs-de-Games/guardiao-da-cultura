@@ -389,14 +389,14 @@ export class QuizPanel extends BasePanel {
       this.scoreText.setText("Por pouco");
       this.questionCounterText.setText("Pontuação baixa");
       this.performanceText.setText("Quase lá...");
-    } else if (percentage < 90) {
+    } else if (percentage < 100) {
       this.scoreText.setText("Parabéns!");
       this.questionCounterText.setText("Boa pontuação");
       this.performanceText.setText("Muito bom");
     } else {
       this.scoreText.setText("Parabéns!");
       this.questionCounterText.setText("Pontuação perfeita!");
-      this.performanceText.setText("Perfeito");
+      this.performanceText.setText("Gabaritou");
     }
     this.performanceContainer.setVisible(true);
     this.performanceStar.setTexture(this.calculateStarFillLevel());
