@@ -204,6 +204,12 @@ export class QuizPanel extends BasePanel {
     this.bindKey("ENTER", () => this.selectOption());
   }
 
+  private getScorePercentage(): number {
+    return this.questions.length > 0
+      ? (this.score / this.questions.length) * 100
+      : 0;
+  }
+
   public startQuiz(
     questions: QuizQuestion[],
     scoreManager: ScoreManager,
@@ -287,7 +293,7 @@ export class QuizPanel extends BasePanel {
   }
 
   private calculateStarFillLevel(): string {
-    const percentage = (this.score / this.questions.length) * 100;
+    const percentage = this.getScorePercentage();
     if (percentage > 90) return "ui_star_full";
     if (percentage > 70) return "ui_star_3q";
     if (percentage > 50) return "ui_star_2q";
@@ -301,12 +307,11 @@ export class QuizPanel extends BasePanel {
       | undefined;
     const baseW = source?.width ?? 457;
 
-    const panelWidth = 1200;
     const sidePadding = 140;
     const starCount = 5;
     const gapRatio = 0.18;
 
-    const maxRowWidth = Math.max(0, panelWidth - sidePadding * 2);
+    const maxRowWidth = Math.max(0, this.panelWidth - sidePadding * 2);
     const denom = starCount + (starCount - 1) * gapRatio;
     const targetW = denom > 0 ? maxRowWidth / denom : maxRowWidth;
     const scale = baseW > 0 ? targetW / baseW : 1;
@@ -314,84 +319,30 @@ export class QuizPanel extends BasePanel {
     return scale;
   }
 
-  private showFinalPerformance() {
-    this.isShowingPerformance = true;
-    this.questionTitle.setVisible(false);
-    this.questionText.setVisible(false);
-    this.optionButtons.forEach((b) => {
-      b.destroy(true);
-    });
-    const percentage = (this.score / this.questions.length) * 100;
-    this.optionButtons = [];
-    if (percentage < 70) {
-      this.scoreText.setText("Por pouco");
-      this.questionCounterText.setText("Pontuação baixa");
-      this.performanceText.setText("Quase lá...");
-    } else if (percentage < 90) {
-      this.scoreText.setText("Parabéns!");
-      this.questionCounterText.setText("Boa pontuação");
-      this.performanceText.setText("Muito bom");
-    } else {
-      this.scoreText.setText("Parabéns!");
-      this.questionCounterText.setText("Pontuação perfeita!");
-      this.performanceText.setText("Perfeito");
-    }
-    this.performanceContainer.setVisible(true);
-    this.performanceStar.setTexture(this.calculateStarFillLevel());
-    this.performanceStar.setScale(this.calculateResultStarScale());
-    if (percentage >= 70) {
-      this.footerHintText.setText("Pressione Espaço para ver resultados");
-    } else {
-      this.footerHintText.setText("Pressione Espaço para fechar");
-    }
-  }
-
-  private handlePerformanceSpace() {
-    const percentage = (this.score / this.questions.length) * 100;
-
-    if (percentage >= 70) {
-      this.shouldShowResultsAfterHide = true;
-    }
-
-    this.hide();
-  }
-
-  private updateSelectionVisuals() {
-    for (let i = 0; i < this.optionButtons.length; i++) {
-      const b = this.optionButtons[i];
-      b.setSelected(i === this.selectedOptionIndex);
-    }
-  }
-
-  private showAnswerFeedback(optionIndex: number, isCorrect: boolean) {
-    this.optionButtons[optionIndex]?.showFeedback(isCorrect);
-  }
-
-  private showQuestion() {
-    const question = this.questions[this.currentQuestionIndex];
-    if (!question) return;
-
-    this.selectedOptionIndex = 0;
-
+  private resetOptionButtons() {
     this.optionButtons.forEach((b) => {
       b.destroy(true);
     });
     this.optionButtons = [];
+  }
 
+  private updateQuestionHeader() {
     this.questionTitle.setText(
       `Desafio ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
     );
-    this.questionText.setText(question.question);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
       `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}/${String(this.questions.length).padStart(2, "0")}`,
     );
+  }
 
+  private syncProgressUI() {
     this.positionProgressTracker();
     this.progressTracker.setCurrentIndex(this.currentQuestionIndex);
     this.updateProgressTracker();
+  }
 
-    const options = question.options.slice(0, 4);
+  private createOptionButtons(options: string[]) {
     const colGap = 50;
     const rowGap = 22;
 
@@ -417,7 +368,6 @@ export class QuizPanel extends BasePanel {
     };
 
     const buttonPanel = this.scene.add.container(0, 80);
-
     for (let i = 0; i < options.length; i++) {
       const pos = positions[i];
       const btn = new QuizButton(this.scene, pos.x, pos.y, options[i], {
@@ -427,7 +377,69 @@ export class QuizPanel extends BasePanel {
       buttonPanel.add(btn);
     }
     this.add(buttonPanel);
+  }
 
+  private showFinalPerformance() {
+    this.isShowingPerformance = true;
+    this.questionTitle.setVisible(false);
+    this.questionText.setVisible(false);
+    this.resetOptionButtons();
+    const percentage = this.getScorePercentage();
+    if (percentage < 70) {
+      this.scoreText.setText("Por pouco");
+      this.questionCounterText.setText("Pontuação baixa");
+      this.performanceText.setText("Quase lá...");
+    } else if (percentage < 90) {
+      this.scoreText.setText("Parabéns!");
+      this.questionCounterText.setText("Boa pontuação");
+      this.performanceText.setText("Muito bom");
+    } else {
+      this.scoreText.setText("Parabéns!");
+      this.questionCounterText.setText("Pontuação perfeita!");
+      this.performanceText.setText("Perfeito");
+    }
+    this.performanceContainer.setVisible(true);
+    this.performanceStar.setTexture(this.calculateStarFillLevel());
+    this.performanceStar.setScale(this.calculateResultStarScale());
+    if (percentage >= 70) {
+      this.footerHintText.setText("Pressione Espaço para ver resultados");
+    } else {
+      this.footerHintText.setText("Pressione Espaço para fechar");
+    }
+  }
+
+  private handlePerformanceSpace() {
+    const percentage = this.getScorePercentage();
+
+    if (percentage >= 70) {
+      this.shouldShowResultsAfterHide = true;
+    }
+
+    this.hide();
+  }
+
+  private updateSelectionVisuals() {
+    for (let i = 0; i < this.optionButtons.length; i++) {
+      const b = this.optionButtons[i];
+      b.setSelected(i === this.selectedOptionIndex);
+    }
+  }
+
+  private showAnswerFeedback(optionIndex: number, isCorrect: boolean) {
+    this.optionButtons[optionIndex]?.showFeedback(isCorrect);
+  }
+
+  private showQuestion() {
+    const question = this.questions[this.currentQuestionIndex];
+    if (!question) return;
+
+    this.selectedOptionIndex = 0;
+    this.resetOptionButtons();
+    this.updateQuestionHeader();
+    this.questionText.setText(question.question);
+    this.syncProgressUI();
+    const options = question.options.slice(0, 4);
+    this.createOptionButtons(options);
     this.updateSelectionVisuals();
   }
 
@@ -459,10 +471,10 @@ export class QuizPanel extends BasePanel {
   private selectOption() {
     if (!this._isVisible) return;
     if (this.isProcessingAnswer) return;
-
     if (this.optionButtons.length === 0) return;
 
     const question = this.questions[this.currentQuestionIndex];
+    if (!question) return;
     const isCorrect = this.selectedOptionIndex === question.correctOptionIndex;
     if (isCorrect) {
       this.score++;
