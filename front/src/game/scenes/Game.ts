@@ -49,6 +49,7 @@ import { DataUtils } from "../utils/DataUtils";
 export class Game extends Scene {
   player!: Player;
   rat!: Enemy;
+  private hasInteractedWithRat: boolean = false;
   npcs: Npc[] = [];
   questManager!: QuestManager;
   private scoreManager!: ScoreManager;
@@ -533,6 +534,10 @@ export class Game extends Scene {
     this.player.on("interact-placeholder", () => {
       if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
 
+      if (this.tryInteractWithRat()) {
+        return;
+      }
+
       const label = this.labelSystem.getNearbyLabel(
         this.player.x,
         this.player.y,
@@ -620,6 +625,32 @@ export class Game extends Scene {
     });
 
     this.setupCameras();
+  }
+
+  private tryInteractWithRat(): boolean {
+    if (!this.player || !this.rat || !this.rat.active) return false;
+
+    const isNearRat =
+      Phaser.Math.Distance.Between(
+        this.player.x,
+        this.player.y,
+        this.rat.x,
+        this.rat.y,
+      ) <= 130;
+
+    const isOverlappingRat = this.physics.world.overlap(this.player, this.rat);
+
+    if (!isNearRat && !isOverlappingRat) return false;
+
+    this.rat.fleeLeftAndDisappear();
+
+    if (!this.hasInteractedWithRat) {
+      this.hasInteractedWithRat = true;
+      const currentInspected = this.registry.get("objects_inspected") || 0;
+      this.registry.set("objects_inspected", currentInspected + 1);
+    }
+
+    return true;
   }
 
   public startQuiz(missionId: string) {
