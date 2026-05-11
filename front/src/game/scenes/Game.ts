@@ -615,6 +615,7 @@ export class Game extends Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
+      this.collectibleSystem?.destroy();
       this.badgeSystem.destroy();
     });
 

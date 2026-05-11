@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractiveButton } from "../objects/InteractiveButton";
 import type { ScoreManager } from "../objects/ScoreManager";
@@ -6,8 +7,11 @@ import type {
   CollectibleData,
   CollectiblesJson,
   ContentJson,
+  LabelInfoData,
 } from "../types/GameDataTypes";
 import { TiledUtils } from "../utils/TiledUtils";
+
+type CollectibleInspectMode = "idle" | "inspect" | "label";
 
 export interface CollectibleInstance {
   collectibleId: string;
@@ -23,9 +27,14 @@ export class CollectibleSystem {
   private readonly scoreManager: ScoreManager;
   private readonly mapScale: number;
   private collectibles: CollectibleInstance[] = [];
+  private activeCollectible: CollectibleInstance | null = null;
+  private inspectMode: CollectibleInspectMode = "idle";
   private inspectContainer: Phaser.GameObjects.Container | null = null;
-  private inspectKeyHandler?: (event: KeyboardEvent) => void;
-  private inspectOpenedAt: number = 0;
+  private readonly dialogueEndedHandler = () => {
+    if (this.inspectMode === "label") {
+      this.closeInteraction(true);
+    }
+  };
 
   constructor(
     scene: Phaser.Scene,
@@ -35,6 +44,8 @@ export class CollectibleSystem {
     this.scene = scene;
     this.scoreManager = scoreManager;
     this.mapScale = mapScale;
+
+    this.scene.events.on(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
   }
 
   public registerAllFromLayer(
@@ -81,12 +92,10 @@ export class CollectibleSystem {
   }
 
   public destroy() {
+    this.scene.events.off(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
     this.hideInspectCard();
-
-    if (this.inspectKeyHandler) {
-      this.scene.input.keyboard?.off("keydown", this.inspectKeyHandler);
-      this.inspectKeyHandler = undefined;
-    }
+    this.activeCollectible = null;
+    this.inspectMode = "idle";
 
     for (const collectible of this.collectibles) {
       collectible.button.destroy();
@@ -117,12 +126,7 @@ export class CollectibleSystem {
     const button = new InteractiveButton(this.scene, x, y, {
       dialogueLines: [],
       onInteract: () => {
-        if (!instance.isCollected) {
-          this.scoreManager.recordInteractible();
-          instance.isCollected = true;
-        }
-
-        this.showInspectCard(instance.collectibleData, player);
+        this.handleCollectibleInteraction(instance, player);
       },
     });
     button.setPlayerTracking(player);
@@ -139,11 +143,45 @@ export class CollectibleSystem {
     this.collectibles.push(instance);
   }
 
+  private handleCollectibleInteraction(
+    instance: CollectibleInstance,
+    player: Phaser.Physics.Arcade.Sprite,
+  ) {
+    if (this.activeCollectible && this.activeCollectible !== instance) {
+      return;
+    }
+
+    if (!this.activeCollectible) {
+      this.activeCollectible = instance;
+
+      if (!instance.isCollected) {
+        this.scoreManager.recordInteractible();
+        instance.isCollected = true;
+      }
+
+      this.showInspectCard(instance, player);
+      this.showOpinionDialogue(instance);
+      return;
+    }
+
+    if (this.inspectMode === "inspect") {
+      if (this.isEvidence(instance.collectibleType)) {
+        this.closeInteraction();
+        return;
+      }
+
+      this.showCollectibleLabel(instance.collectibleData);
+      this.inspectMode = "label";
+    }
+  }
+
   private showInspectCard(
-    collectibleData: CollectibleData,
+    instance: CollectibleInstance,
     player: Phaser.Physics.Arcade.Sprite,
   ) {
     this.hideInspectCard();
+
+    this.inspectMode = "inspect";
 
     const camera = this.scene.cameras.main;
     const viewportW = camera.width;
@@ -177,41 +215,96 @@ export class CollectibleSystem {
       .rectangle(0, 0, cardSize - 32, cardSize - 32, 0xffffff, 1)
       .setStrokeStyle(2, 0x1f1f1f, 0.8);
 
-    const inspectScale = collectibleData.assets.scaleOnInspect ?? 6;
+    const inspectScale = instance.collectibleData.assets.scaleOnInspect ?? 6;
     const inspectSprite = this.scene.add
-      .sprite(0, 0, collectibleData.assets.sprite)
+      .sprite(0, 0, instance.collectibleData.assets.sprite)
       .setScale(inspectScale)
       .setOrigin(0.5, 0.5);
 
     container.add([shadow, paper, innerFrame, inspectSprite]);
 
     this.inspectContainer = container;
-    this.inspectOpenedAt = this.scene.time.now;
-
-    if (!this.inspectKeyHandler) {
-      this.inspectKeyHandler = (event: KeyboardEvent) => {
-        if (!this.inspectContainer) return;
-        if (this.scene.time.now - this.inspectOpenedAt < 120) return;
-
-        const isEscape = event.key.toLowerCase() === "escape";
-        const isSpace =
-          event.code === "Space" ||
-          event.key === " " ||
-          event.key === "Spacebar";
-
-        if (isEscape || isSpace) {
-          this.hideInspectCard();
-        }
-      };
-
-      this.scene.input.keyboard?.on("keydown", this.inspectKeyHandler);
-    }
   }
 
   private hideInspectCard() {
     if (!this.inspectContainer) return;
     this.inspectContainer.destroy(true);
     this.inspectContainer = null;
+  }
+
+  private showOpinionDialogue(instance: CollectibleInstance) {
+    const opinion = instance.collectibleData.educational.opinion?.trim();
+
+    const startDialogue = () => {
+      if (!this.activeCollectible || this.activeCollectible !== instance) {
+        return;
+      }
+
+      if (!opinion) {
+        if (this.isEvidence(instance.collectibleType)) {
+          this.closeInteraction(true);
+        } else {
+          this.showCollectibleLabel(instance.collectibleData);
+          this.inspectMode = "label";
+        }
+        return;
+      }
+
+      this.scene.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        [opinion],
+        () => {
+          if (!this.activeCollectible || this.activeCollectible !== instance) {
+            return;
+          }
+
+          if (this.isEvidence(instance.collectibleType)) {
+            this.closeInteraction(true);
+            return;
+          }
+
+          this.showCollectibleLabel(instance.collectibleData);
+          this.inspectMode = "label";
+        },
+      );
+    };
+
+    this.scene.time.delayedCall(0, startDialogue);
+  }
+
+  private showCollectibleLabel(collectibleData: CollectibleData) {
+    this.scene.events.emit(
+      GameEvents.SHOW_LABEL_REQUEST,
+      this.buildLabelInfo(collectibleData),
+    );
+  }
+
+  private closeInteraction(force: boolean = false) {
+    if (!force && this.inspectMode === "idle") {
+      return;
+    }
+
+    this.hideInspectCard();
+    this.activeCollectible = null;
+    this.inspectMode = "idle";
+  }
+
+  private isEvidence(collectibleType: keyof CollectiblesJson): boolean {
+    return collectibleType !== "COLLECT";
+  }
+
+  private buildLabelInfo(collectibleData: CollectibleData): LabelInfoData {
+    return {
+      title: collectibleData.metadata.title || collectibleData.id,
+      author: collectibleData.metadata.author || "",
+      description: collectibleData.educational.description || "",
+      year: collectibleData.metadata.year,
+      dimensions:
+        collectibleData.metadata.dimensions ||
+        collectibleData.educational.dimensions,
+      medium: collectibleData.educational.medium,
+      place: collectibleData.metadata.place,
+    };
   }
 
   private getCardPosition(

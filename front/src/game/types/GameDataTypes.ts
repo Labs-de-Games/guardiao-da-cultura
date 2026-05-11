@@ -94,12 +94,18 @@ export interface MessagesJson {
 }
 
 export interface CollectibleMetadata {
-  name: string;
-  category: string;
+  title: string;
+  author?: string;
+  year?: string;
+  place?: string;
+  dimensions?: string;
 }
 
 export interface CollectibleEducational {
   description: string;
+  medium?: string;
+  opinion?: string;
+  dimensions?: string;
 }
 
 export interface CollectibleAssets {
