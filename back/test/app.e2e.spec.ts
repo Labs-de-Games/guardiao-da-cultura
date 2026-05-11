@@ -13,7 +13,7 @@ import { UserProgress } from "../src/modules/progression/user-progress.entity";
 import { UserScore } from "../src/modules/scoring/user-score.entity";
 import { User } from "../src/modules/users/user.entity";
 
-class MockDatabaseModule { }
+class MockDatabaseModule {}
 
 describe("AppController (e2e)", () => {
   let app: INestApplication;

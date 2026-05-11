@@ -25,12 +25,19 @@ const quizEventSchema = z.object({
 export class GameService {
   constructor(private readonly eventEmitter: EventEmitter2) {}
 
-  async processEvent(payload: GameEventPayload): Promise<void> {
-    console.log(`[GameService] Received event: ${payload.type}`, payload);
+  async processEvent(
+    payload: GameEventPayload,
+    userId?: string,
+  ): Promise<void> {
+    const finalUserId = userId ?? payload.userId;
+    console.log(
+      `[GameService] Received event: ${payload.type} for user: ${finalUserId}`,
+      payload,
+    );
     // Validate quiz events with Zod
     if (payload.type === "quiz.completed" || payload.type === "quiz.failed") {
       try {
-        quizEventSchema.parse(payload);
+        quizEventSchema.parse({ ...payload, userId: finalUserId });
       } catch (error) {
         if (error instanceof z.ZodError) {
           const messages = error.issues.map(
@@ -44,6 +51,7 @@ export class GameService {
 
     const event: GameEventPayload = {
       ...payload,
+      userId: finalUserId,
       timestamp: payload.timestamp ?? new Date(),
     };
 
