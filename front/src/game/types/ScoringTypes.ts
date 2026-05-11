@@ -17,7 +17,7 @@ export interface FloorScore {
   completedAt: IsoTimestamp | null;
 }
 
-export interface CollectiblesScore {
+export interface InteractiblesScore {
   total: number; // expected: 4
   interactionsCount: number; // 0..total
   quartersEarned: number; // 0..total
@@ -46,7 +46,7 @@ export type ScoringEventRecord =
       quartersEarned: number;
       occurredAt: IsoTimestamp;
     }
-  | { type: "collectible"; occurredAt: IsoTimestamp }
+  | { type: "interactible"; occurredAt: IsoTimestamp }
   | {
       type: "quiz-completed";
       totalQuestions: number;
@@ -61,7 +61,7 @@ export interface ScoringPayload {
   startedAt: IsoTimestamp;
 
   floors: [FloorScore, FloorScore, FloorScore];
-  collectibles: CollectiblesScore;
+  interactibles: InteractiblesScore;
   quiz: QuizScore;
 
   totalQuarters: number; // 0..20

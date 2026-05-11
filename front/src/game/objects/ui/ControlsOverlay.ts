@@ -44,7 +44,8 @@ export class ControlsOverlay extends BasePanel {
         0,
         0,
         "WASD ou SETAS: andar\n" +
-          "ESPAÇO: interagir\n" +
+          "E: interagir\n" +
+          "SHIFT: modo inspecionar\n" +
           "TAB: abrir o mapa das relíquias\n" +
           "Q: ver novamente os controles",
         {
@@ -82,10 +83,7 @@ export class ControlsOverlay extends BasePanel {
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_OPENED);
 
     this.onEscHandler = (event: KeyboardEvent) => {
-      const isEscape = event.key.toLowerCase() === "escape";
-      const isSpace =
-        event.code === "Space" || event.key === " " || event.key === "Spacebar";
-      if (isEscape || isSpace) {
+      if (event.key.toLowerCase() === "escape") {
         this.hide();
       }
     };

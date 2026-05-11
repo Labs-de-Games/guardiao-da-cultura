@@ -3,11 +3,11 @@ import { GameEvents } from "../../constants/GameEvents";
 import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
 import type { Game } from "../../scenes/Game";
 import type { PlaceholderInstance } from "../../systems/PlaceholderSystem";
-import { InteractiveType } from "../../types/InteractiveTypes";
+import { InteractableType } from "../../types/InteractableTypes";
 import type { BaseMechanicHandler } from "./BaseMechanicHandler";
 
-export class PhotoMechanicHandler implements BaseMechanicHandler {
-  public readonly type = InteractiveType.PHOTO;
+export class PictureMechanicHandler implements BaseMechanicHandler {
+  public readonly type = InteractableType.PICTURE;
 
   public handleInteraction(
     scene: Phaser.Scene,
@@ -39,7 +39,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
 
       if (invIndex === -1) {
         console.warn(
-          `[PhotoMechanic] ⚠️ Item "${cleanPlaced}" não encontrado no inventário ou já utilizado.`,
+          `[PictureMechanic] ⚠️ Item "${cleanPlaced}" não encontrado no inventário ou já utilizado.`,
         );
         return;
       }

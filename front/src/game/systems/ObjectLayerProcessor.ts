@@ -4,7 +4,7 @@ import type { IObjectFactory } from "../factories/IObjectFactory";
 import { PaintingFactory } from "../factories/PaintingFactory";
 import { PhotoFactory } from "../factories/PhotoFactory";
 import { SculptureFactory } from "../factories/SculptureFactory";
-import type { InteractiveItem } from "../objects/interactives/InteractiveItem";
+import type { InteractableItem } from "../objects/interactables/InteractableItem";
 import type { ContentJson, WorkData } from "../types/GameDataTypes";
 
 import { TiledUtils } from "../utils/TiledUtils";
@@ -24,9 +24,9 @@ export class ObjectLayerProcessor {
     this.factories.set("painting", new PaintingFactory());
     this.factories.set("photo", new PhotoFactory());
     this.factories.set("photos", new PhotoFactory());
-    this.factories.set("photo", new PhotoFactory());
-    this.factories.set("photos", new PhotoFactory());
-    this.factories.set("photo_chunk", new PhotoFactory());
+    this.factories.set("picture", new PhotoFactory());
+    this.factories.set("pictures", new PhotoFactory());
+    this.factories.set("picture_chunk", new PhotoFactory());
     this.factories.set("chunk", new PhotoFactory());
   }
 
@@ -39,8 +39,8 @@ export class ObjectLayerProcessor {
     mapData: MapData,
     contentJson?: ContentJson,
     scale: number = LayoutConfig.GAME.MAP_SCALE,
-  ): InteractiveItem[] {
-    const items: InteractiveItem[] = [];
+  ): InteractableItem[] {
+    const items: InteractableItem[] = [];
 
     for (const [layerName, layer] of Object.entries(mapData.objectLayers)) {
       layer.objects.forEach((obj: Phaser.Types.Tilemaps.TiledObject) => {
