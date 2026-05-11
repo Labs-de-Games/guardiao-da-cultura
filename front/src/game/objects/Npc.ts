@@ -97,6 +97,22 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     this.questManager = qm;
   }
 
+  /** Move NPC (and related visuals/physics) to new world coordinates */
+  public teleportTo(x: number, y: number) {
+    this.setPosition(x, y);
+    const body = this.body as Phaser.Physics.Arcade.Body | undefined;
+    if (body) {
+      try {
+        body.reset(x, y);
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (this.exclamationIcon) {
+      this.exclamationIcon.setPosition(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y);
+    }
+  }
+
   private handleInteraction() {
     if (!this.questManager) {
       console.warn("[Npc] QuestManager not found!");

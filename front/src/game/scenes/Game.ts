@@ -442,6 +442,26 @@ export class Game extends Scene {
       npc.setQuestManager(this.questManager);
     }
 
+    // Teleport curator NPC when either sculptures or paintings are marked done
+    this.questManager.on(
+      "info-collected",
+      (payload: { missionId: string; infoKey: string }) => {
+        const key = payload.infoKey;
+        if (
+          key === MissionKeys.PAINTINGS_DONE ||
+          key === MissionKeys.SCULPTURES_DONE
+        ) {
+          const curator = this.npcs.find((n) => {
+            const ent = n as unknown as INpcEntity;
+            return ent.config && ent.config.missionId === MissionIds.CURATOR;
+          });
+          if (curator) {
+            (curator as unknown as Npc).teleportTo(2100, 400);
+          }
+        }
+      },
+    );
+
     this.collectibleSystem.registerAllFromLayer(
       mapData.objectLayers.collectibles,
       this.contentData,
