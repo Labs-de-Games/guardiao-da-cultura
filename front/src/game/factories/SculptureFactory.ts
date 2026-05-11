@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
-import { DraggableItem } from "../objects/interactables/DraggableItem";
+import { DraggableItem } from "../objects/interactives/DraggableItem";
 import type { WorkData } from "../types/GameDataTypes";
-import { InteractableType } from "../types/InteractableTypes";
+import { InteractiveType } from "../types/InteractiveTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
@@ -42,7 +42,7 @@ export class SculptureFactory implements IObjectFactory {
       texture: texture,
       name: data?.metadata?.title || name,
       id: data?.id || name,
-      type: InteractableType.SCULPTURE,
+      type: InteractiveType.SCULPTURE,
     };
 
     const item = new DraggableItem(scene, config);

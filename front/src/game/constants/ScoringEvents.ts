@@ -2,7 +2,7 @@ export const ScoringEvents = {
   SCORE_UPDATED: "score-updated",
   FLOOR_ERROR_RECORDED: "floor-error-recorded",
   FLOOR_COMPLETED: "floor-completed",
-  INTERACTIBLE_USED: "interactible-used",
+  COLLECTIBLE_USED: "collectible-used",
   QUIZ_COMPLETED: "quiz-completed",
 } as const;
 

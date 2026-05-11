@@ -155,8 +155,15 @@ export class CollectibleSystem {
       this.activeCollectible = instance;
 
       if (!instance.isCollected) {
-        this.scoreManager.recordInteractible();
+        this.scoreManager.recordCollectible();
         instance.isCollected = true;
+
+        // Track secret clue collection for Detetive achievement (CLUE_VILLAIN only)
+        if (instance.collectibleType === "CLUE_VILLAIN") {
+          this.scene.events.emit(GameEvents.INFO_COLLECTED, {
+            infoKey: `pista_${instance.collectibleId}`,
+          });
+        }
       }
 
       this.showInspectCard(instance, player);
