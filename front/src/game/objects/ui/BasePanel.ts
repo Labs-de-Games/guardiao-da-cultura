@@ -44,7 +44,7 @@ export abstract class BasePanel extends Phaser.GameObjects.Container {
       0,
       width,
       height,
-      LayoutConfig.COLORS.QUIZ_BG,
+      LayoutConfig.COLORS.STANDARD_BG,
       0.95,
     );
     bg.setStrokeStyle(

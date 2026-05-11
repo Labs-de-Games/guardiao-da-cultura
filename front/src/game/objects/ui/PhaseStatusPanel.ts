@@ -39,7 +39,7 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
       0,
       LayoutConfig.UI.PANEL_WIDTH,
       110,
-      LayoutConfig.COLORS.QUIZ_BG,
+      LayoutConfig.COLORS.STANDARD_BG,
       0.75,
     );
     bg.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
