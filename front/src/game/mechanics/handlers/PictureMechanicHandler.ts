@@ -122,7 +122,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
 
       gameScene.add
         .image(cx, cy, fullPhotoKey)
-        .setScale(scale * 2)
+        .setScale(scale * 2.7)
         .setDepth(2);
 
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
