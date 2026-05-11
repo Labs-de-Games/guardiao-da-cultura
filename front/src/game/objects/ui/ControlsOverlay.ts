@@ -43,10 +43,12 @@ export class ControlsOverlay extends BasePanel {
       .text(
         0,
         0,
-        "WASD ou SETAS: andar\n" +
-          "ESPAÇO: interagir\n" +
-          "TAB: abrir o mapa das relíquias\n" +
-          "Q: ver novamente os controles",
+        "Q: rever controles" +
+          "WASD ou SETAS DIRECIONAIS: andar, subir e descer\n" +
+          "ESPAÇO: pular\n" +
+          "SHIFT: interagir\n" +
+          "TAB: painel\n" +
+          "ESC: fechar\n",
         {
           fontSize: "28px",
           color: LayoutConfig.COLORS.WHITE,
@@ -83,9 +85,8 @@ export class ControlsOverlay extends BasePanel {
 
     this.onEscHandler = (event: KeyboardEvent) => {
       const isEscape = event.key.toLowerCase() === "escape";
-      const isSpace =
-        event.code === "Space" || event.key === " " || event.key === "Spacebar";
-      if (isEscape || isSpace) {
+      const isShift = event.key.toLowerCase() === "shift";
+      if (isEscape || isShift) {
         this.hide();
       }
     };

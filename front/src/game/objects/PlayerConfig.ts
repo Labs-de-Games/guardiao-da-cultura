@@ -220,6 +220,7 @@ export const PLAYER_KEYS = {
   S: "S",
   D: "D",
   SPACE: "SPACE",
+  SHIFT: "SHIFT",
   E: "E",
 } as const;
 
