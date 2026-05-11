@@ -7,8 +7,6 @@ export const GameEvents = {
 
   CONTROLS_OVERLAY_OPENED: "controls-overlay-opened",
   CONTROLS_OVERLAY_CLOSED: "controls-overlay-closed",
-  INVENTORY_OPENED: "inventory-opened",
-  INVENTORY_CLOSED: "inventory-closed",
 
   SHOW_DIALOGUE_REQUEST: "show-dialogue-request",
   SHOW_QUIZ_REQUEST: "show-quiz-request",

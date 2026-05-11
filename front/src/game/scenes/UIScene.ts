@@ -8,7 +8,6 @@ import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
-import { InventoryPanel } from "../objects/ui/InventoryPanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
@@ -37,7 +36,6 @@ export class UIScene extends Scene {
   // Componentes Especialistas
   private root!: Phaser.GameObjects.Container;
   private statusPanel!: PhaseStatusPanel;
-  private inventoryPanel!: InventoryPanel;
   private controlsOverlay!: ControlsOverlay;
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
@@ -78,11 +76,6 @@ export class UIScene extends Scene {
       "Museu antigo",
       this.missionsTotal,
       this.questManager,
-    );
-    this.inventoryPanel = new InventoryPanel(
-      this,
-      this.questManager,
-      this.missionDefs,
     );
     this.controlsOverlay = new ControlsOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
@@ -233,11 +226,6 @@ export class UIScene extends Scene {
   }
 
   private setupKeyboardListeners() {
-    this.input.keyboard?.on("keydown-TAB", (e: KeyboardEvent) => {
-      e.preventDefault();
-      this.toggleInventory();
-    });
-
     this.input.keyboard?.on("keydown-Q", (e: KeyboardEvent) => {
       e.preventDefault();
       this.toggleControls();
@@ -263,7 +251,6 @@ export class UIScene extends Scene {
     this.cameras.main.setSize(w, h);
 
     this.statusPanel.layout(w, h);
-    this.inventoryPanel.layout(w, h);
     this.controlsOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
@@ -280,18 +267,6 @@ export class UIScene extends Scene {
     this.activeMissionIds.forEach((id) => {
       this.refreshMissionSteps(id);
     });
-    if (this.inventoryPanel.isVisible) this.inventoryPanel.refresh();
-  }
-
-  private toggleInventory() {
-    if (this.inventoryPanel.isVisible) {
-      this.inventoryPanel.hide();
-      return;
-    }
-
-    if (this.canShowOverlay()) {
-      this.inventoryPanel.show();
-    }
   }
 
   private toggleControls() {

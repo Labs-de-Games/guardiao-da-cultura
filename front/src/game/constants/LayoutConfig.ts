@@ -84,13 +84,6 @@ export const LayoutConfig = {
     PANEL_WIDTH: 360,
     PANEL_BORDER_WIDTH: 4,
     PANEL_BORDER_COLOR: 0xffffff,
-    INVENTORY: {
-      MAX_WIDTH: 1320,
-      MAX_HEIGHT: 880,
-      PADDING: 34,
-      SLOT_SIZE: 128,
-      SLOT_GAP: 18,
-    },
     TOAST: {
       WIDTH: 860,
       HEIGHT: 120,
