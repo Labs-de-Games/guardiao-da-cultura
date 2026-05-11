@@ -37,12 +37,20 @@ export class Player
 
   private setPhysicsBodyForVisualScale(scale: number) {
     const isDragging = scale === PLAYER_PHYSICS.DRAGGING_SCALE;
-    const hitbox = isDragging
-      ? PLAYER_PHYSICS.DRAGGING_HITBOX
-      : PLAYER_PHYSICS.HITBOX;
-    const hitboxOffset = isDragging
-      ? PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET
-      : PLAYER_PHYSICS.HITBOX_OFFSET;
+    const isJumping = this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key;
+
+    let hitbox: { readonly WIDTH: number; readonly HEIGHT: number } =
+      PLAYER_PHYSICS.HITBOX;
+    let hitboxOffset: { readonly X: number; readonly Y: number } =
+      PLAYER_PHYSICS.HITBOX_OFFSET;
+
+    if (isDragging) {
+      hitbox = PLAYER_PHYSICS.DRAGGING_HITBOX;
+      hitboxOffset = PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET;
+    } else if (isJumping) {
+      hitbox = PLAYER_PHYSICS.JUMP_HITBOX;
+      hitboxOffset = PLAYER_PHYSICS.JUMP_HITBOX_OFFSET;
+    }
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
     const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
@@ -385,7 +393,9 @@ export class Player
             const walkAnim = this.isCarrying
               ? PLAYER_ANIMS.CARRY_WALK.key
               : PLAYER_ANIMS.WALK.key;
+            const changed = this.anims.currentAnim?.key !== walkAnim;
             this.anims.play(walkAnim, true);
+            if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
           }
           body.velocity.x -= accel;
           if (!this.isGrabbing) this.setFlipX(true);
@@ -398,7 +408,9 @@ export class Player
             const walkAnim = this.isCarrying
               ? PLAYER_ANIMS.CARRY_WALK.key
               : PLAYER_ANIMS.WALK.key;
+            const changed = this.anims.currentAnim?.key !== walkAnim;
             this.anims.play(walkAnim, true);
+            if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
           }
           body.velocity.x += accel;
           if (!this.isGrabbing) this.setFlipX(false);
@@ -407,7 +419,9 @@ export class Player
         const idleAnim = this.isCarrying
           ? PLAYER_ANIMS.CARRY_IDLE.key
           : PLAYER_ANIMS.IDLE.key;
+        const changed = this.anims.currentAnim?.key !== idleAnim;
         this.anims.play(idleAnim, true);
+        if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
       }
     }
 
@@ -446,6 +460,7 @@ export class Player
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
       if (!this.isCarrying) {
         this.anims.play(PLAYER_ANIMS.JUMP.key, true);
+        this.setPhysicsBodyForVisualScale(this.scaleX);
       }
     }
 

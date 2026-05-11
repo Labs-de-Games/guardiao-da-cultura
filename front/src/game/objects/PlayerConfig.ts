@@ -93,7 +93,14 @@ export const PLAYER_PHYSICS = {
     X: 10,
     Y: -1,
   },
-
+  JUMP_HITBOX: {
+    WIDTH: 12,
+    HEIGHT: 38,
+  },
+  JUMP_HITBOX_OFFSET: {
+    X: 18,
+    Y: 5,
+  },
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
 
