@@ -483,8 +483,7 @@ export class Player
 
     if (this.isCarrying && this.carriedItem) {
       // Offset so the base of the item rests near the player's hands (above their head)
-      const offsetY =
-        this.displayHeight / 2 + this.carriedItem.displayHeight / 2 - 10;
+      const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
       this.carriedItem.setDepth(this.depth + 1);
@@ -497,14 +496,18 @@ export class Player
     let closestItem: DraggableItem | null = null;
     let minDist: number = GRAB_DIST;
 
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
     for (const item of this.draggableRegistry) {
       if (!item.input?.enabled) continue;
 
-      const itemBody = item.body as Phaser.Physics.Arcade.Body | undefined;
-      const itemX = itemBody?.center?.x ?? item.x;
-      const itemY = itemBody?.center?.y ?? item.y;
-
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, itemX, itemY);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
       if (dist < minDist) {
         minDist = dist;
         closestItem = item;
@@ -567,10 +570,18 @@ export class Player
     let closestItem: CarryableItem | null = null;
     let minDist: number = GRAB_DIST;
 
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
     for (const item of this.carryableRegistry) {
       if (!item.input?.enabled || item.isCarried) continue;
 
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
       if (dist < minDist) {
         minDist = dist;
         closestItem = item;
