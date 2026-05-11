@@ -205,7 +205,7 @@ export class LabelPanel extends BasePanel {
       data.dimensions,
       data.medium,
       data.place,
-    ].filter((value): value is string => Boolean(value && value.trim()));
+    ].filter((value): value is string => Boolean(value?.trim()));
 
     return fields;
   }
