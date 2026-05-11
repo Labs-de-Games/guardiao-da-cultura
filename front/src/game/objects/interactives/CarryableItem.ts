@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
-import { InteractableItem } from "./InteractableItem";
+import { InteractiveItem } from "./InteractiveItem";
 
-export class CarryableItem extends InteractableItem {
+export class CarryableItem extends InteractiveItem {
   public isCarried: boolean = false;
 
   public setCarried(isCarried: boolean) {

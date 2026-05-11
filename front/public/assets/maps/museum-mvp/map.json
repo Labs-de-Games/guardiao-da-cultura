@@ -566,7 +566,7 @@
     {
       "draworder": "topdown",
       "id": 14,
-      "name": "Pictures",
+      "name": "Photos",
       "objects": [
         {
           "height": 0,
@@ -867,7 +867,7 @@
             {
               "name": "type",
               "type": "string",
-              "value": "picture"
+              "value": "photo"
             }
           ],
           "rotation": 0,

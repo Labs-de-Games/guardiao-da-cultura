@@ -13,13 +13,13 @@ import {
   PHASE_SETTINGS,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
-import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHandler";
+import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
-import { CarryableItem } from "../objects/interactables/CarryableItem";
-import { DraggableItem } from "../objects/interactables/DraggableItem";
-import type { InteractableItem } from "../objects/interactables/InteractableItem";
+import { CarryableItem } from "../objects/interactives/CarryableItem";
+import { DraggableItem } from "../objects/interactives/DraggableItem";
+import type { InteractiveItem } from "../objects/interactives/InteractiveItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
@@ -42,7 +42,7 @@ import type {
   LabelInfoData,
   WorkData,
 } from "../types/GameDataTypes";
-import { InteractableType } from "../types/InteractableTypes";
+import { InteractiveType } from "../types/InteractiveTypes";
 import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
@@ -290,7 +290,7 @@ export class Game extends Scene {
     this.registry.set("quiz_solved_after_failure", 0);
 
     this.mechanicsManager = new MechanicsManager();
-    this.mechanicsManager.registerHandler(new PictureMechanicHandler());
+    this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
@@ -480,12 +480,12 @@ export class Game extends Scene {
       }
     });
 
-    type PortalItem = InteractableItem & {
+    type PortalItem = InteractiveItem & {
       interaction: { onInteract: (() => void) | null };
       add: (child: Phaser.GameObjects.Container) => void;
     };
 
-    const endPhase_btn = (createdItems as InteractableItem[]).find(
+    const endPhase_btn = (createdItems as InteractiveItem[]).find(
       (item) =>
         item.itemId === "phase_complete_portal" ||
         item.itemName === "phase_complete_portal",
@@ -557,7 +557,7 @@ export class Game extends Scene {
         this.player.x,
         this.player.y,
         120,
-        InteractableType.PICTURE,
+        InteractiveType.PHOTO,
       );
 
       if (nearby) {
@@ -565,7 +565,7 @@ export class Game extends Scene {
         const availableChunks = this.player
           .getInventory()
           .filter(
-            (item) => item.interactableType === InteractableType.PICTURE_CHUNK,
+            (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
           );
 
         this.isChunkSelectorOpen = true;
@@ -875,7 +875,7 @@ export class Game extends Scene {
     const result = this.placeholderSystem.handleDrop(item);
 
     const typeKey =
-      item.interactableType === InteractableType.PAINTING
+      item.interactiveType === InteractiveType.PAINTING
         ? "PAINTING"
         : "SCULPTURE";
 
@@ -892,10 +892,10 @@ export class Game extends Scene {
         sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
       );
       const missionId = MissionIds.CURATOR;
-      if (item.interactableType === InteractableType.PAINTING) {
+      if (item.interactiveType === InteractiveType.PAINTING) {
         if (
           this.placeholderSystem.checkCategoryCompletion(
-            InteractableType.PAINTING,
+            InteractiveType.PAINTING,
           )
         ) {
           this.completeFloor(this.scoringFloors.paintings);
@@ -905,10 +905,10 @@ export class Game extends Scene {
           });
           this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         }
-      } else if (item.interactableType === InteractableType.SCULPTURE) {
+      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
         if (
           this.placeholderSystem.checkCategoryCompletion(
-            InteractableType.SCULPTURE,
+            InteractiveType.SCULPTURE,
           )
         ) {
           this.completeFloor(this.scoringFloors.sculptures);
@@ -920,9 +920,9 @@ export class Game extends Scene {
         }
       }
     } else if (result.mismatch) {
-      if (item.interactableType === InteractableType.PAINTING) {
+      if (item.interactiveType === InteractiveType.PAINTING) {
         this.recordFloorError(this.scoringFloors.paintings);
-      } else if (item.interactableType === InteractableType.SCULPTURE) {
+      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
         this.recordFloorError(this.scoringFloors.sculptures);
       }
 
