@@ -358,17 +358,20 @@ export class Player
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
     const spaceDown = this.keys.space.isDown;
     const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
-    if (spaceDown && !this.isGrabbing && body?.blocked.down) {
-      this.tryGrab();
+    if (spacePress && body?.blocked.down) {
+      if (!this.isGrabbing) {
+        // Priority 1: try to grab a nearby draggable sculpture
+        const grabbed = this.tryGrab();
+        if (!grabbed) {
+          // Priority 2: toggle carry for paintings, or open placeholder UI
+          const handled = this.tryToggleCarry();
+          if (!handled && !this.isCarrying) {
+            this.emit("interact-placeholder");
+          }
+        }
+      }
     } else if (!spaceDown && this.isGrabbing) {
       this.releaseGrab();
-    }
-
-    if (spacePress && body?.blocked.down) {
-      const handled = this.tryToggleCarry();
-      if (!handled && !this.isCarrying) {
-        this.emit("interact-placeholder");
-      }
     }
 
     if (body) {
@@ -473,8 +476,8 @@ export class Player
     }
   }
 
-  private tryGrab() {
-    if (this.isCarrying) return;
+  private tryGrab(): boolean {
+    if (this.isCarrying) return false;
     const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
     let closestItem: DraggableItem | null = null;
     let minDist: number = GRAB_DIST;
@@ -488,52 +491,49 @@ export class Player
 
       const dist = Phaser.Math.Distance.Between(this.x, this.y, itemX, itemY);
       if (dist < minDist) {
-        const isFacingItem =
-          (this.flipX && itemX < this.x) || (!this.flipX && itemX > this.x);
-        if (isFacingItem) {
-          minDist = dist;
-          closestItem = item;
-        }
+        minDist = dist;
+        closestItem = item;
       }
     }
 
-    if (closestItem) {
-      this.isGrabbing = true;
-      this.grabbedItem = closestItem;
+    if (!closestItem) return false;
 
-      const body = this.body as Phaser.Physics.Arcade.Body;
-      const prevBodyX = body?.x;
-      const prevBodyY = body?.y;
-      this.grabbedItem.setDepth(11);
+    this.isGrabbing = true;
+    this.grabbedItem = closestItem;
 
-      // Switch player to the dragging pose (visual), but keep the physics
-      // body stable to avoid collision ejection.
-      this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
-      this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    const prevBodyX = body?.x;
+    const prevBodyY = body?.y;
+    this.grabbedItem.setDepth(11);
 
-      // Swap to the dragging spritesheet immediately so we can compensate any
-      // body shift caused by the new (bigger) animation frame size.
-      this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
+    // Switch player to the dragging pose (visual), but keep the physics
+    // body stable to avoid collision ejection.
+    this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
 
-      // Keep the Arcade body world position stable across scale/animation changes.
-      if (
-        body &&
-        typeof prevBodyX === "number" &&
-        typeof prevBodyY === "number"
-      ) {
-        body.updateFromGameObject();
-        this.x += prevBodyX - body.x;
-        this.y += prevBodyY - body.y;
-        body.updateFromGameObject();
-      }
+    // Swap to the dragging spritesheet immediately so we can compensate any
+    // body shift caused by the new (bigger) animation frame size.
+    this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
 
-      // Preserve the sculpture position and keep a rigid constraint.
-      this.grabOffset = closestItem.x - this.x;
-      this.grabOffsetY = closestItem.y - this.y;
-      this.grabbedItem.setGrabbed(true);
-
-      this.emit("item-interacted", closestItem);
+    // Keep the Arcade body world position stable across scale/animation changes.
+    if (
+      body &&
+      typeof prevBodyX === "number" &&
+      typeof prevBodyY === "number"
+    ) {
+      body.updateFromGameObject();
+      this.x += prevBodyX - body.x;
+      this.y += prevBodyY - body.y;
+      body.updateFromGameObject();
     }
+
+    // Preserve the sculpture position and keep a rigid constraint.
+    this.grabOffset = closestItem.x - this.x;
+    this.grabOffsetY = closestItem.y - this.y;
+    this.grabbedItem.setGrabbed(true);
+
+    this.emit("item-interacted", closestItem);
+    return true;
   }
 
   private tryToggleCarry(): boolean {
