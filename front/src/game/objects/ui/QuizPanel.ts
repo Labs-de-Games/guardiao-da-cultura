@@ -69,7 +69,7 @@ export class QuizPanel extends BasePanel {
       .container(0, -this.bg.height / 2 + 120)
       .setSize(1150, 150);
     this.questionContainer = this.scene.add
-      .container(0, 100)
+      .container(0, this.topContainer.height - 70)
       .setSize(1150, 250);
     this.scoreText = scene.add
       .text(
@@ -109,14 +109,19 @@ export class QuizPanel extends BasePanel {
       .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
     this.questionTitle = scene.add
-      .text(-410, -this.panelHeight / 2 + 110, "Desafio 01", {
-        fontFamily: "Jockey One",
-        fontSize: "32px",
-        color: LayoutConfig.COLORS.GOLD,
-        align: "left",
-        wordWrap: { width: 1000, useAdvancedWrap: true },
-        lineSpacing: 6,
-      })
+      .text(
+        -this.questionContainer.width / 2 + 165,
+        -this.questionContainer.height - 40,
+        "Desafio 01",
+        {
+          fontFamily: "Jockey One",
+          fontSize: "32px",
+          color: LayoutConfig.COLORS.GOLD,
+          align: "left",
+          wordWrap: { width: 1000, useAdvancedWrap: true },
+          lineSpacing: 6,
+        },
+      )
       .setOrigin(0.5, 0);
     this.questionText = scene.add
       .text(0, -this.panelHeight / 2 + 170, "", {
