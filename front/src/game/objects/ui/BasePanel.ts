@@ -20,15 +20,39 @@ export abstract class BasePanel extends Phaser.GameObjects.Container {
   /** Contrato para reposicionamento responsivo */
   abstract layout(width: number, height: number): void;
 
+  protected getFontScale(width: number, height: number): number {
+    return Math.min(width / 1920, height / 1080);
+  }
+
+  protected applyScaledFontSize(
+    text: Phaser.GameObjects.Text,
+    baseSize: number,
+    width: number,
+    height: number,
+  ): void {
+    text.setFontSize(Math.round(baseSize * this.getFontScale(width, height)));
+  }
+
   /** Fábrica Visual: Cria fundo padrão do sistema */
   protected createStandardBg(
     width: number,
     height: number,
     depth: number = 0,
   ): Phaser.GameObjects.Rectangle {
-    const bg = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.9);
-    bg.setStrokeStyle(4, 0xffffff, 1);
-    bg.setOrigin(0.5, 0); // Padrão para painéis de diálogo/topo
+    const bg = this.scene.add.rectangle(
+      0,
+      0,
+      width,
+      height,
+      LayoutConfig.COLORS.QUIZ_BG,
+      0.95,
+    );
+    bg.setStrokeStyle(
+      LayoutConfig.UI.PANEL_BORDER_WIDTH,
+      LayoutConfig.UI.PANEL_BORDER_COLOR,
+      1,
+    );
+    bg.setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
     bg.setDepth(depth);
     return bg;
   }
@@ -40,11 +64,11 @@ export abstract class BasePanel extends Phaser.GameObjects.Container {
   ): Phaser.GameObjects.Text {
     return this.scene.add
       .text(0, 0, text, {
-        fontSize: "20px",
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
         color: color,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5, 1);
+      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
   }
 
   /** Input Manager: Registra tecla no sistema Phaser com cleanup automático */
