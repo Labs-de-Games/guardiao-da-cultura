@@ -12,6 +12,7 @@ export class ControlsOverlay extends BasePanel {
   private title: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private escHint: Phaser.GameObjects.Text;
+  private onEscHandler?: (event: KeyboardEvent) => void;
 
   private readonly panelW = 980;
   private readonly panelH = 420;
@@ -36,11 +37,12 @@ export class ControlsOverlay extends BasePanel {
       .text(
         0,
         0,
-        "WASD ou SETAS: andar\n" +
-          "ESPAÇO: interagir\n" +
-          "TAB: abrir o mapa das relíquias\n" +
-          "Q: ver novamente os controles\n" +
-          "B: abrir painel de badges",
+        "Q: rever controles" +
+          "WASD ou SETAS DIRECIONAIS: andar, subir e descer\n" +
+          "ESPAÇO: pular\n" +
+          "SHIFT: interagir\n" +
+          "TAB: painel\n" +
+          "ESC: fechar\n",
         {
           fontFamily: LayoutConfig.FONTS.BODY,
           fontSize: LayoutConfig.FONTS.SIZES.BODY,
@@ -93,15 +95,14 @@ export class ControlsOverlay extends BasePanel {
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_OPENED);
 
-    /* this.onEscHandler = (event: KeyboardEvent) => {
+    this.onEscHandler = (event: KeyboardEvent) => {
       const isEscape = event.key.toLowerCase() === "escape";
-      const isSpace =
-        event.code === "Space" || event.key === " " || event.key === "Spacebar";
-      if (isEscape || isSpace) {
+      const isShift = event.key.toLowerCase() === "shift";
+      if (isEscape || isShift) {
         this.hide();
       }
     };
-    this.scene.input.keyboard?.on("keydown", this.onEscHandler);*/
+    this.scene.input.keyboard?.on("keydown", this.onEscHandler);
   }
 
   public override hide(duration: number = 120, onComplete?: () => void) {
@@ -109,6 +110,8 @@ export class ControlsOverlay extends BasePanel {
 
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_CLOSED);
+
+    this.scene.input.keyboard?.off("keydown", this.onEscHandler);
 
     super.hide(duration, onComplete);
   }

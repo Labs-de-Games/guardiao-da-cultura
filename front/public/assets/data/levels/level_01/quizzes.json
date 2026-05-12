@@ -32,7 +32,7 @@
       "id": "q3",
       "category": "MVP Escultura",
       "question": "Qual dessas coisas é impossível de se esculpir?",
-      "options": ["Areia molhada", "Água congelada", "Gás carbônico", "Bronze"],
+      "options": ["areia molhada", "água congelada", "gás carbônico", "bronze"],
       "correctOptionIndex": 2,
       "explanation": "XXXXX",
       "hints": [
@@ -66,10 +66,10 @@
       "category": "MVP Escultura",
       "question": "Qual desses temas está mais presente nas obras de Edgard de Souza?",
       "options": [
-        "Hiperrealismo",
-        "Transfiguração",
-        "Miniaturização",
-        "Megalomania"
+        "hiperrealismo",
+        "transfiguração",
+        "miniaturização",
+        "megalomania"
       ],
       "correctOptionIndex": 1,
       "explanation": "XXXXX",
@@ -137,10 +137,10 @@
       "category": "MVP Fotografia",
       "question": "Qual desses elementos é usado na revelação de fotografias em preto e branco?",
       "options": [
-        "Pó de marfim e ébano",
-        "Pelos de urso panda",
-        "Borra de café",
-        "Gelatina de prata"
+        "pó de marfim e ébano",
+        "pelos de urso panda",
+        "borra de café",
+        "gelatina de prata"
       ],
       "correctOptionIndex": 3,
       "explanation": "XXXXX",

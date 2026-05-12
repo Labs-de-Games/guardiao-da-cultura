@@ -95,9 +95,7 @@ export class LabelPanel extends BasePanel {
     ]);
 
     this.bindKey("ESC", () => this.hide());
-    this.bindKey("SPACE", () => this.hide());
-    this.bindKey("UP", () => this.scrollDescription(-40));
-    this.bindKey("DOWN", () => this.scrollDescription(40));
+    this.bindKey("SHIFT", () => this.hide());
 
     this.scene.input.on("wheel", this.onWheel, this);
   }
