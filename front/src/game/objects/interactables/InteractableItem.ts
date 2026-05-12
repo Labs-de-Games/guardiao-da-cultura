@@ -1,34 +1,34 @@
 import * as Phaser from "phaser";
-import { InteractiveType } from "../../types/InteractiveTypes";
+import { InteractableType } from "../../types/InteractableTypes";
 
-export interface InteractiveConfig {
+export interface InteractableConfig {
   x: number;
   y: number;
   texture: string;
   frame?: string | number;
   id?: string;
   name?: string;
-  type?: InteractiveType;
+  type?: InteractableType;
 }
 
-export abstract class InteractiveItem extends Phaser.Physics.Arcade.Sprite {
+export abstract class InteractableItem extends Phaser.Physics.Arcade.Sprite {
   public itemId: string;
   public itemName: string;
-  public interactiveType: InteractiveType;
+  public interactableType: InteractableType;
 
-  constructor(scene: Phaser.Scene, config: InteractiveConfig) {
+  constructor(scene: Phaser.Scene, config: InteractableConfig) {
     super(scene, config.x, config.y, config.texture, config.frame);
 
     this.itemId = config.id || Phaser.Math.RND.uuid();
-    this.itemName = config.name || "Interactive";
-    this.interactiveType = config.type || InteractiveType.SCULPTURE;
+    this.itemName = config.name || "Interactable";
+    this.interactableType = config.type || InteractableType.SCULPTURE;
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
-      if (this.interactiveType === InteractiveType.SCULPTURE) {
+      if (this.interactableType === InteractableType.SCULPTURE) {
         body.setAllowGravity(true);
         body.setGravity(0, 4000);
       }

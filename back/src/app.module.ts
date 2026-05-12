@@ -13,6 +13,7 @@ import { RolesGuard } from "./modules/auth/guards/roles.guard";
 import { BadgesModule } from "./modules/badges/badges.module";
 import { GameModule } from "./modules/game/game.module";
 import { ProgressionModule } from "./modules/progression/progression.module";
+import { ScoringModule } from "./modules/scoring/scoring.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from "./modules/users/users.module";
     GameModule,
     ProgressionModule,
     BadgesModule,
+    ScoringModule,
     AnalyticsModule,
     HealthModule,
     ThrottlerModule.forRoot({

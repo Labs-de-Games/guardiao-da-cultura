@@ -1,8 +1,8 @@
 import type * as Phaser from "phaser";
-// import { DraggableItem } from "../objects/interactives/DraggableItem";
-import { CarryableItem } from "../objects/interactives/CarryableItem";
+// import { DraggableItem } from "../objects/interactables/DraggableItem";
+import { CarryableItem } from "../objects/interactables/CarryableItem";
 import type { WorkData } from "../types/GameDataTypes";
-import { InteractiveType } from "../types/InteractiveTypes";
+import { InteractableType } from "../types/InteractableTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
@@ -37,7 +37,7 @@ export class PaintingFactory implements IObjectFactory {
       texture: texture,
       name: data?.metadata?.title || name,
       id: data?.id || name,
-      type: InteractiveType.PAINTING,
+      type: InteractableType.PAINTING,
     };
 
     return new CarryableItem(scene, config);

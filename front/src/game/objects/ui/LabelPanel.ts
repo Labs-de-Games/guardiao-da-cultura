@@ -15,6 +15,7 @@ export class LabelPanel extends BasePanel {
   private rightTexts: Phaser.GameObjects.Text[] = [];
   private escHint: Phaser.GameObjects.Text;
 
+  private currentFontScale: number = 1;
   private labelData: LabelInfoData | null = null;
   private panelWidth: number = 1000;
   private panelHeight: number = 600;
@@ -26,42 +27,63 @@ export class LabelPanel extends BasePanel {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.DIALOGUE + 5);
 
-    this.bg = scene.add.rectangle(0, 0, 10, 10, 0xffffff, 1);
-    this.bg.setStrokeStyle(4, 0x000000, 1);
-    this.bg.setOrigin(0.5);
+    this.bg = scene.add.rectangle(
+      0,
+      0,
+      10,
+      10,
+      LayoutConfig.COLORS.WHITE_HEX,
+      1,
+    );
+    this.bg.setStrokeStyle(4, LayoutConfig.COLORS.BLACK_HEX, 1);
+    this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     this.lines = scene.add.graphics();
 
     this.titleText = scene.add
       .text(0, 0, "", {
-        fontFamily: "Jockey One",
-        fontSize: "60px",
-        color: "#000000",
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
+        color: LayoutConfig.COLORS.BLACK,
         wordWrap: { width: 800, useAdvancedWrap: true },
         lineSpacing: 6,
       })
-      .setOrigin(0, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
     this.descText = scene.add
       .text(0, 0, "", {
-        fontFamily: "Inter",
-        fontSize: "25px",
-        fontStyle: "bold",
-        color: "#000000",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.BODY,
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
+        color: LayoutConfig.COLORS.BLACK,
         wordWrap: { width: 600, useAdvancedWrap: true },
         lineSpacing: 6,
       })
-      .setOrigin(0, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
+
+    this.descText = scene.add
+      .text(0, 0, "", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.BODY,
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
+        color: LayoutConfig.COLORS.BLACK,
+        wordWrap: { width: 600, useAdvancedWrap: true },
+        lineSpacing: 6,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
     // Mask removed - was causing text to not display
     this.descMaskGraphics = scene.add.graphics();
     this.descMaskGraphics.setVisible(false);
 
-    this.escHint = this.createKeyHint("Aperte ESC para fechar", "#000000");
-    this.escHint.setOrigin(1, 0);
-    this.escHint.setFontSize("16px");
-    this.escHint.setFontFamily("Inter");
-    this.escHint.setFontStyle("bold");
+    this.escHint = this.createKeyHint(
+      "ESC para fechar",
+      LayoutConfig.COLORS.BLACK,
+    );
+    this.escHint.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
+    this.escHint.setFontSize(LayoutConfig.FONTS.SIZES.SMALL);
+    this.escHint.setFontFamily(LayoutConfig.FONTS.BODY);
+    this.escHint.setFontStyle(LayoutConfig.FONTS.STYLES.BOLD);
 
     this.add([
       this.bg,
@@ -104,6 +126,26 @@ export class LabelPanel extends BasePanel {
 
     this.setPosition(w / 2, h / 2);
     this.bg.setSize(this.panelWidth, this.panelHeight);
+    this.currentFontScale = this.getFontScale(w, h);
+
+    this.applyScaledFontSize(
+      this.titleText,
+      LayoutConfig.FONTS.SIZES.TITLE_LARGE,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.descText,
+      LayoutConfig.FONTS.SIZES.BODY,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.escHint,
+      LayoutConfig.FONTS.SIZES.SMALL,
+      w,
+      h,
+    );
 
     this.updateContent();
   }
@@ -148,9 +190,17 @@ export class LabelPanel extends BasePanel {
     // Reduce font size if title exceeds 50 characters
     const titleLength = this.labelData.title.length;
     if (titleLength > 50) {
-      this.titleText.setFontSize("45px");
+      this.titleText.setFontSize(
+        Math.round(
+          LayoutConfig.FONTS.SIZES.TITLE_LARGE * this.currentFontScale,
+        ),
+      );
     } else {
-      this.titleText.setFontSize("60px");
+      this.titleText.setFontSize(
+        Math.round(
+          LayoutConfig.FONTS.SIZES.TITLE_LARGE * this.currentFontScale,
+        ),
+      );
     }
 
     this.titleText.setText(this.labelData.title);
@@ -171,7 +221,7 @@ export class LabelPanel extends BasePanel {
     this.resetDescriptionScroll();
 
     this.lines.clear();
-    this.lines.lineStyle(lineThickness, 0x000000, 1);
+    this.lines.lineStyle(lineThickness, LayoutConfig.COLORS.BLACK_HEX, 1);
 
     // Horizontal line separating title from body
     this.lines.lineBetween(left, bodyTop, right, bodyTop);
@@ -189,7 +239,7 @@ export class LabelPanel extends BasePanel {
         text.setText(value);
         text.setPosition(rightLeft + 14, rowCenterY);
         text.setWordWrapWidth(rightWidth - 28, true);
-        text.setOrigin(0, 0.5);
+        text.setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
 
         if (index > 0) {
           this.lines.lineBetween(rightLeft, rowTop, right, rowTop);
@@ -205,7 +255,7 @@ export class LabelPanel extends BasePanel {
       data.dimensions,
       data.medium,
       data.place,
-    ].filter((value): value is string => Boolean(value && value.trim()));
+    ].filter((value): value is string => Boolean(value?.trim()));
 
     return fields;
   }
@@ -214,14 +264,16 @@ export class LabelPanel extends BasePanel {
     while (this.rightTexts.length < count) {
       const text = this.scene.add
         .text(0, 0, "", {
-          fontFamily: "Inter",
-          fontSize: "22px",
-          fontStyle: "bold",
-          color: "#000000",
+          fontFamily: LayoutConfig.FONTS.BODY,
+          fontSize: Math.round(
+            LayoutConfig.FONTS.SIZES.METADATA * this.currentFontScale,
+          ),
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
+          color: LayoutConfig.COLORS.BLACK,
           wordWrap: { width: 280, useAdvancedWrap: true },
           lineSpacing: 4,
         })
-        .setOrigin(0, 0.5);
+        .setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
       this.rightTexts.push(text);
       this.add(text);
     }
