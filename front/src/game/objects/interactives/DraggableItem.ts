@@ -1,10 +1,10 @@
 import type * as Phaser from "phaser";
-import { type InteractableConfig, InteractableItem } from "./InteractableItem";
+import { type InteractiveConfig, InteractiveItem } from "./InteractiveItem";
 
 export class DraggableItem extends InteractiveItem {
   public isGrabbed: boolean = false;
 
-  constructor(scene: Phaser.Scene, config: InteractableConfig) {
+  constructor(scene: Phaser.Scene, config: InteractiveConfig) {
     super(scene, config);
     this.setDepth(10);
   }
