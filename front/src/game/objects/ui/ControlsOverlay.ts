@@ -12,6 +12,7 @@ export class ControlsOverlay extends BasePanel {
   private title: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private escHint: Phaser.GameObjects.Text;
+  private onEscHandler?: (event: KeyboardEvent) => void;
 
   private readonly panelW = 980;
   private readonly panelH = 420;
@@ -109,6 +110,8 @@ export class ControlsOverlay extends BasePanel {
 
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_CLOSED);
+
+    this.scene.input.keyboard?.off("keydown", this.onEscHandler);
 
     super.hide(duration, onComplete);
   }
