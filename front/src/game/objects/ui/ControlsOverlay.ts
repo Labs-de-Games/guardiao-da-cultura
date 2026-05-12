@@ -37,8 +37,7 @@ export class ControlsOverlay extends BasePanel {
         0,
         0,
         "WASD ou SETAS: andar\n" +
-          "E: interagir\n" +
-          "SHIFT: modo inspecionar\n" +
+          "ESPAÇO: interagir\n" +
           "TAB: abrir o mapa das relíquias\n" +
           "Q: ver novamente os controles",
         {
@@ -92,6 +91,16 @@ export class ControlsOverlay extends BasePanel {
 
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_OPENED);
+
+    this.onEscHandler = (event: KeyboardEvent) => {
+      const isEscape = event.key.toLowerCase() === "escape";
+      const isSpace =
+        event.code === "Space" || event.key === " " || event.key === "Spacebar";
+      if (isEscape || isSpace) {
+        this.hide();
+      }
+    };
+    this.scene.input.keyboard?.on("keydown", this.onEscHandler);
   }
 
   public override hide(duration: number = 120, onComplete?: () => void) {
