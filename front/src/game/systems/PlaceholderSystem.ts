@@ -41,6 +41,9 @@ export class PlaceholderSystem {
     if (!layer?.objects) return;
 
     layer.objects.forEach((obj) => {
+      // Only process objects of class 'PlaceholderInstance'
+      if (obj.type !== "PlaceholderInstance") return;
+
       const typeStr = TiledUtils.getProperty(obj, "type");
       const rawProp = TiledUtils.getProperty(obj, "id");
       const targetId = TiledUtils.parseTargetIds(rawProp);
