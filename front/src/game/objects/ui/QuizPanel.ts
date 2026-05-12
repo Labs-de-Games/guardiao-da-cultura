@@ -3,64 +3,56 @@ import { GameEvents } from "../../constants/GameEvents";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import type { QuizQuestion } from "../../types/GameDataTypes";
+import type { ScoreManager } from "../ScoreManager";
 import { BasePanel } from "./BasePanel";
+import { QuizButton, type QuizRibbonButtonConfig } from "./quiz/QuizButton";
+import { QuizProgressTracker } from "./quiz/QuizProgressTracker";
 
 export class QuizPanel extends BasePanel {
-  private readonly optionButtonWidth = 460;
-  private readonly optionButtonHeight = 68;
+  private readonly optionButtonWidth = 524;
+  private readonly optionButtonHeight = 100;
   private readonly optionNotchDepth = 30;
   private readonly optionNotchHeight = 20;
+  // private currentFontScale: number = 1;
 
-  private readonly progressIndicatorWidth = 24;
-  private readonly progressIndicatorHeight = 48;
-  private readonly progressNotchDepth = 6;
-  private readonly progressNotchHeight = 6;
+  private readonly progressIndicatorWidth = 48;
+  private readonly progressIndicatorHeight = 84;
+  private readonly progressNotchDepth = 12;
+  private readonly progressNotchHeight = 12;
 
   private questions: QuizQuestion[] = [];
   private currentQuestionIndex: number = 0;
   private selectedOptionIndex: number = 0;
   private score: number = 0;
+  private scoreManager: ScoreManager | null = null;
   private onComplete: ((score: number) => void) | null = null;
-
-  private mode: "quiz" | "results" = "quiz";
 
   private answers: ("correct" | "wrong" | null)[] = [];
   private isProcessingAnswer: boolean = false;
 
-  private optionButtons: {
-    container: Phaser.GameObjects.Container;
-    bg: Phaser.GameObjects.Graphics;
-    label: Phaser.GameObjects.Text;
-    checkmark: Phaser.GameObjects.Graphics;
-    cross: Phaser.GameObjects.Graphics;
-  }[] = [];
+  private optionButtons: QuizButton[] = [];
 
   private scoreText: Phaser.GameObjects.Text;
   private questionCounterText: Phaser.GameObjects.Text;
-  private progressIndicators: Phaser.GameObjects.Graphics[] = [];
-  private questionTitleText: Phaser.GameObjects.Text;
+  private progressTracker: QuizProgressTracker;
   private questionText: Phaser.GameObjects.Text;
+  private questionTitle: Phaser.GameObjects.Text;
   private footerHintText: Phaser.GameObjects.Text;
 
-  private resultTitleText: Phaser.GameObjects.Text;
-  private resultSummaryText: Phaser.GameObjects.Text;
+  private performanceText: Phaser.GameObjects.Text;
+  private performanceStar: Phaser.GameObjects.Image;
+  private performanceContainer: Phaser.GameObjects.Container;
+  private questionContainer: Phaser.GameObjects.Container;
+  private topContainer: Phaser.GameObjects.Container;
+  private isShowingPerformance: boolean = false;
+  private shouldShowResultsAfterHide: boolean = false;
 
-  private resultStarsContainer: Phaser.GameObjects.Container;
-  private resultStars: Phaser.GameObjects.Image[] = [];
-
-  private readonly resultStarsCount = 5;
-  private readonly resultStarsSidePadding = 140; // breathing room inside panel
-  private readonly resultStarsGapRatio = 0.18; // gap as a fraction of star width
-  private readonly resultStarsTopPadding = 150; // space below the summary text
-
-  private currentFontScale: number = 1;
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.QUIZ || 2000);
-
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
     this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.bg.setFillStyle(LayoutConfig.COLORS.STANDARD_BG, 0.95);
@@ -70,35 +62,45 @@ export class QuizPanel extends BasePanel {
       1,
     );
 
+    const topContainerBg = this.scene.add
+      .rectangle(0, 0, 1150, 150, 0x000000)
+      .setOrigin(0.5, 0.7)
+      .setRounded(16);
+    this.topContainer = this.scene.add
+      .container(0, -this.bg.height / 2 + 120)
+      .setSize(1150, 150);
+    this.questionContainer = this.scene.add
+      .container(0, this.topContainer.height - 70)
+      .setSize(1150, 250);
     this.scoreText = scene.add
       .text(
-        -this.panelWidth / 2 + 40,
-        -this.panelHeight / 2 + 30,
+        -this.topContainer.width / 2 + 35,
+        -this.topContainer.height / 2 - 5,
         "Pontos: 0",
         {
-          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-          fontFamily: LayoutConfig.FONTS.BODY,
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
           color: LayoutConfig.COLORS.GOLD,
           fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
-      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
+      .setOrigin(0, 0);
 
     this.questionCounterText = scene.add
       .text(
-        -this.panelWidth / 2 + 40,
-        -this.panelHeight / 2 + 58,
+        -this.topContainer.width / 2 + 35,
+        -this.topContainer.height / 2 + 55,
         "Pergunta 01/01",
         {
-          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-          fontFamily: LayoutConfig.FONTS.BODY,
-          color: LayoutConfig.COLORS.GOLD,
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+          color: LayoutConfig.COLORS.WHITE,
           fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
       .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
-    this.questionTitleText = scene.add
+    this.questionTitle = scene.add
       .text(0, -this.panelHeight / 2 + 110, "Pergunta 01", {
         fontSize: LayoutConfig.FONTS.SIZES.TITLE,
         fontFamily: LayoutConfig.FONTS.TITLE,
@@ -107,6 +109,21 @@ export class QuizPanel extends BasePanel {
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
+    this.questionTitle = scene.add
+      .text(
+        -this.questionContainer.width / 2 + 165,
+        -this.questionContainer.height - 40,
+        "Desafio 01",
+        {
+          fontFamily: "Jockey One",
+          fontSize: "32px",
+          color: LayoutConfig.COLORS.GOLD,
+          align: "left",
+          wordWrap: { width: 1000, useAdvancedWrap: true },
+          lineSpacing: 6,
+        },
+      )
+      .setOrigin(0.5, 0);
     this.questionText = scene.add
       .text(0, -this.panelHeight / 2 + 170, "", {
         fontSize: LayoutConfig.FONTS.SIZES.BODY,
@@ -131,47 +148,41 @@ export class QuizPanel extends BasePanel {
       )
       .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
 
-    this.resultTitleText = scene.add
-      .text(0, -this.panelHeight / 2 + 110, "Resultado", {
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-        fontFamily: LayoutConfig.FONTS.TITLE,
-        color: LayoutConfig.COLORS.WHITE,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER)
-      .setVisible(false);
-
-    this.resultSummaryText = scene.add
-      .text(0, -this.panelHeight / 2 + 190, "", {
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
-        fontFamily: LayoutConfig.FONTS.BODY,
-        color: LayoutConfig.COLORS.WHITE,
-        align: LayoutConfig.ALIGN.TEXT_CENTER,
-        wordWrap: { width: 1000, useAdvancedWrap: true },
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER)
-      .setVisible(false);
-
-    // Results stars (5 slots, quarter fractions). Created once; content updated on results.
-    this.resultStarsContainer = scene.add.container(
-      0,
-      -this.panelHeight / 2 + 310,
-    );
-    this.resultStarsContainer.setVisible(false);
-    this.createResultsStars();
-
-    this.add([
-      this.bg,
-      this.questionText,
+    this.progressTracker = new QuizProgressTracker(scene, 64, -12, {
+      indicatorWidth: this.progressIndicatorWidth,
+      indicatorHeight: this.progressIndicatorHeight,
+      notchDepth: this.progressNotchDepth,
+      notchHeight: this.progressNotchHeight,
+      gap: 16,
+    });
+    this.topContainer.add([
+      topContainerBg,
       this.scoreText,
       this.questionCounterText,
-      this.questionTitleText,
-      this.footerHintText,
-      this.resultTitleText,
-      this.resultSummaryText,
-      this.resultStarsContainer,
+      this.progressTracker,
     ]);
-
+    this.questionContainer.add([this.questionTitle, this.questionText]);
+    this.performanceContainer = this.scene.add.container(0, 0);
+    this.performanceText = this.scene.add
+      .text(0, -100, "Quiz completo!", {
+        fontFamily: "Jockey One",
+        fontSize: "48px",
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0.5);
+    this.performanceStar = this.scene.add
+      .image(0, 50, "ui_star_full")
+      .setScale(1);
+    this.performanceContainer.add([this.performanceText, this.performanceStar]);
+    this.performanceContainer.setVisible(false);
+    this.add([
+      this.bg,
+      this.topContainer,
+      this.questionContainer,
+      this.footerHintText,
+      this.performanceContainer,
+    ]);
     this.bindKey("W", () => this.moveVertical(-1));
     this.bindKey("UP", () => this.moveVertical(-1));
     this.bindKey("S", () => this.moveVertical(1));
@@ -180,54 +191,29 @@ export class QuizPanel extends BasePanel {
     this.bindKey("LEFT", () => this.moveHorizontal(-1));
     this.bindKey("D", () => this.moveHorizontal(1));
     this.bindKey("RIGHT", () => this.moveHorizontal(1));
-    // ESC should not close during quiz questions; only allow closing on results.
     this.bindKey("ESC", () => {
       if (!this._isVisible) return;
-      if (this.mode !== "results") return;
       this.hide();
     });
-    this.bindKey("SPACE", () => this.selectOption());
+    this.bindKey("SPACE", () => {
+      if (this.isShowingPerformance) {
+        this.handlePerformanceSpace();
+      } else {
+        this.selectOption();
+      }
+    });
     this.bindKey("ENTER", () => this.selectOption());
   }
 
-  private getNotchedRectPoints(
-    centerX: number,
-    centerY: number,
-    halfW: number,
-    halfH: number,
-    notchDepth: number,
-    notchHeight: number,
-  ): { x: number; y: number }[] {
-    return [
-      { x: centerX - halfW + notchDepth, y: centerY - halfH },
-      {
-        x: centerX - halfW + notchDepth,
-        y: centerY - halfH + notchHeight,
-      },
-      { x: centerX - halfW, y: centerY - halfH + notchHeight },
-      { x: centerX - halfW, y: centerY + halfH - notchHeight },
-      {
-        x: centerX - halfW + notchDepth,
-        y: centerY + halfH - notchHeight,
-      },
-      { x: centerX - halfW + notchDepth, y: centerY + halfH },
-      { x: centerX + halfW - notchDepth, y: centerY + halfH },
-      {
-        x: centerX + halfW - notchDepth,
-        y: centerY + halfH - notchHeight,
-      },
-      { x: centerX + halfW, y: centerY + halfH - notchHeight },
-      { x: centerX + halfW, y: centerY - halfH + notchHeight },
-      {
-        x: centerX + halfW - notchDepth,
-        y: centerY - halfH + notchHeight,
-      },
-      { x: centerX + halfW - notchDepth, y: centerY - halfH },
-    ];
+  private getScorePercentage(): number {
+    return this.questions.length > 0
+      ? (this.score / this.questions.length) * 100
+      : 0;
   }
 
   public startQuiz(
     questions: QuizQuestion[],
+    scoreManager: ScoreManager,
     onComplete: (score: number) => void,
   ) {
     this.questions = questions;
@@ -236,25 +222,21 @@ export class QuizPanel extends BasePanel {
     this.score = 0;
     this.selectedOptionIndex = 0;
     this.isProcessingAnswer = false;
-    this.mode = "quiz";
-
+    this.scoreManager = scoreManager;
     this.answers = new Array(questions.length).fill(null);
-    this.createProgressTracker(questions.length);
-
-    this.setQuizUiVisible(true);
-    this.setResultsUiVisible(false);
+    this.progressTracker.setCount(questions.length);
+    this.progressTracker.setAnswers(this.answers);
     this.footerHintText.setText(
       "Use as setas e pressione Espaço para confirmar",
     );
-
     this.showQuestion();
     this.show();
   }
 
   public override show() {
     if (this._isVisible) return;
-    super.show();
 
+    super.show();
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
   }
@@ -262,282 +244,106 @@ export class QuizPanel extends BasePanel {
   public override hide(duration: number = 200, onComplete?: () => void) {
     if (!this._isVisible) return;
 
+    this.isShowingPerformance = false;
+    this.performanceContainer.setVisible(false);
+    this.questionTitle.setVisible(true);
+    this.questionText.setVisible(true);
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
-
+    this.questionContainer.setVisible(false);
     super.hide(duration, () => {
       if (onComplete) onComplete();
       if (this.onComplete) {
         const finalScore = this.score;
         this.onComplete(finalScore);
         this.onComplete = null;
+        if (this.shouldShowResultsAfterHide) {
+          this.shouldShowResultsAfterHide = false;
+          const gameScene = this.scene.scene.get(SceneNames.GAME);
+          gameScene.events.emit(
+            GameEvents.SHOW_QUIZ_RESULTS,
+            this.score,
+            this.questions.length,
+            this.progressTracker,
+            this.scoreManager,
+          );
+        }
       }
     });
   }
 
   public layout(w: number, h: number) {
     this.setPosition(w / 2, h / 2);
-    this.currentFontScale = this.getFontScale(w, h);
-
-    this.layoutResultsStarsRow();
-
-    this.applyScaledFontSize(
-      this.scoreText,
-      LayoutConfig.FONTS.SIZES.METADATA,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.questionCounterText,
-      LayoutConfig.FONTS.SIZES.METADATA,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.questionTitleText,
-      LayoutConfig.FONTS.SIZES.TITLE,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.questionText,
-      LayoutConfig.FONTS.SIZES.BODY,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.footerHintText,
-      LayoutConfig.FONTS.SIZES.HINT,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.resultTitleText,
-      LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-      w,
-      h,
-    );
-    this.applyScaledFontSize(
-      this.resultSummaryText,
-      LayoutConfig.FONTS.SIZES.TITLE,
-      w,
-      h,
-    );
-  }
-
-  private createProgressTracker(count: number) {
-    for (const g of this.progressIndicators) {
-      g.destroy();
-    }
-    this.progressIndicators = [];
-
-    for (let i = 0; i < count; i++) {
-      const g = this.scene.add.graphics();
-      this.progressIndicators.push(g);
-      this.add(g);
-    }
   }
 
   private positionProgressTracker() {
-    const count = this.progressIndicators.length;
-    if (count === 0) return;
-
-    const gap = 8;
-    const totalWidth = count * this.progressIndicatorWidth + (count - 1) * gap;
-    const leftX = -this.panelWidth / 2 + 40;
+    const totalWidth = this.progressTracker.getTotalWidth();
+    if (totalWidth === 0) return;
     const leftBlockWidth = Math.max(
       this.scoreText.displayWidth,
       this.questionCounterText.displayWidth,
     );
-    const desiredStartX = leftX + leftBlockWidth + 30;
-    const maxStartX = this.panelWidth / 2 - 40 - totalWidth;
-    const startX = Math.min(desiredStartX, maxStartX);
-    const y = -this.panelHeight / 2 + 30;
+    const startX = -500 + leftBlockWidth + 30;
+    const y = -60;
 
-    for (let i = 0; i < count; i++) {
-      this.progressIndicators[i].setPosition(
-        startX + i * (this.progressIndicatorWidth + gap),
-        y,
-      );
-    }
+    this.progressTracker.layout(startX, y);
   }
 
   private updateProgressTracker() {
-    for (let i = 0; i < this.progressIndicators.length; i++) {
-      const g = this.progressIndicators[i];
-      g.clear();
-
-      const state = this.answers[i];
-      const fill =
-        state === "correct"
-          ? 0x4caf50
-          : state === "wrong"
-            ? 0xf44336
-            : 0x4a4a4a;
-      g.fillStyle(fill, 1);
-      const halfW = this.progressIndicatorWidth / 2;
-      const halfH = this.progressIndicatorHeight / 2;
-      const cx = halfW;
-      const cy = halfH;
-      g.fillPoints(
-        this.getNotchedRectPoints(
-          cx,
-          cy,
-          halfW,
-          halfH,
-          this.progressNotchDepth,
-          this.progressNotchHeight,
-        ),
-        true,
-      );
-    }
+    this.progressTracker.setAnswers(this.answers);
   }
 
-  private drawRibbon(
-    g: Phaser.GameObjects.Graphics,
-    width: number,
-    height: number,
-    color: number,
-  ) {
-    const halfW = width / 2;
-    const halfH = height / 2;
-
-    g.clear();
-    g.fillStyle(color, 1);
-    g.fillPoints(
-      this.getNotchedRectPoints(
-        0,
-        0,
-        halfW,
-        halfH,
-        this.optionNotchDepth,
-        this.optionNotchHeight,
-      ),
-      true,
-    );
+  private calculateStarFillLevel(): string {
+    const percentage = this.getScorePercentage();
+    if (percentage > 90) return "ui_star_full";
+    if (percentage > 70) return "ui_star_3q";
+    if (percentage > 50) return "ui_star_2q";
+    return "ui_star_1q";
   }
 
-  private createCheckmark(): Phaser.GameObjects.Graphics {
-    const g = this.scene.add.graphics();
-    g.lineStyle(5, 0x4caf50);
-    g.lineBetween(-14, 0, -2, 14);
-    g.lineBetween(-2, 14, 18, -12);
-    return g;
+  private calculateResultStarScale(): number {
+    const tex = this.scene.textures.get("ui_star_full");
+    const source = tex?.getSourceImage() as
+      | { width: number; height: number }
+      | undefined;
+    const baseW = source?.width ?? 457;
+
+    const sidePadding = 140;
+    const starCount = 5;
+    const gapRatio = 0.18;
+
+    const maxRowWidth = Math.max(0, this.panelWidth - sidePadding * 2);
+    const denom = starCount + (starCount - 1) * gapRatio;
+    const targetW = denom > 0 ? maxRowWidth / denom : maxRowWidth;
+    const scale = baseW > 0 ? targetW / baseW : 1;
+
+    return scale;
   }
 
-  private createCross(): Phaser.GameObjects.Graphics {
-    const g = this.scene.add.graphics();
-    g.lineStyle(5, 0xf44336);
-    g.lineBetween(-12, -12, 12, 12);
-    g.lineBetween(12, -12, -12, 12);
-    return g;
-  }
-
-  private createRibbonButton(x: number, y: number, text: string) {
-    const container = this.scene.add.container(x, y);
-
-    const bg = this.scene.add.graphics();
-    this.drawRibbon(
-      bg,
-      this.optionButtonWidth,
-      this.optionButtonHeight,
-      LayoutConfig.COLORS.RIBBON_GOLD,
-    );
-
-    const label = this.scene.add
-      .text(0, 0, text, {
-        fontSize: Math.round(
-          LayoutConfig.FONTS.SIZES.METADATA * this.currentFontScale,
-        ),
-        fontFamily: LayoutConfig.FONTS.BODY,
-        color: LayoutConfig.COLORS.WHITE,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-
-    const checkmark = this.createCheckmark().setVisible(false);
-    const cross = this.createCross().setVisible(false);
-
-    container.add([bg, label, checkmark, cross]);
-    this.add(container);
-
-    return { container, bg, label, checkmark, cross };
-  }
-
-  private updateSelectionVisuals() {
-    for (let i = 0; i < this.optionButtons.length; i++) {
-      const b = this.optionButtons[i];
-      const selected = i === this.selectedOptionIndex;
-      const color = selected
-        ? LayoutConfig.COLORS.RIBBON_GOLD_SELECTED
-        : LayoutConfig.COLORS.RIBBON_GOLD;
-      this.drawRibbon(
-        b.bg,
-        this.optionButtonWidth,
-        this.optionButtonHeight,
-        color,
-      );
-      b.container.setScale(selected ? 1.05 : 1);
-    }
-  }
-
-  private showAnswerFeedback(optionIndex: number, isCorrect: boolean) {
-    const b = this.optionButtons[optionIndex];
-    b.checkmark.setPosition(-80, 0).setVisible(isCorrect);
-    b.cross.setPosition(-80, 0).setVisible(!isCorrect);
-
-    this.drawRibbon(
-      b.bg,
-      this.optionButtonWidth,
-      this.optionButtonHeight,
-      isCorrect ? 0x4caf50 : 0xf44336,
-    );
-
-    if (isCorrect) {
-      this.scene.tweens.add({
-        targets: b.container,
-        scaleX: 1.1,
-        scaleY: 1.1,
-        duration: 150,
-        yoyo: true,
-        repeat: 1,
-      });
-      return;
-    }
-
-    this.scene.tweens.add({
-      targets: b.container,
-      x: "-=8",
-      duration: 50,
-      yoyo: true,
-      repeat: 3,
-    });
-  }
-
-  private showQuestion() {
-    const question = this.questions[this.currentQuestionIndex];
-    if (!question) return;
-
-    this.selectedOptionIndex = 0;
-
+  private resetOptionButtons() {
     this.optionButtons.forEach((b) => {
-      b.container.destroy(true);
+      b.destroy(true);
     });
     this.optionButtons = [];
+  }
 
-    this.questionTitleText.setText(
-      `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
+  private updateQuestionHeader() {
+    this.questionTitle.setText(
+      `Desafio ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
     );
-    this.questionText.setText(question.question);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
       `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}/${String(this.questions.length).padStart(2, "0")}`,
     );
+  }
 
+  private syncProgressUI() {
     this.positionProgressTracker();
-
+    this.progressTracker.setCurrentIndex(this.currentQuestionIndex);
     this.updateProgressTracker();
+  }
 
-    const options = question.options.slice(0, 4);
+  private createOptionButtons(options: string[]) {
     const colGap = 50;
     const rowGap = 22;
 
@@ -553,13 +359,88 @@ export class QuizPanel extends BasePanel {
       { x: rightX, y: bottomY },
     ];
 
+    const buttonCfg: QuizRibbonButtonConfig = {
+      width: this.optionButtonWidth,
+      height: this.optionButtonHeight,
+      notchDepth: this.optionNotchDepth,
+      notchHeight: this.optionNotchHeight,
+      baseColor: LayoutConfig.COLORS.GOLD_DARK_HEX,
+      selectedColor: LayoutConfig.COLORS.GOLD_HEX,
+    };
+
+    const buttonPanel = this.scene.add.container(0, 80);
     for (let i = 0; i < options.length; i++) {
       const pos = positions[i];
-      this.optionButtons.push(
-        this.createRibbonButton(pos.x, pos.y, options[i]),
-      );
+      const btn = new QuizButton(this.scene, pos.x, pos.y, options[i], {
+        ...buttonCfg,
+      });
+      this.optionButtons.push(btn);
+      buttonPanel.add(btn);
+    }
+    this.add(buttonPanel);
+  }
+
+  private showFinalPerformance() {
+    this.isShowingPerformance = true;
+    this.questionTitle.setVisible(false);
+    this.questionText.setVisible(false);
+    this.resetOptionButtons();
+    const percentage = this.getScorePercentage();
+    if (percentage < 70) {
+      this.scoreText.setText("Por pouco");
+      this.questionCounterText.setText("Pontuação baixa");
+      this.performanceText.setText("Quase lá...");
+    } else if (percentage < 100) {
+      this.scoreText.setText("Parabéns!");
+      this.questionCounterText.setText("Boa pontuação");
+      this.performanceText.setText("Muito bom");
+    } else {
+      this.scoreText.setText("Parabéns!");
+      this.questionCounterText.setText("Pontuação perfeita!");
+      this.performanceText.setText("Gabaritou");
+    }
+    this.performanceContainer.setVisible(true);
+    this.performanceStar.setTexture(this.calculateStarFillLevel());
+    this.performanceStar.setScale(this.calculateResultStarScale());
+    if (percentage >= 70) {
+      this.footerHintText.setText("Pressione Espaço para ver resultados");
+    } else {
+      this.footerHintText.setText("Pressione Espaço para fechar");
+    }
+  }
+
+  private handlePerformanceSpace() {
+    const percentage = this.getScorePercentage();
+
+    if (percentage >= 70) {
+      this.shouldShowResultsAfterHide = true;
     }
 
+    this.hide();
+  }
+
+  private updateSelectionVisuals() {
+    for (let i = 0; i < this.optionButtons.length; i++) {
+      const b = this.optionButtons[i];
+      b.setSelected(i === this.selectedOptionIndex);
+    }
+  }
+
+  private showAnswerFeedback(optionIndex: number, isCorrect: boolean) {
+    this.optionButtons[optionIndex]?.showFeedback(isCorrect);
+  }
+
+  private showQuestion() {
+    const question = this.questions[this.currentQuestionIndex];
+    if (!question) return;
+
+    this.selectedOptionIndex = 0;
+    this.resetOptionButtons();
+    this.updateQuestionHeader();
+    this.questionText.setText(question.question);
+    this.syncProgressUI();
+    const options = question.options.slice(0, 4);
+    this.createOptionButtons(options);
     this.updateSelectionVisuals();
   }
 
@@ -591,196 +472,28 @@ export class QuizPanel extends BasePanel {
   private selectOption() {
     if (!this._isVisible) return;
     if (this.isProcessingAnswer) return;
-
-    if (this.mode === "results") {
-      this.hide();
-      return;
-    }
-
     if (this.optionButtons.length === 0) return;
 
     const question = this.questions[this.currentQuestionIndex];
+    if (!question) return;
     const isCorrect = this.selectedOptionIndex === question.correctOptionIndex;
-
     if (isCorrect) {
       this.score++;
       this.answers[this.currentQuestionIndex] = "correct";
     } else {
       this.answers[this.currentQuestionIndex] = "wrong";
     }
-
     this.showAnswerFeedback(this.selectedOptionIndex, isCorrect);
-
     this.isProcessingAnswer = true;
-
     this.scene.time.delayedCall(500, () => {
       this.isProcessingAnswer = false;
       this.currentQuestionIndex++;
       if (this.currentQuestionIndex < this.questions.length) {
         this.showQuestion();
       } else {
-        this.showResults();
+        this.progressTracker.finishTracker(this.currentQuestionIndex);
+        this.showFinalPerformance();
       }
     });
-  }
-
-  private setQuizUiVisible(visible: boolean) {
-    this.scoreText.setVisible(visible);
-    this.questionCounterText.setVisible(visible);
-    this.questionTitleText.setVisible(visible);
-    this.questionText.setVisible(visible);
-  }
-
-  private setResultsUiVisible(visible: boolean) {
-    this.resultTitleText.setVisible(visible);
-    this.resultSummaryText.setVisible(visible);
-    this.resultStarsContainer.setVisible(visible);
-  }
-
-  private showResults() {
-    this.mode = "results";
-
-    this.optionButtons.forEach((b) => {
-      b.container.destroy(true);
-    });
-    this.optionButtons = [];
-
-    const total = this.questions.length;
-    const required = Math.ceil(total * 0.7);
-    const passed = this.score >= required;
-
-    this.setQuizUiVisible(false);
-    this.setResultsUiVisible(true);
-
-    this.footerHintText.setText("Aperte ESC para fechar");
-
-    this.resultTitleText.setText("Resultado");
-    this.resultTitleText.setColor(passed ? "#4caf50" : "#f44336");
-    this.resultSummaryText.setText(`Você acertou ${this.score} de ${total}`);
-
-    this.positionResultsStarsContainer();
-    this.updateResultsStars();
-    this.layoutResultsStarsRow();
-
-    this.positionProgressTracker();
-    this.updateProgressTracker();
-  }
-
-  private createResultsStars() {
-    // Always render 5 star slots (20 quarters total).
-    for (let i = 0; i < this.resultStarsCount; i++) {
-      const star = this.scene.add.image(0, 0, "ui_star_full").setScale(1);
-      this.resultStars.push(star);
-      this.resultStarsContainer.add(star);
-    }
-
-    this.layoutResultsStarsRow();
-  }
-
-  private positionResultsStarsContainer() {
-    // Anchor below the summary text (handles multi-line wrapping).
-    const y =
-      this.resultSummaryText.y +
-      this.resultSummaryText.displayHeight +
-      this.resultStarsTopPadding;
-    this.resultStarsContainer.setPosition(0, y);
-  }
-
-  private layoutResultsStarsRow() {
-    if (this.resultStars.length === 0) return;
-
-    const tex = this.scene.textures.get("ui_star_full");
-    const source = tex?.getSourceImage() as
-      | { width: number; height: number }
-      | undefined;
-    const baseW = source?.width ?? 457;
-
-    const maxRowWidth = Math.max(
-      0,
-      this.panelWidth - this.resultStarsSidePadding * 2,
-    );
-    const denom =
-      this.resultStarsCount +
-      (this.resultStarsCount - 1) * this.resultStarsGapRatio;
-    const targetW = denom > 0 ? maxRowWidth / denom : maxRowWidth;
-    const gap = targetW * this.resultStarsGapRatio;
-    const scale = baseW > 0 ? targetW / baseW : 1;
-
-    const step = targetW + gap;
-    const startX = -((this.resultStarsCount - 1) * step) / 2;
-
-    for (let i = 0; i < this.resultStarsCount; i++) {
-      const star = this.resultStars[i];
-      if (!star) continue;
-      star.setPosition(startX + i * step, 0);
-      star.setScale(scale);
-    }
-  }
-
-  private computeQuizQuarters(
-    correctAnswers: number,
-    totalQuestions: number,
-  ): number {
-    const total = Math.max(0, Math.floor(totalQuestions));
-    const correct = Math.min(Math.max(0, Math.floor(correctAnswers)), total);
-    const accuracyPercent = total > 0 ? Math.floor((correct / total) * 100) : 0;
-    return Math.min(4, Math.floor(accuracyPercent / 25));
-  }
-
-  private keyForQuarterFill(q: number): string {
-    if (q >= 4) return "ui_star_full";
-    if (q === 3) return "ui_star_3q";
-    if (q === 2) return "ui_star_2q";
-    return "ui_star_1q";
-  }
-
-  private updateResultsStars() {
-    const gameScene = this.scene.scene.get(SceneNames.GAME) as unknown as {
-      getScoringPayload?: () => {
-        totalQuarters: number;
-        quiz: { quartersEarned: number };
-      };
-    };
-
-    // Default to current scoring payload; in practice Game always provides this.
-    const payload = gameScene.getScoringPayload?.();
-    const currentTotalQuarters = payload?.totalQuarters ?? 0;
-    const recordedQuizQuarters = payload?.quiz?.quartersEarned ?? 0;
-
-    // Quiz quarters are only recorded when the quiz closes; compute the final value for display.
-    const quizQuartersNow = this.computeQuizQuarters(
-      this.score,
-      this.questions.length,
-    );
-    const effectiveTotalQuarters = Math.max(
-      0,
-      Math.min(
-        20,
-        currentTotalQuarters - recordedQuizQuarters + quizQuartersNow,
-      ),
-    );
-
-    for (let i = 0; i < this.resultStarsCount; i++) {
-      const quartersForStar = Math.max(
-        0,
-        Math.min(4, effectiveTotalQuarters - i * 4),
-      );
-      const star = this.resultStars[i];
-      if (!star) continue;
-
-      if (quartersForStar <= 0) {
-        // Use full star silhouette as an empty slot.
-        star
-          .setTexture("ui_star_full")
-          .setTint(LayoutConfig.COLORS.DARK_STAR_TINT)
-          .setAlpha(0.5);
-        continue;
-      }
-
-      star
-        .setTexture(this.keyForQuarterFill(quartersForStar))
-        .clearTint()
-        .setAlpha(1);
-    }
   }
 }
