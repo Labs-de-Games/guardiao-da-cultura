@@ -14,7 +14,7 @@ export class CreateUserScoreTable1778260300000 implements MigrationInterface {
         "rating" character varying NOT NULL,
         "floorScores" jsonb,
         "quizScore" jsonb,
-        "interactibleScore" jsonb,
+        "collectibleScore" jsonb,
         "timestamp" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_f1a2b3c4d5e6f7a8b9c0d1e2f3a" PRIMARY KEY ("id")
       )

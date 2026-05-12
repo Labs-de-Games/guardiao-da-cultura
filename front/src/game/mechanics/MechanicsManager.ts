@@ -1,6 +1,6 @@
 import type * as Phaser from "phaser";
 import type { PlaceholderInstance } from "../systems/PlaceholderSystem";
-import type { InteractableType } from "../types/InteractableTypes";
+import type { InteractiveType } from "../types/InteractiveTypes";
 import type { BaseMechanicHandler } from "./handlers/BaseMechanicHandler";
 
 /**
@@ -8,7 +8,7 @@ import type { BaseMechanicHandler } from "./handlers/BaseMechanicHandler";
  * Elimina a necessidade do Game.ts conhecer os detalhes de cada tipo de puzzle.
  */
 export class MechanicsManager {
-  private handlers: Map<InteractableType, BaseMechanicHandler> = new Map();
+  private handlers: Map<InteractiveType, BaseMechanicHandler> = new Map();
 
   /**
    * Registra um novo handler de mecânica.
