@@ -1,9 +1,20 @@
 # Required environment variables for this stack:
-#   DATABASE_URL  - PostgreSQL connection string
-#   JWT_SECRET    - Secret key for JWT signing
+#   DATABASE_URL      - PostgreSQL connection string
+#   JWT_SECRET        - Secret key for JWT signing
+#   MAGIC_LINK_SECRET - Secret key for magic link signing
 #   POSTGRES_USER     - PostgreSQL username
 #   POSTGRES_PASSWORD - PostgreSQL password
 #   POSTGRES_DB       - PostgreSQL database name
+#
+# Optional environment variables:
+#   FRONTEND_URL              - Frontend URL (default: http://localhost:3000)
+#   JWT_EXPIRATION            - JWT expiry (default: 15m)
+#   JWT_ISSUER                - JWT issuer (default: gameplate)
+#   MAGIC_LINK_EXPIRATION_MIN - Magic link expiry in minutes (default: 15)
+#   EMAIL_PROVIDER            - mock | nodemailer (default: mock)
+#   EMAIL_FROM                - Sender address (default: 42 Rio <noreply@42.rio>)
+#   GMAIL_USER                - Gmail address (required if EMAIL_PROVIDER=nodemailer)
+#   GMAIL_APP_PASSWORD        - Gmail app password (required if EMAIL_PROVIDER=nodemailer)
 #
 # You can set them in a .env file in the project root.
 
@@ -36,6 +47,15 @@ services:
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-15m}
+      - JWT_ISSUER=${JWT_ISSUER:-gameplate}
+      - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET}
+      - MAGIC_LINK_EXPIRATION_MIN=${MAGIC_LINK_EXPIRATION_MIN:-15}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-mock}
+      - EMAIL_FROM=${EMAIL_FROM:-42 Rio <noreply@42.rio>}
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
     networks:
       - backend
     deploy:
