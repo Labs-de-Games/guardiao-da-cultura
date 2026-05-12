@@ -131,14 +131,25 @@ export class ProgressionService {
   }
 
   private async findOrCreate(userId: string): Promise<UserProgress> {
-    const existing = await this.progressRepository.findOne({
+    await this.progressRepository
+      .createQueryBuilder()
+      .insert()
+      .into(UserProgress)
+      .values({ userId })
+      .orIgnore()
+      .execute();
+
+    const progress = await this.progressRepository.findOne({
       where: { userId },
     });
 
-    if (existing) return existing;
+    if (!progress) {
+      throw new Error(
+        `[ProgressionService] Failed to find or create progress for userId=${userId}`,
+      );
+    }
 
-    const created = this.progressRepository.create({ userId });
-    return this.progressRepository.save(created);
+    return progress;
   }
 
   private async handleQuizEvent(payload: GameEventPayload): Promise<void> {

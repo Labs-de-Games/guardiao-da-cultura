@@ -5,23 +5,50 @@ import { ProgressionService } from "../../../src/modules/progression/progression
 import { UserProgress } from "../../../src/modules/progression/user-progress.entity";
 import { GameEventType } from "../../../src/shared/events/game-events";
 
+type QueryBuilderMock = {
+  insert: ReturnType<typeof mock<[], QueryBuilderMock>>;
+  into: ReturnType<typeof mock<[unknown], QueryBuilderMock>>;
+  values: ReturnType<typeof mock<[unknown], QueryBuilderMock>>;
+  orIgnore: ReturnType<typeof mock<[], QueryBuilderMock>>;
+  execute: ReturnType<typeof mock<[], Promise<unknown>>>;
+};
+
+type ProgressRepoMock = {
+  findOne: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
+  create: ReturnType<typeof mock<[unknown], unknown>>;
+  save: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
+  update: ReturnType<
+    typeof mock<[unknown, unknown], Promise<{ affected: number }>>
+  >;
+  createQueryBuilder: ReturnType<typeof mock<[], QueryBuilderMock>>;
+};
+
+function createQueryBuilderMock(): QueryBuilderMock {
+  const builder = {} as QueryBuilderMock;
+  builder.insert = mock(() => builder);
+  builder.into = mock(() => builder);
+  builder.values = mock(() => builder);
+  builder.orIgnore = mock(() => builder);
+  builder.execute = mock(async () => ({
+    identifiers: [],
+    generatedMaps: [],
+    raw: [],
+  }));
+  return builder;
+}
+
 describe("ProgressionService", () => {
   let service: ProgressionService;
-  let repo: {
-    findOne: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
-    create: ReturnType<typeof mock<[unknown], unknown>>;
-    save: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
-    update: ReturnType<
-      typeof mock<[unknown, unknown], Promise<{ affected: number }>>
-    >;
-  };
+  let repo: ProgressRepoMock;
 
   beforeEach(async () => {
+    const queryBuilder = createQueryBuilderMock();
     repo = {
       findOne: mock(async () => null),
       create: mock((dto: unknown) => dto),
       save: mock(async (entity: unknown) => entity),
       update: mock(async () => ({ affected: 1 })),
+      createQueryBuilder: mock(() => queryBuilder),
     };
 
     const moduleRef = await Test.createTestingModule({
