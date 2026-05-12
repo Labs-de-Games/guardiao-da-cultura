@@ -66,7 +66,7 @@ export class LabelSystem {
   public registerLabel(config: LabelConfig): LabelInstance {
     const sprite = this.scene.add.sprite(config.x, config.y, "label");
     sprite.setScale(4);
-    sprite.setDepth(10);
+    sprite.setDepth(9);
 
     const instance: LabelInstance = {
       sprite,

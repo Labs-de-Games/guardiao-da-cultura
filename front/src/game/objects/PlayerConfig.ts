@@ -39,6 +39,12 @@ export const PLAYER_ASSETS = {
     frameWidth: 162,
     frameHeight: 183,
   },
+  CARRYING_SPRITESHEET: {
+    key: "player_carrying",
+    path: "player/animations/carrying.png",
+    frameWidth: 48,
+    frameHeight: 37,
+  },
   SOUNDS: {},
 } as const;
 
@@ -87,7 +93,14 @@ export const PLAYER_PHYSICS = {
     X: 10,
     Y: -1,
   },
-
+  JUMP_HITBOX: {
+    WIDTH: 12,
+    HEIGHT: 38,
+  },
+  JUMP_HITBOX_OFFSET: {
+    X: 18,
+    Y: 5,
+  },
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
 
@@ -110,7 +123,7 @@ export const PLAYER_MOVEMENT = {
   WALK_ACCELERATION: 90,
 
   /** Vertical jump velocity */
-  JUMP_VELOCITY_Y: -1200,
+  JUMP_VELOCITY_Y: -1270,
 
   /** Vertical speed when climbing ladders */
   CLIMB_SPEED_Y: 600,
@@ -153,6 +166,20 @@ export const PLAYER_ANIMS = {
   WALK: {
     key: "walk",
     spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 15,
+    repeat: -1,
+  },
+  CARRY_IDLE: {
+    key: "carry_idle",
+    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
+    frames: [0],
+    frameRate: 10,
+    repeat: -1,
+  },
+  CARRY_WALK: {
+    key: "carry_walk",
+    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
     frameRate: 15,
     repeat: -1,

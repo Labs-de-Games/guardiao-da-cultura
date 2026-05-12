@@ -149,9 +149,9 @@ export class Game extends Scene {
       this.load.json(`collectibles_${index}`, path);
     });
 
-    this.load.spritesheet("sparkle", "misc/sparkle.png", {
-      frameWidth: 32,
-      frameHeight: 32,
+    this.load.spritesheet("placeholder", "misc/placeholder-spritesheet.png", {
+      frameWidth: 299,
+      frameHeight: 532,
     });
 
     this.load.image("label", "misc/label.png");
@@ -396,10 +396,10 @@ export class Game extends Scene {
     Npc.createAnims(this);
     Enemy.createAnims(this);
 
-    if (!this.anims.exists("sparkle_hint_anim")) {
+    if (!this.anims.exists("placeholder_hint_anim")) {
       this.anims.create({
-        key: "sparkle_hint_anim",
-        frames: this.anims.generateFrameNumbers("sparkle", {
+        key: "placeholder_hint_anim",
+        frames: this.anims.generateFrameNumbers("placeholder", {
           start: 0,
           end: 5,
         }),
@@ -785,7 +785,8 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09, 0, 170);
+    this.cameras.main.setZoom(1.0);
+    this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
 
