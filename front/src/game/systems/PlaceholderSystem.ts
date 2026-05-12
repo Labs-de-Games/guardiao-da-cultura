@@ -41,6 +41,9 @@ export class PlaceholderSystem {
     if (!layer?.objects) return;
 
     layer.objects.forEach((obj) => {
+      // Only process objects of class 'PlaceholderInstance'
+      if (obj.type !== "PlaceholderInstance") return;
+
       const typeStr = TiledUtils.getProperty(obj, "type");
       const rawProp = TiledUtils.getProperty(obj, "id");
       const targetId = TiledUtils.parseTargetIds(rawProp);
@@ -83,21 +86,21 @@ export class PlaceholderSystem {
       isFilled: false,
     };
 
-    const sparkle = this.scene.add.sprite(
+    const placeholder = this.scene.add.sprite(
       rect.centerX,
       rect.centerY,
-      "sparkle",
+      "placeholder",
       0,
     );
-    sparkle.setScale(4);
-    sparkle.setAlpha(0.8);
-    sparkle.setDepth(10);
+    placeholder.setScale(0.1);
+    placeholder.setAlpha(1);
+    placeholder.setDepth(11);
 
-    if (this.scene.anims.exists("sparkle_hint_anim")) {
-      sparkle.play("sparkle_hint_anim", true);
+    if (this.scene.anims.exists("placeholder_hint_anim")) {
+      placeholder.play("placeholder_hint_anim", true);
     }
 
-    instance.hintSprite = sparkle;
+    instance.hintSprite = placeholder;
     this.placeholders.push(instance);
   }
 
@@ -109,11 +112,13 @@ export class PlaceholderSystem {
     const SNAP_THRESHOLD = 150;
 
     for (const p of this.placeholders) {
-      const isInside = Phaser.Geom.Rectangle.Contains(p.area, x, y);
+      const checkY = y;
+
+      const isInside = Phaser.Geom.Rectangle.Contains(p.area, x, checkY);
 
       const dist = Phaser.Math.Distance.Between(
         x,
-        y,
+        checkY,
         p.area.centerX,
         p.area.centerY,
       );
@@ -172,9 +177,11 @@ export class PlaceholderSystem {
 
     let nearbyMismatch = false;
     for (const p of this.placeholders) {
+      const checkY = item.y;
+
       const dist = Phaser.Math.Distance.Between(
         item.x,
-        item.y,
+        checkY,
         p.area.centerX,
         p.area.centerY,
       );

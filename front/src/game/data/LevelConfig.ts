@@ -83,6 +83,10 @@ export const LEVEL_ASSETS = {
     { key: "chunk_1-2", path: "artworks/photos/chunk-1.png" },
     { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
     { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
+    {
+      key: "candujar_sem_titulo_yanomami",
+      path: "artworks/photos/candujar_sem_titulo_yanomami.png",
+    },
   ],
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
