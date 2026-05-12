@@ -17,7 +17,7 @@ export interface SubmitScoreRequest {
     accuracyPercent: number;
     quartersEarned: number;
   };
-  interactibles: {
+  collectibles: {
     total: number;
     interactionsCount: number;
     quartersEarned: number;

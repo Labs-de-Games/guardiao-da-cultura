@@ -2,22 +2,22 @@
   "SYSTEM_DIALOGUES": {
     "SCULPTURE": {
       "SUCCESS": [
-        "Excelente! A escultura foi posicionada corretamente.",
-        "A exposição está ficando cada vez mais bonita!"
+        "Pronto! Deduzo que essa era a posição original da escultura.",
+        "As coisas estão começando a parecer com o que era antes."
       ],
       "ERROR": [
         "Ops! Esta escultura não parece pertencer a este local.",
-        "Procure o local correto para a exposição."
+        "Melhor continuar investigando."
       ]
     },
     "PAINTING": {
       "SUCCESS": [
-        "Excelente! A pintura foi posicionada corretamente.",
-        "A exposição está ficando cada vez mais bonita!"
+        "Pronto! Deduzo que essa pintura devia ficar mesmo aqui.",
+        "As coisas estão começando a parecer com o que era antes."
       ],
       "ERROR": [
-        "Ops! Esta pintura não parece pertencer a este local.",
-        "Procure o local correto para a exposição."
+        "Ops! A descrição da placa não bate com essa pintura.",
+        "Melhor continuar investigando."
       ]
     }
   }

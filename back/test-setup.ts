@@ -9,3 +9,4 @@ process.env.MAGIC_LINK_SECRET =
   process.env.MAGIC_LINK_SECRET || "test-magic-link-secret";
 process.env.MAGIC_LINK_EXPIRATION_MIN =
   process.env.MAGIC_LINK_EXPIRATION_MIN || "15";
+process.env.EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || "mock";

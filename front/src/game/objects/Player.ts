@@ -1,8 +1,8 @@
 import * as Phaser from "phaser";
 import type { IPlayerState } from "../types/EntityTypes";
-import { InteractableType } from "../types/InteractableTypes";
-import type { CarryableItem } from "./interactables/CarryableItem";
-import type { DraggableItem } from "./interactables/DraggableItem";
+import { InteractiveType } from "../types/InteractiveTypes";
+import type { CarryableItem } from "./interactives/CarryableItem";
+import type { DraggableItem } from "./interactives/DraggableItem";
 import {
   PLAYER_ANIMS,
   PLAYER_ASSETS,
@@ -37,12 +37,20 @@ export class Player
 
   private setPhysicsBodyForVisualScale(scale: number) {
     const isDragging = scale === PLAYER_PHYSICS.DRAGGING_SCALE;
-    const hitbox = isDragging
-      ? PLAYER_PHYSICS.DRAGGING_HITBOX
-      : PLAYER_PHYSICS.HITBOX;
-    const hitboxOffset = isDragging
-      ? PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET
-      : PLAYER_PHYSICS.HITBOX_OFFSET;
+    const isJumping = this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key;
+
+    let hitbox: { readonly WIDTH: number; readonly HEIGHT: number } =
+      PLAYER_PHYSICS.HITBOX;
+    let hitboxOffset: { readonly X: number; readonly Y: number } =
+      PLAYER_PHYSICS.HITBOX_OFFSET;
+
+    if (isDragging) {
+      hitbox = PLAYER_PHYSICS.DRAGGING_HITBOX;
+      hitboxOffset = PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET;
+    } else if (isJumping) {
+      hitbox = PLAYER_PHYSICS.JUMP_HITBOX;
+      hitboxOffset = PLAYER_PHYSICS.JUMP_HITBOX_OFFSET;
+    }
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
     const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
@@ -95,6 +103,14 @@ export class Player
         frameHeight: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameHeight,
       },
     );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
+      PLAYER_ASSETS.CARRYING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameHeight,
+      },
+    );
   }
 
   // Create player animations
@@ -114,6 +130,28 @@ export class Player
       }),
       frameRate: PLAYER_ANIMS.WALK.frameRate,
       repeat: PLAYER_ANIMS.WALK.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.CARRY_IDLE.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.CARRY_IDLE.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.CARRY_IDLE.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.CARRY_IDLE.frameRate,
+      repeat: PLAYER_ANIMS.CARRY_IDLE.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.CARRY_WALK.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.CARRY_WALK.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.CARRY_WALK.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.CARRY_WALK.frameRate,
+      repeat: PLAYER_ANIMS.CARRY_WALK.repeat,
     });
     scene.anims.create({
       key: PLAYER_ANIMS.JUMP.key,
@@ -310,16 +348,26 @@ export class Player
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
-    const isClimbing = isOnStairs && (upDown || downDown) && !this.isGrabbing;
+    const isClimbing =
+      isOnStairs &&
+      (upDown || downDown) &&
+      !this.isGrabbing &&
+      !this.isCarrying;
 
     if (isOnStairs && !this.isGrabbing) {
-      body.setAllowGravity(false);
-      if (upDown) {
-        body.setVelocityY(-PLAYER_MOVEMENT.CLIMB_SPEED_Y);
-      } else if (downDown) {
-        body.setVelocityY(PLAYER_MOVEMENT.CLIMB_SPEED_Y);
-      } else {
+      // Prevent climbing while carrying paintings
+      if (this.isCarrying) {
+        body.setAllowGravity(false);
         body.setVelocityY(0);
+      } else {
+        body.setAllowGravity(false);
+        if (upDown) {
+          body.setVelocityY(-PLAYER_MOVEMENT.CLIMB_SPEED_Y);
+        } else if (downDown) {
+          body.setVelocityY(PLAYER_MOVEMENT.CLIMB_SPEED_Y);
+        } else {
+          body.setVelocityY(0);
+        }
       }
     } else {
       body.setAllowGravity(true);
@@ -350,7 +398,12 @@ export class Player
           body.setVelocityX(0);
         } else {
           if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-            this.anims.play(PLAYER_ANIMS.WALK.key, true);
+            const walkAnim = this.isCarrying
+              ? PLAYER_ANIMS.CARRY_WALK.key
+              : PLAYER_ANIMS.WALK.key;
+            const changed = this.anims.currentAnim?.key !== walkAnim;
+            this.anims.play(walkAnim, true);
+            if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
           }
           body.velocity.x -= accel;
           if (!this.isGrabbing) this.setFlipX(true);
@@ -360,13 +413,23 @@ export class Player
           body.setVelocityX(0);
         } else {
           if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-            this.anims.play(PLAYER_ANIMS.WALK.key, true);
+            const walkAnim = this.isCarrying
+              ? PLAYER_ANIMS.CARRY_WALK.key
+              : PLAYER_ANIMS.WALK.key;
+            const changed = this.anims.currentAnim?.key !== walkAnim;
+            this.anims.play(walkAnim, true);
+            if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
           }
           body.velocity.x += accel;
           if (!this.isGrabbing) this.setFlipX(false);
         }
       } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
-        this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+        const idleAnim = this.isCarrying
+          ? PLAYER_ANIMS.CARRY_IDLE.key
+          : PLAYER_ANIMS.IDLE.key;
+        const changed = this.anims.currentAnim?.key !== idleAnim;
+        this.anims.play(idleAnim, true);
+        if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
       }
     }
 
@@ -403,10 +466,13 @@ export class Player
       !isOnStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
-      this.anims.play(PLAYER_ANIMS.JUMP.key, true);
+      if (!this.isCarrying) {
+        this.anims.play(PLAYER_ANIMS.JUMP.key, true);
+        this.setPhysicsBodyForVisualScale(this.scaleX);
+      }
     }
 
-    if (isOnStairs && !this.isGrabbing) {
+    if (isOnStairs && !this.isGrabbing && !this.isCarrying) {
       if (isClimbing) {
         if (downDown) {
           this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
@@ -424,73 +490,76 @@ export class Player
     }
 
     if (this.isCarrying && this.carriedItem) {
-      const offsetY = 60;
+      // Offset so the base of the item rests near the player's hands (above their head)
+      const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
       this.carriedItem.setDepth(this.depth + 1);
     }
   }
 
-  private tryGrab() {
-    if (this.isCarrying) return;
+  private tryGrab(): boolean {
+    if (this.isCarrying) return false;
     const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
     let closestItem: DraggableItem | null = null;
     let minDist: number = GRAB_DIST;
 
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
     for (const item of this.draggableRegistry) {
       if (!item.input?.enabled) continue;
 
-      const itemBody = item.body as Phaser.Physics.Arcade.Body | undefined;
-      const itemX = itemBody?.center?.x ?? item.x;
-      const itemY = itemBody?.center?.y ?? item.y;
-
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, itemX, itemY);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
       if (dist < minDist) {
-        const isFacingItem =
-          (this.flipX && itemX < this.x) || (!this.flipX && itemX > this.x);
-        if (isFacingItem) {
-          minDist = dist;
-          closestItem = item;
-        }
+        minDist = dist;
+        closestItem = item;
       }
     }
 
-    if (closestItem) {
-      this.isGrabbing = true;
-      this.grabbedItem = closestItem;
+    if (!closestItem) return false;
 
-      const body = this.body as Phaser.Physics.Arcade.Body;
-      const prevBodyX = body?.x;
-      const prevBodyY = body?.y;
+    this.isGrabbing = true;
+    this.grabbedItem = closestItem;
 
-      // Switch player to the dragging pose (visual), but keep the physics
-      // body stable to avoid collision ejection.
-      this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
-      this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    const prevBodyX = body?.x;
+    const prevBodyY = body?.y;
+    this.grabbedItem.setDepth(11);
 
-      // Swap to the dragging spritesheet immediately so we can compensate any
-      // body shift caused by the new (bigger) animation frame size.
-      this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
+    // Switch player to the dragging pose (visual), but keep the physics
+    // body stable to avoid collision ejection.
+    this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
 
-      // Keep the Arcade body world position stable across scale/animation changes.
-      if (
-        body &&
-        typeof prevBodyX === "number" &&
-        typeof prevBodyY === "number"
-      ) {
-        body.updateFromGameObject();
-        this.x += prevBodyX - body.x;
-        this.y += prevBodyY - body.y;
-        body.updateFromGameObject();
-      }
+    // Swap to the dragging spritesheet immediately so we can compensate any
+    // body shift caused by the new (bigger) animation frame size.
+    this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
 
-      // Preserve the sculpture position and keep a rigid constraint.
-      this.grabOffset = closestItem.x - this.x;
-      this.grabOffsetY = closestItem.y - this.y;
-      this.grabbedItem.setGrabbed(true);
-
-      this.emit("item-interacted", closestItem);
+    // Keep the Arcade body world position stable across scale/animation changes.
+    if (
+      body &&
+      typeof prevBodyX === "number" &&
+      typeof prevBodyY === "number"
+    ) {
+      body.updateFromGameObject();
+      this.x += prevBodyX - body.x;
+      this.y += prevBodyY - body.y;
+      body.updateFromGameObject();
     }
+
+    // Preserve the sculpture position and keep a rigid constraint.
+    this.grabOffset = closestItem.x - this.x;
+    this.grabOffsetY = closestItem.y - this.y;
+    this.grabbedItem.setGrabbed(true);
+
+    this.emit("item-interacted", closestItem);
+    return true;
   }
 
   private tryToggleCarry(): boolean {
@@ -499,19 +568,28 @@ export class Player
       this.scene.events.emit("item-dropped", this.carriedItem);
       this.carriedItem = null;
       this.isCarrying = false;
+      this.anims.play(PLAYER_ANIMS.IDLE.key, true);
       return true;
     }
 
     if (this.isGrabbing) return false;
 
-    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
+    const GRAB_DIST = 150; // More lenient for air-pickup
     let closestItem: CarryableItem | null = null;
     let minDist: number = GRAB_DIST;
 
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
     for (const item of this.carryableRegistry) {
       if (!item.input?.enabled || item.isCarried) continue;
 
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, item.x, item.y);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
       if (dist < minDist) {
         minDist = dist;
         closestItem = item;
@@ -519,7 +597,7 @@ export class Player
     }
 
     if (closestItem) {
-      if (closestItem.interactableType === InteractableType.PICTURE_CHUNK) {
+      if (closestItem.interactiveType === InteractiveType.PHOTO_CHUNK) {
         this.inventory.push(closestItem);
         closestItem.setCarried(true);
         closestItem.setVisible(false);
@@ -532,6 +610,7 @@ export class Player
       this.carriedItem = closestItem;
       this.carriedItem.setCarried(true);
 
+      this.anims.play(PLAYER_ANIMS.CARRY_IDLE.key, true);
       this.emit("item-interacted", closestItem);
       return true;
     }
@@ -558,6 +637,7 @@ export class Player
 
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
+      this.grabbedItem.setDepth(10);
     }
     this.isGrabbing = false;
     this.grabbedItem = null;

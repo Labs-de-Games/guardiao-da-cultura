@@ -41,7 +41,7 @@ export class UserScore {
   };
 
   @Column({ type: "jsonb", nullable: true })
-  interactibleScore!: {
+  collectibleScore!: {
     total: number;
     interactionsCount: number;
     quartersEarned: number;

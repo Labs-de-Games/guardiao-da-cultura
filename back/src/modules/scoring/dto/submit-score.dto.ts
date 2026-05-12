@@ -43,7 +43,7 @@ class QuizScoreDto {
   quartersEarned!: number;
 }
 
-class InteractibleScoreDto {
+class collectibleScoreDto {
   @IsInt()
   @Min(0)
   total!: number;
@@ -85,6 +85,6 @@ export class SubmitScoreDto {
   quiz!: QuizScoreDto;
 
   @ValidateNested()
-  @Type(() => InteractibleScoreDto)
-  interactibles!: InteractibleScoreDto;
+  @Type(() => collectibleScoreDto)
+  collectibles!: collectibleScoreDto;
 }

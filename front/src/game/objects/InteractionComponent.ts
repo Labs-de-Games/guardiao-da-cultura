@@ -13,7 +13,7 @@ export interface InteractionOptions {
   onInteract?: () => void;
   onInfoCollected?: (infoKey: string) => void;
 
-  // Hint system (sparkle animation after inactivity)
+  // Hint system (placeholder animation after inactivity)
   enableHint?: boolean;
   hintDelayMs?: number;
   hintOffsetX?: number;
@@ -72,27 +72,20 @@ export class InteractionComponent {
 
     this.armHint();
 
-    // Create Prompt UI
+    // Prompt UI disabled intentionally; interaction still works via spacebar.
     this.promptContainer = scene.add.container(parent.x, parent.y - 30);
-    const promptBg = scene.add
-      .rectangle(
-        options?.gapX ?? 0,
-        options?.gapY ?? 0,
-        30,
-        30,
-        LayoutConfig.COLORS.BLACK_HEX,
-        0.8,
-      )
-      .setStrokeStyle(2, LayoutConfig.COLORS.WHITE_HEX);
-    const promptText = scene.add
-      .text(options?.gapX ?? 0, options?.gapY ?? 0, "E", {
-        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-        color: LayoutConfig.COLORS.WHITE,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-    this.promptContainer.add([promptBg, promptText]);
     this.promptContainer.setVisible(false);
+    // const promptBg = scene.add
+    //   .rectangle(options?.gapX ?? 0, options?.gapY ?? 0, 30, 30, 0x000000, 0.8)
+    //   .setStrokeStyle(2, 0xffffff);
+    // const promptText = scene.add
+    //   .text(options?.gapX ?? 0, options?.gapY ?? 0, "ESPAÇO", {
+    //     fontSize: "20px",
+    //     color: LayoutConfig.COLORS.WHITE,
+    //     fontStyle: "bold",
+    //   })
+    //   .setOrigin(0.5);
+    // this.promptContainer.add([promptBg, promptText]);
 
     // Setup Key Listener
     this.keyHandler = (event: KeyboardEvent) => {
@@ -195,7 +188,7 @@ export class InteractionComponent {
       this.hintSprite = this.scene.add.sprite(
         this.parent.x + this.hintOffsetX,
         this.parent.y + this.hintOffsetY,
-        "sparkle",
+        "placeholder",
         0,
       );
       this.hintSprite.setOrigin(...LayoutConfig.ALIGN.CENTER);
@@ -208,8 +201,8 @@ export class InteractionComponent {
     }
 
     this.hintSprite.setVisible(true);
-    if (this.scene.anims.exists("sparkle_hint_anim")) {
-      this.hintSprite.play("sparkle_hint_anim", true);
+    if (this.scene.anims.exists("placeholder_hint_anim")) {
+      this.hintSprite.play("placeholder_hint_anim", true);
     }
   }
 

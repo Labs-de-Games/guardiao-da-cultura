@@ -4,6 +4,7 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
@@ -12,6 +13,8 @@ import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
+import type { QuizProgressTracker } from "../objects/ui/quiz/QuizProgressTracker";
+import { ResultPanel } from "../objects/ui/ResultPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import type {
   InteractionUIData,
@@ -40,6 +43,7 @@ export class UIScene extends Scene {
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
+  private resultPanel!: ResultPanel;
   private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
   private badgeGalleryPanel!: BadgeGalleryPanel;
@@ -81,6 +85,7 @@ export class UIScene extends Scene {
     this.dialoguePanel = new DialoguePanel(this);
     this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
+    this.resultPanel = new ResultPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
@@ -120,8 +125,6 @@ export class UIScene extends Scene {
       this.onDialogueEnded(),
     );
 
-    // Overlays flow
-
     // Requisiçōes de UI
     gameScene.events.on(
       GameEvents.SHOW_DIALOGUE_REQUEST,
@@ -134,9 +137,32 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.SHOW_QUIZ_REQUEST,
-      (questions: QuizQuestion[], onComplete: (score: number) => void) => {
+      (
+        questions: QuizQuestion[],
+        scoreManager: ScoreManager,
+        onComplete: (score: number) => void,
+      ) => {
         if (this.quizPanel) {
-          this.quizPanel.startQuiz(questions, onComplete);
+          this.quizPanel.startQuiz(questions, scoreManager, onComplete);
+        }
+      },
+    );
+
+    gameScene.events.on(
+      GameEvents.SHOW_QUIZ_RESULTS,
+      (
+        score: number,
+        total: number,
+        progressTracker: QuizProgressTracker,
+        scoreManager: ScoreManager,
+      ) => {
+        if (this.resultPanel) {
+          this.resultPanel.showResults(
+            score,
+            total,
+            progressTracker,
+            scoreManager,
+          );
         }
       },
     );
@@ -163,7 +189,7 @@ export class UIScene extends Scene {
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
-          this.chunkSelector.showChunk(
+          this.chunkSelector.show(
             data.instanceId,
             data.availableItems,
             data.state?.filledSlots || [],
@@ -216,6 +242,7 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.CONTROLS_OVERLAY_CLOSED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_QUIZ_RESULTS);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
         gameScene.events.off(GameEvents.SHOW_LABEL_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
@@ -255,6 +282,7 @@ export class UIScene extends Scene {
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
+    this.resultPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);
@@ -509,7 +537,7 @@ export class UIScene extends Scene {
           accuracyPercent: number;
           quartersEarned: number;
         };
-        interactibles: {
+        collectibles: {
           total: number;
           interactionsCount: number;
           quartersEarned: number;
@@ -533,10 +561,10 @@ export class UIScene extends Scene {
           accuracyPercent: payload.quiz.accuracyPercent,
           quartersEarned: payload.quiz.quartersEarned,
         },
-        interactibles: {
-          total: payload.interactibles.total,
-          interactionsCount: payload.interactibles.interactionsCount,
-          quartersEarned: payload.interactibles.quartersEarned,
+        collectibles: {
+          total: payload.collectibles.total,
+          interactionsCount: payload.collectibles.interactionsCount,
+          quartersEarned: payload.collectibles.quartersEarned,
         },
       });
     } catch (err) {

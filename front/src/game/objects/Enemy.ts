@@ -46,7 +46,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.setScale(2.5);
     this.body?.setSize(26, 20);
-    this.body?.setOffset(2, -5);
+    this.body?.setOffset(2, 10);
     this.setGravityY(8000);
     this.play("enemy_walk");
 
