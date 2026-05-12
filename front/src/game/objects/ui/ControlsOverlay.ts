@@ -92,7 +92,7 @@ export class ControlsOverlay extends BasePanel {
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_OPENED);
 
-    this.onEscHandler = (event: KeyboardEvent) => {
+    /* this.onEscHandler = (event: KeyboardEvent) => {
       const isEscape = event.key.toLowerCase() === "escape";
       const isSpace =
         event.code === "Space" || event.key === " " || event.key === "Spacebar";
@@ -100,7 +100,7 @@ export class ControlsOverlay extends BasePanel {
         this.hide();
       }
     };
-    this.scene.input.keyboard?.on("keydown", this.onEscHandler);
+    this.scene.input.keyboard?.on("keydown", this.onEscHandler);*/
   }
 
   public override hide(duration: number = 120, onComplete?: () => void) {
