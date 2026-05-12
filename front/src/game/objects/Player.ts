@@ -374,7 +374,6 @@ export class Player
 
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
-    const spaceDown = this.keys.space.isDown;
     const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
     if (spacePress) {
       if (this.isGrabbing) {
