@@ -1,6 +1,12 @@
 import type { Scene } from "phaser";
-import { fetchBadges, unlockBadgeOnServer } from "../../lib/badgesApi";
+import { sendGameEvent } from "../../lib/analyticsApi";
+import {
+  fetchBadges,
+  fetchUserBadges,
+  unlockBadgeOnServer,
+} from "../../lib/badgesApi";
 import { GameEvents } from "../constants/GameEvents";
+import { GameEventType } from "../types/AnalyticsTypes";
 import type { BadgeConfig } from "../types/BadgeTypes";
 
 const CONDITION_HANDLERS: Record<
@@ -28,6 +34,18 @@ export class BadgeSystem {
   public async initialize() {
     try {
       this.badges = await fetchBadges();
+
+      try {
+        const userBadges = await fetchUserBadges();
+        userBadges.forEach((ub) => {
+          this.unlockedBadges.add(ub.badgeId);
+        });
+      } catch (e) {
+        console.warn(
+          "[BadgeSystem] Could not sync unlocked badges from server",
+          e,
+        );
+      }
 
       this.badges.forEach((badge) => {
         const currentValue = this.scene.registry.get(badge.stat_required);
@@ -65,33 +83,53 @@ export class BadgeSystem {
   private unlockBadge(badge: BadgeConfig) {
     this.unlockedBadges.add(badge.id);
 
-    this.persistToLocalStorage(badge.id);
-
     this.scene.events.emit(GameEvents.SHOW_BADGE_TOAST, badge);
 
-    unlockBadgeOnServer(badge.id).catch((err) => {
-      console.error(`[BadgeSystem] Failed to sync unlock for ${badge.id}`, err);
+    this.syncUnlockToServer(badge.id);
+    const userId = this.scene.registry.get("userId");
+    if (userId) {
+      this.emitBadgeEarnedEvent(userId, badge);
+    }
+  }
+
+  private emitBadgeEarnedEvent(userId: string, badge: BadgeConfig) {
+    const payload = {
+      userId,
+      type: GameEventType.BADGE_EARNED,
+      timestamp: new Date().toISOString(),
+      metadata: { badgeId: badge.id, badgeName: badge.name },
+    };
+
+    sendGameEvent(payload).catch((err) => {
+      console.error("[BadgeSystem] Failed to send badge.earned event:", err);
     });
   }
 
-  private persistToLocalStorage(badgeId: string) {
-    if (typeof window === "undefined") return;
-
+  private async syncUnlockToServer(badgeId: string) {
     try {
-      const storageKey = "unlocked_badges";
-      const unlocked = JSON.parse(localStorage.getItem(storageKey) || "[]");
-
-      if (!unlocked.includes(badgeId)) {
-        unlocked.push(badgeId);
-        localStorage.setItem(storageKey, JSON.stringify(unlocked));
-      }
-
-      window.dispatchEvent(
-        new CustomEvent("badge-unlocked", { detail: badgeId }),
-      );
-    } catch (e) {
-      console.error("[BadgeSystem] LocalStorage persistence error", e);
+      await unlockBadgeOnServer(badgeId);
+    } catch (err) {
+      console.error(`[BadgeSystem] Failed to sync unlock for ${badgeId}`, err);
+      this.retryUnlock(badgeId);
     }
+  }
+
+  private retryUnlock(badgeId: string, attempt = 1) {
+    if (attempt > 3) return;
+
+    setTimeout(() => {
+      unlockBadgeOnServer(badgeId)
+        .then(() =>
+          console.log(
+            `[BadgeSystem] Retry ${attempt} succeeded for ${badgeId}`,
+          ),
+        )
+        .catch(() => this.retryUnlock(badgeId, attempt + 1));
+    }, attempt * 1000);
+  }
+
+  public getUnlockedBadgeIds(): string[] {
+    return Array.from(this.unlockedBadges);
   }
 
   public destroy() {

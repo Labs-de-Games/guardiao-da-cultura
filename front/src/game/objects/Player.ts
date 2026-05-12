@@ -1,8 +1,8 @@
 import * as Phaser from "phaser";
 import type { IPlayerState } from "../types/EntityTypes";
-import { InteractiveType } from "../types/InteractiveTypes";
-import type { CarryableItem } from "./interactives/CarryableItem";
-import type { DraggableItem } from "./interactives/DraggableItem";
+import { InteractableType } from "../types/InteractableTypes";
+import type { CarryableItem } from "./interactables/CarryableItem";
+import type { DraggableItem } from "./interactables/DraggableItem";
 import {
   PLAYER_ANIMS,
   PLAYER_ASSETS,
@@ -519,7 +519,7 @@ export class Player
     }
 
     if (closestItem) {
-      if (closestItem.interactiveType === InteractiveType.PHOTO_CHUNK) {
+      if (closestItem.interactableType === InteractableType.PICTURE_CHUNK) {
         this.inventory.push(closestItem);
         closestItem.setCarried(true);
         closestItem.setVisible(false);

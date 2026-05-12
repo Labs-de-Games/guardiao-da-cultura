@@ -1,14 +1,14 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import type { CarryableItem } from "../objects/interactives/CarryableItem";
-import type { DraggableItem } from "../objects/interactives/DraggableItem";
-import { InteractiveType } from "../types/InteractiveTypes";
+import type { CarryableItem } from "../objects/interactables/CarryableItem";
+import type { DraggableItem } from "../objects/interactables/DraggableItem";
+import { InteractableType } from "../types/InteractableTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface PlaceholderInstance {
   area: Phaser.Geom.Rectangle;
   instanceId: string;
-  type: InteractiveType;
+  type: InteractableType;
   id: string | string[];
   state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.Sprite;
@@ -21,7 +21,7 @@ export interface PlaceholderConfig {
   width: number;
   height: number;
   instanceId: string;
-  type: InteractiveType;
+  type: InteractableType;
   id: string | string[];
   state?: Record<string, unknown>;
 }
@@ -52,10 +52,10 @@ export class PlaceholderSystem {
         width: scaled.width,
         height: scaled.height,
         instanceId: obj.name || Phaser.Math.RND.uuid(),
-        type: typeStr as InteractiveType,
+        type: typeStr as InteractableType,
         id: targetId,
         state:
-          typeStr === InteractiveType.PHOTO
+          typeStr === InteractableType.PICTURE
             ? { filledSlots: [null, null, null, null] }
             : {},
       });
@@ -120,7 +120,7 @@ export class PlaceholderSystem {
       const isCloseEnough = dist < SNAP_THRESHOLD;
 
       if (isInside || isCloseEnough) {
-        if (item.interactiveType !== p.type) continue;
+        if (item.interactableType !== p.type) continue;
 
         const isMatch = Array.isArray(p.id)
           ? p.id.includes(item.itemId)
@@ -145,7 +145,7 @@ export class PlaceholderSystem {
     if (placeholder) {
       item.x = placeholder.area.centerX;
 
-      if (item.interactiveType !== InteractiveType.SCULPTURE) {
+      if (item.interactableType !== InteractableType.SCULPTURE) {
         item.y = placeholder.area.centerY;
       }
 
@@ -196,7 +196,7 @@ export class PlaceholderSystem {
     x: number,
     y: number,
     maxDistance: number = 100,
-    type?: InteractiveType,
+    type?: InteractableType,
   ): PlaceholderInstance | null {
     let closest: PlaceholderInstance | null = null;
     let minDist = maxDistance;
@@ -236,7 +236,7 @@ export class PlaceholderSystem {
       );
     }
   }
-  public checkCategoryCompletion(type: InteractiveType): boolean {
+  public checkCategoryCompletion(type: InteractableType): boolean {
     const categoryPlaceholders = this.placeholders.filter(
       (p) => p.type === type,
     );

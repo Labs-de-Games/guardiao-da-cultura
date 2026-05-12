@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
@@ -7,7 +8,6 @@ import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
-import { InventoryPanel } from "../objects/ui/InventoryPanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
 // Novos componentes SRP
 import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
@@ -36,7 +36,6 @@ export class UIScene extends Scene {
   // Componentes Especialistas
   private root!: Phaser.GameObjects.Container;
   private statusPanel!: PhaseStatusPanel;
-  private inventoryPanel!: InventoryPanel;
   private controlsOverlay!: ControlsOverlay;
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
@@ -77,11 +76,6 @@ export class UIScene extends Scene {
       "Museu antigo",
       this.missionsTotal,
       this.questManager,
-    );
-    this.inventoryPanel = new InventoryPanel(
-      this,
-      this.questManager,
-      this.missionDefs,
     );
     this.controlsOverlay = new ControlsOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
@@ -169,7 +163,7 @@ export class UIScene extends Scene {
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
-          this.chunkSelector.show(
+          this.chunkSelector.showChunk(
             data.instanceId,
             data.availableItems,
             data.state?.filledSlots || [],
@@ -182,7 +176,7 @@ export class UIScene extends Scene {
       GameEvents.SHOW_BADGE_TOAST,
       (badge: { name: string; icon_key: string }) => {
         if (this.toast) {
-          this.toast.show(
+          this.toast.showToast(
             `Conquista Desbloqueada:\n${badge.name}`,
             4000,
             badge.icon_key,
@@ -254,9 +248,9 @@ export class UIScene extends Scene {
 
   private layout() {
     const { width: w, height: h } = this.scale;
+    this.cameras.main.setSize(w, h);
 
     this.statusPanel.layout(w, h);
-    this.inventoryPanel.layout(w, h);
     this.controlsOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
@@ -273,18 +267,6 @@ export class UIScene extends Scene {
     this.activeMissionIds.forEach((id) => {
       this.refreshMissionSteps(id);
     });
-    if (this.inventoryPanel.isVisible) this.inventoryPanel.refresh();
-  }
-
-  private toggleInventory() {
-    if (this.inventoryPanel.isVisible) {
-      this.inventoryPanel.hide();
-      return;
-    }
-
-    if (this.canShowOverlay()) {
-      this.inventoryPanel.show();
-    }
   }
 
   private toggleControls() {
@@ -299,7 +281,7 @@ export class UIScene extends Scene {
   }
 
   private toggleBadgeGallery() {
-    if (this.badgeGalleryPanel.visibleState) {
+    if (this.badgeGalleryPanel.isVisible) {
       this.badgeGalleryPanel.hide();
       return;
     }
@@ -355,7 +337,9 @@ export class UIScene extends Scene {
     if (this.pendingMissionCompleteToastCount > 0) {
       this.pendingMissionCompleteToastCount = 0;
       this.time.delayedCall(120, () => {
-        this.toast.show("Missão concluída!\nAperte TAB para ver as relíquias");
+        this.toast.showToast(
+          "Missão concluída!\nAperte TAB para ver as relíquias",
+        );
       });
     }
   }
@@ -385,18 +369,22 @@ export class UIScene extends Scene {
       0,
       LayoutConfig.UI.PANEL_WIDTH,
       100,
-      0x000000,
-      0.65,
+      LayoutConfig.COLORS.STANDARD_BG,
+      0.95,
     );
-    bg.setOrigin(1, 0).setStrokeStyle(3, 0xffffff, 0.75);
+    bg.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT).setStrokeStyle(
+      LayoutConfig.UI.PANEL_BORDER_WIDTH,
+      LayoutConfig.UI.PANEL_BORDER_COLOR,
+      1,
+    );
 
     const title = this.add
       .text(-padding, padding, mission.title, {
-        fontSize: "18px",
-        color: "#ffffff",
-        fontStyle: "bold",
+        fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        color: LayoutConfig.COLORS.WHITE,
       })
-      .setOrigin(1, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 
     let currentY = padding + 28;
     const stepTexts: Phaser.GameObjects.Text[] = [];
@@ -404,11 +392,12 @@ export class UIScene extends Scene {
     mission.steps.forEach((_step: MissionStepDef) => {
       const t = this.add
         .text(-padding, currentY, "", {
-          fontSize: "16px",
-          color: "#ffffff",
+          fontSize: LayoutConfig.FONTS.SIZES.SMALL,
+          fontFamily: LayoutConfig.FONTS.BODY,
+          color: LayoutConfig.COLORS.WHITE,
           wordWrap: { width: LayoutConfig.UI.PANEL_WIDTH - padding * 2 },
         })
-        .setOrigin(1, 0);
+        .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 
       stepTexts.push(t);
       currentY += t.displayHeight + 6;
@@ -440,7 +429,7 @@ export class UIScene extends Scene {
 
   private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
 
-  public showPhaseCompleteUI(collectedStars: number, maxStars: number) {
+  public async showPhaseCompleteUI(collectedStars: number, maxStars: number) {
     if (this.phaseCompletePanel) this.phaseCompletePanel.destroy();
 
     const { width: cx, height: cy } = this.scale;
@@ -449,23 +438,23 @@ export class UIScene extends Scene {
       .setDepth(10000);
 
     const bg = this.add
-      .rectangle(0, 0, 800, 500, 0x000000, 0.95)
+      .rectangle(0, 0, 800, 500, LayoutConfig.COLORS.BLACK_HEX, 0.95)
       .setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
     const title = this.add
       .text(0, -210, "Fase concluída!", {
-        fontSize: "52px",
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
         color: LayoutConfig.COLORS.GOLD,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     const message = this.add
       .text(0, 150, "Parabéns, você completou sua exploração no museu!", {
-        fontSize: "28px",
-        color: "#ffffff",
+        fontSize: LayoutConfig.FONTS.SIZES.BODY,
+        color: LayoutConfig.COLORS.WHITE,
         wordWrap: { width: 700 },
-        align: "center",
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     const stars = this.add.container(0, -30);
     const starSpacing = 140;
@@ -482,8 +471,77 @@ export class UIScene extends Scene {
 
     this.phaseCompletePanel.add([bg, title, stars, message]);
 
-    // ESC para fechar (simples)
     this.input.keyboard?.once("keydown-ESC", () => this.hidePhaseCompleteUI());
+
+    await this.submitScoreToBackend();
+  }
+
+  private async submitScoreToBackend() {
+    try {
+      const scoreManager = this.registry.get("scoreManager") as {
+        getPayload: () => unknown;
+      };
+      const userId = this.registry.get("userId");
+      const levelId = this.registry.get("currentLevelId");
+
+      if (!scoreManager || !userId || !levelId) {
+        console.warn("[UIScene] Missing data for score submission:", {
+          hasScoreManager: !!scoreManager,
+          hasUserId: !!userId,
+          hasLevelId: !!levelId,
+        });
+        return;
+      }
+
+      const payload = scoreManager.getPayload() as {
+        levelId: string;
+        totalQuarters: number;
+        totalStars: number;
+        rating: string;
+        floors: Array<{
+          floorIndex: number;
+          errors: number;
+          quartersEarned: number;
+        }>;
+        quiz: {
+          totalQuestions: number;
+          correctAnswers: number;
+          accuracyPercent: number;
+          quartersEarned: number;
+        };
+        interactibles: {
+          total: number;
+          interactionsCount: number;
+          quartersEarned: number;
+        };
+      };
+
+      await submitScore({
+        userId,
+        levelId: payload.levelId,
+        totalQuarters: payload.totalQuarters,
+        totalStars: payload.totalStars,
+        rating: payload.rating,
+        floors: payload.floors.map((f) => ({
+          floorIndex: f.floorIndex,
+          errors: f.errors,
+          quartersEarned: f.quartersEarned,
+        })),
+        quiz: {
+          totalQuestions: payload.quiz.totalQuestions,
+          correctAnswers: payload.quiz.correctAnswers,
+          accuracyPercent: payload.quiz.accuracyPercent,
+          quartersEarned: payload.quiz.quartersEarned,
+        },
+        interactibles: {
+          total: payload.interactibles.total,
+          interactionsCount: payload.interactibles.interactionsCount,
+          quartersEarned: payload.interactibles.quartersEarned,
+        },
+      });
+    } catch (err) {
+      console.error("[UIScene] Failed to submit score:", err);
+    }
   }
 
   public hidePhaseCompleteUI() {

@@ -1,7 +1,7 @@
 {
   "npcs": {
     "professor_curador": {
-      "name": "Inspetora Cremilda Jarbas",
+      "name": "Jarbas",
       "missionId": "missao_curador",
       "dialogues": {
         "intro": [
@@ -11,27 +11,27 @@
           "Dê uma olhada nas esculturas desse andar e averigue o estrago feito."
         ],
         "collecting": [
-          "Entendo sua confusão, mas essas obras são assim mesmo, esculturas sem cabeça. Não é obra de nenhum vândalo.",
+          "Entendo sua confusão, mas essa obra é assim mesmo, uma escultura sem cabeça. Não é obra de nenhum vândalo.",
           "Parece que ele não danificou as obras aqui do Inhotim, apenas tirou tudo do lugar. Observe as plaquinhas informativas.",
           "Cada uma fala sobre uma obra em exposição. Leia sobre as obras em questão, encontre-as e leve-as até seus respectivo lugares.",
           "Quando tiver investigado tudo, procure-me novamente. Estarei no terceiro piso."
         ],
         "ready": [
-          "Terminou de investigar todos os andares?",
+          "Incrível! O salão recuperou sua harmonia visual.",
           "As pinturas e esculturas estão em seus lugares e a fotografia foi restaurada.",
-          "Agora, vamos analisar o que você entendeu das evidências. O segredo pode estar numa dessas obras!"
+          "Agora, vamos ao seu desafio final. Prove que você realmente entende a alma destas obras!"
         ],
         "completed": [
-          "Você é um mestre da restauração! Seu trabalho investigativo ainda facilitou a organização.",
+          "Você é um mestre da restauração! O museu brilha novamente.",
           "Obrigado por preservar nossa história e arte."
         ],
         "success": [
           "Conhecimento impecável! Você é digno do título de Mestre Curador.",
-          "Acho que já examinamos o suficiente por aqui. Espero que não haja outro ataque."
+          "As cores voltaram para ficar! Pegue esta estrela como prova do seu mérito."
         ],
         "failure": [
-          "Hmm... Parece que você se confundiu com alguns detalhes.",
-          "Reveja as obras e fale comigo de novo quando estiver pronto."
+          "Hmm... Parece que você se confundiu com alguns detalhes históricos.",
+          "Dê uma olhada nas obras novamente e venha tentar o quiz quando estiver pronto."
         ]
       }
     }
