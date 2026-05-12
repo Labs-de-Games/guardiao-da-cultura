@@ -334,7 +334,7 @@ export class Game extends Scene {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
       }
-      this.effects.setZoom(1.5, 400);
+      this.effects.setZoom(1.2, 400);
     });
 
     this.events.on(GameEvents.DIALOGUE_ENDED, () => {
@@ -350,7 +350,7 @@ export class Game extends Scene {
         }
       });
 
-      this.effects.setZoom(1.3, 400);
+      this.effects.setZoom(1.0, 400);
     });
 
     this.events.on(GameEvents.CONTROLS_OVERLAY_OPENED, () => {
@@ -767,7 +767,7 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.setZoom(1.3);
+    this.cameras.main.setZoom(1.0);
     this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
