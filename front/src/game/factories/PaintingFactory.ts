@@ -31,6 +31,11 @@ export class PaintingFactory implements IObjectFactory {
 
     const scaled = TiledUtils.scaleCoords(objData, scale);
 
+    const rawScale = TiledUtils.getProperty(objData, "scale");
+    const itemScale = Number(rawScale);
+    const finalScale =
+      Number.isFinite(itemScale) && itemScale > 0 ? itemScale : 1;
+
     const config = {
       x: scaled.x,
       y: scaled.y,
@@ -40,6 +45,10 @@ export class PaintingFactory implements IObjectFactory {
       type: InteractableType.PAINTING,
     };
 
-    return new CarryableItem(scene, config);
+    const item = new CarryableItem(scene, config);
+    item.setOrigin(0.5, 1);
+    item.setScale(finalScale);
+
+    return item;
   }
 }

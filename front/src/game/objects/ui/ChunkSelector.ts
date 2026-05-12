@@ -1,10 +1,18 @@
-import type * as Phaser from "phaser";
+import * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
-import { BasePanel } from "./BasePanel";
+import {
+  computeLockedSlots,
+  ensureValidGridIndex,
+  hasAnyFreeGridSlot,
+  initChunkNavState,
+  normalizeFilledSlots,
+  reduceChunkNavOnArrow,
+} from "./chunkSelectorNavigation";
 
-export class ChunkSelector extends BasePanel {
+export class ChunkSelector extends Phaser.GameObjects.Container {
+  private bg!: Phaser.GameObjects.Rectangle;
   private title!: Phaser.GameObjects.Text;
 
   private inventoryContainer!: Phaser.GameObjects.Container;
@@ -22,119 +30,101 @@ export class ChunkSelector extends BasePanel {
   private lockedSlots: boolean[] = [false, false, false, false];
 
   private currentInstanceId: string = "";
-
-  private readonly panelWidth = 750;
-  private readonly panelHeight = 500;
+  public isVisible: boolean = false;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0);
+    super(scene, scene.scale.width / 2, scene.scale.height / 2);
 
-    this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
-    this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
-    this.add(this.bg);
+    this.createBackground();
+    this.createTitle();
 
-    this.title = this.scene.add
-      .text(0, -this.panelHeight / 2 + 40, "RESTAURAÇÃO DE OBRA", {
-        fontFamily: LayoutConfig.FONTS.TITLE,
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
-        color: LayoutConfig.COLORS.GOLD,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-    this.add(this.title);
-
-    this.inventoryContainer = scene.add.container(-250, -50);
-    this.gridContainer = scene.add.container(100, -50);
+    this.inventoryContainer = scene.add.container(-340, -200);
+    this.gridContainer = scene.add.container(80, -80);
     this.add([this.inventoryContainer, this.gridContainer]);
 
     this.createConfirmButton();
 
     this.setDepth(LayoutConfig.UI.DEPTHS.INVENTORY);
     this.setScrollFactor(0);
+    this.setVisible(false);
+    scene.add.existing(this);
 
-    this.bindKey("UP", () => {
-      if (!this._isVisible) return;
-      this.moveCursor("up");
-      this.refreshUI();
-    });
-    this.bindKey("DOWN", () => {
-      if (!this._isVisible) return;
-      this.moveCursor("down");
-      this.refreshUI();
-    });
-    this.bindKey("LEFT", () => {
-      if (!this._isVisible) return;
-      this.moveCursor("left");
-      this.refreshUI();
-    });
-    this.bindKey("RIGHT", () => {
-      if (!this._isVisible) return;
-      this.moveCursor("right");
-      this.refreshUI();
-    });
-    this.bindKey("SPACE", () => {
-      if (!this._isVisible) return;
-      this.handleAction();
-      this.refreshUI();
-    });
-    this.bindKey("ENTER", () => {
-      if (!this._isVisible) return;
-      this.handleAction();
-      this.refreshUI();
-    });
-    this.bindKey("ESC", () => {
-      if (!this._isVisible) return;
-      this.hide();
-    });
+    this.setupKeyboardListeners();
+  }
+
+  private createBackground() {
+    this.bg = this.scene.add.rectangle(0, 0, 1000, 750, 0x000000, 0.9);
+    this.bg.setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
+    this.add(this.bg);
+  }
+
+  private createTitle() {
+    this.title = this.scene.add
+      .text(0, -320, "RESTAURAÇÃO DE OBRA", {
+        fontSize: "32px",
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    const subtitle = this.scene.add
+      .text(0, -280, "Use os pedaços para montar a fotografia", {
+        fontSize: "18px",
+        color: "#aaaaaa",
+      })
+      .setOrigin(0.5);
+
+    this.add([this.title, subtitle]);
   }
 
   private createConfirmButton() {
-    this.confirmButton = this.scene.add.container(0, 200);
+    this.confirmButton = this.scene.add.container(0, 300);
     const btnBg = this.scene.add
-      .rectangle(0, 0, 200, 50, LayoutConfig.COLORS.CHUNK_CONFIRM_BG)
-      .setStrokeStyle(2, LayoutConfig.COLORS.WHITE_HEX);
+      .rectangle(0, 0, 200, 50, 0x333333)
+      .setStrokeStyle(2, 0xffffff);
     const btnText = this.scene.add
-      .text(0, 0, "CONFIRMAR", {
-        fontFamily: LayoutConfig.FONTS.BODY,
-        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-        color: LayoutConfig.COLORS.WHITE,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
+      .text(0, 0, "CONFIRMAR", { fontSize: "20px", color: "#ffffff" })
+      .setOrigin(0.5);
     this.confirmButton.add([btnBg, btnText]);
     this.add(this.confirmButton);
   }
 
-  public showChunk(
+  public show(
     instanceId: string,
     items: { id: string; name: string }[],
     filledSlots: (string | null)[] = [],
   ) {
     this.currentInstanceId = instanceId;
     this.availableItems = items;
-    this.slots = [...filledSlots];
-    this.lockedSlots = filledSlots.map((s) => s !== null);
+
+    // `filledSlots` can arrive as a sparse/short array (only filled indices).
+    // Normalize to a fixed 2x2 grid.
+    this.slots = normalizeFilledSlots(filledSlots);
+    this.lockedSlots = computeLockedSlots(this.slots);
+
     this.pickedItemIndex = null;
     this.usedInventoryIndices = [null, null, null, null];
-    this.cursorMode = "inventory";
-    this.selectedInventoryIndex = 0;
 
-    const firstFree = this.lockedSlots.findIndex((l) => !l);
-    this.selectedGridIndex = firstFree !== -1 ? firstFree : 0;
+    const navInit = initChunkNavState({
+      inventoryCount: this.availableItems.length,
+      lockedSlots: this.lockedSlots,
+    });
+    this.cursorMode = navInit.cursorMode;
+    this.selectedInventoryIndex = navInit.selectedInventoryIndex;
+    this.selectedGridIndex = navInit.selectedGridIndex;
 
+    this.isVisible = true;
+    this.setVisible(true);
     this.refreshUI();
-    super.show();
-
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
   }
 
-  public override hide(duration: number = 120, onComplete?: () => void) {
-    if (!this._isVisible) return;
-
+  public hide() {
+    this.isVisible = false;
+    this.setVisible(false);
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
-
-    super.hide(duration, onComplete);
   }
 
   private refreshUI() {
@@ -145,14 +135,29 @@ export class ChunkSelector extends BasePanel {
 
   private refreshInventory() {
     this.inventoryContainer.removeAll(true);
+
+    // Match same aspect ratio as grid (chunk native: 122x80)
+    const slotW = 220;
+    const slotH = 145;
+    const gap = 10;
+    const itemSpacing = slotH + gap;
+    const scale = slotW / 122;
+
     const title = this.scene.add
-      .text(0, -100, "INVENTÁRIO", {
-        fontFamily: LayoutConfig.FONTS.BODY,
-        fontSize: LayoutConfig.FONTS.SIZES.HINT,
-        color: LayoutConfig.COLORS.DISABLED_GREY,
+      .text(0, -slotH / 2 - 30, "INVENTÁRIO", {
+        fontSize: "18px",
+        color: "#aaaaaa",
       })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
+      .setOrigin(0.5);
     this.inventoryContainer.add(title);
+
+    if (this.availableItems.length === 0) {
+      const empty = this.scene.add
+        .text(0, 0, "(sem itens)", { fontSize: "16px", color: "#777777" })
+        .setOrigin(0.5);
+      this.inventoryContainer.add(empty);
+      return;
+    }
 
     this.availableItems.forEach((item, index) => {
       const isSelected =
@@ -162,25 +167,23 @@ export class ChunkSelector extends BasePanel {
       const isAlreadyUsed = this.usedInventoryIndices.includes(index);
 
       const bgColor = isSelected
-        ? LayoutConfig.COLORS.CHUNK_SELECTED
+        ? 0x665500
         : isPicked
-          ? LayoutConfig.COLORS.CHUNK_HOLDING
+          ? 0x444444
           : isAlreadyUsed
-            ? LayoutConfig.COLORS.CHUNK_USED
-            : LayoutConfig.COLORS.CHUNK_DEFAULT;
+            ? 0x111111
+            : 0x222222;
+
+      const y = index * itemSpacing;
 
       const box = this.scene.add
-        .rectangle(0, index * 60, 220, 50, bgColor)
+        .rectangle(0, y, slotW, slotH, bgColor)
         .setStrokeStyle(
           2,
-          isSelected
-            ? LayoutConfig.COLORS.GOLD_HEX
-            : isAlreadyUsed
-              ? LayoutConfig.COLORS.CHUNK_STROKE_USED
-              : LayoutConfig.COLORS.CHUNK_STROKE_DEFAULT,
+          isSelected ? 0xffd700 : isAlreadyUsed ? 0x333333 : 0x555555,
         );
 
-      const img = this.scene.add.image(0, index * 60, item.id).setScale(0.3);
+      const img = this.scene.add.image(0, y, item.id).setScale(scale);
       if (isAlreadyUsed && !isSelected) {
         img.setAlpha(0.3);
       }
@@ -191,17 +194,19 @@ export class ChunkSelector extends BasePanel {
 
   private refreshGrid() {
     this.gridContainer.removeAll(true);
-    const title = this.scene.add
-      .text(80, -100, "MOLDURA", {
-        fontFamily: LayoutConfig.FONTS.BODY,
-        fontSize: LayoutConfig.FONTS.SIZES.HINT,
-        color: LayoutConfig.COLORS.DISABLED_GREY,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-    this.gridContainer.add(title);
 
-    const slotSize = 120;
-    const gap = 10;
+    const slotW = 220;
+    const slotH = 145;
+    const gapX = 1;
+    const gapY = 1;
+
+    const totalW = slotW * 2 + gapX;
+    const centerX = totalW / 2 - slotW / 2;
+
+    const title = this.scene.add
+      .text(centerX, -100, "MOLDURA", { fontSize: "18px", color: "#aaaaaa" })
+      .setOrigin(0.5);
+    this.gridContainer.add(title);
 
     for (let i = 0; i < 4; i++) {
       const col = i % 2;
@@ -210,21 +215,15 @@ export class ChunkSelector extends BasePanel {
         this.cursorMode === "grid" && this.selectedGridIndex === i;
       const isLocked = this.lockedSlots[i];
 
-      const x = col * (slotSize + gap);
-      const y = row * (slotSize + gap);
+      const x = col * (slotW + gapX);
+      const y = row * (slotH + gapY);
 
       if (!isLocked) {
-        const box = this.scene.add.rectangle(
-          x,
-          y,
-          slotSize,
-          slotSize,
-          LayoutConfig.COLORS.CHUNK_BG,
-        );
+        const box = this.scene.add.rectangle(x, y, slotW, slotH, 0x111111);
         if (isSelected) {
-          box.setStrokeStyle(3, LayoutConfig.COLORS.GOLD_HEX);
+          box.setStrokeStyle(3, 0xffd700);
         } else {
-          box.setStrokeStyle(3, LayoutConfig.COLORS.CHUNK_STROKE_EMPTY);
+          box.setStrokeStyle(3, 0x444444);
         }
         this.gridContainer.add(box);
       }
@@ -232,9 +231,11 @@ export class ChunkSelector extends BasePanel {
       const itemId = this.slots[i];
 
       if (itemId) {
-        const img = this.scene.add.image(x, y, itemId).setScale(0.8);
+        // Scale image to fill slotW preserving aspect ratio (122x80 native)
+        const scale = slotW / 122;
+        const img = this.scene.add.image(x, y, itemId).setScale(scale);
         if (isLocked) {
-          img.setTint(LayoutConfig.COLORS.LOCK_TINT);
+          img.setTint(0x88ff88);
         }
         this.gridContainer.add(img);
       }
@@ -244,84 +245,76 @@ export class ChunkSelector extends BasePanel {
   private refreshConfirmButton() {
     const bg = this.confirmButton.getAt(0) as Phaser.GameObjects.Rectangle;
     const isSelected = this.cursorMode === "confirm";
-    bg.setFillStyle(
-      isSelected
-        ? LayoutConfig.COLORS.GOLD_HEX
-        : LayoutConfig.COLORS.CHUNK_CONFIRM_BG,
-    );
+    bg.setFillStyle(isSelected ? 0xffd700 : 0x333333);
     const txt = this.confirmButton.getAt(1) as Phaser.GameObjects.Text;
-    txt.setColor(
-      isSelected ? LayoutConfig.COLORS.BLACK : LayoutConfig.COLORS.WHITE,
-    );
+    txt.setColor(isSelected ? "#000000" : "#ffffff");
+  }
+
+  private setupKeyboardListeners() {
+    this.scene.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!this.isVisible) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      switch (event.key) {
+        case "ArrowUp":
+          this.moveCursor("up");
+          break;
+        case "ArrowDown":
+          this.moveCursor("down");
+          break;
+        case "ArrowLeft":
+          this.moveCursor("left");
+          break;
+        case "ArrowRight":
+          this.moveCursor("right");
+          break;
+        case "Enter":
+        case " ":
+          this.handleAction();
+          break;
+        case "Escape":
+          this.hide();
+          break;
+      }
+      this.refreshUI();
+    });
   }
 
   private moveCursor(dir: string) {
-    if (this.cursorMode === "inventory") {
-      this.moveInventoryCursor(dir);
-    } else if (this.cursorMode === "grid") {
-      this.moveGridCursor(dir);
-    } else if (this.cursorMode === "confirm") {
-      this.moveConfirmCursor(dir);
-    }
-  }
-
-  private moveInventoryCursor(dir: string) {
-    if (dir === "down")
-      this.selectedInventoryIndex =
-        (this.selectedInventoryIndex + 1) % this.availableItems.length;
-    if (dir === "up")
-      this.selectedInventoryIndex =
-        (this.selectedInventoryIndex - 1 + this.availableItems.length) %
-        this.availableItems.length;
-    if (dir === "right") this.cursorMode = "grid";
-  }
-
-  private moveGridCursor(dir: string) {
-    let nextIndex = this.selectedGridIndex;
-
-    if (dir === "left") {
-      if (nextIndex % 2 === 1) nextIndex--;
-      else {
-        this.cursorMode = "inventory";
-        return;
-      }
-    } else if (dir === "right") {
-      if (nextIndex % 2 === 0) nextIndex++;
-    } else if (dir === "down") {
-      if (nextIndex < 2) nextIndex += 2;
-      else {
-        this.cursorMode = "confirm";
-        return;
-      }
-    } else if (dir === "up") {
-      if (nextIndex >= 2) nextIndex -= 2;
-      else {
-        this.cursorMode = "inventory";
-        return;
-      }
+    if (dir !== "up" && dir !== "down" && dir !== "left" && dir !== "right") {
+      return;
     }
 
-    if (this.lockedSlots[nextIndex]) {
-      if (dir === "up" || dir === "down") {
-        const otherInRow = nextIndex % 2 === 0 ? nextIndex + 1 : nextIndex - 1;
-        if (!this.lockedSlots[otherInRow]) nextIndex = otherInRow;
-      } else {
-        const otherInCol = nextIndex < 2 ? nextIndex + 2 : nextIndex - 2;
-        if (!this.lockedSlots[otherInCol]) nextIndex = otherInCol;
-      }
-    }
+    const next = reduceChunkNavOnArrow(
+      {
+        cursorMode: this.cursorMode,
+        selectedInventoryIndex: this.selectedInventoryIndex,
+        selectedGridIndex: this.selectedGridIndex,
+      },
+      {
+        inventoryCount: this.availableItems.length,
+        lockedSlots: this.lockedSlots,
+      },
+      dir,
+    );
 
-    if (!this.lockedSlots[nextIndex]) {
-      this.selectedGridIndex = nextIndex;
-    }
-  }
-
-  private moveConfirmCursor(dir: string) {
-    if (dir === "up") this.cursorMode = "grid";
+    this.cursorMode = next.cursorMode;
+    this.selectedInventoryIndex = next.selectedInventoryIndex;
+    this.selectedGridIndex = next.selectedGridIndex;
   }
 
   private handleAction() {
     if (this.cursorMode === "inventory") {
+      if (this.availableItems.length <= 0) return;
+      if (!hasAnyFreeGridSlot(this.lockedSlots)) {
+        // No selectable cells; user must be able to finish via confirm.
+        this.cursorMode = "confirm";
+        this.pickedItemIndex = null;
+        return;
+      }
+
       const isAlreadyUsed = this.usedInventoryIndices.includes(
         this.selectedInventoryIndex,
       );
@@ -329,7 +322,15 @@ export class ChunkSelector extends BasePanel {
 
       this.pickedItemIndex = this.selectedInventoryIndex;
       this.cursorMode = "grid";
+      this.selectedGridIndex = ensureValidGridIndex(
+        this.selectedGridIndex,
+        this.lockedSlots,
+      );
     } else if (this.cursorMode === "grid") {
+      this.selectedGridIndex = ensureValidGridIndex(
+        this.selectedGridIndex,
+        this.lockedSlots,
+      );
       const isLocked = this.lockedSlots[this.selectedGridIndex];
       if (isLocked) return;
 
@@ -360,7 +361,5 @@ export class ChunkSelector extends BasePanel {
 
   public layout(w: number, h: number) {
     this.setPosition(w / 2, h / 2);
-
-    this.applyScaledFontSize(this.title, LayoutConfig.FONTS.SIZES.TITLE, w, h);
   }
 }
