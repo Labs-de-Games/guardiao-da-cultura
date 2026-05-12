@@ -1,6 +1,4 @@
-import { env } from "./env";
-
-const API_URL = `${env.NEXT_PUBLIC_API_URL}/api/v1`;
+import { apiClient } from "./api/client";
 
 export interface SubmitScoreRequest {
   userId: string;
@@ -27,34 +25,18 @@ export interface SubmitScoreRequest {
 }
 
 export async function submitScore(payload: SubmitScoreRequest): Promise<void> {
-  const res = await fetch(`${API_URL}/scores`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to submit score: ${res.statusText}`);
-  }
+  await apiClient.post("/scores", payload);
 }
 
 export async function getUserScores(userId: string): Promise<unknown[]> {
-  const res = await fetch(`${API_URL}/scores/${userId}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch user scores: ${res.statusText}`);
-  }
-
-  return res.json();
+  const res = await apiClient.get(`/scores/${userId}`);
+  return res.data;
 }
 
 export async function getUserLevelScores(
   userId: string,
   levelId: string,
 ): Promise<unknown[]> {
-  const res = await fetch(`${API_URL}/scores/${userId}/${levelId}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch level scores: ${res.statusText}`);
-  }
-
-  return res.json();
+  const res = await apiClient.get(`/scores/${userId}/${levelId}`);
+  return res.data;
 }
