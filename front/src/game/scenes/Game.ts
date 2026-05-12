@@ -829,7 +829,7 @@ export class Game extends Scene {
     };
   }
 
-  update(_time: number, _delta: number) { }
+  update(_time: number, _delta: number) {}
 
   public recordFloorError(floorIndex: number) {
     this.scoreManager.recordFloorError(floorIndex);
