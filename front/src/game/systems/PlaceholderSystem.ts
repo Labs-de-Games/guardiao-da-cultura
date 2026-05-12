@@ -143,7 +143,7 @@ export class PlaceholderSystem {
   public handleDrop(item: DraggableItem | CarryableItem): {
     snapped: boolean;
     mismatch?: boolean;
-    payload?: unknown;
+    placeholder?: PlaceholderInstance | null;
   } {
     const placeholder = this.isOverPlaceholder(item.x, item.y, item);
 
@@ -192,8 +192,11 @@ export class PlaceholderSystem {
     }
 
     if (nearbyMismatch) {
-      const payload = item.getData("payload");
-      return { snapped: false, mismatch: true, payload };
+      return {
+        snapped: false,
+        mismatch: true,
+        placeholder: this.getNearbyPlaceholder(item.x, item.y, 150),
+      };
     }
 
     return { snapped: false };
@@ -238,9 +241,7 @@ export class PlaceholderSystem {
         p.hintSprite.destroy();
         p.hintSprite = undefined;
       }
-      this.placeholders = this.placeholders.filter(
-        (item) => item.instanceId !== instanceId,
-      );
+      p.isFilled = true;
     }
   }
   public checkCategoryCompletion(type: InteractiveType): boolean {

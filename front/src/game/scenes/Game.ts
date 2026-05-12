@@ -951,8 +951,13 @@ export class Game extends Scene {
         this.recordFloorError(this.scoringFloors.sculptures);
       }
 
-      const payload = result.payload as WorkData | undefined;
-      const feedback = payload?.educational?.feedbackError;
+      const placeholderWorkId = result.placeholder
+        ? this.resolveWorkIdFromPlaceholder(result.placeholder.id)
+        : null;
+      const placeholderWork = placeholderWorkId
+        ? this.findWorkDataById(placeholderWorkId)
+        : null;
+      const feedback = placeholderWork?.educational?.feedbackError;
 
       if (feedback) {
         this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [feedback]);

@@ -37,7 +37,7 @@ export class ControlsOverlay extends BasePanel {
       .text(
         0,
         0,
-        "Q: rever controles" +
+        "Q: rever controles\n" +
           "WASD ou SETAS DIRECIONAIS: andar, subir e descer\n" +
           "ESPAÇO: pular\n" +
           "SHIFT: interagir\n" +
