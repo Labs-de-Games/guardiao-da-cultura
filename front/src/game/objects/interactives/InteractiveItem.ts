@@ -28,10 +28,8 @@ export abstract class InteractiveItem extends Phaser.Physics.Arcade.Sprite {
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
-      if (this.interactiveType === InteractiveType.SCULPTURE) {
-        body.setAllowGravity(true);
-        body.setGravity(0, 4000);
-      }
+      body.setAllowGravity(true);
+      body.setGravity(0, 4000);
     }
 
     this.setInteractive({ useHandCursor: true });

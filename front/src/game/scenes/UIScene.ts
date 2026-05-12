@@ -163,7 +163,7 @@ export class UIScene extends Scene {
       GameEvents.OPEN_INTERACTION_UI_REQUEST,
       (data: InteractionUIData) => {
         if (this.chunkSelector) {
-          this.chunkSelector.showChunk(
+          this.chunkSelector.show(
             data.instanceId,
             data.availableItems,
             data.state?.filledSlots || [],

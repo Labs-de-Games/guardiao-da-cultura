@@ -39,7 +39,8 @@ export class ControlsOverlay extends BasePanel {
         "WASD ou SETAS: andar\n" +
           "ESPAÇO: interagir\n" +
           "TAB: abrir o mapa das relíquias\n" +
-          "Q: ver novamente os controles",
+          "Q: ver novamente os controles\n" +
+          "B: abrir painel de badges",
         {
           fontFamily: LayoutConfig.FONTS.BODY,
           fontSize: LayoutConfig.FONTS.SIZES.BODY,
