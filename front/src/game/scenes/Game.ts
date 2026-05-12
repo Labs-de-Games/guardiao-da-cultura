@@ -11,7 +11,6 @@ import {
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
-  PHASE_SETTINGS,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
 import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHandler";
@@ -21,7 +20,6 @@ import { Enemy } from "../objects/Enemy";
 import { InteractiveButton } from "../objects/InteractiveButton";
 import { CarryableItem } from "../objects/interactables/CarryableItem";
 import { DraggableItem } from "../objects/interactables/DraggableItem";
-import type { InteractableItem } from "../objects/interactables/InteractableItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
@@ -457,56 +455,6 @@ export class Game extends Scene {
       }
     });
 
-    type PortalItem = InteractableItem & {
-      interaction: { onInteract: (() => void) | null };
-      add: (child: Phaser.GameObjects.Container) => void;
-    };
-
-    const endPhase_btn = (createdItems as InteractableItem[]).find(
-      (item) =>
-        item.itemId === "phase_complete_portal" ||
-        item.itemName === "phase_complete_portal",
-    ) as PortalItem | undefined;
-
-    if (endPhase_btn) {
-      endPhase_btn.interaction.onInteract = () => {
-        this.levelManager.completePhase();
-      };
-
-      const endPhase_container = this.add.container(0, -60);
-      const floatStar = this.add.image(-10, 0, "star").setScale(2.5);
-      const endPhase_floatText = this.add
-        .text(6, 0, `0/${PHASE_SETTINGS.MAX_STARS}`, {
-          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-          color: LayoutConfig.COLORS.STAR_YELLOW,
-          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-          stroke: LayoutConfig.COLORS.BLACK,
-          strokeThickness: 4,
-        })
-        .setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
-
-      endPhase_container.add([floatStar, endPhase_floatText]);
-      endPhase_btn.add(endPhase_container);
-
-      let isEndPhaseActive = false;
-      this.events.on(GameEvents.MISSION_STATUS_CHANGED, () => {
-        const collected = this.questManager.getTotalCompletedMissions();
-        endPhase_floatText.setText(`${collected}/${PHASE_SETTINGS.MAX_STARS}`);
-
-        if (
-          collected >= PHASE_SETTINGS.MAX_STARS &&
-          !isEndPhaseActive &&
-          endPhase_btn
-        ) {
-          isEndPhaseActive = true;
-          this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-            "O portal de restauração foi ativado! Vá até ele para concluir a fase.",
-          ]);
-          endPhase_btn.setVisible(true);
-        }
-      });
-    }
-
     this.player.on("interact-placeholder", () => {
       if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
 
@@ -628,6 +576,7 @@ export class Game extends Scene {
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
+            this.scoreManager,
             (score: number) => {
               this.scoreManager.recordQuizResult(score, questions.length);
 
@@ -663,10 +612,7 @@ export class Game extends Scene {
                     missionId: missionId,
                   },
                 );
-
                 void this.submitScoreToBackend();
-
-                //this.levelManager.completePhase();
               } else {
                 this.registry.set("has_failed_quiz", 1);
                 void this.submitScoreToBackend();
@@ -716,12 +662,6 @@ export class Game extends Scene {
               if (isSuccess) {
                 this.levelManager.updateProgress();
               }
-
-              this.events.emit(
-                GameEvents.SHOW_DIALOGUE_REQUEST,
-                [...lines],
-                () => this.questManager.clearPendingResult(missionId),
-              );
             },
           );
         },

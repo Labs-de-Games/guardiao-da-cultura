@@ -22,4 +22,5 @@ export const GameEvents = {
   INTERACTION_SUBMITTED: "interaction-submitted",
 
   SHOW_BADGE_TOAST: "show-badge-toast",
+  SHOW_QUIZ_RESULTS: "show-quiz-results",
 } as const;
