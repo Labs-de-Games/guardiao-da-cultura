@@ -174,13 +174,17 @@ export function reduceChunkNavOnArrow(
     }
 
     if (dir === "down") {
+      if (invCount <= 1 || state.selectedInventoryIndex >= invCount - 1) {
+        return { ...state, cursorMode: "confirm" };
+      }
       return {
         ...state,
-        selectedInventoryIndex: (state.selectedInventoryIndex + 1) % invCount,
+        selectedInventoryIndex: state.selectedInventoryIndex + 1,
       };
     }
 
     if (dir === "up") {
+      if (invCount <= 0) return state;
       return {
         ...state,
         selectedInventoryIndex:
@@ -266,18 +270,45 @@ export function reduceChunkNavOnArrow(
 
   // confirm
   if (state.cursorMode === "confirm") {
-    if (dir !== "up") return state;
-
-    if (!hasAnyFreeGridSlot(locked)) {
-      // Nothing to focus in the grid; stay on confirm.
-      return state;
+    if (dir === "up") {
+      if (hasAnyFreeGridSlot(locked)) {
+        return {
+          ...state,
+          cursorMode: "grid",
+          selectedGridIndex: ensureValidGridIndex(
+            state.selectedGridIndex,
+            locked,
+          ),
+        };
+      }
+      return {
+        ...state,
+        cursorMode: "inventory",
+        selectedInventoryIndex: clampIndex(invCount - 1, invCount),
+      };
     }
 
-    return {
-      ...state,
-      cursorMode: "grid",
-      selectedGridIndex: ensureValidGridIndex(state.selectedGridIndex, locked),
-    };
+    if (dir === "left") {
+      return {
+        ...state,
+        cursorMode: "inventory",
+        selectedInventoryIndex: clampIndex(invCount - 1, invCount),
+      };
+    }
+
+    if (dir === "right") {
+      if (!hasAnyFreeGridSlot(locked)) return state;
+      return {
+        ...state,
+        cursorMode: "grid",
+        selectedGridIndex: ensureValidGridIndex(
+          state.selectedGridIndex,
+          locked,
+        ),
+      };
+    }
+
+    return state;
   }
 
   return state;
