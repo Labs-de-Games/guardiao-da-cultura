@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
+import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -62,7 +63,6 @@ export class Game extends Scene {
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
-  private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
@@ -219,6 +219,10 @@ export class Game extends Scene {
     this.questManager = new QuestManager(MissionRequirements);
     this.scoreManager = new ScoreManager({ levelId: this.levelId });
 
+    this.registry.set("scoreManager", this.scoreManager);
+
+    this.registry.set("scoreManager", this.scoreManager);
+
     this.scoreManager.on(
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
@@ -349,16 +353,6 @@ export class Game extends Scene {
       this.effects.setZoom(1.0, 400);
     });
 
-    this.events.on(GameEvents.INVENTORY_OPENED, () => {
-      this.isInventoryOpen = true;
-      if (this.player) this.player.isInDialogue = true;
-    });
-
-    this.events.on(GameEvents.INVENTORY_CLOSED, () => {
-      this.isInventoryOpen = false;
-      this.checkDialogState();
-    });
-
     this.events.on(GameEvents.CONTROLS_OVERLAY_OPENED, () => {
       this.isControlsOverlayOpen = true;
       if (this.player) this.player.isInDialogue = true;
@@ -483,13 +477,13 @@ export class Game extends Scene {
       const floatStar = this.add.image(-10, 0, "star").setScale(2.5);
       const endPhase_floatText = this.add
         .text(6, 0, `0/${PHASE_SETTINGS.MAX_STARS}`, {
-          fontSize: "22px",
+          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
           color: LayoutConfig.COLORS.STAR_YELLOW,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
           stroke: LayoutConfig.COLORS.BLACK,
           strokeThickness: 4,
         })
-        .setOrigin(0, 0.5);
+        .setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
 
       endPhase_container.add([floatStar, endPhase_floatText]);
       endPhase_btn.add(endPhase_container);
@@ -645,8 +639,10 @@ export class Game extends Scene {
               );
 
               if (isSuccess) {
-                this.registry.set("quiz_perfect_score", 1);
-                this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+                if (score === questions.length) {
+                  this.registry.set("quiz_perfect_score", 1);
+                  this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+                }
 
                 if (this.registry.get("has_failed_quiz") === 1) {
                   this.registry.set("quiz_solved_after_failure", 1);
@@ -668,9 +664,12 @@ export class Game extends Scene {
                   },
                 );
 
+                void this.submitScoreToBackend();
+
                 //this.levelManager.completePhase();
               } else {
                 this.registry.set("has_failed_quiz", 1);
+                void this.submitScoreToBackend();
               }
 
               const scoringPayload = this.scoreManager.getPayload();
@@ -741,7 +740,6 @@ export class Game extends Scene {
 
   private checkDialogState() {
     if (
-      !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
       !this.isChunkSelectorOpen &&
       !this.isDialogueOpen
@@ -769,7 +767,7 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
+    this.cameras.main.startFollow(this.player, true, 0.09, 0.09, 0, 170);
     this.levelManager.updateProgress();
   }
 
@@ -851,6 +849,41 @@ export class Game extends Scene {
 
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
+  }
+
+  private async submitScoreToBackend() {
+    try {
+      const userId = this.registry.get("userId");
+      if (!userId) return;
+
+      const payload = this.scoreManager.getPayload();
+
+      await submitScore({
+        userId,
+        levelId: payload.levelId,
+        totalQuarters: payload.totalQuarters,
+        totalStars: payload.totalStars,
+        rating: payload.rating,
+        floors: payload.floors.map((f) => ({
+          floorIndex: f.floorIndex,
+          errors: f.errors,
+          quartersEarned: f.quartersEarned,
+        })),
+        quiz: {
+          totalQuestions: payload.quiz.totalQuestions,
+          correctAnswers: payload.quiz.correctAnswers,
+          accuracyPercent: payload.quiz.accuracyPercent,
+          quartersEarned: payload.quiz.quartersEarned,
+        },
+        interactibles: {
+          total: payload.interactibles.total,
+          interactionsCount: payload.interactibles.interactionsCount,
+          quartersEarned: payload.interactibles.quartersEarned,
+        },
+      });
+    } catch (err) {
+      console.error("[Game] Failed to submit score:", err);
+    }
   }
 
   private handleItemDropped(item: DraggableItem) {

@@ -53,6 +53,7 @@ export class QuizPanel extends BasePanel {
   private readonly resultStarsGapRatio = 0.18; // gap as a fraction of star width
   private readonly resultStarsTopPadding = 150; // space below the summary text
 
+  private currentFontScale: number = 1;
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
 
@@ -61,9 +62,13 @@ export class QuizPanel extends BasePanel {
     this.setDepth(LayoutConfig.UI.DEPTHS.QUIZ || 2000);
 
     this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
-    this.bg.setOrigin(0.5, 0.5);
-    this.bg.setFillStyle(0x1a1a1a, 0.95);
-    this.bg.setStrokeStyle(4, 0xffffff, 1);
+    this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
+    this.bg.setFillStyle(LayoutConfig.COLORS.STANDARD_BG, 0.95);
+    this.bg.setStrokeStyle(
+      LayoutConfig.UI.PANEL_BORDER_WIDTH,
+      LayoutConfig.UI.PANEL_BORDER_COLOR,
+      1,
+    );
 
     this.scoreText = scene.add
       .text(
@@ -71,12 +76,13 @@ export class QuizPanel extends BasePanel {
         -this.panelHeight / 2 + 30,
         "Pontos: 0",
         {
-          fontSize: "20px",
+          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
+          fontFamily: LayoutConfig.FONTS.BODY,
           color: LayoutConfig.COLORS.GOLD,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
-      .setOrigin(0, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
     this.questionCounterText = scene.add
       .text(
@@ -84,30 +90,33 @@ export class QuizPanel extends BasePanel {
         -this.panelHeight / 2 + 58,
         "Pergunta 01/01",
         {
-          fontSize: "20px",
+          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
+          fontFamily: LayoutConfig.FONTS.BODY,
           color: LayoutConfig.COLORS.GOLD,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
-      .setOrigin(0, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
     this.questionTitleText = scene.add
       .text(0, -this.panelHeight / 2 + 110, "Pergunta 01", {
-        fontSize: "36px",
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+        fontFamily: LayoutConfig.FONTS.TITLE,
         color: LayoutConfig.COLORS.GOLD,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
     this.questionText = scene.add
       .text(0, -this.panelHeight / 2 + 170, "", {
-        fontSize: "28px",
+        fontSize: LayoutConfig.FONTS.SIZES.BODY,
+        fontFamily: LayoutConfig.FONTS.BODY,
         color: LayoutConfig.COLORS.WHITE,
-        align: "center",
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
         wordWrap: { width: 1000, useAdvancedWrap: true },
         lineSpacing: 6,
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
     this.footerHintText = scene.add
       .text(
@@ -115,29 +124,32 @@ export class QuizPanel extends BasePanel {
         this.panelHeight / 2 - 40,
         "Use as setas e pressione Espaço para confirmar",
         {
-          fontSize: "18px",
-          color: "#888888",
+          fontSize: LayoutConfig.FONTS.SIZES.HINT,
+          fontFamily: LayoutConfig.FONTS.BODY,
+          color: LayoutConfig.COLORS.HINT_GREY,
         },
       )
-      .setOrigin(0.5, 1);
+      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
 
     this.resultTitleText = scene.add
       .text(0, -this.panelHeight / 2 + 110, "Resultado", {
-        fontSize: "48px",
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
+        fontFamily: LayoutConfig.FONTS.TITLE,
         color: LayoutConfig.COLORS.WHITE,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5, 0)
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER)
       .setVisible(false);
 
     this.resultSummaryText = scene.add
       .text(0, -this.panelHeight / 2 + 190, "", {
-        fontSize: "36px",
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+        fontFamily: LayoutConfig.FONTS.BODY,
         color: LayoutConfig.COLORS.WHITE,
-        align: "center",
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
         wordWrap: { width: 1000, useAdvancedWrap: true },
       })
-      .setOrigin(0.5, 0)
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER)
       .setVisible(false);
 
     // Results stars (5 slots, quarter fractions). Created once; content updated on results.
@@ -265,9 +277,52 @@ export class QuizPanel extends BasePanel {
 
   public layout(w: number, h: number) {
     this.setPosition(w / 2, h / 2);
+    this.currentFontScale = this.getFontScale(w, h);
 
-    // Ensure the results stars row stays within the panel.
     this.layoutResultsStarsRow();
+
+    this.applyScaledFontSize(
+      this.scoreText,
+      LayoutConfig.FONTS.SIZES.METADATA,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.questionCounterText,
+      LayoutConfig.FONTS.SIZES.METADATA,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.questionTitleText,
+      LayoutConfig.FONTS.SIZES.TITLE,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.questionText,
+      LayoutConfig.FONTS.SIZES.BODY,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.footerHintText,
+      LayoutConfig.FONTS.SIZES.HINT,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.resultTitleText,
+      LayoutConfig.FONTS.SIZES.TITLE_LARGE,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.resultSummaryText,
+      LayoutConfig.FONTS.SIZES.TITLE,
+      w,
+      h,
+    );
   }
 
   private createProgressTracker(count: number) {
@@ -386,15 +441,18 @@ export class QuizPanel extends BasePanel {
       bg,
       this.optionButtonWidth,
       this.optionButtonHeight,
-      0xd4a853,
+      LayoutConfig.COLORS.RIBBON_GOLD,
     );
 
     const label = this.scene.add
       .text(0, 0, text, {
-        fontSize: "24px",
+        fontSize: Math.round(
+          LayoutConfig.FONTS.SIZES.METADATA * this.currentFontScale,
+        ),
+        fontFamily: LayoutConfig.FONTS.BODY,
         color: LayoutConfig.COLORS.WHITE,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     const checkmark = this.createCheckmark().setVisible(false);
     const cross = this.createCross().setVisible(false);
@@ -409,7 +467,9 @@ export class QuizPanel extends BasePanel {
     for (let i = 0; i < this.optionButtons.length; i++) {
       const b = this.optionButtons[i];
       const selected = i === this.selectedOptionIndex;
-      const color = selected ? 0xf0c060 : 0xd4a853;
+      const color = selected
+        ? LayoutConfig.COLORS.RIBBON_GOLD_SELECTED
+        : LayoutConfig.COLORS.RIBBON_GOLD;
       this.drawRibbon(
         b.bg,
         this.optionButtonWidth,

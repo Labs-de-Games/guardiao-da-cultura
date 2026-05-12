@@ -75,15 +75,22 @@ export class InteractionComponent {
     // Create Prompt UI
     this.promptContainer = scene.add.container(parent.x, parent.y - 30);
     const promptBg = scene.add
-      .rectangle(options?.gapX ?? 0, options?.gapY ?? 0, 30, 30, 0x000000, 0.8)
-      .setStrokeStyle(2, 0xffffff);
+      .rectangle(
+        options?.gapX ?? 0,
+        options?.gapY ?? 0,
+        30,
+        30,
+        LayoutConfig.COLORS.BLACK_HEX,
+        0.8,
+      )
+      .setStrokeStyle(2, LayoutConfig.COLORS.WHITE_HEX);
     const promptText = scene.add
       .text(options?.gapX ?? 0, options?.gapY ?? 0, "E", {
-        fontSize: "20px",
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
         color: LayoutConfig.COLORS.WHITE,
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.promptContainer.add([promptBg, promptText]);
     this.promptContainer.setVisible(false);
 
@@ -191,7 +198,7 @@ export class InteractionComponent {
         "sparkle",
         0,
       );
-      this.hintSprite.setOrigin(0.5, 0.5);
+      this.hintSprite.setOrigin(...LayoutConfig.ALIGN.CENTER);
       this.hintSprite.setScale(this.hintScale);
       this.hintSprite.setDepth(50);
 

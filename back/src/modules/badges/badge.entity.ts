@@ -32,6 +32,15 @@ export class Badge {
   })
   type!: BadgeType;
 
+  @Column({ type: "varchar", nullable: true })
+  statRequired!: string | null;
+
+  @Column({ type: "varchar", default: ">=" })
+  condition!: string;
+
+  @Column({ type: "int", default: 1 })
+  goalValue!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

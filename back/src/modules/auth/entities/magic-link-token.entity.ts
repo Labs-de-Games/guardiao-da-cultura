@@ -31,15 +31,15 @@ export class MagicLinkToken {
   @Column({ type: "timestamp", nullable: true })
   usedAt!: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   deviceNonce!: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   userAgent!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   ipAddress!: string | null;
 }

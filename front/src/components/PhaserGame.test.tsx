@@ -7,6 +7,29 @@ mock.module("../game/main", () => ({
   default: () => ({ destroy: () => {} }),
 }));
 
+mock.module("../lib/auth/useAuth", () => ({
+  useAuth: () => ({
+    user: {
+      id: "test-user-id",
+      email: "",
+      nickname: "Test",
+      firstName: "",
+      lastName: "",
+      role: "player",
+      isEmailVerified: false,
+    },
+    isAuthenticated: true,
+    isLoading: false,
+    accessToken: "test-token",
+    login: async () => {},
+    confirmLogin: async () => {},
+    register: async () => {},
+    confirmVerifyEmail: async () => {},
+    logout: async () => {},
+    logoutAll: async () => {},
+  }),
+}));
+
 describe("PhaserGame", () => {
   it("renders without crashing", async () => {
     const { container } = render(<PhaserGame />);

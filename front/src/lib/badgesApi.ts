@@ -1,39 +1,49 @@
 import type { BadgeConfig } from "../game/types/BadgeTypes";
-import { MOCK_BADGES } from "./badges.mock";
+import { apiClient } from "./api/client";
 
 export type { BadgeConfig };
 
-/**
- * Reusable helper to simulate network latency.
- */
-const simulateLatency = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Fetches the available badges from the backend API.
- * Currently returns mocked data for frontend development.
- */
-export async function fetchBadges(): Promise<BadgeConfig[]> {
-  await simulateLatency(500);
-
-  // In the future, this will be:
-  // const res = await fetch(`${API_BASE_URL}/badges`);
-  // return res.json();
-
-  return MOCK_BADGES;
+export interface ServerBadgeConfig {
+  id: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  type: string;
+  statRequired: string | null;
+  condition: string;
+  goalValue: number;
+  createdAt: string;
 }
 
-/**
- * Sends a request to the backend to unlock a badge for the current user.
- * Currently simulates a successful server response.
- */
+export interface UserBadgeRecord {
+  id: string;
+  userId: string;
+  badgeId: string;
+  earnedAt: string;
+  badge: ServerBadgeConfig;
+}
+
+export async function fetchBadges(): Promise<BadgeConfig[]> {
+  const res = await apiClient.get<ServerBadgeConfig[]>("/badges");
+  const badges = res.data;
+
+  return badges.map((b) => ({
+    id: b.id,
+    name: b.name,
+    description: b.description,
+    stat_required: b.statRequired ?? "",
+    condition: b.condition,
+    goal_value: b.goalValue,
+    icon_key: b.iconUrl.split("/").pop()?.replace(".png", "") ?? b.id,
+  }));
+}
+
 export async function unlockBadgeOnServer(badgeId: string): Promise<boolean> {
-  console.log(`[BadgesAPI Mock] Unlocking badge on server: ${badgeId}`);
-  await simulateLatency(300);
-
-  // In the future:
-  // const res = await fetch(`${API_BASE_URL}/badges/unlock/${badgeId}...`, { method: 'POST' });
-  // return res.ok;
-
+  await apiClient.post("/badges/unlock", { badgeId });
   return true;
+}
+
+export async function fetchUserBadges(): Promise<UserBadgeRecord[]> {
+  const res = await apiClient.get<UserBadgeRecord[]>("/badges/me");
+  return res.data;
 }
