@@ -893,10 +893,10 @@ export class Game extends Scene {
           accuracyPercent: payload.quiz.accuracyPercent,
           quartersEarned: payload.quiz.quartersEarned,
         },
-        interactibles: {
-          total: payload.interactibles.total,
-          interactionsCount: payload.interactibles.interactionsCount,
-          quartersEarned: payload.interactibles.quartersEarned,
+        collectibles: {
+          total: payload.collectibles.total,
+          interactionsCount: payload.collectibles.interactionsCount,
+          quartersEarned: payload.collectibles.quartersEarned,
         },
       });
     } catch (err) {
