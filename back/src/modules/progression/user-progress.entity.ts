@@ -24,7 +24,7 @@ export class UserProgress {
   @Column({ default: 1 })
   currentLevel!: number;
 
-  @Column({ default: 0 })
+  @Column({ type: "double precision", default: 0 })
   totalStars!: number;
 
   @Column({ type: "jsonb", default: "{}" })

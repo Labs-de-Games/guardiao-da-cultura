@@ -1,8 +1,8 @@
 import type * as Phaser from "phaser";
-// import { DraggableItem } from "../objects/interactables/DraggableItem";
-import { CarryableItem } from "../objects/interactables/CarryableItem";
+// import { DraggableItem } from "../objects/interactives/DraggableItem";
+import { CarryableItem } from "../objects/interactives/CarryableItem";
 import type { WorkData } from "../types/GameDataTypes";
-import { InteractableType } from "../types/InteractableTypes";
+import { InteractiveType } from "../types/InteractiveTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 import type { IObjectFactory } from "./IObjectFactory";
 
@@ -31,15 +31,24 @@ export class PaintingFactory implements IObjectFactory {
 
     const scaled = TiledUtils.scaleCoords(objData, scale);
 
+    const rawScale = TiledUtils.getProperty(objData, "scale");
+    const itemScale = Number(rawScale);
+    const finalScale =
+      Number.isFinite(itemScale) && itemScale > 0 ? itemScale : 1;
+
     const config = {
       x: scaled.x,
       y: scaled.y,
       texture: texture,
       name: data?.metadata?.title || name,
       id: data?.id || name,
-      type: InteractableType.PAINTING,
+      type: InteractiveType.PAINTING,
     };
 
-    return new CarryableItem(scene, config);
+    const item = new CarryableItem(scene, config);
+    item.setOrigin(0.5, 1);
+    item.setScale(finalScale);
+
+    return item;
   }
 }

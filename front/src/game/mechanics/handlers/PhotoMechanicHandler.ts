@@ -3,11 +3,11 @@ import { GameEvents } from "../../constants/GameEvents";
 import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
 import type { Game } from "../../scenes/Game";
 import type { PlaceholderInstance } from "../../systems/PlaceholderSystem";
-import { InteractableType } from "../../types/InteractableTypes";
+import { InteractiveType } from "../../types/InteractiveTypes";
 import type { BaseMechanicHandler } from "./BaseMechanicHandler";
 
-export class PictureMechanicHandler implements BaseMechanicHandler {
-  public readonly type = InteractableType.PICTURE;
+export class PhotoMechanicHandler implements BaseMechanicHandler {
+  public readonly type = InteractiveType.PHOTO;
 
   public handleInteraction(
     scene: Phaser.Scene,
@@ -39,7 +39,7 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
 
       if (invIndex === -1) {
         console.warn(
-          `[PictureMechanic] ⚠️ Item "${cleanPlaced}" não encontrado no inventário ou já utilizado.`,
+          `[PhotoMechanic] ⚠️ Item "${cleanPlaced}" não encontrado no inventário ou já utilizado.`,
         );
         return;
       }
@@ -86,10 +86,6 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     itemId: string,
     index: number,
   ) {
-    const { posX, posY } = this.calculateSpritePosition(placeholder, index);
-
-    gameScene.add.sprite(posX, posY, itemId).setScale(1).setDepth(1);
-
     gameScene.player.removeFromInventory(itemId);
 
     if (!placeholder.state) placeholder.state = {};
@@ -102,27 +98,6 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
     filledSlots[index] = itemId;
   }
 
-  private calculateSpritePosition(
-    placeholder: PlaceholderInstance,
-    index: number,
-  ) {
-    const cellW = placeholder.area.width / 2;
-    const cellH = placeholder.area.height / 2;
-    const gapX = 60;
-    const gapY = 78;
-
-    const startX = placeholder.area.x + cellW / 2 - gapX / 2;
-    const startY = placeholder.area.y + cellH / 2 - gapY / 2;
-
-    const col = index % 2;
-    const row = Math.floor(index / 2);
-
-    return {
-      posX: startX + col * (cellW + gapX),
-      posY: startY + row * (cellH + gapY),
-    };
-  }
-
   private emitFeedback(
     gameScene: Game,
     placeholder: PlaceholderInstance,
@@ -131,6 +106,25 @@ export class PictureMechanicHandler implements BaseMechanicHandler {
   ) {
     if (allCorrect) {
       gameScene.completePhotoFloor();
+
+      // Derive the full photo key from the works data's parent_id convention.
+      const fullPhotoKey = "candujar_sem_titulo_yanomami";
+
+      // Scale full image to fit the placeholder area (native chunks: 122x80 each, 2x2 = 244x160).
+      const nativeW = 244;
+      const nativeH = 160;
+      const scaleX = placeholder.area.width / nativeW;
+      const scaleY = placeholder.area.height / nativeH;
+      const scale = Math.min(scaleX, scaleY);
+
+      const cx = placeholder.area.centerX;
+      const cy = placeholder.area.centerY;
+
+      gameScene.add
+        .image(cx, cy, fullPhotoKey)
+        .setScale(scale * 2.7)
+        .setDepth(2);
+
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Incrível! Você restaurou o quadro perfeitamente.",
       ]);

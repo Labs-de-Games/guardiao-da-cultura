@@ -1,20 +1,25 @@
 import type * as Phaser from "phaser";
-import { InteractableItem } from "./InteractableItem";
+import { type InteractiveConfig, InteractiveItem } from "./InteractiveItem";
 
-export class DraggableItem extends InteractableItem {
+export class DraggableItem extends InteractiveItem {
   public isGrabbed: boolean = false;
+
+  constructor(scene: Phaser.Scene, config: InteractiveConfig) {
+    super(scene, config);
+    this.setDepth(10);
+  }
 
   public setGrabbed(grabbed: boolean) {
     this.isGrabbed = grabbed;
     const body = this.body as Phaser.Physics.Arcade.Body;
 
     if (grabbed) {
-      this.setTint(0xaaaaaa);
+      this.setDepth(11);
       if (body) {
         body.moves = false;
       }
     } else {
-      this.clearTint();
+      this.setDepth(10);
       this.scene.events.emit("item-dropped", this);
     }
   }

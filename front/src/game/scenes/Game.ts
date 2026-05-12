@@ -11,17 +11,16 @@ import {
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
-  PHASE_SETTINGS,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
-import { PictureMechanicHandler } from "../mechanics/handlers/PictureMechanicHandler";
+import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
 import { InteractiveButton } from "../objects/InteractiveButton";
-import { CarryableItem } from "../objects/interactables/CarryableItem";
-import { DraggableItem } from "../objects/interactables/DraggableItem";
-import type { InteractableItem } from "../objects/interactables/InteractableItem";
+import { CarryableItem } from "../objects/interactives/CarryableItem";
+import { DraggableItem } from "../objects/interactives/DraggableItem";
+import type { InteractiveItem } from "../objects/interactives/InteractiveItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
@@ -31,6 +30,7 @@ import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
+import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -43,7 +43,7 @@ import type {
   LabelInfoData,
   WorkData,
 } from "../types/GameDataTypes";
-import { InteractableType } from "../types/InteractableTypes";
+import { InteractiveType } from "../types/InteractiveTypes";
 import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
@@ -68,6 +68,7 @@ export class Game extends Scene {
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private objectLayerProcessor!: ObjectLayerProcessor;
+  private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   public badgeSystem!: BadgeSystem;
@@ -84,6 +85,7 @@ export class Game extends Scene {
     quizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
+    collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
   };
 
   constructor() {
@@ -124,6 +126,10 @@ export class Game extends Scene {
       this.load.image(asset.key, asset.path);
     });
 
+    LEVEL_ASSETS.COLLECTIBLES.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+
     BADGE_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
@@ -140,10 +146,13 @@ export class Game extends Scene {
     this.levelDef.data.messages.forEach((path, index) => {
       this.load.json(`messages_${index}`, path);
     });
+    this.levelDef.data.collectibles.forEach((path, index) => {
+      this.load.json(`collectibles_${index}`, path);
+    });
 
-    this.load.spritesheet("sparkle", "misc/sparkle.png", {
-      frameWidth: 32,
-      frameHeight: 32,
+    this.load.spritesheet("placeholder", "misc/placeholder-spritesheet.png", {
+      frameWidth: 299,
+      frameHeight: 532,
     });
 
     this.load.image("label", "misc/label.png");
@@ -194,6 +203,18 @@ export class Game extends Scene {
         );
       } else {
         console.warn(`[Game] Could not load messages data from: ${path}`);
+      }
+    });
+
+    this.levelDef.data.collectibles.forEach((path, i) => {
+      const data = this.cache.json.get(`collectibles_${i}`);
+      if (data?.collectibles) {
+        DataUtils.deepMerge(
+          this.contentData.collectibles as unknown as Record<string, unknown>,
+          data.collectibles as unknown as Record<string, unknown>,
+        );
+      } else {
+        console.warn(`[Game] Could not load collectibles data from: ${path}`);
       }
     });
   }
@@ -259,6 +280,12 @@ export class Game extends Scene {
     this.badgeSystem = new BadgeSystem(this);
     this.badgeSystem.initialize();
 
+    this.collectibleSystem = new CollectibleSystem(
+      this,
+      this.scoreManager,
+      this.mapScale,
+    );
+
     this.registry.set("currentLevelId", this.levelId);
     this.analyticsSystem = new AnalyticsSystem(this);
     this.analyticsSystem.track(GameEventType.GAME_STARTED);
@@ -268,7 +295,7 @@ export class Game extends Scene {
     this.registry.set("quiz_solved_after_failure", 0);
 
     this.mechanicsManager = new MechanicsManager();
-    this.mechanicsManager.registerHandler(new PictureMechanicHandler());
+    this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
@@ -370,10 +397,10 @@ export class Game extends Scene {
     Npc.createAnims(this);
     Enemy.createAnims(this);
 
-    if (!this.anims.exists("sparkle_hint_anim")) {
+    if (!this.anims.exists("placeholder_hint_anim")) {
       this.anims.create({
-        key: "sparkle_hint_anim",
-        frames: this.anims.generateFrameNumbers("sparkle", {
+        key: "placeholder_hint_anim",
+        frames: this.anims.generateFrameNumbers("placeholder", {
           start: 0,
           end: 5,
         }),
@@ -412,26 +439,16 @@ export class Game extends Scene {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
-    const interactiblesLayer = mapData.objectLayers.Interactibles;
-    if (interactiblesLayer?.objects?.length) {
-      for (const obj of interactiblesLayer.objects) {
-        const x = (obj.x ?? 0) * this.mapScale;
-        const y = (obj.y ?? 0) * this.mapScale;
-        const btn = new InteractiveButton(this, x, y, {
-          dialogueLines: [],
-          onInteract: () => {
-            this.scoreManager.recordInteractible();
-            btn.destroy();
-          },
-        });
-        btn.setPlayerTracking(this.player);
-      }
-    }
-
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
     }
+
+    this.collectibleSystem.registerAllFromLayer(
+      mapData.objectLayers.collectibles,
+      this.contentData,
+      this.player,
+    );
 
     const createdItems = this.objectLayerProcessor.process(
       this,
@@ -457,56 +474,6 @@ export class Game extends Scene {
         trackable.setPlayerTracking(this.player);
       }
     });
-
-    type PortalItem = InteractableItem & {
-      interaction: { onInteract: (() => void) | null };
-      add: (child: Phaser.GameObjects.Container) => void;
-    };
-
-    const endPhase_btn = (createdItems as InteractableItem[]).find(
-      (item) =>
-        item.itemId === "phase_complete_portal" ||
-        item.itemName === "phase_complete_portal",
-    ) as PortalItem | undefined;
-
-    if (endPhase_btn) {
-      endPhase_btn.interaction.onInteract = () => {
-        this.levelManager.completePhase();
-      };
-
-      const endPhase_container = this.add.container(0, -60);
-      const floatStar = this.add.image(-10, 0, "star").setScale(2.5);
-      const endPhase_floatText = this.add
-        .text(6, 0, `0/${PHASE_SETTINGS.MAX_STARS}`, {
-          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-          color: LayoutConfig.COLORS.STAR_YELLOW,
-          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-          stroke: LayoutConfig.COLORS.BLACK,
-          strokeThickness: 4,
-        })
-        .setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
-
-      endPhase_container.add([floatStar, endPhase_floatText]);
-      endPhase_btn.add(endPhase_container);
-
-      let isEndPhaseActive = false;
-      this.events.on(GameEvents.MISSION_STATUS_CHANGED, () => {
-        const collected = this.questManager.getTotalCompletedMissions();
-        endPhase_floatText.setText(`${collected}/${PHASE_SETTINGS.MAX_STARS}`);
-
-        if (
-          collected >= PHASE_SETTINGS.MAX_STARS &&
-          !isEndPhaseActive &&
-          endPhase_btn
-        ) {
-          isEndPhaseActive = true;
-          this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-            "O portal de restauração foi ativado! Vá até ele para concluir a fase.",
-          ]);
-          endPhase_btn.setVisible(true);
-        }
-      });
-    }
 
     this.player.on("interact-placeholder", () => {
       if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
@@ -539,7 +506,7 @@ export class Game extends Scene {
         this.player.x,
         this.player.y,
         120,
-        InteractableType.PICTURE,
+        InteractiveType.PHOTO,
       );
 
       if (nearby) {
@@ -547,7 +514,7 @@ export class Game extends Scene {
         const availableChunks = this.player
           .getInventory()
           .filter(
-            (item) => item.interactableType === InteractableType.PICTURE_CHUNK,
+            (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
           );
 
         this.isChunkSelectorOpen = true;
@@ -597,6 +564,7 @@ export class Game extends Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
+      this.collectibleSystem?.destroy();
       this.badgeSystem.destroy();
     });
 
@@ -659,6 +627,7 @@ export class Game extends Scene {
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
+            this.scoreManager,
             (score: number) => {
               this.scoreManager.recordQuizResult(score, questions.length);
 
@@ -694,10 +663,7 @@ export class Game extends Scene {
                     missionId: missionId,
                   },
                 );
-
                 void this.submitScoreToBackend();
-
-                //this.levelManager.completePhase();
               } else {
                 this.registry.set("has_failed_quiz", 1);
                 void this.submitScoreToBackend();
@@ -747,12 +713,6 @@ export class Game extends Scene {
               if (isSuccess) {
                 this.levelManager.updateProgress();
               }
-
-              this.events.emit(
-                GameEvents.SHOW_DIALOGUE_REQUEST,
-                [...lines],
-                () => this.questManager.clearPendingResult(missionId),
-              );
             },
           );
         },
@@ -798,7 +758,8 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09, 0, 170);
+    this.cameras.main.setZoom(1.0);
+    this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
 
@@ -906,10 +867,10 @@ export class Game extends Scene {
           accuracyPercent: payload.quiz.accuracyPercent,
           quartersEarned: payload.quiz.quartersEarned,
         },
-        interactibles: {
-          total: payload.interactibles.total,
-          interactionsCount: payload.interactibles.interactionsCount,
-          quartersEarned: payload.interactibles.quartersEarned,
+        collectibles: {
+          total: payload.collectibles.total,
+          interactionsCount: payload.collectibles.interactionsCount,
+          quartersEarned: payload.collectibles.quartersEarned,
         },
       });
     } catch (err) {
@@ -921,7 +882,7 @@ export class Game extends Scene {
     const result = this.placeholderSystem.handleDrop(item);
 
     const typeKey =
-      item.interactableType === InteractableType.PAINTING
+      item.interactiveType === InteractiveType.PAINTING
         ? "PAINTING"
         : "SCULPTURE";
 
@@ -938,10 +899,10 @@ export class Game extends Scene {
         sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
       );
       const missionId = MissionIds.CURATOR;
-      if (item.interactableType === InteractableType.PAINTING) {
+      if (item.interactiveType === InteractiveType.PAINTING) {
         if (
           this.placeholderSystem.checkCategoryCompletion(
-            InteractableType.PAINTING,
+            InteractiveType.PAINTING,
           )
         ) {
           this.completeFloor(this.scoringFloors.paintings);
@@ -951,10 +912,10 @@ export class Game extends Scene {
           });
           this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         }
-      } else if (item.interactableType === InteractableType.SCULPTURE) {
+      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
         if (
           this.placeholderSystem.checkCategoryCompletion(
-            InteractableType.SCULPTURE,
+            InteractiveType.SCULPTURE,
           )
         ) {
           this.completeFloor(this.scoringFloors.sculptures);
@@ -966,9 +927,9 @@ export class Game extends Scene {
         }
       }
     } else if (result.mismatch) {
-      if (item.interactableType === InteractableType.PAINTING) {
+      if (item.interactiveType === InteractiveType.PAINTING) {
         this.recordFloorError(this.scoringFloors.paintings);
-      } else if (item.interactableType === InteractableType.SCULPTURE) {
+      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
         this.recordFloorError(this.scoringFloors.sculptures);
       }
 

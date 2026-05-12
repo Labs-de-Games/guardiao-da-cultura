@@ -19,6 +19,7 @@ export interface LevelDefinition {
     quizzes: string[];
     npcs: string[];
     messages: string[];
+    collectibles: string[];
   };
 }
 
@@ -39,6 +40,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       quizzes: ["data/levels/level_01/quizzes.json"],
       npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
+      collectibles: ["data/levels/level_01/collectibles.json"],
     },
   },
 };
@@ -83,10 +85,21 @@ export const LEVEL_ASSETS = {
     { key: "chunk_1-2", path: "artworks/photos/chunk-1.png" },
     { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
     { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
+    {
+      key: "candujar_sem_titulo_yanomami",
+      path: "artworks/photos/candujar_sem_titulo_yanomami.png",
+    },
   ],
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
+  ],
+  COLLECTIBLES: [
+    { key: "fusca", path: "collectibles/fusca.png" },
+    { key: "abebe", path: "collectibles/abebe.png" },
+    { key: "xotehe", path: "collectibles/xotehe.png" },
+    { key: "cachimbo", path: "collectibles/cachimbo.png" },
+    { key: "chimarrao", path: "collectibles/chimarrao.png" },
   ],
   CONTENT: {
     key: "content",

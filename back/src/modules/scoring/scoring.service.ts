@@ -20,7 +20,7 @@ export class ScoringService {
       rating: dto.rating,
       floorScores: dto.floors,
       quizScore: dto.quiz,
-      interactibleScore: dto.interactibles,
+      collectibleScore: dto.collectibles,
     });
 
     return this.userScoreRepository.save(userScore);
