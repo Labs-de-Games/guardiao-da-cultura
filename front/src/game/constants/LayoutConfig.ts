@@ -3,6 +3,7 @@ export const LayoutConfig = {
   COLORS: {
     WHITE: "#ffffff",
     WHITE_HEX: 0xffffff,
+    WHITE_DARK_HEX: 0x999999,
     BLACK: "#000000",
     BLACK_HEX: 0x000000,
     STANDARD_BG: 0x1a1a1a,
@@ -13,10 +14,11 @@ export const LayoutConfig = {
     SUCCESS_GREEN: "#a8ffb0",
     GOLD: "#ffd700",
     GOLD_HEX: 0xffd700,
-    RIBBON_GOLD: 0xd4a853,
-    RIBBON_GOLD_SELECTED: 0xf0c060,
+    GOLD_DARK_HEX: 0x8b6508,
     STAR_YELLOW: "#ffff8bff",
-
+    STAR_YELLOW_HEX: 0xffff8bff,
+    INVENTORY_BG: 0xdbc8a3,
+    INVENTORY_INNER: 0xf3ead2,
     DISABLED_GREY: "#aaaaaa",
     DARK_STAR_TINT: 0x444444,
     HINT_GREY: "#888888",
