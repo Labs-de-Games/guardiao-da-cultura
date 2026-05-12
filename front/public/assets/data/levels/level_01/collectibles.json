@@ -1,0 +1,102 @@
+{
+  "collectibles": {
+    "COLLECT": {
+      "fusca": {
+        "id": "fusca",
+        "type": "Collectible",
+        "metadata": {
+          "title": "Troca-troca",
+          "author": "Jarbas Lopes",
+          "year": "2002",
+          "place": "Rio de Janeiro, RJ"
+        },
+        "educational": {
+          "description": "Troca-troca \u00e9 uma obra composta por tr\u00eas fuscas multicoloridos, originalmente amarelo, azul e vermelho, que tiveram suas latarias trocadas. Eles foram usados em 2002, pelo artista e um grupo de amigos, em uma viagem do Rio de Janeiro a Curitiba.\n\nNo caminho, colaram adesivos nos para-brisas dos carros que encontravam na estrada, produzidos a partir de pal\u00edndromos do artista Luis Andrade: \u201cz\u00e9 deserto, tr\u00eas \u00e9 dez\u201d, \u201ca vadia sa\u00edda v\u00e3\u201d e \u201ce o bolero; borel obo\u00e9\u201d, entre outros.",
+          "medium": "Fusca com aparelhagem de som",
+          "opinion": "Que coisinha mais fofa! Um fusquinha colorido! Opa! Tem uma etiqueta aqui embaixo."
+        },
+        "assets": {
+          "sprite": "fusca",
+          "scaleOnMap": 0.8,
+          "scaleOnInspect": 8
+        }
+      },
+      "abebe": {
+        "id": "abebe",
+        "type": "Collectible",
+        "metadata": {
+          "title": "Abeb\u00e9 de Oxum",
+          "year": "Século XIX",
+          "place": "Rio de Janeiro, RJ"
+        },
+        "educational": {
+          "description": "O abebé é um objeto iorubá, um emblema das iás, que são as mães ancestrais, divindades das águas. Seu formato redondo remete à anatomia da mulher, fortemente ligada à gênese do mundo e da humanidade.\n\nOs abebés podem ser usados como espelho, leque e até como instrumento musical informal.\n\nColeção Polícia da Corte.",
+          "medium": "Latão",
+          "opinion": "O que é isso? É de metal e tem uns penduricalhos. Consigo ver meu reflexo nele. E tem uma etiqueta aqui embaixo."
+        },
+        "assets": {
+          "sprite": "abebe",
+          "scaleOnMap": 0.4,
+          "scaleOnInspect": 4.3
+        }
+      },
+      "xotehe": {
+        "id": "xotehe",
+        "type": "Collectible",
+        "metadata": {
+          "title": "Xotehe",
+          "author": "Mulheres yanomamis",
+          "place": "Catrimani, RR"
+        },
+        "educational": {
+          "description": "O xotehe \u00e9 um dos cestos mais tradicionais do povo yanomami. Ele \u00e9 feito com cip\u00f3-titica, tiras da raiz da palmeira paxiubinha ou fios de p\u00ebr\u0268s\u0268 (um fungo preto descoberto pelos yanomamis). As mulheres o tran\u00e7am \u00e0 m\u00e3o, e \u00e9 um item de uso di\u00e1rio na aldeia.\n\nOs tran\u00e7ados estabelecem sua finalidade: os pontos mais fechados servem para guardar alimentos, frutas, beiju, algod\u00e3o e pequenos objetos; j\u00e1 as tramas abertas s\u00e3o tradicionalmente usadas na pesca e no apoio ao preparo dos alimentos.",
+          "medium": "Cip\u00f3-titica, tiras da raiz de paxiubinha e fios de p\u00ebr\u0268s\u0268",
+          "opinion": "Que lindo cesto! \u00c9 um artesanato ricamente intricado. Hum, tem uma etiqueta embaixo."
+        },
+        "assets": {
+          "sprite": "xotehe",
+          "scaleOnMap": 0.4,
+          "scaleOnInspect": 4.2
+        }
+      }
+    },
+    "CLUE_VILLAIN": {
+      "cachimbo": {
+        "id": "cachimbo",
+        "type": "Clue",
+        "metadata": {
+          "title": "Cachimbo"
+        },
+        "educational": {
+          "description": "Produzida durante o ex\u00edlio de Abdias, refletindo sua conex\u00e3o com a teogonia afrobrasileira e a luta pol\u00edtica por meio da est\u00e9tica. A visualidade \u00e9 inspirada nos pontos riscados do candombl\u00e9, com cores fortes e grafismos representativos de Xang\u00f4, orix\u00e1 da justi\u00e7a, equil\u00edbrio, for\u00e7a e poder, em homenagem ao companheiro de milit\u00e2ncia e ativismo contra a discrimina\u00e7\u00e3o racial.\n\nDurante seu ex\u00edlio do regime militar, foi professor em universidades nos EUA e na Nig\u00e9ria. De volta ao Brasil, foi deputado federal e senador da Rep\u00fablica, al\u00e9m de secret\u00e1rio do governo do Estado do Rio de Janeiro.",
+          "medium": "Madeira",
+          "opinion": "Um cachimbo bem fedorento, com resqu\u00edcios de plantas queimadas. Parece que foi usado recentemente, não deve ser um item em restauração aqui do museu."
+        },
+        "assets": {
+          "sprite": "cachimbo",
+          "scaleOnMap": 1.1,
+          "scaleOnInspect": 4
+        }
+      }
+    },
+    "CLUE_NEXT": {
+      "chimarrao": {
+        "id": "chimarrao",
+        "type": "Clue",
+        "metadata": {
+          "title": "Cuia de chimarr\u00e3o"
+        },
+        "educational": {
+          "description": "Uma cuia pr\u00f3pria para tomar chimarr\u00e3o.",
+          "medium": "Porongo, cera de carna\u00faba, resina, metal e couro",
+          "opinion": "J\u00e1 vi um neg\u00f3cio desses, mas n\u00e3o me lembro onde. Com certeza n\u00e3o foi aqui em Minas Gerais."
+        },
+        "assets": {
+          "sprite": "chimarrao",
+          "scaleOnMap": 1.1,
+          "scaleOnInspect": 4
+        }
+      }
+    }
+  }
+}
