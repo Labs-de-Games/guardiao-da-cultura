@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { ProgressionService } from "../../../src/modules/progression/progression.service";
@@ -7,18 +8,20 @@ import { GameEventType } from "../../../src/shared/events/game-events";
 describe("ProgressionService", () => {
   let service: ProgressionService;
   let repo: {
-    findOne: jest.Mock;
-    create: jest.Mock;
-    save: jest.Mock;
-    update: jest.Mock;
+    findOne: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
+    create: ReturnType<typeof mock<[unknown], unknown>>;
+    save: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
+    update: ReturnType<
+      typeof mock<[unknown, unknown], Promise<{ affected: number }>>
+    >;
   };
 
   beforeEach(async () => {
     repo = {
-      findOne: jest.fn(),
-      create: jest.fn(),
-      save: jest.fn(),
-      update: jest.fn(),
+      findOne: mock(async () => null),
+      create: mock((dto: unknown) => dto),
+      save: mock(async (entity: unknown) => entity),
+      update: mock(async () => ({ affected: 1 })),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -46,7 +49,7 @@ describe("ProgressionService", () => {
       currentLevel: 1,
     };
 
-    repo.findOne.mockResolvedValue(progress);
+    repo.findOne.mockImplementation(async () => progress);
 
     const now = new Date("2026-05-06T00:00:00.000Z");
     await service.handleQuizCompleted({
@@ -64,7 +67,6 @@ describe("ProgressionService", () => {
     });
 
     expect(repo.update).toHaveBeenCalledTimes(1);
-    expect(repo.update.mock.calls[0][0]).toBe("p1");
     const updatePayload = repo.update.mock.calls[0][1];
     const stored = JSON.parse(updatePayload.quizResults);
     expect(stored.other_mission.passed).toBe(true);

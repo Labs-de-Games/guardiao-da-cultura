@@ -1,4 +1,4 @@
-import { env } from "./env";
+import { apiClient } from "./api/client";
 
 type QuizEventType = "quiz.completed" | "quiz.failed";
 
@@ -35,12 +35,6 @@ const MAX_QUEUE_SIZE = 200;
 const MAX_ATTEMPTS = 25;
 const MAX_EVENT_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  );
-}
-
 function nowMs(): number {
   return Date.now();
 }
@@ -72,16 +66,7 @@ function randomId(): string {
 }
 
 async function postEvent(payload: GameEventPayload): Promise<void> {
-  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/events`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    // Keep response body out of logs by default; caller decides.
-    throw new Error(`Events API failed: ${res.status}`);
-  }
+  await apiClient.post("/events", payload);
 }
 
 function enqueue(payload: GameEventPayload): void {
@@ -154,13 +139,6 @@ export function initGameEventQueue(): void {
   void flushGameEventQueue();
 }
 
-export function getStoredUserId(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-  const raw = window.localStorage.getItem("@gameplate:guest_user_id");
-  if (!raw) return undefined;
-  return isUuid(raw) ? raw : undefined;
-}
-
 export async function sendQuizOutcomeEvent(
   payload: Omit<GameEventPayload, "timestamp" | "userId"> & {
     userId?: string;
@@ -168,7 +146,7 @@ export async function sendQuizOutcomeEvent(
   },
 ): Promise<void> {
   const event: GameEventPayload = {
-    userId: payload.userId ?? getStoredUserId(),
+    userId: payload.userId,
     type: payload.type,
     timestamp: payload.timestamp ?? new Date().toISOString(),
     metadata: payload.metadata,
