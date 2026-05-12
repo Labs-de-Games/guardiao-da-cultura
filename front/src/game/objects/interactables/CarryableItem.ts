@@ -10,12 +10,10 @@ export class CarryableItem extends InteractableItem {
     this.setDepth(10);
 
     if (this.isCarried) {
-      this.setTint(0xaaaaaa);
       if (body) {
         body.setAllowGravity(false);
       }
     } else {
-      this.clearTint();
       if (body) {
         body.setAllowGravity(true);
         body.setGravity(0, 4000);
