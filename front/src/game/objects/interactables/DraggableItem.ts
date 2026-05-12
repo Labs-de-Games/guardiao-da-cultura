@@ -15,13 +15,11 @@ export class DraggableItem extends InteractableItem {
 
     if (grabbed) {
       this.setDepth(11);
-      this.setTint(0xaaaaaa);
       if (body) {
         body.moves = false;
       }
     } else {
       this.setDepth(10);
-      this.clearTint();
       this.scene.events.emit("item-dropped", this);
     }
   }
