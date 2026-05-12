@@ -40,45 +40,50 @@ export class DialoguePanel extends BasePanel {
 
     this.contentText = scene.add
       .text(0, 0, "", {
-        fontSize: "32px",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.BODY,
         color: LayoutConfig.COLORS.WHITE,
         wordWrap: { width: this.panelWidth - 100, useAdvancedWrap: true },
         lineSpacing: 8,
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
     this.continuePrompt = scene.add
       .text(0, 0, "", {
-        fontSize: "24px",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
         color: LayoutConfig.COLORS.SUCCESS_GREEN || "#00ff00",
-        fontStyle: "bold",
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
-      .setOrigin(1, 1);
+      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_RIGHT);
 
     // Hint Padronizado
     this.escHint = this.createKeyHint("Aperte ESC para fechar");
-    this.escHint.setOrigin(0, 1);
+    this.escHint.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
 
     this.nextIndicator = scene.add
       .text(0, 0, "▼", {
-        fontSize: "24px",
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
         color: LayoutConfig.COLORS.SUCCESS_GREEN || "#00ff00",
       })
-      .setOrigin(0.5);
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
 
     const yesText = this.scene.add
       .text(0, 0, "Sim", {
-        fontSize: "32px",
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
         color: LayoutConfig.COLORS.GOLD,
       })
-      .setOrigin(0.5)
+      .setOrigin(...LayoutConfig.ALIGN.CENTER)
       .setVisible(false);
     const noText = this.scene.add
       .text(0, 0, "Não", {
-        fontSize: "32px",
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
         color: LayoutConfig.COLORS.WHITE,
       })
-      .setOrigin(0.5)
+      .setOrigin(...LayoutConfig.ALIGN.CENTER)
       .setVisible(false);
     this.confirmOptionTexts = [yesText, noText];
 
@@ -176,6 +181,43 @@ export class DialoguePanel extends BasePanel {
     this.setPosition(w / 2, bottomY - this.bg.displayHeight);
     this.bg.setPosition(0, 0);
     this.updateDialogDimensions();
+
+    this.applyScaledFontSize(
+      this.contentText,
+      LayoutConfig.FONTS.SIZES.BODY,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.continuePrompt,
+      LayoutConfig.FONTS.SIZES.METADATA,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.escHint,
+      LayoutConfig.FONTS.SIZES.METADATA,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.nextIndicator,
+      LayoutConfig.FONTS.SIZES.METADATA,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.confirmOptionTexts[0],
+      LayoutConfig.FONTS.SIZES.TITLE,
+      w,
+      h,
+    );
+    this.applyScaledFontSize(
+      this.confirmOptionTexts[1],
+      LayoutConfig.FONTS.SIZES.TITLE,
+      w,
+      h,
+    );
   }
 
   private updateContent() {

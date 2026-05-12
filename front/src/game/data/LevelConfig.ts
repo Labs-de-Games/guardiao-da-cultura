@@ -19,7 +19,6 @@ export interface LevelDefinition {
     quizzes: string[];
     npcs: string[];
     messages: string[];
-    collectibles: string[];
   };
 }
 
@@ -40,7 +39,6 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       quizzes: ["data/levels/level_01/quizzes.json"],
       npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
-      collectibles: ["data/levels/level_01/collectibles.json"],
     },
   },
 };
@@ -89,13 +87,6 @@ export const LEVEL_ASSETS = {
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
-  ],
-  COLLECTIBLES: [
-    { key: "fusca", path: "collectibles/fusca.png" },
-    { key: "abebe", path: "collectibles/abebe.png" },
-    { key: "xotehe", path: "collectibles/xotehe.png" },
-    { key: "cachimbo", path: "collectibles/cachimbo.png" },
-    { key: "chimarrao", path: "collectibles/chimarrao.png" },
   ],
   CONTENT: {
     key: "content",

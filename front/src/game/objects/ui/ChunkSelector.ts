@@ -1,10 +1,10 @@
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
+import { BasePanel } from "./BasePanel";
 
-export class ChunkSelector extends Phaser.GameObjects.Container {
-  private bg!: Phaser.GameObjects.Rectangle;
+export class ChunkSelector extends BasePanel {
   private title!: Phaser.GameObjects.Text;
 
   private inventoryContainer!: Phaser.GameObjects.Container;
@@ -22,13 +22,26 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   private lockedSlots: boolean[] = [false, false, false, false];
 
   private currentInstanceId: string = "";
-  public isVisible: boolean = false;
+
+  private readonly panelWidth = 750;
+  private readonly panelHeight = 500;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, scene.scale.width / 2, scene.scale.height / 2);
+    super(scene, 0, 0);
 
-    this.createBackground();
-    this.createTitle();
+    this.bg = this.createStandardBg(this.panelWidth, this.panelHeight);
+    this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
+    this.add(this.bg);
+
+    this.title = this.scene.add
+      .text(0, -this.panelHeight / 2 + 40, "RESTAURAÇÃO DE OBRA", {
+        fontFamily: LayoutConfig.FONTS.TITLE,
+        fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+        color: LayoutConfig.COLORS.GOLD,
+        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
+    this.add(this.title);
 
     this.inventoryContainer = scene.add.container(-250, -50);
     this.gridContainer = scene.add.container(100, -50);
@@ -38,42 +51,60 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
 
     this.setDepth(LayoutConfig.UI.DEPTHS.INVENTORY);
     this.setScrollFactor(0);
-    this.setVisible(false);
-    scene.add.existing(this);
 
-    this.setupKeyboardListeners();
-  }
-
-  private createBackground() {
-    this.bg = this.scene.add.rectangle(0, 0, 750, 500, 0x000000, 0.9);
-    this.bg.setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
-    this.add(this.bg);
-  }
-
-  private createTitle() {
-    this.title = this.scene.add
-      .text(0, -210, "RESTAURAÇÃO DE OBRA", {
-        fontSize: "32px",
-        color: LayoutConfig.COLORS.GOLD,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-    this.add(this.title);
+    this.bindKey("UP", () => {
+      if (!this._isVisible) return;
+      this.moveCursor("up");
+      this.refreshUI();
+    });
+    this.bindKey("DOWN", () => {
+      if (!this._isVisible) return;
+      this.moveCursor("down");
+      this.refreshUI();
+    });
+    this.bindKey("LEFT", () => {
+      if (!this._isVisible) return;
+      this.moveCursor("left");
+      this.refreshUI();
+    });
+    this.bindKey("RIGHT", () => {
+      if (!this._isVisible) return;
+      this.moveCursor("right");
+      this.refreshUI();
+    });
+    this.bindKey("SPACE", () => {
+      if (!this._isVisible) return;
+      this.handleAction();
+      this.refreshUI();
+    });
+    this.bindKey("ENTER", () => {
+      if (!this._isVisible) return;
+      this.handleAction();
+      this.refreshUI();
+    });
+    this.bindKey("ESC", () => {
+      if (!this._isVisible) return;
+      this.hide();
+    });
   }
 
   private createConfirmButton() {
     this.confirmButton = this.scene.add.container(0, 200);
     const btnBg = this.scene.add
-      .rectangle(0, 0, 200, 50, 0x333333)
-      .setStrokeStyle(2, 0xffffff);
+      .rectangle(0, 0, 200, 50, LayoutConfig.COLORS.CHUNK_CONFIRM_BG)
+      .setStrokeStyle(2, LayoutConfig.COLORS.WHITE_HEX);
     const btnText = this.scene.add
-      .text(0, 0, "CONFIRMAR", { fontSize: "20px", color: "#ffffff" })
-      .setOrigin(0.5);
+      .text(0, 0, "CONFIRMAR", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.METADATA,
+        color: LayoutConfig.COLORS.WHITE,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.confirmButton.add([btnBg, btnText]);
     this.add(this.confirmButton);
   }
 
-  public show(
+  public showChunk(
     instanceId: string,
     items: { id: string; name: string }[],
     filledSlots: (string | null)[] = [],
@@ -90,18 +121,20 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
     const firstFree = this.lockedSlots.findIndex((l) => !l);
     this.selectedGridIndex = firstFree !== -1 ? firstFree : 0;
 
-    this.isVisible = true;
-    this.setVisible(true);
     this.refreshUI();
+    super.show();
+
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
   }
 
-  public hide() {
-    this.isVisible = false;
-    this.setVisible(false);
+  public override hide(duration: number = 120, onComplete?: () => void) {
+    if (!this._isVisible) return;
+
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+
+    super.hide(duration, onComplete);
   }
 
   private refreshUI() {
@@ -113,8 +146,12 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   private refreshInventory() {
     this.inventoryContainer.removeAll(true);
     const title = this.scene.add
-      .text(0, -100, "INVENTÁRIO", { fontSize: "18px", color: "#aaaaaa" })
-      .setOrigin(0.5);
+      .text(0, -100, "INVENTÁRIO", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        color: LayoutConfig.COLORS.DISABLED_GREY,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.inventoryContainer.add(title);
 
     this.availableItems.forEach((item, index) => {
@@ -125,18 +162,22 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
       const isAlreadyUsed = this.usedInventoryIndices.includes(index);
 
       const bgColor = isSelected
-        ? 0x665500
+        ? LayoutConfig.COLORS.CHUNK_SELECTED
         : isPicked
-          ? 0x444444
+          ? LayoutConfig.COLORS.CHUNK_HOLDING
           : isAlreadyUsed
-            ? 0x111111
-            : 0x222222;
+            ? LayoutConfig.COLORS.CHUNK_USED
+            : LayoutConfig.COLORS.CHUNK_DEFAULT;
 
       const box = this.scene.add
         .rectangle(0, index * 60, 220, 50, bgColor)
         .setStrokeStyle(
           2,
-          isSelected ? 0xffd700 : isAlreadyUsed ? 0x333333 : 0x555555,
+          isSelected
+            ? LayoutConfig.COLORS.GOLD_HEX
+            : isAlreadyUsed
+              ? LayoutConfig.COLORS.CHUNK_STROKE_USED
+              : LayoutConfig.COLORS.CHUNK_STROKE_DEFAULT,
         );
 
       const img = this.scene.add.image(0, index * 60, item.id).setScale(0.3);
@@ -151,8 +192,12 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   private refreshGrid() {
     this.gridContainer.removeAll(true);
     const title = this.scene.add
-      .text(80, -100, "MOLDURA", { fontSize: "18px", color: "#aaaaaa" })
-      .setOrigin(0.5);
+      .text(80, -100, "MOLDURA", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        color: LayoutConfig.COLORS.DISABLED_GREY,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.gridContainer.add(title);
 
     const slotSize = 120;
@@ -174,12 +219,12 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
           y,
           slotSize,
           slotSize,
-          0x111111,
+          LayoutConfig.COLORS.CHUNK_BG,
         );
         if (isSelected) {
-          box.setStrokeStyle(3, 0xffd700);
+          box.setStrokeStyle(3, LayoutConfig.COLORS.GOLD_HEX);
         } else {
-          box.setStrokeStyle(3, 0x444444);
+          box.setStrokeStyle(3, LayoutConfig.COLORS.CHUNK_STROKE_EMPTY);
         }
         this.gridContainer.add(box);
       }
@@ -189,7 +234,7 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
       if (itemId) {
         const img = this.scene.add.image(x, y, itemId).setScale(0.8);
         if (isLocked) {
-          img.setTint(0x88ff88);
+          img.setTint(LayoutConfig.COLORS.LOCK_TINT);
         }
         this.gridContainer.add(img);
       }
@@ -199,41 +244,15 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   private refreshConfirmButton() {
     const bg = this.confirmButton.getAt(0) as Phaser.GameObjects.Rectangle;
     const isSelected = this.cursorMode === "confirm";
-    bg.setFillStyle(isSelected ? 0xffd700 : 0x333333);
+    bg.setFillStyle(
+      isSelected
+        ? LayoutConfig.COLORS.GOLD_HEX
+        : LayoutConfig.COLORS.CHUNK_CONFIRM_BG,
+    );
     const txt = this.confirmButton.getAt(1) as Phaser.GameObjects.Text;
-    txt.setColor(isSelected ? "#000000" : "#ffffff");
-  }
-
-  private setupKeyboardListeners() {
-    this.scene.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (!this.isVisible) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      switch (event.key) {
-        case "ArrowUp":
-          this.moveCursor("up");
-          break;
-        case "ArrowDown":
-          this.moveCursor("down");
-          break;
-        case "ArrowLeft":
-          this.moveCursor("left");
-          break;
-        case "ArrowRight":
-          this.moveCursor("right");
-          break;
-        case "Enter":
-        case " ":
-          this.handleAction();
-          break;
-        case "Escape":
-          this.hide();
-          break;
-      }
-      this.refreshUI();
-    });
+    txt.setColor(
+      isSelected ? LayoutConfig.COLORS.BLACK : LayoutConfig.COLORS.WHITE,
+    );
   }
 
   private moveCursor(dir: string) {
@@ -341,5 +360,7 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
 
   public layout(w: number, h: number) {
     this.setPosition(w / 2, h / 2);
+
+    this.applyScaledFontSize(this.title, LayoutConfig.FONTS.SIZES.TITLE, w, h);
   }
 }

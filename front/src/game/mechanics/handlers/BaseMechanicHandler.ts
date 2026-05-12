@@ -1,6 +1,6 @@
 import type * as Phaser from "phaser";
 import type { PlaceholderInstance } from "../../systems/PlaceholderSystem";
-import type { InteractiveType } from "../../types/InteractiveTypes";
+import type { InteractableType } from "../../types/InteractableTypes";
 
 /**
  * Contrato base para todos os handlers de mecânicas de restauração/interação.
@@ -9,7 +9,7 @@ export interface BaseMechanicHandler {
   /**
    * O tipo de objeto interagível que este handler suporta.
    */
-  readonly type: InteractiveType;
+  readonly type: InteractableType;
 
   /**
    * Processa a interação baseada nos dados recebidos.

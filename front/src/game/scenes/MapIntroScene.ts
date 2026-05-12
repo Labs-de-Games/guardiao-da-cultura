@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 
 type MapMarker = {
@@ -93,14 +94,18 @@ export class MapIntroScene extends Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor("#000000");
+    this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);
 
-    this.mapImage = this.add.image(0, 0, this.mapKey).setOrigin(0.5);
+    this.mapImage = this.add
+      .image(0, 0, this.mapKey)
+      .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.pathGraphics = this.add.graphics();
 
     MARKERS.forEach((markerData) => {
-      const marker = this.add.image(0, 0, this.markerKey).setOrigin(0.5);
+      const marker = this.add
+        .image(0, 0, this.markerKey)
+        .setOrigin(...LayoutConfig.ALIGN.CENTER);
       this.markerViews.set(markerData.id, { marker });
     });
 
@@ -153,31 +158,31 @@ export class MapIntroScene extends Scene {
       -100,
       530,
       200,
-      0x252726,
+      LayoutConfig.COLORS.MAP_BG,
       0.92,
     ); // x, y, width, height, color, alpha
-    boxBackground.setOrigin(0, 1);
+    boxBackground.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
 
     this.infoTitle = this.add.text(65, -225, "", {
-      fontFamily: "Jockey One",
-      fontSize: "60px",
-      color: "#D9AD56",
+      fontFamily: LayoutConfig.FONTS.TITLE,
+      fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
+      color: LayoutConfig.COLORS.INFO_TITLE,
     });
-    this.infoTitle.setOrigin(0, 1);
+    this.infoTitle.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
 
     this.infoLocation = this.add.text(65, -180, "", {
-      fontFamily: "Inter",
-      fontSize: "30px",
-      color: "#F5F5F5",
+      fontFamily: LayoutConfig.FONTS.BODY,
+      fontSize: LayoutConfig.FONTS.SIZES.BODY,
+      color: LayoutConfig.COLORS.INFO_BODY,
     });
-    this.infoLocation.setOrigin(0, 1);
+    this.infoLocation.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
 
     this.infoCta = this.add.text(65, -130, "", {
-      fontFamily: "Inter",
-      fontSize: "20px",
-      color: "#3B8C45",
+      fontFamily: LayoutConfig.FONTS.BODY,
+      fontSize: LayoutConfig.FONTS.SIZES.METADATA,
+      color: LayoutConfig.COLORS.AVAILABLE_GREEN,
     });
-    this.infoCta.setOrigin(0, 1);
+    this.infoCta.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
 
     this.infoBox.add([
       boxBackground,
@@ -195,10 +200,10 @@ export class MapIntroScene extends Scene {
 
     if (this.activeMarkerIndex === 0) {
       this.infoCta.setText("Aperte ESPAÇO para jogar");
-      this.infoCta.setColor("#3B8C45");
+      this.infoCta.setColor(LayoutConfig.COLORS.AVAILABLE_GREEN);
     } else {
       this.infoCta.setText("Em reforma");
-      this.infoCta.setColor("#A84528");
+      this.infoCta.setColor(LayoutConfig.COLORS.UNAVAILABLE_RED);
     }
   }
 
@@ -234,8 +239,23 @@ export class MapIntroScene extends Scene {
     });
   }
 
+  private applyFontScaling(w: number, h: number) {
+    const scale = Math.min(w / 1920, h / 1080);
+    this.infoTitle.setFontSize(
+      Math.round(LayoutConfig.FONTS.SIZES.TITLE_LARGE * scale),
+    );
+    this.infoLocation.setFontSize(
+      Math.round(LayoutConfig.FONTS.SIZES.BODY * scale),
+    );
+    this.infoCta.setFontSize(
+      Math.round(LayoutConfig.FONTS.SIZES.METADATA * scale),
+    );
+  }
+
   private layout() {
     const { width, height } = this.scale;
+    this.cameras.main.setSize(width, height);
+    this.applyFontScaling(width, height);
 
     const source = this.textures.get(this.mapKey).getSourceImage() as {
       width: number;
@@ -256,7 +276,7 @@ export class MapIntroScene extends Scene {
     this.mapImage.setDisplaySize(mapWidth, mapHeight);
 
     this.pathGraphics.clear();
-    this.pathGraphics.lineStyle(3, 0x000000, 0.95);
+    this.pathGraphics.lineStyle(3, LayoutConfig.COLORS.BLACK_HEX, 0.95);
 
     const markerPositions = new Map<string, { x: number; y: number }>();
 
