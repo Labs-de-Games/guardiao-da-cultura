@@ -13,6 +13,7 @@ export class QuizPanel extends BasePanel {
   private readonly optionButtonHeight = 100;
   private readonly optionNotchDepth = 30;
   private readonly optionNotchHeight = 20;
+  // private currentFontScale: number = 1;
 
   private readonly progressIndicatorWidth = 48;
   private readonly progressIndicatorHeight = 84;
@@ -73,27 +74,27 @@ export class QuizPanel extends BasePanel {
       .setSize(1150, 250);
     this.scoreText = scene.add
       .text(
-        -this.panelWidth / 2 + 40,
-        -this.panelHeight / 2 + 30,
+        -this.topContainer.width / 2 + 35,
+        -this.topContainer.height / 2 - 5,
         "Pontos: 0",
         {
-          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-          fontFamily: LayoutConfig.FONTS.BODY,
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
           color: LayoutConfig.COLORS.GOLD,
           fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
-      .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
+      .setOrigin(0, 0);
 
     this.questionCounterText = scene.add
       .text(
-        -this.panelWidth / 2 + 40,
-        -this.panelHeight / 2 + 58,
+        -this.topContainer.width / 2 + 35,
+        -this.topContainer.height / 2 + 55,
         "Pergunta 01/01",
         {
-          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-          fontFamily: LayoutConfig.FONTS.BODY,
-          color: LayoutConfig.COLORS.GOLD,
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE,
+          color: LayoutConfig.COLORS.WHITE,
           fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )

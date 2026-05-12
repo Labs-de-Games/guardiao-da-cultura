@@ -1,7 +1,5 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../constants/GameEvents";
-import { SceneNames } from "../constants/SceneNames";
-import type { UIScene } from "../scenes/UIScene";
 import type { EffectsManager } from "./EffectsManager";
 import type { QuestManager } from "./QuestManager";
 
@@ -44,15 +42,6 @@ export class LevelManager {
       progress,
     );
     this.effects.setGrayscale(grayscaleValue);
-  }
-
-  public completePhase() {
-    const collected = this.questManager.getTotalCompletedMissions();
-    const uiScene = this.scene.scene.get(SceneNames.UI) as UIScene;
-
-    if (uiScene) {
-      uiScene.showPhaseCompleteUI(collected, this.maxMissions);
-    }
   }
 
   public cleanup() {

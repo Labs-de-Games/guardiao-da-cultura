@@ -98,10 +98,10 @@ export class ResultPanel extends BasePanel {
         -this.topContainer.height / 2 - 5,
         "Parabéns!",
         {
-          fontFamily: "Jockey One",
-          fontSize: "48px",
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
           color: LayoutConfig.COLORS.GOLD,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
       .setOrigin(0, 0);
@@ -111,10 +111,10 @@ export class ResultPanel extends BasePanel {
         -this.topContainer.height / 2 + 55,
         "Pontuação perfeita",
         {
-          fontFamily: "Jocky One",
-          fontSize: "32px",
+          fontFamily: LayoutConfig.FONTS.TITLE,
+          fontSize: LayoutConfig.FONTS.SIZES.TITLE,
           color: LayoutConfig.COLORS.WHITE,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
         },
       )
       .setOrigin(0, 0);
