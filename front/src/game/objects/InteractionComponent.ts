@@ -89,9 +89,8 @@ export class InteractionComponent {
 
     // Setup Key Listener
     this.keyHandler = (event: KeyboardEvent) => {
-      const isSpace =
-        event.code === "Space" || event.key === " " || event.key === "Spacebar";
-      if (isSpace) {
+      const isShift = event.code === "ShiftLeft" || event.code === "ShiftRight";
+      if (isShift) {
         const player = this.playerRef as unknown as IPlayerState;
         if (player?.isInDialogue) return;
 

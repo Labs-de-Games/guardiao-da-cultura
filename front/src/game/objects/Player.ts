@@ -225,6 +225,7 @@ export class Player
       s: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.S],
       d: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.D],
       space: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SPACE],
+      shift: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SHIFT],
       E: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.E],
     }) as PlayerKeys;
 
@@ -374,28 +375,18 @@ export class Player
 
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
-    const spacePress = Phaser.Input.Keyboard.JustDown(this.keys.space);
-    if (spacePress) {
-      if (this.isGrabbing) {
-        this.releaseGrab();
-      } else {
-        const isGrounded = body?.blocked.down;
+    const shiftDown = this.keys.shift.isDown;
+    const shiftPress = Phaser.Input.Keyboard.JustDown(this.keys.shift);
+    if (shiftDown && !this.isGrabbing && body?.blocked.down) {
+      this.tryGrab();
+    } else if (!shiftDown && this.isGrabbing) {
+      this.releaseGrab();
+    }
 
-        // Priority 1: try to grab a nearby draggable sculpture (Grounded only)
-        let handled = false;
-        if (isGrounded) {
-          handled = this.tryGrab();
-        }
-
-        if (!handled) {
-          // Priority 2: toggle carry for paintings (Allows air interaction)
-          handled = this.tryToggleCarry();
-
-          if (!handled && !this.isCarrying && isGrounded) {
-            // Priority 3: placeholder UI (Grounded only)
-            this.emit("interact-placeholder");
-          }
-        }
+    if (shiftPress && body?.blocked.down) {
+      const handled = this.tryToggleCarry();
+      if (!handled && !this.isCarrying) {
+        this.emit("interact-placeholder");
       }
     }
 
@@ -465,7 +456,7 @@ export class Player
       }
     }
 
-    const jumpDown = this.keys.up.isDown || this.keys.w.isDown;
+    const jumpDown = this.keys.space.isDown;
 
     if (
       this.body &&
@@ -681,5 +672,6 @@ type PlayerKeys = {
   s: Phaser.Input.Keyboard.Key;
   d: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
+  shift: Phaser.Input.Keyboard.Key;
   E: Phaser.Input.Keyboard.Key;
 };

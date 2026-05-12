@@ -35,7 +35,7 @@ export class DialoguePanel extends BasePanel {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.DIALOGUE || 1000);
 
-    // Fundo Padronizado
+    // Standard background
     this.bg = this.createStandardBg(this.panelWidth, this.minPanelHeight);
 
     this.contentText = scene.add
@@ -58,8 +58,8 @@ export class DialoguePanel extends BasePanel {
       .setOrigin(...LayoutConfig.ALIGN.BOTTOM_RIGHT);
 
     // Hint Padronizado
-    this.escHint = this.createKeyHint("Aperte ESC para fechar");
-    this.escHint.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
+    this.escHint = this.createKeyHint("");
+    this.escHint.setOrigin(0, 1);
 
     this.nextIndicator = scene.add
       .text(0, 0, "▼", {
@@ -96,21 +96,19 @@ export class DialoguePanel extends BasePanel {
       ...this.confirmOptionTexts,
     ]);
 
-    // Input Nativo
+    // Native input
     for (const key of ["W", "UP", "A", "LEFT"]) {
       this.bindKey(key, () => this.moveConfirmSelection(-1));
     }
     for (const key of ["S", "DOWN", "D", "RIGHT"]) {
       this.bindKey(key, () => this.moveConfirmSelection(1));
     }
-    for (const key of ["SPACE", "ENTER"]) {
-      this.bindKey(key, () => this.confirmSelection());
-    }
+    // SHIFT advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
+    this.bindKey("SHIFT", () => this.confirmSelection());
     this.bindKey("ESC", () => {
       if (this.mode === "confirmation") return this.confirmSelection(false);
 
-      this.onComplete = null;
-      this.hide();
+      return;
     });
 
     // Animação do indicador
@@ -243,10 +241,10 @@ export class DialoguePanel extends BasePanel {
 
     const isLastLine = this.currentLineIndex === this.lines.length - 1;
     this.continuePrompt.setText(
-      isLastLine ? "Aperte ESPAÇO para fechar" : "Aperte ESPAÇO para continuar",
+      isLastLine ? "Aperte SHIFT para fechar" : "Aperte SHIFT para continuar",
     );
     this.continuePrompt.setVisible(true);
-    this.escHint.setText("Aperte ESC para fechar");
+    this.escHint.setText("");
     this.nextIndicator.setVisible(!isLastLine);
 
     this.confirmOptionTexts[0].setVisible(false);

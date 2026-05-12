@@ -253,14 +253,14 @@ export class UIScene extends Scene {
   }
 
   private setupKeyboardListeners() {
+    this.input.keyboard?.on("keydown-TAB", (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.toggleBadgeGallery();
+    });
+
     this.input.keyboard?.on("keydown-Q", (e: KeyboardEvent) => {
       e.preventDefault();
       this.toggleControls();
-    });
-
-    this.input.keyboard?.on("keydown-B", (e: KeyboardEvent) => {
-      e.preventDefault();
-      this.toggleBadgeGallery();
     });
   }
 
