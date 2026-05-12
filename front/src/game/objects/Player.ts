@@ -347,16 +347,26 @@ export class Player
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
-    const isClimbing = isOnStairs && (upDown || downDown) && !this.isGrabbing;
+    const isClimbing =
+      isOnStairs &&
+      (upDown || downDown) &&
+      !this.isGrabbing &&
+      !this.isCarrying;
 
     if (isOnStairs && !this.isGrabbing) {
-      body.setAllowGravity(false);
-      if (upDown) {
-        body.setVelocityY(-PLAYER_MOVEMENT.CLIMB_SPEED_Y);
-      } else if (downDown) {
-        body.setVelocityY(PLAYER_MOVEMENT.CLIMB_SPEED_Y);
-      } else {
+      // Prevent climbing while carrying paintings
+      if (this.isCarrying) {
+        body.setAllowGravity(false);
         body.setVelocityY(0);
+      } else {
+        body.setAllowGravity(false);
+        if (upDown) {
+          body.setVelocityY(-PLAYER_MOVEMENT.CLIMB_SPEED_Y);
+        } else if (downDown) {
+          body.setVelocityY(PLAYER_MOVEMENT.CLIMB_SPEED_Y);
+        } else {
+          body.setVelocityY(0);
+        }
       }
     } else {
       body.setAllowGravity(true);
@@ -472,7 +482,7 @@ export class Player
       }
     }
 
-    if (isOnStairs && !this.isGrabbing) {
+    if (isOnStairs && !this.isGrabbing && !this.isCarrying) {
       if (isClimbing) {
         if (downDown) {
           this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
