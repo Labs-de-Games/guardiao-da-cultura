@@ -369,20 +369,20 @@ export class UIScene extends Scene {
       0,
       LayoutConfig.UI.PANEL_WIDTH,
       100,
-      LayoutConfig.COLORS.BLACK_HEX,
-      0.65,
+      LayoutConfig.COLORS.STANDARD_BG,
+      0.95,
     );
     bg.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT).setStrokeStyle(
-      3,
-      LayoutConfig.COLORS.WHITE_HEX,
-      0.75,
+      LayoutConfig.UI.PANEL_BORDER_WIDTH,
+      LayoutConfig.UI.PANEL_BORDER_COLOR,
+      1,
     );
 
     const title = this.add
       .text(-padding, padding, mission.title, {
         fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        fontFamily: LayoutConfig.FONTS.TITLE,
         color: LayoutConfig.COLORS.WHITE,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 
@@ -393,6 +393,7 @@ export class UIScene extends Scene {
       const t = this.add
         .text(-padding, currentY, "", {
           fontSize: LayoutConfig.FONTS.SIZES.SMALL,
+          fontFamily: LayoutConfig.FONTS.BODY,
           color: LayoutConfig.COLORS.WHITE,
           wordWrap: { width: LayoutConfig.UI.PANEL_WIDTH - padding * 2 },
         })
