@@ -10,17 +10,27 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@hookform/resolvers": "^5.2.2",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/material": "^9.0.0",
+    "@mui/material-nextjs": "^9.0.0",
+    "axios": "^1.16.0",
+    "js-cookie": "^3.0.5",
     "next": "latest",
     "phaser": "3.90.0",
     "react": "latest",
     "react-dom": "latest",
-    "zod": "latest"
+    "react-hook-form": "^7.75.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
     "@happy-dom/global-registrator": "latest",
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",

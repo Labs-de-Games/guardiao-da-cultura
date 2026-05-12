@@ -1,5 +1,10 @@
+import AuthGuard from "@/components/auth/AuthGuard";
 import PhaserGame from "../components/PhaserGame";
 
 export default function HomePage() {
-  return <PhaserGame />;
+  return (
+    <AuthGuard>
+      <PhaserGame />
+    </AuthGuard>
+  );
 }
