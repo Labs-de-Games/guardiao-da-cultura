@@ -63,7 +63,6 @@ export class Game extends Scene {
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
-  private isInventoryOpen: boolean = false;
   private isControlsOverlayOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
@@ -354,16 +353,6 @@ export class Game extends Scene {
       this.effects.setZoom(1.0, 400);
     });
 
-    this.events.on(GameEvents.INVENTORY_OPENED, () => {
-      this.isInventoryOpen = true;
-      if (this.player) this.player.isInDialogue = true;
-    });
-
-    this.events.on(GameEvents.INVENTORY_CLOSED, () => {
-      this.isInventoryOpen = false;
-      this.checkDialogState();
-    });
-
     this.events.on(GameEvents.CONTROLS_OVERLAY_OPENED, () => {
       this.isControlsOverlayOpen = true;
       if (this.player) this.player.isInDialogue = true;
@@ -488,13 +477,13 @@ export class Game extends Scene {
       const floatStar = this.add.image(-10, 0, "star").setScale(2.5);
       const endPhase_floatText = this.add
         .text(6, 0, `0/${PHASE_SETTINGS.MAX_STARS}`, {
-          fontSize: "22px",
+          fontSize: LayoutConfig.FONTS.SIZES.METADATA,
           color: LayoutConfig.COLORS.STAR_YELLOW,
-          fontStyle: "bold",
+          fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
           stroke: LayoutConfig.COLORS.BLACK,
           strokeThickness: 4,
         })
-        .setOrigin(0, 0.5);
+        .setOrigin(...LayoutConfig.ALIGN.CENTER_LEFT);
 
       endPhase_container.add([floatStar, endPhase_floatText]);
       endPhase_btn.add(endPhase_container);
@@ -751,7 +740,6 @@ export class Game extends Scene {
 
   private checkDialogState() {
     if (
-      !this.isInventoryOpen &&
       !this.isControlsOverlayOpen &&
       !this.isChunkSelectorOpen &&
       !this.isDialogueOpen
@@ -779,7 +767,7 @@ export class Game extends Scene {
   }
 
   private setupCameras() {
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
+    this.cameras.main.startFollow(this.player, true, 0.09, 0.09, 0, 170);
     this.levelManager.updateProgress();
   }
 
