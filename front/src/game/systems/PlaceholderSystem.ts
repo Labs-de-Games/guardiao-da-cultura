@@ -86,21 +86,21 @@ export class PlaceholderSystem {
       isFilled: false,
     };
 
-    const sparkle = this.scene.add.sprite(
+    const placeholder = this.scene.add.sprite(
       rect.centerX,
       rect.centerY,
-      "sparkle",
+      "placeholder",
       0,
     );
-    sparkle.setScale(0.1);
-    sparkle.setAlpha(1);
-    sparkle.setDepth(11);
+    placeholder.setScale(0.1);
+    placeholder.setAlpha(1);
+    placeholder.setDepth(11);
 
-    if (this.scene.anims.exists("sparkle_hint_anim")) {
-      sparkle.play("sparkle_hint_anim", true);
+    if (this.scene.anims.exists("placeholder_hint_anim")) {
+      placeholder.play("placeholder_hint_anim", true);
     }
 
-    instance.hintSprite = sparkle;
+    instance.hintSprite = placeholder;
     this.placeholders.push(instance);
   }
 

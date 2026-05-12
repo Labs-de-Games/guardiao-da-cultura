@@ -13,7 +13,7 @@ export interface InteractionOptions {
   onInteract?: () => void;
   onInfoCollected?: (infoKey: string) => void;
 
-  // Hint system (sparkle animation after inactivity)
+  // Hint system (placeholder animation after inactivity)
   enableHint?: boolean;
   hintDelayMs?: number;
   hintOffsetX?: number;
@@ -195,7 +195,7 @@ export class InteractionComponent {
       this.hintSprite = this.scene.add.sprite(
         this.parent.x + this.hintOffsetX,
         this.parent.y + this.hintOffsetY,
-        "sparkle",
+        "placeholder",
         0,
       );
       this.hintSprite.setOrigin(...LayoutConfig.ALIGN.CENTER);
@@ -208,8 +208,8 @@ export class InteractionComponent {
     }
 
     this.hintSprite.setVisible(true);
-    if (this.scene.anims.exists("sparkle_hint_anim")) {
-      this.hintSprite.play("sparkle_hint_anim", true);
+    if (this.scene.anims.exists("placeholder_hint_anim")) {
+      this.hintSprite.play("placeholder_hint_anim", true);
     }
   }
 

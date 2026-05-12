@@ -140,7 +140,7 @@ export class Game extends Scene {
       this.load.json(`messages_${index}`, path);
     });
 
-    this.load.spritesheet("sparkle", "misc/placeholder-spritesheet.png", {
+    this.load.spritesheet("placeholder", "misc/placeholder-spritesheet.png", {
       frameWidth: 299,
       frameHeight: 532,
     });
@@ -369,10 +369,10 @@ export class Game extends Scene {
     Npc.createAnims(this);
     Enemy.createAnims(this);
 
-    if (!this.anims.exists("sparkle_hint_anim")) {
+    if (!this.anims.exists("placeholder_hint_anim")) {
       this.anims.create({
-        key: "sparkle_hint_anim",
-        frames: this.anims.generateFrameNumbers("sparkle", {
+        key: "placeholder_hint_anim",
+        frames: this.anims.generateFrameNumbers("placeholder", {
           start: 0,
           end: 5,
         }),
