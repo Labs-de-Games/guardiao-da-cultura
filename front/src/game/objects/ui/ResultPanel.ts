@@ -37,7 +37,6 @@ export class ResultPanel extends BasePanel {
   private readonly navButtonGap = 30;
   private readonly navNextUrl =
     "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit";
-  private isNavActionInFlight = false;
   private progressTracker: QuizProgressTracker | null = null;
 
   private readonly ratingCopyMap: Record<
@@ -48,32 +47,32 @@ export class ResultPanel extends BasePanel {
       congrats: string;
     }
   > = {
-    mínimo: {
-      greeting: "Ok",
-      score: "Performance mínima",
-      congrats: "Podia ser melhor...",
-    },
-    regular: {
-      greeting: "Ok",
-      score: "Performance regular",
-      congrats: "Regular",
-    },
-    bom: {
-      greeting: "Parabéns!",
-      score: "Boa performance",
-      congrats: "Bom!",
-    },
-    ótimo: {
-      greeting: "Parabéns!",
-      score: "Ótima performance",
-      congrats: "Muito Bom!",
-    },
-    perfeito: {
-      greeting: "Parabéns!",
-      score: "Performance perfeita",
-      congrats: "Perfeito!",
-    },
-  };
+      mínimo: {
+        greeting: "Ok",
+        score: "Performance mínima",
+        congrats: "Podia ser melhor...",
+      },
+      regular: {
+        greeting: "Ok",
+        score: "Performance regular",
+        congrats: "Regular",
+      },
+      bom: {
+        greeting: "Parabéns!",
+        score: "Boa performance",
+        congrats: "Bom!",
+      },
+      ótimo: {
+        greeting: "Parabéns!",
+        score: "Ótima performance",
+        congrats: "Muito Bom!",
+      },
+      perfeito: {
+        greeting: "Parabéns!",
+        score: "Performance perfeita",
+        congrats: "Perfeito!",
+      },
+    };
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
@@ -169,7 +168,6 @@ export class ResultPanel extends BasePanel {
     progressTracker: QuizProgressTracker,
     scoreManager: ScoreManager,
   ) {
-    this.isNavActionInFlight = false;
     const payload = scoreManager.getPayload();
     if (!payload) {
       console.error("Failed to get scoring payload");
@@ -297,9 +295,9 @@ export class ResultPanel extends BasePanel {
     this.textMessage.setPosition(
       0,
       this.textCongrat.y +
-        this.textCongrat.displayHeight / 2 +
-        textSpacing +
-        this.textMessage.displayHeight / 2,
+      this.textCongrat.displayHeight / 2 +
+      textSpacing +
+      this.textMessage.displayHeight / 2,
     );
   }
 
@@ -313,9 +311,9 @@ export class ResultPanel extends BasePanel {
   private updateResultsStars(
     payload:
       | {
-          totalQuarters: number;
-          quiz: { quartersEarned: number };
-        }
+        totalQuarters: number;
+        quiz: { quartersEarned: number };
+      }
       | undefined,
   ) {
     const totalQuarters = payload?.totalQuarters ?? 0;
@@ -447,8 +445,6 @@ export class ResultPanel extends BasePanel {
 
   private activateSelectedNavButton() {
     if (!this._isVisible) return;
-    if (this.isNavActionInFlight) return;
-    this.isNavActionInFlight = true;
 
     if (this.selectedNavIndex === 0) {
       this.hide(200, () => {
@@ -457,7 +453,7 @@ export class ResultPanel extends BasePanel {
       });
       return;
     }
-    globalThis.location.assign(this.navNextUrl);
+    window.open(this.navNextUrl, "_blank");
   }
 
   public override hide(duration: number = 200, onComplete?: () => void) {
