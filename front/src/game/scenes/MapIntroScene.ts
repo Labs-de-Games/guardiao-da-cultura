@@ -78,6 +78,8 @@ export class MapIntroScene extends Scene {
   private activeMarkerIndex: number = 0;
   private readonly mapKey = "brazil_map";
   private readonly markerKey = "brazil_marker";
+  private readonly availableMarkerTint = 0x020802;
+  private readonly unavailableMarkerTint = 0x292828;
 
   private readonly handleResize = () => {
     this.layout();
@@ -103,9 +105,8 @@ export class MapIntroScene extends Scene {
     this.pathGraphics = this.add.graphics();
 
     MARKERS.forEach((markerData) => {
-      const marker = this.add
-        .image(0, 0, this.markerKey)
-        .setOrigin(...LayoutConfig.ALIGN.CENTER);
+      const marker = this.add.image(0, 0, this.markerKey).setOrigin(0.5);
+      marker.setTint(this.unavailableMarkerTint);
       this.markerViews.set(markerData.id, { marker });
     });
 
@@ -219,7 +220,7 @@ export class MapIntroScene extends Scene {
   };
 
   update(time: number) {
-    const normalizedPulse = (Math.sin(time * 0.004) + 1) * 0.8;
+    const normalizedPulse = (Math.sin(time * 0.004) + 1) * 1.1;
 
     MARKERS.forEach((markerData, index) => {
       const view = this.markerViews.get(markerData.id);
@@ -280,7 +281,7 @@ export class MapIntroScene extends Scene {
 
     const markerPositions = new Map<string, { x: number; y: number }>();
 
-    MARKERS.forEach((markerData) => {
+    MARKERS.forEach((markerData, index) => {
       const x = mapLeft + mapWidth * markerData.x;
       const y = mapTop + mapHeight * markerData.y;
       markerPositions.set(markerData.id, { x, y });
@@ -302,10 +303,14 @@ export class MapIntroScene extends Scene {
         42,
       );
       const markerScale = markerTargetSize / markerSource.width;
+      const isAvailable = index === 0;
 
       this.markerBaseScales.set(markerData.id, markerScale);
       view.marker.setScale(markerScale);
       view.marker.setPosition(x, y);
+      view.marker.setTint(
+        isAvailable ? this.availableMarkerTint : this.unavailableMarkerTint,
+      );
     });
 
     for (let i = 0; i < MARKERS.length - 1; i++) {

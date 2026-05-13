@@ -77,7 +77,7 @@ export class LabelPanel extends BasePanel {
     this.descMaskGraphics.setVisible(false);
 
     this.escHint = this.createKeyHint(
-      "ESC para fechar",
+      "Aperte ESC para fechar",
       LayoutConfig.COLORS.BLACK,
     );
     this.escHint.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
@@ -95,7 +95,7 @@ export class LabelPanel extends BasePanel {
     ]);
 
     this.bindKey("ESC", () => this.hide());
-    this.bindKey("SHIFT", () => this.hide());
+    this.bindKey("E", () => this.hide());
 
     this.scene.input.on("wheel", this.onWheel, this);
   }

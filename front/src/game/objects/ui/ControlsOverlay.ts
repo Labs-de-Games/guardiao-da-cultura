@@ -37,10 +37,10 @@ export class ControlsOverlay extends BasePanel {
       .text(
         0,
         0,
-        "Q: rever controles" +
+        "Q: rever controles\n" +
           "WASD ou SETAS DIRECIONAIS: andar, subir e descer\n" +
           "ESPAÇO: pular\n" +
-          "SHIFT: interagir\n" +
+          "E: interagir\n" +
           "TAB: painel\n" +
           "ESC: fechar\n",
         {
@@ -55,6 +55,8 @@ export class ControlsOverlay extends BasePanel {
       .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
     this.escHint = this.createKeyHint("Aperte ESC para fechar");
+    this.escHint.setFontFamily(LayoutConfig.FONTS.BODY);
+    this.escHint.setFontSize(LayoutConfig.FONTS.SIZES.METADATA);
     this.escHint.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
 
     this.add([this.bg, this.title, this.bodyText, this.escHint]);
@@ -97,8 +99,8 @@ export class ControlsOverlay extends BasePanel {
 
     this.onEscHandler = (event: KeyboardEvent) => {
       const isEscape = event.key.toLowerCase() === "escape";
-      const isShift = event.key.toLowerCase() === "shift";
-      if (isEscape || isShift) {
+      const isE = event.key.toLowerCase() === "e";
+      if (isEscape || isE) {
         this.hide();
       }
     };

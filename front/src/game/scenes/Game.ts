@@ -148,9 +148,9 @@ export class Game extends Scene {
       this.load.json(`collectibles_${index}`, path);
     });
 
-    this.load.spritesheet("placeholder", "misc/placeholder-spritesheet.png", {
-      frameWidth: 299,
-      frameHeight: 532,
+    this.load.spritesheet("placeholder", "misc/questionmark-spritesheet.png", {
+      frameWidth: 315,
+      frameHeight: 574,
     });
 
     this.load.image("label", "misc/label.png");
@@ -442,6 +442,26 @@ export class Game extends Scene {
       npc.setQuestManager(this.questManager);
     }
 
+    // Teleport curator NPC when either sculptures or paintings are marked done
+    this.questManager.on(
+      "info-collected",
+      (payload: { missionId: string; infoKey: string }) => {
+        const key = payload.infoKey;
+        if (
+          key === MissionKeys.PAINTINGS_DONE ||
+          key === MissionKeys.SCULPTURES_DONE
+        ) {
+          const curator = this.npcs.find((n) => {
+            const ent = n as unknown as INpcEntity;
+            return ent.config && ent.config.missionId === MissionIds.CURATOR;
+          });
+          if (curator) {
+            (curator as unknown as Npc).teleportTo(2100, 400);
+          }
+        }
+      },
+    );
+
     this.collectibleSystem.registerAllFromLayer(
       mapData.objectLayers.collectibles,
       this.contentData,
@@ -508,6 +528,7 @@ export class Game extends Scene {
       );
 
       if (nearby) {
+        if (nearby.isFilled) return;
         const filled = nearby.state?.filledSlots || [null, null, null, null];
         const availableChunks = this.player
           .getInventory()
@@ -931,8 +952,13 @@ export class Game extends Scene {
         this.recordFloorError(this.scoringFloors.sculptures);
       }
 
-      const payload = result.payload as WorkData | undefined;
-      const feedback = payload?.educational?.feedbackError;
+      const placeholderWorkId = result.placeholder
+        ? this.resolveWorkIdFromPlaceholder(result.placeholder.id)
+        : null;
+      const placeholderWork = placeholderWorkId
+        ? this.findWorkDataById(placeholderWorkId)
+        : null;
+      const feedback = placeholderWork?.educational?.feedbackError;
 
       if (feedback) {
         this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [feedback]);
