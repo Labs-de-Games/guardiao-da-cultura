@@ -106,7 +106,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       try {
         body.reset(x, y);
       } catch (e) {
-        // ignore
+        console.warn("[Npc] Error resetting body:", e);
       }
     }
     if (this.exclamationIcon) {
@@ -194,6 +194,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
         this.handleInteraction();
       }
     } catch (e) {
+      console.warn("[Npc] Error in auto intro check:", e);
       // ignore errors in auto intro check
     }
 
