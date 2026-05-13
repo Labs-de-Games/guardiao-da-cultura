@@ -148,9 +148,9 @@ export class Game extends Scene {
       this.load.json(`collectibles_${index}`, path);
     });
 
-    this.load.spritesheet("placeholder", "misc/placeholder-spritesheet.png", {
-      frameWidth: 299,
-      frameHeight: 532,
+    this.load.spritesheet("placeholder", "misc/questionmark-spritesheet.png", {
+      frameWidth: 315,
+      frameHeight: 574,
     });
 
     this.load.image("label", "misc/label.png");
