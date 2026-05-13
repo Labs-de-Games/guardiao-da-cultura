@@ -37,6 +37,7 @@ export class ResultPanel extends BasePanel {
   private readonly navButtonGap = 30;
   private readonly navNextUrl =
     "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit";
+  private isNavActionInFlight = false;
   private progressTracker: QuizProgressTracker | null = null;
 
   private readonly ratingCopyMap: Record<
@@ -168,6 +169,7 @@ export class ResultPanel extends BasePanel {
     progressTracker: QuizProgressTracker,
     scoreManager: ScoreManager,
   ) {
+    this.isNavActionInFlight = false;
     const payload = scoreManager.getPayload();
     if (!payload) {
       console.error("Failed to get scoring payload");
@@ -445,8 +447,9 @@ export class ResultPanel extends BasePanel {
 
   private activateSelectedNavButton() {
     if (!this._isVisible) return;
+    if (this.isNavActionInFlight) return;
+    this.isNavActionInFlight = true;
 
-    // Hide first so DIALOGUE_ENDED is emitted before leaving the current flow.
     if (this.selectedNavIndex === 0) {
       this.hide(200, () => {
         this.scene.scene.stop(SceneNames.GAME);
@@ -454,10 +457,7 @@ export class ResultPanel extends BasePanel {
       });
       return;
     }
-
-    this.hide(200, () => {
-      globalThis.location.assign(this.navNextUrl);
-    });
+    globalThis.location.assign(this.navNextUrl);
   }
 
   public override hide(duration: number = 200, onComplete?: () => void) {
