@@ -1,8 +1,6 @@
 services:
   front:
-    build:
-      context: .
-      dockerfile: ./front/Dockerfile
+    image: ghcr.io/labs-de-games/gameplate-front:latest
     healthcheck:
       test:
         [
@@ -21,9 +19,7 @@ services:
         condition: service_healthy
 
   back:
-    build:
-      context: .
-      dockerfile: ./back/Dockerfile
+    image: ghcr.io/labs-de-games/gameplate-back:latest
     environment:
       - PORT=${PORT:-3001}
       - DATABASE_URL=${DATABASE_URL}
