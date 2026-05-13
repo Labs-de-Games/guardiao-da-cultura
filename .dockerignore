@@ -31,5 +31,6 @@ Makefile
 **/*.test.ts
 **/*.spec.ts
 
-# nginx
-nginx/
+# nginx configs are now baked into the nginx image
+# do not ignore the directory, or the build context will miss them
+# nginx/
