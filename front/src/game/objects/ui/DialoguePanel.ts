@@ -11,6 +11,7 @@ export class DialoguePanel extends BasePanel {
   private lines: string[] = [];
   private currentLineIndex: number = 0;
   private onComplete: (() => void) | null = null;
+  private ignoreNextConfirm: boolean = false;
 
   private mode: "dialogue" | "confirmation" = "dialogue";
   private confirmMessage: string = "";
@@ -126,6 +127,13 @@ export class DialoguePanel extends BasePanel {
     this.lines = lines;
     this.currentLineIndex = 0;
     this.onComplete = onComplete || null;
+
+    // Prevent the same keydown that opened the dialogue from immediately
+    // advancing to the next line. Ignore the next confirm input briefly.
+    this.ignoreNextConfirm = true;
+    this.scene.time.delayedCall(60, () => {
+      this.ignoreNextConfirm = false;
+    });
 
     this.updateContent();
     this.show();
@@ -325,7 +333,13 @@ export class DialoguePanel extends BasePanel {
 
   private confirmSelection(forceYes?: boolean) {
     if (!this._isVisible) return;
-    if (this.mode !== "confirmation") return this.nextLine();
+    if (this.mode !== "confirmation") {
+      if (this.ignoreNextConfirm) {
+        this.ignoreNextConfirm = false;
+        return;
+      }
+      return this.nextLine();
+    }
 
     const yes = forceYes ?? this.confirmSelectedIndex === 0;
     const cb = yes ? this.onConfirmYes : this.onConfirmNo;
