@@ -196,13 +196,13 @@ export class QuizPanel extends BasePanel {
       this.hide();
     });
     this.bindKey("SPACE", () => {
+      this.selectOption();
+    });
+    this.bindKey("E", () => {
       if (this.isShowingPerformance) {
         this.handlePerformanceSpace();
-      } else {
-        this.selectOption();
       }
     });
-    this.bindKey("ENTER", () => this.selectOption());
   }
 
   private getScorePercentage(): number {
