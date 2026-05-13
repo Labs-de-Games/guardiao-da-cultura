@@ -155,9 +155,6 @@ export class ResultPanel extends BasePanel {
       this.resultStarsContainer,
       this.navButtonsContainer,
     ]);
-    this.bindKey("ESC", () => {
-      if (this._isVisible) this.hide();
-    });
   }
 
   public layout(w: number, h: number) {
