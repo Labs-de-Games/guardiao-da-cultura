@@ -528,6 +528,7 @@ export class Game extends Scene {
       );
 
       if (nearby) {
+        if (nearby.isFilled) return;
         const filled = nearby.state?.filledSlots || [null, null, null, null];
         const availableChunks = this.player
           .getInventory()
