@@ -49,16 +49,19 @@ jobs:
       - name: Trigger Coolify webhook
         env:
           COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
-          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
-            echo "::error::COOLIFY_WEBHOOK_URL is not configured."
+          if [ -z "$COOLIFY_WEBHOOK_URL" ] || [ -z "$COOLIFY_TOKEN" ]; then
+            echo "::error::COOLIFY_WEBHOOK_URL or COOLIFY_TOKEN is not configured."
             echo "To enable deployments:"
             echo "1. Open your Coolify dashboard and go to the project settings."
             echo "2. Copy the Webhook URL for automatic deployments."
-            echo "3. In this GitHub repository, go to Settings > Secrets and variables > Actions."
-            echo "4. Create a new Repository Secret named COOLIFY_WEBHOOK_URL with the copied URL."
-            echo "5. Push to master again to trigger the deployment."
+            echo "3. Go to Keys & Tokens > API Tokens and create a new token with Deploy permissions."
+            echo "4. In this GitHub repository, go to Settings > Secrets and variables > Actions."
+            echo "5. Create Repository Secrets named COOLIFY_WEBHOOK_URL and COOLIFY_TOKEN."
+            echo "6. Push to master again to trigger the deployment."
             exit 1
           fi
           echo "Triggering Coolify deployment..."
-          curl -X POST "$COOLIFY_WEBHOOK_URL"
+          curl -X GET "$COOLIFY_WEBHOOK_URL" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN"
