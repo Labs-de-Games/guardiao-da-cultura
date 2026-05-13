@@ -35,6 +35,8 @@ export class ResultPanel extends BasePanel {
   private readonly navButtonWidth = 320;
   private readonly navButtonHeight = 80;
   private readonly navButtonGap = 30;
+  private readonly navNextUrl =
+    "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit";
   private progressTracker: QuizProgressTracker | null = null;
 
   private readonly ratingCopyMap: Record<
@@ -153,9 +155,6 @@ export class ResultPanel extends BasePanel {
       this.resultStarsContainer,
       this.navButtonsContainer,
     ]);
-    this.bindKey("ESC", () => {
-      if (this._isVisible) this.hide();
-    });
   }
 
   public layout(w: number, h: number) {
@@ -446,9 +445,15 @@ export class ResultPanel extends BasePanel {
 
   private activateSelectedNavButton() {
     if (!this._isVisible) return;
-    console.log(
-      `Nav button ${this.selectedNavIndex === 0 ? "home" : "next"} activated`,
-    );
+
+    if (this.selectedNavIndex === 0) {
+      this.hide(200, () => {
+        this.scene.scene.stop(SceneNames.GAME);
+        this.scene.scene.start(SceneNames.INTRO);
+      });
+      return;
+    }
+    window.open(this.navNextUrl, "_blank");
   }
 
   public override hide(duration: number = 200, onComplete?: () => void) {
