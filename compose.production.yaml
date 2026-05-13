@@ -30,6 +30,19 @@ services:
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:3001",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - frontend
       - backend
