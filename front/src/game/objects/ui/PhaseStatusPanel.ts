@@ -1,6 +1,9 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../../constants/LayoutConfig";
+import { ScoringEvents } from "../../constants/ScoringEvents";
+import type { ScoringPayload } from "../../types/ScoringTypes";
 import type { QuestManager } from "../QuestManager";
+import type { ScoreManager } from "../ScoreManager";
 
 /**
  * Painel que exibe o status global da fase.
@@ -12,12 +15,22 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
   private missionsTotal: number;
   private questManager: QuestManager;
 
+  private scoreManager?: ScoreManager;
+
   private phasePanel: Phaser.GameObjects.Container;
   private missionsText: Phaser.GameObjects.Text;
   private objectsText: Phaser.GameObjects.Text;
 
   private starsPanel: Phaser.GameObjects.Container;
   private starsText: Phaser.GameObjects.Text;
+
+  private readonly handleScoreUpdated = (payload: ScoringPayload) => {
+    const rawStars = payload.totalStars;
+    const stars = Number.isFinite(rawStars)
+      ? Math.max(0, Math.floor(rawStars))
+      : 0;
+    this.starsText.setText(`${stars}`);
+  };
 
   constructor(
     scene: Phaser.Scene,
@@ -73,25 +86,8 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 
-    this.missionsText = scene.add
-      .text(-padding, padding + 34, "", {
-        fontFamily: LayoutConfig.FONTS.BODY,
-        fontSize: LayoutConfig.FONTS.SIZES.HINT,
-        color: LayoutConfig.COLORS.WHITE,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
-
-    this.objectsText = scene.add
-      .text(-padding, padding + 58, "", {
-        fontFamily: LayoutConfig.FONTS.BODY,
-        fontSize: LayoutConfig.FONTS.SIZES.HINT,
-        color: LayoutConfig.COLORS.WHITE,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
-
     this.phasePanel.add([bg, titleText, this.missionsText, this.objectsText]);
 
-    // 2. Painel de Estrelas (Top-Left)
     this.starsPanel = scene.add.container(0, 0);
     const starIcon = scene.add
       .image(0, 0, "star")
@@ -109,16 +105,38 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
       .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
     this.starsPanel.add([starIcon, this.starsText]);
 
+    this.scoreManager = scene.registry.get("scoreManager") as
+      | ScoreManager
+      | undefined;
+    if (this.scoreManager) {
+      this.scoreManager.on(
+        ScoringEvents.SCORE_UPDATED,
+        this.handleScoreUpdated,
+        this,
+      );
+      this.handleScoreUpdated(this.scoreManager.getPayload());
+    }
+
     this.add([this.phasePanel, this.starsPanel]);
     scene.add.existing(this);
   }
 
-  /**
-   * Reposiciona os elementos de acordo com o tamanho da tela.
-   */
+  override destroy(fromScene?: boolean) {
+    if (this.scoreManager) {
+      this.scoreManager.off(
+        ScoringEvents.SCORE_UPDATED,
+        this.handleScoreUpdated,
+        this,
+      );
+      this.scoreManager = undefined;
+    }
+
+    super.destroy(fromScene);
+  }
+
   public layout(w: number, h: number) {
     const padding = LayoutConfig.UI.PADDING;
-    // root offset compensation in UIScene was -20
+
     this.phasePanel.setPosition(w - padding, padding);
     this.starsPanel.setPosition(padding + 20, padding);
 
@@ -134,9 +152,6 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
     );
   }
 
-  /**
-   * Atualiza os textos de progresso baseados no QuestManager.
-   */
   public refresh() {
     const completed = this.questManager.getTotalCompletedMissions();
     const collected = this.questManager.getTotalCollectedCount();
@@ -144,6 +159,5 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
 
     this.missionsText.setText(`Missões ${completed}/${this.missionsTotal}`);
     this.objectsText.setText(`Objetos ${collected}/${totalReq}`);
-    this.starsText.setText(`${completed}`);
   }
 }
