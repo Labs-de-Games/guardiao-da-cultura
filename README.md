@@ -24,6 +24,7 @@ This repository contains the complete development environment for our browser-ba
 | Backend | [NestJS](https://nestjs.com/) | 10+ | [NestJS Docs](https://docs.nestjs.com/) |
 | Database | [PostgreSQL](https://www.postgresql.org/) | 16 | [PostgreSQL Docs](https://www.postgresql.org/docs/) |
 | Linting | [Biome](https://biomejs.dev/) | latest | [Biome Docs](https://biomejs.dev/) |
+| Registry | [GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) | - | - |
 | CI/CD | [GitHub Actions](https://github.com/features/actions) | - | [Actions Docs](https://docs.github.com/en/actions) |
 | Deployment | [Coolify](https://coolify.io/) | - | [Coolify Docs](https://coolify.io/docs/) |
 
@@ -213,7 +214,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 This project uses GitHub Actions for continuous integration and Coolify for deployment.
 
 - **CI**: Every Pull Request triggers lint, build, and test checks
-- **CD**: Merges to `master` automatically deploy via Coolify webhook
+- **CD**: Merges to `master` automatically build and push images to GitHub Container Registry (GHCR), then trigger deployment via Coolify webhook
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed CI/CD pipeline information.
 
