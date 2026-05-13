@@ -216,6 +216,13 @@ export class QuizPanel extends BasePanel {
     scoreManager: ScoreManager,
     onComplete: (score: number) => void,
   ) {
+    this.isShowingPerformance = false;
+    this.shouldShowResultsAfterHide = false;
+    this.performanceContainer.setVisible(false);
+    this.questionContainer.setVisible(true);
+    this.questionTitle.setVisible(true);
+    this.questionText.setVisible(true);
+
     this.questions = questions;
     this.onComplete = onComplete;
     this.currentQuestionIndex = 0;
