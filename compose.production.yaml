@@ -24,6 +24,7 @@ services:
     extends:
       file: compose.base.yaml
       service: front
+    image: ghcr.io/labs-de-games/gameplate-front:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -45,6 +46,7 @@ services:
     extends:
       file: compose.base.yaml
       service: back
+    image: ghcr.io/labs-de-games/gameplate-back:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
