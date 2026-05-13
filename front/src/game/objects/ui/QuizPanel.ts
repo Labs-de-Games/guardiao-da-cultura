@@ -335,9 +335,7 @@ export class QuizPanel extends BasePanel {
   }
 
   private updateQuestionHeader() {
-    this.questionTitle.setText(
-      `Desafio ${this.currentQuestionIndex + 1}`,
-    );
+    this.questionTitle.setText(`Desafio ${this.currentQuestionIndex + 1}`);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
       `Pergunta ${this.currentQuestionIndex + 1}/${this.questions.length}`,
