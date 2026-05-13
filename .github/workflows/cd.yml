@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -57,7 +57,7 @@ jobs:
             echo "2. Copy the Webhook URL for automatic deployments."
             echo "3. In this GitHub repository, go to Settings > Secrets and variables > Actions."
             echo "4. Create a new Repository Secret named COOLIFY_WEBHOOK_URL with the copied URL."
-            echo "5. Push to main again to trigger the deployment."
+            echo "5. Push to master again to trigger the deployment."
             exit 1
           fi
           echo "Triggering Coolify deployment..."
