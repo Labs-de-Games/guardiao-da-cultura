@@ -47,32 +47,32 @@ export class ResultPanel extends BasePanel {
       congrats: string;
     }
   > = {
-      mínimo: {
-        greeting: "Ok",
-        score: "Performance mínima",
-        congrats: "Podia ser melhor...",
-      },
-      regular: {
-        greeting: "Ok",
-        score: "Performance regular",
-        congrats: "Regular",
-      },
-      bom: {
-        greeting: "Parabéns!",
-        score: "Boa performance",
-        congrats: "Bom!",
-      },
-      ótimo: {
-        greeting: "Parabéns!",
-        score: "Ótima performance",
-        congrats: "Muito Bom!",
-      },
-      perfeito: {
-        greeting: "Parabéns!",
-        score: "Performance perfeita",
-        congrats: "Perfeito!",
-      },
-    };
+    mínimo: {
+      greeting: "Ok",
+      score: "Performance mínima",
+      congrats: "Podia ser melhor...",
+    },
+    regular: {
+      greeting: "Ok",
+      score: "Performance regular",
+      congrats: "Regular",
+    },
+    bom: {
+      greeting: "Parabéns!",
+      score: "Boa performance",
+      congrats: "Bom!",
+    },
+    ótimo: {
+      greeting: "Parabéns!",
+      score: "Ótima performance",
+      congrats: "Muito Bom!",
+    },
+    perfeito: {
+      greeting: "Parabéns!",
+      score: "Performance perfeita",
+      congrats: "Perfeito!",
+    },
+  };
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
@@ -295,9 +295,9 @@ export class ResultPanel extends BasePanel {
     this.textMessage.setPosition(
       0,
       this.textCongrat.y +
-      this.textCongrat.displayHeight / 2 +
-      textSpacing +
-      this.textMessage.displayHeight / 2,
+        this.textCongrat.displayHeight / 2 +
+        textSpacing +
+        this.textMessage.displayHeight / 2,
     );
   }
 
@@ -311,9 +311,9 @@ export class ResultPanel extends BasePanel {
   private updateResultsStars(
     payload:
       | {
-        totalQuarters: number;
-        quiz: { quartersEarned: number };
-      }
+          totalQuarters: number;
+          quiz: { quartersEarned: number };
+        }
       | undefined,
   ) {
     const totalQuarters = payload?.totalQuarters ?? 0;
