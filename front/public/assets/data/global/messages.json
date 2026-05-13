@@ -2,7 +2,7 @@
   "SYSTEM_DIALOGUES": {
     "SCULPTURE": {
       "SUCCESS": [
-        "Pronto! Deduzo que essa era a posição original da escultura.",
+        "Pronto! Pelo que consta na etiqueta, deduzo que essa era a posição original da escultura.",
         "As coisas estão começando a parecer com o que era antes."
       ],
       "ERROR": [
@@ -12,7 +12,7 @@
     },
     "PAINTING": {
       "SUCCESS": [
-        "Pronto! Deduzo que essa pintura devia ficar mesmo aqui.",
+        "Pronto! Pelo que consta na etiqueta, deduzo que essa pintura devia ficar mesmo aqui.",
         "As coisas estão começando a parecer com o que era antes."
       ],
       "ERROR": [

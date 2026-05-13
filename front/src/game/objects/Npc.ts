@@ -19,6 +19,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
   private exclamationIcon: Phaser.GameObjects.Image;
   private missionAccepted: boolean = false;
   private config: NpcConfig;
+  private autoIntroPlayed: boolean = false;
 
   static preload(scene: Phaser.Scene) {
     scene.load.spritesheet(
@@ -97,6 +98,22 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     this.questManager = qm;
   }
 
+  /** Move NPC (and related visuals/physics) to new world coordinates */
+  public teleportTo(x: number, y: number) {
+    this.setPosition(x, y);
+    const body = this.body as Phaser.Physics.Arcade.Body | undefined;
+    if (body) {
+      try {
+        body.reset(x, y);
+      } catch (e) {
+        console.warn("[Npc] Error resetting body:", e);
+      }
+    }
+    if (this.exclamationIcon) {
+      this.exclamationIcon.setPosition(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y);
+    }
+  }
+
   private handleInteraction() {
     if (!this.questManager) {
       console.warn("[Npc] QuestManager not found!");
@@ -163,6 +180,23 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
   update(_ts: number, _dt: number) {
     this.interaction.update();
+
+    // Auto-play intro dialogue the first time the player comes in range.
+    try {
+      const qm = this.questManager;
+      const status = qm ? qm.getStatus(this.config.missionId) : undefined;
+      if (
+        !this.autoIntroPlayed &&
+        this.interaction.isPromptVisible &&
+        status === QuestStatus.IDLE
+      ) {
+        this.autoIntroPlayed = true;
+        this.handleInteraction();
+      }
+    } catch (e) {
+      console.warn("[Npc] Error in auto intro check:", e);
+      // ignore errors in auto intro check
+    }
 
     if (
       !this.missionAccepted &&

@@ -11,6 +11,7 @@ export class DialoguePanel extends BasePanel {
   private lines: string[] = [];
   private currentLineIndex: number = 0;
   private onComplete: (() => void) | null = null;
+  private ignoreNextConfirm: boolean = false;
 
   private mode: "dialogue" | "confirmation" = "dialogue";
   private confirmMessage: string = "";
@@ -103,8 +104,8 @@ export class DialoguePanel extends BasePanel {
     for (const key of ["S", "DOWN", "D", "RIGHT"]) {
       this.bindKey(key, () => this.moveConfirmSelection(1));
     }
-    // SHIFT advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
-    this.bindKey("SHIFT", () => this.confirmSelection());
+    // E advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
+    this.bindKey("E", () => this.confirmSelection());
     this.bindKey("ESC", () => {
       if (this.mode === "confirmation") return this.confirmSelection(false);
 
@@ -126,6 +127,13 @@ export class DialoguePanel extends BasePanel {
     this.lines = lines;
     this.currentLineIndex = 0;
     this.onComplete = onComplete || null;
+
+    // Prevent the same keydown that opened the dialogue from immediately
+    // advancing to the next line. Ignore the next confirm input briefly.
+    this.ignoreNextConfirm = true;
+    this.scene.time.delayedCall(60, () => {
+      this.ignoreNextConfirm = false;
+    });
 
     this.updateContent();
     this.show();
@@ -222,11 +230,12 @@ export class DialoguePanel extends BasePanel {
     if (this.mode === "confirmation") {
       this.contentText.setText(this.confirmMessage);
 
-      this.continuePrompt.setText("ENTER para confirmar");
+      this.continuePrompt.setText("Aperte E para confirmar");
       this.continuePrompt.setVisible(true);
       this.nextIndicator.setVisible(false);
 
-      this.escHint.setText("ESC para cancelar");
+      this.escHint.setText("Aperte ESC para cancelar");
+      this.escHint.setFontFamily(LayoutConfig.FONTS.BODY);
 
       this.confirmOptionTexts[0].setVisible(true);
       this.confirmOptionTexts[1].setVisible(true);
@@ -241,7 +250,7 @@ export class DialoguePanel extends BasePanel {
 
     const isLastLine = this.currentLineIndex === this.lines.length - 1;
     this.continuePrompt.setText(
-      isLastLine ? "Aperte SHIFT para fechar" : "Aperte SHIFT para continuar",
+      isLastLine ? "Aperte E para fechar" : "Aperte E para continuar",
     );
     this.continuePrompt.setVisible(true);
     this.escHint.setText("");
@@ -324,7 +333,13 @@ export class DialoguePanel extends BasePanel {
 
   private confirmSelection(forceYes?: boolean) {
     if (!this._isVisible) return;
-    if (this.mode !== "confirmation") return this.nextLine();
+    if (this.mode !== "confirmation") {
+      if (this.ignoreNextConfirm) {
+        this.ignoreNextConfirm = false;
+        return;
+      }
+      return this.nextLine();
+    }
 
     const yes = forceYes ?? this.confirmSelectedIndex === 0;
     const cb = yes ? this.onConfirmYes : this.onConfirmNo;

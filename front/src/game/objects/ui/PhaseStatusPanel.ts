@@ -40,7 +40,7 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
       LayoutConfig.UI.PANEL_WIDTH,
       110,
       LayoutConfig.COLORS.STANDARD_BG,
-      0.75,
+      0.95,
     );
     bg.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
     bg.setStrokeStyle(
@@ -54,7 +54,6 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
         fontFamily: LayoutConfig.FONTS.TITLE,
         fontSize: LayoutConfig.FONTS.SIZES.METADATA,
         color: LayoutConfig.COLORS.WHITE,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
 

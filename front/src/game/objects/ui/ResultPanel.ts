@@ -340,7 +340,7 @@ export class ResultPanel extends BasePanel {
     const containerWidth = this.navButtonWidth * 2 + this.navButtonGap;
     const startX = -containerWidth / 2 + this.navButtonWidth / 2;
     this.navButtonHome = this.createNavButton(
-      "Home",
+      "Voltar ao mapa",
       LayoutConfig.COLORS.WHITE_HEX,
     );
     this.navButtonNext = this.createNavButton(

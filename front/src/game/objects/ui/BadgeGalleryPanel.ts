@@ -204,6 +204,8 @@ export class BadgeGalleryPanel extends BasePanel {
   }
 
   public async show() {
+    if (this._isVisible) return;
+    this._isVisible = true;
     await this.syncUnlockedFromServer();
     this.refresh();
     this.setVisible(true);
@@ -220,6 +222,7 @@ export class BadgeGalleryPanel extends BasePanel {
   }
 
   public hide() {
+    this._isVisible = false;
     this.scene.tweens.add({
       targets: this,
       alpha: 0,

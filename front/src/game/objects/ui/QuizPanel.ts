@@ -90,7 +90,7 @@ export class QuizPanel extends BasePanel {
       .text(
         -this.topContainer.width / 2 + 35,
         -this.topContainer.height / 2 + 55,
-        "Pergunta 01/01",
+        "Pergunta 1/1",
         {
           fontFamily: LayoutConfig.FONTS.TITLE,
           fontSize: LayoutConfig.FONTS.SIZES.TITLE,
@@ -101,7 +101,7 @@ export class QuizPanel extends BasePanel {
       .setOrigin(...LayoutConfig.ALIGN.TOP_LEFT);
 
     this.questionTitle = scene.add
-      .text(0, -this.panelHeight / 2 + 110, "Pergunta 01", {
+      .text(0, -this.panelHeight / 2 + 110, "Pergunta 1", {
         fontSize: LayoutConfig.FONTS.SIZES.TITLE,
         fontFamily: LayoutConfig.FONTS.TITLE,
         color: LayoutConfig.COLORS.GOLD,
@@ -113,7 +113,7 @@ export class QuizPanel extends BasePanel {
       .text(
         -this.questionContainer.width / 2 + 165,
         -this.questionContainer.height - 40,
-        "Desafio 01",
+        "Desafio 1",
         {
           fontFamily: "Jockey One",
           fontSize: "32px",
@@ -196,13 +196,13 @@ export class QuizPanel extends BasePanel {
       this.hide();
     });
     this.bindKey("SPACE", () => {
+      this.selectOption();
+    });
+    this.bindKey("E", () => {
       if (this.isShowingPerformance) {
         this.handlePerformanceSpace();
-      } else {
-        this.selectOption();
       }
     });
-    this.bindKey("ENTER", () => this.selectOption());
   }
 
   private getScorePercentage(): number {
@@ -335,12 +335,10 @@ export class QuizPanel extends BasePanel {
   }
 
   private updateQuestionHeader() {
-    this.questionTitle.setText(
-      `Desafio ${String(this.currentQuestionIndex + 1).padStart(2, "0")}`,
-    );
+    this.questionTitle.setText(`Desafio ${this.currentQuestionIndex + 1}`);
     this.scoreText.setText(`Pontos: ${this.score}`);
     this.questionCounterText.setText(
-      `Pergunta ${String(this.currentQuestionIndex + 1).padStart(2, "0")}/${String(this.questions.length).padStart(2, "0")}`,
+      `Pergunta ${this.currentQuestionIndex + 1}/${this.questions.length}`,
     );
   }
 
@@ -394,25 +392,25 @@ export class QuizPanel extends BasePanel {
     this.resetOptionButtons();
     const percentage = this.getScorePercentage();
     if (percentage < 70) {
-      this.scoreText.setText("Por pouco");
+      this.scoreText.setText("Por pouco!");
       this.questionCounterText.setText("Pontuação baixa");
-      this.performanceText.setText("Quase lá...");
+      this.performanceText.setText("Quase lá…");
     } else if (percentage < 100) {
       this.scoreText.setText("Parabéns!");
       this.questionCounterText.setText("Boa pontuação");
-      this.performanceText.setText("Muito bom");
+      this.performanceText.setText("Muito bom!");
     } else {
       this.scoreText.setText("Parabéns!");
       this.questionCounterText.setText("Pontuação perfeita!");
-      this.performanceText.setText("Gabaritou");
+      this.performanceText.setText("Gabaritou!");
     }
     this.performanceContainer.setVisible(true);
     this.performanceStar.setTexture(this.calculateStarFillLevel());
     this.performanceStar.setScale(this.calculateResultStarScale());
     if (percentage >= 70) {
-      this.footerHintText.setText("Pressione Espaço para ver resultados");
+      this.footerHintText.setText("Aperte E para ver resultados");
     } else {
-      this.footerHintText.setText("Pressione Espaço para fechar");
+      this.footerHintText.setText("Aperte E para fechar");
     }
   }
 
