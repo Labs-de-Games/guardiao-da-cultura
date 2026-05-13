@@ -46,7 +46,7 @@ The system is designed around specific business domains. While physically struct
 - **Framework:** NestJS.
 - **Database:** PostgreSQL.
 - **ORM:** TypeORM.
-- **Infrastructure:** Docker & Docker Compose for local environments; GitHub Actions & Coolify for CI/CD.
+- **Infrastructure:** Docker & Docker Compose for local environments; GitHub Actions for building/pushing to GitHub Container Registry (GHCR); Coolify for Deployment (CD).
 
 ## 4. Architectural Patterns & Boundaries
 
