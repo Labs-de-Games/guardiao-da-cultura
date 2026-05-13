@@ -17,10 +17,8 @@ import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
-import { InteractiveButton } from "../objects/InteractiveButton";
 import { CarryableItem } from "../objects/interactives/CarryableItem";
 import { DraggableItem } from "../objects/interactives/DraggableItem";
-import type { InteractiveItem } from "../objects/interactives/InteractiveItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
