@@ -2,29 +2,66 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push front image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./front/Dockerfile
+          push: true
+          tags: ghcr.io/labs-de-games/gameplate-front:latest
+
+      - name: Build and push back image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./back/Dockerfile
+          push: true
+          tags: ghcr.io/labs-de-games/gameplate-back:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
       - name: Trigger Coolify webhook
         env:
           COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
-          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
-            echo "::error::COOLIFY_WEBHOOK_URL is not configured."
+          if [ -z "$COOLIFY_WEBHOOK_URL" ] || [ -z "$COOLIFY_TOKEN" ]; then
+            echo "::error::COOLIFY_WEBHOOK_URL or COOLIFY_TOKEN is not configured."
             echo "To enable deployments:"
             echo "1. Open your Coolify dashboard and go to the project settings."
             echo "2. Copy the Webhook URL for automatic deployments."
-            echo "3. In this GitHub repository, go to Settings > Secrets and variables > Actions."
-            echo "4. Create a new Repository Secret named COOLIFY_WEBHOOK_URL with the copied URL."
-            echo "5. Push to main again to trigger the deployment."
+            echo "3. Go to Keys & Tokens > API Tokens and create a new token with Deploy permissions."
+            echo "4. In this GitHub repository, go to Settings > Secrets and variables > Actions."
+            echo "5. Create Repository Secrets named COOLIFY_WEBHOOK_URL and COOLIFY_TOKEN."
+            echo "6. Push to master again to trigger the deployment."
             exit 1
           fi
           echo "Triggering Coolify deployment..."
-          curl -X POST "$COOLIFY_WEBHOOK_URL"
+          curl -X GET "$COOLIFY_WEBHOOK_URL" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN"

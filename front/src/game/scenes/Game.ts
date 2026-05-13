@@ -570,7 +570,7 @@ export class Game extends Scene {
   }
 
   private tryInteractWithRat(): boolean {
-    if (!this.player || !this.rat || !this.rat.active) return false;
+    if (!this.player || !this.rat?.active) return false;
 
     const isNearRat =
       Phaser.Math.Distance.Between(
