@@ -136,8 +136,8 @@ export class PhaseStatusPanel extends Phaser.GameObjects.Container {
 
   public layout(w: number, h: number) {
     const padding = LayoutConfig.UI.PADDING;
-    
-	this.phasePanel.setPosition(w - padding, padding);
+
+    this.phasePanel.setPosition(w - padding, padding);
     this.starsPanel.setPosition(padding + 20, padding);
 
     const fontScale = Math.min(w / 1920, h / 1080);
