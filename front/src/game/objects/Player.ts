@@ -225,7 +225,7 @@ export class Player
       s: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.S],
       d: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.D],
       space: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SPACE],
-      shift: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SHIFT],
+      e: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.E],
     }) as PlayerKeys;
 
     this.setScale(PLAYER_PHYSICS.SCALE);
@@ -374,8 +374,8 @@ export class Player
 
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
-    const shiftPress = Phaser.Input.Keyboard.JustDown(this.keys.shift);
-    if (shiftPress) {
+    const ePress = Phaser.Input.Keyboard.JustDown(this.keys.e);
+    if (ePress) {
       if (this.isGrabbing) {
         this.releaseGrab();
       } else {
@@ -680,6 +680,6 @@ type PlayerKeys = {
   a: Phaser.Input.Keyboard.Key;
   s: Phaser.Input.Keyboard.Key;
   d: Phaser.Input.Keyboard.Key;
+  e: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
-  shift: Phaser.Input.Keyboard.Key;
 };

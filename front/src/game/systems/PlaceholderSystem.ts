@@ -94,7 +94,7 @@ export class PlaceholderSystem {
     );
     placeholder.setScale(0.1);
     placeholder.setAlpha(1);
-    placeholder.setDepth(11);
+    placeholder.setDepth(10);
 
     if (this.scene.anims.exists("placeholder_hint_anim")) {
       placeholder.play("placeholder_hint_anim", true);

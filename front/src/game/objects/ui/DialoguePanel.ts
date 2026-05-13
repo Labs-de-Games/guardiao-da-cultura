@@ -103,8 +103,8 @@ export class DialoguePanel extends BasePanel {
     for (const key of ["S", "DOWN", "D", "RIGHT"]) {
       this.bindKey(key, () => this.moveConfirmSelection(1));
     }
-    // SHIFT advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
-    this.bindKey("SHIFT", () => this.confirmSelection());
+    // E advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
+    this.bindKey("E", () => this.confirmSelection());
     this.bindKey("ESC", () => {
       if (this.mode === "confirmation") return this.confirmSelection(false);
 
@@ -226,7 +226,8 @@ export class DialoguePanel extends BasePanel {
       this.continuePrompt.setVisible(true);
       this.nextIndicator.setVisible(false);
 
-      this.escHint.setText("ESC para cancelar");
+      this.escHint.setText("Aperte ESC para cancelar");
+      this.escHint.setFontFamily(LayoutConfig.FONTS.BODY);
 
       this.confirmOptionTexts[0].setVisible(true);
       this.confirmOptionTexts[1].setVisible(true);
@@ -241,7 +242,7 @@ export class DialoguePanel extends BasePanel {
 
     const isLastLine = this.currentLineIndex === this.lines.length - 1;
     this.continuePrompt.setText(
-      isLastLine ? "Aperte SHIFT para fechar" : "Aperte SHIFT para continuar",
+      isLastLine ? "Aperte E para fechar" : "Aperte E para continuar",
     );
     this.continuePrompt.setVisible(true);
     this.escHint.setText("");
