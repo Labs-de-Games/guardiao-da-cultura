@@ -230,7 +230,7 @@ export class DialoguePanel extends BasePanel {
     if (this.mode === "confirmation") {
       this.contentText.setText(this.confirmMessage);
 
-      this.continuePrompt.setText("ENTER para confirmar");
+      this.continuePrompt.setText("Aperte E para confirmar");
       this.continuePrompt.setVisible(true);
       this.nextIndicator.setVisible(false);
 
