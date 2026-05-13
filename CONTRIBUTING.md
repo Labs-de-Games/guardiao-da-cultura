@@ -142,12 +142,13 @@ All checks must pass before merging.
 
 ### Continuous Deployment (CD)
 
-Merges to `master` automatically trigger deployment:
+Merges to `master` automatically trigger the deployment pipeline:
 
-1. GitHub webhook notifies Coolify
-2. Coolify pulls latest code
-3. Production containers are rebuilt and redeployed
-4. Health checks verify deployment success
+1. GitHub Actions builds the Docker images for Frontend and Backend.
+2. Images are pushed to the GitHub Container Registry (GHCR).
+3. A webhook notifies Coolify.
+4. Coolify pulls the latest images from GHCR and redeploys the containers.
+5. Health checks verify deployment success.
 
 ### Git Hooks
 

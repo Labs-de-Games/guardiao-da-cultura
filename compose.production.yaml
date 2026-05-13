@@ -6,15 +6,14 @@
 #   POSTGRES_PASSWORD - PostgreSQL password
 #   POSTGRES_DB       - PostgreSQL database name
 #   CLOUDFLARE_TUNNEL_TOKEN - Cloudflare Tunnel token
-
 #
 # Optional environment variables:
-#   FRONTEND_URL              - Frontend URL (default: http://localhost:3000)
-#   JWT_EXPIRATION            - JWT expiry (default: 15m)
-#   JWT_ISSUER                - JWT issuer (default: gameplate)
-#   MAGIC_LINK_EXPIRATION_MIN - Magic link expiry in minutes (default: 15)
-#   EMAIL_PROVIDER            - mock | nodemailer (default: mock)
-#   EMAIL_FROM                - Sender address (default: 42 Rio <noreply@42.rio>)
+#   FRONTEND_URL              - Frontend URL
+#   JWT_EXPIRATION            - JWT expiry
+#   JWT_ISSUER                - JWT issuer
+#   MAGIC_LINK_EXPIRATION_MIN - Magic link expiry in minutes
+#   EMAIL_PROVIDER            - mock | nodemailer
+#   EMAIL_FROM                - Sender address
 #   GMAIL_USER                - Gmail address (required if EMAIL_PROVIDER=nodemailer)
 #   GMAIL_APP_PASSWORD        - Gmail app password (required if EMAIL_PROVIDER=nodemailer)
 #
@@ -25,40 +24,42 @@ services:
     extends:
       file: compose.base.yaml
       service: front
+    image: ghcr.io/labs-de-games/gameplate-front:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
-      - NEXT_PUBLIC_API_URL=/api/v1
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     networks:
       - frontend
       - backend
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
 
   back:
     extends:
       file: compose.base.yaml
       service: back
+    image: ghcr.io/labs-de-games/gameplate-back:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
       - PORT=${PORT:-3001}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION:-15m}
-      - JWT_ISSUER=${JWT_ISSUER:-gameplate}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - JWT_ISSUER=${JWT_ISSUER}
       - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET}
-      - MAGIC_LINK_EXPIRATION_MIN=${MAGIC_LINK_EXPIRATION_MIN:-15}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-mock}
-      - EMAIL_FROM=${EMAIL_FROM:-42 Rio <noreply@42.rio>}
+      - MAGIC_LINK_EXPIRATION_MIN=${MAGIC_LINK_EXPIRATION_MIN}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - EMAIL_FROM=${EMAIL_FROM}
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
     networks:
@@ -66,10 +67,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
 
   postgres:
@@ -84,10 +85,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
 
   nginx:
@@ -118,15 +119,17 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel run --token ${TUNNEL_TOKEN}
     restart: unless-stopped
     depends_on:
       - nginx
@@ -136,10 +139,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
 
 volumes:
