@@ -30,6 +30,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=build /app/front/.next/standalone ./
+COPY --from=build /app/front/.next/static ./.next/static
+COPY --from=build /app/front/public ./public
 
 EXPOSE 3000
 CMD ["bun", "front/server.js"]
