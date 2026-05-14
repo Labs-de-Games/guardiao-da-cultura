@@ -4,10 +4,20 @@ import { env } from "./env";
 
 const API_URL = env.NEXT_PUBLIC_API_URL;
 
+function getApiUrl(path: string): string {
+  if (API_URL) {
+    return `${API_URL}${path}`;
+  }
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${path}`;
+  }
+  return path;
+}
+
 export async function sendGameEvent(
   payload: GameEventPayload,
 ): Promise<boolean> {
-  const url = `${API_URL}/api/v1/events`;
+  const url = getApiUrl("/api/v1/events");
 
   if (
     payload.type === "session.end" &&

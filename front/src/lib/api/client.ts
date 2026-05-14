@@ -48,8 +48,12 @@ function handleAuthError(error: AxiosError): never {
   throw new AuthError(message, status);
 }
 
+const baseURL = env.NEXT_PUBLIC_API_URL
+  ? `${env.NEXT_PUBLIC_API_URL}/api/v1`
+  : "/api/v1";
+
 export const apiClient = axios.create({
-  baseURL: `${env.NEXT_PUBLIC_API_URL}/api/v1`,
+  baseURL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
