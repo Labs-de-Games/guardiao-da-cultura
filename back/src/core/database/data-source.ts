@@ -8,6 +8,8 @@ import { UserProgress } from "../../modules/progression/user-progress.entity";
 import { UserScore } from "../../modules/scoring/user-score.entity";
 import { User } from "../../modules/users/user.entity";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const AppDataSource = new DataSource({
   type: "postgres",
   url: process.env.DATABASE_URL,
@@ -21,7 +23,9 @@ export const AppDataSource = new DataSource({
     RefreshToken,
     UserScore,
   ],
-  migrations: ["src/core/database/migrations/*.ts"],
+  migrations: isProduction
+    ? ["dist/core/database/migrations/*.js"]
+    : ["src/core/database/migrations/*.ts"],
   migrationsTableName: "migrations",
   synchronize: false,
 });
