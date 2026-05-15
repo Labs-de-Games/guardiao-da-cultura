@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
+import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import { type QuestManager, QuestStatus } from "../objects/QuestManager";
@@ -16,6 +17,7 @@ import { QuizPanel } from "../objects/ui/QuizPanel";
 import type { QuizProgressTracker } from "../objects/ui/quiz/QuizProgressTracker";
 import { ResultPanel } from "../objects/ui/ResultPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
+import { onKeyDown, registerScene } from "../systems/InputManager";
 import type {
   InteractionUIData,
   LabelInfoData,
@@ -96,6 +98,7 @@ export class UIScene extends Scene {
     // 3. Configuração de Eventos
     this.setupEventListeners();
     this.setupKeyboardListeners();
+    registerScene(this);
 
     // 4. Estado Inicial
     this.seedInitialState();
@@ -230,8 +233,6 @@ export class UIScene extends Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize");
-      this.input.keyboard?.off("keydown-TAB");
-      this.input.keyboard?.off("keydown-Q");
 
       // Unregister gameScene events (vazamento de memória evitado)
       if (gameScene?.events) {
@@ -253,13 +254,11 @@ export class UIScene extends Scene {
   }
 
   private setupKeyboardListeners() {
-    this.input.keyboard?.on("keydown-TAB", (e: KeyboardEvent) => {
-      e.preventDefault();
+    onKeyDown(this, Actions.TOGGLE_PANEL, () => {
       this.toggleBadgeGallery();
     });
 
-    this.input.keyboard?.on("keydown-Q", (e: KeyboardEvent) => {
-      e.preventDefault();
+    onKeyDown(this, Actions.TOGGLE_CONTROLS, () => {
       this.toggleControls();
     });
   }
