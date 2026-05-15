@@ -1,4 +1,6 @@
 import * as Phaser from "phaser";
+import { Actions } from "../constants/KeyBindings";
+import { getKeys } from "../systems/InputManager";
 import type { IPlayerState } from "../types/EntityTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
 import type { CarryableItem } from "./interactives/CarryableItem";
@@ -6,7 +8,6 @@ import type { DraggableItem } from "./interactives/DraggableItem";
 import {
   PLAYER_ANIMS,
   PLAYER_ASSETS,
-  PLAYER_KEYS,
   PLAYER_MOVEMENT,
   PLAYER_PHYSICS,
 } from "./PlayerConfig";
@@ -215,18 +216,14 @@ export class Player
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    this.keys = this.scene.input.keyboard?.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.UP],
-      down: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.DOWN],
-      left: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.LEFT],
-      right: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.RIGHT],
-      w: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.W],
-      a: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.A],
-      s: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.S],
-      d: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.D],
-      space: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.SPACE],
-      e: Phaser.Input.Keyboard.KeyCodes[PLAYER_KEYS.E],
-    }) as PlayerKeys;
+    this.keys = getKeys(this.scene, [
+      Actions.MOVE_UP,
+      Actions.MOVE_DOWN,
+      Actions.MOVE_LEFT,
+      Actions.MOVE_RIGHT,
+      Actions.JUMP,
+      Actions.INTERACT,
+    ]) as PlayerKeys;
 
     this.setScale(PLAYER_PHYSICS.SCALE);
     this.setDamping(PLAYER_PHYSICS.DAMPING);

@@ -235,22 +235,6 @@ export const PLAYER_ANIMS = {
 } as const;
 
 // ------------------------------------------------------------
-// KEYBINDINGS
-// ------------------------------------------------------------
-export const PLAYER_KEYS = {
-  UP: "UP",
-  DOWN: "DOWN",
-  LEFT: "LEFT",
-  RIGHT: "RIGHT",
-  W: "W",
-  A: "A",
-  S: "S",
-  D: "D",
-  SPACE: "SPACE",
-  E: "E",
-} as const;
-
-// ------------------------------------------------------------
 // EVENTS (scene.events.emit / on)
 // ------------------------------------------------------------
 export const PLAYER_EVENTS = {} as const;
