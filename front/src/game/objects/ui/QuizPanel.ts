@@ -387,6 +387,7 @@ export class QuizPanel extends BasePanel {
     this.questionTitle.setVisible(false);
     this.questionText.setVisible(false);
     this.resetOptionButtons();
+	this.scoreManager?.recordQuizResult(this.score, this.questions.length);
     const percentage = this.getScorePercentage();
     if (percentage < 70) {
       this.scoreText.setText("Tente de novo!");
