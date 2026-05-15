@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../../constants/LayoutConfig";
+import { offKeyDown, onKeyDown } from "../../systems/InputManager";
 
 /**
  * BasePanel é uma classe base abstrata para todos os componentes de UI da UIScene.
@@ -8,7 +9,7 @@ import { LayoutConfig } from "../../constants/LayoutConfig";
 export abstract class BasePanel extends Phaser.GameObjects.Container {
   protected _isVisible: boolean = false;
   protected bg!: Phaser.GameObjects.Rectangle;
-  private keyListeners: { key: string; fn: () => void }[] = [];
+  private actionListeners: { action: string; fn: () => void }[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -71,18 +72,16 @@ export abstract class BasePanel extends Phaser.GameObjects.Container {
       .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
   }
 
-  /** Input Manager: Registra tecla no sistema Phaser com cleanup automático */
-  protected bindKey(key: string, callback: () => void) {
-    const phaserKey = key.toUpperCase();
-    this.scene.input.keyboard?.on(`keydown-${phaserKey}`, callback);
-    this.keyListeners.push({ key: `keydown-${phaserKey}`, fn: callback });
+  protected bindAction(action: string, callback: () => void) {
+    onKeyDown(this.scene, action, callback);
+    this.actionListeners.push({ action, fn: callback });
   }
 
-  private clearKeys() {
-    this.keyListeners.forEach((l) => {
-      this.scene.input.keyboard?.off(l.key, l.fn);
+  private clearActions() {
+    this.actionListeners.forEach((l) => {
+      offKeyDown(this.scene, l.action, l.fn);
     });
-    this.keyListeners = [];
+    this.actionListeners = [];
   }
 
   /** Métodos de animação padrão */
@@ -120,7 +119,7 @@ export abstract class BasePanel extends Phaser.GameObjects.Container {
   }
 
   public override destroy(fromScene?: boolean) {
-    this.clearKeys();
+    this.clearActions();
     super.destroy(fromScene);
   }
 }
