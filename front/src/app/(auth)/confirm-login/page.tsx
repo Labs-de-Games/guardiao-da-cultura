@@ -24,7 +24,7 @@ function ConfirmLoginContent() {
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid or missing token.");
+      setError("Token inválido ou inexistente.");
     }
   }, [token]);
 
@@ -36,7 +36,7 @@ function ConfirmLoginContent() {
       await confirmLogin({ token });
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to confirm login";
+        err instanceof Error ? err.message : "Falha ao confirmar acesso";
       setError(message);
       showToast(message, "error");
     } finally {
@@ -55,10 +55,10 @@ function ConfirmLoginContent() {
   return (
     <Box sx={{ textAlign: "center" }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Confirm Login
+        Confirmar acesso
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Click the button below to complete your login.
+        Clique no botão abaixo para acessar.
       </Typography>
 
       {error && (
@@ -74,7 +74,7 @@ function ConfirmLoginContent() {
         disabled={isLoading || !token}
         fullWidth
       >
-        {isLoading ? <CircularProgress size={24} /> : "Confirm Login"}
+        {isLoading ? <CircularProgress size={24} /> : "Confirmar acesso"}
       </Button>
     </Box>
   );

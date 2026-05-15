@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = authStatus === "authenticated";
 
   if (isProtectedRoute(path) && !isAuthenticated) {
-    const redirectUrl = new URL("/login", request.url);
+    const redirectUrl = new URL("/register", request.url);
     redirectUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(redirectUrl);
   }

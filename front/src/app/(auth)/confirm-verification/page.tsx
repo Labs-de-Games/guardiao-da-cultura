@@ -24,7 +24,7 @@ function ConfirmVerificationContent() {
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid or missing token.");
+      setError("Token inválido ou inexistente.");
     }
   }, [token]);
 
@@ -36,7 +36,7 @@ function ConfirmVerificationContent() {
       await confirmVerifyEmail({ token });
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to verify email";
+        err instanceof Error ? err.message : "Falha na verificação de e-mail";
       setError(message);
       showToast(message, "error");
     } finally {
@@ -55,11 +55,10 @@ function ConfirmVerificationContent() {
   return (
     <Box sx={{ textAlign: "center" }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Verify Email
+        Confirmamos seu e-mail
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Click the button below to verify your email address and activate your
-        account.
+        Obrigado! Agora é só clicar no botão abaixo e jogar!
       </Typography>
 
       {error && (
@@ -75,7 +74,7 @@ function ConfirmVerificationContent() {
         disabled={isLoading || !token}
         fullWidth
       >
-        {isLoading ? <CircularProgress size={24} /> : "Verify Email"}
+        {isLoading ? <CircularProgress size={24} /> : "Quero jogar!"}
       </Button>
     </Box>
   );
