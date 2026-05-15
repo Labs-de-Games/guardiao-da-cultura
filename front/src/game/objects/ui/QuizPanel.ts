@@ -14,7 +14,6 @@ export class QuizPanel extends BasePanel {
   private readonly optionButtonHeight = 100;
   private readonly optionNotchDepth = 30;
   private readonly optionNotchHeight = 20;
-  // private currentFontScale: number = 1;
 
   private readonly progressIndicatorWidth = 48;
   private readonly progressIndicatorHeight = 84;
@@ -203,9 +202,7 @@ export class QuizPanel extends BasePanel {
   }
 
   private getScorePercentage(): number {
-    return this.questions.length > 0
-      ? (this.score / this.questions.length) * 100
-      : 0;
+    return this.scoreManager?.getPayload().quiz.accuracyPercent ?? 0;
   }
 
   public startQuiz(
@@ -297,12 +294,17 @@ export class QuizPanel extends BasePanel {
     this.progressTracker.setAnswers(this.answers);
   }
 
-  private calculateStarFillLevel(): string {
+  private calculateStarFillLevel() {
     const percentage = this.getScorePercentage();
-    if (percentage > 90) return "ui_star_full";
-    if (percentage > 70) return "ui_star_3q";
-    if (percentage > 50) return "ui_star_2q";
-    return "ui_star_1q";
+    if (percentage === 100) this.performanceStar.setTexture("ui_star_full");
+	else if (percentage >= 75) this.performanceStar.setTexture("ui_star_3q");
+	else if (percentage >= 50) this.performanceStar.setTexture("ui_star_2q");
+	else if (percentage >= 25) this.performanceStar.setTexture("ui_star_1q");
+	else {
+      this.performanceStar.setTexture("ui_star_full")
+        .setTint(LayoutConfig.COLORS.DARK_STAR_TINT)
+        .setAlpha(0.5);
+      }
   }
 
   private calculateResultStarScale(): number {
@@ -387,10 +389,14 @@ export class QuizPanel extends BasePanel {
     this.questionTitle.setVisible(false);
     this.questionText.setVisible(false);
     this.resetOptionButtons();
-	this.scoreManager?.recordQuizResult(this.score, this.questions.length);
+    this.scoreManager?.recordQuizResult(this.score, this.questions.length);
     const percentage = this.getScorePercentage();
-    if (percentage < 70) {
-      this.scoreText.setText("Tente de novo!");
+	if (percentage < 25) {
+      this.scoreText.setText("Essa não");
+      this.questionCounterText.setText("Pontuação muito baixa");
+      this.performanceText.setText("Tente novamente");
+	} else if (percentage < 70) {
+      this.scoreText.setText("Por pouco!");
       this.questionCounterText.setText("Pontuação baixa");
       this.performanceText.setText(
         "Com um pouco mais de atenção, você consegue!",
@@ -405,7 +411,7 @@ export class QuizPanel extends BasePanel {
       this.performanceText.setText("Gabaritou!");
     }
     this.performanceContainer.setVisible(true);
-    this.performanceStar.setTexture(this.calculateStarFillLevel());
+    this.calculateStarFillLevel();
     this.performanceStar.setScale(this.calculateResultStarScale());
     if (percentage >= 70) {
       this.footerHintText.setText("Aperte E para ver resultados");
