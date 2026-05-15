@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import type { LabelInfoData } from "../../types/GameDataTypes";
@@ -94,8 +95,8 @@ export class LabelPanel extends BasePanel {
       this.escHint,
     ]);
 
-    this.bindKey("ESC", () => this.hide());
-    this.bindKey("E", () => this.hide());
+    this.bindAction(Actions.CLOSE, () => this.hide());
+    this.bindAction(Actions.INTERACT, () => this.hide());
 
     this.scene.input.on("wheel", this.onWheel, this);
   }

@@ -1,7 +1,9 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
+import { onKeyDown } from "../../systems/InputManager";
 import {
   computeLockedSlots,
   ensureValidGridIndex,
@@ -33,11 +35,10 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   public isVisible: boolean = false;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, scene.scale.width / 2, scene.scale.height / 2);
+    super(scene, 0, 0);
 
     this.createBackground();
     this.createTitle();
-
     this.inventoryContainer = scene.add.container(-340, -200);
     this.gridContainer = scene.add.container(80, -80);
     this.add([this.inventoryContainer, this.gridContainer]);
@@ -97,8 +98,6 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
     this.currentInstanceId = instanceId;
     this.availableItems = items;
 
-    // `filledSlots` can arrive as a sparse/short array (only filled indices).
-    // Normalize to a fixed 2x2 grid.
     this.slots = normalizeFilledSlots(filledSlots);
     this.lockedSlots = computeLockedSlots(this.slots);
 
@@ -251,34 +250,34 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   }
 
   private setupKeyboardListeners() {
-    this.scene.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+    onKeyDown(this.scene, Actions.NAV_UP, () => {
       if (!this.isVisible) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      switch (event.key) {
-        case "ArrowUp":
-          this.moveCursor("up");
-          break;
-        case "ArrowDown":
-          this.moveCursor("down");
-          break;
-        case "ArrowLeft":
-          this.moveCursor("left");
-          break;
-        case "ArrowRight":
-          this.moveCursor("right");
-          break;
-        case "Enter":
-        case " ":
-          this.handleAction();
-          break;
-        case "Escape":
-          this.hide();
-          break;
-      }
+      this.moveCursor("up");
       this.refreshUI();
+    });
+    onKeyDown(this.scene, Actions.NAV_DOWN, () => {
+      if (!this.isVisible) return;
+      this.moveCursor("down");
+      this.refreshUI();
+    });
+    onKeyDown(this.scene, Actions.NAV_LEFT, () => {
+      if (!this.isVisible) return;
+      this.moveCursor("left");
+      this.refreshUI();
+    });
+    onKeyDown(this.scene, Actions.NAV_RIGHT, () => {
+      if (!this.isVisible) return;
+      this.moveCursor("right");
+      this.refreshUI();
+    });
+    onKeyDown(this.scene, Actions.CONFIRM, () => {
+      if (!this.isVisible) return;
+      this.handleAction();
+      this.refreshUI();
+    });
+    onKeyDown(this.scene, Actions.CLOSE, () => {
+      if (!this.isVisible) return;
+      this.hide();
     });
   }
 
