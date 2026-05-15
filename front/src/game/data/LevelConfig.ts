@@ -61,6 +61,18 @@ export const LEVEL_ASSETS = {
       key: "edgards_sem_titulo_iii_em_pe",
       path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
     },
+    {
+      key: "placeholder-1",
+      path: "artworks/sculptures/placeholder-1.png",
+    },
+    {
+      key: "placeholder-2",
+      path: "artworks/sculptures/placeholder-2.png",
+    },
+    {
+      key: "placeholder-3",
+      path: "artworks/sculptures/placeholder-3.png",
+    },
   ],
   PAINTINGS: [
     {
