@@ -13,6 +13,7 @@ export interface PlaceholderInstance {
   state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.Sprite;
   isFilled?: boolean;
+  placeholderImage?: string;
 }
 
 export interface PlaceholderConfig {
@@ -24,6 +25,7 @@ export interface PlaceholderConfig {
   type: InteractiveType;
   id: string | string[];
   state?: Record<string, unknown>;
+  placeholderImage?: string;
 }
 
 export class PlaceholderSystem {
@@ -46,6 +48,10 @@ export class PlaceholderSystem {
 
       const typeStr = TiledUtils.getProperty(obj, "type");
       const rawProp = TiledUtils.getProperty(obj, "id");
+      const placeholderImageStr = TiledUtils.getProperty(
+        obj,
+        "placeholderImage",
+      );
       const targetId = TiledUtils.parseTargetIds(rawProp);
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
@@ -61,6 +67,7 @@ export class PlaceholderSystem {
           typeStr === InteractiveType.PHOTO
             ? { filledSlots: [null, null, null, null] }
             : {},
+        placeholderImage: placeholderImageStr as string,
       });
     });
   }
@@ -84,19 +91,44 @@ export class PlaceholderSystem {
       id: config.id,
       state: config.state || {},
       isFilled: false,
+      placeholderImage: config.placeholderImage,
     };
+
+    let textureKey = "placeholder";
+    if (config.placeholderImage) {
+      if (["1", "2", "3"].includes(String(config.placeholderImage))) {
+        textureKey = `placeholder-${config.placeholderImage}`;
+      } else {
+        textureKey = config.placeholderImage;
+      }
+    }
 
     const placeholder = this.scene.add.sprite(
       rect.centerX,
       rect.centerY,
-      "placeholder",
+      textureKey,
       0,
     );
-    placeholder.setScale(0.1);
-    placeholder.setAlpha(1);
+    let scale = 0.1;
+    switch (config.type) {
+      case InteractiveType.SCULPTURE:
+        scale = 1.2;
+        break;
+      case InteractiveType.PAINTING:
+        scale = 0.1;
+        break;
+      case InteractiveType.PHOTO:
+        scale = 0.1;
+        break;
+    }
+    placeholder.setScale(scale);
+    placeholder.setAlpha(0.45);
     placeholder.setDepth(10);
 
-    if (this.scene.anims.exists("placeholder_hint_anim")) {
+    if (
+      textureKey === "placeholder" &&
+      this.scene.anims.exists("placeholder_hint_anim")
+    ) {
       placeholder.play("placeholder_hint_anim", true);
     }
 
