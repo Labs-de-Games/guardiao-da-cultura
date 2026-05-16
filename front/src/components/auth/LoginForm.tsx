@@ -77,7 +77,8 @@ export default function LoginForm() {
           Veja seu e-mail
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Enviamos um link de acesso para o seu e-mail. Clique no link para jogar.
+          Enviamos um link de acesso para o seu e-mail. Clique no link para
+          jogar.
         </Typography>
         <Button
           variant="outlined"
@@ -123,7 +124,11 @@ export default function LoginForm() {
         disabled={isSubmitting}
         sx={{ mt: 2, mb: 2 }}
       >
-        {isSubmitting ? <CircularProgress size={24} /> : "Receber link de acesso por e-mail"}
+        {isSubmitting ? (
+          <CircularProgress size={24} />
+        ) : (
+          "Receber link de acesso por e-mail"
+        )}
       </Button>
 
       <Box sx={{ textAlign: "center" }}>
