@@ -123,10 +123,10 @@ export const emailTemplates = {
       html: baseTemplate(
         "Novo acesso detectado",
         `<p>Olá,</p>
-        <p>detectamos um novo acesso na sua conta <strong>${escapeHtml(email)}</strong>.</p>
+        <p>detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
         <p>Se foi você, pode ignorar este e-mail com segurança.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Acessar Conta</a>
+          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Acessar conta</a>
         </p>
         <hr class="divider">
         <p style="font-size: 14px; color: #666;">Se não foi você, recomendamos que altere sua senha imediatamente e entre em contato com nosso suporte.</p>`,
