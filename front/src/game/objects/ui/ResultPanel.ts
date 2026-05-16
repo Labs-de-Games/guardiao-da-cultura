@@ -48,28 +48,28 @@ export class ResultPanel extends BasePanel {
     }
   > = {
     mínimo: {
-      greeting: "Ok",
-      score: "Performance mínima",
-      congrats: "Podia ser melhor...",
+      greeting: "OK",
+      score: "Desempenho mínimo",
+      congrats: "Podia ser melhor…",
     },
     regular: {
-      greeting: "Ok",
-      score: "Performance regular",
+      greeting: "OK",
+      score: "Desempenho regular",
       congrats: "Regular",
     },
     bom: {
       greeting: "Parabéns!",
-      score: "Boa performance",
+      score: "Bom desempenho",
       congrats: "Bom!",
     },
     ótimo: {
       greeting: "Parabéns!",
-      score: "Ótima performance",
+      score: "Ótimo desempenho",
       congrats: "Muito Bom!",
     },
     perfeito: {
       greeting: "Parabéns!",
-      score: "Performance perfeita",
+      score: "Desempenho perfeito",
       congrats: "Perfeito!",
     },
   };
@@ -344,7 +344,7 @@ export class ResultPanel extends BasePanel {
       LayoutConfig.COLORS.WHITE_HEX,
     );
     this.navButtonNext = this.createNavButton(
-      "Próximo",
+      "Dê sua opinião",
       LayoutConfig.COLORS.GOLD_HEX,
     );
     this.navButtonHome.setPosition(startX, 0);
