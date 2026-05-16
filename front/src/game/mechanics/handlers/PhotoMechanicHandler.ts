@@ -126,7 +126,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
         .setDepth(2);
 
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Incrível! Você restaurou o quadro perfeitamente.",
+        "Incrível! Agora sim é possível ver a fotografia completa!",
       ]);
       gameScene.events.emit(GameEvents.INFO_COLLECTED, {
         missionId: MissionIds.CURATOR,
@@ -135,11 +135,11 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
       gameScene.placeholderSystem.lockPlaceholder(placeholder.instanceId);
     } else if (anyCorrect) {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Algumas peças encaixaram, mas outras ainda não estão no lugar certo.",
+        "Só algumas peças encaixaram, faltam outras.",
       ]);
     } else {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Nada parece ter encaixado... Tente posições diferentes.",
+        "Nada parece ter encaixado…",
       ]);
     }
   }

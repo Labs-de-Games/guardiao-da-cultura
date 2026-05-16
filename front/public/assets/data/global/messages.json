@@ -2,8 +2,8 @@
   "SYSTEM_DIALOGUES": {
     "SCULPTURE": {
       "SUCCESS": [
-        "Pronto! Pelo que consta na etiqueta, deduzo que essa era a posição original da escultura.",
-        "As coisas estão começando a parecer com o que era antes."
+        "Pronto! Essa é posição original da escultura. Bate com o que diz na plaquinha.",
+        "As coisas já estão começando a parecer com o que era antes."
       ],
       "ERROR": [
         "Ops! Esta escultura não parece pertencer a este local.",
@@ -12,8 +12,8 @@
     },
     "PAINTING": {
       "SUCCESS": [
-        "Pronto! Pelo que consta na etiqueta, deduzo que essa pintura devia ficar mesmo aqui.",
-        "As coisas estão começando a parecer com o que era antes."
+        "Pronto! Essa pintura fica aqui mesmo. Bate com o que diz na plaquinha.",
+        "As coisas já estão começando a parecer com o que era antes."
       ],
       "ERROR": [
         "Ops! A descrição da placa não bate com essa pintura.",
