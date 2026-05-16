@@ -112,7 +112,7 @@ export class MapIntroScene extends Scene {
 
     this.createInfoBox();
 
-    this.input.keyboard?.on("keydown-SPACE", this.beginGame, this);
+    this.input.keyboard?.on("keydown-E", this.beginGame, this);
     this.input.keyboard?.on("keydown-UP", this.cycleMarkerForward, this);
     this.input.keyboard?.on("keydown-LEFT", this.cycleMarkerBackward, this);
     this.input.keyboard?.on("keydown-DOWN", this.cycleMarkerBackward, this);
@@ -125,9 +125,10 @@ export class MapIntroScene extends Scene {
     this.scale.on("resize", this.handleResize); // Listens for resize events and calls the handleResize method when the game is resized.
 
     // Clean up listeners when the scene is shutdown to prevent memory leaks and unintended behavior if the scene is restarted.
+    //! I think this is what's making the game freeze after the first playthrough, because the listeners are still active and trying to interact with destroyed game objects.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
-      this.input.keyboard?.off("keydown-SPACE", this.beginGame, this);
+      this.input.keyboard?.off("keydown-E", this.beginGame, this);
       this.input.keyboard?.off("keydown-UP", this.cycleMarkerForward, this);
       this.input.keyboard?.off("keydown-DOWN", this.cycleMarkerBackward, this);
       this.input.keyboard?.off("keydown-LEFT", this.cycleMarkerBackward, this);
@@ -200,7 +201,7 @@ export class MapIntroScene extends Scene {
     this.infoLocation.setText(marker.location);
 
     if (this.activeMarkerIndex === 0) {
-      this.infoCta.setText("Aperte ESPAÇO para jogar");
+      this.infoCta.setText("Aperte E para jogar");
       this.infoCta.setColor(LayoutConfig.COLORS.AVAILABLE_GREEN);
     } else {
       this.infoCta.setText("Em reforma");
@@ -220,7 +221,7 @@ export class MapIntroScene extends Scene {
   };
 
   update(time: number) {
-    const normalizedPulse = (Math.sin(time * 0.004) + 1) * 1.1;
+    const normalizedPulse = (Math.sin(time * 0.004) + 1) * 1.1; // Pulsating effect of the map markers.
 
     MARKERS.forEach((markerData, index) => {
       const view = this.markerViews.get(markerData.id);
@@ -232,7 +233,7 @@ export class MapIntroScene extends Scene {
 
       // Only pulsate the active marker
       if (index === this.activeMarkerIndex) {
-        const scale = baseScale * (1 + normalizedPulse * 0.15);
+        const scale = baseScale * (1 + normalizedPulse * 0.55); // Pulsating effect of the active marker.
         view.marker.setScale(scale);
       } else {
         view.marker.setScale(baseScale);

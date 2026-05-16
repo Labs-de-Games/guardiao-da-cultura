@@ -5,33 +5,34 @@
       "missionId": "missao_curador",
       "dialogues": {
         "intro": [
-          "A estrada até aqui foi mais tranquila do que eu esperava. Como te avisei no caminho, esse é o Inhotim. Um museu a céu aberto aqui em Brumadinho, Minas Gerais.",
-          "As obras vandalizadas estavam todas em manutenção, reunidas nesse prédio em vez de suas respectivas galerias.",
-          "Isso pode ter sido frustrante para o vândalo, ou exatamente o que ele, ou ela, queria; encontrar tudo junto num lugar só.",
-          "Dê uma olhada nas esculturas desse andar e averigue o estrago feito."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: A estrada até aqui foi mais tranquila do que eu esperava. Como te avisei no caminho, esse é o Inhotim. Um museu a céu aberto aqui em Brumadinho, Minas Gerais.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Dê uma olhada nas esculturas desse andar e averigue o estrago feito.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Leia as placas e use seus poderes de observação e dedução para descobrir onde cada obra deveria estar.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Quando tiver investigado tudo, procure-me novamente. Estarei no último piso… err… inspecionando lá do alto. Vantagens de ser a chefe."
         ],
         "collecting": [
-          "Entendo sua confusão, mas essas obras são assim mesmo, esculturas sem cabeça. Não é obra de nenhum vândalo.",
-          "Parece que ele não danificou as obras aqui do Inhotim, apenas tirou tudo do lugar. Observe as plaquinhas informativas.",
-          "Cada uma fala sobre uma obra em exposição. Leia sobre as obras em questão, encontre-as e leve-as até seus respectivo lugares.",
-          "Quando tiver investigado tudo, procure-me novamente. Estarei no terceiro piso."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Essas obras são assim mesmo, esculturas sem cabeça, quadros surreais. Não é obra de nenhum vândalo.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Parece que ele não danificou as obras aqui do Inhotim, apenas tirou tudo do lugar.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Observe as placas informativas. Cada uma fala sobre uma obra em exposição. Leia sobre elas, encontre-as e leve-as até seus respectivos lugares.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: O que elas têm em comum? Estavam todas em manutenção, reunidas nesse prédio em vez de suas galerias.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Isso pode ter sido frustrante para o vândalo, ou exatamente o que ele, ou ela, queria; encontrar tudo junto num lugar só."
         ],
         "ready": [
-          "Terminou de investigar todos os andares?",
-          "As pinturas e esculturas estão em seus lugares e a fotografia foi restaurada.",
-          "Agora, vamos analisar o que você entendeu das evidências. O segredo pode estar numa dessas obras!"
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Terminou de investigar todos os andares?",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: As pinturas e esculturas estão em seus lugares e a fotografia foi restaurada.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Agora, vamos analisar o que você entendeu das evidências. O segredo pode estar numa dessas obras!"
         ],
         "completed": [
-          "Você é um mestre da restauração! Seu trabalho investigativo ainda facilitou a organização.",
-          "Obrigado por preservar nossa história e arte."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Você é um mestre da restauração! Seu trabalho investigativo ainda facilitou a organização.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Obrigado por preservar nossa história e arte."
         ],
         "success": [
-          "Conhecimento impecável! Você é digno do título de Mestre Curador.",
-          "Acho que já examinamos o suficiente por aqui. Espero que não haja outro ataque."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Conhecimento impecável! Você é digno do título de Mestre Curador.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Acho que já examinamos o suficiente por aqui. Espero que não haja outro ataque."
         ],
         "failure": [
-          "Hmm... Parece que você se confundiu com alguns detalhes.",
-          "Reveja as obras e fale comigo de novo quando estiver pronto."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Hmm... Parece que você se confundiu com alguns detalhes.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Reveja as obras e fale comigo de novo quando estiver pronto."
         ]
       }
     }
