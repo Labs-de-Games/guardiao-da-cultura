@@ -1,0 +1,70 @@
+[
+  {
+    "type": "quiz.completed",
+    "metadata": {
+      "missionId": "mission_curator",
+      "score": 4,
+      "totalQuestions": 5,
+      "accuracyPercent": 80,
+      "quartersEarned": 3,
+      "passed": true,
+      "timeSpentMs": 45000,
+      "attempts": 1
+    }
+  },
+  {
+    "type": "quiz.failed",
+    "metadata": {
+      "missionId": "mission_curator",
+      "score": 2,
+      "totalQuestions": 5,
+      "accuracyPercent": 40,
+      "quartersEarned": 1,
+      "passed": false,
+      "timeSpentMs": 30000,
+      "attempts": 2
+    }
+  },
+  {
+    "type": "level.completed",
+    "metadata": {
+      "levelId": "level_01",
+      "levelNumber": 1,
+      "score": 85,
+      "stars": 3,
+      "timeSpentMs": 120000
+    }
+  },
+  {
+    "type": "star.collected",
+    "metadata": {
+      "levelId": "level_01",
+      "starId": "star_entrance",
+      "value": 1
+    }
+  },
+  {
+    "type": "clue.used",
+    "metadata": {
+      "levelId": "level_01",
+      "clueId": "clue_painting_1"
+    }
+  },
+  {
+    "type": "level.failed",
+    "metadata": {
+      "levelId": "level_02",
+      "levelNumber": 2,
+      "score": 30,
+      "stars": 0,
+      "timeSpentMs": 60000
+    }
+  },
+  {
+    "type": "clue.unlocked",
+    "metadata": {
+      "levelId": "level_01",
+      "clueId": "clue_sculpture_1"
+    }
+  }
+]
