@@ -61,6 +61,7 @@ export const LayoutConfig = {
     },
     STYLES: {
       BOLD: "bold",
+      ITALIC: "italic",
     },
   },
 
