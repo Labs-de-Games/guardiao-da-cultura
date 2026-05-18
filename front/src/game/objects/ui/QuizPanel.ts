@@ -53,6 +53,7 @@ export class QuizPanel extends BasePanel {
   private navButtonsContainer: Phaser.GameObjects.Container;
   private navButtonHome: Phaser.GameObjects.Container;
   private navButtonNext: Phaser.GameObjects.Container;
+  private navButtonNextLabel!: Phaser.GameObjects.Text;
   private selectedNavIndex: number = 1;
   private readonly navButtonWidth = 320;
   private readonly navButtonHeight = 80;
@@ -61,6 +62,7 @@ export class QuizPanel extends BasePanel {
     "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit";
   private isShowingPerformance: boolean = false;
   private isRetryMode: boolean = false;
+  private navNextAction: (() => void) | null = null;
 
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
@@ -245,14 +247,17 @@ export class QuizPanel extends BasePanel {
   private createNavButtons() {
     const containerWidth = this.navButtonWidth * 2 + this.navButtonGap;
     const startX = -containerWidth / 2 + this.navButtonWidth / 2;
-    this.navButtonHome = this.createNavButton(
+
+    const home = this.createNavButton(
       "Voltar ao mapa",
       LayoutConfig.COLORS.WHITE_HEX,
     );
-    this.navButtonNext = this.createNavButton(
-      "Próximo",
-      LayoutConfig.COLORS.GOLD_HEX,
-    );
+    this.navButtonHome = home.container;
+
+    const next = this.createNavButton("Próximo", LayoutConfig.COLORS.GOLD_HEX);
+    this.navButtonNext = next.container;
+    this.navButtonNextLabel = next.label;
+
     this.navButtonHome.setPosition(startX, 0);
     this.navButtonNext.setPosition(
       startX + this.navButtonWidth + this.navButtonGap,
@@ -276,7 +281,10 @@ export class QuizPanel extends BasePanel {
   private createNavButton(
     text: string,
     color: number,
-  ): Phaser.GameObjects.Container {
+  ): {
+    container: Phaser.GameObjects.Container;
+    label: Phaser.GameObjects.Text;
+  } {
     const container = this.scene.add.container(0, 0);
     const bg = this.scene.add.graphics();
     this.drawButtonBg(bg, color);
@@ -310,7 +318,8 @@ export class QuizPanel extends BasePanel {
       this.updateNavButtonsSelection();
       this.activateSelectedNavButton();
     });
-    return container;
+
+    return { container, label };
   }
 
   private selectPrevNavButton() {
@@ -360,23 +369,7 @@ export class QuizPanel extends BasePanel {
       return;
     }
 
-    if (this.isRetryMode) {
-      // Close the panel and reset quiz session/stats for the next attempt.
-      this.hide(200, () => {
-        this.resetQuizSessionState();
-      });
-      return;
-    }
-
-    window.open(this.navNextUrl, "_blank");
-  }
-
-  private setNavButtonLabel(
-    button: Phaser.GameObjects.Container,
-    text: string,
-  ) {
-    const label = button.getAt(1) as Phaser.GameObjects.Text | undefined;
-    label?.setText(text);
+    this.navNextAction?.();
   }
 
   private resetQuizSessionState() {
@@ -392,6 +385,7 @@ export class QuizPanel extends BasePanel {
     this.progressTracker.setCount(0);
     this.progressTracker.setAnswers([]);
     this.scoreManager?.recordQuizResult(0, 0);
+    this.navNextAction = null;
   }
 
   private getScorePercentage(): number {
@@ -607,10 +601,19 @@ export class QuizPanel extends BasePanel {
     const percentage = this.getScorePercentage();
 
     this.isRetryMode = percentage >= 0 && percentage < 70;
-    this.setNavButtonLabel(
-      this.navButtonNext,
+    this.navButtonNextLabel.setText(
       this.isRetryMode ? "Tentar novamente" : "Próximo",
     );
+    this.navNextAction = this.isRetryMode
+      ? () => {
+          // Close the panel and reset quiz session/stats for the next attempt.
+          this.hide(200, () => {
+            this.resetQuizSessionState();
+          });
+        }
+      : () => {
+          window.open(this.navNextUrl, "_blank");
+        };
 
     if (percentage >= 70 && percentage <= 100) {
       this.performanceBottomHintText.setText(
