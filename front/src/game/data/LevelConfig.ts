@@ -54,24 +54,24 @@ export const LEVEL_ASSETS = {
       path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
     },
     {
+      key: "edgards_sem_titulo_i_fundidos_ph",
+      path: "artworks/sculptures/edgards_sem_titulo_i_fundidos_ph.png",
+    },
+    {
       key: "edgards_sem_titulo_ii_flexao",
       path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
+    },
+    {
+      key: "edgards_sem_titulo_ii_flexao_ph",
+      path: "artworks/sculptures/edgards_sem_titulo_ii_flexao_ph.png",
     },
     {
       key: "edgards_sem_titulo_iii_em_pe",
       path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
     },
     {
-      key: "placeholder-1",
-      path: "artworks/sculptures/placeholder-1.png",
-    },
-    {
-      key: "placeholder-2",
-      path: "artworks/sculptures/placeholder-2.png",
-    },
-    {
-      key: "placeholder-3",
-      path: "artworks/sculptures/placeholder-3.png",
+      key: "edgards_sem_titulo_iii_em_pe_ph",
+      path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe_ph.png",
     },
   ],
   PAINTINGS: [
@@ -80,16 +80,32 @@ export const LEVEL_ASSETS = {
       path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi.png",
     },
     {
+      key: "abdiasn_invocacao_noturna_oxossi_ph",
+      path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi_ph.png",
+    },
+    {
       key: "abdiasn_oke_oxossi",
       path: "artworks/paintings/abdiasn_oke_oxossi.png",
+    },
+    {
+      key: "abdiasn_oke_oxossi_ph",
+      path: "artworks/paintings/abdiasn_oke_oxossi_ph.png",
     },
     {
       key: "abdiasn_oxum_em_extase",
       path: "artworks/paintings/abdiasn_oxum_em_extase.png",
     },
     {
+      key: "abdiasn_oxum_em_extase_ph",
+      path: "artworks/paintings/abdiasn_oxum_em_extase_ph.png",
+    },
+    {
       key: "abdiasn_xango_rodrigues_alves",
       path: "artworks/paintings/abdiasn_xango_rodrigues_alves.png",
+    },
+    {
+      key: "abdiasn_xango_rodrigues_alves_ph",
+      path: "artworks/paintings/abdiasn_xango_rodrigues_alves_ph.png",
     },
   ],
   CHUNKS: [
@@ -100,6 +116,10 @@ export const LEVEL_ASSETS = {
     {
       key: "candujar_sem_titulo_yanomami",
       path: "artworks/photos/candujar_sem_titulo_yanomami.png",
+    },
+    {
+      key: "candujar_sem_titulo_yanomami_ph",
+      path: "artworks/photos/candujar_sem_titulo_yanomami_ph.png",
     },
   ],
   OTHERS: [
