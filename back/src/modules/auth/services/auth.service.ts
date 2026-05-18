@@ -104,7 +104,7 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<{ message: string }> {
     const existingUser = await this.userService.findByEmail(dto.email);
     if (existingUser) {
-      return { message: "Check your email" };
+      return { message: "Veja seu e-mail." };
     }
 
     const user = await this.userService.create({
@@ -125,7 +125,7 @@ export class AuthService {
     const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
     await this.emailService.sendVerificationEmail(dto.email, verificationUrl);
 
-    return { message: "Check your email" };
+    return { message: "Veja seu e-mail." };
   }
 
   async login(
@@ -134,7 +134,7 @@ export class AuthService {
   ): Promise<{ message: string }> {
     const user = await this.userService.findByEmail(dto.email);
     if (!user?.isActive || !user.isEmailVerified) {
-      return { message: "Check your email" };
+      return { message: "Veja seu e-mail." };
     }
 
     const nonce = randomBytes(32).toString("base64url");
@@ -150,7 +150,7 @@ export class AuthService {
     const magicLinkUrl = `${this.configService.frontendUrl}/confirm-login?token=${rawToken}`;
     await this.emailService.sendMagicLinkEmail(user.email, magicLinkUrl);
 
-    return { message: "Check your email" };
+    return { message: "Veja seu e-mail." };
   }
 
   async confirmMagicLinkLogin(
@@ -220,7 +220,7 @@ export class AuthService {
       this.tokenService.addToBlacklist(accessTokenJti, exp);
     }
     this.clearAuthCookies(res);
-    return { message: "Logged out successfully" };
+    return { message: "Sua sessão foi encerrada." };
   }
 
   async logoutAll(
@@ -234,13 +234,13 @@ export class AuthService {
       this.tokenService.addToBlacklist(accessTokenJti, exp);
     }
     this.clearAuthCookies(res);
-    return { message: "Logged out from all devices" };
+    return { message: "Sua sessão foi encerrada em todos os dispositivos." };
   }
 
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
     const user = await this.userService.findByEmail(email);
     if (!user || user.isEmailVerified) {
-      return { message: "Check your email" };
+      return { message: "Veja seu e-mail." };
     }
 
     await this.magicLinkService.cleanupExpired();
@@ -253,6 +253,6 @@ export class AuthService {
     const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
     await this.emailService.sendVerificationEmail(email, verificationUrl);
 
-    return { message: "Check your email" };
+    return { message: "Veja seu e-mail." };
   }
 }
