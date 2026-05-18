@@ -47,7 +47,11 @@ test:
 # --- STRESS TESTS (k6) ---
 stress-install:
 	@echo "Installing k6..."
-	curl -fsSL https://k6.io/install.sh | bash
+	@curl -fsSL "https://github.com/grafana/k6/releases/download/v2.0.0/k6-v2.0.0-linux-amd64.tar.gz" | tar xz -C /tmp
+	@mkdir -p ~/.local/bin
+	@mv /tmp/k6-v2.0.0-linux-amd64/k6 ~/.local/bin/k6
+	@rm -rf /tmp/k6-v2.0.0-linux-amd64
+	@echo "k6 installed to ~/.local/bin/k6"
 
 stress-seed:
 	cd back && bun run test/stress/helpers/seed.ts $(ARGS)
