@@ -37,7 +37,6 @@ export class QuizPanel extends BasePanel {
   private progressTracker: QuizProgressTracker;
   private questionText: Phaser.GameObjects.Text;
   private questionTitle: Phaser.GameObjects.Text;
-  private footerHintText: Phaser.GameObjects.Text;
 
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
@@ -154,19 +153,6 @@ export class QuizPanel extends BasePanel {
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
-    this.footerHintText = scene.add
-      .text(
-        0,
-        this.panelHeight / 2 - 40,
-        "Use as setas e pressione Espaço para confirmar",
-        {
-          fontSize: LayoutConfig.FONTS.SIZES.HINT,
-          fontFamily: LayoutConfig.FONTS.BODY,
-          color: LayoutConfig.COLORS.HINT_GREY,
-        },
-      )
-      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
-
     this.progressTracker = new QuizProgressTracker(scene, 64, -12, {
       indicatorWidth: this.progressIndicatorWidth,
       indicatorHeight: this.progressIndicatorHeight,
@@ -205,7 +191,6 @@ export class QuizPanel extends BasePanel {
       this.bg,
       this.topContainer,
       this.questionContainer,
-      this.footerHintText,
       this.performanceContainer,
       this.navButtonsContainer,
     ]);
@@ -382,9 +367,6 @@ export class QuizPanel extends BasePanel {
     this.answers = new Array(questions.length).fill(null);
     this.progressTracker.setCount(questions.length);
     this.progressTracker.setAnswers(this.answers);
-    this.footerHintText.setText(
-      "Use as setas e pressione Espaço para confirmar",
-    );
     this.showQuestion();
     this.show();
   }
@@ -585,11 +567,6 @@ export class QuizPanel extends BasePanel {
     const starScale = this.calculateResultStarScale();
     this.performanceStar.setScale(starScale);
     this.updatePerformanceStarsOutline(starScale);
-    if (percentage >= 70) {
-      this.footerHintText.setText("Aperte E para ver resultados");
-    } else {
-      this.footerHintText.setText("Aperte E para fechar");
-    }
   }
 
   private handlePerformanceSpace() {
