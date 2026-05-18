@@ -42,6 +42,9 @@ export class QuizPanel extends BasePanel {
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
   private performanceContainer: Phaser.GameObjects.Container;
+  private performanceStarsOutline: Phaser.GameObjects.Graphics;
+  private readonly performanceStarsOutlineWidth = 800;
+  private readonly performanceStarsOutlinePaddingY = 100;
   private questionContainer: Phaser.GameObjects.Container;
   private topContainer: Phaser.GameObjects.Container;
   private isShowingPerformance: boolean = false;
@@ -162,6 +165,7 @@ export class QuizPanel extends BasePanel {
     ]);
     this.questionContainer.add([this.questionTitle, this.questionText]);
     this.performanceContainer = this.scene.add.container(0, 0);
+    this.performanceStarsOutline = this.scene.add.graphics();
     this.performanceText = this.scene.add
       .text(0, -100, "Quiz completo!", {
         fontFamily: "Jockey One",
@@ -173,7 +177,12 @@ export class QuizPanel extends BasePanel {
     this.performanceStar = this.scene.add
       .image(0, 50, "ui_star_full")
       .setScale(1);
-    this.performanceContainer.add([this.performanceText, this.performanceStar]);
+    // Keep outline behind the performance content.
+    this.performanceContainer.add([
+      this.performanceStarsOutline,
+      this.performanceText,
+      this.performanceStar,
+    ]);
     this.performanceContainer.setVisible(false);
     this.add([
       this.bg,
@@ -314,6 +323,27 @@ export class QuizPanel extends BasePanel {
     return scale;
   }
 
+  private updatePerformanceStarsOutline(scale: number) {
+    this.performanceStarsOutline.clear();
+
+    const tex = this.scene.textures.get("ui_star_full");
+    const source = tex?.getSourceImage() as
+      | { width: number; height: number }
+      | undefined;
+    const baseH = source?.height ?? 457;
+
+    const starH = baseH * scale;
+    const paddingY = this.performanceStarsOutlinePaddingY;
+
+    const width = this.performanceStarsOutlineWidth;
+    const x = -width / 2;
+    const y = this.performanceStar.y - starH / 2 - paddingY;
+    const height = starH + 2 * paddingY;
+
+    this.performanceStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
+    this.performanceStarsOutline.strokeRoundedRect(x, y, width, height, 16);
+  }
+
   private resetOptionButtons() {
     this.optionButtons.forEach((b) => {
       b.destroy(true);
@@ -400,7 +430,9 @@ export class QuizPanel extends BasePanel {
     }
     this.performanceContainer.setVisible(true);
     this.calculateStarFillLevel();
-    this.performanceStar.setScale(this.calculateResultStarScale());
+    const starScale = this.calculateResultStarScale();
+    this.performanceStar.setScale(starScale);
+    this.updatePerformanceStarsOutline(starScale);
     if (percentage >= 70) {
       this.footerHintText.setText("Aperte E para ver resultados");
     } else {
