@@ -400,7 +400,10 @@ export class Player
     }
 
     if (body) {
-      const accel = this.getMovementAcceleration();
+      const NOMINAL_DT = 1000 / 60;
+      const dtClamped = Math.min(dt, 50);
+      const dtScale = dtClamped / NOMINAL_DT;
+      const accel = this.getMovementAcceleration() * dtScale;
 
       if (leftDown) {
         if (this.wouldGrabbedPedestalHitWall(-1, dt, accel)) {
