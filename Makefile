@@ -50,10 +50,10 @@ stress-install:
 	curl -fsSL https://k6.io/install.sh | bash
 
 stress-seed:
-	bun run back/test/stress/helpers/seed.ts
+	cd back && bun run test/stress/helpers/seed.ts $(ARGS)
 
 stress-clean:
-	bun run back/test/stress/helpers/cleanup.ts
+	cd back && bun run test/stress/helpers/cleanup.ts
 
 stress-test:
 	@echo "Running stress tests..."
