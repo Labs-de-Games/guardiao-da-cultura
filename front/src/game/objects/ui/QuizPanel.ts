@@ -46,8 +46,7 @@ export class QuizPanel extends BasePanel {
   private performanceStarsOutline: Phaser.GameObjects.Graphics;
   private readonly performanceStarsOutlineWidth = 800;
   private readonly performanceStarsOutlinePaddingY = 100;
-  private readonly performanceBottomHintPadding = 20;
-  // Increase outline height by extending only the top (bottom stays fixed).
+  private readonly performanceBottomHintPadding = 70;
   private readonly performanceStarsOutlineExtraTop = 40;
   private questionContainer: Phaser.GameObjects.Container;
   private topContainer: Phaser.GameObjects.Container;
@@ -190,17 +189,17 @@ export class QuizPanel extends BasePanel {
     this.questionContainer.add([this.questionTitle, this.questionText]);
     this.performanceContainer = this.scene.add.container(0, 0);
     this.performanceStarsOutline = this.scene.add.graphics();
+    this.performanceStar = this.scene.add
+      .image(0, -50, "ui_star_full")
+      .setScale(1);
     this.performanceText = this.scene.add
-      .text(0, -100, "Quiz completo!", {
+      .text(0, 90, "Quiz completo!", {
         fontFamily: "Jockey One",
         fontSize: "48px",
         color: LayoutConfig.COLORS.GOLD,
         fontStyle: "bold",
       })
       .setOrigin(0.5, 0.5);
-    this.performanceStar = this.scene.add
-      .image(0, 50, "ui_star_full")
-      .setScale(1);
 
     this.performanceBottomHintText = this.scene.add
       .text(0, 0, "", {
@@ -220,8 +219,8 @@ export class QuizPanel extends BasePanel {
     // Keep outline behind the performance content.
     this.performanceContainer.add([
       this.performanceStarsOutline,
-      this.performanceText,
       this.performanceStar,
+      this.performanceText,
       this.performanceBottomHintText,
     ]);
     this.performanceContainer.setVisible(false);
@@ -534,11 +533,10 @@ export class QuizPanel extends BasePanel {
 
     const width = this.performanceStarsOutlineWidth;
     const x = -width / 2;
-    const y = this.performanceStar.y - starH / 2 - paddingY - extraTop;
+    const y = this.topContainer.y + 100;
     const height = starH + 2 * paddingY + extraTop;
 
-    // Position hint text at the bottom of the outline, below the star.
-    const bottomY = this.performanceStar.y + starH / 2 + paddingY;
+    const bottomY = this.performanceText.y + starH / 2 + paddingY;
     this.performanceBottomHintText.setPosition(
       0,
       bottomY - this.performanceBottomHintPadding,
@@ -546,8 +544,6 @@ export class QuizPanel extends BasePanel {
 
     this.performanceStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
     this.performanceStarsOutline.strokeRoundedRect(x, y, width, height, 16);
-
-    // Increase container bounds without moving its content.
     this.performanceContainer.setSize(width, height);
   }
 
@@ -622,6 +618,9 @@ export class QuizPanel extends BasePanel {
     this.navButtonNextLabel.setText(
       this.isRetryMode ? "Tentar novamente" : "Próximo",
     );
+	this.performanceBottomHintText.setColor(
+			this.isRetryMode ? LayoutConfig.COLORS.WHITE : LayoutConfig.COLORS.GOLD
+		)
     this.navNextAction = this.isRetryMode
       ? () => {
           // Close the panel and reset quiz session/stats for the next attempt.
