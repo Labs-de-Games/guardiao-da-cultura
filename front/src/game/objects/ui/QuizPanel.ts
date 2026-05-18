@@ -45,7 +45,6 @@ export class QuizPanel extends BasePanel {
   private questionContainer: Phaser.GameObjects.Container;
   private topContainer: Phaser.GameObjects.Container;
   private isShowingPerformance: boolean = false;
-  private shouldShowResultsAfterHide: boolean = false;
 
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
@@ -211,7 +210,6 @@ export class QuizPanel extends BasePanel {
     onComplete: (score: number) => void,
   ) {
     this.isShowingPerformance = false;
-    this.shouldShowResultsAfterHide = false;
     this.performanceContainer.setVisible(false);
     this.questionContainer.setVisible(true);
     this.questionTitle.setVisible(true);
@@ -258,17 +256,6 @@ export class QuizPanel extends BasePanel {
         const finalScore = this.score;
         this.onComplete(finalScore);
         this.onComplete = null;
-        if (this.shouldShowResultsAfterHide) {
-          this.shouldShowResultsAfterHide = false;
-          const gameScene = this.scene.scene.get(SceneNames.GAME);
-          gameScene.events.emit(
-            GameEvents.SHOW_QUIZ_RESULTS,
-            this.score,
-            this.questions.length,
-            this.progressTracker,
-            this.scoreManager,
-          );
-        }
       }
     });
   }
@@ -297,14 +284,15 @@ export class QuizPanel extends BasePanel {
   private calculateStarFillLevel() {
     const percentage = this.getScorePercentage();
     if (percentage === 100) this.performanceStar.setTexture("ui_star_full");
-	else if (percentage >= 75) this.performanceStar.setTexture("ui_star_3q");
-	else if (percentage >= 50) this.performanceStar.setTexture("ui_star_2q");
-	else if (percentage >= 25) this.performanceStar.setTexture("ui_star_1q");
-	else {
-      this.performanceStar.setTexture("ui_star_full")
+    else if (percentage >= 75) this.performanceStar.setTexture("ui_star_3q");
+    else if (percentage >= 50) this.performanceStar.setTexture("ui_star_2q");
+    else if (percentage >= 25) this.performanceStar.setTexture("ui_star_1q");
+    else {
+      this.performanceStar
+        .setTexture("ui_star_full")
         .setTint(LayoutConfig.COLORS.DARK_STAR_TINT)
         .setAlpha(0.5);
-      }
+    }
   }
 
   private calculateResultStarScale(): number {
@@ -391,11 +379,11 @@ export class QuizPanel extends BasePanel {
     this.resetOptionButtons();
     this.scoreManager?.recordQuizResult(this.score, this.questions.length);
     const percentage = this.getScorePercentage();
-	if (percentage < 25) {
+    if (percentage < 25) {
       this.scoreText.setText("Essa não");
       this.questionCounterText.setText("Pontuação muito baixa");
       this.performanceText.setText("Tente novamente");
-	} else if (percentage < 70) {
+    } else if (percentage < 70) {
       this.scoreText.setText("Por pouco!");
       this.questionCounterText.setText("Pontuação baixa");
       this.performanceText.setText(
@@ -421,12 +409,6 @@ export class QuizPanel extends BasePanel {
   }
 
   private handlePerformanceSpace() {
-    const percentage = this.getScorePercentage();
-
-    if (percentage >= 70) {
-      this.shouldShowResultsAfterHide = true;
-    }
-
     this.hide();
   }
 
