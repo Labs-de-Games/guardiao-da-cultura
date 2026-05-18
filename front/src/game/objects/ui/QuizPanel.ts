@@ -44,6 +44,7 @@ export class QuizPanel extends BasePanel {
   private performanceBottomHintText: Phaser.GameObjects.Text;
   private performanceContainer: Phaser.GameObjects.Container;
   private performanceStarsOutline: Phaser.GameObjects.Graphics;
+  private performanceStarsOutlineColor: number = LayoutConfig.COLORS.GOLD_HEX;
   private readonly performanceStarsOutlineWidth = 800;
   private readonly performanceStarsOutlinePaddingY = 100;
   private readonly performanceBottomHintPadding = 70;
@@ -542,7 +543,11 @@ export class QuizPanel extends BasePanel {
       bottomY - this.performanceBottomHintPadding,
     );
 
-    this.performanceStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
+    this.performanceStarsOutline.lineStyle(
+      4,
+      this.performanceStarsOutlineColor,
+      1,
+    );
     this.performanceStarsOutline.strokeRoundedRect(x, y, width, height, 16);
     this.performanceContainer.setSize(width, height);
   }
@@ -615,12 +620,15 @@ export class QuizPanel extends BasePanel {
     const percentage = this.getScorePercentage();
 
     this.isRetryMode = percentage >= 0 && percentage < 70;
+    this.performanceStarsOutlineColor = this.isRetryMode
+      ? LayoutConfig.COLORS.WHITE_HEX
+      : LayoutConfig.COLORS.GOLD_HEX;
     this.navButtonNextLabel.setText(
       this.isRetryMode ? "Tentar novamente" : "Próximo",
     );
-	this.performanceBottomHintText.setColor(
-			this.isRetryMode ? LayoutConfig.COLORS.WHITE : LayoutConfig.COLORS.GOLD
-		)
+    this.performanceBottomHintText.setColor(
+      this.isRetryMode ? LayoutConfig.COLORS.WHITE : LayoutConfig.COLORS.GOLD,
+    );
     this.navNextAction = this.isRetryMode
       ? () => {
           // Close the panel and reset quiz session/stats for the next attempt.
@@ -644,7 +652,7 @@ export class QuizPanel extends BasePanel {
 
     if (percentage < 25) {
       this.scoreText.setText("Essa não");
-      this.questionCounterText.setText("Pontuação muito baixa");
+      this.questionCounterText.setText("Pontuação baixa");
       this.performanceText.setText("Tente novamente");
     } else if (percentage < 70) {
       this.scoreText.setText("Por pouco!");
