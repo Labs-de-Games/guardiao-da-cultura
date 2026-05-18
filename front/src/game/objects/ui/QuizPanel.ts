@@ -217,7 +217,6 @@ export class QuizPanel extends BasePanel {
       })
       .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
 
-    // Keep outline behind the performance content.
     this.performanceContainer.add([
       this.performanceStarsOutline,
       this.performanceStar,
@@ -250,13 +249,11 @@ export class QuizPanel extends BasePanel {
       }
     });
 
-    // Navigation buttons (only active during performance view)
     this.bindKey("LEFT", () => this.selectPrevNavButton());
     this.bindKey("A", () => this.selectPrevNavButton());
     this.bindKey("RIGHT", () => this.selectNextNavButton());
     this.bindKey("D", () => this.selectNextNavButton());
     this.bindKey("ENTER", () => this.activateSelectedNavButton());
-    // SPACE is handled above (quiz confirm or nav activation)
   }
 
   private createNavButtons() {
@@ -312,7 +309,6 @@ export class QuizPanel extends BasePanel {
       .setOrigin(0.5);
     container.add([bg, label]);
 
-    // Basic pointer activation (keyboard selection is handled by existing QuizPanel bindings).
     container.setSize(this.navButtonWidth, this.navButtonHeight);
     container.setInteractive(
       new Phaser.Geom.Rectangle(
@@ -560,8 +556,11 @@ export class QuizPanel extends BasePanel {
   }
 
   private updateQuestionHeader() {
+
+	console.log("---> " + this.score * (100 / this.questions.length))
+
     this.questionTitle.setText(`Desafio ${this.currentQuestionIndex + 1}`);
-    this.scoreText.setText(`Pontos: ${this.score}`);
+    this.scoreText.setText(`Pontos: ${this.score * (100 / this.questions.length)}%`);
     this.questionCounterText.setText(
       `Pergunta ${this.currentQuestionIndex + 1}/${this.questions.length}`,
     );
