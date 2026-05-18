@@ -15,5 +15,9 @@ front/next-env.d.ts
 front/.env
 back/.env
 
+# stress test
+back/test/stress/reports/
+back/test/stress/data/tokens.json
+
 # misc
 .DS_Store
