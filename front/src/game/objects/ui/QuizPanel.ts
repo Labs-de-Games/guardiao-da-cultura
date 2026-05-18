@@ -40,10 +40,14 @@ export class QuizPanel extends BasePanel {
 
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
+  private performanceBottomHintText: Phaser.GameObjects.Text;
   private performanceContainer: Phaser.GameObjects.Container;
   private performanceStarsOutline: Phaser.GameObjects.Graphics;
   private readonly performanceStarsOutlineWidth = 800;
   private readonly performanceStarsOutlinePaddingY = 100;
+  private readonly performanceBottomHintPadding = 20;
+  // Increase outline height by extending only the top (bottom stays fixed).
+  private readonly performanceStarsOutlineExtraTop = 40;
   private questionContainer: Phaser.GameObjects.Container;
   private topContainer: Phaser.GameObjects.Container;
   private navButtonsContainer: Phaser.GameObjects.Container;
@@ -180,11 +184,28 @@ export class QuizPanel extends BasePanel {
     this.performanceStar = this.scene.add
       .image(0, 50, "ui_star_full")
       .setScale(1);
+
+    this.performanceBottomHintText = this.scene.add
+      .text(0, 0, "", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: LayoutConfig.FONTS.STYLES.ITALIC,
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
+        wordWrap: {
+          width: this.performanceStarsOutlineWidth - 120,
+          useAdvancedWrap: true,
+        },
+        lineSpacing: 6,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
+
     // Keep outline behind the performance content.
     this.performanceContainer.add([
       this.performanceStarsOutline,
       this.performanceText,
       this.performanceStar,
+      this.performanceBottomHintText,
     ]);
     this.performanceContainer.setVisible(false);
     this.add([
@@ -465,14 +486,25 @@ export class QuizPanel extends BasePanel {
 
     const starH = baseH * scale;
     const paddingY = this.performanceStarsOutlinePaddingY;
+    const extraTop = this.performanceStarsOutlineExtraTop;
 
     const width = this.performanceStarsOutlineWidth;
     const x = -width / 2;
-    const y = this.performanceStar.y - starH / 2 - paddingY;
-    const height = starH + 2 * paddingY;
+    const y = this.performanceStar.y - starH / 2 - paddingY - extraTop;
+    const height = starH + 2 * paddingY + extraTop;
+
+    // Position hint text at the bottom of the outline, below the star.
+    const bottomY = this.performanceStar.y + starH / 2 + paddingY;
+    this.performanceBottomHintText.setPosition(
+      0,
+      bottomY - this.performanceBottomHintPadding,
+    );
 
     this.performanceStarsOutline.lineStyle(4, LayoutConfig.COLORS.GOLD_HEX, 1);
     this.performanceStarsOutline.strokeRoundedRect(x, y, width, height, 16);
+
+    // Increase container bounds without moving its content.
+    this.performanceContainer.setSize(width, height);
   }
 
   private resetOptionButtons() {
@@ -540,6 +572,17 @@ export class QuizPanel extends BasePanel {
     this.resetOptionButtons();
     this.scoreManager?.recordQuizResult(this.score, this.questions.length);
     const percentage = this.getScorePercentage();
+
+    if (percentage >= 70 && percentage <= 100) {
+      this.performanceBottomHintText.setText(
+        "você está pronto para o próximo nível",
+      );
+    } else {
+      this.performanceBottomHintText.setText(
+        "Sua pontuação não foi o suficiente. Mas não desista!",
+      );
+    }
+
     if (percentage < 25) {
       this.scoreText.setText("Essa não");
       this.questionCounterText.setText("Pontuação muito baixa");
