@@ -2,6 +2,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import "reflect-metadata";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
