@@ -484,6 +484,9 @@ export class QuizPanel extends BasePanel {
 
   private calculateStarFillLevel() {
     const percentage = this.getScorePercentage();
+	this.performanceStar.setTexture("ui_star_full");
+    this.performanceStar.setAlpha(1);
+    this.performanceStar.setTint(0xffffff);
     if (percentage === 100) this.performanceStar.setTexture("ui_star_full");
     else if (percentage >= 75) this.performanceStar.setTexture("ui_star_3q");
     else if (percentage >= 50) this.performanceStar.setTexture("ui_star_2q");
@@ -556,11 +559,10 @@ export class QuizPanel extends BasePanel {
   }
 
   private updateQuestionHeader() {
-
-	console.log("---> " + this.score * (100 / this.questions.length))
-
     this.questionTitle.setText(`Desafio ${this.currentQuestionIndex + 1}`);
-    this.scoreText.setText(`Pontos: ${this.score * (100 / this.questions.length)}%`);
+    this.scoreText.setText(
+      `Pontos: ${this.score * (100 / this.questions.length)}%`,
+    );
     this.questionCounterText.setText(
       `Pergunta ${this.currentQuestionIndex + 1}/${this.questions.length}`,
     );
