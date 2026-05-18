@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { DataSource, Like } from "typeorm";
 import { GameEvent } from "../../../src/modules/analytics/game-event.entity";
 import { MagicLinkToken } from "../../../src/modules/auth/entities/magic-link-token.entity";
