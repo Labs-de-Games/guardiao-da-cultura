@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../lib/auth/useAuth";
+import LoadingGameScreen from "./LoadingGameScreen";
 
 export default function PhaserGame() {
   const { user } = useAuth();
@@ -48,25 +49,13 @@ export default function PhaserGame() {
       ref={containerRef}
       id="game-container"
       style={{
+        position: "relative",
         width: "100%",
         height: "100vh",
         overflow: "hidden",
       }}
     >
-      {isLoading && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100%",
-            color: "white",
-            backgroundColor: "#000000",
-          }}
-        >
-          Carregando o jogo...
-        </div>
-      )}
+      {isLoading && <LoadingGameScreen />}
     </div>
   );
 }
