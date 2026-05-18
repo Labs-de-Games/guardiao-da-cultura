@@ -20,7 +20,7 @@ const USERS_COUNT =
   Number(process.argv.find((a) => a.startsWith("--users="))?.split("=")[1]) ||
   200;
 
-const JWT_SECRET = process.env.JWT_SECRET || "test-jwt-secret";
+const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
 const JWT_ISSUER = process.env.JWT_ISSUER || "gameplate";
 
 const TOKENS_PATH = resolve(__dirname, "../data/tokens.json");
