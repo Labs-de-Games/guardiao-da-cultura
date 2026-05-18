@@ -840,7 +840,12 @@ export class Game extends Scene {
     };
   }
 
-  update(_time: number, _delta: number) {}
+  update(_time: number, delta: number) {
+    const NOMINAL_DT = 1000 / 60;
+    const dtClamped = Math.min(delta, 50);
+    const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
+    this.cameras.main.lerp.set(adjusted, adjusted);
+  }
 
   public recordFloorError(floorIndex: number) {
     this.scoreManager.recordFloorError(floorIndex);
