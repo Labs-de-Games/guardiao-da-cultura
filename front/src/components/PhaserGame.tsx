@@ -52,7 +52,10 @@ export default function PhaserGame() {
 
     return () => {
       window.removeEventListener("phaser-loading-start", handleLoadingStart);
-      window.removeEventListener("phaser-loading-complete", handleLoadingComplete);
+      window.removeEventListener(
+        "phaser-loading-complete",
+        handleLoadingComplete,
+      );
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
