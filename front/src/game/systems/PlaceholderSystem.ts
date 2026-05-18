@@ -13,7 +13,6 @@ export interface PlaceholderInstance {
   state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.Sprite;
   isFilled?: boolean;
-  placeholderImage?: string;
 }
 
 export interface PlaceholderConfig {
@@ -25,7 +24,7 @@ export interface PlaceholderConfig {
   type: InteractiveType;
   id: string | string[];
   state?: Record<string, unknown>;
-  placeholderImage?: string;
+  scale?: number;
 }
 
 export class PlaceholderSystem {
@@ -48,10 +47,7 @@ export class PlaceholderSystem {
 
       const typeStr = TiledUtils.getProperty(obj, "type");
       const rawProp = TiledUtils.getProperty(obj, "id");
-      const placeholderImageStr = TiledUtils.getProperty(
-        obj,
-        "placeholderImage",
-      );
+      const rawScale = TiledUtils.getProperty(obj, "scale");
       const targetId = TiledUtils.parseTargetIds(rawProp);
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
@@ -67,7 +63,7 @@ export class PlaceholderSystem {
           typeStr === InteractiveType.PHOTO
             ? { filledSlots: [null, null, null, null] }
             : {},
-        placeholderImage: placeholderImageStr as string,
+        scale: rawScale !== undefined ? Number(rawScale) : undefined,
       });
     });
   }
@@ -91,16 +87,14 @@ export class PlaceholderSystem {
       id: config.id,
       state: config.state || {},
       isFilled: false,
-      placeholderImage: config.placeholderImage,
     };
 
     let textureKey = "placeholder";
-    if (config.placeholderImage) {
-      if (["1", "2", "3"].includes(String(config.placeholderImage))) {
-        textureKey = `placeholder-${config.placeholderImage}`;
-      } else {
-        textureKey = config.placeholderImage;
-      }
+    const primaryId = Array.isArray(config.id) ? config.id[0] : config.id;
+    if (config.type === InteractiveType.PHOTO) {
+      textureKey = "candujar_sem_titulo_yanomami_ph";
+    } else if (primaryId) {
+      textureKey = `${primaryId}_ph`;
     }
 
     const placeholder = this.scene.add.sprite(
@@ -109,21 +103,17 @@ export class PlaceholderSystem {
       textureKey,
       0,
     );
-    let scale = 0.1;
-    switch (config.type) {
-      case InteractiveType.SCULPTURE:
-        scale = 1.2;
-        break;
-      case InteractiveType.PAINTING:
-        scale = 0.1;
-        break;
-      case InteractiveType.PHOTO:
-        scale = 0.1;
-        break;
+    let scale = 1;
+    if (config.scale !== undefined && !Number.isNaN(config.scale)) {
+      scale = config.scale;
     }
     placeholder.setScale(scale);
     placeholder.setAlpha(0.45);
     placeholder.setDepth(10);
+
+    if (config.type === InteractiveType.PAINTING) {
+      placeholder.setOrigin(0.5, 1);
+    }
 
     if (
       textureKey === "placeholder" &&
