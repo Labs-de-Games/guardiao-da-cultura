@@ -66,67 +66,67 @@ export const emailTemplates = {
     return {
       subject: "Seu link de acesso - 42 Rio",
       html: baseTemplate(
-        "Link de Acesso",
-        `<p>Olá,</p>
-        <p>Recebemos uma solicitação de acesso para o email <strong>${escapeHtml(email)}</strong>.</p>
-        <p>Clique no botão abaixo para acessar sua conta:</p>
+        "Link de acesso",
+        `<p>Olá, </p>
+        <p>recebemos uma solicitação de acesso para o e-mail <strong>${escapeHtml(email)}</strong>.</p>
+        <p>Se foi você quem solicitou, clique no botão abaixo para dar continuidade.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(magicLinkUrl)}" class="button">Acessar Conta</a>
+          <a href="${escapeHtml(magicLinkUrl)}" class="button">Acessar</a>
         </p>
         <p>Ou copie e cole este link no seu navegador:</p>
         <p style="word-break: break-all; color: #00babc;">${escapeHtml(magicLinkUrl)}</p>
         <hr class="divider">
-        <p style="font-size: 14px; color: #666;">Este link expira em 15 minutos. Se você não solicitou este acesso, ignore este email.</p>`,
+        <p style="font-size: 14px; color: #666;">Este link expira em 15 minutos. Se você não solicitou este acesso, ignore este e-mail.</p>`,
       ),
     };
   },
 
   verification(email: string, verificationUrl: string): EmailTemplate {
     return {
-      subject: "Verifique seu email - 42 Rio",
+      subject: "Verifique seu e-mail - 42 Rio",
       html: baseTemplate(
-        "Verificação de Email",
-        `<p>Olá,</p>
-        <p>Obrigado por se cadastrar na 42 Rio!</p>
-        <p>Para confirmar seu email <strong>${escapeHtml(email)}</strong>, clique no botão abaixo:</p>
+        "Verificação de e-mail",
+        `<p>Olá, </p>
+        <p>obrigado pelo interesse em testar nosso jogo!</p>
+        <p>Para confirmar seu e-mail <strong>${escapeHtml(email)}</strong>, clique no botão abaixo:</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(verificationUrl)}" class="button">Verificar Email</a>
+          <a href="${escapeHtml(verificationUrl)}" class="button">Verificar e-mail</a>
         </p>
         <p>Ou copie e cole este link no seu navegador:</p>
         <p style="word-break: break-all; color: #00babc;">${escapeHtml(verificationUrl)}</p>
         <hr class="divider">
-        <p style="font-size: 14px; color: #666;">Se você não criou uma conta, ignore este email.</p>`,
+        <p style="font-size: 14px; color: #666;">Se você não sabe do que se trata, ignore este e-mail.</p>`,
       ),
     };
   },
 
   welcome(email: string, nickname: string): EmailTemplate {
     return {
-      subject: "Bem-vindo à 42 Rio!",
+      subject: "Boas-vindas ao ambiente de testes da 42 Rio!",
       html: baseTemplate(
-        "Bem-vindo!",
-        `<p>Olá <strong>${escapeHtml(nickname)}</strong>,</p>
-        <p>Seja muito bem-vindo à <strong>42 Rio</strong>!</p>
+        "Boas-vindas!",
+        `<p>Olá, <strong>${escapeHtml(nickname)}</strong>,</p>
+        <p>ficamos felizes em ter você aqui no <strong>ambiente de testes da 42 Rio</strong>!</p>
         <p>Sua conta <strong>${escapeHtml(email)}</strong> foi criada com sucesso e você já pode começar sua jornada de aprendizado.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Começar Agora</a>
+          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Começar agora</a>
         </p>
         <hr class="divider">
-        <p style="font-size: 14px; color: #666;">Estamos muito felizes em ter você com a gente!</p>`,
+        <p style="font-size: 14px; color: #666;">Esperamos que seja divertido! Lembre-se de dar sua opinião ao final, queremos saber como foi sua experiência!</p>`,
       ),
     };
   },
 
   loginNotification(email: string): EmailTemplate {
     return {
-      subject: "Novo login detectado - 42 Rio",
+      subject: "Novo acesso detectado - 42 Rio",
       html: baseTemplate(
-        "Novo Login Detectado",
-        `<p>Olá,</p>
-        <p>Detectamos um novo login na sua conta <strong>${escapeHtml(email)}</strong>.</p>
-        <p>Se foi você, pode ignorar este email com segurança.</p>
+        "Novo acesso detectado",
+        `<p>Olá, </p>
+        <p>detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
+        <p>Se foi você, pode ignorar este e-mail com segurança.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Acessar Conta</a>
+          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Acessar conta</a>
         </p>
         <hr class="divider">
         <p style="font-size: 14px; color: #666;">Se não foi você, recomendamos que altere sua senha imediatamente e entre em contato com nosso suporte.</p>`,
