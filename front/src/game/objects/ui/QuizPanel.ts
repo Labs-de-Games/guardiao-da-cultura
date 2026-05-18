@@ -37,6 +37,7 @@ export class QuizPanel extends BasePanel {
   private progressTracker: QuizProgressTracker;
   private questionText: Phaser.GameObjects.Text;
   private questionTitle: Phaser.GameObjects.Text;
+  private footerHintText: Phaser.GameObjects.Text;
 
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
@@ -160,6 +161,19 @@ export class QuizPanel extends BasePanel {
       })
       .setOrigin(...LayoutConfig.ALIGN.TOP_CENTER);
 
+    this.footerHintText = scene.add
+      .text(
+        0,
+        this.panelHeight / 2 - 40,
+        "Use as setas e pressione espaço para confirmar",
+        {
+          fontSize: LayoutConfig.FONTS.SIZES.HINT,
+          fontFamily: LayoutConfig.FONTS.BODY,
+          color: LayoutConfig.COLORS.HINT_GREY,
+        },
+      )
+      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
+
     this.progressTracker = new QuizProgressTracker(scene, 64, -12, {
       indicatorWidth: this.progressIndicatorWidth,
       indicatorHeight: this.progressIndicatorHeight,
@@ -215,6 +229,7 @@ export class QuizPanel extends BasePanel {
       this.bg,
       this.topContainer,
       this.questionContainer,
+      this.footerHintText,
       this.performanceContainer,
       this.navButtonsContainer,
     ]);
@@ -403,6 +418,7 @@ export class QuizPanel extends BasePanel {
     this.questionContainer.setVisible(true);
     this.questionTitle.setVisible(true);
     this.questionText.setVisible(true);
+    this.footerHintText.setVisible(true);
 
     this.questions = questions;
     this.onComplete = onComplete;
@@ -434,6 +450,7 @@ export class QuizPanel extends BasePanel {
     this.navButtonsContainer.setVisible(false);
     this.questionTitle.setVisible(true);
     this.questionText.setVisible(true);
+    this.footerHintText.setVisible(true);
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
     this.questionContainer.setVisible(false);
@@ -596,6 +613,7 @@ export class QuizPanel extends BasePanel {
     this.isShowingPerformance = true;
     this.questionTitle.setVisible(false);
     this.questionText.setVisible(false);
+    this.footerHintText.setVisible(false);
     this.resetOptionButtons();
     this.scoreManager?.recordQuizResult(this.score, this.questions.length);
     const percentage = this.getScorePercentage();
