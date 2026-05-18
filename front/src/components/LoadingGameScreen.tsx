@@ -32,9 +32,9 @@ export default function LoadingGameScreen() {
         zIndex: 50,
       }}
     >
-      <div 
+      <div
         style={{ width: "250px", textAlign: "left" }}
-        aria-live="polite" 
+        aria-live="polite"
         aria-busy="true"
       >
         Carregando{dots}
