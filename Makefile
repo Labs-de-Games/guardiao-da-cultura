@@ -2,7 +2,7 @@
 
 PROJECT_NAME = gameplate
 
-.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db-migrate db-migrate-generate help
+.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db-migrate db-migrate-generate help stress-install stress-seed stress-clean stress-test
 
 # --- SETUP & INSTALLATION ---
 install:
@@ -43,6 +43,21 @@ lint:
 
 test:
 	bun run test
+
+# --- STRESS TESTS (k6) ---
+stress-install:
+	@echo "Installing k6..."
+	curl -fsSL https://k6.io/install.sh | bash
+
+stress-seed:
+	bun run back/test/stress/helpers/seed.ts
+
+stress-clean:
+	bun run back/test/stress/helpers/cleanup.ts
+
+stress-test:
+	@echo "Running stress tests..."
+	cd back && k6 run test/stress/scenarios/01_game_events.stress.ts
 
 build-front:
 	docker compose -f compose.development.yaml build front
@@ -119,6 +134,12 @@ help:
 	@echo "=== QA & Tests ==="
 	@echo "  make lint        - Run Biome (lint + format)"
 	@echo "  make test        - Run tests via Turbo"
+	@echo ""
+	@echo "=== Stress Tests ==="
+	@echo "  make stress-install - Install k6 load testing tool (requires curl)"
+	@echo "  make stress-seed    - Seed stress test data (users + JWT tokens)"
+	@echo "  make stress-clean   - Remove stress test data from database"
+	@echo "  make stress-test    - Run stress tests (requires Docker environment running)"
 	@echo ""
 	@echo "=== Cleanup ==="
 	@echo "  make down        - Stop Docker containers"
