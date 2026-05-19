@@ -484,7 +484,7 @@ export class QuizPanel extends BasePanel {
 
   private calculateStarFillLevel() {
     const percentage = this.getScorePercentage();
-	this.performanceStar.setTexture("ui_star_full");
+    this.performanceStar.setTexture("ui_star_full");
     this.performanceStar.setAlpha(1);
     this.performanceStar.setTint(0xffffff);
     if (percentage === 100) this.performanceStar.setTexture("ui_star_full");
