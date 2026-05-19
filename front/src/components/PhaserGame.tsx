@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../lib/auth/useAuth";
+import LoadingGameScreen from "./LoadingGameScreen";
 
 export default function PhaserGame() {
   const { user } = useAuth();
@@ -9,8 +10,22 @@ export default function PhaserGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingType, setLoadingType] = useState<string>("initial");
 
   useEffect(() => {
+    const handleLoadingStart = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setLoadingType(customEvent.detail?.type || "default");
+      setIsLoading(true);
+    };
+
+    const handleLoadingComplete = () => {
+      setIsLoading(false);
+    };
+
+    window.addEventListener("phaser-loading-start", handleLoadingStart);
+    window.addEventListener("phaser-loading-complete", handleLoadingComplete);
+
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
 
@@ -29,44 +44,38 @@ export default function PhaserGame() {
       } catch (err) {
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
+        setIsLoading(false);
       }
     };
 
     void initGame();
 
     return () => {
+      window.removeEventListener("phaser-loading-start", handleLoadingStart);
+      window.removeEventListener(
+        "phaser-loading-complete",
+        handleLoadingComplete,
+      );
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
         isInitializingRef.current = false;
       }
     };
-  }, []);
+  }, [user?.id]);
 
   return (
     <div
       ref={containerRef}
       id="game-container"
       style={{
+        position: "relative",
         width: "100%",
         height: "100vh",
         overflow: "hidden",
       }}
     >
-      {isLoading && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100%",
-            color: "white",
-            backgroundColor: "#000000",
-          }}
-        >
-          Carregando o jogo...
-        </div>
-      )}
+      {isLoading && <LoadingGameScreen />}
     </div>
   );
 }

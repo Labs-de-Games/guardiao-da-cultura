@@ -103,6 +103,12 @@ export class Game extends Scene {
   }
 
   preload() {
+    window.dispatchEvent(
+      new CustomEvent("phaser-loading-start", {
+        detail: { type: "level_assets" },
+      }),
+    );
+
     this.load.setPath("assets/");
     Player.preload(this);
     Npc.preload(this);
@@ -218,6 +224,8 @@ export class Game extends Scene {
   }
 
   create() {
+    window.dispatchEvent(new CustomEvent("phaser-loading-complete"));
+
     this.processModularData();
     this.effects = new EffectsManager(this);
     this.createAnimations();
