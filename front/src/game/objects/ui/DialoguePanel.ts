@@ -99,8 +99,8 @@ export class DialoguePanel extends BasePanel {
     ]);
 
     // Native input
-    this.bindAction(Actions.NAV_PREV, () => this.moveConfirmSelection(-1));
-    this.bindAction(Actions.NAV_NEXT, () => this.moveConfirmSelection(1));
+    this.bindAction(Actions.UI_NAV_PREV, () => this.moveConfirmSelection(-1));
+    this.bindAction(Actions.UI_NAV_NEXT, () => this.moveConfirmSelection(1));
     // E advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
     this.bindAction(Actions.INTERACT, () => this.confirmSelection());
     this.bindAction(Actions.CLOSE, () => {

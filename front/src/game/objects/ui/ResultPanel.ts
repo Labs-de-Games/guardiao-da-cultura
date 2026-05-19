@@ -388,8 +388,8 @@ export class ResultPanel extends BasePanel {
   }
 
   private setupNavButtonKeyboard() {
-    this.bindAction(Actions.NAV_LEFT, () => this.selectPrevNavButton());
-    this.bindAction(Actions.NAV_RIGHT, () => this.selectNextNavButton());
+    this.bindAction(Actions.UI_NAV_LEFT, () => this.selectPrevNavButton());
+    this.bindAction(Actions.UI_NAV_RIGHT, () => this.selectNextNavButton());
     this.bindAction(Actions.CONFIRM, () => this.activateSelectedNavButton());
   }
 
