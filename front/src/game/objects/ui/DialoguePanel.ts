@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import { BasePanel } from "./BasePanel";
@@ -98,18 +99,12 @@ export class DialoguePanel extends BasePanel {
     ]);
 
     // Native input
-    for (const key of ["W", "UP", "A", "LEFT"]) {
-      this.bindKey(key, () => this.moveConfirmSelection(-1));
-    }
-    for (const key of ["S", "DOWN", "D", "RIGHT"]) {
-      this.bindKey(key, () => this.moveConfirmSelection(1));
-    }
+    this.bindAction(Actions.UI_NAV_PREV, () => this.moveConfirmSelection(-1));
+    this.bindAction(Actions.UI_NAV_NEXT, () => this.moveConfirmSelection(1));
     // E advances/confirms dialogue. ESC cancels confirmation, doesn't skip dialogue.
-    this.bindKey("E", () => this.confirmSelection());
-    this.bindKey("ESC", () => {
+    this.bindAction(Actions.INTERACT, () => this.confirmSelection());
+    this.bindAction(Actions.CLOSE, () => {
       if (this.mode === "confirmation") return this.confirmSelection(false);
-
-      return;
     });
 
     // Animação do indicador

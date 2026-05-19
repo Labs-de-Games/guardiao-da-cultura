@@ -1,5 +1,6 @@
 import type * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import type { ScoreManager } from "../ScoreManager";
@@ -387,24 +388,9 @@ export class ResultPanel extends BasePanel {
   }
 
   private setupNavButtonKeyboard() {
-    this.scene.input.keyboard?.on("keydown-LEFT", () =>
-      this.selectPrevNavButton(),
-    );
-    this.scene.input.keyboard?.on("keydown-RIGHT", () =>
-      this.selectNextNavButton(),
-    );
-    this.scene.input.keyboard?.on("keydown-A", () =>
-      this.selectPrevNavButton(),
-    );
-    this.scene.input.keyboard?.on("keydown-D", () =>
-      this.selectNextNavButton(),
-    );
-    this.scene.input.keyboard?.on("keydown-SPACE", () =>
-      this.activateSelectedNavButton(),
-    );
-    this.scene.input.keyboard?.on("keydown-ENTER", () =>
-      this.activateSelectedNavButton(),
-    );
+    this.bindAction(Actions.UI_NAV_LEFT, () => this.selectPrevNavButton());
+    this.bindAction(Actions.UI_NAV_RIGHT, () => this.selectNextNavButton());
+    this.bindAction(Actions.CONFIRM, () => this.activateSelectedNavButton());
   }
 
   private selectPrevNavButton() {

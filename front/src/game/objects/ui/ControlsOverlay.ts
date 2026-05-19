@@ -1,7 +1,9 @@
 import type * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
+import { offKeyDown, onKeyDown } from "../../systems/InputManager";
 import { BasePanel } from "./BasePanel";
 
 /**
@@ -12,7 +14,7 @@ export class ControlsOverlay extends BasePanel {
   private title: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private escHint: Phaser.GameObjects.Text;
-  private onEscHandler?: (event: KeyboardEvent) => void;
+  private handleCloseOnInteract: () => void;
 
   private readonly panelW = 980;
   private readonly panelH = 420;
@@ -20,6 +22,8 @@ export class ControlsOverlay extends BasePanel {
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0);
     this.setDepth(LayoutConfig.UI.DEPTHS.CONTROLS);
+
+    this.handleCloseOnInteract = () => this.hide();
 
     this.bg = this.createStandardBg(this.panelW, this.panelH);
     this.bg.setOrigin(...LayoutConfig.ALIGN.CENTER);
@@ -61,7 +65,7 @@ export class ControlsOverlay extends BasePanel {
 
     this.add([this.bg, this.title, this.bodyText, this.escHint]);
 
-    this.bindKey("ESC", () => this.hide());
+    this.bindAction(Actions.CLOSE, () => this.hide());
   }
 
   public layout(w: number, h: number) {
@@ -97,14 +101,7 @@ export class ControlsOverlay extends BasePanel {
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_OPENED);
 
-    this.onEscHandler = (event: KeyboardEvent) => {
-      const isEscape = event.key.toLowerCase() === "escape";
-      const isE = event.key.toLowerCase() === "e";
-      if (isEscape || isE) {
-        this.hide();
-      }
-    };
-    this.scene.input.keyboard?.on("keydown", this.onEscHandler);
+    onKeyDown(this.scene, Actions.INTERACT, this.handleCloseOnInteract);
   }
 
   public override hide(duration: number = 120, onComplete?: () => void) {
@@ -113,7 +110,7 @@ export class ControlsOverlay extends BasePanel {
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.CONTROLS_OVERLAY_CLOSED);
 
-    this.scene.input.keyboard?.off("keydown", this.onEscHandler);
+    offKeyDown(this.scene, Actions.INTERACT, this.handleCloseOnInteract);
 
     super.hide(duration, onComplete);
   }
