@@ -14,7 +14,6 @@ export class QuizPanel extends BasePanel {
   private readonly optionButtonHeight = 100;
   private readonly optionNotchDepth = 30;
   private readonly optionNotchHeight = 20;
-  // private currentFontScale: number = 1;
 
   private readonly progressIndicatorWidth = 48;
   private readonly progressIndicatorHeight = 84;
@@ -42,11 +41,29 @@ export class QuizPanel extends BasePanel {
 
   private performanceText: Phaser.GameObjects.Text;
   private performanceStar: Phaser.GameObjects.Image;
+  private performanceBottomHintText: Phaser.GameObjects.Text;
   private performanceContainer: Phaser.GameObjects.Container;
+  private performanceStarsOutline: Phaser.GameObjects.Graphics;
+  private performanceStarsOutlineColor: number = LayoutConfig.COLORS.GOLD_HEX;
+  private readonly performanceStarsOutlineWidth = 800;
+  private readonly performanceStarsOutlinePaddingY = 100;
+  private readonly performanceBottomHintPadding = 70;
+  private readonly performanceStarsOutlineExtraTop = 40;
   private questionContainer: Phaser.GameObjects.Container;
   private topContainer: Phaser.GameObjects.Container;
+  private navButtonsContainer: Phaser.GameObjects.Container;
+  private navButtonHome: Phaser.GameObjects.Container;
+  private navButtonNext: Phaser.GameObjects.Container;
+  private navButtonNextLabel!: Phaser.GameObjects.Text;
+  private selectedNavIndex: number = 1;
+  private readonly navButtonWidth = 320;
+  private readonly navButtonHeight = 80;
+  private readonly navButtonGap = 30;
+  private readonly navNextUrl =
+    "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit";
   private isShowingPerformance: boolean = false;
-  private shouldShowResultsAfterHide: boolean = false;
+  private isRetryMode: boolean = false;
+  private navNextAction: (() => void) | null = null;
 
   private readonly panelWidth = 1200;
   private readonly panelHeight = 800;
@@ -73,6 +90,14 @@ export class QuizPanel extends BasePanel {
     this.questionContainer = this.scene.add
       .container(0, this.topContainer.height - 70)
       .setSize(1150, 250);
+
+    this.navButtonsContainer = this.scene.add
+      .container(0, -this.bg.height / 2 + 700)
+      .setSize(1150, 150);
+    this.navButtonHome = this.scene.add.container(0, 0);
+    this.navButtonNext = this.scene.add.container(0, 0);
+    this.createNavButtons();
+    this.navButtonsContainer.setVisible(false);
     this.scoreText = scene.add
       .text(
         -this.topContainer.width / 2 + 35,
@@ -140,7 +165,7 @@ export class QuizPanel extends BasePanel {
       .text(
         0,
         this.panelHeight / 2 - 40,
-        "Use as setas e pressione Espaço para confirmar",
+        "Mova entre alternativas com as SETAS DIRECIONAIS e aperte ESPAÇO para confirmar.",
         {
           fontSize: LayoutConfig.FONTS.SIZES.HINT,
           fontFamily: LayoutConfig.FONTS.BODY,
@@ -164,18 +189,40 @@ export class QuizPanel extends BasePanel {
     ]);
     this.questionContainer.add([this.questionTitle, this.questionText]);
     this.performanceContainer = this.scene.add.container(0, 0);
+    this.performanceStarsOutline = this.scene.add.graphics();
+    this.performanceStar = this.scene.add
+      .image(0, -50, "ui_star_full")
+      .setScale(1);
     this.performanceText = this.scene.add
-      .text(0, -100, "Quiz completo!", {
+      .text(0, 90, "Quiz completo!", {
         fontFamily: "Jockey One",
         fontSize: "48px",
         color: LayoutConfig.COLORS.GOLD,
         fontStyle: "bold",
       })
       .setOrigin(0.5, 0.5);
-    this.performanceStar = this.scene.add
-      .image(0, 50, "ui_star_full")
-      .setScale(1);
-    this.performanceContainer.add([this.performanceText, this.performanceStar]);
+
+    this.performanceBottomHintText = this.scene.add
+      .text(0, 0, "", {
+        fontFamily: LayoutConfig.FONTS.BODY,
+        fontSize: LayoutConfig.FONTS.SIZES.HINT,
+        color: LayoutConfig.COLORS.WHITE,
+        fontStyle: LayoutConfig.FONTS.STYLES.ITALIC,
+        align: LayoutConfig.ALIGN.TEXT_CENTER,
+        wordWrap: {
+          width: this.performanceStarsOutlineWidth - 120,
+          useAdvancedWrap: true,
+        },
+        lineSpacing: 6,
+      })
+      .setOrigin(...LayoutConfig.ALIGN.BOTTOM_CENTER);
+
+    this.performanceContainer.add([
+      this.performanceStarsOutline,
+      this.performanceStar,
+      this.performanceText,
+      this.performanceBottomHintText,
+    ]);
     this.performanceContainer.setVisible(false);
     this.add([
       this.bg,
@@ -183,15 +230,12 @@ export class QuizPanel extends BasePanel {
       this.questionContainer,
       this.footerHintText,
       this.performanceContainer,
+      this.navButtonsContainer,
     ]);
     this.bindAction(Actions.UI_NAV_UP, () => this.moveVertical(-1));
     this.bindAction(Actions.UI_NAV_DOWN, () => this.moveVertical(1));
     this.bindAction(Actions.UI_NAV_LEFT, () => this.moveHorizontal(-1));
     this.bindAction(Actions.UI_NAV_RIGHT, () => this.moveHorizontal(1));
-    this.bindAction(Actions.CLOSE, () => {
-      if (!this._isVisible) return;
-      this.hide();
-    });
     this.bindAction(Actions.CONFIRM, () => {
       this.selectOption();
     });
@@ -200,12 +244,160 @@ export class QuizPanel extends BasePanel {
         this.handlePerformanceSpace();
       }
     });
+
+    this.bindAction(Actions.UI_NAV_LEFT, () => this.selectPrevNavButton());
+    this.bindAction(Actions.UI_NAV_RIGHT, () => this.selectNextNavButton());
+    this.bindAction(Actions.CONFIRM, () => this.activateSelectedNavButton());
+  }
+
+  private createNavButtons() {
+    const containerWidth = this.navButtonWidth * 2 + this.navButtonGap;
+    const startX = -containerWidth / 2 + this.navButtonWidth / 2;
+
+    const home = this.createNavButton(
+      "Voltar ao mapa",
+      LayoutConfig.COLORS.WHITE_HEX,
+    );
+    this.navButtonHome = home.container;
+
+    const next = this.createNavButton(
+      "Dê sua opinião",
+      LayoutConfig.COLORS.GOLD_HEX,
+    );
+    this.navButtonNext = next.container;
+    this.navButtonNextLabel = next.label;
+
+    this.navButtonHome.setPosition(startX, 0);
+    this.navButtonNext.setPosition(
+      startX + this.navButtonWidth + this.navButtonGap,
+      0,
+    );
+    this.navButtonsContainer.add([this.navButtonHome, this.navButtonNext]);
+  }
+
+  private drawButtonBg(bg: Phaser.GameObjects.Graphics, color: number) {
+    bg.clear();
+    bg.fillStyle(color, 1);
+    bg.fillRoundedRect(
+      -this.navButtonWidth / 2,
+      -this.navButtonHeight / 2,
+      this.navButtonWidth,
+      this.navButtonHeight,
+      12,
+    );
+  }
+
+  private createNavButton(
+    text: string,
+    color: number,
+  ): {
+    container: Phaser.GameObjects.Container;
+    label: Phaser.GameObjects.Text;
+  } {
+    const container = this.scene.add.container(0, 0);
+    const bg = this.scene.add.graphics();
+    this.drawButtonBg(bg, color);
+    const label = this.scene.add
+      .text(0, 0, text, {
+        fontFamily: "Inter",
+        fontSize: "24px",
+        color: LayoutConfig.COLORS.BLACK,
+      })
+      .setOrigin(0.5);
+    container.add([bg, label]);
+
+    container.setSize(this.navButtonWidth, this.navButtonHeight);
+    container.setInteractive(
+      new Phaser.Geom.Rectangle(
+        -this.navButtonWidth / 2,
+        -this.navButtonHeight / 2,
+        this.navButtonWidth,
+        this.navButtonHeight,
+      ),
+      Phaser.Geom.Rectangle.Contains,
+    );
+    container.on("pointerdown", () => {
+      if (!this.isShowingPerformance) return;
+      if (container === this.navButtonHome) {
+        this.selectedNavIndex = 0;
+      } else {
+        this.selectedNavIndex = 1;
+      }
+      this.updateNavButtonsSelection();
+      this.activateSelectedNavButton();
+    });
+
+    return { container, label };
+  }
+
+  private selectPrevNavButton() {
+    if (!this._isVisible || !this.isShowingPerformance) return;
+    if (this.selectedNavIndex > 0) {
+      this.selectedNavIndex--;
+      this.updateNavButtonsSelection();
+    }
+  }
+
+  private selectNextNavButton() {
+    if (!this._isVisible || !this.isShowingPerformance) return;
+    if (this.selectedNavIndex < 1) {
+      this.selectedNavIndex++;
+      this.updateNavButtonsSelection();
+    }
+  }
+
+  private updateNavButtonsSelection() {
+    const homeBg = this.navButtonHome.getAt(0) as Phaser.GameObjects.Graphics;
+    const navBg = this.navButtonNext.getAt(0) as Phaser.GameObjects.Graphics;
+
+    this.navButtonHome.setScale(this.selectedNavIndex === 0 ? 1.1 : 1);
+    this.drawButtonBg(
+      homeBg,
+      this.selectedNavIndex === 0
+        ? LayoutConfig.COLORS.WHITE_HEX
+        : LayoutConfig.COLORS.WHITE_DARK_HEX,
+    );
+    this.navButtonNext.setScale(this.selectedNavIndex === 1 ? 1.1 : 1);
+    this.drawButtonBg(
+      navBg,
+      this.selectedNavIndex === 0
+        ? LayoutConfig.COLORS.GOLD_DARK_HEX
+        : LayoutConfig.COLORS.GOLD_HEX,
+    );
+  }
+
+  private activateSelectedNavButton() {
+    if (!this._isVisible || !this.isShowingPerformance) return;
+
+    if (this.selectedNavIndex === 0) {
+      this.hide(200, () => {
+        this.scene.scene.stop(SceneNames.GAME);
+        this.scene.scene.start(SceneNames.INTRO);
+      });
+      return;
+    }
+
+    this.navNextAction?.();
+  }
+
+  private resetQuizSessionState() {
+    this.isShowingPerformance = false;
+    this.isRetryMode = false;
+    this.isProcessingAnswer = false;
+    this.currentQuestionIndex = 0;
+    this.score = 0;
+    this.selectedOptionIndex = 0;
+    this.questions = [];
+    this.answers = [];
+    this.resetOptionButtons();
+    this.progressTracker.setCount(0);
+    this.progressTracker.setAnswers([]);
+    this.scoreManager?.recordQuizResult(0, 0);
+    this.navNextAction = null;
   }
 
   private getScorePercentage(): number {
-    return this.questions.length > 0
-      ? (this.score / this.questions.length) * 100
-      : 0;
+    return this.scoreManager?.getPayload().quiz.accuracyPercent ?? 0;
   }
 
   public startQuiz(
@@ -214,11 +406,12 @@ export class QuizPanel extends BasePanel {
     onComplete: (score: number) => void,
   ) {
     this.isShowingPerformance = false;
-    this.shouldShowResultsAfterHide = false;
     this.performanceContainer.setVisible(false);
+    this.navButtonsContainer.setVisible(false);
     this.questionContainer.setVisible(true);
     this.questionTitle.setVisible(true);
     this.questionText.setVisible(true);
+    this.footerHintText.setVisible(true);
 
     this.questions = questions;
     this.onComplete = onComplete;
@@ -230,9 +423,6 @@ export class QuizPanel extends BasePanel {
     this.answers = new Array(questions.length).fill(null);
     this.progressTracker.setCount(questions.length);
     this.progressTracker.setAnswers(this.answers);
-    this.footerHintText.setText(
-      "Use as setas e pressione Espaço para confirmar",
-    );
     this.showQuestion();
     this.show();
   }
@@ -250,29 +440,21 @@ export class QuizPanel extends BasePanel {
 
     this.isShowingPerformance = false;
     this.performanceContainer.setVisible(false);
+    this.navButtonsContainer.setVisible(false);
     this.questionTitle.setVisible(true);
     this.questionText.setVisible(true);
+    this.footerHintText.setVisible(true);
     const gameScene = this.scene.scene.get(SceneNames.GAME);
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
     this.questionContainer.setVisible(false);
     super.hide(duration, () => {
-      if (onComplete) onComplete();
       if (this.onComplete) {
         const finalScore = this.score;
         this.onComplete(finalScore);
         this.onComplete = null;
-        if (this.shouldShowResultsAfterHide) {
-          this.shouldShowResultsAfterHide = false;
-          const gameScene = this.scene.scene.get(SceneNames.GAME);
-          gameScene.events.emit(
-            GameEvents.SHOW_QUIZ_RESULTS,
-            this.score,
-            this.questions.length,
-            this.progressTracker,
-            this.scoreManager,
-          );
-        }
       }
+
+      if (onComplete) onComplete();
     });
   }
 
@@ -297,12 +479,21 @@ export class QuizPanel extends BasePanel {
     this.progressTracker.setAnswers(this.answers);
   }
 
-  private calculateStarFillLevel(): string {
+  private calculateStarFillLevel() {
     const percentage = this.getScorePercentage();
-    if (percentage > 90) return "ui_star_full";
-    if (percentage > 70) return "ui_star_3q";
-    if (percentage > 50) return "ui_star_2q";
-    return "ui_star_1q";
+    this.performanceStar.setTexture("ui_star_full");
+    this.performanceStar.setAlpha(1);
+    this.performanceStar.setTint(0xffffff);
+    if (percentage === 100) this.performanceStar.setTexture("ui_star_full");
+    else if (percentage >= 75) this.performanceStar.setTexture("ui_star_3q");
+    else if (percentage >= 50) this.performanceStar.setTexture("ui_star_2q");
+    else if (percentage >= 25) this.performanceStar.setTexture("ui_star_1q");
+    else {
+      this.performanceStar
+        .setTexture("ui_star_full")
+        .setTint(LayoutConfig.COLORS.DARK_STAR_TINT)
+        .setAlpha(0.5);
+    }
   }
 
   private calculateResultStarScale(): number {
@@ -324,6 +515,39 @@ export class QuizPanel extends BasePanel {
     return scale;
   }
 
+  private updatePerformanceStarsOutline(scale: number) {
+    this.performanceStarsOutline.clear();
+
+    const tex = this.scene.textures.get("ui_star_full");
+    const source = tex?.getSourceImage() as
+      | { width: number; height: number }
+      | undefined;
+    const baseH = source?.height ?? 457;
+
+    const starH = baseH * scale;
+    const paddingY = this.performanceStarsOutlinePaddingY;
+    const extraTop = this.performanceStarsOutlineExtraTop;
+
+    const width = this.performanceStarsOutlineWidth;
+    const x = -width / 2;
+    const y = this.topContainer.y + 100;
+    const height = starH + 2 * paddingY + extraTop;
+
+    const bottomY = this.performanceText.y + starH / 2 + paddingY;
+    this.performanceBottomHintText.setPosition(
+      0,
+      bottomY - this.performanceBottomHintPadding,
+    );
+
+    this.performanceStarsOutline.lineStyle(
+      4,
+      this.performanceStarsOutlineColor,
+      1,
+    );
+    this.performanceStarsOutline.strokeRoundedRect(x, y, width, height, 16);
+    this.performanceContainer.setSize(width, height);
+  }
+
   private resetOptionButtons() {
     this.optionButtons.forEach((b) => {
       b.destroy(true);
@@ -333,7 +557,9 @@ export class QuizPanel extends BasePanel {
 
   private updateQuestionHeader() {
     this.questionTitle.setText(`Desafio ${this.currentQuestionIndex + 1}`);
-    this.scoreText.setText(`Pontos: ${this.score}`);
+    this.scoreText.setText(
+      `Pontos: ${this.score * (100 / this.questions.length)}%`,
+    );
     this.questionCounterText.setText(
       `Pergunta ${this.currentQuestionIndex + 1}/${this.questions.length}`,
     );
@@ -386,10 +612,47 @@ export class QuizPanel extends BasePanel {
     this.isShowingPerformance = true;
     this.questionTitle.setVisible(false);
     this.questionText.setVisible(false);
+    this.footerHintText.setVisible(false);
     this.resetOptionButtons();
+    this.scoreManager?.recordQuizResult(this.score, this.questions.length);
     const percentage = this.getScorePercentage();
-    if (percentage < 70) {
-      this.scoreText.setText("Tente de novo!");
+
+    this.isRetryMode = percentage >= 0 && percentage < 70;
+    this.performanceStarsOutlineColor = this.isRetryMode
+      ? LayoutConfig.COLORS.WHITE_HEX
+      : LayoutConfig.COLORS.GOLD_HEX;
+    this.navButtonNextLabel.setText(
+      this.isRetryMode ? "Tentar novamente" : "Dê sua opinião",
+    );
+    this.performanceBottomHintText.setColor(
+      this.isRetryMode ? LayoutConfig.COLORS.WHITE : LayoutConfig.COLORS.GOLD,
+    );
+    this.navNextAction = this.isRetryMode
+      ? () => {
+          this.hide(200, () => {
+            this.resetQuizSessionState();
+          });
+        }
+      : () => {
+          window.open(this.navNextUrl, "_blank");
+        };
+
+    if (percentage >= 70 && percentage <= 100) {
+      this.performanceBottomHintText.setText(
+        " Você já pode encarar o próximo nível! ",
+      );
+    } else {
+      this.performanceBottomHintText.setText(
+        "Sua pontuação não foi o suficiente. Mas não desista!",
+      );
+    }
+
+    if (percentage < 25) {
+      this.scoreText.setText("Essa não");
+      this.questionCounterText.setText("Pontuação baixa");
+      this.performanceText.setText("Tente novamente");
+    } else if (percentage < 70) {
+      this.scoreText.setText("Por pouco!");
       this.questionCounterText.setText("Pontuação baixa");
       this.performanceText.setText(
         "Com um pouco mais de atenção, você consegue!",
@@ -404,22 +667,16 @@ export class QuizPanel extends BasePanel {
       this.performanceText.setText("Gabaritou!");
     }
     this.performanceContainer.setVisible(true);
-    this.performanceStar.setTexture(this.calculateStarFillLevel());
-    this.performanceStar.setScale(this.calculateResultStarScale());
-    if (percentage >= 70) {
-      this.footerHintText.setText("Aperte E para ver resultados");
-    } else {
-      this.footerHintText.setText("Aperte E para fechar");
-    }
+    this.navButtonsContainer.setVisible(true);
+    this.selectedNavIndex = 1;
+    this.updateNavButtonsSelection();
+    this.calculateStarFillLevel();
+    const starScale = this.calculateResultStarScale();
+    this.performanceStar.setScale(starScale);
+    this.updatePerformanceStarsOutline(starScale);
   }
 
   private handlePerformanceSpace() {
-    const percentage = this.getScorePercentage();
-
-    if (percentage >= 70) {
-      this.shouldShowResultsAfterHide = true;
-    }
-
     this.hide();
   }
 
