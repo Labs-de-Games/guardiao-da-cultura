@@ -24,7 +24,7 @@ function ConfirmLoginContent() {
 
   useEffect(() => {
     if (!token) {
-      setError("Passe inválido ou inexistente.");
+      setError("Token inválido ou inexistente.");
     }
   }, [token]);
 
