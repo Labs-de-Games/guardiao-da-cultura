@@ -236,10 +236,6 @@ export class QuizPanel extends BasePanel {
     this.bindAction(Actions.UI_NAV_DOWN, () => this.moveVertical(1));
     this.bindAction(Actions.UI_NAV_LEFT, () => this.moveHorizontal(-1));
     this.bindAction(Actions.UI_NAV_RIGHT, () => this.moveHorizontal(1));
-    this.bindAction(Actions.CLOSE, () => {
-      if (!this._isVisible) return;
-      this.hide();
-    });
     this.bindAction(Actions.CONFIRM, () => {
       this.selectOption();
     });
@@ -249,11 +245,9 @@ export class QuizPanel extends BasePanel {
       }
     });
 
-    this.bindKey("LEFT", () => this.selectPrevNavButton());
-    this.bindKey("A", () => this.selectPrevNavButton());
-    this.bindKey("RIGHT", () => this.selectNextNavButton());
-    this.bindKey("D", () => this.selectNextNavButton());
-    this.bindKey("ENTER", () => this.activateSelectedNavButton());
+    this.bindAction(Actions.UI_NAV_LEFT, () => this.selectPrevNavButton());
+    this.bindAction(Actions.UI_NAV_RIGHT, () => this.selectNextNavButton());
+    this.bindAction(Actions.CONFIRM, () => this.activateSelectedNavButton());
   }
 
   private createNavButtons() {

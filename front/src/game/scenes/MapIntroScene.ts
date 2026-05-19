@@ -188,7 +188,7 @@ export class MapIntroScene extends Scene {
     this.infoLocation.setText(marker.location);
 
     if (this.activeMarkerIndex === 0) {
-      this.infoCta.setText("Aperte E para jogar");
+      this.infoCta.setText("Aperte ESPAÇO para jogar");
       this.infoCta.setColor(LayoutConfig.COLORS.AVAILABLE_GREEN);
     } else {
       this.infoCta.setText("Em reforma");
