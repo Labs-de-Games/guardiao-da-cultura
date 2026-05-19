@@ -52,6 +52,8 @@ stress-install:
 	@mv /tmp/k6-v2.0.0-linux-amd64/k6 ~/.local/bin/k6
 	@rm -rf /tmp/k6-v2.0.0-linux-amd64
 	@echo "k6 installed to ~/.local/bin/k6"
+	@echo "Make sure $$HOME/.local/bin is in your PATH:"
+	@echo '  export PATH="$$HOME/.local/bin:$$PATH"'
 
 stress-seed:
 	cd back && bun run test/stress/helpers/seed.ts $(ARGS)
@@ -61,7 +63,13 @@ stress-clean:
 
 stress-test:
 	@echo "Running stress tests..."
-	cd back && k6 run test/stress/scenarios/01_game_events.stress.ts
+	cd back && k6 run test/stress/scenarios/01_game_events.stress.js
+
+stress-all:
+	@echo "Running all stress test scenarios..."
+	cd back && for s in 01 02 03 04 05; do \
+	  k6 run "test/stress/scenarios/$${s}_"*.stress.js; \
+	done
 
 build-front:
 	docker compose -f compose.development.yaml build front
