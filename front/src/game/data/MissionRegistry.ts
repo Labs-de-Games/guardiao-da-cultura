@@ -15,15 +15,15 @@ export const MissionRequirements = [
 export const MissionRegistry: Record<string, MissionDef> = {
   [MissionIds.CURATOR]: {
     id: MissionIds.CURATOR,
-    title: "Restauração do Museu",
+    title: "Sala de restauração",
     steps: [
       {
         infoKey: MissionKeys.SCULPTURES_DONE,
-        text: "Investigar todas as esculturas",
+        text: "Reorganizar todas as esculturas",
       },
       {
         infoKey: MissionKeys.PAINTINGS_DONE,
-        text: "Investigar todas as pinturas",
+        text: "Reorganizar todas as pinturas",
       },
       { infoKey: MissionKeys.PHOTO_DONE, text: "Remontar a fotografia" },
     ],
