@@ -1,30 +1,30 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Digite um endereço de e-mail válido."),
 });
 
 export const registerSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
-  email: z.string().email("Please enter a valid email address"),
+  firstName: z.string().min(1, "Precisamos saber seu nome."),
+  lastName: z.string().min(1, "Precisamos saber seu sobrenome."),
+  dateOfBirth: z.string().min(1, "Precisamos saber sua data de nascimento."),
+  email: z.string().email("Digite um endereço de e-mail válido."),
   nickname: z
     .string()
-    .min(3, "Nickname must be at least 3 characters")
-    .max(30, "Nickname must be at most 30 characters")
+    .min(3, "Apelidos precisam ter pelo menos 3 caracteres.")
+    .max(30, "Apelidos podem ter no máximo 30 caracteres.")
     .regex(
       /^[a-zA-Z0-9_]+$/,
-      "Nickname can only contain letters, numbers, and underscores",
+      "Apelidos podem ter apenas letras, números e sublinha (_).",
     ),
 });
 
 export const resendVerificationSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Digite um endereço de e-mail válido."),
 });
 
 export const tokenConfirmSchema = z.object({
-  token: z.string().min(1, "Token is required"),
+  token: z.string().min(1, "O token é necessário para confirmar a ação."),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
