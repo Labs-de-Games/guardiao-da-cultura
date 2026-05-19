@@ -184,10 +184,10 @@ export class QuizPanel extends BasePanel {
       this.footerHintText,
       this.performanceContainer,
     ]);
-    this.bindAction(Actions.NAV_UP, () => this.moveVertical(-1));
-    this.bindAction(Actions.NAV_DOWN, () => this.moveVertical(1));
-    this.bindAction(Actions.NAV_LEFT, () => this.moveHorizontal(-1));
-    this.bindAction(Actions.NAV_RIGHT, () => this.moveHorizontal(1));
+    this.bindAction(Actions.UI_NAV_UP, () => this.moveVertical(-1));
+    this.bindAction(Actions.UI_NAV_DOWN, () => this.moveVertical(1));
+    this.bindAction(Actions.UI_NAV_LEFT, () => this.moveHorizontal(-1));
+    this.bindAction(Actions.UI_NAV_RIGHT, () => this.moveHorizontal(1));
     this.bindAction(Actions.CLOSE, () => {
       if (!this._isVisible) return;
       this.hide();

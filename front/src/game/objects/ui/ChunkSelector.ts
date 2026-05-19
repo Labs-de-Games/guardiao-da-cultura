@@ -250,22 +250,22 @@ export class ChunkSelector extends Phaser.GameObjects.Container {
   }
 
   private setupKeyboardListeners() {
-    onKeyDown(this.scene, Actions.NAV_UP, () => {
+    onKeyDown(this.scene, Actions.UI_NAV_UP, () => {
       if (!this.isVisible) return;
       this.moveCursor("up");
       this.refreshUI();
     });
-    onKeyDown(this.scene, Actions.NAV_DOWN, () => {
+    onKeyDown(this.scene, Actions.UI_NAV_DOWN, () => {
       if (!this.isVisible) return;
       this.moveCursor("down");
       this.refreshUI();
     });
-    onKeyDown(this.scene, Actions.NAV_LEFT, () => {
+    onKeyDown(this.scene, Actions.UI_NAV_LEFT, () => {
       if (!this.isVisible) return;
       this.moveCursor("left");
       this.refreshUI();
     });
-    onKeyDown(this.scene, Actions.NAV_RIGHT, () => {
+    onKeyDown(this.scene, Actions.UI_NAV_RIGHT, () => {
       if (!this.isVisible) return;
       this.moveCursor("right");
       this.refreshUI();
