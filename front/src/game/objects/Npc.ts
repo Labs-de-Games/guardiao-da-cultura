@@ -150,7 +150,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       case QuestStatus.IDLE:
         return d.intro;
       case QuestStatus.COLLECTING:
-        return d.intro;
+        return d.intro; // repeating the same intro lines during the collecting phase, per request
       case QuestStatus.READY_FOR_QUIZ:
         return d.ready;
       case QuestStatus.COMPLETED:
