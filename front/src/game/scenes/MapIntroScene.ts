@@ -282,9 +282,9 @@ export class MapIntroScene extends Scene {
       const markerSource = this.textures
         .get(this.markerKey)
         .getSourceImage() as {
-          width: number;
-          height: number;
-        };
+        width: number;
+        height: number;
+      };
       const markerTargetSize = Phaser.Math.Clamp(
         Math.min(width, height) * 0.035,
         22,
