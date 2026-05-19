@@ -77,7 +77,7 @@ export class UIScene extends Scene {
     // 2. Instanciação de Componentes
     this.statusPanel = new PhaseStatusPanel(
       this,
-      "Museu antigo",
+      "Inhotim",
       this.missionsTotal,
       this.questManager,
     );

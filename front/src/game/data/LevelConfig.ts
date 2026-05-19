@@ -26,7 +26,7 @@ export interface LevelDefinition {
 export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_01: {
     id: "level_01",
-    title: "Museu Antigo",
+    title: "Inhotim",
     maxStars: 2,
     initialGrayscale: 0.82,
     map: {
