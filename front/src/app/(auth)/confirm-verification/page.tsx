@@ -55,7 +55,7 @@ function ConfirmVerificationContent() {
   return (
     <Box sx={{ textAlign: "center" }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Confiramos seu e-mail
+        Verificar e-mail
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         Clique no botão abaixo para verificar seu e-mail e ativar sua conta.
