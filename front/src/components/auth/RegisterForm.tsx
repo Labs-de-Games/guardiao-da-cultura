@@ -32,7 +32,7 @@ export default function RegisterForm() {
     try {
       await registerUser(data);
       setIsSubmitted(true);
-      showToast("Cadastro realizado. Agora veja seu e-mail!", "success");
+      showToast("Cadastro realizado. Agora verifique seu e-mail!", "success");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Falha ao completar cadastro.";
