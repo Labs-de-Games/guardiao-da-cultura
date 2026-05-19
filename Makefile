@@ -2,7 +2,7 @@
 
 PROJECT_NAME = gameplate
 
-.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db-migrate db-migrate-generate help stress-install stress-seed stress-clean stress-test stress-all
+.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db-migrate db-migrate-generate help stress-install stress-seed stress-clean stress-test stress-all stress-run
 
 # --- SETUP & INSTALLATION ---
 install:
@@ -70,6 +70,9 @@ stress-all:
 	cd back && for s in 01 02 03 04 05; do \
 	  k6 run "test/stress/scenarios/$${s}_"*.stress.js; \
 	done
+
+stress-run:
+	cd back && k6 run "test/stress/scenarios/$(or $(N),01)_"*.stress.js
 
 build-front:
 	docker compose -f compose.development.yaml build front
