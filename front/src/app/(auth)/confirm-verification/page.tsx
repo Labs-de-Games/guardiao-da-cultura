@@ -74,7 +74,7 @@ function ConfirmVerificationContent() {
         disabled={isLoading || !token}
         fullWidth
       >
-        {isLoading ? <CircularProgress size={24} /> : "Quero jogar!"}
+        {isLoading ? <CircularProgress size={24} /> : "Verificar e-mail!"}
       </Button>
     </Box>
   );
