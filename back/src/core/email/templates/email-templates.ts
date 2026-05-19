@@ -129,7 +129,7 @@ export const emailTemplates = {
           <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Acessar conta</a>
         </p>
         <hr class="divider">
-        <p style="font-size: 14px; color: #666;">Se não foi você, recomendamos que altere sua senha imediatamente e entre em contato com nosso suporte.</p>`,
+        <p style="font-size: 14px; color: #666;">Se não foi você, recomendamos que entre em contato com nosso suporte..</p>`,
       ),
     };
   },
