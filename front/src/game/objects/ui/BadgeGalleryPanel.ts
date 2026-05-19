@@ -4,6 +4,7 @@ import {
   fetchBadges,
   fetchUserBadges,
 } from "../../../lib/badgesApi";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { BasePanel } from "./BasePanel";
 
@@ -54,7 +55,7 @@ export class BadgeGalleryPanel extends BasePanel {
 
     this.add([this.bg, this.titleText, closeBtn, this.badgesContainer]);
 
-    this.bindKey("ESC", () => this.hide());
+    this.bindAction(Actions.CLOSE, () => this.hide());
 
     this.loadData();
   }

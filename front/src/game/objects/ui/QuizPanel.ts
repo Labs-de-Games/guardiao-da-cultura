@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../../constants/GameEvents";
+import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
 import { SceneNames } from "../../constants/SceneNames";
 import type { QuizQuestion } from "../../types/GameDataTypes";
@@ -183,22 +184,18 @@ export class QuizPanel extends BasePanel {
       this.footerHintText,
       this.performanceContainer,
     ]);
-    this.bindKey("W", () => this.moveVertical(-1));
-    this.bindKey("UP", () => this.moveVertical(-1));
-    this.bindKey("S", () => this.moveVertical(1));
-    this.bindKey("DOWN", () => this.moveVertical(1));
-    this.bindKey("A", () => this.moveHorizontal(-1));
-    this.bindKey("LEFT", () => this.moveHorizontal(-1));
-    this.bindKey("D", () => this.moveHorizontal(1));
-    this.bindKey("RIGHT", () => this.moveHorizontal(1));
-    this.bindKey("ESC", () => {
+    this.bindAction(Actions.UI_NAV_UP, () => this.moveVertical(-1));
+    this.bindAction(Actions.UI_NAV_DOWN, () => this.moveVertical(1));
+    this.bindAction(Actions.UI_NAV_LEFT, () => this.moveHorizontal(-1));
+    this.bindAction(Actions.UI_NAV_RIGHT, () => this.moveHorizontal(1));
+    this.bindAction(Actions.CLOSE, () => {
       if (!this._isVisible) return;
       this.hide();
     });
-    this.bindKey("SPACE", () => {
+    this.bindAction(Actions.CONFIRM, () => {
       this.selectOption();
     });
-    this.bindKey("E", () => {
+    this.bindAction(Actions.INTERACT, () => {
       if (this.isShowingPerformance) {
         this.handlePerformanceSpace();
       }

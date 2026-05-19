@@ -1,6 +1,8 @@
 import { Scene } from "phaser";
+import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
+import { onKeyDown, registerScene } from "../systems/InputManager";
 
 type MapMarker = {
   id: string;
@@ -112,31 +114,16 @@ export class MapIntroScene extends Scene {
 
     this.createInfoBox();
 
-    this.input.keyboard?.on("keydown-E", this.beginGame, this);
-    this.input.keyboard?.on("keydown-UP", this.cycleMarkerForward, this);
-    this.input.keyboard?.on("keydown-LEFT", this.cycleMarkerBackward, this);
-    this.input.keyboard?.on("keydown-DOWN", this.cycleMarkerBackward, this);
-    this.input.keyboard?.on("keydown-RIGHT", this.cycleMarkerForward, this);
-    this.input.keyboard?.on("keydown-W", this.cycleMarkerForward, this);
-    this.input.keyboard?.on("keydown-A", this.cycleMarkerBackward, this);
-    this.input.keyboard?.on("keydown-S", this.cycleMarkerBackward, this);
-    this.input.keyboard?.on("keydown-D", this.cycleMarkerForward, this);
+    onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame());
+    onKeyDown(this, Actions.CYCLE_FORWARD, this.cycleMarkerForward);
+    onKeyDown(this, Actions.CYCLE_BACKWARD, this.cycleMarkerBackward);
 
-    this.scale.on("resize", this.handleResize); // Listens for resize events and calls the handleResize method when the game is resized.
+    registerScene(this);
 
-    // Clean up listeners when the scene is shutdown to prevent memory leaks and unintended behavior if the scene is restarted.
-    //! I think this is what's making the game freeze after the first playthrough, because the listeners are still active and trying to interact with destroyed game objects.
+    this.scale.on("resize", this.handleResize);
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
-      this.input.keyboard?.off("keydown-E", this.beginGame, this);
-      this.input.keyboard?.off("keydown-UP", this.cycleMarkerForward, this);
-      this.input.keyboard?.off("keydown-DOWN", this.cycleMarkerBackward, this);
-      this.input.keyboard?.off("keydown-LEFT", this.cycleMarkerBackward, this);
-      this.input.keyboard?.off("keydown-RIGHT", this.cycleMarkerForward, this);
-      this.input.keyboard?.off("keydown-W", this.cycleMarkerForward, this);
-      this.input.keyboard?.off("keydown-A", this.cycleMarkerBackward, this);
-      this.input.keyboard?.off("keydown-S", this.cycleMarkerBackward, this);
-      this.input.keyboard?.off("keydown-D", this.cycleMarkerForward, this);
     });
 
     this.layout();

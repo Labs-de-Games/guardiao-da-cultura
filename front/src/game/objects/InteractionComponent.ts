@@ -1,6 +1,8 @@
 import * as Phaser from "phaser";
 import { GameEvents } from "../constants/GameEvents";
+import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import { offKeyDown, onKeyDown } from "../systems/InputManager";
 import type { IPlayerState } from "../types/EntityTypes";
 
 export interface InteractionOptions {
@@ -37,7 +39,7 @@ export class InteractionComponent {
   public onInteract: (() => void) | null = null;
   private onInfoCollected: ((key: string) => void) | null = null;
 
-  private keyHandler: (event: KeyboardEvent) => void;
+  private handleInteract: () => void;
   private lastInteractionTime: number = 0;
   private readonly INTERACTION_COOLDOWN: number = 250;
 
@@ -88,33 +90,29 @@ export class InteractionComponent {
     // this.promptContainer.add([promptBg, promptText]);
 
     // Setup Key Listener
-    this.keyHandler = (event: KeyboardEvent) => {
-      if (event.code === "KeyE") {
-        const player = this.playerRef as unknown as IPlayerState;
-        if (player?.isInDialogue) return;
+    this.handleInteract = () => {
+      const player = this.playerRef as unknown as IPlayerState;
+      if (player?.isInDialogue) return;
 
-        const now = Date.now();
-        if (now - this.lastInteractionTime < this.INTERACTION_COOLDOWN) return;
+      const now = Date.now();
+      if (now - this.lastInteractionTime < this.INTERACTION_COOLDOWN) return;
 
-        if (this.isPromptVisible) {
-          this.lastInteractionTime = now;
-          this.markInteracted();
+      if (this.isPromptVisible) {
+        this.lastInteractionTime = now;
+        this.markInteracted();
 
-          if (this.dialogueLines) {
-            // Complex dialogue (managed externally via onInteract)
-            if (this.onInteract) this.onInteract();
-          } else {
-            // Simple single-line dialog
-            this.showDialog();
-            if (this.infoKey && this.onInfoCollected) {
-              this.onInfoCollected(this.infoKey);
-            }
-            if (this.onInteract) this.onInteract();
+        if (this.dialogueLines) {
+          if (this.onInteract) this.onInteract();
+        } else {
+          this.showDialog();
+          if (this.infoKey && this.onInfoCollected) {
+            this.onInfoCollected(this.infoKey);
           }
+          if (this.onInteract) this.onInteract();
         }
       }
     };
-    scene.input.keyboard?.on("keydown", this.keyHandler);
+    onKeyDown(scene, Actions.INTERACT, this.handleInteract);
 
     parent.once(Phaser.GameObjects.Events.DESTROY, () => {
       this.destroy();
@@ -231,7 +229,7 @@ export class InteractionComponent {
     if (this.isPromptVisible) {
       this.scene.events.emit(GameEvents.INTERACTION_PROMPT_HIDDEN, this.parent);
     }
-    this.scene.input.keyboard?.off("keydown", this.keyHandler);
+    offKeyDown(this.scene, Actions.INTERACT, this.handleInteract);
     this.promptContainer.destroy();
 
     this.disarmHint();
