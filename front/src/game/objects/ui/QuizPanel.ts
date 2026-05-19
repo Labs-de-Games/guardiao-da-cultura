@@ -165,7 +165,7 @@ export class QuizPanel extends BasePanel {
       .text(
         0,
         this.panelHeight / 2 - 40,
-        "Use as setas e pressione espaço para confirmar",
+        "Mova entre alternativas com as SETAS DIRECIONAIS e aperte ESPAÇO para confirmar.",
         {
           fontSize: LayoutConfig.FONTS.SIZES.HINT,
           fontFamily: LayoutConfig.FONTS.BODY,
@@ -266,7 +266,10 @@ export class QuizPanel extends BasePanel {
     );
     this.navButtonHome = home.container;
 
-    const next = this.createNavButton("Próximo", LayoutConfig.COLORS.GOLD_HEX);
+    const next = this.createNavButton(
+      "Dê sua opinião",
+      LayoutConfig.COLORS.GOLD_HEX,
+    );
     this.navButtonNext = next.container;
     this.navButtonNextLabel = next.label;
 
@@ -625,14 +628,13 @@ export class QuizPanel extends BasePanel {
       ? LayoutConfig.COLORS.WHITE_HEX
       : LayoutConfig.COLORS.GOLD_HEX;
     this.navButtonNextLabel.setText(
-      this.isRetryMode ? "Tentar novamente" : "Próximo",
+      this.isRetryMode ? "Tentar novamente" : "Dê sua opinião",
     );
     this.performanceBottomHintText.setColor(
       this.isRetryMode ? LayoutConfig.COLORS.WHITE : LayoutConfig.COLORS.GOLD,
     );
     this.navNextAction = this.isRetryMode
       ? () => {
-          // Close the panel and reset quiz session/stats for the next attempt.
           this.hide(200, () => {
             this.resetQuizSessionState();
           });
@@ -643,7 +645,7 @@ export class QuizPanel extends BasePanel {
 
     if (percentage >= 70 && percentage <= 100) {
       this.performanceBottomHintText.setText(
-        "você está pronto para o próximo nível",
+        " Você já pode encarar o próximo nível! ",
       );
     } else {
       this.performanceBottomHintText.setText(
