@@ -50,9 +50,9 @@ export default function LoginForm() {
       setSubmittedEmail(data.email);
       setIsEmailSent(true);
       startCountdown();
-      showToast("Magic link sent to your email", "success");
+      showToast("Link de acesso enviado!", "success");
     } catch {
-      showToast("Failed to send magic link. Please try again.", "error");
+      showToast("Não foi possível enviar o link de acesso.", "error");
     }
   };
 
@@ -62,9 +62,9 @@ export default function LoginForm() {
     try {
       await login({ email: submittedEmail });
       startCountdown();
-      showToast("Magic link resent", "success");
+      showToast("Link de acesso enviado!", "success");
     } catch {
-      showToast("Failed to resend magic link.", "error");
+      showToast("Não foi possível reenviar o link de acesso.", "error");
     } finally {
       setIsResending(false);
     }
@@ -74,10 +74,11 @@ export default function LoginForm() {
     return (
       <Box sx={{ textAlign: "center" }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Check your email
+          Veja seu e-mail!
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          We sent a magic link to your email. Click the link to log in.
+          Enviamos um link de acesso para o seu e-mail. Clique no link para
+          jogar.
         </Typography>
         <Button
           variant="outlined"
@@ -88,14 +89,14 @@ export default function LoginForm() {
           {isResending ? (
             <CircularProgress size={20} />
           ) : countdown > 0 ? (
-            `Resend in ${countdown}s`
+            `Tente reenviar em ${countdown} s.`
           ) : (
-            "Resend magic link"
+            "Reenviar link por e-mail"
           )}
         </Button>
         <Box sx={{ mt: 2 }}>
           <Link href="/register" variant="body2">
-            Need an account? Register
+            Ainda não tem conta? Crie uma agora mesmo!
           </Link>
         </Box>
       </Box>
@@ -106,7 +107,7 @@ export default function LoginForm() {
     <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
       <TextField
         fullWidth
-        label="Email"
+        label="Digite o seu e-mail"
         type="email"
         autoComplete="email"
         margin="normal"
@@ -123,12 +124,16 @@ export default function LoginForm() {
         disabled={isSubmitting}
         sx={{ mt: 2, mb: 2 }}
       >
-        {isSubmitting ? <CircularProgress size={24} /> : "Send Magic Link"}
+        {isSubmitting ? (
+          <CircularProgress size={24} />
+        ) : (
+          "Receber link de acesso por e-mail"
+        )}
       </Button>
 
       <Box sx={{ textAlign: "center" }}>
         <Link href="/register" variant="body2">
-          Need an account? Register
+          Ainda não tem conta? Crie uma agora mesmo!
         </Link>
       </Box>
     </Box>

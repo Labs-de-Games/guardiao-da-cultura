@@ -28,10 +28,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             component="h1"
             sx={{ mb: 1, fontWeight: 700 }}
           >
-            Gameplate
+            Guardião da Cultura
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-            Your adventure begins here
+            Crie sua conta e comece a jogar!
           </Typography>
           {children}
         </Paper>
