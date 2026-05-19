@@ -28,7 +28,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             component="h1"
             sx={{ mb: 1, fontWeight: 700 }}
           >
-            Guardião da cultura
+            Guardião da Cultura
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
             Crie sua conta e comece a jogar!
