@@ -47,7 +47,8 @@ export default function RegisterForm() {
           Veja seu e-mail!
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Em instantes, você vai receber um e-mail para verificar sua conta e começar a jogar.
+          Em instantes, você vai receber um e-mail para verificar sua conta e
+          começar a jogar.
         </Typography>
       </Box>
     );
