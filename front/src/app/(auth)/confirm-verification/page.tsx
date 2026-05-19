@@ -58,7 +58,7 @@ function ConfirmVerificationContent() {
         Confiramos seu e-mail
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Obrigado! Agora é só clicar no botão abaixo e jogar!
+        Clique no botão abaixo para verificar seu e-mail e ativar sua conta.
       </Typography>
 
       {error && (
