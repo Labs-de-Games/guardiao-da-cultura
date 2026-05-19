@@ -24,7 +24,7 @@ export const resendVerificationSchema = z.object({
 });
 
 export const tokenConfirmSchema = z.object({
-  token: z.string().min(1, "O passe é necessário para confirmar a ação."),
+  token: z.string().min(1, "O token é necessário para confirmar a ação."),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
