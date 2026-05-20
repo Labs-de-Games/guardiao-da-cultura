@@ -25,7 +25,7 @@ async function bootstrap() {
     origin:
       config.nodeEnv === "production"
         ? [config.frontendUrl]
-        : [config.frontendUrl, "http://localhost:3000", "http://localhost"],
+        : [config.frontendUrl, "http://localhost"],
     credentials: true,
   });
 
