@@ -38,5 +38,6 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile --production --ignore-scripts
 
 WORKDIR /app/back
-EXPOSE 3001
+ARG BACKEND_PORT=3001
+EXPOSE ${BACKEND_PORT}
 CMD ["bun", "dist/main.js"]
