@@ -66,6 +66,15 @@ export class UIScene extends Scene {
     this.questManager = data.questManager;
     this.missionDefs = data.missionDefs || {};
     this.missionsTotal = data.missionsTotal || 0;
+
+    // Reset state for scene restarts
+    this.activeMissionIds = [];
+    this.missionPanels = [];
+    this.missionStepTexts.clear();
+    this.lastMissionStatuses.clear();
+    this.pendingMissionCompleteToastCount = 0;
+    this.activeInteractionPrompts.clear();
+    this.phaseCompletePanel = null;
   }
 
   create() {
