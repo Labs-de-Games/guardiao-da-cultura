@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const schema = z
   .object({
-    PORT: z.coerce.number().default(3001),
+    BACKEND_PORT: z.coerce.number().default(3001),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -40,7 +40,7 @@ export class ConfigService {
 
   constructor() {
     this.config = schema.parse({
-      PORT: process.env.PORT,
+      BACKEND_PORT: process.env.BACKEND_PORT,
       NODE_ENV: process.env.NODE_ENV,
       DATABASE_URL: process.env.DATABASE_URL,
       JWT_SECRET: process.env.JWT_SECRET,
@@ -57,7 +57,7 @@ export class ConfigService {
   }
 
   get port() {
-    return this.config.PORT;
+    return this.config.BACKEND_PORT;
   }
   get nodeEnv() {
     return this.config.NODE_ENV;
