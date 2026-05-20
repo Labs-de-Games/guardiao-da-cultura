@@ -1,14 +1,17 @@
 # Required environment variables for this stack:
-#   DATABASE_URL      - PostgreSQL connection string
-#   JWT_SECRET        - Secret key for JWT signing
-#   MAGIC_LINK_SECRET - Secret key for magic link signing
-#   POSTGRES_USER     - PostgreSQL username
-#   POSTGRES_PASSWORD - PostgreSQL password
-#   POSTGRES_DB       - PostgreSQL database name
-#   CLOUDFLARE_TUNNEL_TOKEN - Cloudflare Tunnel token
+#   DATABASE_URL              - PostgreSQL connection string
+#   JWT_SECRET                - Secret key for JWT signing
+#   MAGIC_LINK_SECRET         - Secret key for magic link signing
+#   POSTGRES_USER             - PostgreSQL username
+#   POSTGRES_PASSWORD         - PostgreSQL password
+#   POSTGRES_DB               - PostgreSQL database name
+#   CLOUDFLARE_TUNNEL_TOKEN   - Cloudflare Tunnel token
 #
 # Optional environment variables:
+#   FRONTEND_PORT             - Frontend port (default: 3000)
+#   BACKEND_PORT              - Backend port (default: 3001)
 #   FRONTEND_URL              - Frontend URL
+#   FRONTEND_API_URL          - Public API URL exposed to frontend
 #   JWT_EXPIRATION            - JWT expiry
 #   JWT_ISSUER                - JWT issuer
 #   MAGIC_LINK_EXPIRATION_MIN - Magic link expiry in minutes
@@ -29,8 +32,8 @@ services:
     environment:
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - PORT=3000
+      - PORT=${FRONTEND_PORT:-3000}
+      - NEXT_PUBLIC_API_URL=${FRONTEND_API_URL}
     healthcheck:
       test:
         [
@@ -39,7 +42,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://127.0.0.1:3000",
+          "http://127.0.0.1:${FRONTEND_PORT:-3000}",
         ]
       interval: 10s
       timeout: 5s
@@ -64,7 +67,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=${PORT:-3001}
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
@@ -113,10 +116,13 @@ services:
       context: .
       dockerfile: ./nginx/Dockerfile
       args:
-        - NGINX_CONFIG=nginx.prod.conf
+        - NGINX_CONFIG=nginx.production.conf
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
     image: gameplate-nginx:latest
     ports:
-      - "81:80"
+      - "${NGINX_PORT:-81}:80"
     restart: unless-stopped
     healthcheck:
       test:
@@ -145,9 +151,7 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    command: tunnel run --token ${TUNNEL_TOKEN}
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     restart: unless-stopped
     depends_on:
       - nginx

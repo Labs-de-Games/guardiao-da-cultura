@@ -11,7 +11,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://127.0.0.1:3000",
+          "http://127.0.0.1:${FRONTEND_PORT:-3000}",
         ]
       interval: 10s
       timeout: 5s
@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: ./back/Dockerfile
     environment:
-      - PORT=${PORT:-3001}
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
       - DATABASE_URL=${DATABASE_URL}
     healthcheck:
       test:
@@ -35,7 +35,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost:3001/api/v1/health",
+          "http://localhost:${BACKEND_PORT:-3001}/api/v1/health",
         ]
       interval: 10s
       timeout: 5s
@@ -57,7 +57,14 @@ services:
       retries: 5
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+      args:
+        - NGINX_CONFIG=nginx.development.conf
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
     healthcheck:
       test:
         [
