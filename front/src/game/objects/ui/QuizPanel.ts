@@ -654,9 +654,7 @@ export class QuizPanel extends BasePanel {
     } else if (percentage < 70) {
       this.scoreText.setText("Por pouco!");
       this.questionCounterText.setText("Pontuação baixa");
-      this.performanceText.setText(
-        "Com um pouco mais de atenção, você consegue!",
-      );
+      this.performanceText.setText("Com mais atenção, você consegue!");
     } else if (percentage < 100) {
       this.scoreText.setText("Parabéns!");
       this.questionCounterText.setText("Boa pontuação");
