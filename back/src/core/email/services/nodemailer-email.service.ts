@@ -60,12 +60,19 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
   }
 
   async sendWelcomeEmail(email: string, nickname: string): Promise<void> {
-    const template = emailTemplates.welcome(email, nickname);
+    const template = emailTemplates.welcome(
+      email,
+      nickname,
+      this.config.frontendUrl,
+    );
     await this.send(email, template.subject, template.html);
   }
 
   async sendLoginNotificationEmail(email: string): Promise<void> {
-    const template = emailTemplates.loginNotification(email);
+    const template = emailTemplates.loginNotification(
+      email,
+      this.config.frontendUrl,
+    );
     await this.send(email, template.subject, template.html);
   }
 }
