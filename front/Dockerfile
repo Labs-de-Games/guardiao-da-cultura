@@ -33,5 +33,6 @@ COPY --from=build /app/front/.next/standalone ./
 COPY --from=build /app/front/.next/static ./front/.next/static
 COPY --from=build /app/front/public ./front/public
 
-EXPOSE 3000
+ARG FRONTEND_PORT=3000
+EXPOSE ${FRONTEND_PORT}
 CMD ["bun", "front/server.js"]
