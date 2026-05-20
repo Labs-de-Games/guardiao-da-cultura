@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
 import { ToastProvider } from "@/components/ToastProvider";
 import { AuthProvider } from "@/lib/auth/AuthContext";
+import Script from "next/script";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <ToastProvider>{children}</ToastProvider>
           </AuthProvider>
         </ThemeRegistry>
+        <Script src="https://t.contentsquare.net/uxa/bb88b6a708c9e.js" strategy="afterInteractive" />
       </body>
     </html>
   );
