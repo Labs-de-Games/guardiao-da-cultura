@@ -100,7 +100,7 @@ export const emailTemplates = {
     };
   },
 
-  welcome(email: string, nickname: string): EmailTemplate {
+  welcome(email: string, nickname: string, frontendUrl: string): EmailTemplate {
     return {
       subject: "Boas-vindas ao ambiente de testes da 42 Rio!",
       html: baseTemplate(
@@ -109,7 +109,7 @@ export const emailTemplates = {
         <p>ficamos felizes em ter você aqui no <strong>ambiente de testes da 42 Rio</strong>!</p>
         <p>Sua conta <strong>${escapeHtml(email)}</strong> foi criada com sucesso e você já pode começar sua jornada de aprendizado.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Começar agora</a>
+          <a href="${escapeHtml(frontendUrl)}" class="button">Começar agora</a>
         </p>
         <hr class="divider">
         <p style="font-size: 14px; color: #666;">Esperamos que seja divertido! Lembre-se de dar sua opinião ao final, queremos saber como foi sua experiência!</p>`,
@@ -117,7 +117,7 @@ export const emailTemplates = {
     };
   },
 
-  loginNotification(email: string): EmailTemplate {
+  loginNotification(email: string, frontendUrl: string): EmailTemplate {
     return {
       subject: "Novo acesso detectado - 42 Rio",
       html: baseTemplate(
@@ -126,7 +126,7 @@ export const emailTemplates = {
         <p>detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
         <p>Se foi você, pode ignorar este e-mail com segurança.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(process.env.FRONTEND_URL || "http://localhost:3000")}" class="button">Acessar conta</a>
+          <a href="${escapeHtml(frontendUrl)}" class="button">Acessar conta</a>
         </p>
         <hr class="divider">
         <p style="font-size: 14px; color: #666;">Se não foi você, recomendamos que entre em contato com nosso suporte..</p>`,
