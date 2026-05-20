@@ -98,6 +98,12 @@ export function getKeys(
 }
 
 export function registerScene(scene: Phaser.Scene): void {
+  // Capture every configured game key to suppress browser defaults.
+  // This fixes issues like the tab key moving focus out of the game canvas, 
+  // or space/arrow keys scrolling the page.
+  const captureKeys = [...new Set(Object.values(DefaultKeymap).flat())];
+  scene.input.keyboard?.addCapture(captureKeys);
+
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
     cleanupScene(scene);
   });
