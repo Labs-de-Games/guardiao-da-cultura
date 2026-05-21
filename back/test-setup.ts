@@ -1,4 +1,7 @@
 import "reflect-metadata";
+
+jest.spyOn(console, "log").mockImplementation(() => {});
+
 process.env.DATABASE_URL =
   process.env.DATABASE_URL ||
   "postgres://postgres:postgres@localhost:5432/test";
