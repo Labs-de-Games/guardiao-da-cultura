@@ -2,7 +2,7 @@
   "name": "back",
   "private": true,
   "scripts": {
-    "start:dev": "nest start --watch",
+    "start:dev": "npx nest start --watch",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "lint": "biome check .",
