@@ -6,23 +6,23 @@ PROJECT_NAME = gameplate
 
 # --- SETUP & INSTALLATION ---
 install:
-	@echo "Installing dependencies with Bun..."
-	bun install --frozen-lockfile
+	@echo "Installing dependencies with npm..."
+	npm ci
 
 setup: install
 	@echo "Setup complete. You can now run:"
 	@echo "  make dev-all     - Start local development (Turbo)"
 	@echo "  make docker-all  - Start Docker development"
 
-# --- NATIVE RUN (Bun/Turbo) ---
+# --- NATIVE RUN (npm/Turbo) ---
 dev-all: install
-	bun run dev
+	npm run dev
 
 dev-front: install
-	bun run dev --filter=front
+	npm run dev -- --filter=front
 
 dev-back: install
-	bun run dev --filter=back
+	npm run dev -- --filter=back
 
 # --- DOCKER RUN ---
 dev:
@@ -39,10 +39,10 @@ docker-back:
 
 # --- QA & TESTS ---
 lint:
-	bun run lint
+	npm run lint
 
 test:
-	bun run test
+	npm run test
 
 build-front:
 	docker compose -f compose.development.yaml build front
@@ -58,8 +58,8 @@ sync:
 	@echo "Syncing node_modules..."
 	@echo "Removing existing node_modules..."
 	rm -rf node_modules front/node_modules back/node_modules
-	@echo "Reinstalling with Bun..."
-	bun install --frozen-lockfile
+	@echo "Reinstalling with npm..."
+	npm ci
 	@echo "Sync complete. node_modules are now aligned with host."
 
 # --- DATABASE ---
@@ -93,10 +93,10 @@ help:
 	@echo ""
 	@echo "=== SETUP ==="
 	@echo "  make setup       - Initial setup (install dependencies)"
-	@echo "  make install     - Install dependencies with Bun"
+	@echo "  make install     - Install dependencies with npm"
 	@echo "  make sync        - Reinstall node_modules (fix conflicts)"
 	@echo ""
-	@echo "=== Native Development (Bun/Turbo) ==="
+	@echo "=== Native Development (npm/Turbo) ==="
 	@echo "  make dev-all     - Run both front and back locally via Turbo"
 	@echo "  make dev-front   - Run ONLY front locally"
 	@echo "  make dev-back    - Run ONLY back locally"
