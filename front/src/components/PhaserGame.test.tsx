@@ -3,6 +3,7 @@ import { act } from "react";
 import PhaserGame from "./PhaserGame";
 
 jest.mock("../game/main", () => ({
+  __esModule: true,
   default: () => ({ destroy: () => {} }),
 }));
 
