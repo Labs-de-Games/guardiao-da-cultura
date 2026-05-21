@@ -10,7 +10,7 @@ export default function PhaserGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingType, setLoadingType] = useState<string>("initial");
+  const [_loadingType, setLoadingType] = useState<string>("initial");
 
   useEffect(() => {
     const handleLoadingStart = (event: Event) => {
