@@ -4,6 +4,7 @@ import HomePage from "./page";
 jest.mock("../components/PhaserGame", () => {
   const React = require("react");
   return {
+    __esModule: true,
     default: () =>
       React.createElement(
         "div",
