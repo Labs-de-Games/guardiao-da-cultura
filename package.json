@@ -30,7 +30,7 @@
       "biome check --write"
     ]
   },
-  "packageManager": "bun@1.3.11",
+  "packageManager": "npm@11.12.1",
   "dependencies": {
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
