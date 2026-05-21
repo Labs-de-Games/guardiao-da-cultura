@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { ProgressionService } from "../../../src/modules/progression/progression.service";
@@ -6,30 +5,28 @@ import { UserProgress } from "../../../src/modules/progression/user-progress.ent
 import { GameEventType } from "../../../src/shared/events/game-events";
 
 type QueryBuilderMock = {
-  insert: ReturnType<typeof mock<[], QueryBuilderMock>>;
-  into: ReturnType<typeof mock<[unknown], QueryBuilderMock>>;
-  values: ReturnType<typeof mock<[unknown], QueryBuilderMock>>;
-  orIgnore: ReturnType<typeof mock<[], QueryBuilderMock>>;
-  execute: ReturnType<typeof mock<[], Promise<unknown>>>;
+  insert: jest.Mock<QueryBuilderMock, []>;
+  into: jest.Mock<QueryBuilderMock, [unknown]>;
+  values: jest.Mock<QueryBuilderMock, [unknown]>;
+  orIgnore: jest.Mock<QueryBuilderMock, []>;
+  execute: jest.Mock<Promise<unknown>, []>;
 };
 
 type ProgressRepoMock = {
-  findOne: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
-  create: ReturnType<typeof mock<[unknown], unknown>>;
-  save: ReturnType<typeof mock<[unknown], Promise<unknown>>>;
-  update: ReturnType<
-    typeof mock<[unknown, unknown], Promise<{ affected: number }>>
-  >;
-  createQueryBuilder: ReturnType<typeof mock<[], QueryBuilderMock>>;
+  findOne: jest.Mock<Promise<unknown>, [unknown]>;
+  create: jest.Mock<unknown, [unknown]>;
+  save: jest.Mock<Promise<unknown>, [unknown]>;
+  update: jest.Mock<Promise<{ affected: number }>, [unknown, unknown]>;
+  createQueryBuilder: jest.Mock<QueryBuilderMock, []>;
 };
 
 function createQueryBuilderMock(): QueryBuilderMock {
   const builder = {} as QueryBuilderMock;
-  builder.insert = mock(() => builder);
-  builder.into = mock(() => builder);
-  builder.values = mock(() => builder);
-  builder.orIgnore = mock(() => builder);
-  builder.execute = mock(async () => ({
+  builder.insert = jest.fn(() => builder);
+  builder.into = jest.fn(() => builder);
+  builder.values = jest.fn(() => builder);
+  builder.orIgnore = jest.fn(() => builder);
+  builder.execute = jest.fn(async () => ({
     identifiers: [],
     generatedMaps: [],
     raw: [],
@@ -44,11 +41,11 @@ describe("ProgressionService", () => {
   beforeEach(async () => {
     const queryBuilder = createQueryBuilderMock();
     repo = {
-      findOne: mock(async () => null),
-      create: mock((dto: unknown) => dto),
-      save: mock(async (entity: unknown) => entity),
-      update: mock(async () => ({ affected: 1 })),
-      createQueryBuilder: mock(() => queryBuilder),
+      findOne: jest.fn(async () => null),
+      create: jest.fn((dto: unknown) => dto),
+      save: jest.fn(async (entity: unknown) => entity),
+      update: jest.fn(async () => ({ affected: 1 })),
+      createQueryBuilder: jest.fn(() => queryBuilder),
     };
 
     const moduleRef = await Test.createTestingModule({
