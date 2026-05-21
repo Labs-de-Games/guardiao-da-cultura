@@ -10,7 +10,7 @@ For AI agent collaboration guidelines, see [AGENTS.md](./AGENTS.md).
 
 Ensure you have the following installed:
 
-- Bun (latest version)
+- Node.js (v24+)
 - Docker and Docker Compose
 - Git
 
@@ -22,7 +22,7 @@ git clone <repository-url>
 cd gameplate
 
 # Install dependencies
-bun install
+npm ci
 
 # Start development environment
 make dev
@@ -135,7 +135,7 @@ Every Pull Request triggers the following checks:
 | Stage | Description |
 |-------|-------------|
 | **Lint** | Run Biome linting and formatting checks (`make lint`) |
-| **Build** | Validate frontend and backend builds (`bun run build`) |
+| **Build** | Validate frontend and backend builds (`npm run build`) |
 | **Test** | Execute test suites (`make test`) |
 
 All checks must pass before merging.
@@ -181,7 +181,7 @@ This project uses Biome for linting and formatting:
 make lint
 
 # Fix auto-fixable issues
-bun run lint --write
+npm run lint -- --write
 ```
 
 Pre-commit hooks use lint-staged to run Biome only on staged files.
@@ -193,7 +193,7 @@ Pre-commit hooks use lint-staged to run Biome only on staged files.
 make test
 
 # Run tests in watch mode (during development)
-bun test --watch
+npm test -- --watch
 ```
 
 ### Type Safety
@@ -238,8 +238,8 @@ If ports 3000, 3001, or 5432 are already in use:
 ```bash
 # Clean install
 rm -rf node_modules front/node_modules back/node_modules
-rm -rf bun.lockb front/bun.lockb back/bun.lockb
-bun install
+rm -rf package-lock.json front/package-lock.json back/package-lock.json
+npm ci
 ```
 
 ## Resources
@@ -247,7 +247,7 @@ bun install
 - [Next.js Documentation](https://nextjs.org/docs)
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [Phaser 3 Documentation](https://phaser.io/docs/)
-- [Bun Documentation](https://bun.sh/docs)
+- [Node.js Documentation](https://nodejs.org/docs/)
 - [Biome Documentation](https://biomejs.dev/)
 
 ## Questions?

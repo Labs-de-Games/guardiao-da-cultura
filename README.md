@@ -10,14 +10,14 @@ This repository contains the complete development environment for our browser-ba
 
 - **Frontend**: Next.js with React and Phaser 3 for game rendering
 - **Backend**: NestJS API with PostgreSQL database
-- **Tooling**: Bun runtime, Biome for linting/formatting, Docker for local development
+- **Tooling**: Node.js runtime, Biome for linting/formatting, Docker for local development
 - **CI/CD**: GitHub Actions for automated testing and deployment
 
 ## Tech Stack
 
 | Layer | Technology | Version | Documentation |
 |-------|------------|---------|---------------|
-| Runtime | [Bun](https://bun.sh/) | latest | [Bun Docs](https://bun.sh/docs) |
+| Runtime | [Node.js](https://nodejs.org/) | 24+ | [Node.js Docs](https://nodejs.org/docs/) |
 | Frontend | [Next.js](https://nextjs.org/) | 14+ | [Next.js Docs](https://nextjs.org/docs) |
 | Frontend | [React](https://react.dev/) | 18+ | [React Docs](https://react.dev/) |
 | Game Engine | [Phaser 3](https://phaser.io/) | 3.70+ | [Phaser Docs](https://phaser.io/docs/) |
@@ -63,7 +63,7 @@ This repository contains the complete development environment for our browser-ba
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) (latest version)
+- [Node.js](https://nodejs.org/) (v24+)
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - Git
 
@@ -75,14 +75,14 @@ git clone <repository-url>
 cd gameplate
 
 # Install dependencies
-bun install
+npm ci
 
 # Set up environment variables
 cp .env.example .env
 # Edit .env with your local configuration
 
 # Set up developer tooling
-bun run prepare  # Installs pre-commit hooks
+npm run prepare  # Installs pre-commit hooks
 
 # Start development environment
 make dev
@@ -123,8 +123,8 @@ The development stack includes:
 |---------|-------------|
 | `make lint` | Run Biome linting and formatting checks |
 | `make test` | Run test suites |
-| `bun run lint --write` | Fix auto-fixable linting issues |
-| `bun test --watch` | Run tests in watch mode |
+| `npm run lint -- --write` | Fix auto-fixable linting issues |
+| `npm test -- --watch` | Run tests in watch mode |
 
 ### Build
 
