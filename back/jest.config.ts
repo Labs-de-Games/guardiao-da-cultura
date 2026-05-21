@@ -8,7 +8,15 @@ const config: Config = {
   moduleFileExtensions: ["js", "json", "ts"],
   rootDir: ".",
   transform: {
-    "^.+\\.ts$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        tsconfig: "tsconfig.test.json",
+        diagnostics: {
+          ignoreCodes: [151002],
+        },
+      },
+    ],
   },
 };
 
