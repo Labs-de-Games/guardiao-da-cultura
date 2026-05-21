@@ -357,7 +357,7 @@ flowchart TD
 
 ### Install dependencies
 ```bash
-cd back && bun add @nestjs/passport @nestjs/jwt @nestjs/throttler passport passport-jwt cookie-parser && bun add -D @types/passport-jwt
+cd back && npm add @nestjs/passport @nestjs/jwt @nestjs/throttler passport passport-jwt cookie-parser && npm add -D @types/passport-jwt
 ```
 
 > Note: `bcryptjs` and `@types/bcryptjs` are **removed** — passwordless auth does not need password hashing. Token hashing uses SHA-256 (native Node.js `crypto`).
@@ -600,7 +600,7 @@ Using `@nestjs/throttler`:
 
 ### Install dependencies
 ```bash
-cd front && bun add @mui/material @emotion/react @emotion/styled @mui/icons-material axios js-cookie react-hook-form @hookform/resolvers && bun add -D @types/js-cookie
+cd front && npm add @mui/material @emotion/react @emotion/styled @mui/icons-material axios js-cookie react-hook-form @hookform/resolvers && npm add -D @types/js-cookie
 ```
 
 ### Files to create/modify
@@ -750,8 +750,8 @@ The interceptor must handle concurrent 401s:
 
 ## Verification
 
-1. **Backend:** `cd back && bun test` — all unit and E2E tests pass
-2. **Frontend:** `cd front && bun test` — all component and unit tests pass
+1. **Backend:** `cd back && npm test` — all unit and E2E tests pass
+2. **Frontend:** `cd front && npm test` — all component and unit tests pass
 3. **Lint:** `make lint` — no errors
 4. **Typecheck:** `make typecheck` — no errors
 5. **Manual auth flow:** Register → verify email → auto-login → access protected route → refresh token → logout → verify token revoked

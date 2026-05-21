@@ -28,7 +28,7 @@
 
 ## Prerequisites
 
-- [Bun](https://bun.sh/) installed
+- [Node.js](https://nodejs.org/) (v24+) installed
 - Docker and Docker Compose running
 - Git repository cloned and on the `feat/auth-implementation` branch
 - Backend `.env` configured with valid `JWT_SECRET`, `MAGIC_LINK_SECRET`, and email service settings
