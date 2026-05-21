@@ -7,6 +7,9 @@ const config: Config = {
   testRegex: ".*\\.spec\\.ts$",
   moduleFileExtensions: ["js", "json", "ts"],
   rootDir: ".",
+  transform: {
+    "^.+\\.ts$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
+  },
 };
 
 export default config;

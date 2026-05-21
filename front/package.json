@@ -29,6 +29,7 @@
     "@biomejs/biome": "latest",
     "@happy-dom/global-registrator": "latest",
     "@testing-library/jest-dom": "latest",
+    "@testing-library/dom": "latest",
     "@testing-library/react": "latest",
     "@types/jest": "latest",
     "@types/js-cookie": "^3.0.6",
