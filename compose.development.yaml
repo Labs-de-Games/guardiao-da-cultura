@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: ./front/Dockerfile
       target: build
-    command: bun run dev
+    command: npm run dev
     ports:
       - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     volumes:
@@ -29,7 +29,7 @@ services:
       context: .
       dockerfile: ./back/Dockerfile
       target: build
-    command: sh -c "cd back && bun run start:dev"
+    command: sh -c "cd back && npm run start:dev"
     ports:
       - "${BACKEND_PORT:-3001}:${BACKEND_PORT:-3001}"
     volumes:
