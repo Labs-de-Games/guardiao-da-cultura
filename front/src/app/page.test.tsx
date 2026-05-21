@@ -1,28 +1,35 @@
-import { describe, expect, it, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import HomePage from "./page";
 
-mock.module("../components/PhaserGame", () => ({
-  default: () => <div data-testid="phaser-game">Mocked Game</div>,
-}));
+jest.mock("../components/PhaserGame", () => {
+  const React = require("react");
+  return {
+    default: () =>
+      React.createElement(
+        "div",
+        { "data-testid": "phaser-game" },
+        "Mocked Game",
+      ),
+  };
+});
 
-mock.module("next/navigation", () => ({
-  useRouter: () => ({ push: mock(() => {}), replace: mock(() => {}) }),
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: jest.fn(() => {}), replace: jest.fn(() => {}) }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
-mock.module("@/lib/auth/useAuth", () => ({
+jest.mock("@/lib/auth/useAuth", () => ({
   useAuth: () => ({
     user: null,
     isAuthenticated: true,
     isLoading: false,
     accessToken: null,
-    login: mock(async () => {}),
-    confirmLogin: mock(async () => {}),
-    register: mock(async () => {}),
-    confirmVerifyEmail: mock(async () => {}),
-    logout: mock(async () => {}),
-    logoutAll: mock(async () => {}),
+    login: jest.fn(async () => {}),
+    confirmLogin: jest.fn(async () => {}),
+    register: jest.fn(async () => {}),
+    confirmVerifyEmail: jest.fn(async () => {}),
+    logout: jest.fn(async () => {}),
+    logoutAll: jest.fn(async () => {}),
   }),
 }));
 
