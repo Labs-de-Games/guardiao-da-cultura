@@ -65,11 +65,11 @@ sync:
 # --- DATABASE ---
 db-migrate:
 	@echo "Running TypeORM migrations inside back container..."
-	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && node_modules/.bin/typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
+	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
 
 db-migrate-generate:
 	@if [ -z "$(NAME)" ]; then echo "Usage: make db-migrate-generate NAME=MigrationName"; exit 1; fi
-	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && node_modules/.bin/typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
+	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
 
 # --- CLEANUP ---
 down:
