@@ -23,6 +23,67 @@
 # You can set them in a .env file in the project root.
 
 services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    networks:
+      - frontend
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+      args:
+        - NGINX_CONFIG=nginx.staging.conf
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
+    image: gameplate-nginx:latest
+    ports:
+      - "${NGINX_PORT:-82}:80"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:80/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      front:
+        condition: service_healthy
+      back:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
   front:
     image: ghcr.io/labs-de-games/gameplate-front:latest
     restart: unless-stopped
@@ -127,67 +188,6 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
-
-  nginx:
-    build:
-      context: .
-      dockerfile: ./nginx/Dockerfile
-      args:
-        - NGINX_CONFIG=nginx.staging.conf
-    environment:
-      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
-      - BACKEND_PORT=${BACKEND_PORT:-3001}
-    image: gameplate-nginx:latest
-    ports:
-      - "${NGINX_PORT:-82}:80"
-    restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://127.0.0.1:80/health",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    depends_on:
-      front:
-        condition: service_healthy
-      back:
-        condition: service_healthy
-    networks:
-      - frontend
-      - backend
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-        reservations:
-          cpus: "0.1"
-          memory: 64M
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    restart: unless-stopped
-    depends_on:
-      - nginx
-    networks:
-      - frontend
-      - backend
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-        reservations:
-          cpus: "0.1"
-          memory: 64M
 
 volumes:
   postgres_data:
