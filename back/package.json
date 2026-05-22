@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts",
-    "migration:run:prod": "node node_modules/.bin/typeorm -d dist/core/database/data-source.js migration:run",
+    "migration:run:prod": "npx typeorm -d dist/core/database/data-source.js migration:run",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/core/database/data-source.ts",
     "db:drop": "typeorm-ts-node-commonjs schema:drop -d src/core/database/data-source.ts"
   },
