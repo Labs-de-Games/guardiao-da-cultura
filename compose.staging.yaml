@@ -53,8 +53,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 512M
+          cpus: "0.75"
+          memory: 768M
         reservations:
           cpus: "0.25"
           memory: 256M
@@ -97,8 +97,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 512M
+          cpus: "0.75"
+          memory: 768M
         reservations:
           cpus: "0.25"
           memory: 256M
@@ -122,8 +122,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 512M
+          cpus: "0.75"
+          memory: 768M
         reservations:
           cpus: "0.25"
           memory: 256M
@@ -133,13 +133,13 @@ services:
       context: .
       dockerfile: ./nginx/Dockerfile
       args:
-        - NGINX_CONFIG=nginx.production.conf
+        - NGINX_CONFIG=nginx.staging.conf
     environment:
       - FRONTEND_PORT=${FRONTEND_PORT:-3000}
       - BACKEND_PORT=${BACKEND_PORT:-3001}
     image: gameplate-nginx:latest
     ports:
-      - "${NGINX_PORT:-81}:80"
+      - "${NGINX_PORT:-82}:80"
     restart: unless-stopped
     healthcheck:
       test:
@@ -165,8 +165,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 128M
+          cpus: "0.5"
+          memory: 256M
         reservations:
           cpus: "0.1"
           memory: 64M
@@ -183,8 +183,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 128M
+          cpus: "0.5"
+          memory: 256M
         reservations:
           cpus: "0.1"
           memory: 64M
