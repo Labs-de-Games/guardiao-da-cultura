@@ -695,6 +695,7 @@ export class Game extends Scene {
                   GameEventType.LEVEL_COMPLETED,
                   this.levelId,
                   {
+                    levelNumber: this.levelDef.levelNumber,
                     score: payload.totalQuarters,
                     stars: payload.totalStars,
                     rating: payload.rating,
