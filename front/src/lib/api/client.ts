@@ -1,4 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { clearAuthStatusCookie } from "@/lib/auth/cookies";
+import { broadcastAuthEvent } from "@/lib/auth/sync";
 import { env } from "@/lib/env";
 import {
   AuthError,
@@ -29,6 +31,28 @@ function onTokenRefreshed(token: string): void {
 
 function addRefreshSubscriber(callback: (token: string) => void): void {
   refreshSubscribers.push(callback);
+}
+
+function forceLogout(): void {
+  // Keep this axios-layer logout minimal and side-effect safe:
+  // clear local auth state, sync across tabs, and navigate to login.
+  clearAccessToken();
+  clearAuthStatusCookie();
+  broadcastAuthEvent("LOGOUT");
+
+  if (typeof window !== "undefined") {
+    const loginPath = "/login";
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const nextUrl =
+      currentPath && currentPath !== loginPath
+        ? `?next=${encodeURIComponent(currentPath)}`
+        : "";
+
+    // Prefer hard navigation to guarantee full reset of app state.
+    if (window.location.pathname !== loginPath) {
+      window.location.assign(`${loginPath}${nextUrl}`);
+    }
+  }
 }
 
 function handleAuthError(error: AxiosError): never {
@@ -74,6 +98,16 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
+    // If refresh itself fails, we must not try to refresh again (would deadlock).
+    const originalUrl = originalRequest?.url ?? "";
+    if (
+      originalUrl.includes("/auth/refresh") &&
+      (error.response?.status === 401 || error.response?.status === 403)
+    ) {
+      forceLogout();
+      handleAuthError(error);
+    }
+
     if (!originalRequest || error.response?.status !== 401) {
       return Promise.reject(error);
     }
@@ -96,7 +130,8 @@ apiClient.interceptors.response.use(
           return newToken;
         })
         .catch((refreshError: AxiosError) => {
-          accessToken = null;
+          // Refresh token missing/invalid/etc. -> treat as logged out.
+          forceLogout();
           handleAuthError(refreshError);
         })
         .finally(() => {
