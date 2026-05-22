@@ -124,4 +124,92 @@ describe("ProgressionService", () => {
     expect(repo.findOne).not.toHaveBeenCalled();
     expect(repo.update).not.toHaveBeenCalled();
   });
+
+  describe("handleLevelCompleted", () => {
+    it("advances currentLevel when levelNumber is provided", async () => {
+      const userId = "user_1";
+      const progress = {
+        id: "p1",
+        userId,
+        completedLevels: "{}",
+        clues: "{}",
+        quizResults: "{}",
+        totalStars: 0,
+        currentLevel: 1,
+      };
+
+      repo.findOne.mockImplementation(async () => progress);
+
+      await service.handleLevelCompleted({
+        userId,
+        type: GameEventType.LEVEL_COMPLETED,
+        timestamp: new Date(),
+        metadata: {
+          levelId: "level_01",
+          levelNumber: 1,
+        },
+      });
+
+      expect(repo.update).toHaveBeenCalledTimes(1);
+      const updatePayload = repo.update.mock.calls[0][1];
+      expect(updatePayload.currentLevel).toBe(2);
+    });
+
+    it("does not increment currentLevel when replaying a lower level", async () => {
+      const userId = "user_1";
+      const progress = {
+        id: "p1",
+        userId,
+        completedLevels: "{}",
+        clues: "{}",
+        quizResults: "{}",
+        totalStars: 0,
+        currentLevel: 4,
+      };
+
+      repo.findOne.mockImplementation(async () => progress);
+
+      await service.handleLevelCompleted({
+        userId,
+        type: GameEventType.LEVEL_COMPLETED,
+        timestamp: new Date(),
+        metadata: {
+          levelId: "level_01",
+          levelNumber: 1,
+        },
+      });
+
+      expect(repo.update).toHaveBeenCalledTimes(1);
+      const updatePayload = repo.update.mock.calls[0][1];
+      expect(updatePayload.currentLevel).toBe(4);
+    });
+
+    it("does not change currentLevel when levelNumber is missing", async () => {
+      const userId = "user_1";
+      const progress = {
+        id: "p1",
+        userId,
+        completedLevels: "{}",
+        clues: "{}",
+        quizResults: "{}",
+        totalStars: 0,
+        currentLevel: 3,
+      };
+
+      repo.findOne.mockImplementation(async () => progress);
+
+      await service.handleLevelCompleted({
+        userId,
+        type: GameEventType.LEVEL_COMPLETED,
+        timestamp: new Date(),
+        metadata: {
+          levelId: "level_01",
+        },
+      });
+
+      expect(repo.update).toHaveBeenCalledTimes(1);
+      const updatePayload = repo.update.mock.calls[0][1];
+      expect(updatePayload.currentLevel).toBe(3);
+    });
+  });
 });
