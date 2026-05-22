@@ -47,12 +47,10 @@ export class ProgressionService {
     const totalStars =
       progress.totalStars + (typeof stars === "number" ? stars : 0);
 
-    const rawLevelNumber = meta.levelNumber ?? progress.currentLevel;
-    const levelNumber =
-      typeof rawLevelNumber === "number"
-        ? rawLevelNumber
+    const currentLevel =
+      typeof meta.levelNumber === "number"
+        ? Math.max(progress.currentLevel, meta.levelNumber + 1)
         : progress.currentLevel;
-    const currentLevel = Math.max(progress.currentLevel, levelNumber + 1);
 
     await this.progressRepository.update(progress.id, {
       completedLevels: JSON.stringify(completedLevels),
