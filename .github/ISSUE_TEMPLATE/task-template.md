@@ -1,3 +1,9 @@
+---
+name: Task
+about: A well-defined unit of work
+title: "[TASK] "
+labels: task
+---
 
 ## Description
 

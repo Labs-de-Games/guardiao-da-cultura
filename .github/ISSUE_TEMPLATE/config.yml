@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Labs-de-Games Discussion
+    url: https://github.com/Labs-de-Games/gameplate/discussions
+    about: Please ask questions here
