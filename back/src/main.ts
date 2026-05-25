@@ -3,11 +3,13 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module";
 import { ConfigService } from "./core/config/config.service";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
   const config = app.get(ConfigService);
 
   app.setGlobalPrefix("api/v1");
