@@ -18,6 +18,9 @@ const schema = z
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().default("42 Rio <noreply@42.rio>"),
+    LOG_LEVEL: z
+      .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+      .default("debug"),
   })
   .refine(
     (data) => {
@@ -53,6 +56,7 @@ export class ConfigService {
       GMAIL_USER: process.env.GMAIL_USER,
       GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD,
       EMAIL_FROM: process.env.EMAIL_FROM,
+      LOG_LEVEL: process.env.LOG_LEVEL,
     });
   }
 
@@ -94,5 +98,8 @@ export class ConfigService {
   }
   get emailFrom() {
     return this.config.EMAIL_FROM;
+  }
+  get logLevel() {
+    return this.config.LOG_LEVEL;
   }
 }
