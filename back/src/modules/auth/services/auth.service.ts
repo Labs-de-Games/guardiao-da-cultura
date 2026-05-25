@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import type { Response } from "express";
+import { PinoLogger } from "nestjs-pino";
 import { ConfigService } from "../../../core/config/config.service";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
@@ -14,6 +15,7 @@ import { TokenService } from "./token.service";
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly logger: PinoLogger,
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly magicLinkService: MagicLinkService,
@@ -104,6 +106,10 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<{ message: string }> {
     const existingUser = await this.userService.findByEmail(dto.email);
     if (existingUser) {
+      this.logger.warn(
+        { email: dto.email },
+        "Registration attempted for existing email",
+      );
       return { message: "Check your email" };
     }
 
@@ -116,6 +122,8 @@ export class AuthService {
       isEmailVerified: false,
       isActive: true,
     });
+
+    this.logger.info({ userId: user.id }, "New user registered");
 
     const { rawToken } = await this.magicLinkService.createMagicLink(
       user.id,
@@ -134,6 +142,10 @@ export class AuthService {
   ): Promise<{ message: string }> {
     const user = await this.userService.findByEmail(dto.email);
     if (!user?.isActive || !user.isEmailVerified) {
+      this.logger.warn(
+        { email: dto.email },
+        "Login attempted for inactive or unverified user",
+      );
       return { message: "Check your email" };
     }
 
@@ -150,6 +162,8 @@ export class AuthService {
     const magicLinkUrl = `${this.configService.frontendUrl}/confirm-login?token=${rawToken}`;
     await this.emailService.sendMagicLinkEmail(user.email, magicLinkUrl);
 
+    this.logger.info({ userId: user.id }, "Magic link sent for login");
+
     return { message: "Check your email" };
   }
 
@@ -160,6 +174,7 @@ export class AuthService {
   ): Promise<{ redirectTo: string }> {
     const cookieData = this.readLoginAttemptCookie(req);
     if (!cookieData) {
+      this.logger.error("Invalid or expired login attempt cookie");
       throw new UnauthorizedException("Invalid or expired login attempt");
     }
 
@@ -168,10 +183,12 @@ export class AuthService {
       MagicLinkTokenType.MagicLink,
     );
     if (!token) {
+      this.logger.error("Invalid or expired magic link token");
       throw new UnauthorizedException("Invalid or expired magic link");
     }
 
     if (token.deviceNonce !== cookieData.nonce) {
+      this.logger.error({ userId: token.user.id }, "Magic link nonce mismatch");
       throw new UnauthorizedException("Invalid login attempt");
     }
 
@@ -180,6 +197,11 @@ export class AuthService {
     );
     this.setAuthCookies(res, refreshToken);
     await this.emailService.sendLoginNotificationEmail(token.user.email);
+
+    this.logger.info(
+      { userId: token.user.id },
+      "User logged in via magic link",
+    );
 
     return { redirectTo: "/" };
   }
@@ -193,6 +215,7 @@ export class AuthService {
       MagicLinkTokenType.Verification,
     );
     if (!token) {
+      this.logger.error("Invalid or expired verification link token");
       throw new UnauthorizedException("Invalid or expired verification link");
     }
 
@@ -203,6 +226,8 @@ export class AuthService {
     const refreshToken = await this.tokenService.generateRefreshToken(user.id);
     this.setAuthCookies(res, refreshToken);
     await this.emailService.sendWelcomeEmail(user.email, user.nickname);
+
+    this.logger.info({ userId: user.id }, "User email verified and logged in");
 
     return { redirectTo: "/" };
   }
@@ -220,6 +245,7 @@ export class AuthService {
       this.tokenService.addToBlacklist(accessTokenJti, exp);
     }
     this.clearAuthCookies(res);
+    this.logger.info("User logged out");
     return { message: "Logged out successfully" };
   }
 
@@ -234,6 +260,7 @@ export class AuthService {
       this.tokenService.addToBlacklist(accessTokenJti, exp);
     }
     this.clearAuthCookies(res);
+    this.logger.info({ userId }, "User logged out from all devices");
     return { message: "Logged out from all devices" };
   }
 
@@ -252,6 +279,8 @@ export class AuthService {
 
     const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
     await this.emailService.sendVerificationEmail(email, verificationUrl);
+
+    this.logger.info({ userId: user.id }, "Verification email resent");
 
     return { message: "Check your email" };
   }
