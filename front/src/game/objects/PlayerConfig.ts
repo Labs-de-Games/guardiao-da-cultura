@@ -80,7 +80,7 @@ export const PLAYER_PHYSICS = {
   /** Hitbox offset (setOffset) */
   HITBOX_OFFSET: {
     X: 18,
-    Y: -1,
+    Y: -1.5,
   },
 
   /** Scale and Hitbox for the dragging animation */
@@ -91,7 +91,7 @@ export const PLAYER_PHYSICS = {
   },
   DRAGGING_HITBOX_OFFSET: {
     X: 10,
-    Y: -1,
+    Y: -1.5,
   },
   JUMP_HITBOX: {
     WIDTH: 12,
