@@ -6,6 +6,7 @@ import { ConfigModule } from "./core/config/config.module";
 import { DatabaseModule } from "./core/database/database.module";
 import { GlobalJwtGuardProvider } from "./core/guards/global-jwt.guard";
 import { HealthModule } from "./core/health/health.module";
+import { LoggerModule } from "./core/logger/logger.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -18,6 +19,7 @@ import { UsersModule } from "./modules/users/users.module";
 
 @Module({
   imports: [
+    LoggerModule,
     EventEmitterModule.forRoot(),
     ConfigModule,
     DatabaseModule,
