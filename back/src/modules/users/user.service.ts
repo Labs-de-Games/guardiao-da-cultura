@@ -1,11 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { PinoLogger } from "nestjs-pino";
 import type { Repository } from "typeorm";
 import { User } from "./user.entity";
 
 @Injectable()
 export class UserService {
   constructor(
+    private readonly logger: PinoLogger,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -24,11 +26,15 @@ export class UserService {
 
   async create(data: Partial<User>): Promise<User> {
     const user = this.userRepository.create(data);
-    return this.userRepository.save(user);
+    const saved = await this.userRepository.save(user);
+    this.logger.info({ userId: saved.id }, "User created");
+    return saved;
   }
 
   async save(user: User): Promise<User> {
-    return this.userRepository.save(user);
+    const saved = await this.userRepository.save(user);
+    this.logger.info({ userId: saved.id }, "User updated");
+    return saved;
   }
 
   async updateLastLoginAt(

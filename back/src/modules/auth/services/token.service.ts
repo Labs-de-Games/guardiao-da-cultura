@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
+import { PinoLogger } from "nestjs-pino";
 import { IsNull, type Repository } from "typeorm";
 import { ConfigService } from "../../../core/config/config.service";
 import type { User } from "../../users/user.entity";
@@ -14,6 +15,7 @@ export class TokenService {
   private readonly blacklist = new Map<string, number>();
 
   constructor(
+    private readonly logger: PinoLogger,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @InjectRepository(RefreshToken)
@@ -80,10 +82,12 @@ export class TokenService {
     });
 
     if (payload.type !== JwtTokenType.Access) {
+      this.logger.warn({ jti: payload.jti }, "Invalid token type");
       throw new UnauthorizedException("Invalid token type");
     }
 
     if (this.isTokenBlacklisted(payload.jti)) {
+      this.logger.warn({ jti: payload.jti }, "Token has been revoked");
       throw new UnauthorizedException("Token has been revoked");
     }
 
@@ -102,19 +106,26 @@ export class TokenService {
     });
 
     if (!token) {
+      this.logger.warn("Invalid refresh token rotation attempt");
       throw new UnauthorizedException("Invalid refresh token");
     }
 
     if (token.revokedAt) {
+      this.logger.error({ userId: token.user.id }, "Token reuse detected");
       await this.revokeAllUserTokens(token.user.id);
       throw new UnauthorizedException("Token reuse detected");
     }
 
     if (token.expiresAt < new Date()) {
+      this.logger.warn({ userId: token.user.id }, "Refresh token expired");
       throw new UnauthorizedException("Refresh token expired");
     }
 
     if (!token.user.isActive || !token.user.isEmailVerified) {
+      this.logger.warn(
+        { userId: token.user.id },
+        "User account is inactive or unverified",
+      );
       throw new UnauthorizedException("User account is inactive or unverified");
     }
 
@@ -129,6 +140,7 @@ export class TokenService {
     await this.refreshTokenRepository.save(token);
 
     const { token: accessToken, jti } = this.generateAccessToken(token.user);
+    this.logger.info({ userId: token.user.id }, "Token rotated successfully");
     return { accessToken, refreshToken: newRawToken, jti };
   }
 
@@ -138,6 +150,7 @@ export class TokenService {
       { token: hashedToken },
       { revokedAt: new Date() },
     );
+    this.logger.info("Refresh token revoked");
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {
@@ -145,10 +158,12 @@ export class TokenService {
       { user: { id: userId }, revokedAt: IsNull() },
       { revokedAt: new Date() },
     );
+    this.logger.info({ userId }, "All user tokens revoked");
   }
 
   addToBlacklist(jti: string, exp: number): void {
     this.blacklist.set(jti, exp);
+    this.logger.info({ jti }, "Access token added to blacklist");
   }
 
   isTokenBlacklisted(jti: string): boolean {
