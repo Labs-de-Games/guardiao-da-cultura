@@ -29,13 +29,13 @@ dev:
 	docker compose -f compose.development.yaml up --build -d
 
 docker-all:
-	docker compose -f compose.base.yaml -f compose.development.yaml up --build
+	docker compose -f compose.development.yaml up --build
 
 docker-front:
-	docker compose -f compose.base.yaml -f compose.development.yaml up --build front
+	docker compose -f compose.development.yaml up --build front
 
 docker-back:
-	docker compose -f compose.base.yaml -f compose.development.yaml up --build back
+	docker compose -f compose.development.yaml up --build back
 
 # --- QA & TESTS ---
 lint:
