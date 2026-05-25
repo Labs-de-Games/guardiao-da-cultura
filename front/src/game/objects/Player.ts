@@ -14,13 +14,13 @@ import {
 
 export class Player
   extends Phaser.Physics.Arcade.Sprite
-  implements IPlayerState
-{
+  implements IPlayerState {
   keys: PlayerKeys;
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+  isClimbingStairs: boolean = false;
 
   private draggableRegistry: DraggableItem[] = [];
   private carryableRegistry: CarryableItem[] = [];
@@ -324,14 +324,22 @@ export class Player
       this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
       this.anims.isPlaying;
 
-    let isOnStairs = false;
+    let isOnStairsCenter = false;
+    let isOnStairsBottom = false;
+
     if (this.stairsLayer && body) {
-      const tile = this.stairsLayer.getTileAtWorldXY(
+      const tCenter = this.stairsLayer.getTileAtWorldXY(
         body.center.x,
         body.center.y,
         true,
       );
-      isOnStairs = tile && tile.index !== -1;
+      const tBottom = this.stairsLayer.getTileAtWorldXY(
+        body.center.x,
+        body.bottom + 2,
+        true,
+      );
+      isOnStairsCenter = !!(tCenter && tCenter.index !== -1);
+      isOnStairsBottom = !!(tBottom && tBottom.index !== -1);
     }
 
     if (this.isInDialogue) {
@@ -341,20 +349,50 @@ export class Player
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
+
+    if (!isOnStairs) {
+      this.isClimbingStairs = false;
+    } else {
+      const isJumpAnimActive =
+        this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key;
+      const wasInAir = !this.isClimbingStairs && body && !body.blocked.down;
+
+      const canClimbUp = upDown && isOnStairsCenter;
+      const canClimbDown = downDown && isOnStairs;
+      const canAutoClimb = (isJumpAnimActive || wasInAir) && isOnStairsCenter;
+
+      if (
+        (canClimbUp || canClimbDown || canAutoClimb) &&
+        !this.isGrabbing &&
+        !this.isCarrying
+      ) {
+        if (!this.isClimbingStairs) {
+          this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
+        }
+        this.isClimbingStairs = true;
+      }
+
+      // Exit climbing state if player is touching the ground and not actively climbing
+      if (body && body.blocked.down && !upDown && !downDown) {
+        this.isClimbingStairs = false;
+      }
+    }
+
     const isClimbing =
       isOnStairs &&
+      this.isClimbingStairs &&
       (upDown || downDown) &&
       !this.isGrabbing &&
       !this.isCarrying;
 
-    if (isOnStairs && !this.isGrabbing) {
+    if (isOnStairs && this.isClimbingStairs && !this.isGrabbing) {
       // Prevent climbing while carrying paintings
       if (this.isCarrying) {
         body.setAllowGravity(false);
         body.setVelocityY(0);
       } else {
         body.setAllowGravity(false);
-        if (upDown) {
+        if (upDown && isOnStairsCenter) {
           body.setVelocityY(-PLAYER_MOVEMENT.CLIMB_SPEED_Y);
         } else if (downDown) {
           body.setVelocityY(PLAYER_MOVEMENT.CLIMB_SPEED_Y);
@@ -368,6 +406,16 @@ export class Player
 
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
+
+    // Determines if the climbing animation should be paused on the current frame.
+    // This keeps the player suspended on the stairs in a paused climbing stance.
+    const shouldPlayClimbPause =
+      isOnStairs &&
+      this.isClimbingStairs &&
+      !isClimbing &&
+      !this.isGrabbing &&
+      !this.isCarrying;
+
     const ePress = Phaser.Input.Keyboard.JustDown(this.keys.e);
     if (this.isInDialogue) return;
     if (ePress) {
@@ -470,7 +518,7 @@ export class Player
       jumpDown &&
       this.body.blocked.down &&
       !this.isGrabbing &&
-      !isOnStairs
+      !this.isClimbingStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
       if (!this.isCarrying) {
@@ -479,20 +527,20 @@ export class Player
       }
     }
 
-    if (isOnStairs && !this.isGrabbing && !this.isCarrying) {
+    if (
+      isOnStairs &&
+      this.isClimbingStairs &&
+      !this.isGrabbing &&
+      !this.isCarrying
+    ) {
       if (isClimbing) {
         if (downDown) {
           this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
         } else {
           this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
         }
-      } else {
-        if (this.anims.currentAnim?.key === PLAYER_ANIMS.CLIMB.key) {
-          this.anims.pause();
-        } else {
-          this.anims.play(PLAYER_ANIMS.CLIMB.key);
-          this.anims.pause();
-        }
+      } else if (shouldPlayClimbPause) {
+        this.anims.pause();
       }
     }
 
@@ -579,7 +627,7 @@ export class Player
       return true;
     }
 
-    if (this.isGrabbing) return false;
+    if (this.isGrabbing || !this.body?.blocked.down) return false;
 
     const GRAB_DIST = 150; // More lenient for air-pickup
     let closestItem: CarryableItem | null = null;
@@ -665,7 +713,9 @@ export class Player
     isJumpPlaying: boolean,
     isOnStairs: boolean,
   ): boolean {
-    return this.isInDialogue || this.isGrabbing || isJumpPlaying || isOnStairs;
+    return (
+      this.isGrabbing || isJumpPlaying || (isOnStairs && this.isClimbingStairs)
+    );
   }
 
   private applyMovementRestriction(isOnStairs: boolean) {
