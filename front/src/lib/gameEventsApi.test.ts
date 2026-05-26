@@ -1,8 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-
 const mockApi = { count: 0 };
 
-mock.module("./api/client", () => ({
+jest.mock("./api/client", () => ({
   apiClient: {
     post: async () => {
       mockApi.count++;

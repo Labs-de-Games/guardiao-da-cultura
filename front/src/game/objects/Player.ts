@@ -22,10 +22,9 @@ export class Player
   isInDialogue: boolean = false;
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 
-  // Grab mechanics
   private draggableRegistry: DraggableItem[] = [];
   private carryableRegistry: CarryableItem[] = [];
-  private inventory: CarryableItem[] = []; // Simple inventory for chunks/items
+  private inventory: CarryableItem[] = [];
   private grabbedItem: DraggableItem | null = null;
   private carriedItem: CarryableItem | null = null;
   public isGrabbing: boolean = false;
@@ -33,7 +32,6 @@ export class Player
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
 
-  // Tile layers that have collision enabled (walls/floor/etc).
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
 
   private setPhysicsBodyForVisualScale(scale: number) {
@@ -62,7 +60,6 @@ export class Player
     this.setOffset(worldOffX / scale, worldOffY / scale);
   }
 
-  // Preload player assets
   static preload(scene: Phaser.Scene) {
     scene.load.spritesheet(
       PLAYER_ASSETS.WALK_SPRITESHEET.key,
@@ -114,7 +111,6 @@ export class Player
     );
   }
 
-  // Create player animations
   static createAnims(scene: Phaser.Scene) {
     scene.anims.create({
       key: PLAYER_ANIMS.IDLE.key,
@@ -209,7 +205,6 @@ export class Player
     });
   }
 
-  // Create player
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
 
@@ -319,13 +314,10 @@ export class Player
     return false;
   }
 
-  // Player update logic (runs once per frame)
   update(_ts: number, dt: number) {
-    if (this.isDead || this.isInDialogue) return;
+    if (this.isDead) return;
 
-    if (this.isHit) {
-      return;
-    }
+    if (this.isHit) return;
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     const isJumpPlaying =
@@ -340,6 +332,11 @@ export class Player
         true,
       );
       isOnStairs = tile && tile.index !== -1;
+    }
+
+    if (this.isInDialogue) {
+      this.applyMovementRestriction(isOnStairs);
+      return;
     }
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
@@ -372,6 +369,7 @@ export class Player
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
     const ePress = Phaser.Input.Keyboard.JustDown(this.keys.e);
+    if (this.isInDialogue) return;
     if (ePress) {
       if (this.isGrabbing) {
         this.releaseGrab();
@@ -667,7 +665,33 @@ export class Player
     isJumpPlaying: boolean,
     isOnStairs: boolean,
   ): boolean {
-    return this.isGrabbing || isJumpPlaying || isOnStairs;
+    return this.isInDialogue || this.isGrabbing || isJumpPlaying || isOnStairs;
+  }
+
+  private applyMovementRestriction(isOnStairs: boolean) {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (body) {
+      body.setVelocity(0, 0);
+      body.setAllowGravity(false);
+    }
+
+    if (this.isGrabbing) {
+      this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
+      return;
+    }
+
+    if (isOnStairs && !this.isCarrying) {
+      if (this.anims.currentAnim?.key !== PLAYER_ANIMS.CLIMB.key) {
+        this.anims.play(PLAYER_ANIMS.CLIMB.key);
+      }
+      this.anims.pause();
+      return;
+    }
+
+    const idleAnim = this.isCarrying
+      ? PLAYER_ANIMS.CARRY_IDLE.key
+      : PLAYER_ANIMS.IDLE.key;
+    this.anims.play(idleAnim, true);
   }
 }
 

@@ -32,10 +32,10 @@ The system is designed around specific business domains. While physically struct
 ## 3. Technology Stack
 
 ### Workspace & Tooling
-- **Package Manager & Runtime:** [Bun](https://bun.sh/) (replaces npm/yarn/Node for faster execution and dependency management).
+- **Package Manager & Runtime:** [Node.js](https://nodejs.org/) (v24+) with npm.
 - **Monorepo Orchestration:** [Turborepo](https://turbo.build/) for task caching and parallel execution.
 - **Linting & Formatting:** [Biome](https://biomejs.dev/) (replaces ESLint and Prettier for unified, fast code validation).
-- **Testing:** `bun test` acting as the universal test runner across the workspace.
+- **Testing:** [Jest](https://jestjs.io/) as the universal test runner across the workspace.
 
 ### Frontend (`/front`)
 - **Framework:** Next.js with React.

@@ -2,15 +2,15 @@
   "name": "back",
   "private": true,
   "scripts": {
-    "start:dev": "bun run --watch src/main.ts",
+    "start:dev": "npx nest start --watch",
     "build": "tsc -p tsconfig.json",
-    "start": "bun dist/main.js",
+    "start": "node dist/main.js",
     "lint": "biome check .",
-    "test": "bun test --preload ./test-setup.ts",
+    "test": "jest",
     "typecheck": "tsc --noEmit",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts",
-    "migration:run:prod": "bun node_modules/.bin/typeorm -d dist/core/database/data-source.js migration:run",
+    "migration:run:prod": "npx typeorm -d dist/core/database/data-source.js migration:run",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/core/database/data-source.ts",
     "db:drop": "typeorm-ts-node-commonjs schema:drop -d src/core/database/data-source.ts"
   },
@@ -38,11 +38,15 @@
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
+    "@nestjs/cli": "latest",
     "@nestjs/testing": "latest",
     "@types/cookie-parser": "^1.4.10",
+    "@types/jest": "latest",
     "@types/node": "latest",
     "@types/nodemailer": "^8.0.0",
     "@types/passport-jwt": "^4.0.1",
+    "jest": "latest",
+    "ts-jest": "latest",
     "ts-node": "^10.9.2",
     "typescript": "latest"
   }

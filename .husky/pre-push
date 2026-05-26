@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
-if command -v bun >/dev/null 2>&1; then
-  bun run test
-elif command -v npx >/dev/null 2>&1; then
+if command -v npx >/dev/null 2>&1; then
   npm run test || echo "Skipping tests: dependencies not installed yet."
 else
-  echo "Skipping hooks: bun/npx not available."
+  echo "Skipping hooks: npx not available."
 fi

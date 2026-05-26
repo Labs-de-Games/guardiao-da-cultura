@@ -1,3 +1,10 @@
+---
+name: Spike
+about: Research or investigation to inform a technical decision
+title: "[SPIKE] "
+labels: spike
+---
+
 ## Definition
 
 What technical decision or information is this spike trying to obtain?

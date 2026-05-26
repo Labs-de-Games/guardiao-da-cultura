@@ -1,5 +1,5 @@
-upstream front { server front:3000; }
-upstream back { server back:3001; }
+upstream front { server front:${FRONTEND_PORT}; }
+upstream back { server back:${BACKEND_PORT}; }
 
 server {
     listen 80;

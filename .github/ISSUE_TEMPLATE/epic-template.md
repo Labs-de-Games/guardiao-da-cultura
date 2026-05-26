@@ -1,3 +1,9 @@
+---
+name: Epic
+about: A large body of work broken down into multiple tasks
+title: "[EPIC] "
+labels: epic
+---
 
 ## Description
 

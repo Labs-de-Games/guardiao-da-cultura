@@ -1,13 +1,13 @@
-import { describe, expect, it, mock } from "bun:test";
 import { render } from "@testing-library/react";
 import { act } from "react";
 import PhaserGame from "./PhaserGame";
 
-mock.module("../game/main", () => ({
+jest.mock("../game/main", () => ({
+  __esModule: true,
   default: () => ({ destroy: () => {} }),
 }));
 
-mock.module("../lib/auth/useAuth", () => ({
+jest.mock("../lib/auth/useAuth", () => ({
   useAuth: () => ({
     user: {
       id: "test-user-id",

@@ -1,72 +1,128 @@
 services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+      args:
+        - NGINX_CONFIG=nginx.development.conf
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:80/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      front:
+        condition: service_healthy
+      back:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
   front:
-    extends:
-      file: compose.base.yaml
-      service: front
     build:
       context: .
       dockerfile: ./front/Dockerfile
       target: build
-    command: bun run dev
+    command: npm run dev
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     volumes:
       - ./:/app
       - root_node_modules:/app/node_modules
       - front_node_modules:/app/front/node_modules
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      - PORT=${FRONTEND_PORT:-3000}
+      - NEXT_PUBLIC_API_URL=${FRONTEND_API_URL:-http://localhost:${BACKEND_PORT:-3001}}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:${FRONTEND_PORT:-3000}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      back:
+        condition: service_healthy
     networks:
       - frontend
       - backend
 
   back:
-    extends:
-      file: compose.base.yaml
-      service: back
     build:
       context: .
       dockerfile: ./back/Dockerfile
       target: build
-    command: sh -c "cd back && bun run start:dev"
+    command: sh -c "cd back && npm run start:dev"
     ports:
-      - "3001:3001"
+      - "${BACKEND_PORT:-3001}:${BACKEND_PORT:-3001}"
     volumes:
       - ./:/app
       - root_node_modules:/app/node_modules
       - back_node_modules:/app/back/node_modules
     environment:
+      - BACKEND_PORT=${BACKEND_PORT:-3001}
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/template}
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-15m}
       - JWT_ISSUER=${JWT_ISSUER:-gameplate}
       - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET:-change-me-in-production}
       - MAGIC_LINK_EXPIRATION_MIN=${MAGIC_LINK_EXPIRATION_MIN:-15}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-3000}}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${BACKEND_PORT:-3001}/api/v1/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - backend
 
   postgres:
-    extends:
-      file: compose.base.yaml
-      service: postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-template}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - backend
-
-  nginx:
-    extends:
-      file: compose.base.yaml
-      service: nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - frontend
       - backend
 
 volumes:

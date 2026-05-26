@@ -1,4 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { clearAuthStatusCookie } from "@/lib/auth/cookies";
+import { broadcastAuthEvent } from "@/lib/auth/sync";
 import { env } from "@/lib/env";
 import {
   AuthError,
@@ -11,6 +13,10 @@ let accessToken: string | null = null;
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
 let refreshSubscribers: Array<(token: string) => void> = [];
+
+const FORCE_LOGOUT_TOAST_MESSAGE =
+  "Sua sess\u00e3o expirou. Fa\u00e7a login novamente.";
+const TOAST_STORAGE_KEY = "app.toast.next";
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
@@ -29,6 +35,37 @@ function onTokenRefreshed(token: string): void {
 
 function addRefreshSubscriber(callback: (token: string) => void): void {
   refreshSubscribers.push(callback);
+}
+
+function forceLogout(): void {
+  clearAccessToken();
+  clearAuthStatusCookie();
+  broadcastAuthEvent("LOGOUT");
+
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(
+        TOAST_STORAGE_KEY,
+        JSON.stringify({
+          message: FORCE_LOGOUT_TOAST_MESSAGE,
+          severity: "info",
+        }),
+      );
+    } catch {
+      // Ignore storage failures.
+    }
+
+    const loginPath = "/login";
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const nextUrl =
+      currentPath && currentPath !== loginPath
+        ? `?next=${encodeURIComponent(currentPath)}`
+        : "";
+
+    if (window.location.pathname !== loginPath) {
+      window.location.assign(`${loginPath}${nextUrl}`);
+    }
+  }
 }
 
 function handleAuthError(error: AxiosError): never {
@@ -74,11 +111,19 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
+    const originalUrl = originalRequest?.url ?? "";
+    if (
+      originalUrl.includes("/auth/refresh") &&
+      (error.response?.status === 401 || error.response?.status === 403)
+    ) {
+      forceLogout();
+      handleAuthError(error);
+    }
+
     if (!originalRequest || error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    // Already retried — fail permanently
     if (originalRequest._retry) {
       handleAuthError(error);
     }
@@ -96,7 +141,7 @@ apiClient.interceptors.response.use(
           return newToken;
         })
         .catch((refreshError: AxiosError) => {
-          accessToken = null;
+          forceLogout();
           handleAuthError(refreshError);
         })
         .finally(() => {
