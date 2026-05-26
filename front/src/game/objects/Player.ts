@@ -14,7 +14,8 @@ import {
 
 export class Player
   extends Phaser.Physics.Arcade.Sprite
-  implements IPlayerState {
+  implements IPlayerState
+{
   keys: PlayerKeys;
   isDead: boolean = false;
   isHit: boolean = false;
@@ -357,6 +358,8 @@ export class Player
       hasStairAbove = !!(tAbove && tAbove.index !== -1);
       hasStairBelow = !!(tBelow && tBelow.index !== -1);
     }
+
+    const isOnStairs = isOnStairsCenter || isOnStairsBottom;
 
     if (this.isInDialogue) {
       this.applyMovementRestriction(isOnStairs);
