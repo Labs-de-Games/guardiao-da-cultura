@@ -6,6 +6,7 @@ export interface MapData {
   tileLayers: Record<string, Phaser.Tilemaps.TilemapLayer>;
   objectLayers: Record<string, Phaser.Tilemaps.ObjectLayer>;
   colliders: Phaser.Tilemaps.TilemapLayer[];
+  oneWayColliders: Phaser.Tilemaps.TilemapLayer[];
 }
 
 export namespace TiledMapLoader {
@@ -19,6 +20,7 @@ export namespace TiledMapLoader {
       tileLayers: {},
       objectLayers: {},
       colliders: [],
+      oneWayColliders: [],
     };
 
     for (const layerData of map.layers) {
@@ -48,8 +50,10 @@ export namespace TiledMapLoader {
               tile.collideRight = false;
             }
           });
+          result.oneWayColliders.push(layer);
+        } else {
+          result.colliders.push(layer);
         }
-        result.colliders.push(layer);
       }
 
       const depthProp = properties?.find((p) => p.name === "depth");
