@@ -327,7 +327,11 @@ export class Player
     let isOnStairsCenter = false;
     let isOnStairsBottom = false;
 
+    let hasStairAbove = false;
+    let hasStairBelow = false;
+
     if (this.stairsLayer && body) {
+      const tileHeight = this.stairsLayer.tilemap.tileHeight || 16;
       const tCenter = this.stairsLayer.getTileAtWorldXY(
         body.center.x,
         body.center.y,
@@ -338,8 +342,20 @@ export class Player
         body.bottom + 2,
         true,
       );
+      const tAbove = this.stairsLayer.getTileAtWorldXY(
+        body.center.x,
+        body.center.y - tileHeight,
+        true,
+      );
+      const tBelow = this.stairsLayer.getTileAtWorldXY(
+        body.center.x,
+        body.bottom + tileHeight,
+        true,
+      );
       isOnStairsCenter = !!(tCenter && tCenter.index !== -1);
       isOnStairsBottom = !!(tBottom && tBottom.index !== -1);
+      hasStairAbove = !!(tAbove && tAbove.index !== -1);
+      hasStairBelow = !!(tBelow && tBelow.index !== -1);
     }
 
     if (this.isInDialogue) {
@@ -357,8 +373,8 @@ export class Player
         this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key;
       const wasInAir = !this.isClimbingStairs && body && !body.blocked.down;
 
-      const canClimbUp = upDown && isOnStairsCenter;
-      const canClimbDown = downDown && isOnStairs;
+      const canClimbUp = upDown && isOnStairsCenter && hasStairAbove;
+      const canClimbDown = downDown && isOnStairs && hasStairBelow;
       const canAutoClimb = (isJumpAnimActive || wasInAir) && isOnStairsCenter;
 
       if (
