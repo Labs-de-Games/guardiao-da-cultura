@@ -100,6 +100,20 @@ export class Game extends Scene {
       );
       this.levelDef = LEVEL_REGISTRY.level_01;
     }
+
+    // Reset state for scene restarts
+    this.hasInteractedWithRat = false;
+    this.isControlsOverlayOpen = false;
+    this.isChunkSelectorOpen = false;
+    this.isDialogueOpen = false;
+    this.itemsInteracted.clear();
+    this.contentData = {
+      works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
+      quizzes: {},
+      npcs: {},
+      messages: { SYSTEM_DIALOGUES: {} },
+      collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+    };
   }
 
   preload() {
@@ -681,6 +695,7 @@ export class Game extends Scene {
                   GameEventType.LEVEL_COMPLETED,
                   this.levelId,
                   {
+                    levelNumber: this.levelDef.levelNumber,
                     score: payload.totalQuarters,
                     stars: payload.totalStars,
                     rating: payload.rating,

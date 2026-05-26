@@ -6,43 +6,43 @@ PROJECT_NAME = gameplate
 
 # --- SETUP & INSTALLATION ---
 install:
-	@echo "Installing dependencies with Bun..."
-	bun install --frozen-lockfile
+	@echo "Installing dependencies with npm..."
+	npm ci
 
 setup: install
 	@echo "Setup complete. You can now run:"
 	@echo "  make dev-all     - Start local development (Turbo)"
 	@echo "  make docker-all  - Start Docker development"
 
-# --- NATIVE RUN (Bun/Turbo) ---
+# --- NATIVE RUN (npm/Turbo) ---
 dev-all: install
-	bun run dev
+	npm run dev
 
 dev-front: install
-	bun run dev --filter=front
+	npm run dev -- --filter=front
 
 dev-back: install
-	bun run dev --filter=back
+	npm run dev -- --filter=back
 
 # --- DOCKER RUN ---
 dev:
 	docker compose -f compose.development.yaml up --build -d
 
 docker-all:
-	docker compose -f compose.base.yaml -f compose.development.yaml up --build
+	docker compose -f compose.development.yaml up --build
 
 docker-front:
-	docker compose -f compose.base.yaml -f compose.development.yaml up --build front
+	docker compose -f compose.development.yaml up --build front
 
 docker-back:
-	docker compose -f compose.base.yaml -f compose.development.yaml up --build back
+	docker compose -f compose.development.yaml up --build back
 
 # --- QA & TESTS ---
 lint:
-	bun run lint
+	npm run lint
 
 test:
-	bun run test
+	npm run test
 
 build-front:
 	docker compose -f compose.development.yaml build front
@@ -58,18 +58,18 @@ sync:
 	@echo "Syncing node_modules..."
 	@echo "Removing existing node_modules..."
 	rm -rf node_modules front/node_modules back/node_modules
-	@echo "Reinstalling with Bun..."
-	bun install --frozen-lockfile
+	@echo "Reinstalling with npm..."
+	npm ci
 	@echo "Sync complete. node_modules are now aligned with host."
 
 # --- DATABASE ---
 db-migrate:
 	@echo "Running TypeORM migrations inside back container..."
-	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && node_modules/.bin/typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
+	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
 
 db-migrate-generate:
 	@if [ -z "$(NAME)" ]; then echo "Usage: make db-migrate-generate NAME=MigrationName"; exit 1; fi
-	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && node_modules/.bin/typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
+	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
 
 # --- CLEANUP ---
 down:
@@ -93,10 +93,10 @@ help:
 	@echo ""
 	@echo "=== SETUP ==="
 	@echo "  make setup       - Initial setup (install dependencies)"
-	@echo "  make install     - Install dependencies with Bun"
+	@echo "  make install     - Install dependencies with npm"
 	@echo "  make sync        - Reinstall node_modules (fix conflicts)"
 	@echo ""
-	@echo "=== Native Development (Bun/Turbo) ==="
+	@echo "=== Native Development (npm/Turbo) ==="
 	@echo "  make dev-all     - Run both front and back locally via Turbo"
 	@echo "  make dev-front   - Run ONLY front locally"
 	@echo "  make dev-back    - Run ONLY back locally"

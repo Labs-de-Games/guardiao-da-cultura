@@ -5,6 +5,7 @@
 
 export interface LevelDefinition {
   id: string;
+  levelNumber: number;
   title: string;
   maxStars: number;
   initialGrayscale: number;
@@ -26,6 +27,7 @@ export interface LevelDefinition {
 export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_01: {
     id: "level_01",
+    levelNumber: 1,
     title: "Inhotim",
     maxStars: 2,
     initialGrayscale: 0.82,

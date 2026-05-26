@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
-if command -v bunx >/dev/null 2>&1; then
-  bunx --no-install commitlint --edit "$1"
-elif command -v npx >/dev/null 2>&1; then
+if command -v npx >/dev/null 2>&1; then
   npx --no-install commitlint --edit "$1" || echo "Skipping commitlint: dependencies not installed yet."
 else
-  echo "Skipping commitlint: bunx/npx not available."
+  echo "Skipping commitlint: npx not available."
 fi
