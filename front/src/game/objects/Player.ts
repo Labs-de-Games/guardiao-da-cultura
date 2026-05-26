@@ -672,9 +672,7 @@ export class Player
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
       body.setVelocity(0, 0);
-      if (isOnStairs) {
-        body.setAllowGravity(false);
-      }
+      body.setAllowGravity(false);
     }
 
     if (this.isGrabbing) {
