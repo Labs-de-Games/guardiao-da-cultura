@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
+import { PostHogService } from "../posthog/posthog.service";
 import type { SubmitScoreDto } from "./dto/submit-score.dto";
 import { UserScore } from "./user-score.entity";
 
@@ -9,6 +10,7 @@ export class ScoringService {
   constructor(
     @InjectRepository(UserScore)
     private readonly userScoreRepository: Repository<UserScore>,
+    private readonly posthog: PostHogService,
   ) {}
 
   async submitScore(dto: SubmitScoreDto): Promise<UserScore> {
@@ -23,7 +25,23 @@ export class ScoringService {
       collectibleScore: dto.collectibles,
     });
 
-    return this.userScoreRepository.save(userScore);
+    const saved = await this.userScoreRepository.save(userScore);
+
+    this.posthog.capture({
+      event: "match_ended",
+      distinctId: dto.userId,
+      properties: {
+        level_id: dto.levelId,
+        score: dto.totalQuarters,
+        stars: dto.totalStars,
+        rating: dto.rating,
+        quiz_correct: dto.quiz.correctAnswers,
+        quiz_total: dto.quiz.totalQuestions,
+        quiz_accuracy: dto.quiz.accuracyPercent,
+      },
+    });
+
+    return saved;
   }
 
   async findByUserId(userId: string): Promise<UserScore[]> {
