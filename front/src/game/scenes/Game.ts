@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import posthog from "posthog-js";
 import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
 import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
@@ -310,6 +311,11 @@ export class Game extends Scene {
     this.analyticsSystem = new AnalyticsSystem(this);
     this.analyticsSystem.track(GameEventType.GAME_STARTED);
     this.analyticsSystem.setupAbandonmentTracking();
+
+    posthog.capture("game_started", {
+      level_id: this.levelId,
+      level_number: this.levelDef.levelNumber,
+    });
 
     this.registry.set("has_failed_quiz", 0);
     this.registry.set("quiz_solved_after_failure", 0);
@@ -702,13 +708,43 @@ export class Game extends Scene {
                     missionId: missionId,
                   },
                 );
+
+                posthog.capture("level_completed", {
+                  level_id: this.levelId,
+                  level_number: this.levelDef.levelNumber,
+                  score: payload.totalQuarters,
+                  stars: payload.totalStars,
+                  rating: payload.rating,
+                  mission_id: missionId,
+                  time_spent_ms:
+                    Date.now() - new Date(payload.startedAt).getTime(),
+                  attempts: this.registry.get("has_failed_quiz") || 0,
+                });
+
                 void this.submitScoreToBackend();
               } else {
                 this.registry.set("has_failed_quiz", 1);
+                posthog.capture("level_failed", {
+                  level_id: this.levelId,
+                  level_number: this.levelDef.levelNumber,
+                  mission_id: missionId,
+                  score,
+                  total_questions: questions.length,
+                });
                 void this.submitScoreToBackend();
               }
 
               const scoringPayload = this.scoreManager.getPayload();
+              posthog.capture("quiz_completed", {
+                level_id: this.levelId,
+                mission_id: missionId,
+                score,
+                correct_answers: scoringPayload.quiz.correctAnswers,
+                total_questions: questions.length,
+                accuracy_percent: scoringPayload.quiz.accuracyPercent,
+                passed: isSuccess,
+              });
+
               void sendQuizOutcomeEvent({
                 type: isSuccess ? "quiz.completed" : "quiz.failed",
                 metadata: {
