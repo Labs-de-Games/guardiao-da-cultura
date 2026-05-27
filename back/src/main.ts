@@ -3,12 +3,24 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import { PostHogInterceptor } from "posthog-node/nestjs";
 import { AppModule } from "./app.module";
 import { ConfigService } from "./core/config/config.service";
+import { PostHogService } from "./modules/posthog/posthog.service";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
+  const posthogService = app.get(PostHogService);
+  const posthogClient = posthogService.getClient();
+
+  if (posthogClient) {
+    app.useGlobalInterceptors(
+      new PostHogInterceptor(posthogClient, {
+        captureExceptions: true,
+      }),
+    );
+  }
 
   app.setGlobalPrefix("api/v1");
   app.use(cookieParser());
