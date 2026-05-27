@@ -20,6 +20,7 @@
     "js-cookie": "^3.0.5",
     "next": "latest",
     "phaser": "3.90.0",
+    "posthog-js": "^1.376.3",
     "react": "latest",
     "react-dom": "latest",
     "react-hook-form": "^7.75.0",
@@ -28,8 +29,8 @@
   "devDependencies": {
     "@biomejs/biome": "latest",
     "@happy-dom/global-registrator": "latest",
-    "@testing-library/jest-dom": "latest",
     "@testing-library/dom": "latest",
+    "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@types/jest": "latest",
     "@types/js-cookie": "^3.0.6",
