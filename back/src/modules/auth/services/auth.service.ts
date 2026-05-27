@@ -179,6 +179,7 @@ export class AuthService {
       token.user.id,
     );
     this.setAuthCookies(res, refreshToken);
+    await this.userService.updateLastLoginAt(token.user.id);
     await this.emailService.sendLoginNotificationEmail(token.user.email);
 
     return { redirectTo: "/" };
@@ -199,6 +200,7 @@ export class AuthService {
     const user = token.user;
     user.isEmailVerified = true;
     await this.userService.save(user);
+    await this.userService.updateLastLoginAt(user.id);
 
     const refreshToken = await this.tokenService.generateRefreshToken(user.id);
     this.setAuthCookies(res, refreshToken);
