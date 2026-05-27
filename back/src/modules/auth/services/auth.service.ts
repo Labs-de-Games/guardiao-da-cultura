@@ -179,8 +179,8 @@ export class AuthService {
       token.user.id,
     );
     this.setAuthCookies(res, refreshToken);
-    await this.emailService.sendLoginNotificationEmail(token.user.email);
     await this.userService.updateLastLoginAt(token.user.id);
+    await this.emailService.sendLoginNotificationEmail(token.user.email);
 
     return { redirectTo: "/" };
   }
