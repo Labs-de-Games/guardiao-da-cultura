@@ -4,6 +4,7 @@ import type { Response } from "express";
 import { ConfigService } from "../../../core/config/config.service";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
+import { PostHogService } from "../../posthog/posthog.service";
 import { UserService } from "../../users/user.service";
 import { getCookieConfig } from "../config/cookie.config";
 import type { RegisterDto } from "../dto/register.dto";
@@ -18,6 +19,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly magicLinkService: MagicLinkService,
     private readonly configService: ConfigService,
+    private readonly posthog: PostHogService,
     @Inject(EMAIL_SERVICE)
     private readonly emailService: IEmailService,
   ) {}
@@ -125,6 +127,15 @@ export class AuthService {
     const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
     await this.emailService.sendVerificationEmail(dto.email, verificationUrl);
 
+    this.posthog.capture({
+      event: "user_registered",
+      distinctId: user.id,
+      properties: {
+        method: "email",
+        has_referral_code: false,
+      },
+    });
+
     return { message: "Check your email" };
   }
 
@@ -181,6 +192,14 @@ export class AuthService {
     this.setAuthCookies(res, refreshToken);
     await this.emailService.sendLoginNotificationEmail(token.user.email);
 
+    this.posthog.capture({
+      event: "user_logged_in",
+      distinctId: token.user.id,
+      properties: {
+        method: "magic_link",
+      },
+    });
+
     return { redirectTo: "/" };
   }
 
@@ -203,6 +222,14 @@ export class AuthService {
     const refreshToken = await this.tokenService.generateRefreshToken(user.id);
     this.setAuthCookies(res, refreshToken);
     await this.emailService.sendWelcomeEmail(user.email, user.nickname);
+
+    this.posthog.capture({
+      event: "user_verified",
+      distinctId: user.id,
+      properties: {
+        method: "email",
+      },
+    });
 
     return { redirectTo: "/" };
   }
