@@ -18,6 +18,8 @@ const schema = z
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().default("42 Rio <noreply@42.rio>"),
+    POSTHOG_API_KEY: z.string().optional(),
+    POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
   })
   .refine(
     (data) => {
@@ -53,6 +55,8 @@ export class ConfigService {
       GMAIL_USER: process.env.GMAIL_USER,
       GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD,
       EMAIL_FROM: process.env.EMAIL_FROM,
+      POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+      POSTHOG_HOST: process.env.POSTHOG_HOST,
     });
   }
 
@@ -94,5 +98,11 @@ export class ConfigService {
   }
   get emailFrom() {
     return this.config.EMAIL_FROM;
+  }
+  get posthogApiKey() {
+    return this.config.POSTHOG_API_KEY;
+  }
+  get posthogHost() {
+    return this.config.POSTHOG_HOST;
   }
 }
