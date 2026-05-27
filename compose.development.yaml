@@ -47,6 +47,8 @@ services:
     environment:
       - PORT=${FRONTEND_PORT:-3000}
       - NEXT_PUBLIC_API_URL=${FRONTEND_API_URL:-http://localhost:${BACKEND_PORT:-3001}}
+      - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}
     healthcheck:
       test:
         [
@@ -88,6 +90,8 @@ services:
       - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET:-change-me-in-production}
       - MAGIC_LINK_EXPIRATION_MIN=${MAGIC_LINK_EXPIRATION_MIN:-15}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-3000}}
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      - POSTHOG_HOST=${POSTHOG_HOST:-https://us.i.posthog.com}
     healthcheck:
       test:
         [
