@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import posthog from "posthog-js";
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -15,10 +15,12 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html>
+    <html lang="pt-BR">
       <body>
         <h2>Algo deu errado!</h2>
-        <button onClick={() => reset()}>Tentar novamente</button>
+        <button type="button" onClick={() => reset()}>
+          Tentar novamente
+        </button>
       </body>
     </html>
   );
