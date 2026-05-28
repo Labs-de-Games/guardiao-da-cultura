@@ -3,6 +3,7 @@
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useEffect, useState } from "react";
+import { env } from "../lib/env";
 import { PostHogStub } from "../lib/posthogStub";
 
 interface PostHogBootstrapData {
@@ -32,7 +33,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
-    const env = process.env.NEXT_PUBLIC_ENV || "production";
+    const environment = env.NEXT_PUBLIC_ENV;
 
     if (!key) {
       console.warn(
@@ -56,22 +57,22 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         autocapture: false,
         capture_pageview: false,
         record_sessions_percent: recordSessionsPercent,
-        record_canvas: env === "production",
-        opt_in_site_apps: env === "production",
+        record_canvas: environment === "production",
+        opt_in_site_apps: environment === "production",
         __add_tracing_headers: [],
         bootstrap: {
           distinctID: bootstrap?.distinctId,
           featureFlags: bootstrap?.featureFlags ?? {},
         },
         loaded: (ph) => {
-          if (env === "development") {
+          if (environment === "development") {
             ph.debug();
           }
           const userId = bootstrap?.distinctId;
           if (userId) {
             ph.identify(userId);
           }
-          ph.register({ environment: env });
+          ph.register({ environment });
         },
       } as Parameters<typeof posthog.init>[1]);
 
