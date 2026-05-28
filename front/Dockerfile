@@ -23,6 +23,8 @@ COPY front/tsconfig.json ./front/
 COPY front/next.config.ts ./front/
 COPY front/src ./front/src
 COPY front/public ./front/public
+ARG NEXT_PUBLIC_ENV=production
+ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
 RUN npm run build -- --filter=front
 
 FROM node:24.15.0-alpine AS runner
