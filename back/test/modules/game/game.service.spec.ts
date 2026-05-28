@@ -1,7 +1,19 @@
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Test } from "@nestjs/testing";
+import { PinoLogger } from "nestjs-pino";
 import { GameService } from "../../../src/modules/game/game.service";
 import type { GameEventPayload } from "../../../src/shared/events/game-events";
+
+const mockPinoLogger = {
+  info: () => {},
+  error: () => {},
+  warn: () => {},
+  debug: () => {},
+  trace: () => {},
+  fatal: () => {},
+  setContext: () => {},
+  assign: () => {},
+};
 
 describe("GameService", () => {
   let service: GameService;
@@ -10,6 +22,10 @@ describe("GameService", () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         GameService,
+        {
+          provide: PinoLogger,
+          useValue: mockPinoLogger,
+        },
         {
           provide: EventEmitter2,
           useValue: {

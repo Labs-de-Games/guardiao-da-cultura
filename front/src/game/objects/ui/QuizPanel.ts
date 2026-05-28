@@ -26,6 +26,7 @@ export class QuizPanel extends BasePanel {
   private score: number = 0;
   private scoreManager: ScoreManager | null = null;
   private onComplete: ((score: number) => void) | null = null;
+  private hasCompleted: boolean = false;
 
   private answers: ("correct" | "wrong" | null)[] = [];
   private isProcessingAnswer: boolean = false;
@@ -394,6 +395,7 @@ export class QuizPanel extends BasePanel {
     this.progressTracker.setAnswers([]);
     this.scoreManager?.recordQuizResult(0, 0);
     this.navNextAction = null;
+    this.hasCompleted = false;
   }
 
   private getScorePercentage(): number {
@@ -421,6 +423,7 @@ export class QuizPanel extends BasePanel {
     this.isProcessingAnswer = false;
     this.scoreManager = scoreManager;
     this.answers = new Array(questions.length).fill(null);
+    this.hasCompleted = false;
     this.progressTracker.setCount(questions.length);
     this.progressTracker.setAnswers(this.answers);
     this.showQuestion();
@@ -448,12 +451,6 @@ export class QuizPanel extends BasePanel {
     gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
     this.questionContainer.setVisible(false);
     super.hide(duration, () => {
-      if (this.onComplete) {
-        const finalScore = this.score;
-        this.onComplete(finalScore);
-        this.onComplete = null;
-      }
-
       if (onComplete) onComplete();
     });
   }
@@ -615,6 +612,12 @@ export class QuizPanel extends BasePanel {
     this.footerHintText.setVisible(false);
     this.resetOptionButtons();
     this.scoreManager?.recordQuizResult(this.score, this.questions.length);
+    if (!this.hasCompleted && this.onComplete) {
+      this.hasCompleted = true;
+      const finalScore = this.score;
+      this.onComplete(finalScore);
+      this.onComplete = null;
+    }
     const percentage = this.getScorePercentage();
 
     this.isRetryMode = percentage >= 0 && percentage < 70;

@@ -20,6 +20,9 @@ const schema = z
     EMAIL_FROM: z.string().default("42 Rio <noreply@42.rio>"),
     POSTHOG_API_KEY: z.string().optional(),
     POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
+    LOG_LEVEL: z
+      .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+      .default("debug"),
   })
   .refine(
     (data) => {
@@ -57,6 +60,7 @@ export class ConfigService {
       EMAIL_FROM: process.env.EMAIL_FROM,
       POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
       POSTHOG_HOST: process.env.POSTHOG_HOST,
+      LOG_LEVEL: process.env.LOG_LEVEL,
     });
   }
 
@@ -104,5 +108,7 @@ export class ConfigService {
   }
   get posthogHost() {
     return this.config.POSTHOG_HOST;
+  get logLevel() {
+    return this.config.LOG_LEVEL;
   }
 }

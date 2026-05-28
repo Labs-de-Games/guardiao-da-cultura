@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { PinoLogger } from "nestjs-pino";
 import type { Repository } from "typeorm";
 import { PostHogService } from "../posthog/posthog.service";
 import type { SubmitScoreDto } from "./dto/submit-score.dto";
@@ -8,6 +9,7 @@ import { UserScore } from "./user-score.entity";
 @Injectable()
 export class ScoringService {
   constructor(
+    private readonly logger: PinoLogger,
     @InjectRepository(UserScore)
     private readonly userScoreRepository: Repository<UserScore>,
     private readonly posthog: PostHogService,
@@ -41,6 +43,10 @@ export class ScoringService {
       },
     });
 
+    this.logger.info(
+      { userId: dto.userId, levelId: dto.levelId, scoreId: saved.id },
+      "Score submitted",
+    );
     return saved;
   }
 
