@@ -132,7 +132,6 @@ export class AuthService {
       distinctId: user.id,
       properties: {
         method: "email",
-        has_referral_code: false,
       },
     });
 
