@@ -41,6 +41,25 @@ export class PostHogService implements OnModuleDestroy {
     });
   }
 
+  captureException(
+    error: Error,
+    distinctId?: string,
+    properties?: Record<string, unknown>,
+  ) {
+    if (!this.client) {
+      this.logger.debug("[PostHogStub] captureException:", {
+        error,
+        distinctId,
+        properties,
+      });
+      return;
+    }
+    this.client.captureException(error, distinctId, {
+      ...properties,
+      environment: this.config.nodeEnv,
+    });
+  }
+
   onModuleDestroy() {
     this.client?.shutdown();
   }
