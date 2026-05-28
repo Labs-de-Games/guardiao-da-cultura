@@ -9,6 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ToastProvider";
@@ -29,6 +30,10 @@ export default function RegisterForm() {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
+    posthog.capture("button_clicked", {
+      button_name: "create_account",
+      screen: "register",
+    });
     try {
       await registerUser(data);
       setIsSubmitted(true);

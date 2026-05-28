@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import posthog from "posthog-js";
 import { submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
@@ -288,6 +289,9 @@ export class UIScene extends Scene {
 
     if (this.canShowOverlay()) {
       this.controlsOverlay.show();
+      posthog.capture("settings_opened", {
+        from_screen: "game",
+      });
     }
   }
 

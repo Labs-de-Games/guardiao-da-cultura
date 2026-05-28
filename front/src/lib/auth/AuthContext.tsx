@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import {
   createContext,
   type ReactNode,
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessTokenState(null);
     clearAccessToken();
     clearAuthStatusCookie();
+    posthog.reset();
   }, []);
 
   const restoreSession = useCallback(async () => {
@@ -71,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = await apiMe();
       setUser(userData);
       setIsAuthenticated(true);
+      posthog.identify(userData.id);
     } catch {
       // /me failed, try refresh
       try {
@@ -81,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
         setIsAuthenticated(true);
         setAuthStatusCookie();
+        posthog.identify(userData.id);
       } catch {
         clearAuthState();
       }
@@ -119,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       setIsAuthenticated(true);
       setAuthStatusCookie();
+      posthog.identify(userData.id);
       router.push(result.redirectTo);
     },
     [router],
@@ -138,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       setIsAuthenticated(true);
       setAuthStatusCookie();
+      posthog.identify(userData.id);
       router.push(result.redirectTo);
     },
     [router],
