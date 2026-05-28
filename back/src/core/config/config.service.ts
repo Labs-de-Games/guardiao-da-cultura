@@ -108,6 +108,7 @@ export class ConfigService {
   }
   get posthogHost() {
     return this.config.POSTHOG_HOST;
+  }
   get logLevel() {
     return this.config.LOG_LEVEL;
   }
