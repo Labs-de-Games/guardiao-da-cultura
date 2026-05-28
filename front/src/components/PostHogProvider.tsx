@@ -5,6 +5,25 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useEffect, useState } from "react";
 import { PostHogStub } from "../lib/posthogStub";
 
+interface PostHogBootstrapData {
+  distinctId: string;
+  featureFlags: Record<string, string | boolean | number>;
+}
+
+async function fetchBootstrap(): Promise<PostHogBootstrapData | null> {
+  try {
+    const response = await fetch("/api/v1/posthog/bootstrap", {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    return (await response.json()) as PostHogBootstrapData;
+  } catch {
+    return null;
+  }
+}
+
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const [client, setClient] = useState<typeof posthog | PostHogStub | null>(
     null,
@@ -23,40 +42,46 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    posthog.init(key, {
-      api_host: host || "https://us.i.posthog.com",
-      autocapture: false,
-      capture_pageview: false,
-      opt_in_site_apps: env === "production",
-      __add_tracing_headers: [],
-      bootstrap: {
-        distinctID: (window as unknown as Record<string, unknown>)
-          .__POSTHOG_DISTINCT_ID__ as string,
-        featureFlags:
-          ((window as unknown as Record<string, unknown>).__POSTHOG_FLAGS__ as
-            | Record<string, string | boolean>
-            | undefined) || {},
-      },
-      loaded: (ph) => {
-        if (env === "development") {
-          ph.debug();
-        }
-        const userId = (window as unknown as Record<string, unknown>)
-          .__INITIAL_USER_ID__ as string;
-        if (userId) {
-          ph.identify(userId);
-        }
-        ph.register({ environment: env });
-      },
-    } as Parameters<typeof posthog.init>[1]);
+    void (async () => {
+      const bootstrap = await fetchBootstrap();
 
-    if (env === "production") {
-      posthog.set_config({ record_canvas: true } as NonNullable<
-        Parameters<typeof posthog.init>[1]
-      >);
-    }
+      const recordSessionsPercent =
+        typeof bootstrap?.featureFlags?.session_replay_sampling_rate ===
+        "number"
+          ? (bootstrap.featureFlags.session_replay_sampling_rate as number)
+          : 1.0;
 
-    setClient(posthog);
+      posthog.init(key, {
+        api_host: host || "https://us.i.posthog.com",
+        autocapture: false,
+        capture_pageview: false,
+        record_sessions_percent: recordSessionsPercent,
+        opt_in_site_apps: env === "production",
+        __add_tracing_headers: [],
+        bootstrap: {
+          distinctID: bootstrap?.distinctId,
+          featureFlags: bootstrap?.featureFlags ?? {},
+        },
+        loaded: (ph) => {
+          if (env === "development") {
+            ph.debug();
+          }
+          const userId = bootstrap?.distinctId;
+          if (userId) {
+            ph.identify(userId);
+          }
+          ph.register({ environment: env });
+        },
+      } as Parameters<typeof posthog.init>[1]);
+
+      if (env === "production") {
+        posthog.set_config({ record_canvas: true } as NonNullable<
+          Parameters<typeof posthog.init>[1]
+        >);
+      }
+
+      setClient(posthog);
+    })();
   }, []);
 
   if (!client) return <>{children}</>;
