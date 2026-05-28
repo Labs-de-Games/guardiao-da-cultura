@@ -65,9 +65,8 @@ Since Next.js App Router does not emit `router.events`, we will use the standard
 
 ### 9. Authoritative Server-Side Events (Option B)
 The backend is the source of truth for critical lifecycle events:
-- `user_registered`, `user_verified`, `user_logged_in`, `password_reset_requested`
-- Game completion events (`match_ended`, `reward_granted`)
-- Payment/commerce events (`purchase_initiated`, `purchase_completed`)
+- `user_registered`, `user_verified`, `user_logged_in`
+- Game completion events (`match_ended`)
 
 Frontend captures UI interactions (`button_clicked`, `settings_opened`, `game_started`). Avoid double-counting by ensuring the same event is not captured on both sides.
 
@@ -551,7 +550,6 @@ export class AuthController {
       distinctId: user.id,
       properties: {
         method: "email",
-        has_referral_code: !!body.referralCode,
       },
     });
 
@@ -689,14 +687,10 @@ The `PostHogInterceptor` propagates the user's `distinct_id` from request header
 
 | Event Name | Trigger | Properties |
 |---|---|---|
-| `user_registered` | New account created | `method` (email/oauth), `has_referral_code` |
+| `user_registered` | New account created | `method` (email/oauth) |
 | `user_verified` | Email verified | `method` |
 | `user_logged_in` | Successful login | `method` |
-| `password_reset_requested` | Reset email sent | — |
 | `match_ended` | Game session persisted | `level_id`, `score`, `stars`, `duration_ms`, `user_id` |
-| `reward_granted` | Backend grants reward | `reward_type`, `reward_id`, `reason` |
-| `purchase_initiated` | Checkout started | `product_id`, `price`, `currency` |
-| `purchase_completed` | Payment confirmed | `product_id`, `price`, `currency`, `transaction_id` |
 | `$exception` | Unhandled error | `$exception_message`, `$exception_type`, stack trace |
 
 **Naming Convention:** Use `snake_case` with `.` namespacing for game events and `_` separation for product events. Be consistent.
@@ -706,12 +700,15 @@ The `PostHogInterceptor` propagates the user's `distinct_id` from request header
 ## Survey Implementation
 
 ### Goal
-Display a PostHog survey **after the player earns their first star**.
+Display a feedback survey **after the player earns their first star**.
 
 ### Why This Timing
 - A survey popping up mid-gameplay (while moving or solving a quiz) is terrible UX.
 - The `ResultPanel` (level-complete screen) is a natural pause point where the player is already reading their score.
 - PostHog surveys render as DOM overlays, so even if the player navigates away quickly, the survey will persist on the next screen.
+
+### Current Implementation Note
+> **Inconsistency:** The current codebase uses a hardcoded Google Form link (`navNextUrl`) in `ResultPanel.ts` for the "Dê sua opinião" button instead of a PostHog survey overlay. The `first_star_earned` event is correctly captured and would trigger a PostHog survey if configured in the PostHog UI, but the in-game button currently bypasses PostHog and opens an external Google Form. When ready to switch to PostHog surveys, remove the Google Form link and configure the survey in the PostHog Dashboard with an event-based trigger on `first_star_earned`.
 
 ### Implementation Steps
 
