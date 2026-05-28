@@ -56,6 +56,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         autocapture: false,
         capture_pageview: false,
         record_sessions_percent: recordSessionsPercent,
+        record_canvas: env === "production",
         opt_in_site_apps: env === "production",
         __add_tracing_headers: [],
         bootstrap: {
@@ -73,12 +74,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           ph.register({ environment: env });
         },
       } as Parameters<typeof posthog.init>[1]);
-
-      if (env === "production") {
-        posthog.set_config({ record_canvas: true } as NonNullable<
-          Parameters<typeof posthog.init>[1]
-        >);
-      }
 
       setClient(posthog);
     })();
