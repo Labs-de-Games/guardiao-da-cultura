@@ -9,6 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ToastProvider";
@@ -45,6 +46,10 @@ export default function LoginForm() {
   };
 
   const onSubmit = async (data: LoginFormData) => {
+    posthog.capture("button_clicked", {
+      button_name: "request_login_link",
+      screen: "login",
+    });
     try {
       await login(data);
       setSubmittedEmail(data.email);
@@ -58,6 +63,10 @@ export default function LoginForm() {
 
   const handleResend = async () => {
     if (countdown > 0) return;
+    posthog.capture("button_clicked", {
+      button_name: "resend_login_link",
+      screen: "login",
+    });
     setIsResending(true);
     try {
       await login({ email: submittedEmail });

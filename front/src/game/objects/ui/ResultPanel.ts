@@ -1,4 +1,5 @@
 import type * as Phaser from "phaser";
+import posthog from "posthog-js";
 import { GameEvents } from "../../constants/GameEvents";
 import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
@@ -174,6 +175,19 @@ export class ResultPanel extends BasePanel {
       console.error("Failed to get scoring payload");
       return;
     }
+
+    const hasEarnedStarBefore =
+      this.scene.registry.get("hasEarnedStarBefore") ?? false;
+    if (!hasEarnedStarBefore && payload.totalStars > 0) {
+      posthog.capture("first_star_earned", {
+        level_id: this.scene.registry.get("currentLevelId"),
+        total_score: payload.totalQuarters,
+        stars: payload.totalStars,
+        rating: payload.rating,
+      });
+      this.scene.registry.set("hasEarnedStarBefore", true);
+    }
+
     this.textMessage.setText("Você está pronto para o próximo nível");
     this.applyRatingCopy(payload.rating);
 
