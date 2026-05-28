@@ -153,18 +153,22 @@ POSTHOG_HOST=https://us.i.posthog.com
 Add to the Zod schema:
 
 ```typescript
-NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
+NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
 NEXT_PUBLIC_POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
 ```
+
+> **Note:** `NEXT_PUBLIC_POSTHOG_KEY` is `.optional()` so that the `PostHogStub` is used automatically in local development when no key is set.
 
 ### Backend (`back/src/core/config/config.service.ts`)
 
 Add to the Zod schema:
 
 ```typescript
-POSTHOG_API_KEY: z.string().min(1),
+POSTHOG_API_KEY: z.string().optional(),
 POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
 ```
+
+> **Note:** `POSTHOG_API_KEY` is `.optional()` so that PostHog is silently disabled in local development when no key is set.
 
 **Note:** The project API key (`phc_...`) is a public write-only key. It is safe to use in both frontend and backend. Never use a personal API key in application code.
 
@@ -582,8 +586,8 @@ To avoid flicker (where the default sampling rate applies before flags are fetch
 
 **Bootstrapping flow:**
 1. User logs in. Server knows `user.id`.
-2. On first game page load, the server calls PostHog `/decide` with `distinctId: user.id`.
-3. Flag values are injected into the page as `window.__POSTHOG_FLAGS__`.
+2. `PostHogProvider` fetches `/api/v1/posthog/bootstrap` after mount.
+3. The response contains the user's `distinctId` and evaluated `featureFlags`.
 4. `posthog.init()` uses these bootstrapped values immediately, then refreshes in the background.
 
 **Anonymous users:** The game requires login to play, but auth pages (`/auth/login`, `/auth/register`) are tracked. Anonymous users do not bootstrap flags. They use the safe default (`record_sessions_percent: 1.0` at launch).
@@ -591,36 +595,70 @@ To avoid flicker (where the default sampling rate applies before flags are fetch
 **Implementation in `PostHogProvider`:**
 
 ```tsx
+async function fetchBootstrap(): Promise<PostHogBootstrapData | null> {
+  try {
+    const response = await fetch("/api/v1/posthog/bootstrap", {
+      credentials: "include",
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as PostHogBootstrapData;
+  } catch {
+    return null;
+  }
+}
+
+// Inside useEffect:
+const bootstrap = await fetchBootstrap();
+
+const recordSessionsPercent =
+  typeof bootstrap?.featureFlags?.session_replay_sampling_rate === "number"
+    ? (bootstrap.featureFlags.session_replay_sampling_rate as number)
+    : 1.0;
+
 posthog.init(key, {
   api_host: host || "https://us.i.posthog.com",
   autocapture: false,
   capture_pageview: false,
-  record_canvas: true,
-  opt_in_site_apps: true,
+  record_sessions_percent: recordSessionsPercent,
+  opt_in_site_apps: env === "production",
   __add_tracing_headers: [],
   bootstrap: {
-    distinctId: (window as any).__POSTHOG_DISTINCT_ID__,
-    featureFlags: (window as any).__POSTHOG_FLAGS__ || {},
+    distinctID: bootstrap?.distinctId,
+    featureFlags: bootstrap?.featureFlags ?? {},
   },
   loaded: (ph) => {
-    const userId = (window as any).__INITIAL_USER_ID__;
-    if (userId) {
-      ph.identify(userId);
-    }
-    ph.register({ environment: process.env.NEXT_PUBLIC_ENV || "production" });
+    if (env === "development") ph.debug();
+    const userId = bootstrap?.distinctId;
+    if (userId) ph.identify(userId);
+    ph.register({ environment: env });
   },
 });
 ```
 
 ### Backend: Flag Evaluation
 
-Server-side flag evaluation uses `posthog-node` local evaluation for performance:
+Server-side flag evaluation uses `posthog-node`'s `getAllFlags` for performance. This leverages local evaluation when cached flag definitions are available, falling back to remote evaluation transparently:
 
 ```typescript
-const isEnabled = await posthog.isFeatureEnabled(
-  "session_replay_sampling_rate",
-  userId
-);
+import { PostHogService } from "../posthog/posthog.service";
+
+@Controller("posthog")
+export class PostHogController {
+  constructor(private readonly posthog: PostHogService) {}
+
+  @Get("bootstrap")
+  async bootstrap(@CurrentUser() user: User) {
+    const client = this.posthog.getClient();
+    const flags = client
+      ? await client.getAllFlags(user.id)
+      : {};
+
+    return {
+      distinctId: user.id,
+      featureFlags: flags,
+    };
+  }
+}
 ```
 
 The `PostHogInterceptor` propagates the user's `distinct_id` from request headers, so flags can be evaluated for the correct user without extra context.
@@ -637,7 +675,7 @@ The `PostHogInterceptor` propagates the user's `distinct_id` from request header
 | `game_started` | Player clicks "Play" / level loads | `level_id`, `level_number` |
 | `level_completed` | Level ends successfully | `level_id`, `score`, `stars`, `time_spent_ms`, `attempts` |
 | `level_failed` | Level ends unsuccessfully | `level_id`, `score`, `time_spent_ms`, `reason` |
-| `star_collected` | Player collects a star | `level_id`, `star_index`, `total_stars` |
+| `star_collected` | Player collects a collectible (star, clue, etc.) | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` |
 | `first_star_earned` | **First star ever** earned, captured at ResultPanel | `level_id`, `total_score` |
 | `badge_earned` | Player earns a badge | `badge_id`, `badge_name`, `level_id` |
 | `quiz_completed` | Quiz minigame ends | `quiz_id`, `score`, `correct_answers`, `total_questions` |
