@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { PinoLogger } from "nestjs-pino";
 import { z } from "zod";
 import type { GameEventPayload } from "../../shared/events/game-events";
 
@@ -23,16 +24,19 @@ const quizEventSchema = z.object({
 
 @Injectable()
 export class GameService {
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(
+    private readonly logger: PinoLogger,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async processEvent(
     payload: GameEventPayload,
     userId?: string,
   ): Promise<void> {
     const finalUserId = userId ?? payload.userId;
-    console.log(
-      `[GameService] Received event: ${payload.type} for user: ${finalUserId}`,
-      payload,
+    this.logger.info(
+      { eventType: payload.type, userId: finalUserId },
+      "Processing game event",
     );
     // Validate quiz events with Zod
     if (payload.type === "quiz.completed" || payload.type === "quiz.failed") {
@@ -42,6 +46,10 @@ export class GameService {
         if (error instanceof z.ZodError) {
           const messages = error.issues.map(
             (issue) => `${issue.path.join(".")}: ${issue.message}`,
+          );
+          this.logger.error(
+            { eventType: payload.type, issues: messages },
+            "Invalid quiz event payload",
           );
           throw new Error(`Invalid quiz event payload: ${messages.join(", ")}`);
         }
