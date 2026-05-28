@@ -1,4 +1,5 @@
 import type { Scene } from "phaser";
+import posthog from "posthog-js";
 import { sendGameEvent } from "../../lib/analyticsApi";
 import {
   fetchBadges,
@@ -89,6 +90,11 @@ export class BadgeSystem {
     const userId = this.scene.registry.get("userId");
     if (userId) {
       this.emitBadgeEarnedEvent(userId, badge);
+      posthog.capture("badge_earned", {
+        badge_id: badge.id,
+        badge_name: badge.name,
+        level_id: this.scene.registry.get("currentLevelId"),
+      });
     }
   }
 
