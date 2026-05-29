@@ -85,7 +85,7 @@ services:
           memory: 64M
 
   front:
-    image: ghcr.io/labs-de-games/gameplate-front:latest
+    image: ghcr.io/labs-de-games/gameplate-front:${IMAGE_TAG:-develop}
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -124,7 +124,7 @@ services:
           memory: 256M
 
   back:
-    image: ghcr.io/labs-de-games/gameplate-back:latest
+    image: ghcr.io/labs-de-games/gameplate-back:${IMAGE_TAG:-develop}
     restart: unless-stopped
     environment:
       - NODE_ENV=production
