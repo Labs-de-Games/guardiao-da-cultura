@@ -36,7 +36,7 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/package-lock.json ./package-lock.json
 
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
+    npm pkg delete scripts.prepare && npm ci --omit=dev
 
 WORKDIR /app/back
 ARG BACKEND_PORT=3001
