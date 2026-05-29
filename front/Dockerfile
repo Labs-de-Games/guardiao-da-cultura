@@ -30,6 +30,7 @@ RUN npm run build -- --filter=front
 FROM node:24.15.0-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV HUSKY=0
 
 COPY --from=build /app/front/.next/standalone ./
 COPY --from=build /app/front/.next/static ./front/.next/static
