@@ -35,6 +35,11 @@ ENV HUSKY=0
 COPY --from=build /app/front/.next/standalone ./
 COPY --from=build /app/front/.next/static ./front/.next/static
 COPY --from=build /app/front/public ./front/public
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/package-lock.json ./package-lock.json
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm pkg delete scripts.prepare && npm ci --omit=dev
 
 ARG FRONTEND_PORT=3000
 EXPOSE ${FRONTEND_PORT}
