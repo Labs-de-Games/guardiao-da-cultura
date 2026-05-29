@@ -27,6 +27,7 @@ RUN npm run build -- --filter=back
 FROM node:24.15.0-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV HUSKY=0
 
 COPY --from=build /app/back/dist ./back/dist
 COPY --from=build /app/back/package.json ./back/package.json
