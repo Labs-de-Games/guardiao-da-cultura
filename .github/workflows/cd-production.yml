@@ -1,7 +1,12 @@
-name: CD
+name: CD Production
 
 on:
   workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  FRONT_IMAGE: ghcr.io/labs-de-games/gameplate-front
+  BACK_IMAGE: ghcr.io/labs-de-games/gameplate-back
 
 jobs:
   build-and-push:
@@ -10,14 +15,23 @@ jobs:
       contents: read
       packages: write
 
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set image tag
+        id: vars
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "image_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -30,7 +44,9 @@ jobs:
           context: .
           file: ./front/Dockerfile
           push: true
-          tags: ghcr.io/labs-de-games/gameplate-front:latest
+          tags: |
+            ${{ env.FRONT_IMAGE }}:master-${{ steps.vars.outputs.image_tag }}
+            ${{ env.FRONT_IMAGE }}:master
 
       - name: Build and push back image
         uses: docker/build-push-action@v5
@@ -38,28 +54,29 @@ jobs:
           context: .
           file: ./back/Dockerfile
           push: true
-          tags: ghcr.io/labs-de-games/gameplate-back:latest
+          tags: |
+            ${{ env.BACK_IMAGE }}:master-${{ steps.vars.outputs.image_tag }}
+            ${{ env.BACK_IMAGE }}:master
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Coolify webhook
+      - name: Trigger Coolify production deploy
         env:
-          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL_PRODUCTION }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
           if [ -z "$COOLIFY_WEBHOOK_URL" ] || [ -z "$COOLIFY_TOKEN" ]; then
-            echo "::error::COOLIFY_WEBHOOK_URL or COOLIFY_TOKEN is not configured."
-            echo "To enable deployments:"
-            echo "1. Open your Coolify dashboard and go to the project settings."
+            echo "::error::COOLIFY_WEBHOOK_URL_PRODUCTION or COOLIFY_TOKEN is not configured."
+            echo "To enable production deployments:"
+            echo "1. Open your Coolify dashboard and go to the production app settings."
             echo "2. Copy the Webhook URL for automatic deployments."
             echo "3. Go to Keys & Tokens > API Tokens and create a new token with Deploy permissions."
             echo "4. In this GitHub repository, go to Settings > Secrets and variables > Actions."
-            echo "5. Create Repository Secrets named COOLIFY_WEBHOOK_URL and COOLIFY_TOKEN."
-            echo "6. Push to master again to trigger the deployment."
+            echo "5. Create Repository Secrets named COOLIFY_WEBHOOK_URL_PRODUCTION and COOLIFY_TOKEN."
             exit 1
           fi
-          echo "Triggering Coolify deployment..."
+          echo "Triggering production deployment with tag: ${{ needs.build-and-push.outputs.image_tag }}"
           curl -X GET "$COOLIFY_WEBHOOK_URL" \
             -H "Authorization: Bearer $COOLIFY_TOKEN"
