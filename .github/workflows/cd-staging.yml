@@ -51,6 +51,9 @@ jobs:
           tags: |
             ${{ env.FRONT_IMAGE }}:develop-${{ steps.vars.outputs.image_tag }}
             ${{ env.FRONT_IMAGE }}:develop
+          build-args: |
+            NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+            NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
 
       - name: Build and push back image
         uses: docker/build-push-action@v5
