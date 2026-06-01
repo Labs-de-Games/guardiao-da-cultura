@@ -179,11 +179,12 @@ export class CollectibleSystem {
     if (!this.activeCollectible) {
       this.activeCollectible = instance;
 
+      this.scoreManager.recordCollectible(
+        instance.collectibleId,
+        instance.collectibleType,
+      );
+
       if (!instance.isCollected) {
-        this.scoreManager.recordCollectible(
-          instance.collectibleId,
-          instance.collectibleType,
-        );
         instance.isCollected = true;
 
         const totalCollected = this.collectibles.filter(
