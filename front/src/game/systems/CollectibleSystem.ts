@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import posthog from "posthog-js";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractiveButton } from "../objects/InteractiveButton";
@@ -157,6 +158,17 @@ export class CollectibleSystem {
       if (!instance.isCollected) {
         this.scoreManager.recordCollectible();
         instance.isCollected = true;
+
+        const totalCollected = this.collectibles.filter(
+          (c) => c.isCollected,
+        ).length;
+        posthog.capture("star_collected", {
+          level_id: this.scene.registry.get("currentLevelId"),
+          collectible_id: instance.collectibleId,
+          collectible_type: instance.collectibleType,
+          total_collected: totalCollected,
+          total_available: this.collectibles.length,
+        });
 
         // Track secret clue collection for Detetive achievement (CLUE_VILLAIN only)
         if (instance.collectibleType === "CLUE_VILLAIN") {

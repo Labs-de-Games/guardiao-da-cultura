@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import posthog from "posthog-js";
 import { clearAuthStatusCookie } from "@/lib/auth/cookies";
 import { broadcastAuthEvent } from "@/lib/auth/sync";
 import { env } from "@/lib/env";
@@ -101,6 +102,19 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken && config.headers) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+
+  if (posthog.__loaded) {
+    const sessionId = posthog.get_session_id();
+    const distinctId = posthog.get_distinct_id();
+
+    if (sessionId) {
+      config.headers["X-PostHog-Session-ID"] = sessionId;
+    }
+    if (distinctId) {
+      config.headers["X-PostHog-Distinct-ID"] = distinctId;
+    }
+  }
+
   return config;
 });
 

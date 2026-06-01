@@ -23,8 +23,8 @@ type ProgressRepoMock = {
 function createQueryBuilderMock(): QueryBuilderMock {
   const builder = {} as QueryBuilderMock;
   builder.insert = jest.fn(() => builder);
-  builder.into = jest.fn(() => builder);
-  builder.values = jest.fn(() => builder);
+  builder.into = jest.fn((_target: unknown) => builder);
+  builder.values = jest.fn((_values: unknown) => builder);
   builder.orIgnore = jest.fn(() => builder);
   builder.execute = jest.fn(async () => ({
     identifiers: [],
@@ -41,10 +41,12 @@ describe("ProgressionService", () => {
   beforeEach(async () => {
     const queryBuilder = createQueryBuilderMock();
     repo = {
-      findOne: jest.fn(async () => null),
+      findOne: jest.fn(async (_options: unknown) => null),
       create: jest.fn((dto: unknown) => dto),
       save: jest.fn(async (entity: unknown) => entity),
-      update: jest.fn(async () => ({ affected: 1 })),
+      update: jest.fn(async (_id: unknown, _data: unknown) => ({
+        affected: 1,
+      })),
       createQueryBuilder: jest.fn(() => queryBuilder),
     };
 
@@ -91,7 +93,7 @@ describe("ProgressionService", () => {
     });
 
     expect(repo.update).toHaveBeenCalledTimes(1);
-    const updatePayload = repo.update.mock.calls[0][1];
+    const updatePayload = repo.update.mock.calls[0][1] as any;
     const stored = JSON.parse(updatePayload.quizResults);
     expect(stored.other_mission.passed).toBe(true);
     expect(stored.mission_1.passed).toBe(true);
@@ -148,7 +150,7 @@ describe("ProgressionService", () => {
       });
 
       expect(repo.update).toHaveBeenCalledTimes(1);
-      const updatePayload = repo.update.mock.calls[0][1];
+      const updatePayload = repo.update.mock.calls[0][1] as any;
       expect(updatePayload.currentLevel).toBe(2);
     });
 
@@ -177,7 +179,7 @@ describe("ProgressionService", () => {
       });
 
       expect(repo.update).toHaveBeenCalledTimes(1);
-      const updatePayload = repo.update.mock.calls[0][1];
+      const updatePayload = repo.update.mock.calls[0][1] as any;
       expect(updatePayload.currentLevel).toBe(4);
     });
 
@@ -205,8 +207,80 @@ describe("ProgressionService", () => {
       });
 
       expect(repo.update).toHaveBeenCalledTimes(1);
-      const updatePayload = repo.update.mock.calls[0][1];
+      const updatePayload = repo.update.mock.calls[0][1] as any;
       expect(updatePayload.currentLevel).toBe(3);
+    });
+
+    it("increments totalStars and stores highest stars when replaying with better stars", async () => {
+      const userId = "user_1";
+      const progress = {
+        id: "p1",
+        userId,
+        completedLevels: JSON.stringify({
+          level_01: { completedAt: new Date(), score: 100, stars: 1 },
+        }),
+        clues: "{}",
+        quizResults: "{}",
+        totalStars: 1,
+        currentLevel: 2,
+      };
+
+      repo.findOne.mockImplementation(async () => progress);
+
+      await service.handleLevelCompleted({
+        userId,
+        type: GameEventType.LEVEL_COMPLETED,
+        timestamp: new Date(),
+        metadata: {
+          levelId: "level_01",
+          levelNumber: 1,
+          score: 150,
+          stars: 3,
+        },
+      });
+
+      expect(repo.update).toHaveBeenCalledTimes(1);
+      const updatePayload = repo.update.mock.calls[0][1] as any;
+      expect(updatePayload.totalStars).toBe(3);
+      const stored = JSON.parse(updatePayload.completedLevels);
+      expect(stored.level_01.stars).toBe(3);
+      expect(stored.level_01.score).toBe(150);
+    });
+
+    it("does not increment totalStars when replaying with lower or equal stars", async () => {
+      const userId = "user_1";
+      const progress = {
+        id: "p1",
+        userId,
+        completedLevels: JSON.stringify({
+          level_01: { completedAt: new Date(), score: 200, stars: 3 },
+        }),
+        clues: "{}",
+        quizResults: "{}",
+        totalStars: 3,
+        currentLevel: 2,
+      };
+
+      repo.findOne.mockImplementation(async () => progress);
+
+      await service.handleLevelCompleted({
+        userId,
+        type: GameEventType.LEVEL_COMPLETED,
+        timestamp: new Date(),
+        metadata: {
+          levelId: "level_01",
+          levelNumber: 1,
+          score: 250,
+          stars: 2,
+        },
+      });
+
+      expect(repo.update).toHaveBeenCalledTimes(1);
+      const updatePayload = repo.update.mock.calls[0][1] as any;
+      expect(updatePayload.totalStars).toBe(3);
+      const stored = JSON.parse(updatePayload.completedLevels);
+      expect(stored.level_01.stars).toBe(3);
+      expect(stored.level_01.score).toBe(250);
     });
   });
 });

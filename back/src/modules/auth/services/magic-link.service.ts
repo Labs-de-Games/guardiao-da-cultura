@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { PinoLogger } from "nestjs-pino";
 import { LessThan, type Repository } from "typeorm";
 import { MagicLinkToken } from "../entities/magic-link-token.entity";
 import type { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
@@ -8,6 +9,7 @@ import type { MagicLinkTokenType } from "../enums/magic-link-token-type.enum";
 @Injectable()
 export class MagicLinkService {
   constructor(
+    private readonly logger: PinoLogger,
     @InjectRepository(MagicLinkToken)
     private readonly magicLinkTokenRepository: Repository<MagicLinkToken>,
   ) {}
@@ -39,6 +41,7 @@ export class MagicLinkService {
     });
 
     await this.magicLinkTokenRepository.save(token);
+    this.logger.info({ userId, type }, "Magic link created");
     return { rawToken };
   }
 
@@ -52,9 +55,24 @@ export class MagicLinkService {
       relations: ["user"],
     });
 
-    if (!token) return null;
-    if (token.usedAt) return null;
-    if (token.expiresAt < new Date()) return null;
+    if (!token) {
+      this.logger.warn({ type }, "Magic link token not found");
+      return null;
+    }
+    if (token.usedAt) {
+      this.logger.warn(
+        { userId: token.user.id, type },
+        "Magic link token already used",
+      );
+      return null;
+    }
+    if (token.expiresAt < new Date()) {
+      this.logger.warn(
+        { userId: token.user.id, type },
+        "Magic link token expired",
+      );
+      return null;
+    }
 
     return token;
   }
@@ -68,6 +86,10 @@ export class MagicLinkService {
 
     token.usedAt = new Date();
     await this.magicLinkTokenRepository.save(token);
+    this.logger.info(
+      { userId: token.user.id, type },
+      "Magic link token consumed",
+    );
     return token;
   }
 
@@ -77,11 +99,16 @@ export class MagicLinkService {
       { token: hashedToken },
       { usedAt: new Date() },
     );
+    this.logger.info("Magic link token revoked");
   }
 
   async cleanupExpired(): Promise<void> {
-    await this.magicLinkTokenRepository.delete({
+    const result = await this.magicLinkTokenRepository.delete({
       expiresAt: LessThan(new Date()),
     });
+    this.logger.info(
+      { count: result.affected ?? 0 },
+      "Expired magic link tokens cleaned up",
+    );
   }
 }

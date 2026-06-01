@@ -85,13 +85,16 @@ services:
           memory: 64M
 
   front:
-    image: ghcr.io/labs-de-games/gameplate-front:latest
+    image: ghcr.io/labs-de-games/gameplate-front:${IMAGE_TAG:-develop}
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - NEXT_PUBLIC_ENV=staging
       - HOSTNAME=0.0.0.0
       - PORT=${FRONTEND_PORT:-3000}
       - NEXT_PUBLIC_API_URL=${FRONTEND_API_URL}
+      - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}
     healthcheck:
       test:
         [
@@ -121,7 +124,7 @@ services:
           memory: 256M
 
   back:
-    image: ghcr.io/labs-de-games/gameplate-back:latest
+    image: ghcr.io/labs-de-games/gameplate-back:${IMAGE_TAG:-develop}
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -137,6 +140,8 @@ services:
       - EMAIL_FROM=${EMAIL_FROM}
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      - POSTHOG_HOST=${POSTHOG_HOST:-https://us.i.posthog.com}
     healthcheck:
       test:
         [
