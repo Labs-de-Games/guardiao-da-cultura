@@ -86,6 +86,7 @@ services:
 
   front:
     image: ghcr.io/labs-de-games/gameplate-front:${IMAGE_TAG:-master}
+    pull_policy: always
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -125,6 +126,7 @@ services:
 
   back:
     image: ghcr.io/labs-de-games/gameplate-back:${IMAGE_TAG:-master}
+    pull_policy: always
     restart: unless-stopped
     environment:
       - NODE_ENV=production
