@@ -116,12 +116,15 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
-  recordCollectible(collectibleId: string) {
+  recordCollectible(collectibleId: string, collectibleType: string) {
     if (this.collectibles.interactionsCount >= this.collectibles.total) {
       return;
     }
 
-    const isNewInteraction = this.addCollectibleInteraction(collectibleId);
+    const isNewInteraction = this.addCollectibleInteraction(
+      collectibleId,
+      collectibleType,
+    );
     if (!isNewInteraction) {
       return;
     }
@@ -143,13 +146,18 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
-  private addCollectibleInteraction(collectibleId: string): boolean {
+  private addCollectibleInteraction(
+    collectibleId: string,
+    collectibleType: string,
+  ): boolean {
     if (!collectibleId) {
       return false;
     }
 
     const alreadyTracked = this.collectibles.interactions.some(
-      (interaction) => interaction.collectible_id === collectibleId,
+      (interaction) =>
+        interaction.collectible_id === collectibleId &&
+        interaction.collectible_type === collectibleType,
     );
 
     if (alreadyTracked) {
@@ -158,6 +166,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
 
     const interaction: CollectibleInteraction = {
       collectible_id: collectibleId,
+      collectible_type: collectibleType,
       interactedAt: this.nowIso(),
     };
 

@@ -23,6 +23,11 @@ export interface CollectibleInstance {
   button: InteractiveButton;
 }
 
+export interface PersistedCollectible {
+  collectibleId: string;
+  collectibleType: keyof CollectiblesJson;
+}
+
 export class CollectibleSystem {
   private readonly scene: Phaser.Scene;
   private readonly scoreManager: ScoreManager;
@@ -88,8 +93,26 @@ export class CollectibleSystem {
         typeKey,
         collectibleId,
         player,
+        false,
       );
     });
+  }
+
+  public applyCollectedCollectibles(collected: PersistedCollectible[]): void {
+    if (!collected.length) return;
+    const collectedKey = new Set(
+      collected.map((item) => `${item.collectibleType}:${item.collectibleId}`),
+    );
+
+    for (const collectible of this.collectibles) {
+      if (
+        collectedKey.has(
+          `${collectible.collectibleType}:${collectible.collectibleId}`,
+        )
+      ) {
+        collectible.isCollected = true;
+      }
+    }
   }
 
   public destroy() {
@@ -111,6 +134,7 @@ export class CollectibleSystem {
     collectibleType: keyof CollectiblesJson,
     collectibleId: string,
     player: Phaser.Physics.Arcade.Sprite,
+    isCollected: boolean,
   ) {
     const x = (obj.x ?? 0) * this.mapScale;
     const y = (obj.y ?? 0) * this.mapScale;
@@ -136,7 +160,7 @@ export class CollectibleSystem {
       collectibleId,
       collectibleType,
       collectibleData,
-      isCollected: false,
+      isCollected,
       sprite,
       button,
     };
@@ -156,7 +180,10 @@ export class CollectibleSystem {
       this.activeCollectible = instance;
 
       if (!instance.isCollected) {
-        this.scoreManager.recordCollectible(instance.collectibleId);
+        this.scoreManager.recordCollectible(
+          instance.collectibleId,
+          instance.collectibleType,
+        );
         instance.isCollected = true;
 
         const totalCollected = this.collectibles.filter(
