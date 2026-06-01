@@ -35,17 +35,40 @@ export class ProgressionService {
 
     const completedLevels = parseJson(progress.completedLevels);
     const levelId = String(meta.levelId ?? "");
+    let starsToGain = 0;
+
     if (levelId) {
-      completedLevels[levelId] = {
-        completedAt: payload.timestamp,
-        score: meta.score ?? 0,
-        stars: meta.stars ?? 0,
-      };
+      const existingLevel = completedLevels[levelId] as
+        | { stars?: number; score?: number }
+        | undefined;
+      const previousStars =
+        typeof existingLevel?.stars === "number" ? existingLevel.stars : 0;
+      const previousScore =
+        typeof existingLevel?.score === "number" ? existingLevel.score : 0;
+      const newStars = typeof meta.stars === "number" ? meta.stars : 0;
+      const newScore = typeof meta.score === "number" ? meta.score : 0;
+
+      if (
+        !existingLevel ||
+        newStars > previousStars ||
+        newScore > previousScore
+      ) {
+        completedLevels[levelId] = {
+          completedAt: payload.timestamp,
+          score: Math.max(previousScore, newScore),
+          stars: Math.max(previousStars, newStars),
+        };
+      }
+
+      if (newStars > previousStars) {
+        starsToGain = newStars - previousStars;
+      }
+    } else {
+      const newStars = typeof meta.stars === "number" ? meta.stars : 0;
+      starsToGain = newStars;
     }
 
-    const stars = meta.stars ?? 0;
-    const totalStars =
-      progress.totalStars + (typeof stars === "number" ? stars : 0);
+    const totalStars = progress.totalStars + starsToGain;
 
     const currentLevel =
       typeof meta.levelNumber === "number"

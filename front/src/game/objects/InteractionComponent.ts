@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import posthog from "posthog-js";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -180,6 +181,11 @@ export class InteractionComponent {
   private showHint() {
     if (!this.hintEnabled) return;
     if (this.hintCompleted) return;
+
+    posthog.capture("clue_used", {
+      level_id: this.scene.registry.get("currentLevelId"),
+      clue_index: this.parent.name || "unknown",
+    });
 
     if (!this.hintSprite) {
       this.hintSprite = this.scene.add.sprite(

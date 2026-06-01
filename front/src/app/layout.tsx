@@ -1,5 +1,7 @@
 import Script from "next/script";
 import type { ReactNode } from "react";
+import PostHogPageView from "@/components/PostHogPageView";
+import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
 import { ToastProvider } from "@/components/ToastProvider";
 import { AuthProvider } from "@/lib/auth/AuthContext";
@@ -22,11 +24,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         style={{ margin: 0, padding: 0, height: "100vh", overflow: "hidden" }}
       >
-        <ThemeRegistry>
-          <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </AuthProvider>
-        </ThemeRegistry>
+        <PostHogProvider>
+          <ThemeRegistry>
+            <AuthProvider>
+              <ToastProvider>
+                <PostHogPageView />
+                {children}
+              </ToastProvider>
+            </AuthProvider>
+          </ThemeRegistry>
+        </PostHogProvider>
         <Script
           src="https://t.contentsquare.net/uxa/bb88b6a708c9e.js"
           strategy="afterInteractive"

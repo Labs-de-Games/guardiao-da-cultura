@@ -1,131 +1,199 @@
-# Run 'make help' to see available commands
+# =============================================================================
+# Gameplate Makefile
+# =============================================================================
+# Run 'make help' to see available commands, or just 'make'.
+# =============================================================================
 
+# --- Project Configuration ---
 PROJECT_NAME = gameplate
 
-.PHONY: dev-all dev-front dev-back docker-all docker-front docker-back lint test build-front build-back build-prod down clean fclean fclean-images sync install setup db-migrate db-migrate-generate help
+# --- Tooling Variables ---
+DC         = docker compose
+PKG        = npm
+DC_DEV     = -f compose.development.yaml
+DC_STAGING = -f compose.staging.yaml
+DC_PROD    = -f compose.production.yaml
 
-# --- SETUP & INSTALLATION ---
-install:
-	@echo "Installing dependencies with npm..."
-	npm ci
+# --- Default Target ---
+.DEFAULT_GOAL := help
 
-setup: install
+# --- Phony Declarations ---
+.PHONY: install setup sync local-all local-front local-back development-up development-front development-back development-down development-build development-build-front development-build-back development-logs development-ps development-shell-front development-shell-back development-restart staging-up staging-down staging-logs staging-ps staging-shell-front staging-shell-back production-up production-down production-logs production-ps production-shell-front production-shell-back production-build lint test check db-migrate db-migrate-generate clean deep-clean clean-images help up down logs
+
+# =============================================================================
+# Setup & Installation
+# =============================================================================
+
+install: ## Install dependencies
+	@echo "Installing dependencies with $(PKG)..."
+	@$(PKG) ci
+
+setup: install ## Initial project setup
 	@echo "Setup complete. You can now run:"
-	@echo "  make dev-all     - Start local development (Turbo)"
-	@echo "  make docker-all  - Start Docker development"
+	@echo "  make up          - Start local development (Docker)"
+	@echo "  make local-all   - Start local development (Turbo)"
 
-# --- NATIVE RUN (npm/Turbo) ---
-dev-all: install
-	npm run dev
-
-dev-front: install
-	npm run dev -- --filter=front
-
-dev-back: install
-	npm run dev -- --filter=back
-
-# --- DOCKER RUN ---
-dev:
-	docker compose -f compose.development.yaml up --build -d
-
-docker-all:
-	docker compose -f compose.development.yaml up --build
-
-docker-front:
-	docker compose -f compose.development.yaml up --build front
-
-docker-back:
-	docker compose -f compose.development.yaml up --build back
-
-# --- QA & TESTS ---
-lint:
-	npm run lint
-
-test:
-	npm run test
-
-build-front:
-	docker compose -f compose.development.yaml build front
-
-build-back:
-	docker compose -f compose.development.yaml build back
-
-build-prod:
-	docker compose -f compose.production.yaml build
-
-# --- SYNC ---
-sync:
+sync: ## Reinstall node_modules (fix conflicts)
 	@echo "Syncing node_modules..."
 	@echo "Removing existing node_modules..."
-	rm -rf node_modules front/node_modules back/node_modules
-	@echo "Reinstalling with npm..."
-	npm ci
+	@rm -rf node_modules front/node_modules back/node_modules
+	@echo "Reinstalling with $(PKG)..."
+	@$(PKG) ci
 	@echo "Sync complete. node_modules are now aligned with host."
 
-# --- DATABASE ---
-db-migrate:
+# =============================================================================
+# Native Development
+# =============================================================================
+
+local-all: install ## Run both front and back locally via Turbo
+	@$(PKG) run dev
+
+local-front: install ## Run ONLY front locally
+	@$(PKG) run dev -- --filter=front
+
+local-back: install ## Run ONLY back locally
+	@$(PKG) run dev -- --filter=back
+
+# =============================================================================
+# Docker Development
+# =============================================================================
+
+development-up: ## Start all dev services (detached)
+	@$(DC) $(DC_DEV) up --build -d
+
+development-front: ## Start ONLY front via Docker
+	@$(DC) $(DC_DEV) up --build front -d
+
+development-back: ## Start ONLY back via Docker
+	@$(DC) $(DC_DEV) up --build back -d
+
+development-down: ## Stop dev containers
+	@$(DC) $(DC_DEV) down
+
+development-build: ## Build all dev images
+	@$(DC) $(DC_DEV) build
+
+development-build-front: ## Build front dev image
+	@$(DC) $(DC_DEV) build front
+
+development-build-back: ## Build back dev image
+	@$(DC) $(DC_DEV) build back
+
+development-logs: ## Follow dev container logs
+	@$(DC) $(DC_DEV) logs -f
+
+development-ps: ## List dev containers
+	@$(DC) $(DC_DEV) ps
+
+development-shell-front: ## Shell into front container
+	@$(DC) $(DC_DEV) exec front sh
+
+development-shell-back: ## Shell into back container
+	@$(DC) $(DC_DEV) exec back sh
+
+development-restart: ## Restart dev containers
+	@$(DC) $(DC_DEV) restart
+
+# =============================================================================
+# Staging
+# =============================================================================
+
+staging-up: ## Start staging stack (pulls latest from GHCR)
+	@$(DC) $(DC_STAGING) up -d --pull always
+
+staging-down: ## Stop staging stack
+	@$(DC) $(DC_STAGING) down
+
+staging-logs: ## Follow staging logs
+	@$(DC) $(DC_STAGING) logs -f
+
+staging-ps: ## List staging containers
+	@$(DC) $(DC_STAGING) ps
+
+staging-shell-front: ## Shell into staging front container
+	@$(DC) $(DC_STAGING) exec front sh
+
+staging-shell-back: ## Shell into staging back container
+	@$(DC) $(DC_STAGING) exec back sh
+
+# =============================================================================
+# Production
+# =============================================================================
+
+production-up: ## Start production stack (pulls latest from GHCR)
+	@$(DC) $(DC_PROD) up -d --pull always
+
+production-down: ## Stop production stack
+	@$(DC) $(DC_PROD) down
+
+production-logs: ## Follow production logs
+	@$(DC) $(DC_PROD) logs -f
+
+production-ps: ## List production containers
+	@$(DC) $(DC_PROD) ps
+
+production-shell-front: ## Shell into production front container
+	@$(DC) $(DC_PROD) exec front sh
+
+production-shell-back: ## Shell into production back container
+	@$(DC) $(DC_PROD) exec back sh
+
+production-build: ## Build nginx image for production
+	@$(DC) $(DC_PROD) build
+
+# =============================================================================
+# QA & Tests
+# =============================================================================
+
+lint: ## Run Biome (lint + format)
+	@$(PKG) run lint
+
+test: ## Run tests via Turbo
+	@$(PKG) run test
+
+check: lint test ## Run lint and tests in one go
+
+# =============================================================================
+# Database
+# =============================================================================
+
+db-migrate: ## Run pending TypeORM migrations in Docker
 	@echo "Running TypeORM migrations inside back container..."
-	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
+	@$(DC) $(DC_DEV) exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:run -d src/core/database/data-source.ts"
 
-db-migrate-generate:
+db-migrate-generate: ## Generate new migration (NAME=MigrationName)
 	@if [ -z "$(NAME)" ]; then echo "Usage: make db-migrate-generate NAME=MigrationName"; exit 1; fi
-	docker compose -f compose.development.yaml exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
+	@$(DC) $(DC_DEV) exec back sh -c "cd /app/back && npx typeorm-ts-node-commonjs migration:generate -d src/core/database/data-source.ts src/core/database/migrations/$(NAME)"
 
-# --- CLEANUP ---
-down:
-	docker compose -f compose.development.yaml down
+# =============================================================================
+# Cleanup
+# =============================================================================
 
-clean:
-	docker compose -f compose.development.yaml down -v
+clean: ## Stop containers and remove volumes
+	@$(DC) $(DC_DEV) down -v
 
-fclean: clean fclean-images
-	@echo "Full cleanup completed for $(PROJECT_NAME)"
+deep-clean: clean clean-images ## Full cleanup (containers, volumes, images)
+	@echo "Deep cleanup completed for $(PROJECT_NAME)"
 
-fclean-images:
-	@echo "Removing $(PROJECT_NAME) project images"
+clean-images: ## Remove project Docker images
+	@echo "Removing $(PROJECT_NAME) project images..."
 	@docker images --format '{{.Repository}}:{{.Tag}}' | grep "$(PROJECT_NAME)" | xargs -r docker rmi -f 2>/dev/null || true
 	@docker images --format '{{.Repository}}:{{.Tag}}' | grep "<none>" | xargs -r docker rmi -f 2>/dev/null || true
 	@echo "Project images removed."
 
-# --- HELP ---
-help:
-	@echo "Available commands:"
+# =============================================================================
+# Aliases
+# =============================================================================
+
+up: development-up ## Alias for development-up
+down: development-down ## Alias for development-down
+logs: development-logs ## Alias for development-logs
+
+# =============================================================================
+# Help
+# =============================================================================
+
+help: ## Show this help message
+	@echo "Usage: make [target]"
 	@echo ""
-	@echo "=== SETUP ==="
-	@echo "  make setup       - Initial setup (install dependencies)"
-	@echo "  make install     - Install dependencies with npm"
-	@echo "  make sync        - Reinstall node_modules (fix conflicts)"
-	@echo ""
-	@echo "=== Native Development (npm/Turbo) ==="
-	@echo "  make dev-all     - Run both front and back locally via Turbo"
-	@echo "  make dev-front   - Run ONLY front locally"
-	@echo "  make dev-back    - Run ONLY back locally"
-	@echo ""
-	@echo "=== Docker Development ==="
-	@echo "  make dev         - Start all services in detached mode"
-	@echo "  make docker-all  - Start all services via Docker Compose"
-	@echo "  make docker-front- Start ONLY front via Docker"
-	@echo "  make docker-back - Start ONLY back via Docker"
-	@echo ""
-	@echo "=== Production Builds ==="
-	@echo "  make build-front - Build front Docker image"
-	@echo "  make build-back  - Build back Docker image"
-	@echo "  make build-prod  - Build production images"
-	@echo ""
-	@echo "=== Database ==="
-	@echo "  make db-migrate           - Run pending TypeORM migrations in Docker"
-	@echo "  make db-migrate-generate  - Generate new migration (NAME=MigrationName)"
-	@echo ""
-	@echo "=== QA & Tests ==="
-	@echo "  make lint        - Run Biome (lint + format)"
-	@echo "  make test        - Run tests via Turbo"
-	@echo ""
-	@echo "=== Cleanup ==="
-	@echo "  make down        - Stop Docker containers"
-	@echo "  make clean       - Stop containers and remove volumes"
-	@echo "  make fclean      - Full cleanup (containers, volumes, project images only)"
-	@echo ""
-	@echo "=== IMPORTANT NOTES ==="
-	@echo "  - Use EITHER 'make dev-all' (local) OR 'make docker-all' (Docker)"
-	@echo "  - If switching between them, run 'make sync' first"
-	@echo "  - 'make build-front/back' are for production images only"
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}'
