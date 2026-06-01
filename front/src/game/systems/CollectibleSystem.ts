@@ -156,7 +156,7 @@ export class CollectibleSystem {
       this.activeCollectible = instance;
 
       if (!instance.isCollected) {
-        this.scoreManager.recordCollectible();
+        this.scoreManager.recordCollectible(instance.collectibleId);
         instance.isCollected = true;
 
         const totalCollected = this.collectibles.filter(

@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import type {
+  CollectibleInteraction,
   CollectiblesScore,
   FloorScore,
   IsoTimestamp,
@@ -56,6 +57,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       interactionsCount: 0,
       quartersEarned: 0,
       lastInteractionAt: null,
+      interactions: [],
     };
 
     this.quiz = {
@@ -114,8 +116,13 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
-  recordCollectible() {
+  recordCollectible(collectibleId: string) {
     if (this.collectibles.interactionsCount >= this.collectibles.total) {
+      return;
+    }
+
+    const isNewInteraction = this.addCollectibleInteraction(collectibleId);
+    if (!isNewInteraction) {
       return;
     }
 
@@ -134,6 +141,28 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       payload,
     });
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
+  }
+
+  private addCollectibleInteraction(collectibleId: string): boolean {
+    if (!collectibleId) {
+      return false;
+    }
+
+    const alreadyTracked = this.collectibles.interactions.some(
+      (interaction) => interaction.collectible_id === collectibleId,
+    );
+
+    if (alreadyTracked) {
+      return false;
+    }
+
+    const interaction: CollectibleInteraction = {
+      collectible_id: collectibleId,
+      interactedAt: this.nowIso(),
+    };
+
+    this.collectibles.interactions.push(interaction);
+    return true;
   }
 
   recordQuizResult(correctAnswers: number, totalQuestions: number) {
