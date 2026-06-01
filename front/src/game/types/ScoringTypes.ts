@@ -27,6 +27,7 @@ export interface CollectiblesScore {
 
 export interface CollectibleInteraction {
   collectible_id: string;
+  collectible_type: string;
   interactedAt: IsoTimestamp;
 }
 
