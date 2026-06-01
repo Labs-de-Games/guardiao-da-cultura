@@ -4,6 +4,7 @@ import { PinoLogger } from "nestjs-pino";
 import type { Repository } from "typeorm";
 import { PostHogService } from "../posthog/posthog.service";
 import type { SubmitScoreDto } from "./dto/submit-score.dto";
+import { UserCollectibleService } from "./user-collectible.service";
 import { UserScore } from "./user-score.entity";
 
 @Injectable()
@@ -13,9 +14,20 @@ export class ScoringService {
     @InjectRepository(UserScore)
     private readonly userScoreRepository: Repository<UserScore>,
     private readonly posthog: PostHogService,
+    private readonly userCollectibleService: UserCollectibleService,
   ) {}
 
   async submitScore(dto: SubmitScoreDto): Promise<UserScore> {
+    const collected = dto.collectedCollectibles ?? [];
+    await this.userCollectibleService.recordCollectibles(
+      collected.map((collectible) => ({
+        userId: dto.userId,
+        collectibleId: collectible.collectibleId,
+        collectibleType: collectible.collectibleType,
+        levelId: collectible.levelId,
+      })),
+    );
+
     const userScore = this.userScoreRepository.create({
       userId: dto.userId,
       levelId: dto.levelId,
