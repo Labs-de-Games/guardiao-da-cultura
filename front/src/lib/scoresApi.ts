@@ -22,6 +22,11 @@ export interface SubmitScoreRequest {
     interactionsCount: number;
     quartersEarned: number;
   };
+  collectedCollectibles: Array<{
+    collectibleId: string;
+    collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+    levelId: string;
+  }>;
 }
 
 export async function submitScore(payload: SubmitScoreRequest): Promise<void> {
@@ -38,5 +43,34 @@ export async function getUserLevelScores(
   levelId: string,
 ): Promise<unknown[]> {
   const res = await apiClient.get(`/scores/${userId}/${levelId}`);
+  return res.data;
+}
+
+export interface UserCollectibleRecord {
+  id: string;
+  userId: string;
+  collectibleId: string;
+  collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  levelId: string;
+  collectedAt: string;
+}
+
+export async function getUserCollectibles(
+  userId: string,
+  options?: {
+    levelId?: string;
+    collectibleType?: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  },
+): Promise<UserCollectibleRecord[]> {
+  const params = new URLSearchParams();
+  if (options?.levelId) params.set("levelId", options.levelId);
+  if (options?.collectibleType) {
+    params.set("collectibleType", options.collectibleType);
+  }
+  const query = params.toString();
+  const url = query
+    ? `/scores/${userId}/collectibles?${query}`
+    : `/scores/${userId}/collectibles`;
+  const res = await apiClient.get<UserCollectibleRecord[]>(url);
   return res.data;
 }
