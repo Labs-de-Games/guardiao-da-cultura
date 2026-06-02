@@ -8,5 +8,6 @@ import { GameEvent } from "./game-event.entity";
   imports: [TypeOrmModule.forFeature([GameEvent])],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
+  exports: [AnalyticsService],
 })
 export class AnalyticsModule {}
