@@ -85,7 +85,7 @@ export async function getClassesMetrics(): Promise<ClassMetrics[]> {
 export async function getDashboardMetrics(params?: {
   dateRange?: string;
 }): Promise<DashboardMetrics> {
-  const response = await apiClient.get<DashboardMetrics>("/dashboard/metrics", {
+  const response = await apiClient.get<DashboardMetrics>("/metrics", {
     params,
   });
   return response.data;
