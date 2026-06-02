@@ -6,6 +6,7 @@ import { ConfigService } from "../../../core/config/config.service";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
 import { PostHogService } from "../../posthog/posthog.service";
+import { Role } from "../../users/enums/role.enum";
 import { UserService } from "../../users/user.service";
 import { getCookieConfig } from "../config/cookie.config";
 import type { RegisterDto } from "../dto/register.dto";
@@ -115,12 +116,15 @@ export class AuthService {
       return { message: "Check your email" };
     }
 
+    const role = dto.role === Role.Institution ? Role.Institution : Role.Player;
+
     const user = await this.userService.create({
       email: dto.email,
       nickname: dto.nickname,
       firstName: dto.firstName,
       lastName: dto.lastName,
       dateOfBirth: new Date(dto.dateOfBirth),
+      role,
       isEmailVerified: false,
       isActive: true,
     });
