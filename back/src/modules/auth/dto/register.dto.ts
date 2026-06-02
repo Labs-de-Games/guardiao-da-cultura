@@ -1,6 +1,14 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsString, Length, Matches } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from "class-validator";
 import { IsValidDate } from "../../../common/validators/is-valid-date.decorator";
+import { Role } from "../../users/enums/role.enum";
 
 export class RegisterDto {
   @ApiProperty({ example: "John", description: "User first name" })
@@ -38,4 +46,14 @@ export class RegisterDto {
     message: "nickname must be alphanumeric with underscores only",
   })
   nickname!: string;
+
+  @ApiPropertyOptional({
+    enum: [Role.Institution],
+    description:
+      "Optional role for institutional signup. When omitted, defaults to player.",
+    example: Role.Institution,
+  })
+  @IsOptional()
+  @IsIn([Role.Institution])
+  role?: Role.Institution;
 }
