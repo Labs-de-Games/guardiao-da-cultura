@@ -21,6 +21,76 @@ The game is currently in active development. Core infrastructure is in place, an
 - **Infrastructure**: Deployment, monitoring, and tooling
 - **Documentation**: Keeping docs updated as the project evolves
 
+## Commands
+
+These are the exact commands agents must use. Do not guess alternatives.
+
+| Task | Command |
+|------|---------|
+| Start dev environment (Docker) | `make up` |
+| Start dev environment (Turbo) | `make local-all` |
+| Run linting | `make lint` |
+| Fix linting | `npm run lint:fix` |
+| Run tests | `make test` |
+| Run typecheck | `npm run typecheck` |
+| Run migrations | `make db-migrate` |
+| Stop containers | `make down` |
+| Full cleanup | `make deep-clean` |
+
+## Project Structure
+
+```mermaid
+flowchart TB
+    subgraph Root["gameplate/"]
+        direction TB
+        Front["front/ — Next.js + Phaser"]
+        Back["back/ — NestJS + TypeORM"]
+        Infra["Docker, nginx, compose.*.yaml"]
+        Docs["docs/, README.md, ARCHITECTURE.md"]
+    end
+
+    subgraph FrontSrc["front/src/"]
+        App["app/ — Next.js App Router"]
+        Components["components/ — React UI"]
+        Lib["lib/ — API clients, auth, utils"]
+        Game["game/ — Phaser 3 domain"]
+    end
+
+    subgraph BackSrc["back/src/"]
+        Core["core/ — Config, DB, email, guards"]
+        Modules["modules/ — 9 feature domains"]
+    end
+
+    Front --> FrontSrc
+    Back --> BackSrc
+
+    style Root fill:#e1f5fe
+    style FrontSrc fill:#e8f5e9
+    style BackSrc fill:#fce4ec
+```
+
+## Safe Zones vs Ask-First Zones
+
+### Safe Zones — Edit Autonomously
+
+- `/front/src/components/` — React UI components
+- `/front/src/lib/` — Utility functions, API clients, auth logic
+- `/front/src/game/` — Phaser game objects, scenes, mechanics
+- `/back/src/modules/*/services/` — Business logic services
+- `/back/src/modules/*/controllers/` — HTTP controllers
+- `/back/src/modules/*/dto/` — Data transfer objects
+- `/docs/` — Documentation updates
+
+### Ask-First Zones — Stop and Escalate
+
+- `/back/src/core/database/migrations/` — Database migrations affect production data
+- `/back/src/modules/*/entities/` — Entity changes require migration planning
+- `/.github/workflows/` — CI/CD changes affect all deployments
+- `/nginx/` — Reverse proxy config changes
+- `/compose.*.yaml` — Docker orchestration changes
+- `/.env.example` — Environment variable changes
+- `/package.json`, `/front/package.json`, `/back/package.json` — Dependency changes
+
 ## Agent Responsibilities
 
 ### What Agents Can Do
@@ -172,9 +242,19 @@ When reviewing AI-assisted code:
 - Copy-paste without adaptation
 - Generated comments that don't match the code
 
+## Hierarchical Agent Guidelines
+
+This repository uses nested `AGENTS.md` files for monorepo-specific rules:
+
+- `front/AGENTS.md` — Frontend-specific conventions (Next.js, Phaser, MUI)
+- `back/AGENTS.md` — Backend-specific conventions (NestJS, TypeORM)
+
+The nearest `AGENTS.md` in the directory tree takes precedence for context-specific decisions.
+
 ## References
 
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [README.md](./README.md) - Project overview
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - Development workflow and standards
+- [CONTRIBUTING.md](./docs/CONTRIBUTING.md) - Development workflow and standards
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - System architecture and API contracts
 - [GitHub Issues](https://github.com/Labs-de-Games/gameplate/issues) - Issue tracker and project board
