@@ -27,6 +27,7 @@ export interface RegisterCredentials {
   dateOfBirth: string;
   email: string;
   nickname: string;
+  role?: Extract<Role, "institution">;
 }
 
 export interface ResendVerificationData {
