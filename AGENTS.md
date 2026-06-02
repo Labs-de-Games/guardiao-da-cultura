@@ -6,6 +6,16 @@ This document defines how AI agents collaborate on this repository. It establish
 
 AI agents accelerate development by handling scaffolding, configuration, and repetitive tasks. They do not replace human judgment for architecture decisions, security reviews, or product direction.
 
+## First Steps for Agents
+
+Before making any changes, read these documents in order:
+
+1. **[CONTRIBUTING.md](./docs/CONTRIBUTING.md)** — Development workflow, branch strategy, commit conventions, and code standards. This is the primary guide for how work is done in this repository.
+2. **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System architecture, domain model, and API contracts. Understand the structure before modifying code.
+3. **Nearest `AGENTS.md`** — If working in `/front/` or `/back/`, read the respective `AGENTS.md` for package-specific conventions.
+
+Always follow the conventions in CONTRIBUTING.md unless the nearest AGENTS.md explicitly overrides them.
+
 ## Repository Scope
 
 This is an **active game development project** being built by a squad. We are developing a 2D browser-based game using Next.js, NestJS, and Phaser.
