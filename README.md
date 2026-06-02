@@ -4,6 +4,25 @@
 
 A 2D web game built with Next.js, NestJS, and Phaser.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Initial Setup](#initial-setup)
+  - [Database Setup](#database-setup)
+- [Available Commands](#available-commands)
+- [Architecture](#architecture)
+- [Development Workflow](#development-workflow)
+- [CI/CD](#cicd)
+- [Environment Variables](#environment-variables)
+- [Contributing](#contributing)
+- [Working with AI Agents](#working-with-ai-agents)
+- [Documentation](#documentation)
+- [License](#license)
+
 ## Overview
 
 This repository contains the complete development environment for our browser-based game, featuring:
@@ -33,29 +52,34 @@ This repository contains the complete development environment for our browser-ba
 ```
 .
 ├── front/                      # Next.js application
-│   ├── app/                    # App router (pages and layouts)
-│   ├── components/             # React components
-│   ├── lib/                    # Utility functions and helpers
+│   ├── src/
+│   │   ├── app/                # App router (pages and layouts)
+│   │   ├── components/         # React components
+│   │   ├── lib/                # Utility functions and helpers
+│   │   └── game/               # Phaser 3 game domain
 │   ├── public/                 # Static assets (images, fonts)
 │   └── package.json            # Frontend dependencies
 ├── back/                       # NestJS API
 │   ├── src/                    # Source code
-│   │   ├── modules/            # Feature modules
-│   │   ├── common/             # Shared utilities, guards, filters
+│   │   ├── core/               # Global config, database, health checks
+│   │   ├── modules/            # Feature modules (auth, game, progression, ...)
 │   │   └── main.ts             # Application entry point
 │   └── package.json            # Backend dependencies
 ├── .github/workflows/          # CI/CD pipelines
-│   ├── ci.yml                  # PR validation (lint, build, test)
-│   └── cd.yml                  # Deployment to production
-├── compose.base.yaml           # Shared Docker service definitions
+│   ├── ci.yml                  # PR validation (typecheck, lint, build, test)
+│   ├── cd-staging.yml          # Auto-deploy to staging on push to develop
+│   └── cd-production.yml       # Manual production deployment
 ├── compose.development.yaml    # Local development stack
+├── compose.staging.yaml        # Staging stack (Coolify)
 ├── compose.production.yaml     # Production stack (Coolify)
 ├── Makefile                    # Common development commands
 ├── nginx/                      # Reverse proxy configuration
-│   ├── nginx.dev.conf          # Development nginx config
-│   └── nginx.prod.conf         # Production nginx config
+│   ├── nginx.development.conf.template
+│   ├── nginx.staging.conf.template
+│   └── nginx.production.conf.template
 ├── AGENTS.md                   # AI agent collaboration guidelines
 ├── CONTRIBUTING.md             # Development workflow guide
+├── ARCHITECTURE.md             # System architecture and API contracts
 └── docs/                       # Additional documentation
 ```
 
@@ -85,7 +109,7 @@ cp .env.example .env
 npm run prepare  # Installs pre-commit hooks
 
 # Start development environment
-make dev
+make up
 ```
 
 The development stack includes:
@@ -94,16 +118,14 @@ The development stack includes:
 - **Backend** (NestJS): <http://localhost:3001>
 - **PostgreSQL**: localhost:5432
 
-### Database Setup (Optional)
-
-> **Note:** Database migrations and seed data setup will be documented here once implemented.
+### Database Setup
 
 ```bash
-# Run database migrations (placeholder)
-# make db-migrate
+# Run pending TypeORM migrations
+make db-migrate
 
-# Seed database with initial data (placeholder)
-# make db-seed
+# Generate a new migration (run inside Docker back container)
+make db-migrate-generate NAME=MigrationName
 ```
 
 ## Available Commands
@@ -112,10 +134,11 @@ The development stack includes:
 
 | Command | Description |
 |---------|-------------|
-| `make dev` | Start local development environment with hot reload |
+| `make up` | Start local development environment with hot reload (Docker) |
+| `make local-all` | Start front and back locally via Turbo (no Docker) |
 | `make down` | Stop development containers |
 | `make clean` | Stop containers and remove volumes |
-| `make fclean` | Full cleanup including images |
+| `make deep-clean` | Full cleanup including images |
 
 ### Code Quality
 
@@ -123,69 +146,64 @@ The development stack includes:
 |---------|-------------|
 | `make lint` | Run Biome linting and formatting checks |
 | `make test` | Run test suites |
-| `npm run lint -- --write` | Fix auto-fixable linting issues |
-| `npm test -- --watch` | Run tests in watch mode |
+| `npm run lint:fix` | Fix auto-fixable linting issues |
 
 ### Build
 
 | Command | Description |
 |---------|-------------|
-| `make build-front` | Build frontend Docker image |
-| `make build-back` | Build backend Docker image |
-| `make build-prod` | Build production images for validation |
+| `make development-build` | Build all development Docker images |
+| `make production-build` | Build production nginx image |
 
 ### Database
 
 | Command | Description |
 |---------|-------------|
-| `make db-migrate` | Run database migrations (placeholder) |
-| `make db-seed` | Seed database with initial data (placeholder) |
-| `make db-reset` | Reset database (placeholder) |
+| `make db-migrate` | Run pending TypeORM migrations |
+| `make db-migrate-generate` | Generate a new migration (`NAME=MigrationName`) |
 
 ### Debug
 
 | Command | Description |
 |---------|-------------|
 | `make logs` | View container logs |
-| `make logs-front` | View frontend logs only |
-| `make logs-back` | View backend logs only |
+| `make development-logs` | View development container logs |
+| `make development-shell-front` | Shell into front container |
+| `make development-shell-back` | Shell into back container |
 
 ## Architecture
 
 ### System Overview
 
-```
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   Client    │──────▶│    nginx    │──────▶│   Next.js   │
-│  (Browser)  │      │   (Proxy)   │      │   (Front)   │
-└─────────────┘      └─────────────┘      └──────┬──────┘
-                                                  │
-                                                  ▼
-                                           ┌─────────────┐
-                                           │   NestJS    │
-                                           │   (Back)    │
-                                           └──────┬──────┘
-                                                  │
-                                                  ▼
-                                           ┌─────────────┐
-                                           │  PostgreSQL │
-                                           │  (Database) │
-                                           └─────────────┘
+```mermaid
+flowchart LR
+    Client["Client (Browser)"] --> nginx["nginx (Reverse Proxy)"]
+    nginx --> Front["Next.js (Frontend)"]
+    Front --> Back["NestJS (Backend API)"]
+    Back --> DB["PostgreSQL (Database)"]
+
+    style Client fill:#e1f5fe
+    style nginx fill:#fff3e0
+    style Front fill:#e8f5e9
+    style Back fill:#fce4ec
+    style DB fill:#f3e5f5
 ```
 
 ### Frontend Architecture
 
 - **Next.js App Router**: File-based routing with React Server Components
-- **Phaser Integration**: Game scenes rendered via Phaser 3 canvas
-- **State Management**: React hooks and context for UI state
-- **Styling**: CSS modules and Tailwind CSS
+- **Phaser Integration**: Game scenes rendered via Phaser 3 canvas, encapsulated in `src/game/`
+- **State Management**: React hooks and context for UI state; Zustand planned for complex game state
+- **Styling**: Material UI (MUI) v9 with Emotion for CSS-in-JS
+- **Analytics**: PostHog for product analytics and session replay
 
 ### Backend Architecture
 
-- **NestJS Modules**: Feature-based module organization
-- **API Design**: RESTful endpoints with DTO validation
-- **Database**: TypeORM with PostgreSQL
-- **Authentication**: JWT-based auth (planned)
+- **NestJS Modules**: Feature-based module organization (9 domains)
+- **API Design**: RESTful endpoints with DTO validation using `class-validator`
+- **Database**: TypeORM with PostgreSQL; migrations managed via TypeORM CLI
+- **Authentication**: Passwordless magic-link authentication with JWT access tokens and opaque refresh tokens
+- **Observability**: PostHog for backend event tracking and error monitoring
 
 ## Development Workflow
 
@@ -207,16 +225,17 @@ The development stack includes:
 
 5. **Merge** after CI passes and review approval
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
+See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for detailed guidelines.
 
 ## CI/CD
 
 This project uses GitHub Actions for continuous integration and Coolify for deployment.
 
-- **CI**: Every Pull Request triggers lint, build, and test checks
-- **CD**: Merges to `master` automatically build and push images to GitHub Container Registry (GHCR), then trigger deployment via Coolify webhook
+- **CI**: Every Pull Request triggers typecheck, lint, build, and test checks via `.github/workflows/ci.yml`
+- **CD Staging**: Pushes to the `develop` branch automatically build and push images to GitHub Container Registry (GHCR), then trigger staging deployment via Coolify webhook (`.github/workflows/cd-staging.yml`)
+- **CD Production**: Production deployment is **manual** via `workflow_dispatch` on `.github/workflows/cd-production.yml`. Images are built from `master` and deployed to production Coolify.
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed CI/CD pipeline information.
+See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for detailed CI/CD pipeline information.
 
 ## Environment Variables
 
@@ -238,7 +257,7 @@ Configure these in your deployment platform:
 
 ## Contributing
 
-We welcome contributions from all squad members! Please read our [Contributing Guide](./CONTRIBUTING.md) for:
+We welcome contributions from all squad members! Please read our [Contributing Guide](./docs/CONTRIBUTING.md) for:
 
 - Detailed setup instructions
 - Branch naming conventions
@@ -257,8 +276,9 @@ This project uses AI agents to accelerate development. See [AGENTS.md](./AGENTS.
 
 ## Documentation
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md) — Development workflow and standards
+- [CONTRIBUTING.md](./docs/CONTRIBUTING.md) — Development workflow and standards
 - [AGENTS.md](./AGENTS.md) — AI agent collaboration guidelines
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) — System architecture, domain model, and API contracts
 
 ## License
 
