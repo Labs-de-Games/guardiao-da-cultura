@@ -22,12 +22,24 @@ type ActivePanel = "none" | "topCard" | "bottomCard";
 
 function HintPanel() {
   const items = useGameUIStore(useShallow(selectHintCollectibles));
-  return <CollectibleGrid title="Dica do Vândalo" items={items} />;
+  return (
+    <CollectibleGrid
+      title="Dica do Vândalo"
+      items={items}
+      emptySlotLabel="???"
+    />
+  );
 }
 
 function InventoryPanel() {
   const items = useGameUIStore(useShallow(selectInventoryCollectibles));
-  return <CollectibleGrid title="Artefatos" items={items} />;
+  return (
+    <CollectibleGrid
+      title="Artefatos"
+      items={items}
+      emptySlotLabel="item secreto"
+    />
+  );
 }
 
 export function Sidebar() {
