@@ -9,6 +9,7 @@ For AI agent collaboration guidelines, see [AGENTS.md](../AGENTS.md).
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Initial Setup](#initial-setup)
+  - [Project Structure](#project-structure)
 - [Development Workflow](#development-workflow)
   - [1. Branch Creation](#1-branch-creation)
   - [2. Making Changes](#2-making-changes)
@@ -63,6 +64,42 @@ The development stack includes:
 - **Frontend** (Next.js): <http://localhost:3000>
 - **Backend** (NestJS): <http://localhost:3001>
 - **PostgreSQL**: localhost:5432
+
+### Project Structure
+
+```
+.
+├── front/                      # Next.js application
+│   ├── src/
+│   │   ├── app/                # App router (pages and layouts)
+│   │   ├── components/         # React components
+│   │   ├── lib/                # Utility functions and helpers
+│   │   └── game/               # Phaser 3 game domain
+│   ├── public/                 # Static assets (images, fonts)
+│   └── package.json            # Frontend dependencies
+├── back/                       # NestJS API
+│   ├── src/                    # Source code
+│   │   ├── core/               # Global config, database, health checks
+│   │   ├── modules/            # Feature modules (auth, game, progression, ...)
+│   │   └── main.ts             # Application entry point
+│   └── package.json            # Backend dependencies
+├── .github/workflows/          # CI/CD pipelines
+│   ├── ci.yml                  # PR validation (typecheck, lint, build, test)
+│   ├── cd-staging.yml          # Auto-deploy to staging on push to develop
+│   └── cd-production.yml       # Manual production deployment
+├── compose.development.yaml    # Local development stack
+├── compose.staging.yaml        # Staging stack (Coolify)
+├── compose.production.yaml     # Production stack (Coolify)
+├── Makefile                    # Common development commands
+├── nginx/                      # Reverse proxy configuration
+│   ├── nginx.development.conf.template
+│   ├── nginx.staging.conf.template
+│   └── nginx.production.conf.template
+├── AGENTS.md                   # AI agent collaboration guidelines
+├── CONTRIBUTING.md             # Development workflow guide
+├── ARCHITECTURE.md             # System architecture and API contracts
+└── docs/                       # Additional documentation
+```
 
 ## Development Workflow
 

@@ -8,10 +8,9 @@ A 2D web game built with Next.js, NestJS, and Phaser.
 
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
 - [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
-  - [Initial Setup](#initial-setup)
+  - [Docker Setup](#docker-setup)
   - [Database Setup](#database-setup)
 - [Available Commands](#available-commands)
 - [Architecture](#architecture)
@@ -47,42 +46,6 @@ This repository contains the complete development environment for our browser-ba
 | CI/CD | [GitHub Actions](https://github.com/features/actions) | - | [Actions Docs](https://docs.github.com/en/actions) |
 | Deployment | [Coolify](https://coolify.io/) | - | [Coolify Docs](https://coolify.io/docs/) |
 
-## Project Structure
-
-```
-.
-├── front/                      # Next.js application
-│   ├── src/
-│   │   ├── app/                # App router (pages and layouts)
-│   │   ├── components/         # React components
-│   │   ├── lib/                # Utility functions and helpers
-│   │   └── game/               # Phaser 3 game domain
-│   ├── public/                 # Static assets (images, fonts)
-│   └── package.json            # Frontend dependencies
-├── back/                       # NestJS API
-│   ├── src/                    # Source code
-│   │   ├── core/               # Global config, database, health checks
-│   │   ├── modules/            # Feature modules (auth, game, progression, ...)
-│   │   └── main.ts             # Application entry point
-│   └── package.json            # Backend dependencies
-├── .github/workflows/          # CI/CD pipelines
-│   ├── ci.yml                  # PR validation (typecheck, lint, build, test)
-│   ├── cd-staging.yml          # Auto-deploy to staging on push to develop
-│   └── cd-production.yml       # Manual production deployment
-├── compose.development.yaml    # Local development stack
-├── compose.staging.yaml        # Staging stack (Coolify)
-├── compose.production.yaml     # Production stack (Coolify)
-├── Makefile                    # Common development commands
-├── nginx/                      # Reverse proxy configuration
-│   ├── nginx.development.conf.template
-│   ├── nginx.staging.conf.template
-│   └── nginx.production.conf.template
-├── AGENTS.md                   # AI agent collaboration guidelines
-├── CONTRIBUTING.md             # Development workflow guide
-├── ARCHITECTURE.md             # System architecture and API contracts
-└── docs/                       # Additional documentation
-```
-
 ## Quick Start
 
 ### Prerequisites
@@ -91,7 +54,9 @@ This repository contains the complete development environment for our browser-ba
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - Git
 
-### Initial Setup
+### Docker Setup
+
+The fastest way to get the full stack running locally is via Docker Compose:
 
 ```bash
 # Clone the repository
@@ -103,20 +68,33 @@ npm ci
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your local configuration
+# Edit .env with your local configuration (optional for first run)
 
 # Set up developer tooling
 npm run prepare  # Installs pre-commit hooks
 
-# Start development environment
+# Start the full development stack
 make up
 ```
 
-The development stack includes:
+This starts all services in detached mode:
 
 - **Frontend** (Next.js): <http://localhost:3000>
 - **Backend** (NestJS): <http://localhost:3001>
 - **PostgreSQL**: localhost:5432
+- **nginx** (reverse proxy): <http://localhost:80>
+
+View logs:
+
+```bash
+make development-logs
+```
+
+Stop the stack:
+
+```bash
+make down
+```
 
 ### Database Setup
 
@@ -181,12 +159,15 @@ flowchart LR
     nginx --> Front["Next.js (Frontend)"]
     Front --> Back["NestJS (Backend API)"]
     Back --> DB["PostgreSQL (Database)"]
+    Front -.->|"Analytics"| PostHog["PostHog"]
+    Back -.->|"Analytics"| PostHog
 
     style Client fill:#e1f5fe
     style nginx fill:#fff3e0
     style Front fill:#e8f5e9
     style Back fill:#fce4ec
     style DB fill:#f3e5f5
+    style PostHog fill:#fff9c4
 ```
 
 ### Frontend Architecture
