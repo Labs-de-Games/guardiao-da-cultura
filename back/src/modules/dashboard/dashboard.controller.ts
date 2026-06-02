@@ -24,7 +24,9 @@ export class DashboardController {
   @Get("metrics")
   @ApiOperation({ summary: "Get dashboard metrics" })
   @ApiOkResponse({ type: DashboardMetricsDto })
-  getMetrics(@Query() query: DashboardQueryDto): DashboardMetricsDto {
+  async getMetrics(
+    @Query() query: DashboardQueryDto,
+  ): Promise<DashboardMetricsDto> {
     return this.dashboardService.getMetrics(query.dateRange);
   }
 }
