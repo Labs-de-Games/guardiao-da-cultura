@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const confirmLogin = useCallback(
     async (data: LoginConfirmData) => {
-      const result = await apiConfirmLogin(data);
+      await apiConfirmLogin(data);
       const token = await apiRefreshToken();
       setAccessToken(token);
       setAccessTokenState(token);
@@ -124,7 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       setAuthStatusCookie();
       posthog.identify(userData.id);
-      router.push(result.redirectTo);
+      const destination =
+        userData.role === "institution" || userData.role === "admin"
+          ? "/institution"
+          : "/";
+      router.push(destination);
     },
     [router],
   );
@@ -135,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const confirmVerifyEmail = useCallback(
     async (data: VerifyEmailConfirmData) => {
-      const result = await apiConfirmVerifyEmail(data);
+      await apiConfirmVerifyEmail(data);
       const token = await apiRefreshToken();
       setAccessToken(token);
       setAccessTokenState(token);
@@ -144,7 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       setAuthStatusCookie();
       posthog.identify(userData.id);
-      router.push(result.redirectTo);
+      const destination =
+        userData.role === "institution" || userData.role === "admin"
+          ? "/institution"
+          : "/";
+      router.push(destination);
     },
     [router],
   );
