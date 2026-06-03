@@ -93,8 +93,8 @@ function OverlayContent() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
-        e.preventDefault();
         if (gameStarted) {
+          e.preventDefault();
           toggleSidebar();
         }
       }
@@ -107,6 +107,8 @@ function OverlayContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [sidebarOpen, gameStarted, toggleSidebar, setSidebarOpen]);
+
+  if (!gameStarted) return null;
 
   return <Sidebar />;
 }
