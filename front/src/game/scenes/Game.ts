@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
-import { submitScore } from "../../lib/scoresApi";
+import { getUserCollectibles, submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -325,6 +325,7 @@ export class Game extends Scene {
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
+      void this.initializeCollectibles();
       this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
 
       const placeholderLayer =
@@ -379,6 +380,36 @@ export class Game extends Scene {
     );
 
     this.setupEvents();
+  }
+
+  private async initializeCollectibles(): Promise<void> {
+    const userId = this.registry.get("userId") as string | undefined;
+    let collected: Array<{
+      collectibleId: string;
+      collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+    }> = [];
+
+    if (userId) {
+      try {
+        const records = await getUserCollectibles(userId, {
+          levelId: this.levelId,
+        });
+        collected = records.map((record) => ({
+          collectibleId: record.collectibleId,
+          collectibleType: record.collectibleType,
+        }));
+
+        this.collectibleSystem.applyCollectedCollectibles(collected);
+
+        for (const record of collected) {
+          if (record.collectibleType === "CLUE_VILLAIN") {
+            this.questManager.collectInfo(`pista_${record.collectibleId}`);
+          }
+        }
+      } catch (err) {
+        console.warn("[Game] Failed to load user collectibles:", err);
+      }
+    }
   }
 
   private setupEvents() {
@@ -984,6 +1015,16 @@ export class Game extends Scene {
           interactionsCount: payload.collectibles.interactionsCount,
           quartersEarned: payload.collectibles.quartersEarned,
         },
+        collectedCollectibles: payload.collectibles.interactions.map(
+          (interaction) => ({
+            collectibleId: interaction.collectible_id,
+            collectibleType: interaction.collectible_type as
+              | "COLLECT"
+              | "CLUE_VILLAIN"
+              | "CLUE_NEXT",
+            levelId: payload.levelId,
+          }),
+        ),
       });
     } catch (err) {
       console.error("[Game] Failed to submit score:", err);

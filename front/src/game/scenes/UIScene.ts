@@ -528,6 +528,10 @@ export class UIScene extends Scene {
           total: number;
           interactionsCount: number;
           quartersEarned: number;
+          interactions: Array<{
+            collectible_id: string;
+            collectible_type: string;
+          }>;
         };
       };
 
@@ -553,6 +557,16 @@ export class UIScene extends Scene {
           interactionsCount: payload.collectibles.interactionsCount,
           quartersEarned: payload.collectibles.quartersEarned,
         },
+        collectedCollectibles: payload.collectibles.interactions.map(
+          (interaction) => ({
+            collectibleId: interaction.collectible_id,
+            collectibleType: interaction.collectible_type as
+              | "COLLECT"
+              | "CLUE_VILLAIN"
+              | "CLUE_NEXT",
+            levelId: payload.levelId,
+          }),
+        ),
       });
     } catch (err) {
       console.error("[UIScene] Failed to submit score:", err);
