@@ -163,7 +163,7 @@ export default function InstitutionLayout({
 }) {
   return (
     <InstitutionGuard>
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      <Box sx={{ display: "flex", minHeight: "100vh", height: "100vh" }}>
         <Drawer
           variant="permanent"
           sx={{
@@ -186,7 +186,9 @@ export default function InstitutionLayout({
             p: 4,
             backgroundColor: "background.default",
             minHeight: "100vh",
-            overflow: "auto",
+            height: "100vh",
+            overflowY: "auto",
+            overflowX: "hidden",
           }}
         >
           {children}
