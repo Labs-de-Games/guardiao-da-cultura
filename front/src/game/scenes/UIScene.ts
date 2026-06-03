@@ -180,7 +180,7 @@ export class UIScene extends Scene {
   }
 
   private setupKeyboardListeners() {
-    onKeyDown(this, Actions.TOGGLE_PANEL, () => {
+    onKeyDown(this, Actions.TOGGLE_BADGE_GALLERY, () => {
       this.toggleBadgeGallery();
     });
 
