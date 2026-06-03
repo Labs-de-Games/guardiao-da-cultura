@@ -45,7 +45,8 @@ export class ControlsOverlay extends BasePanel {
           "WASD ou SETAS DIRECIONAIS: andar, subir e descer\n" +
           "ESPAÇO: pular\n" +
           "E: interagir\n" +
-          "TAB: painel\n" +
+          "TAB: painel de status\n" +
+          "B: galeria de conquistas\n" +
           "ESC: fechar\n",
         {
           fontFamily: LayoutConfig.FONTS.BODY,
