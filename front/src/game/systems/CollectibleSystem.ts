@@ -198,12 +198,13 @@ export class CollectibleSystem {
           total_collected: totalCollected,
           total_available: this.collectibles.length,
         });
-        
+
         EventBus.emit("inventory:item-collected", {
           itemId: instance.collectibleId,
           itemName:
             instance.collectibleData.metadata.title || instance.collectibleId,
-          category: instance.collectibleType,});
+          category: instance.collectibleType,
+        });
         // Track secret clue collection for Detetive achievement (CLUE_VILLAIN only)
         if (instance.collectibleType === "CLUE_VILLAIN") {
           this.scene.events.emit(GameEvents.INFO_COLLECTED, {
