@@ -4,7 +4,7 @@ strict: true
 on:
   schedule:
   - cron: 0 13 * * 1-5
-  stop-after: +1mo
+  stop-after: +4mo
   workflow_dispatch:  # Allows manual triggering from GitHub UI or CLI for testing
   # To disable manual triggering, change to: workflow_dispatch: null
 permissions:
