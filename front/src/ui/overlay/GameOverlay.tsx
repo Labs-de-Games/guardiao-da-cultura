@@ -56,7 +56,7 @@ function OverlayContent() {
       addOrUpdateMission(
         data.missionId,
         data.missionTitle,
-        data.stepIndex,
+        data.collectedInfos,
         data.totalSteps,
         data.steps,
       );
