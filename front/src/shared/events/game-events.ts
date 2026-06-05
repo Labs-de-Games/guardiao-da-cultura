@@ -6,9 +6,9 @@ export interface StarsChangedData {
 export interface QuestProgressData {
   missionId: string;
   missionTitle: string;
-  stepIndex: number;
+  collectedInfos: string[];
   totalSteps: number;
-  steps?: { text: string }[];
+  steps?: { infoKey: string; text: string }[];
 }
 
 export interface ItemCollectedData {
