@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 export interface QuestStep {
   text: string;
+  infoKey?: string;
   done: boolean;
 }
 
@@ -34,9 +35,9 @@ export interface GameUIState {
   addOrUpdateMission: (
     missionId: string,
     title: string,
-    stepIndex: number,
+    collectedInfos: string[],
     totalSteps: number,
-    steps?: { text: string }[],
+    steps?: { infoKey: string; text: string }[],
   ) => void;
   updateMissionStep: (
     missionId: string,
@@ -60,7 +61,7 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   setGameStarted: (started) => set({ gameStarted: started }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setMissions: (missions) => set({ missions }),
-  addOrUpdateMission: (missionId, title, stepIndex, totalSteps, steps) =>
+  addOrUpdateMission: (missionId, title, collectedInfos, totalSteps, steps) =>
     set((s) => {
       const existing = s.missions.find((m) => m.missionId === missionId);
       if (existing) {
@@ -72,7 +73,10 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
                   steps: Array.from({ length: totalSteps }, (_, i) => ({
                     text:
                       steps?.[i]?.text || m.steps[i]?.text || `Etapa ${i + 1}`,
-                    done: i < stepIndex,
+                    infoKey: steps?.[i]?.infoKey,
+                    done: steps?.[i]?.infoKey
+                      ? collectedInfos.includes(steps[i].infoKey)
+                      : false,
                   })),
                 }
               : m,
@@ -87,7 +91,10 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
             title,
             steps: Array.from({ length: totalSteps }, (_, i) => ({
               text: steps?.[i]?.text || `Etapa ${i + 1}`,
-              done: i < stepIndex,
+              infoKey: steps?.[i]?.infoKey,
+              done: steps?.[i]?.infoKey
+                ? collectedInfos.includes(steps[i].infoKey)
+                : false,
             })),
           },
         ],
