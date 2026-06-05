@@ -530,7 +530,7 @@ export class Player
       }
     }
 
-    const jumpDown = this.keys.space.isDown;
+    const jumpDown = Phaser.Input.Keyboard.JustDown(this.keys.space);
 
     if (
       this.body &&
