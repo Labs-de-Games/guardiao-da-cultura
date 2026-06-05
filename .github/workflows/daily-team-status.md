@@ -5,7 +5,8 @@ on:
   schedule:
   - cron: 0 13 * * 1-5
   stop-after: +1mo
-  workflow_dispatch: null
+  workflow_dispatch:  # Allows manual triggering from GitHub UI or CLI for testing
+  # To disable manual triggering, change to: workflow_dispatch: null
 permissions:
   contents: read
   issues: read
