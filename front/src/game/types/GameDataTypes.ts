@@ -1,4 +1,6 @@
 import type { QuestManager } from "../objects/QuestManager";
+import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
+import type { InteractiveType } from "./InteractiveTypes";
 
 /**
  * Conjunto de Tipos de Dados e DTOs (Data Transfer Objects)
@@ -15,6 +17,7 @@ export interface QuizQuestion {
 export interface MissionStepDef {
   infoKey: string;
   text: string;
+  categoryType?: InteractiveType;
 }
 
 export interface MissionDef {
@@ -140,6 +143,7 @@ export interface UIInitData {
   missionsTotal: number;
   questManager: QuestManager;
   missionDefs: Record<string, MissionDef>;
+  placeholderSystem: PlaceholderSystem;
 }
 
 export interface InteractionUIData {
