@@ -11,9 +11,9 @@
           "place": "Rio de Janeiro, RJ"
         },
         "educational": {
-          "description": "Troca-troca \u00e9 uma obra composta por tr\u00eas fuscas multicoloridos, originalmente amarelo, azul e vermelho, que tiveram suas latarias trocadas. Eles foram usados em 2002, pelo artista e um grupo de amigos, em uma viagem do Rio de Janeiro a Curitiba.\n\nNo caminho, colaram adesivos nos para-brisas dos carros que encontravam na estrada, produzidos a partir de pal\u00edndromos do artista Luis Andrade: \u201cz\u00e9 deserto, tr\u00eas \u00e9 dez\u201d, \u201ca vadia sa\u00edda v\u00e3\u201d e \u201ce o bolero; borel obo\u00e9\u201d, entre outros.",
+          "description": "Esta obra usa três fuscas coloridos com peças trocadas.\n\nOs carros andaram por cidades do Brasil. O artista Jarbas Lopes e seus amigos colaram adesivos com frases noutros carros que passavam no caminho.",
           "medium": "Fusca com aparelhagem de som",
-          "opinion": "Legal! Uma réplica da obra que vi lá fora! Opa! O que tem nessa etiqueta aqui embaixo?"
+          "opinion": "Legal! Uma réplica da obra que vi lá fora! Opa! O que tem nesse papel aqui embaixo?"
         },
         "assets": {
           "sprite": "fusca",
@@ -30,9 +30,9 @@
           "place": "Rio de Janeiro, RJ"
         },
         "educational": {
-          "description": "O abebé é um objeto iorubá, um emblema das iás, que são as mães ancestrais, divindades das águas. Seu formato redondo remete à anatomia da mulher, fortemente ligada à gênese do mundo e da humanidade.\n\nOs abebés podem ser usados como espelho, leque e até como instrumento musical informal.\n\nColeção Polícia da Corte.",
+          "description": "O abebé é um objeto de origem africana que pode servir de leque, espelho ou instrumento. Ele é de Oxum, deusa rainha das águas doces e das mães.\n\nEsse objeto pertence à coleção Polícia da Corte.",
           "medium": "Latão",
-          "opinion": "O que é isso? É de metal e tem uns penduricalhos. Consigo ver meu reflexo nele. E tem uma etiqueta aqui embaixo."
+          "opinion": "O que é isso? É de metal e consigo ver meu rosto nele, como um espelho. Tem um papel aqui embaixo."
         },
         "assets": {
           "sprite": "abebe",

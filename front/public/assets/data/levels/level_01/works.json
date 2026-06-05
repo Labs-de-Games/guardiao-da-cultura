@@ -4,16 +4,16 @@
       "id": "edgards_sem_titulo_i_fundidos",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sem título (Dor de cabeça I)",
+        "title": "Escultura sem título (Dor de cabeça 1)",
         "author": "Edgard de Souza",
         "year": "2000",
         "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "Esta escultura remete a corpos que se encontram e se unem.\n\nEdgard de Souza estudou artes plásticas em sua cidade natal, São Paulo, onde teve contato com a arte conceitual. Sua produção se liga a questões do corpo.\n\nDesde o início de sua carreira, o artista estabelece um compromisso com a tridimensionalidade.",
+        "description": "Esta escultura mostra dois corpos colados.\n\nEdgard de Souza estudou artes em São Paulo. Suas obras falam de questões do corpo.",
         "medium": "Bronze fundido",
-        "opinion": "Uma escultura de duas pessoas que se misturaram. Não sei se estão num abraço, ou tentando se livrar um do outro.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado a um encontro de corpos.",
+        "opinion": "Uma escultura de duas pessoas juntas. Não sei se estão se abraçando ou se querem se soltar.",
+        "feedbackError": "Aqui deve ter algo mostrando dois corpos colados.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -24,16 +24,16 @@
       "id": "edgards_sem_titulo_ii_flexao",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sem título (Dor de cabeça II)",
+        "title": "Escultura sem título (Dor de cabeça 2)",
         "author": "Edgard de Souza",
         "year": "2002",
         "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "Esta escultura remete à força.\n\nA transfiguração é um elemento presente nos trabalhos de Edgard de Souza, como em esculturas de bronze nas quais troncos sem cabeças aparecem conectados.\n\nEm seu universo, as coisas manifestam uma animação que vai além da semelhança com braços, cabeças e pernas.",
+        "description": "Esta escultura remete à força.\n\nA transfiguração está nas obras de Edgard de Souza, como em esculturas sem cabeças.",
         "medium": "Bronze fundido",
-        "opinion": "Uma escultura de uma pessoa que parece estar fazendo flexões. Não sei se ela tenta entrar de cabeça em algo ou se livrar da situação.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado a um corpo que faz força.",
+        "opinion": "Uma escultura de uma pessoa que parece estar mergulhando.",
+        "feedbackError": "Aqui deve ter algo mostrando um corpo que faz força.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -44,16 +44,16 @@
       "id": "edgards_sem_titulo_iii_em_pe",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sem título (Dor de cabeça III)",
+        "title": "Escultura sem título (Dor de cabeça 3)",
         "author": "Edgard de Souza",
         "year": "2005",
         "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "Esta escultura remete à introspecção, um olhar para si mesmo.\n\nEssas três esculturas de Edgard de Souza são parte de uma série desenvolvida ao longo dos anos 2000. A silhueta faz referência a uma figura masculina, baseada no corpo do próprio artista.\n\nExibidas linearmente, as esculturas sugerem um movimento contínuo. Um segundo olhar pode revelar uma ação fragmentada, sem relação direta entre causa e efeito em cada uma das poses.",
+        "description": "Esta escultura mostra um corpo dobrado.\n\nEstas esculturas de Edgard de Souza foram criadas nos anos 2000. Ele usou seu próprio corpo como modelo.",
         "medium": "Bronze fundido",
-        "opinion": "Uma escultura de uma pessoa totalmente curvada. Não sei se está reverenciando a si mesmo ou tentando olhar para dentro de si.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado a um corpo que olha para dentro de si mesmo.",
+        "opinion": "Uma escultura de uma pessoa totalmente curvada. Parece que olha para seu próprio corpo.",
+        "feedbackError": "Aqui deve ter algo mostrando um corpo dobrado.",
         "hint": "XXXXX"
       },
       "assets": {
