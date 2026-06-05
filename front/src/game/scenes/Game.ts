@@ -399,11 +399,10 @@ export class Game extends Scene {
       (data: { missionId: string; infoKey: string }) => {
         this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         const reqs = this.questManager.getRequiredInfos(data.missionId);
-        const collected = this.questManager.getCollectedCount(data.missionId);
         EventBus.emit("quest:progress-changed", {
           missionId: data.missionId,
           missionTitle: MissionRegistry[data.missionId]?.title || "",
-          stepIndex: collected,
+          collectedInfos: this.questManager.getCollectedInfos(data.missionId),
           totalSteps: reqs.length,
           steps: MissionRegistry[data.missionId]?.steps,
         });
@@ -459,7 +458,7 @@ export class Game extends Scene {
       EventBus.emit("quest:progress-changed", {
         missionId,
         missionTitle: def.title,
-        stepIndex: 0,
+        collectedInfos: [],
         totalSteps: def.steps.length,
         steps: def.steps,
       });
