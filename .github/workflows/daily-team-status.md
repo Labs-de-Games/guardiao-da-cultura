@@ -3,7 +3,7 @@ timeout-minutes: 10
 strict: true
 on:
   schedule:
-  - cron: 0 9 * * 1-5
+  - cron: 0 13 * * 1-5
   stop-after: +1mo
   workflow_dispatch: null
 permissions:
@@ -20,7 +20,8 @@ safe-outputs:
     expires: 1d
     title-prefix: "[team-status] "
 description: |
-  This workflow created daily team status reporter creating upbeat activity summaries.
+  This workflow creates a daily team status reporter generating upbeat activity summaries.
+  Runs Monday–Friday at 10:00 AM Brasilia time (13:00 UTC).
   Gathers recent repository activity (issues, PRs, releases, code changes)
   and generates engaging GitHub issues with productivity insights, community
   highlights, and project recommendations. Uses a positive, encouraging tone with
