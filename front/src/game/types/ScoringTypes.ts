@@ -22,6 +22,13 @@ export interface CollectiblesScore {
   interactionsCount: number; // 0..total
   quartersEarned: number; // 0..total
   lastInteractionAt: IsoTimestamp | null;
+  interactions: CollectibleInteraction[];
+}
+
+export interface CollectibleInteraction {
+  collectible_id: string;
+  collectible_type: string;
+  interactedAt: IsoTimestamp;
 }
 
 export interface QuizScore {

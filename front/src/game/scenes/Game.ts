@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
-import { submitScore } from "../../lib/scoresApi";
+import { getUserCollectibles, submitScore } from "../../lib/scoresApi";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -40,6 +40,7 @@ import type {
   ContentJson,
   InteractionSubmittedData,
   LabelInfoData,
+  MissionDef,
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
@@ -66,6 +67,8 @@ export class Game extends Scene {
   private isControlsOverlayOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private photoChunksCollected: number = 0;
+  private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
@@ -107,6 +110,8 @@ export class Game extends Scene {
     this.isControlsOverlayOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
+    this.photoChunksCollected = 0;
+    this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
@@ -286,16 +291,35 @@ export class Game extends Scene {
 
     this.setupEvents();
 
+    this.objectLayerProcessor = new ObjectLayerProcessor();
+    this.placeholderSystem = new PlaceholderSystem(this);
+
+    const missionDefsWithProgress: Record<string, MissionDef> = {
+      [MissionIds.CURATOR]: {
+        ...MissionRegistry[MissionIds.CURATOR],
+        steps: MissionRegistry[MissionIds.CURATOR].steps.map((step) => {
+          if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
+            return {
+              ...step,
+              progressGetter: () => ({
+                filled: this.photoChunksCollected,
+                total: this.totalPhotoChunks,
+              }),
+            };
+          }
+          return step;
+        }),
+      },
+    };
+
     this.scene.launch(SceneNames.UI, {
       phaseTitle: this.levelDef.title,
       missionsTotal: Object.keys(MissionRegistry).length,
       questManager: this.questManager,
-      missionDefs: MissionRegistry,
+      missionDefs: missionDefsWithProgress,
+      placeholderSystem: this.placeholderSystem,
     });
     this.scene.bringToTop(SceneNames.UI);
-
-    this.objectLayerProcessor = new ObjectLayerProcessor();
-    this.placeholderSystem = new PlaceholderSystem(this);
     this.labelSystem = new LabelSystem(this);
 
     this.badgeSystem = new BadgeSystem(this);
@@ -335,6 +359,7 @@ export class Game extends Scene {
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
+      void this.initializeCollectibles();
       this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
 
       const placeholderLayer =
@@ -392,6 +417,36 @@ export class Game extends Scene {
     );
 
     this.setupEvents();
+  }
+
+  private async initializeCollectibles(): Promise<void> {
+    const userId = this.registry.get("userId") as string | undefined;
+    let collected: Array<{
+      collectibleId: string;
+      collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+    }> = [];
+
+    if (userId) {
+      try {
+        const records = await getUserCollectibles(userId, {
+          levelId: this.levelId,
+        });
+        collected = records.map((record) => ({
+          collectibleId: record.collectibleId,
+          collectibleType: record.collectibleType,
+        }));
+
+        this.collectibleSystem.applyCollectedCollectibles(collected);
+
+        for (const record of collected) {
+          if (record.collectibleType === "CLUE_VILLAIN") {
+            this.questManager.collectInfo(`pista_${record.collectibleId}`);
+          }
+        }
+      } catch (err) {
+        console.warn("[Game] Failed to load user collectibles:", err);
+      }
+    }
   }
 
   private setupEvents() {
@@ -525,6 +580,10 @@ export class Game extends Scene {
     this.player.setDraggableRegistry(this.draggableItems);
     this.player.setCarryableRegistry(this.carryableItems);
 
+    this.totalPhotoChunks = this.carryableItems.filter(
+      (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
+    ).length;
+
     Object.values(createdItems).forEach((item) => {
       if ("setPlayerTracking" in item) {
         const trackable = item as unknown as {
@@ -602,6 +661,20 @@ export class Game extends Scene {
 
         if (opinion) {
           this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [opinion]);
+        }
+
+        if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
+          this.photoChunksCollected++;
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+          if (
+            this.totalPhotoChunks > 0 &&
+            this.photoChunksCollected >= this.totalPhotoChunks
+          ) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR,
+              infoKey: MissionKeys.PHOTO_COLLECTED,
+            });
+          }
         }
       }
     });
@@ -997,6 +1070,16 @@ export class Game extends Scene {
           interactionsCount: payload.collectibles.interactionsCount,
           quartersEarned: payload.collectibles.quartersEarned,
         },
+        collectedCollectibles: payload.collectibles.interactions.map(
+          (interaction) => ({
+            collectibleId: interaction.collectible_id,
+            collectibleType: interaction.collectible_type as
+              | "COLLECT"
+              | "CLUE_VILLAIN"
+              | "CLUE_NEXT",
+            levelId: payload.levelId,
+          }),
+        ),
       });
     } catch (err) {
       console.error("[Game] Failed to submit score:", err);
@@ -1024,6 +1107,10 @@ export class Game extends Scene {
         sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
       );
       const missionId = MissionIds.CURATOR;
+
+      // Always emit progress on every successful drop
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
       if (item.interactiveType === InteractiveType.PAINTING) {
         if (
           this.placeholderSystem.checkCategoryCompletion(
@@ -1031,11 +1118,14 @@ export class Game extends Scene {
           )
         ) {
           this.completeFloor(this.scoringFloors.paintings);
-          this.events.emit(GameEvents.INFO_COLLECTED, {
-            missionId,
-            infoKey: MissionKeys.PAINTINGS_DONE,
+          // Two-phase: show 3/3 first, then [✓] after delay
+          this.time.delayedCall(500, () => {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId,
+              infoKey: MissionKeys.PAINTINGS_DONE,
+            });
+            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
           });
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         }
       } else if (item.interactiveType === InteractiveType.SCULPTURE) {
         if (
@@ -1044,11 +1134,14 @@ export class Game extends Scene {
           )
         ) {
           this.completeFloor(this.scoringFloors.sculptures);
-          this.events.emit(GameEvents.INFO_COLLECTED, {
-            missionId,
-            infoKey: MissionKeys.SCULPTURES_DONE,
+          // Two-phase: show 3/3 first, then [✓] after delay
+          this.time.delayedCall(500, () => {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId,
+              infoKey: MissionKeys.SCULPTURES_DONE,
+            });
+            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
           });
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         }
       }
     } else if (result.mismatch) {

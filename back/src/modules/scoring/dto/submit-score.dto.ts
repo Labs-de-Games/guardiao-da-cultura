@@ -1,8 +1,10 @@
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsIn,
   IsInt,
   IsNumber,
+  IsOptional,
   IsString,
   IsUUID,
   Max,
@@ -43,7 +45,7 @@ class QuizScoreDto {
   quartersEarned!: number;
 }
 
-class collectibleScoreDto {
+class CollectibleScoreDto {
   @IsInt()
   @Min(0)
   total!: number;
@@ -55,6 +57,18 @@ class collectibleScoreDto {
   @IsInt()
   @Min(0)
   quartersEarned!: number;
+}
+
+class CollectibleRecordDto {
+  @IsString()
+  collectibleId!: string;
+
+  @IsString()
+  @IsIn(["COLLECT", "CLUE_VILLAIN", "CLUE_NEXT"])
+  collectibleType!: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+
+  @IsString()
+  levelId!: string;
 }
 
 export class SubmitScoreDto {
@@ -85,6 +99,12 @@ export class SubmitScoreDto {
   quiz!: QuizScoreDto;
 
   @ValidateNested()
-  @Type(() => collectibleScoreDto)
-  collectibles!: collectibleScoreDto;
+  @Type(() => CollectibleScoreDto)
+  collectibles!: CollectibleScoreDto;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CollectibleRecordDto)
+  collectedCollectibles?: CollectibleRecordDto[];
 }

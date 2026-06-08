@@ -274,4 +274,27 @@ export class PlaceholderSystem {
 
     return categoryPlaceholders.every((p) => p.isFilled);
   }
+
+  public getCategoryProgress(type: InteractiveType): {
+    filled: number;
+    total: number;
+  } {
+    const categoryPlaceholders = this.placeholders.filter(
+      (p) => p.type === type,
+    );
+
+    if (type === InteractiveType.PHOTO) {
+      const placeholder = categoryPlaceholders[0];
+      if (!placeholder) return { filled: 0, total: 0 };
+      const filledSlots =
+        (placeholder.state?.filledSlots as (string | null)[] | undefined) ?? [];
+      const total = filledSlots.length;
+      const filled = filledSlots.filter((s) => s !== null).length;
+      return { filled, total };
+    }
+
+    const total = categoryPlaceholders.length;
+    const filled = categoryPlaceholders.filter((p) => p.isFilled).length;
+    return { filled, total };
+  }
 }

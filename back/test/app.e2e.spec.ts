@@ -9,6 +9,7 @@ import { RefreshToken } from "../src/modules/auth/entities/refresh-token.entity"
 import { Badge } from "../src/modules/badges/badge.entity";
 import { UserBadge } from "../src/modules/badges/user-badge.entity";
 import { UserProgress } from "../src/modules/progression/user-progress.entity";
+import { UserCollectible } from "../src/modules/scoring/user-collectible.entity";
 import { UserScore } from "../src/modules/scoring/user-score.entity";
 import { User } from "../src/modules/users/user.entity";
 
@@ -21,6 +22,17 @@ describe("AppController (e2e)", () => {
     find: async () => [],
     findOne: async () => null,
     create: (dto: unknown) => dto,
+    createQueryBuilder: () => ({
+      insert: () => ({
+        into: () => ({
+          values: () => ({
+            orIgnore: () => ({
+              execute: async () => ({ identifiers: [] }),
+            }),
+          }),
+        }),
+      }),
+    }),
     save: async (entity: unknown) => entity,
     update: async () => ({ affected: 1 }),
   };
@@ -46,6 +58,8 @@ describe("AppController (e2e)", () => {
       .overrideProvider(getRepositoryToken(RefreshToken))
       .useValue(repo)
       .overrideProvider(getRepositoryToken(UserScore))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(UserCollectible))
       .useValue(repo)
       .compile();
 
