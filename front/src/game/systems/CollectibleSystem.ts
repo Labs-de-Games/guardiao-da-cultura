@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import posthog from "posthog-js";
+import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractiveButton } from "../objects/InteractiveButton";
@@ -198,6 +199,12 @@ export class CollectibleSystem {
           total_available: this.collectibles.length,
         });
 
+        EventBus.emit("inventory:item-collected", {
+          itemId: instance.collectibleId,
+          itemName:
+            instance.collectibleData.metadata.title || instance.collectibleId,
+          category: instance.collectibleType,
+        });
         // Track secret clue collection for Detetive achievement (CLUE_VILLAIN only)
         if (instance.collectibleType === "CLUE_VILLAIN") {
           this.scene.events.emit(GameEvents.INFO_COLLECTED, {

@@ -1,8 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+
 import { useAuth } from "../lib/auth/useAuth";
 import LoadingGameScreen from "./LoadingGameScreen";
+
+const GameOverlay = dynamic(
+  () =>
+    import("@/ui/overlay/GameOverlay").then((m) => ({ default: m.default })),
+  { ssr: false },
+);
 
 export default function PhaserGame() {
   const { user } = useAuth();
@@ -11,6 +19,7 @@ export default function PhaserGame() {
   const isInitializingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [_loadingType, setLoadingType] = useState<string>("initial");
+  const [overlayMounted, setOverlayMounted] = useState(false);
 
   useEffect(() => {
     const handleLoadingStart = (event: Event) => {
@@ -41,6 +50,7 @@ export default function PhaserGame() {
         const { default: StartGame } = await import("../game/main");
         gameRef.current = StartGame("game-container", activeUserId);
         setIsLoading(false);
+        setOverlayMounted(true);
       } catch (err) {
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
@@ -76,6 +86,7 @@ export default function PhaserGame() {
       }}
     >
       {isLoading && <LoadingGameScreen />}
+      {overlayMounted && <GameOverlay />}
     </div>
   );
 }
