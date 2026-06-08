@@ -17,6 +17,7 @@ import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import { onKeyDown, registerScene } from "../systems/InputManager";
+import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type {
   InteractionUIData,
   LabelInfoData,
@@ -36,6 +37,7 @@ export class UIScene extends Scene {
   private questManager!: QuestManager;
   private missionDefs: Record<string, MissionDef> = {};
   private missionsTotal: number = 0;
+  private placeholderSystem!: PlaceholderSystem;
 
   // Componentes Especialistas
   private root!: Phaser.GameObjects.Container;
@@ -67,6 +69,7 @@ export class UIScene extends Scene {
     this.questManager = data.questManager;
     this.missionDefs = data.missionDefs || {};
     this.missionsTotal = data.missionsTotal || 0;
+    this.placeholderSystem = data.placeholderSystem;
 
     // Reset state for scene restarts
     this.activeMissionIds = [];
@@ -432,11 +435,24 @@ export class UIScene extends Scene {
 
     mission.steps.forEach((step: MissionStepDef, idx: number) => {
       const done = this.questManager.hasInfo(missionId, step.infoKey);
-      const checkbox = done ? "[✓]" : "[ ]";
-      texts[idx].setText(`${checkbox} ${step.text}`);
-      texts[idx].setColor(
-        done ? LayoutConfig.COLORS.SUCCESS_GREEN : LayoutConfig.COLORS.WHITE,
-      );
+
+      if (done) {
+        texts[idx].setText(`[✓] ${step.text}`);
+        texts[idx].setColor(LayoutConfig.COLORS.SUCCESS_GREEN);
+      } else if (step.progressGetter) {
+        const { filled, total } = step.progressGetter();
+        texts[idx].setText(`${filled}/${total} ${step.text}`);
+        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
+      } else if (step.categoryType) {
+        const progress = this.placeholderSystem.getCategoryProgress(
+          step.categoryType,
+        );
+        texts[idx].setText(`${progress.filled}/${progress.total} ${step.text}`);
+        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
+      } else {
+        texts[idx].setText(`[ ] ${step.text}`);
+        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
+      }
     });
   }
 
@@ -528,6 +544,10 @@ export class UIScene extends Scene {
           total: number;
           interactionsCount: number;
           quartersEarned: number;
+          interactions: Array<{
+            collectible_id: string;
+            collectible_type: string;
+          }>;
         };
       };
 
@@ -553,6 +573,16 @@ export class UIScene extends Scene {
           interactionsCount: payload.collectibles.interactionsCount,
           quartersEarned: payload.collectibles.quartersEarned,
         },
+        collectedCollectibles: payload.collectibles.interactions.map(
+          (interaction) => ({
+            collectibleId: interaction.collectible_id,
+            collectibleType: interaction.collectible_type as
+              | "COLLECT"
+              | "CLUE_VILLAIN"
+              | "CLUE_NEXT",
+            levelId: payload.levelId,
+          }),
+        ),
       });
     } catch (err) {
       console.error("[UIScene] Failed to submit score:", err);
