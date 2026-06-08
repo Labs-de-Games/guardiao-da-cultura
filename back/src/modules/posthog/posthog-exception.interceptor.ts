@@ -1,4 +1,8 @@
-import type { ExecutionContext, NestInterceptor } from "@nestjs/common";
+import type {
+  CallHandler,
+  ExecutionContext,
+  NestInterceptor,
+} from "@nestjs/common";
 import { Observable, throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
 import type { PostHogService } from "./posthog.service";
@@ -6,10 +10,6 @@ import type { PostHogService } from "./posthog.service";
 interface HttpArgumentsHost {
   getRequest<T = any>(): T;
   getResponse<T = any>(): T;
-}
-
-interface CallHandler<T = any> {
-  handle(): Observable<T>;
 }
 
 interface ExceptionCaptureOptions {
