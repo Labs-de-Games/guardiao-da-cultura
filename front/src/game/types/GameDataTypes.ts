@@ -140,8 +140,6 @@ export interface ContentJson {
 }
 
 export interface UIInitData {
-  phaseTitle: string;
-  missionsTotal: number;
   questManager: QuestManager;
   missionDefs: Record<string, MissionDef>;
   placeholderSystem: PlaceholderSystem;

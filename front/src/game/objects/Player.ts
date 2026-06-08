@@ -392,7 +392,7 @@ export class Player
       }
 
       // Exit climbing state if player is touching the ground and not actively climbing
-      if (body && body.blocked.down && !upDown && !downDown) {
+      if (body?.blocked.down && !upDown && !downDown) {
         this.isClimbingStairs = false;
       }
     }

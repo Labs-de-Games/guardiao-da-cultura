@@ -5,15 +5,13 @@ import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
-import { type QuestManager, QuestStatus } from "../objects/QuestManager";
+import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
-// Novos componentes SRP
-import { PhaseStatusPanel } from "../objects/ui/PhaseStatusPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { ToastNotification } from "../objects/ui/ToastNotification";
 import { onKeyDown, registerScene } from "../systems/InputManager";
@@ -21,27 +19,15 @@ import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type {
   InteractionUIData,
   LabelInfoData,
-  MissionDef,
-  MissionStepDef,
   QuizQuestion,
   UIInitData,
 } from "../types/GameDataTypes";
 
-/**
- * UIScene.ts - Orquestrador de Interface.
- * Deixou de ser uma God Class (+1000 linhas) para se tornar um orquestrador leve
- * que gerencia a comunicação entre sistemas de jogo e componentes de UI.
- */
 export class UIScene extends Scene {
-  // Estado e Dados
   private questManager!: QuestManager;
-  private missionDefs: Record<string, MissionDef> = {};
-  private missionsTotal: number = 0;
   private placeholderSystem!: PlaceholderSystem;
 
-  // Componentes Especialistas
   private root!: Phaser.GameObjects.Container;
-  private statusPanel!: PhaseStatusPanel;
   private controlsOverlay!: ControlsOverlay;
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
@@ -50,14 +36,8 @@ export class UIScene extends Scene {
   private toast!: ToastNotification;
   private badgeGalleryPanel!: BadgeGalleryPanel;
 
-  // Gestão de Missões (Individual Cards - candidate for further extraction)
-  private activeMissionIds: string[] = [];
-  private missionPanels: Phaser.GameObjects.Container[] = [];
-  private missionStepTexts: Map<string, Phaser.GameObjects.Text[]> = new Map();
-  private lastMissionStatuses: Map<string, QuestStatus> = new Map();
   private pendingMissionCompleteToastCount: number = 0;
 
-  // Prompt de Interação (tracking para bloquear overlays)
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
     new Set();
 
@@ -67,32 +47,17 @@ export class UIScene extends Scene {
 
   init(data: UIInitData) {
     this.questManager = data.questManager;
-    this.missionDefs = data.missionDefs || {};
-    this.missionsTotal = data.missionsTotal || 0;
     this.placeholderSystem = data.placeholderSystem;
 
-    // Reset state for scene restarts
-    this.activeMissionIds = [];
-    this.missionPanels = [];
-    this.missionStepTexts.clear();
-    this.lastMissionStatuses.clear();
     this.pendingMissionCompleteToastCount = 0;
     this.activeInteractionPrompts.clear();
     this.phaseCompletePanel = null;
   }
 
   create() {
-    // 1. Inicialização do Root (Offset padrão do protótipo)
     this.root = this.add.container(-20, 0);
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
-    // 2. Instanciação de Componentes
-    this.statusPanel = new PhaseStatusPanel(
-      this,
-      "Inhotim",
-      this.missionsTotal,
-      this.questManager,
-    );
     this.controlsOverlay = new ControlsOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
     this.labelPanel = new LabelPanel(this);
@@ -101,43 +66,22 @@ export class UIScene extends Scene {
     this.toast = new ToastNotification(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
 
-    this.root.add(this.statusPanel);
-    // Overlays e Toasts são adicionados diretamente à cena via add.existing no construtor
-
-    // 3. Configuração de Eventos
     this.setupEventListeners();
     this.setupKeyboardListeners();
     registerScene(this);
 
-    // 4. Estado Inicial
-    this.seedInitialState();
     this.layout();
-    this.refreshAll();
 
-    // Exibe controles na entrada
     this.controlsOverlay.show();
   }
-
-  // --- ORQUESTRAÇÃO E EVENTOS ---
 
   private setupEventListeners() {
     const gameScene = this.scene.get(SceneNames.GAME);
 
-    // Mudanças de Missão
-    gameScene.events.on(GameEvents.MISSION_ACCEPTED, (id: string) =>
-      this.onMissionAccepted(id),
-    );
-    gameScene.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () =>
-      this.refreshAll(),
-    );
-    gameScene.events.on(GameEvents.MISSION_STATUS_CHANGED, () =>
-      this.onMissionStatusChanged(),
-    );
     gameScene.events.on(GameEvents.DIALOGUE_ENDED, () =>
       this.onDialogueEnded(),
     );
 
-    // Requisiçōes de UI
     gameScene.events.on(
       GameEvents.SHOW_DIALOGUE_REQUEST,
       (lines: string[], onComplete?: () => void) => {
@@ -204,7 +148,6 @@ export class UIScene extends Scene {
       },
     );
 
-    // Prompts de Interação (bloqueio de overlays)
     gameScene.events.on(
       GameEvents.INTERACTION_PROMPT_SHOWN,
       (obj: Phaser.GameObjects.GameObject) => {
@@ -218,19 +161,13 @@ export class UIScene extends Scene {
       },
     );
 
-    // Responsividade
     this.scale.on("resize", () => this.layout());
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize");
 
-      // Unregister gameScene events (vazamento de memória evitado)
       if (gameScene?.events) {
-        gameScene.events.off(GameEvents.MISSION_ACCEPTED);
-        gameScene.events.off(GameEvents.MISSION_PROGRESS_CHANGED);
-        gameScene.events.off(GameEvents.MISSION_STATUS_CHANGED);
         gameScene.events.off(GameEvents.DIALOGUE_ENDED);
-        gameScene.events.off(GameEvents.CONTROLS_OVERLAY_CLOSED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
@@ -243,7 +180,7 @@ export class UIScene extends Scene {
   }
 
   private setupKeyboardListeners() {
-    onKeyDown(this, Actions.TOGGLE_PANEL, () => {
+    onKeyDown(this, Actions.TOGGLE_BADGE_GALLERY, () => {
       this.toggleBadgeGallery();
     });
 
@@ -252,20 +189,10 @@ export class UIScene extends Scene {
     });
   }
 
-  private seedInitialState() {
-    // Registra status iniciais para detectar transições (Toasts)
-    for (const id in this.missionDefs) {
-      this.lastMissionStatuses.set(id, this.questManager.getStatus(id));
-    }
-  }
-
-  // --- LÓGICA DE NEGÓCIO DA UI ---
-
   private layout() {
     const { width: w, height: h } = this.scale;
     this.cameras.main.setSize(w, h);
 
-    this.statusPanel.layout(w, h);
     this.controlsOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
@@ -273,15 +200,6 @@ export class UIScene extends Scene {
     this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);
-
-    this.positionMissionPanels();
-  }
-
-  private refreshAll() {
-    this.statusPanel.refresh();
-    this.activeMissionIds.forEach((id) => {
-      this.refreshMissionSteps(id);
-    });
   }
 
   private toggleControls() {
@@ -312,7 +230,6 @@ export class UIScene extends Scene {
   private canShowOverlay(): boolean {
     if (this.activeInteractionPrompts.size > 0) return false;
 
-    // Regra: não abrir se algum painel crítico (dialog/quiz) estiver visível
     if (
       this.dialoguePanel?.isVisible ||
       this.labelPanel?.isVisible ||
@@ -321,34 +238,6 @@ export class UIScene extends Scene {
       return false;
 
     return true;
-  }
-
-  private onMissionAccepted(missionId: string) {
-    if (this.activeMissionIds.includes(missionId)) return;
-
-    const mission = this.missionDefs[missionId];
-    if (!mission) return;
-
-    this.activeMissionIds.push(missionId);
-    const panel = this.createMissionPanel(mission);
-    this.missionPanels.push(panel);
-    this.root.add(panel);
-
-    this.layout();
-    this.refreshAll();
-  }
-
-  private onMissionStatusChanged() {
-    for (const id in this.missionDefs) {
-      const prev = this.lastMissionStatuses.get(id);
-      const next = this.questManager.getStatus(id);
-
-      if (next === QuestStatus.COMPLETED && prev !== QuestStatus.COMPLETED) {
-        this.pendingMissionCompleteToastCount++;
-      }
-      this.lastMissionStatuses.set(id, next);
-    }
-    this.refreshAll();
   }
 
   private onDialogueEnded() {
@@ -361,102 +250,6 @@ export class UIScene extends Scene {
       });
     }
   }
-
-  // --- MÉTODOS DE SUPORTE (Simplificados) ---
-
-  private positionMissionPanels() {
-    const padding = LayoutConfig.UI.PADDING;
-    const x = this.scale.width - padding;
-    let y = padding + 110 + 10; // Abaixo do status panel
-
-    this.missionPanels.forEach((panel) => {
-      panel.setPosition(x, y);
-      const bg = panel.getAt(0) as Phaser.GameObjects.Rectangle;
-      y += bg.height + 10;
-    });
-  }
-
-  private createMissionPanel(
-    mission: MissionDef,
-  ): Phaser.GameObjects.Container {
-    const padding = LayoutConfig.UI.PADDING;
-    const panel = this.add.container(0, 0);
-
-    const bg = this.add.rectangle(
-      0,
-      0,
-      LayoutConfig.UI.PANEL_WIDTH,
-      100,
-      LayoutConfig.COLORS.STANDARD_BG,
-      0.95,
-    );
-    bg.setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT).setStrokeStyle(
-      LayoutConfig.UI.PANEL_BORDER_WIDTH,
-      LayoutConfig.UI.PANEL_BORDER_COLOR,
-      1,
-    );
-
-    const title = this.add
-      .text(-padding, padding, mission.title, {
-        fontSize: LayoutConfig.FONTS.SIZES.HINT,
-        fontFamily: LayoutConfig.FONTS.TITLE,
-        color: LayoutConfig.COLORS.WHITE,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
-
-    let currentY = padding + 28;
-    const stepTexts: Phaser.GameObjects.Text[] = [];
-
-    mission.steps.forEach((_step: MissionStepDef) => {
-      const t = this.add
-        .text(-padding, currentY, "", {
-          fontSize: LayoutConfig.FONTS.SIZES.SMALL,
-          fontFamily: LayoutConfig.FONTS.BODY,
-          color: LayoutConfig.COLORS.WHITE,
-          wordWrap: { width: LayoutConfig.UI.PANEL_WIDTH - padding * 2 },
-        })
-        .setOrigin(...LayoutConfig.ALIGN.TOP_RIGHT);
-
-      stepTexts.push(t);
-      currentY += t.displayHeight + 6;
-    });
-
-    bg.setSize(LayoutConfig.UI.PANEL_WIDTH, currentY + padding / 2);
-    this.missionStepTexts.set(mission.id, stepTexts);
-    panel.add([bg, title, ...stepTexts]);
-
-    return panel;
-  }
-
-  private refreshMissionSteps(missionId: string) {
-    const mission = this.missionDefs[missionId];
-    const texts = this.missionStepTexts.get(missionId);
-    if (!mission || !texts) return;
-
-    mission.steps.forEach((step: MissionStepDef, idx: number) => {
-      const done = this.questManager.hasInfo(missionId, step.infoKey);
-
-      if (done) {
-        texts[idx].setText(`[✓] ${step.text}`);
-        texts[idx].setColor(LayoutConfig.COLORS.SUCCESS_GREEN);
-      } else if (step.progressGetter) {
-        const { filled, total } = step.progressGetter();
-        texts[idx].setText(`${filled}/${total} ${step.text}`);
-        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
-      } else if (step.categoryType) {
-        const progress = this.placeholderSystem.getCategoryProgress(
-          step.categoryType,
-        );
-        texts[idx].setText(`${progress.filled}/${progress.total} ${step.text}`);
-        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
-      } else {
-        texts[idx].setText(`[ ] ${step.text}`);
-        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
-      }
-    });
-  }
-
-  // --- MÉTODOS PÚBLICOS (EndGame) ---
 
   private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
 
