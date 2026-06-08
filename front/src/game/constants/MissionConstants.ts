@@ -5,6 +5,7 @@ export const MissionIds = {
 export const MissionKeys = {
   PAINTINGS_DONE: "paintings_done",
   SCULPTURES_DONE: "sculptures_done",
+  PHOTO_COLLECTED: "photo_collected",
   PHOTO_DONE: "photo_done",
 } as const;
 

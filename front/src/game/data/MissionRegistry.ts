@@ -7,6 +7,7 @@ export const MissionRequirements = [
     requiredInfos: [
       MissionKeys.SCULPTURES_DONE,
       MissionKeys.PAINTINGS_DONE,
+      MissionKeys.PHOTO_COLLECTED,
       MissionKeys.PHOTO_DONE,
     ],
   },
@@ -24,6 +25,10 @@ export const MissionRegistry: Record<string, MissionDef> = {
       {
         infoKey: MissionKeys.PAINTINGS_DONE,
         text: "Reorganizar todas as pinturas",
+      },
+      {
+        infoKey: MissionKeys.PHOTO_COLLECTED,
+        text: "Encontrar os pedaços da fotografia destruida",
       },
       { infoKey: MissionKeys.PHOTO_DONE, text: "Remontar a fotografia" },
     ],
