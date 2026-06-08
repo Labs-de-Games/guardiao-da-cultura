@@ -91,7 +91,11 @@ export function ObjectiveList() {
                         lineHeight: 1.4,
                       }}
                     >
-                      {step.text}
+                      {step.done
+                        ? step.text
+                        : step.filled !== undefined && step.total !== undefined
+                          ? `${step.filled}/${step.total} ${step.text}`
+                          : step.text}
                     </Typography>
                   </Box>
                 </ListItem>
