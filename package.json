@@ -37,6 +37,7 @@
     "@nestjs/throttler": "^6.5.0",
     "cookie-parser": "^1.4.7",
     "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1"
+    "passport-jwt": "^4.0.1",
+    "rxjs": "^7.8.2"
   }
 }
