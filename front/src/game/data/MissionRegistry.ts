@@ -36,8 +36,7 @@ export const MissionRegistry: Record<string, MissionDef> = {
       },
       {
         infoKey: MissionKeys.PHOTO_COLLECTED,
-        text: "Encontrar os pedaços da fotografia destruida",
-        categoryType: InteractiveType.PHOTO_CHUNK,
+        text: "Encontrar os pedaços da fotografia",
       },
     ],
   },
