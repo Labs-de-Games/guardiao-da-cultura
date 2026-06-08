@@ -104,6 +104,9 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     allCorrect: boolean,
     anyCorrect: boolean,
   ) {
+    // Always emit progress on any interaction
+    gameScene.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
     if (allCorrect) {
       gameScene.completePhotoFloor();
 
@@ -128,10 +131,16 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Incrível! Agora sim é possível ver a fotografia completa!",
       ]);
-      gameScene.events.emit(GameEvents.INFO_COLLECTED, {
-        missionId: MissionIds.CURATOR,
-        infoKey: MissionKeys.PHOTO_DONE,
+
+      // Two-phase: show 4/4 first, then [✓] after delay
+      gameScene.time.delayedCall(500, () => {
+        gameScene.events.emit(GameEvents.INFO_COLLECTED, {
+          missionId: MissionIds.CURATOR,
+          infoKey: MissionKeys.PHOTO_DONE,
+        });
+        gameScene.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
       });
+
       gameScene.placeholderSystem.lockPlaceholder(placeholder.instanceId);
     } else if (anyCorrect) {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
