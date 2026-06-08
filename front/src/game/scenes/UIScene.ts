@@ -251,7 +251,6 @@ export class UIScene extends Scene {
     }
   }
 
-
   private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
 
   public async showPhaseCompleteUI(collectedStars: number, maxStars: number) {
