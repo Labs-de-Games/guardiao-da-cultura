@@ -4,16 +4,16 @@
       "id": "edgards_sem_titulo_i_fundidos",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sem título (Dor de cabeça I)",
+        "title": "Escultura sem título (Dor de cabeça 1)",
         "author": "Edgard de Souza",
         "year": "2000",
         "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "Esta escultura remete a corpos que se encontram e se unem.\n\nEdgard de Souza estudou artes plásticas em sua cidade natal, São Paulo, onde teve contato com a arte conceitual. Sua produção se liga a questões do corpo.\n\nDesde o início de sua carreira, o artista estabelece um compromisso com a tridimensionalidade.",
+        "description": "Esta escultura mostra dois corpos colados.\n\nEdgard de Souza estudou artes em São Paulo. Suas obras falam de questões do corpo.",
         "medium": "Bronze fundido",
-        "opinion": "Uma escultura de duas pessoas que se misturaram. Não sei se estão num abraço, ou tentando se livrar um do outro.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado a um encontro de corpos.",
+        "opinion": "Uma escultura de duas pessoas juntas. Não sei se estão se abraçando ou se querem se soltar.",
+        "feedbackError": "Aqui deve ter algo mostrando dois corpos colados.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -24,16 +24,16 @@
       "id": "edgards_sem_titulo_ii_flexao",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sem título (Dor de cabeça II)",
+        "title": "Escultura sem título (Dor de cabeça 2)",
         "author": "Edgard de Souza",
         "year": "2002",
         "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "Esta escultura remete à força.\n\nA transfiguração é um elemento presente nos trabalhos de Edgard de Souza, como em esculturas de bronze nas quais troncos sem cabeças aparecem conectados.\n\nEm seu universo, as coisas manifestam uma animação que vai além da semelhança com braços, cabeças e pernas.",
+        "description": "Esta escultura remete à força.\n\nA transfiguração está nas obras de Edgard de Souza, como em esculturas sem cabeças.",
         "medium": "Bronze fundido",
-        "opinion": "Uma escultura de uma pessoa que parece estar fazendo flexões. Não sei se ela tenta entrar de cabeça em algo ou se livrar da situação.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado a um corpo que faz força.",
+        "opinion": "Uma escultura de uma pessoa que parece estar mergulhando.",
+        "feedbackError": "Aqui deve ter algo mostrando um corpo que faz força.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -44,16 +44,16 @@
       "id": "edgards_sem_titulo_iii_em_pe",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sem título (Dor de cabeça III)",
+        "title": "Escultura sem título (Dor de cabeça 3)",
         "author": "Edgard de Souza",
         "year": "2005",
         "place": "São Paulo, SP"
       },
       "educational": {
-        "description": "Esta escultura remete à introspecção, um olhar para si mesmo.\n\nEssas três esculturas de Edgard de Souza são parte de uma série desenvolvida ao longo dos anos 2000. A silhueta faz referência a uma figura masculina, baseada no corpo do próprio artista.\n\nExibidas linearmente, as esculturas sugerem um movimento contínuo. Um segundo olhar pode revelar uma ação fragmentada, sem relação direta entre causa e efeito em cada uma das poses.",
+        "description": "Esta escultura mostra um corpo dobrado.\n\nEstas esculturas de Edgard de Souza foram criadas nos anos 2000. Ele usou seu próprio corpo como modelo.",
         "medium": "Bronze fundido",
-        "opinion": "Uma escultura de uma pessoa totalmente curvada. Não sei se está reverenciando a si mesmo ou tentando olhar para dentro de si.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado a um corpo que olha para dentro de si mesmo.",
+        "opinion": "Uma escultura de uma pessoa totalmente curvada. Parece que olha para seu próprio corpo.",
+        "feedbackError": "Aqui deve ter algo mostrando um corpo dobrado.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -73,11 +73,11 @@
         "place": "Middletown, Connecticut, EUA"
       },
       "educational": {
-        "description": "Inspira-se nos pontos riscados do candomblé, o machado na cor vermelha representa Xangô, orixá da justiça, força e poder. Homenageia o companheiro de ativismo contra o racismo.\n\nProduzida durante o exílio de Abdias Nascimento, reflete sua conexão com a teogonia afro-brasileira e a luta política.\n\nDurante seu exílio do regime militar, Abdias Nascimento foi professor em universidades nos EUA e na Nigéria. De volta ao Brasil, foi deputado federal e senador, além de secretário do governo do Rio de Janeiro.",
+        "description": "Nessa pintura, o machado vermelho representa Xangô, justiça, força e poder.\n\nEssa obra é um homenagem a um amigo que lutou com Abdias Nascimento contra o racismo. As pinturas do Abdias Nascimento retratam deuses da umbanda e candomblé, que são religiões de origem africana.\n\nFoi pintada quando Abdias esteve exilado, vivendo nos Estados Unidos.",
         "dimensions": "154 x 102 cm",
         "medium": "Acrílica sobre linho",
-        "opinion": "Um vermelho muito forte. Me lembra uma máscara negra com uma coroa de prata, dividida por um grande machado duplo. Um símbolo de justiça, justamente o que falta a esse vândalo.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo vermelho e relacionado a Xangô.",
+        "opinion": "Um vermelho muito forte. Me lembra uma máscara negra com uma coroa de prata, dividida por um grande machado.",
+        "feedbackError": "Aqui deve ter algo vermelho e relacionado a Xangô.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -95,11 +95,11 @@
         "place": "Búfalo, Nova Iorque, EUA"
       },
       "educational": {
-        "description": "A obra remete à liberdade de um céu azul, uma vez que tanto Abdias quanto Gerardo foram perseguidos politicamente.\n\nO homenageado é um companheiro de escrita, pai do artista plástico Tunga. É também uma homenagem aos poetas da La Santa Hermandad de la Orquídea.\n\nAbdias Nascimento foi poeta, escritor, dramaturgo, curador, artista plástico, professor universitário, pan-africanista e parlamentar. Indicado oficialmente ao Prêmio Nobel da Paz em 2010, teve uma longa trilha no ativismo e na valorização social do negro e da cultura afro-brasileira, por meio da arte e da educação.",
+        "description": "A pintura mostra um pássaro livre no céu azul.\n\nO pintor Abdias Nascimento e seu amigo Gerardo foram perseguidos pela ditadura. O amigo é um poeta, assim como Abdias Nascimento também foi poeta, escritor, artista, professor e político.\n\nAbdias foi indicado ao Prêmio Nobel da Paz em 2010 pelo seu trabalho de valorizar a cultura negra com arte e educação.",
         "dimensions": "152 x 102 cm",
         "medium": "Acrílica sobre tela",
-        "opinion": "Vejo o céu em diferentes tons de azul, com um pássaro voando livremente, um arco e flecha apontando para cima. É muito poético.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado à liberdade de um céu azul.",
+        "opinion": "Vejo o céu em muitos tons de azul e um pássaro voando livremente. No chão tem um arco e flecha apontando para cima.",
+        "feedbackError": "Aqui deve ter algo relacionado a um pássaro no céu azul.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -117,11 +117,11 @@
         "place": "Búfalo, Nova Iorque, EUA"
       },
       "educational": {
-        "description": "Ressignifica a bandeira brasileira com símbolos do candomblé, substituindo o lema “Ordem e progresso” pela saudação a Oxóssi “Okê” e o ofá (arco e flecha), propondo uma nação sob a proteção da ancestralidade africana.\n\nO ofá vermelho, arma de Oxóssi, orixá da caça, fartura e conhecimento, aponta para cima em sentido vertical, sugerindo direção e firmeza.\n\nCriada durante seu exílio nos EUA, a obra é uma crítica à ditadura militar e uma afirmação da resistência e identidade nacional.",
+        "description": "Mostra a bandeira brasileira com símbolos do candomblé, trocando “Ordem e progresso” por “Okê”.\n\n“Okê” é uma saudação a Oxóssi, uma divindade da umbanda. Também mostra um arco e flecha chamado ofá.\n\nO ofá vermelho, arma de Oxóssi, orixá da caça, fartura e conhecimento, aponta para cima, passando firmeza.\n\nA pintura foi feita durante o exílio de Abdias Nascimento, período em que viveu nos Estados Unidos.",
         "dimensions": "65 x 96 cm",
         "medium": "Acrílica sobre tela",
-        "opinion": "Parece muito a bandeira do Brasil varada por uma flecha, mas tem poucas estrelas. Está escrito “okê” várias vezes, mas “okê” isso significa?",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo relacionado com as cores da nossa bandeira.",
+        "opinion": "Parece muito a bandeira do Brasil com uma flecha, mas tem poucas estrelas. Está escrito “okê” várias vezes?",
+        "feedbackError": "Aqui deve ter algo relacionado às cores da nossa bandeira.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -139,11 +139,11 @@
         "place": "Búfalo, Nova Iorque, EUA"
       },
       "educational": {
-        "description": "Pintada em Búfalo, Nova Iorque, durante o exílio de Abdias Nascimento, retrata Oxum, a orixá das águas doces, com muitas cores vibrantes, simbolizando a força da ancestralidade e espiritualidade.\n\nAbdias Nascimento fundou projetos pioneiros, como o Teatro Experimental do Negro e o Museu da Arte Negra, iniciativas que reuniram obras de artistas nacionais e internacionais, com a missão de divulgar a influência africana na arte moderna ocidental e a pluralidade da produção artística negra.",
+        "description": "A pintura mostra Oxum, a deusa das águas doces, com muitas cores vibrantes.\n\nAbdias Nascimento fundou projetos como o Teatro Experimental do Negro e o Museu da Arte Negra.",
         "dimensions": "106 x 157 cm",
         "medium": "Acrílica sobre tela",
         "opinion": "Que pintura colorida! Mostra uma linda moça coroada, com os olhos cobertos e estrelas multicor em seu peito.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter algo muito colorido e relacionado à Oxum.",
+        "feedbackError": "Aqui deve ter algo muito colorido e relacionado à Oxum.",
         "hint": "XXXXX"
       },
       "assets": {
@@ -158,7 +158,7 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "1/4" },
       "educational": {
-        "opinion": "Uma fotografia rasgada! Está em preto e branco, não sei bem o que retrata. Parece ser o teto de algum lugar."
+        "opinion": "Uma foto rasgada! Está em preto e branco e parece ser o teto de algum lugar."
       }
     },
     "chunk_1-2": {
@@ -167,7 +167,7 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "2/4" },
       "educational": {
-        "opinion": "Uma fotografia rasgada! Vejo a claridade entrando pelas frestas."
+        "opinion": "Uma foto rasgada! Vejo a claridade entrando pelos buracos."
       }
     },
     "chunk_1-3": {
@@ -176,7 +176,7 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "3/4" },
       "educational": {
-        "opinion": "Uma fotografia rasgada! Parece a entrada de um lugar e chão de terra batida."
+        "opinion": "Uma foto rasgada! Parece a entrada de um lugar e chão de terra batida."
       }
     },
     "chunk_1-4": {
@@ -185,24 +185,24 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "4/4" },
       "educational": {
-        "opinion": "Uma fotografia rasgada! É de uma criança banhada pela luz."
+        "opinion": "Uma foto rasgada! É de uma criança iluminada."
       }
     },
     "candujar_sem_titulo_yanomami": {
       "id": "candujar_sem_titulo_yanomami",
       "type": "Photo",
       "metadata": {
-        "title": "Sem título (Yanomami)",
+        "title": "Fotografia sem título (Yanomami)",
         "author": "Claudia Andujar",
         "year": "1976",
         "place": "Catrimani, RR"
       },
       "educational": {
-        "description": "Da série 'A casa'. Mostra um curumim dentro duma shabono (casa comunitária). A série é composta por várias fotografias que retratam o cotidiano dos yanomami.\n\nNos anos 70, os yanomami enfrentavam ameaças de invasão e destruição de suas terras por garimpeiros e madeireiros ilegais.",
+        "description": "Uma foto preto e branco com um curumim dentro duma shabono (casa comunitária).\n\nEssa foto é parte de uma série de outras fotografias que retratam o cotidiano do povo yanomami. Nos anos 70, eles enfrentavam ameaças de invasão e destruição de suas terras.\n\nEsta fotografia pertence à série 'A casa'.",
         "dimensions": "90 x 60 cm",
         "medium": "Gelatina de prata sobre papel Ilford Multigrade",
-        "opinion": "Essa é uma foto muito legal! A luz do sol invade a oca comunitária pelas frestas e ilumina uma criança.",
-        "feedbackError": "Pelo que diz a placa, aqui deve ter outro pedaço da fotografia.",
+        "opinion": "Essa é uma foto muito legal! A luz do sol invade a oca comunitária e ilumina uma criança.",
+        "feedbackError": "Aqui deve ter outro pedaço da fotografia.",
         "hint": "XXXXX"
       },
       "assets": {
