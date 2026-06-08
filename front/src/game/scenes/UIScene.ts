@@ -439,6 +439,10 @@ export class UIScene extends Scene {
       if (done) {
         texts[idx].setText(`[✓] ${step.text}`);
         texts[idx].setColor(LayoutConfig.COLORS.SUCCESS_GREEN);
+      } else if (step.progressGetter) {
+        const { filled, total } = step.progressGetter();
+        texts[idx].setText(`${filled}/${total} ${step.text}`);
+        texts[idx].setColor(LayoutConfig.COLORS.WHITE);
       } else if (step.categoryType) {
         const progress = this.placeholderSystem.getCategoryProgress(
           step.categoryType,
