@@ -59,6 +59,7 @@ function OverlayContent() {
         data.collectedInfos,
         data.totalSteps,
         data.steps,
+        data.stepProgress,
       );
     });
 

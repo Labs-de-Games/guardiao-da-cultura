@@ -3,12 +3,18 @@ export interface StarsChangedData {
   total: number;
 }
 
+export interface StepProgress {
+  filled: number;
+  total: number;
+}
+
 export interface QuestProgressData {
   missionId: string;
   missionTitle: string;
   collectedInfos: string[];
   totalSteps: number;
   steps?: { infoKey: string; text: string }[];
+  stepProgress?: StepProgress[];
 }
 
 export interface ItemCollectedData {

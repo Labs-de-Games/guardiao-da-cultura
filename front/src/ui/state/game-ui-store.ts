@@ -4,6 +4,8 @@ export interface QuestStep {
   text: string;
   infoKey?: string;
   done: boolean;
+  filled?: number;
+  total?: number;
 }
 
 export interface MissionProgress {
@@ -38,6 +40,7 @@ export interface GameUIState {
     collectedInfos: string[],
     totalSteps: number,
     steps?: { infoKey: string; text: string }[],
+    stepProgress?: { filled: number; total: number }[],
   ) => void;
   updateMissionStep: (
     missionId: string,
@@ -61,43 +64,38 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   setGameStarted: (started) => set({ gameStarted: started }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setMissions: (missions) => set({ missions }),
-  addOrUpdateMission: (missionId, title, collectedInfos, totalSteps, steps) =>
+  addOrUpdateMission: (
+    missionId,
+    title,
+    collectedInfos,
+    totalSteps,
+    steps,
+    stepProgress,
+  ) =>
     set((s) => {
+      const progress = stepProgress ?? [];
+      const buildSteps = (_existing?: MissionProgress) =>
+        Array.from({ length: totalSteps }, (_, i) => ({
+          text:
+            steps?.[i]?.text || _existing?.steps[i]?.text || `Etapa ${i + 1}`,
+          infoKey: steps?.[i]?.infoKey,
+          done: steps?.[i]?.infoKey
+            ? collectedInfos.includes(steps[i].infoKey)
+            : false,
+          filled: progress[i]?.filled,
+          total: progress[i]?.total,
+        }));
+
       const existing = s.missions.find((m) => m.missionId === missionId);
       if (existing) {
         return {
           missions: s.missions.map((m) =>
-            m.missionId === missionId
-              ? {
-                  ...m,
-                  steps: Array.from({ length: totalSteps }, (_, i) => ({
-                    text:
-                      steps?.[i]?.text || m.steps[i]?.text || `Etapa ${i + 1}`,
-                    infoKey: steps?.[i]?.infoKey,
-                    done: steps?.[i]?.infoKey
-                      ? collectedInfos.includes(steps[i].infoKey)
-                      : false,
-                  })),
-                }
-              : m,
+            m.missionId === missionId ? { ...m, steps: buildSteps(m) } : m,
           ),
         };
       }
       return {
-        missions: [
-          ...s.missions,
-          {
-            missionId,
-            title,
-            steps: Array.from({ length: totalSteps }, (_, i) => ({
-              text: steps?.[i]?.text || `Etapa ${i + 1}`,
-              infoKey: steps?.[i]?.infoKey,
-              done: steps?.[i]?.infoKey
-                ? collectedInfos.includes(steps[i].infoKey)
-                : false,
-            })),
-          },
-        ],
+        missions: [...s.missions, { missionId, title, steps: buildSteps() }],
       };
     }),
   updateMissionStep: (missionId, stepIndex, done) =>
