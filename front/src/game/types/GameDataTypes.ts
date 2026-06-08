@@ -18,6 +18,7 @@ export interface MissionStepDef {
   infoKey: string;
   text: string;
   categoryType?: InteractiveType;
+  progressGetter?: () => { filled: number; total: number };
 }
 
 export interface MissionDef {
