@@ -66,6 +66,8 @@ export class Game extends Scene {
   private isControlsOverlayOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private photoChunksCollected: number = 0;
+  private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
@@ -107,6 +109,8 @@ export class Game extends Scene {
     this.isControlsOverlayOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
+    this.photoChunksCollected = 0;
+    this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
@@ -543,6 +547,10 @@ export class Game extends Scene {
     this.player.setDraggableRegistry(this.draggableItems);
     this.player.setCarryableRegistry(this.carryableItems);
 
+    this.totalPhotoChunks = this.carryableItems.filter(
+      (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
+    ).length;
+
     Object.values(createdItems).forEach((item) => {
       if ("setPlayerTracking" in item) {
         const trackable = item as unknown as {
@@ -620,6 +628,19 @@ export class Game extends Scene {
 
         if (opinion) {
           this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [opinion]);
+        }
+
+        if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
+          this.photoChunksCollected++;
+          if (
+            this.totalPhotoChunks > 0 &&
+            this.photoChunksCollected >= this.totalPhotoChunks
+          ) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR,
+              infoKey: MissionKeys.PHOTO_COLLECTED,
+            });
+          }
         }
       }
     });
