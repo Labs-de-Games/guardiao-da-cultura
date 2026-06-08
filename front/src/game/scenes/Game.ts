@@ -40,6 +40,7 @@ import type {
   ContentJson,
   InteractionSubmittedData,
   LabelInfoData,
+  MissionDef,
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
@@ -293,11 +294,29 @@ export class Game extends Scene {
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
 
+    const missionDefsWithProgress: Record<string, MissionDef> = {
+      [MissionIds.CURATOR]: {
+        ...MissionRegistry[MissionIds.CURATOR],
+        steps: MissionRegistry[MissionIds.CURATOR].steps.map((step) => {
+          if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
+            return {
+              ...step,
+              progressGetter: () => ({
+                filled: this.photoChunksCollected,
+                total: this.totalPhotoChunks,
+              }),
+            };
+          }
+          return step;
+        }),
+      },
+    };
+
     this.scene.launch(SceneNames.UI, {
       phaseTitle: this.levelDef.title,
       missionsTotal: Object.keys(MissionRegistry).length,
       questManager: this.questManager,
-      missionDefs: MissionRegistry,
+      missionDefs: missionDefsWithProgress,
       placeholderSystem: this.placeholderSystem,
     });
     this.scene.bringToTop(SceneNames.UI);
@@ -633,6 +652,7 @@ export class Game extends Scene {
 
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
           if (
             this.totalPhotoChunks > 0 &&
             this.photoChunksCollected >= this.totalPhotoChunks
