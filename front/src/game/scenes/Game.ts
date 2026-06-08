@@ -394,6 +394,19 @@ export class Game extends Scene {
       },
     );
 
+    this.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () => {
+      const missionId = MissionIds.CURATOR;
+      const reqs = this.questManager.getRequiredInfos(missionId);
+      EventBus.emit("quest:progress-changed", {
+        missionId,
+        missionTitle: MissionRegistry[missionId]?.title || "",
+        collectedInfos: this.questManager.getCollectedInfos(missionId),
+        totalSteps: reqs.length,
+        steps: MissionRegistry[missionId]?.steps,
+        stepProgress: this.getMissionStepProgress(missionId),
+      });
+    });
+
     this.questManager.on(
       "info-collected",
       (data: { missionId: string; infoKey: string }) => {
@@ -405,6 +418,7 @@ export class Game extends Scene {
           collectedInfos: this.questManager.getCollectedInfos(data.missionId),
           totalSteps: reqs.length,
           steps: MissionRegistry[data.missionId]?.steps,
+          stepProgress: this.getMissionStepProgress(data.missionId),
         });
       },
     );
@@ -454,13 +468,14 @@ export class Game extends Scene {
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
 
-    Object.entries(MissionRegistry).forEach(([missionId, def]) => {
+    Object.entries(MissionRegistry).forEach(([missionId]) => {
       EventBus.emit("quest:progress-changed", {
         missionId,
-        missionTitle: def.title,
+        missionTitle: MissionRegistry[missionId]?.title || "",
         collectedInfos: [],
-        totalSteps: def.steps.length,
-        steps: def.steps,
+        totalSteps: MissionRegistry[missionId]?.steps.length ?? 0,
+        steps: MissionRegistry[missionId]?.steps,
+        stepProgress: this.getMissionStepProgress(missionId),
       });
     });
 
@@ -722,6 +737,16 @@ export class Game extends Scene {
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
           this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+          EventBus.emit("quest:progress-changed", {
+            missionId: MissionIds.CURATOR,
+            missionTitle: MissionRegistry[MissionIds.CURATOR]?.title || "",
+            collectedInfos: this.questManager.getCollectedInfos(
+              MissionIds.CURATOR,
+            ),
+            totalSteps: MissionRegistry[MissionIds.CURATOR]?.steps.length ?? 0,
+            steps: MissionRegistry[MissionIds.CURATOR]?.steps,
+            stepProgress: this.getMissionStepProgress(MissionIds.CURATOR),
+          });
           if (
             this.totalPhotoChunks > 0 &&
             this.photoChunksCollected >= this.totalPhotoChunks
@@ -1099,6 +1124,26 @@ export class Game extends Scene {
     return this.scoreManager.getPayload();
   }
 
+  private getMissionStepProgress(
+    missionId: string,
+  ): { filled: number; total: number }[] {
+    const def = MissionRegistry[missionId];
+    if (!def) return [];
+
+    return def.steps.map((step) => {
+      if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
+        return {
+          filled: this.photoChunksCollected,
+          total: this.totalPhotoChunks,
+        };
+      }
+      if (step.categoryType) {
+        return this.placeholderSystem.getCategoryProgress(step.categoryType);
+      }
+      return { filled: 0, total: 0 };
+    });
+  }
+
   private async submitScoreToBackend() {
     try {
       const userId = this.registry.get("userId");
@@ -1168,6 +1213,15 @@ export class Game extends Scene {
 
       // Always emit progress on every successful drop
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      const reqs = this.questManager.getRequiredInfos(missionId);
+      EventBus.emit("quest:progress-changed", {
+        missionId,
+        missionTitle: MissionRegistry[missionId]?.title || "",
+        collectedInfos: this.questManager.getCollectedInfos(missionId),
+        totalSteps: reqs.length,
+        steps: MissionRegistry[missionId]?.steps,
+        stepProgress: this.getMissionStepProgress(missionId),
+      });
 
       if (item.interactiveType === InteractiveType.PAINTING) {
         if (
@@ -1183,6 +1237,15 @@ export class Game extends Scene {
               infoKey: MissionKeys.PAINTINGS_DONE,
             });
             this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+            const reqs2 = this.questManager.getRequiredInfos(missionId);
+            EventBus.emit("quest:progress-changed", {
+              missionId,
+              missionTitle: MissionRegistry[missionId]?.title || "",
+              collectedInfos: this.questManager.getCollectedInfos(missionId),
+              totalSteps: reqs2.length,
+              steps: MissionRegistry[missionId]?.steps,
+              stepProgress: this.getMissionStepProgress(missionId),
+            });
           });
         }
       } else if (item.interactiveType === InteractiveType.SCULPTURE) {
@@ -1199,6 +1262,15 @@ export class Game extends Scene {
               infoKey: MissionKeys.SCULPTURES_DONE,
             });
             this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+            const reqs2 = this.questManager.getRequiredInfos(missionId);
+            EventBus.emit("quest:progress-changed", {
+              missionId,
+              missionTitle: MissionRegistry[missionId]?.title || "",
+              collectedInfos: this.questManager.getCollectedInfos(missionId),
+              totalSteps: reqs2.length,
+              steps: MissionRegistry[missionId]?.steps,
+              stepProgress: this.getMissionStepProgress(missionId),
+            });
           });
         }
       }
