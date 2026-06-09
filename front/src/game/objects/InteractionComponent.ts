@@ -1,9 +1,11 @@
 import * as Phaser from "phaser";
 import posthog from "posthog-js";
+import { sendGameEvent } from "../../lib/analyticsApi";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { offKeyDown, onKeyDown } from "../systems/InputManager";
+import { GameEventType } from "../types/AnalyticsTypes";
 import type { IPlayerState } from "../types/EntityTypes";
 
 export interface InteractionOptions {
@@ -101,6 +103,44 @@ export class InteractionComponent {
       if (this.isPromptVisible) {
         this.lastInteractionTime = now;
         this.markInteracted();
+
+        const metadata: Record<string, unknown> = {
+          eventName: "object.inspected",
+          inspectable: true,
+          levelId: this.scene.registry.get("currentLevelId"),
+          levelNumber: this.scene.registry.get("currentLevelNumber"),
+        };
+
+        if (this.infoKey) {
+          metadata.infoKey = this.infoKey;
+        }
+
+        const parentWithName = this.parent as Phaser.GameObjects.GameObject & {
+          name?: string;
+        };
+
+        if (parentWithName.name) {
+          metadata.objectId = parentWithName.name;
+        }
+
+        if ("texture" in this.parent) {
+          const textureKey = (this.parent as Phaser.GameObjects.Sprite).texture
+            ?.key;
+          if (textureKey) {
+            metadata.objectType = textureKey;
+          }
+        }
+
+        sendGameEvent({
+          type: GameEventType.EVENT_LOGGED,
+          timestamp: new Date().toISOString(),
+          metadata,
+        }).catch((err) => {
+          console.error(
+            "[InteractionComponent] Failed to log interaction:",
+            err,
+          );
+        });
 
         if (this.dialogueLines) {
           if (this.onInteract) this.onInteract();

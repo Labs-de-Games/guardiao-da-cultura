@@ -17,6 +17,7 @@ export const registerSchema = z.object({
       /^[a-zA-Z0-9_]+$/,
       "Apelidos podem ter apenas letras, números e sublinha (_).",
     ),
+  isInstitution: z.boolean().optional(),
 });
 
 export const resendVerificationSchema = z.object({

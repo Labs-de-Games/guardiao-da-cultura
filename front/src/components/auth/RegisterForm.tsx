@@ -4,7 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
+  Checkbox,
   CircularProgress,
+  FormControlLabel,
   Link,
   TextField,
   Typography,
@@ -29,13 +31,18 @@ export default function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async ({ isInstitution, ...data }: RegisterFormData) => {
     posthog.capture("button_clicked", {
       button_name: "create_account",
       screen: "register",
     });
+
+    const payload = isInstitution
+      ? { ...data, role: "institution" as const }
+      : data;
+
     try {
-      await registerUser(data);
+      await registerUser(payload);
       setIsSubmitted(true);
       showToast("Cadastro realizado. Agora verifique seu e-mail!", "success");
     } catch (err) {
@@ -109,6 +116,12 @@ export default function RegisterForm() {
         error={!!errors.nickname}
         helperText={errors.nickname?.message}
         {...register("nickname")}
+      />
+
+      <FormControlLabel
+        sx={{ mt: 1 }}
+        control={<Checkbox {...register("isInstitution")} />}
+        label="Sou uma instituição"
       />
 
       <Button
