@@ -337,9 +337,19 @@ export class Game extends Scene {
     );
 
     this.registry.set("currentLevelId", this.levelId);
+    this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
     this.analyticsSystem = new AnalyticsSystem(this);
     this.analyticsSystem.track(GameEventType.GAME_STARTED);
     this.analyticsSystem.setupAbandonmentTracking();
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.analyticsSystem.track(GameEventType.SESSION_END, {
+        reason: "scene_shutdown",
+        lastScene: this.scene.key,
+        levelId: this.levelId,
+        levelNumber: this.levelDef.levelNumber,
+      });
+    });
 
     posthog.capture("game_started", {
       level_id: this.levelId,
@@ -370,6 +380,9 @@ export class Game extends Scene {
       this.analyticsSystem.trackLevelEvent(
         GameEventType.LEVEL_STARTED,
         this.levelId,
+        {
+          levelNumber: this.levelDef.levelNumber,
+        },
       );
     }
     this.setupCameras();

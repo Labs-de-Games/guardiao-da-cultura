@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 const AUTH_STATUS_COOKIE_NAME = "auth_status";
 
 const PROTECTED_ROUTES = ["/"];
+const INSTITUTION_ROUTE_PREFIX = "/institution";
 const GUEST_ROUTES = [
   "/login",
   "/register",
@@ -13,8 +14,13 @@ const GUEST_ROUTES = [
 ];
 
 function isProtectedRoute(path: string): boolean {
-  return PROTECTED_ROUTES.some(
-    (route) => path === route || path.startsWith(`${route}?`),
+  return PROTECTED_ROUTES.some((route) => path === route);
+}
+
+function isInstitutionRoute(path: string): boolean {
+  return (
+    path === INSTITUTION_ROUTE_PREFIX ||
+    path.startsWith(`${INSTITUTION_ROUTE_PREFIX}/`)
   );
 }
 
@@ -28,6 +34,12 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const authStatus = request.cookies.get(AUTH_STATUS_COOKIE_NAME)?.value;
   const isAuthenticated = authStatus === "authenticated";
+
+  if (isInstitutionRoute(path) && !isAuthenticated) {
+    const redirectUrl = new URL("/login", request.url);
+    redirectUrl.searchParams.set("redirect", path);
+    return NextResponse.redirect(redirectUrl);
+  }
 
   if (isProtectedRoute(path) && !isAuthenticated) {
     const redirectUrl = new URL("/register", request.url);
@@ -50,5 +62,6 @@ export const config = {
     "/verify-email",
     "/confirm-login",
     "/confirm-verification",
+    "/institution/:path*",
   ],
 };
