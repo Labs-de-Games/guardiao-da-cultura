@@ -15,19 +15,19 @@ export class AddBadgeStatFields1777927558354 implements MigrationInterface {
     );
 
     await queryRunner.query(
-      `UPDATE "badge" SET "statRequired" = 'objects_inspected', "condition" = '>=', "goalValue" = 10 WHERE "name" = 'Explorador'`,
+      `UPDATE "badge" SET "statRequired" = 'objects_inspected', "condition" = '>=', "goalValue" = 10 WHERE "name" = 'Exploração'`,
     );
     await queryRunner.query(
-      `UPDATE "badge" SET "statRequired" = 'puzzles_solved_flawlessly', "condition" = '>=', "goalValue" = 1 WHERE "name" = 'Restaurador'`,
+      `UPDATE "badge" SET "statRequired" = 'puzzles_solved_flawlessly', "condition" = '>=', "goalValue" = 1 WHERE "name" = 'Restauração'`,
     );
     await queryRunner.query(
-      `UPDATE "badge" SET "statRequired" = 'quiz_perfect_score', "condition" = '==', "goalValue" = 1 WHERE "name" = 'Curador'`,
+      `UPDATE "badge" SET "statRequired" = 'quiz_perfect_score', "condition" = '==', "goalValue" = 1 WHERE "name" = 'Curadoria'`,
     );
     await queryRunner.query(
       `UPDATE "badge" SET "statRequired" = 'secret_clues_collected', "condition" = '>=', "goalValue" = 1 WHERE "name" = 'Detetive'`,
     );
     await queryRunner.query(
-      `UPDATE "badge" SET "statRequired" = 'quiz_solved_after_failure', "condition" = '==', "goalValue" = 1 WHERE "name" = 'Persistente'`,
+      `UPDATE "badge" SET "statRequired" = 'quiz_solved_after_failure', "condition" = '==', "goalValue" = 1 WHERE "name" = 'Persistentência'`,
     );
   }
 

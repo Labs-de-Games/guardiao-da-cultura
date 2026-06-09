@@ -3,8 +3,8 @@ import type { BadgeConfig } from "./badgesApi";
 export const MOCK_BADGES: BadgeConfig[] = [
   {
     id: "badge_explorador",
-    name: "Explorador",
-    description: "Inspecionou todos os objetos.",
+    name: "Exploração",
+    description: "Achou todos os objetos.",
     stat_required: "objects_inspected",
     condition: ">=",
     goal_value: 10,
@@ -12,8 +12,8 @@ export const MOCK_BADGES: BadgeConfig[] = [
   },
   {
     id: "badge_restaurador",
-    name: "Restaurador",
-    description: "Resolveu sem erros.",
+    name: "Restauração",
+    description: "Pôs tudo no lugar sem errar.",
     stat_required: "puzzles_solved_flawlessly",
     condition: ">=",
     goal_value: 1,
@@ -21,8 +21,8 @@ export const MOCK_BADGES: BadgeConfig[] = [
   },
   {
     id: "badge_curador",
-    name: "Curador",
-    description: "Acertou 100% do quiz.",
+    name: "Curadoria",
+    description: "Acertou todas as perguntas do teste.",
     stat_required: "quiz_perfect_score",
     condition: "==",
     goal_value: 1,
@@ -31,7 +31,7 @@ export const MOCK_BADGES: BadgeConfig[] = [
   {
     id: "badge_detetive",
     name: "Detetive",
-    description: "Coletou pista secreta.",
+    description: "Achou uma pista.",
     stat_required: "secret_clues_collected",
     condition: ">=",
     goal_value: 1,
@@ -39,8 +39,8 @@ export const MOCK_BADGES: BadgeConfig[] = [
   },
   {
     id: "badge_persistente",
-    name: "Persistente",
-    description: "Concluiu o quiz após uma falha anterior.",
+    name: "Persistência",
+    description: "Passou no teste depois de errar uma vez.",
     stat_required: "quiz_solved_after_failure",
     condition: "==",
     goal_value: 1,
