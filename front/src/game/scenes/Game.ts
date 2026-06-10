@@ -1,7 +1,10 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
-import { submitScore } from "../../lib/scoresApi";
+
+import { getUserCollectibles, submitScore } from "../../lib/scoresApi";
+
+import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -40,6 +43,7 @@ import type {
   ContentJson,
   InteractionSubmittedData,
   LabelInfoData,
+  MissionDef,
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
@@ -66,6 +70,8 @@ export class Game extends Scene {
   private isControlsOverlayOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private photoChunksCollected: number = 0;
+  private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
@@ -107,6 +113,8 @@ export class Game extends Scene {
     this.isControlsOverlayOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
+    this.photoChunksCollected = 0;
+    this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
@@ -264,12 +272,16 @@ export class Game extends Scene {
 
     this.registry.set("scoreManager", this.scoreManager);
 
-    this.registry.set("scoreManager", this.scoreManager);
-
     this.scoreManager.on(
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
-        console.log("[ScoreManager] payload", payload);
+        const stars = Number.isFinite(payload.totalStars)
+          ? Math.max(0, Math.floor(payload.totalStars))
+          : 0;
+        EventBus.emit("player:stars-changed", {
+          current: stars,
+          total: Math.ceil(payload.totalQuarters / 4),
+        });
       },
     );
 
@@ -286,16 +298,33 @@ export class Game extends Scene {
 
     this.setupEvents();
 
-    this.scene.launch(SceneNames.UI, {
-      phaseTitle: this.levelDef.title,
-      missionsTotal: Object.keys(MissionRegistry).length,
-      questManager: this.questManager,
-      missionDefs: MissionRegistry,
-    });
-    this.scene.bringToTop(SceneNames.UI);
-
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
+
+    const missionDefsWithProgress: Record<string, MissionDef> = {
+      [MissionIds.CURATOR]: {
+        ...MissionRegistry[MissionIds.CURATOR],
+        steps: MissionRegistry[MissionIds.CURATOR].steps.map((step) => {
+          if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
+            return {
+              ...step,
+              progressGetter: () => ({
+                filled: this.photoChunksCollected,
+                total: this.totalPhotoChunks,
+              }),
+            };
+          }
+          return step;
+        }),
+      },
+    };
+
+    this.scene.launch(SceneNames.UI, {
+      questManager: this.questManager,
+      missionDefs: missionDefsWithProgress,
+      placeholderSystem: this.placeholderSystem,
+    });
+    this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
     this.badgeSystem = new BadgeSystem(this);
@@ -308,9 +337,19 @@ export class Game extends Scene {
     );
 
     this.registry.set("currentLevelId", this.levelId);
+    this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
     this.analyticsSystem = new AnalyticsSystem(this);
     this.analyticsSystem.track(GameEventType.GAME_STARTED);
     this.analyticsSystem.setupAbandonmentTracking();
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.analyticsSystem.track(GameEventType.SESSION_END, {
+        reason: "scene_shutdown",
+        lastScene: this.scene.key,
+        levelId: this.levelId,
+        levelNumber: this.levelDef.levelNumber,
+      });
+    });
 
     posthog.capture("game_started", {
       level_id: this.levelId,
@@ -325,6 +364,7 @@ export class Game extends Scene {
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
+      void this.initializeCollectibles();
       this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
 
       const placeholderLayer =
@@ -340,6 +380,9 @@ export class Game extends Scene {
       this.analyticsSystem.trackLevelEvent(
         GameEventType.LEVEL_STARTED,
         this.levelId,
+        {
+          levelNumber: this.levelDef.levelNumber,
+        },
       );
     }
     this.setupCameras();
@@ -364,21 +407,130 @@ export class Game extends Scene {
       },
     );
 
+    this.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () => {
+      const missionId = MissionIds.CURATOR;
+      const reqs = this.questManager.getRequiredInfos(missionId);
+      EventBus.emit("quest:progress-changed", {
+        missionId,
+        missionTitle: MissionRegistry[missionId]?.title || "",
+        collectedInfos: this.questManager.getCollectedInfos(missionId),
+        totalSteps: reqs.length,
+        steps: MissionRegistry[missionId]?.steps,
+        stepProgress: this.getMissionStepProgress(missionId),
+      });
+    });
+
     this.questManager.on(
       "info-collected",
-      (_data: { missionId: string; infoKey: string }) => {
+      (data: { missionId: string; infoKey: string }) => {
         this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        const reqs = this.questManager.getRequiredInfos(data.missionId);
+        EventBus.emit("quest:progress-changed", {
+          missionId: data.missionId,
+          missionTitle: MissionRegistry[data.missionId]?.title || "",
+          collectedInfos: this.questManager.getCollectedInfos(data.missionId),
+          totalSteps: reqs.length,
+          steps: MissionRegistry[data.missionId]?.steps,
+          stepProgress: this.getMissionStepProgress(data.missionId),
+        });
       },
     );
 
     this.questManager.on(
       "status-changed",
-      (_data: { missionId: string; status: QuestStatus }) => {
+      (data: { missionId: string; status: QuestStatus }) => {
         this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
+        EventBus.emit("quest:mission-status-changed", {
+          missionId: data.missionId,
+          status:
+            data.status === QuestStatus.COMPLETED
+              ? "completed"
+              : data.status === QuestStatus.READY_FOR_QUIZ
+                ? "accepted"
+                : "accepted",
+        });
       },
     );
 
-    this.setupEvents();
+    const userId = this.registry.get("userId") as string | undefined;
+    EventBus.emit("game:ready", { userId: userId || "" });
+
+    const initialPayload = this.scoreManager.getPayload();
+    const initialStars = Number.isFinite(initialPayload.totalStars)
+      ? Math.max(0, Math.floor(initialPayload.totalStars))
+      : 0;
+    EventBus.emit("player:stars-changed", {
+      current: initialStars,
+      total: Math.ceil(initialPayload.totalQuarters / 4),
+    });
+
+    const allCollectibles = Object.entries(
+      this.contentData.collectibles,
+    ).flatMap(([category, items]) =>
+      Object.entries(
+        items as Record<string, { metadata: { title?: string } }>,
+      ).map(([id, data]) => ({
+        id,
+        name: data.metadata.title || id,
+        category,
+        collected: false,
+      })),
+    );
+    EventBus.emit("inventory:collectibles-sync", { entries: allCollectibles });
+
+    EventBus.emit("game:started", undefined);
+    EventBus.emit("sidebar:toggled", { open: true });
+
+    Object.entries(MissionRegistry).forEach(([missionId]) => {
+      EventBus.emit("quest:progress-changed", {
+        missionId,
+        missionTitle: MissionRegistry[missionId]?.title || "",
+        collectedInfos: [],
+        totalSteps: MissionRegistry[missionId]?.steps.length ?? 0,
+        steps: MissionRegistry[missionId]?.steps,
+        stepProgress: this.getMissionStepProgress(missionId),
+      });
+    });
+
+    EventBus.on("game:pause-requested", () => {
+      this.scene.pause(SceneNames.GAME);
+      this.scene.pause(SceneNames.UI);
+    });
+
+    EventBus.on("game:resume-requested", () => {
+      this.scene.resume(SceneNames.GAME);
+      this.scene.resume(SceneNames.UI);
+    });
+  }
+
+  private async initializeCollectibles(): Promise<void> {
+    const userId = this.registry.get("userId") as string | undefined;
+    let collected: Array<{
+      collectibleId: string;
+      collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+    }> = [];
+
+    if (userId) {
+      try {
+        const records = await getUserCollectibles(userId, {
+          levelId: this.levelId,
+        });
+        collected = records.map((record) => ({
+          collectibleId: record.collectibleId,
+          collectibleType: record.collectibleType,
+        }));
+
+        this.collectibleSystem.applyCollectedCollectibles(collected);
+
+        for (const record of collected) {
+          if (record.collectibleType === "CLUE_VILLAIN") {
+            this.questManager.collectInfo(`pista_${record.collectibleId}`);
+          }
+        }
+      } catch (err) {
+        console.warn("[Game] Failed to load user collectibles:", err);
+      }
+    }
   }
 
   private setupEvents() {
@@ -512,6 +664,10 @@ export class Game extends Scene {
     this.player.setDraggableRegistry(this.draggableItems);
     this.player.setCarryableRegistry(this.carryableItems);
 
+    this.totalPhotoChunks = this.carryableItems.filter(
+      (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
+    ).length;
+
     Object.values(createdItems).forEach((item) => {
       if ("setPlayerTracking" in item) {
         const trackable = item as unknown as {
@@ -590,6 +746,30 @@ export class Game extends Scene {
         if (opinion) {
           this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [opinion]);
         }
+
+        if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
+          this.photoChunksCollected++;
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+          EventBus.emit("quest:progress-changed", {
+            missionId: MissionIds.CURATOR,
+            missionTitle: MissionRegistry[MissionIds.CURATOR]?.title || "",
+            collectedInfos: this.questManager.getCollectedInfos(
+              MissionIds.CURATOR,
+            ),
+            totalSteps: MissionRegistry[MissionIds.CURATOR]?.steps.length ?? 0,
+            steps: MissionRegistry[MissionIds.CURATOR]?.steps,
+            stepProgress: this.getMissionStepProgress(MissionIds.CURATOR),
+          });
+          if (
+            this.totalPhotoChunks > 0 &&
+            this.photoChunksCollected >= this.totalPhotoChunks
+          ) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR,
+              infoKey: MissionKeys.PHOTO_COLLECTED,
+            });
+          }
+        }
       }
     });
 
@@ -613,6 +793,8 @@ export class Game extends Scene {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
       this.badgeSystem.destroy();
+      EventBus.off("game:pause-requested");
+      EventBus.off("game:resume-requested");
     });
 
     this.setupCameras();
@@ -955,6 +1137,26 @@ export class Game extends Scene {
     return this.scoreManager.getPayload();
   }
 
+  private getMissionStepProgress(
+    missionId: string,
+  ): { filled: number; total: number }[] {
+    const def = MissionRegistry[missionId];
+    if (!def) return [];
+
+    return def.steps.map((step) => {
+      if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
+        return {
+          filled: this.photoChunksCollected,
+          total: this.totalPhotoChunks,
+        };
+      }
+      if (step.categoryType) {
+        return this.placeholderSystem.getCategoryProgress(step.categoryType);
+      }
+      return { filled: 0, total: 0 };
+    });
+  }
+
   private async submitScoreToBackend() {
     try {
       const userId = this.registry.get("userId");
@@ -984,6 +1186,16 @@ export class Game extends Scene {
           interactionsCount: payload.collectibles.interactionsCount,
           quartersEarned: payload.collectibles.quartersEarned,
         },
+        collectedCollectibles: payload.collectibles.interactions.map(
+          (interaction) => ({
+            collectibleId: interaction.collectible_id,
+            collectibleType: interaction.collectible_type as
+              | "COLLECT"
+              | "CLUE_VILLAIN"
+              | "CLUE_NEXT",
+            levelId: payload.levelId,
+          }),
+        ),
       });
     } catch (err) {
       console.error("[Game] Failed to submit score:", err);
@@ -1011,6 +1223,19 @@ export class Game extends Scene {
         sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
       );
       const missionId = MissionIds.CURATOR;
+
+      // Always emit progress on every successful drop
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      const reqs = this.questManager.getRequiredInfos(missionId);
+      EventBus.emit("quest:progress-changed", {
+        missionId,
+        missionTitle: MissionRegistry[missionId]?.title || "",
+        collectedInfos: this.questManager.getCollectedInfos(missionId),
+        totalSteps: reqs.length,
+        steps: MissionRegistry[missionId]?.steps,
+        stepProgress: this.getMissionStepProgress(missionId),
+      });
+
       if (item.interactiveType === InteractiveType.PAINTING) {
         if (
           this.placeholderSystem.checkCategoryCompletion(
@@ -1018,11 +1243,23 @@ export class Game extends Scene {
           )
         ) {
           this.completeFloor(this.scoringFloors.paintings);
-          this.events.emit(GameEvents.INFO_COLLECTED, {
-            missionId,
-            infoKey: MissionKeys.PAINTINGS_DONE,
+          // Two-phase: show 3/3 first, then [✓] after delay
+          this.time.delayedCall(500, () => {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId,
+              infoKey: MissionKeys.PAINTINGS_DONE,
+            });
+            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+            const reqs2 = this.questManager.getRequiredInfos(missionId);
+            EventBus.emit("quest:progress-changed", {
+              missionId,
+              missionTitle: MissionRegistry[missionId]?.title || "",
+              collectedInfos: this.questManager.getCollectedInfos(missionId),
+              totalSteps: reqs2.length,
+              steps: MissionRegistry[missionId]?.steps,
+              stepProgress: this.getMissionStepProgress(missionId),
+            });
           });
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         }
       } else if (item.interactiveType === InteractiveType.SCULPTURE) {
         if (
@@ -1031,11 +1268,23 @@ export class Game extends Scene {
           )
         ) {
           this.completeFloor(this.scoringFloors.sculptures);
-          this.events.emit(GameEvents.INFO_COLLECTED, {
-            missionId,
-            infoKey: MissionKeys.SCULPTURES_DONE,
+          // Two-phase: show 3/3 first, then [✓] after delay
+          this.time.delayedCall(500, () => {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId,
+              infoKey: MissionKeys.SCULPTURES_DONE,
+            });
+            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+            const reqs2 = this.questManager.getRequiredInfos(missionId);
+            EventBus.emit("quest:progress-changed", {
+              missionId,
+              missionTitle: MissionRegistry[missionId]?.title || "",
+              collectedInfos: this.questManager.getCollectedInfos(missionId),
+              totalSteps: reqs2.length,
+              steps: MissionRegistry[missionId]?.steps,
+              stepProgress: this.getMissionStepProgress(missionId),
+            });
           });
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         }
       }
     } else if (result.mismatch) {
