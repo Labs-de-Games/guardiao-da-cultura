@@ -27,6 +27,9 @@ services:
     image: cloudflare/cloudflared:latest
     command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     restart: unless-stopped
+    depends_on:
+      - nginx
+    networks:
       - frontend
       - backend
     deploy:
@@ -64,6 +67,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      front:
+        condition: service_healthy
       back:
         condition: service_healthy
     networks:
@@ -103,6 +109,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      back:
+        condition: service_healthy
     networks:
       - frontend
       - backend
@@ -148,6 +157,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - backend
     deploy:
@@ -167,7 +179,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-template}
     restart: unless-stopped
     volumes:
-      - postgres_data_staging:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -185,7 +197,7 @@ services:
           memory: 256M
 
 volumes:
-  postgres_data_staging:
+  postgres_data:
 
 networks:
   frontend:
