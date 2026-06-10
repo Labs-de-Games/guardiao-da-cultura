@@ -11,6 +11,7 @@ import {
 } from "./errors";
 
 let accessToken: string | null = null;
+let guestId: string | null = null;
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
 let refreshSubscribers: Array<(token: string) => void> = [];
@@ -25,6 +26,14 @@ export function setAccessToken(token: string | null): void {
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+export function setGuestId(id: string | null): void {
+  guestId = id;
+}
+
+export function getGuestId(): string | null {
+  return guestId;
 }
 
 function onTokenRefreshed(token: string): void {
@@ -101,6 +110,8 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken && config.headers) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  } else if (guestId && config.headers) {
+    config.headers["x-guest-id"] = guestId;
   }
 
   if (posthog.__loaded) {
@@ -185,6 +196,7 @@ apiClient.interceptors.response.use(
 
 export function clearAccessToken(): void {
   accessToken = null;
+  guestId = null;
   isRefreshing = false;
   refreshPromise = null;
   refreshSubscribers = [];
