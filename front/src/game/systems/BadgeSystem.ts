@@ -112,6 +112,11 @@ export class BadgeSystem {
   }
 
   private async syncUnlockToServer(badgeId: string) {
+    const isGuest = this.scene.registry.get("isGuest") === true;
+    if (isGuest) {
+      console.log(`[BadgeSystem] Skipping server sync for guest: ${badgeId}`);
+      return;
+    }
     try {
       await unlockBadgeOnServer(badgeId);
     } catch (err) {
