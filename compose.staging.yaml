@@ -64,6 +64,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      back:
+        condition: service_healthy
     networks:
       - frontend
       - backend
@@ -113,6 +115,8 @@ services:
           cpus: "0.25"
           memory: 256M
 
+  back:
+    image: ghcr.io/labs-de-games/gameplate-back:${IMAGE_TAG:-develop}
     pull_policy: always
     restart: unless-stopped
     environment:
@@ -163,7 +167,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-template}
     restart: unless-stopped
     volumes:
-      - postgres_data_staging_v2:/var/lib/postgresql/data
+      - postgres_data_staging:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -181,7 +185,7 @@ services:
           memory: 256M
 
 volumes:
-  postgres_data_staging_v2:
+  postgres_data_staging:
 
 networks:
   frontend:
