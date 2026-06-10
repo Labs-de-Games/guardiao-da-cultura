@@ -64,8 +64,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      back:
-        condition: service_healthy
     networks:
       - frontend
       - backend
@@ -115,8 +113,6 @@ services:
           cpus: "0.25"
           memory: 256M
 
-  back:
-    image: ghcr.io/labs-de-games/gameplate-back:${IMAGE_TAG:-develop}
     pull_policy: always
     restart: unless-stopped
     environment:
