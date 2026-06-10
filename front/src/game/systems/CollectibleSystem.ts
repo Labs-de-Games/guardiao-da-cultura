@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import posthog from "posthog-js";
+import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractiveButton } from "../objects/InteractiveButton";
@@ -21,6 +22,11 @@ export interface CollectibleInstance {
   isCollected: boolean;
   sprite: Phaser.GameObjects.Sprite;
   button: InteractiveButton;
+}
+
+export interface PersistedCollectible {
+  collectibleId: string;
+  collectibleType: keyof CollectiblesJson;
 }
 
 export class CollectibleSystem {
@@ -88,8 +94,26 @@ export class CollectibleSystem {
         typeKey,
         collectibleId,
         player,
+        false,
       );
     });
+  }
+
+  public applyCollectedCollectibles(collected: PersistedCollectible[]): void {
+    if (!collected.length) return;
+    const collectedKey = new Set(
+      collected.map((item) => `${item.collectibleType}:${item.collectibleId}`),
+    );
+
+    for (const collectible of this.collectibles) {
+      if (
+        collectedKey.has(
+          `${collectible.collectibleType}:${collectible.collectibleId}`,
+        )
+      ) {
+        collectible.isCollected = true;
+      }
+    }
   }
 
   public destroy() {
@@ -111,6 +135,7 @@ export class CollectibleSystem {
     collectibleType: keyof CollectiblesJson,
     collectibleId: string,
     player: Phaser.Physics.Arcade.Sprite,
+    isCollected: boolean,
   ) {
     const x = (obj.x ?? 0) * this.mapScale;
     const y = (obj.y ?? 0) * this.mapScale;
@@ -136,7 +161,7 @@ export class CollectibleSystem {
       collectibleId,
       collectibleType,
       collectibleData,
-      isCollected: false,
+      isCollected,
       sprite,
       button,
     };
@@ -155,8 +180,12 @@ export class CollectibleSystem {
     if (!this.activeCollectible) {
       this.activeCollectible = instance;
 
+      this.scoreManager.recordCollectible(
+        instance.collectibleId,
+        instance.collectibleType,
+      );
+
       if (!instance.isCollected) {
-        this.scoreManager.recordCollectible();
         instance.isCollected = true;
 
         const totalCollected = this.collectibles.filter(
@@ -170,6 +199,12 @@ export class CollectibleSystem {
           total_available: this.collectibles.length,
         });
 
+        EventBus.emit("inventory:item-collected", {
+          itemId: instance.collectibleId,
+          itemName:
+            instance.collectibleData.metadata.title || instance.collectibleId,
+          category: instance.collectibleType,
+        });
         // Track secret clue collection for Detetive achievement (CLUE_VILLAIN only)
         if (instance.collectibleType === "CLUE_VILLAIN") {
           this.scene.events.emit(GameEvents.INFO_COLLECTED, {
