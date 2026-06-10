@@ -1,5 +1,17 @@
 import { create } from "zustand";
 
+const MAX_VISIBLE_TOASTS = 5;
+const MIN_TOAST_DURATION = 1000;
+const MAX_TOAST_DURATION = 10000;
+
+export interface ToastEntry {
+  id: string;
+  message: string;
+  duration: number;
+  iconSrc?: string;
+  exiting: boolean;
+}
+
 export interface QuestStep {
   text: string;
   infoKey?: string;
@@ -28,6 +40,7 @@ export interface GameUIState {
   totalStars: number;
   missions: MissionProgress[];
   collectibles: CollectibleEntry[];
+  toasts: ToastEntry[];
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -49,6 +62,9 @@ export interface GameUIState {
   ) => void;
   setCollectibles: (entries: CollectibleEntry[]) => void;
   collectItem: (itemId: string) => void;
+  addToast: (message: string, duration: number, iconSrc?: string) => void;
+  dismissToast: (id: string) => void;
+  removeToast: (id: string) => void;
 }
 
 export const useGameUIStore = create<GameUIState>()((set) => ({
@@ -58,6 +74,7 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   totalStars: 0,
   missions: [],
   collectibles: [],
+  toasts: [],
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -117,6 +134,31 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
       collectibles: s.collectibles.map((c) =>
         c.id === itemId ? { ...c, collected: true } : c,
       ),
+    })),
+  addToast: (message, duration, iconSrc) =>
+    set((s) => {
+      const clampedDuration = Math.max(
+        MIN_TOAST_DURATION,
+        Math.min(duration, MAX_TOAST_DURATION),
+      );
+      const newEntry: ToastEntry = {
+        id: crypto.randomUUID(),
+        message,
+        duration: clampedDuration,
+        iconSrc,
+        exiting: false,
+      };
+      return {
+        toasts: [...s.toasts.slice(-(MAX_VISIBLE_TOASTS - 1)), newEntry],
+      };
+    }),
+  dismissToast: (id) =>
+    set((s) => ({
+      toasts: s.toasts.map((t) => (t.id === id ? { ...t, exiting: true } : t)),
+    })),
+  removeToast: (id) =>
+    set((s) => ({
+      toasts: s.toasts.filter((t) => t.id !== id),
     })),
 }));
 
