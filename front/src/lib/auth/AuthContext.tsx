@@ -20,7 +20,7 @@ import {
   refreshToken as apiRefreshToken,
   register as apiRegister,
 } from "@/lib/api/auth";
-import { clearAccessToken, setAccessToken } from "@/lib/api/client";
+import { clearAccessToken, setAccessToken, setGuestId } from "@/lib/api/client";
 import {
   clearAuthStatusCookie,
   hasAuthStatusCookie,
@@ -119,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = await apiRefreshToken();
       setAccessToken(token);
       setAccessTokenState(token);
+      setGuestId(null);
       const userData = await apiMe();
       setUser(userData);
       setIsAuthenticated(true);
@@ -143,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = await apiRefreshToken();
       setAccessToken(token);
       setAccessTokenState(token);
+      setGuestId(null);
       const userData = await apiMe();
       setUser(userData);
       setIsAuthenticated(true);
