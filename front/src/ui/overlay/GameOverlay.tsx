@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { EventBus } from "@/shared/events/event-bus";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 export default function GameOverlay() {
@@ -38,6 +39,7 @@ function OverlayContent() {
   const collectItem = useGameUIStore((s) => s.collectItem);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
   const setGameStarted = useGameUIStore((s) => s.setGameStarted);
+  const addToast = useGameUIStore((s) => s.addToast);
 
   useEffect(() => {
     const unsubStarted = EventBus.on("game:started", () => {
@@ -74,6 +76,10 @@ function OverlayContent() {
       collectItem(data.itemId);
     });
 
+    const unsubToast = EventBus.on("ui:toast-show", (data) => {
+      addToast(data.message, data.duration, data.iconSrc);
+    });
+
     return () => {
       unsubStarted();
       unsubSidebar();
@@ -81,6 +87,7 @@ function OverlayContent() {
       unsubQuestProgress();
       unsubCollectSync();
       unsubCollectItem();
+      unsubToast();
     };
   }, [
     setSidebarOpen,
@@ -89,6 +96,7 @@ function OverlayContent() {
     setCollectibles,
     collectItem,
     setGameStarted,
+    addToast,
   ]);
 
   useEffect(() => {
@@ -111,5 +119,10 @@ function OverlayContent() {
 
   if (!gameStarted) return null;
 
-  return <Sidebar />;
+  return (
+    <>
+      <Sidebar />
+      <ToastNotification />
+    </>
+  );
 }

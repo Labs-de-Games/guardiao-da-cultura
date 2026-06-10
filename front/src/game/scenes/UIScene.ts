@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { submitScore } from "../../lib/scoresApi";
+import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -13,7 +14,6 @@ import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
-import { ToastNotification } from "../objects/ui/ToastNotification";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type {
@@ -33,10 +33,7 @@ export class UIScene extends Scene {
   private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
-  private toast!: ToastNotification;
   private badgeGalleryPanel!: BadgeGalleryPanel;
-
-  private pendingMissionCompleteToastCount: number = 0;
 
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
     new Set();
@@ -49,7 +46,6 @@ export class UIScene extends Scene {
     this.questManager = data.questManager;
     this.placeholderSystem = data.placeholderSystem;
 
-    this.pendingMissionCompleteToastCount = 0;
     this.activeInteractionPrompts.clear();
     this.phaseCompletePanel = null;
   }
@@ -63,7 +59,6 @@ export class UIScene extends Scene {
     this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
-    this.toast = new ToastNotification(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
 
     this.setupEventListeners();
@@ -77,10 +72,6 @@ export class UIScene extends Scene {
 
   private setupEventListeners() {
     const gameScene = this.scene.get(SceneNames.GAME);
-
-    gameScene.events.on(GameEvents.DIALOGUE_ENDED, () =>
-      this.onDialogueEnded(),
-    );
 
     gameScene.events.on(
       GameEvents.SHOW_DIALOGUE_REQUEST,
@@ -138,13 +129,11 @@ export class UIScene extends Scene {
     gameScene.events.on(
       GameEvents.SHOW_BADGE_TOAST,
       (badge: { name: string; icon_key: string }) => {
-        if (this.toast) {
-          this.toast.showToast(
-            `Conquista Desbloqueada:\n${badge.name}`,
-            4000,
-            badge.icon_key,
-          );
-        }
+        EventBus.emit("ui:toast-show", {
+          message: `Conquista Desbloqueada:\n${badge.name}`,
+          duration: 4000,
+          iconSrc: `data/badges/${badge.icon_key}.png`,
+        });
       },
     );
 
@@ -167,7 +156,6 @@ export class UIScene extends Scene {
       this.scale.off("resize");
 
       if (gameScene?.events) {
-        gameScene.events.off(GameEvents.DIALOGUE_ENDED);
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
@@ -198,7 +186,6 @@ export class UIScene extends Scene {
     this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
-    this.toast.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);
   }
 
@@ -238,17 +225,6 @@ export class UIScene extends Scene {
       return false;
 
     return true;
-  }
-
-  private onDialogueEnded() {
-    if (this.pendingMissionCompleteToastCount > 0) {
-      this.pendingMissionCompleteToastCount = 0;
-      this.time.delayedCall(120, () => {
-        this.toast.showToast(
-          "Missão concluída!\nAperte TAB para ver as relíquias",
-        );
-      });
-    }
   }
 
   private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
