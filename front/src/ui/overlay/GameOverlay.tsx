@@ -15,6 +15,7 @@ import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
+import QuizPanel from "@/ui/quiz/Quiz";
 
 export default function GameOverlay() {
   const [mounted, setMounted] = useState(false);
@@ -165,6 +166,7 @@ function OverlayContent() {
       <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
       <LabelPanel />
       <BadgeGalleryPanel />
+      <QuizPanel />
     </>
   );
 }
