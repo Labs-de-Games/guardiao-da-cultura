@@ -81,12 +81,16 @@ export class UIScene extends Scene {
       GameEvents.SHOW_QUIZ_REQUEST,
       (
         questions: QuizQuestion[],
-        scoreManager: ScoreManager,
+        _scoreManager: ScoreManager,
         onComplete: (score: number) => void,
       ) => {
-        if (this.quizPanel) {
-          this.quizPanel.startQuiz(questions, scoreManager, onComplete);
-        }
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        const quizState = useGameUIStore.getState().quiz;
+        if (quizState.isVisible) return;
+        useGameUIStore.getState().startQuiz(questions, (score: number) => {
+          onComplete(score);
+          gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+        });
       },
     );
 
