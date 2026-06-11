@@ -177,6 +177,7 @@ export default function QuizPanel() {
         justifyContent: "center",
         zIndex: 1000,
         bgcolor: "rgba(0,0,0,0.6)",
+        pointerEvents: "auto",
       }}
     >
       <Card
