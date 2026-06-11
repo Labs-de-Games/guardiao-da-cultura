@@ -34,6 +34,12 @@ jest.mock("@/lib/auth/useAuth", () => ({
   }),
 }));
 
+jest.mock("@/lib/posthog/FeatureFlagContext", () => ({
+  useFeatureFlag: () => true,
+  usePostHogDistinctId: () => "test-distinct-id",
+  FeatureFlagProvider: ({ children }) => children,
+}));
+
 describe("HomePage", () => {
   it("renders the game container", () => {
     render(<HomePage />);
