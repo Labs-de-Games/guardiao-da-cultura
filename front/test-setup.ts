@@ -1,3 +1,5 @@
+import "@testing-library/jest-dom";
+
 jest.mock("phaser", () => ({
   Game: class {
     destroy() {}
