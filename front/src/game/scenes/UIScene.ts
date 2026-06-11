@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { submitScore } from "../../lib/scoresApi";
 import { EventBus } from "../../shared/events/event-bus";
+import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -10,7 +11,6 @@ import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
-import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
@@ -28,7 +28,6 @@ export class UIScene extends Scene {
   private placeholderSystem!: PlaceholderSystem;
 
   private root!: Phaser.GameObjects.Container;
-  private controlsOverlay!: ControlsOverlay;
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
@@ -54,7 +53,6 @@ export class UIScene extends Scene {
     this.root = this.add.container(-20, 0);
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
-    this.controlsOverlay = new ControlsOverlay(this);
     this.dialoguePanel = new DialoguePanel(this);
     this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
@@ -66,8 +64,6 @@ export class UIScene extends Scene {
     registerScene(this);
 
     this.layout();
-
-    this.controlsOverlay.show();
   }
 
   private setupEventListeners() {
@@ -181,7 +177,6 @@ export class UIScene extends Scene {
     const { width: w, height: h } = this.scale;
     this.cameras.main.setSize(w, h);
 
-    this.controlsOverlay.layout(w, h);
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
@@ -190,13 +185,14 @@ export class UIScene extends Scene {
   }
 
   private toggleControls() {
-    if (this.controlsOverlay.isVisible) {
-      this.controlsOverlay.hide();
-      return;
-    }
+    const currentOpen = useGameUIStore.getState().controlsOpen;
+    const newOpen = !currentOpen;
 
-    if (this.canShowOverlay()) {
-      this.controlsOverlay.show();
+    if (newOpen && !this.canShowOverlay()) return;
+
+    EventBus.emit("ui:controls-overlay", { open: newOpen });
+
+    if (newOpen) {
       posthog.capture("settings_opened", {
         from_screen: "game",
       });
