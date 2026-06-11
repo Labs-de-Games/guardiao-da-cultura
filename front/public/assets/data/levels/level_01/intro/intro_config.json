@@ -1,0 +1,8 @@
+{
+  "panels": [
+    { "image": "comic_L1P1.png", "duration": 3000 },
+    { "image": "comic_L1P2.png", "duration": 3000 }
+  ],
+  "revealIconMask": "reveal_icon_mask_L1.png",
+  "skipEnabled": true
+}

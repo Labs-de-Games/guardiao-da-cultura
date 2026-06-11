@@ -1,6 +1,7 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
 import { Game as MainGame } from "./scenes/Game";
-import { MapIntroScene } from "./scenes/MapIntroScene";
+import { LevelCinematic } from "./scenes/LevelCinematic";
+import { MapScene } from "./scenes/MapScene";
 import { UIScene } from "./scenes/UIScene";
 
 // Find out more information about the Game Config at:
@@ -23,7 +24,7 @@ const config: Types.Core.GameConfig = {
     mode: Scale.RESIZE,
     autoCenter: Scale.CENTER_BOTH,
   },
-  scene: [MapIntroScene, MainGame, UIScene],
+  scene: [MapScene, LevelCinematic, MainGame, UIScene],
 };
 
 const StartGame = (parent: string, userId: string, isGuest = false) => {

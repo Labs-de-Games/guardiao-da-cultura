@@ -1,5 +1,6 @@
 export const SceneNames = {
-  INTRO: "MapIntro",
+  MAIN: "MapScene",
+  LEVEL_CINEMATIC: "LevelCinematic",
   GAME: "Game",
   UI: "UIScene",
 } as const;

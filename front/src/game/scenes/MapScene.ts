@@ -69,7 +69,7 @@ const MARKERS: MapMarker[] = [
   },
 ];
 
-export class MapIntroScene extends Scene {
+export class MapScene extends Scene {
   private mapImage!: Phaser.GameObjects.Image;
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private markerViews: Map<string, MarkerView> = new Map();
@@ -85,7 +85,7 @@ export class MapIntroScene extends Scene {
   };
 
   constructor() {
-    super(SceneNames.INTRO);
+    super(SceneNames.MAIN);
   }
 
   preload() {
@@ -127,7 +127,7 @@ export class MapIntroScene extends Scene {
 
   private beginGame() {
     if (this.activeMarkerIndex === 0) {
-      this.scene.start(SceneNames.GAME, { levelId: "level_01" });
+      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
     }
   }
 
