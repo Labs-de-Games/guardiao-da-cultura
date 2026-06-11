@@ -31,6 +31,10 @@ export interface GameResumeData {
   reason: string;
 }
 
+export interface ControlsOverlayData {
+  open: boolean;
+}
+
 export interface SidebarToggleData {
   open: boolean;
 }
@@ -63,6 +67,7 @@ export interface GameEventMap {
   };
   "inventory:item-collected": ItemCollectedData;
   "inventory:collectibles-sync": CollectiblesSyncData;
+  "ui:controls-overlay": ControlsOverlayData;
   "inventory:opened": undefined;
   "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
