@@ -18,7 +18,7 @@
       "id": "q2",
       "category": "MVP Pintura",
       "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião?",
-      "options": ["Umbanda", "Protestantismo", "Islamismo", "Budismo"],
+      "options": ["umbanda", "protestantismo", "islamismo", "budismo"],
       "correctOptionIndex": 0,
       "explanation": "XXXXX",
       "hint": [
