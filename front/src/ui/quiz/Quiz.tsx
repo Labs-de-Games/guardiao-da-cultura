@@ -100,7 +100,24 @@ function AnswerButton({
         `,
       }}
     >
-      {label}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          transform: "translateX(-30px)",
+        }}
+      >
+        {feedback === "correct" && (
+          <CheckIcon sx={{ color: "#81C784", fontSize: 48, mr: 1 }} />
+        )}
+        {feedback === "wrong" && (
+          <CloseIcon sx={{ color: "#FF6659", fontSize: 48, mr: 1 }} />
+        )}
+        {!feedback && (
+          <CheckIcon sx={{ visibility: "hidden", fontSize: 48, mr: 1 }} />
+        )}
+        {label}
+      </Box>
     </Button>
   );
 }
