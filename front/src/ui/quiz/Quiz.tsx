@@ -55,7 +55,7 @@ function AnswerButton({ label, selected = false, onClick }: AnswerButtonProps) {
       disableElevation
       onClick={onClick}
       sx={{
-        height: 72,
+        height: 82,
         borderRadius: 0,
         bgcolor: selected ? "#B88932" : "#D6AF58",
         color: selected ? "#111111" : "#FFFFFF",
@@ -187,12 +187,14 @@ export default function QuizPanel() {
         sx={{
           width: 939,
           // maxHeight: 643,
-          height: 743,
+          height: 715,
           mx: "auto",
           p: 4,
           borderRadius: 1.8,
           bgcolor: "#222624",
           outline: "none",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* HEADER */}
@@ -242,7 +244,7 @@ export default function QuizPanel() {
           </Box>
         </Box>
 
-        <Box sx={{ px: 4 }}>
+        <Box sx={{ px: 4, flex: 1 }}>
           {/* QUESTION */}
           {/* QuizPanel - questionTitle */}
           <Stack spacing={3} sx={{ mb: 4, alignItems: "start" }}>
@@ -296,31 +298,32 @@ export default function QuizPanel() {
               </Grid>
             ))}
           </Grid>
+        </Box>
 
-          {/* FOOTER */}
-          {/* QuizPanel - footerHintText */}
-          <Box
+        {/* FOOTER */}
+        {/* QuizPanel - footerHintText */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            px: 4,
+          }}
+        >
+          <PlayArrowRoundedIcon
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
+              color: "#F2EEE4",
+              fontSize: 48,
+            }}
+          />
+          <Typography
+            sx={{
+              color: "#F2EEE4",
+              fontSize: "1.25rem",
             }}
           >
-            <PlayArrowRoundedIcon
-              sx={{
-                color: "#F2EEE4",
-                fontSize: 48,
-              }}
-            />
-            <Typography
-              sx={{
-                color: "#F2EEE4",
-                fontSize: "1.25rem",
-              }}
-            >
-              Utilize as teclas WASD ou as setas do teclado para selecionar.
-            </Typography>
-          </Box>
+            Utilize as teclas WASD ou as setas do teclado para selecionar.
+          </Typography>
         </Box>
       </Card>
     </Box>
