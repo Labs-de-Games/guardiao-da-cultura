@@ -351,7 +351,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
           onComplete(finalScore);
         }
       }
-    }, 500);
+    }, 1000);
   },
 
   moveSelection: (dRow: number, dCol: number) => {

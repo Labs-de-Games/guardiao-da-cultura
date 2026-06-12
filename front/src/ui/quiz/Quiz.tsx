@@ -45,6 +45,7 @@ function ProgressStep({ state }: ProgressStepProps) {
 interface AnswerButtonProps {
   label: string;
   selected?: boolean;
+  feedback?: "correct" | "wrong";
   onClick: () => void;
   onMouseEnter: () => void;
 }
@@ -52,9 +53,21 @@ interface AnswerButtonProps {
 function AnswerButton({
   label,
   selected = false,
+  feedback,
   onClick,
   onMouseEnter,
 }: AnswerButtonProps) {
+  const bgColor =
+    feedback === "correct"
+      ? "#4CAF50"
+      : feedback === "wrong"
+        ? "#D97858"
+        : selected
+          ? "#B88932"
+          : "#D6AF58";
+
+  const textColor = feedback ? "#FFFFFF" : selected ? "#111111" : "#FFFFFF";
+
   return (
     <Button
       fullWidth
@@ -64,8 +77,8 @@ function AnswerButton({
       sx={{
         height: 82,
         borderRadius: 0,
-        bgcolor: selected ? "#B88932" : "#D6AF58",
-        color: selected ? "#111111" : "#FFFFFF",
+        bgcolor: bgColor,
+        color: textColor,
         fontSize: "1.2rem",
         fontWeight: 700,
         textTransform: "none",
@@ -170,6 +183,10 @@ export default function QuizPanel() {
   });
 
   const options = currentQuestion.options.slice(0, 4);
+
+  const currentAnswer = quiz.isProcessingAnswer
+    ? (quiz.answers[quiz.currentQuestionIndex] ?? undefined)
+    : undefined;
 
   return (
     <Box
@@ -283,6 +300,9 @@ export default function QuizPanel() {
                 <AnswerButton
                   label={option}
                   selected={selectedOptionIndex === index}
+                  feedback={
+                    selectedOptionIndex === index ? currentAnswer : undefined
+                  }
                   onClick={() => {
                     if (!quiz.isProcessingAnswer) {
                       const store = useGameUIStore.getState();
