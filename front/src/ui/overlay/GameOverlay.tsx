@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react";
 
 import { EventBus } from "@/shared/events/event-bus";
+import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
+import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
+import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
+import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 export default function GameOverlay() {
@@ -35,53 +39,19 @@ function OverlayContent() {
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
+  const dialogueOpen = useDialogueStore((s) => s.dialogueOpen);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
-  const setStars = useGameUIStore((s) => s.setStars);
-  const addOrUpdateMission = useGameUIStore((s) => s.addOrUpdateMission);
-  const setCollectibles = useGameUIStore((s) => s.setCollectibles);
-  const collectItem = useGameUIStore((s) => s.collectItem);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
   const setControlsOpen = useGameUIStore((s) => s.setControlsOpen);
-  const setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const addToast = useGameUIStore((s) => s.addToast);
+  const dequeueDialogue = useDialogueStore((s) => s.dequeueDialogue);
+
+  useEventBridge();
+  const { emitComplete, emitDismiss } = useDialogueBridge();
 
   useEffect(() => {
-    const unsubStarted = EventBus.on("game:started", () => {
-      setGameStarted(true);
-    });
-
-    const unsubSidebar = EventBus.on("sidebar:toggled", (data) => {
-      setSidebarOpen(data.open);
-    });
-
     const unsubControls = EventBus.on("ui:controls-overlay", (data) => {
       setControlsOpen(data.open);
-    });
-
-    const unsubStars = EventBus.on("player:stars-changed", (data) => {
-      setStars(data.current, data.total);
-    });
-
-    const unsubQuestProgress = EventBus.on("quest:progress-changed", (data) => {
-      addOrUpdateMission(
-        data.missionId,
-        data.missionTitle,
-        data.collectedInfos,
-        data.totalSteps,
-        data.steps,
-        data.stepProgress,
-      );
-    });
-
-    const unsubCollectSync = EventBus.on(
-      "inventory:collectibles-sync",
-      (data) => {
-        setCollectibles(data.entries);
-      },
-    );
-
-    const unsubCollectItem = EventBus.on("inventory:item-collected", (data) => {
-      collectItem(data.itemId);
     });
 
     const unsubToast = EventBus.on("ui:toast-show", (data) => {
@@ -89,30 +59,15 @@ function OverlayContent() {
     });
 
     return () => {
-      unsubStarted();
-      unsubSidebar();
       unsubControls();
-      unsubStars();
-      unsubQuestProgress();
-      unsubCollectSync();
-      unsubCollectItem();
       unsubToast();
     };
-  }, [
-    setSidebarOpen,
-    setControlsOpen,
-    setStars,
-    addOrUpdateMission,
-    setCollectibles,
-    collectItem,
-    setGameStarted,
-    addToast,
-  ]);
+  }, [setControlsOpen, addToast]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
-        if (gameStarted && !controlsOpen) {
+        if (gameStarted && !controlsOpen && !dialogueOpen) {
           e.preventDefault();
           toggleSidebar();
         }
@@ -125,7 +80,14 @@ function OverlayContent() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sidebarOpen, controlsOpen, gameStarted, toggleSidebar, setSidebarOpen]);
+  }, [sidebarOpen, controlsOpen, dialogueOpen, gameStarted, toggleSidebar, setSidebarOpen]);
+
+  useEffect(() => {
+    if (!dialogueOpen && useDialogueStore.getState().dialogueQueue.length > 0) {
+      EventBus.emit("dialogue:dequeue-started", undefined);
+      dequeueDialogue();
+    }
+  }, [dialogueOpen, dequeueDialogue]);
 
   if (!gameStarted) return null;
 
@@ -136,6 +98,7 @@ function OverlayContent() {
       <ErrorBoundary fallback={null}>
         <ControlsPanel />
       </ErrorBoundary>
+      <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
       <Sidebar />
     </>
   );
