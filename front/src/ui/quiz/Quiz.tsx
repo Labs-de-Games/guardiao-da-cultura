@@ -185,8 +185,9 @@ export default function QuizPanel() {
         tabIndex={-1}
         elevation={0}
         sx={{
-          maxWidth: 839,
-          maxHeight: 643,
+          width: 939,
+          // maxHeight: 643,
+          height: 743,
           mx: "auto",
           p: 4,
           borderRadius: 1.8,
@@ -241,7 +242,7 @@ export default function QuizPanel() {
           </Box>
         </Box>
 
-        <Box sx={{ px: 3 }}>
+        <Box sx={{ px: 4 }}>
           {/* QUESTION */}
           {/* QuizPanel - questionTitle */}
           <Stack spacing={3} sx={{ mb: 4, alignItems: "start" }}>
