@@ -363,12 +363,12 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     )
       return;
 
-    const row = quiz.selectedOptionIndex % 2;
-    const col = quiz.selectedOptionIndex >= 2 ? 1 : 0;
+    const col = quiz.selectedOptionIndex % 2;
+    const row = quiz.selectedOptionIndex >= 2 ? 1 : 0;
 
-    const nextRow = (row + dRow + 2) % 2;
     const nextCol = (col + dCol + 2) % 2;
-    const nextIndex = nextCol * 2 + nextRow;
+    const nextRow = (row + dRow + 2) % 2;
+    const nextIndex = nextRow * 2 + nextCol;
 
     if (nextIndex >= 4) return;
 
