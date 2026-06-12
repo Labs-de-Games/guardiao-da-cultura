@@ -211,7 +211,7 @@ export default function QuizPanel() {
           }}
         >
           {/* QuizPanel - scoreText + questionCounterText */}
-          <Stack spacing={0.5} sx={{ alignItems: "start" }}>
+          <Stack spacing={0.5} sx={{ alignItems: "start", width: 220 }}>
             <Typography
               sx={{
                 color: "#D9AD56",
