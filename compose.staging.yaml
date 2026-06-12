@@ -179,7 +179,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-template}
     restart: unless-stopped
     volumes:
-      - postgres_data_staging:/var/lib/postgresql/data
+      - postgres_data_staging_fix_20260610:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -197,7 +197,7 @@ services:
           memory: 256M
 
 volumes:
-  postgres_data_staging:
+  postgres_data_staging_fix_20260610:
 
 networks:
   frontend:
