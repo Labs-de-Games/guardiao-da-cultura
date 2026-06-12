@@ -6,6 +6,9 @@ import { ConfigService } from "../../core/config/config.service";
 export class PostHogService implements OnModuleDestroy {
   private client: PostHog | null = null;
   private readonly logger = new Logger(PostHogService.name);
+  private guestPlayCache: { value: boolean; expiresAt: number } | null = null;
+  private readonly CACHE_TTL_MS = 30000;
+  private readonly SERVER_DISTINCT_ID = "nestjs-server";
 
   constructor(private config: ConfigService) {
     if (config.posthogApiKey) {
@@ -21,6 +24,42 @@ export class PostHogService implements OnModuleDestroy {
 
   getClient(): PostHog | null {
     return this.client;
+  }
+
+  async isGuestPlayEnabled(): Promise<boolean> {
+    // In development, always enable guest play for testing
+    if (this.config.nodeEnv === "development") {
+      return true;
+    }
+
+    if (this.guestPlayCache && Date.now() < this.guestPlayCache.expiresAt) {
+      return this.guestPlayCache.value;
+    }
+
+    if (!this.client) {
+      this.guestPlayCache = {
+        value: false,
+        expiresAt: Date.now() + this.CACHE_TTL_MS,
+      };
+      return false;
+    }
+
+    try {
+      const flags = await this.client.getAllFlags(this.SERVER_DISTINCT_ID);
+      const value = flags.guest_play_enabled === true;
+      this.guestPlayCache = {
+        value,
+        expiresAt: Date.now() + this.CACHE_TTL_MS,
+      };
+      return value;
+    } catch (error) {
+      this.logger.error("Failed to evaluate guest_play_enabled flag:", error);
+      this.guestPlayCache = {
+        value: false,
+        expiresAt: Date.now() + this.CACHE_TTL_MS,
+      };
+      return false;
+    }
   }
 
   capture(options: {

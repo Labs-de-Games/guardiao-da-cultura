@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useEffect, useState } from "react";
 import { env } from "../lib/env";
+import { FeatureFlagProvider } from "../lib/posthog/FeatureFlagContext";
 import { PostHogStub } from "../lib/posthogStub";
 
 interface PostHogBootstrapData {
@@ -11,9 +12,24 @@ interface PostHogBootstrapData {
   featureFlags: Record<string, string | boolean | number>;
 }
 
+function setGuestPlayCookie(enabled: boolean): void {
+  if (typeof document === "undefined") return;
+  const value = enabled ? "1" : "0";
+  document.cookie = `gp_guest_play=${value}; path=/; SameSite=Lax`;
+}
+
+function setDistinctIdCookie(distinctId: string): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `gp_distinct_id=${distinctId}; path=/; SameSite=Lax`;
+}
+
 async function fetchBootstrap(): Promise<PostHogBootstrapData | null> {
   try {
-    const response = await fetch("/api/v1/posthog/bootstrap", {
+    const apiUrl = env.NEXT_PUBLIC_API_URL || "";
+    const url = apiUrl
+      ? `${apiUrl}/api/v1/posthog/bootstrap`
+      : "/api/v1/posthog/bootstrap";
+    const response = await fetch(url, {
       credentials: "include",
     });
     if (!response.ok) {
@@ -29,6 +45,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const [client, setClient] = useState<typeof posthog | PostHogStub | null>(
     null,
   );
+  const [bootstrapData, setBootstrapData] =
+    useState<PostHogBootstrapData | null>(null);
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -45,6 +63,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       const bootstrap = await fetchBootstrap();
+      setBootstrapData(bootstrap);
+
+      if (bootstrap) {
+        const guestPlayEnabled =
+          bootstrap.featureFlags.guest_play_enabled === true;
+        setGuestPlayCookie(guestPlayEnabled);
+        setDistinctIdCookie(bootstrap.distinctId);
+      }
 
       const recordSessionsPercent =
         typeof bootstrap?.featureFlags?.session_replay_sampling_rate ===
@@ -68,10 +94,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           if (environment === "development") {
             ph.debug();
           }
-          const userId = bootstrap?.distinctId;
-          if (userId) {
-            ph.identify(userId);
-          }
           ph.register({ environment });
         },
       } as Parameters<typeof posthog.init>[1]);
@@ -84,7 +106,18 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PHProvider client={client as unknown as typeof posthog}>
-      {children}
+      <FeatureFlagProvider
+        initialData={
+          bootstrapData
+            ? {
+                distinctId: bootstrapData.distinctId,
+                featureFlags: bootstrapData.featureFlags,
+              }
+            : undefined
+        }
+      >
+        {children}
+      </FeatureFlagProvider>
     </PHProvider>
   );
 }

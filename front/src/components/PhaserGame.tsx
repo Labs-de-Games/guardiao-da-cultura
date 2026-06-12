@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-
+import { setGuestId } from "../lib/api/client";
 import { useAuth } from "../lib/auth/useAuth";
+import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
 import LoadingGameScreen from "./LoadingGameScreen";
 
 const GameOverlay = dynamic(
@@ -14,6 +15,7 @@ const GameOverlay = dynamic(
 
 export default function PhaserGame() {
   const { user } = useAuth();
+  const posthogDistinctId = usePostHogDistinctId();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
@@ -43,12 +45,19 @@ export default function PhaserGame() {
     const initGame = async () => {
       try {
         const activeUserId = user?.id;
-        if (!activeUserId) {
-          throw new Error("User ID is required to start the game.");
+        const playerId = activeUserId ?? posthogDistinctId ?? "";
+        const isGuest = !activeUserId;
+
+        if (!playerId) {
+          throw new Error("Player ID is required to start the game.");
+        }
+
+        if (isGuest && posthogDistinctId) {
+          setGuestId(posthogDistinctId);
         }
 
         const { default: StartGame } = await import("../game/main");
-        gameRef.current = StartGame("game-container", activeUserId);
+        gameRef.current = StartGame("game-container", playerId, isGuest);
         setIsLoading(false);
         setOverlayMounted(true);
       } catch (err) {
@@ -72,7 +81,7 @@ export default function PhaserGame() {
         isInitializingRef.current = false;
       }
     };
-  }, [user?.id]);
+  }, [user?.id, posthogDistinctId]);
 
   return (
     <div
