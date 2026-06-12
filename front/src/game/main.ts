@@ -26,11 +26,12 @@ const config: Types.Core.GameConfig = {
   scene: [MapIntroScene, MainGame, UIScene],
 };
 
-const StartGame = (parent: string, userId: string) => {
+const StartGame = (parent: string, userId: string, isGuest = false) => {
   const game = new Game({ ...config, parent });
   if (userId) {
     game.registry.set("userId", userId);
   }
+  game.registry.set("isGuest", isGuest);
   return game;
 };
 
