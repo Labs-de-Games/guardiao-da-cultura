@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+export { useDialogueStore } from "./dialogue-store";
+
 const MAX_VISIBLE_TOASTS = 5;
 const MIN_TOAST_DURATION = 1000;
 const MAX_TOAST_DURATION = 10000;
