@@ -70,6 +70,7 @@ export class Game extends Scene {
   private levelManager!: LevelManager;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private isQuizActive: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
@@ -112,6 +113,7 @@ export class Game extends Scene {
     this.hasInteractedWithRat = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
+    this.isQuizActive = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
@@ -558,7 +560,11 @@ export class Game extends Scene {
 
     const unsubControls = useGameUIStore.subscribe((state, prevState) => {
       if (state.controlsOpen !== prevState.controlsOpen) {
-        if (!state.controlsOpen) this.checkDialogState();
+        if (state.controlsOpen && this.player) {
+          this.player.isInDialogue = true;
+        } else {
+          this.checkDialogState();
+        }
       }
     });
 
@@ -850,6 +856,7 @@ export class Game extends Scene {
         GameEvents.SHOW_CONFIRMATION_REQUEST,
         "Pronto para iniciar o teste?",
         () => {
+          this.isQuizActive = true;
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
@@ -967,6 +974,8 @@ export class Game extends Scene {
               if (isSuccess) {
                 this.levelManager.updateProgress();
               }
+
+              this.isQuizActive = false;
             },
           );
         },
@@ -984,7 +993,12 @@ export class Game extends Scene {
   }
 
   private checkDialogState() {
-    if (!this.isChunkSelectorOpen && !this.isDialogueOpen) {
+    if (
+      !this.isDialogueOpen &&
+      !useGameUIStore.getState().controlsOpen &&
+      !this.isChunkSelectorOpen &&
+      !this.isQuizActive
+    ) {
       if (this.player) this.player.isInDialogue = false;
     }
   }
