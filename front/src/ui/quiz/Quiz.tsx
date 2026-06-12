@@ -189,7 +189,7 @@ export default function QuizPanel() {
           maxHeight: 643,
           mx: "auto",
           p: 4,
-          borderRadius: 4,
+          borderRadius: 1.8,
           bgcolor: "#222624",
           outline: "none",
         }}
@@ -198,7 +198,7 @@ export default function QuizPanel() {
         <Box
           sx={{
             bgcolor: "#1B1B1B",
-            borderRadius: 3,
+            borderRadius: 1.8,
             px: 4,
             py: 3,
             mb: 6,
@@ -206,6 +206,7 @@ export default function QuizPanel() {
             justifyContent: "space-between",
             alignItems: "center",
             gap: 4,
+            boxShadow: "inset 0 4px 4px rgba(0, 0, 0, 0.2)",
           }}
         >
           {/* QuizPanel - scoreText + questionCounterText */}
