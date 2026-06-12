@@ -46,14 +46,21 @@ interface AnswerButtonProps {
   label: string;
   selected?: boolean;
   onClick: () => void;
+  onMouseEnter: () => void;
 }
 
-function AnswerButton({ label, selected = false, onClick }: AnswerButtonProps) {
+function AnswerButton({
+  label,
+  selected = false,
+  onClick,
+  onMouseEnter,
+}: AnswerButtonProps) {
   return (
     <Button
       fullWidth
       disableElevation
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
       sx={{
         height: 82,
         borderRadius: 0,
@@ -78,9 +85,6 @@ function AnswerButton({ label, selected = false, onClick }: AnswerButtonProps) {
             5% 20%
           )
         `,
-        "&:hover": {
-          bgcolor: selected ? "#B88932" : "#C89E4B",
-        },
       }}
     >
       {label}
@@ -292,6 +296,20 @@ export default function QuizPanel() {
                         (index % 2) - (store.quiz.selectedOptionIndex % 2),
                       );
                       store.selectOption();
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    if (!quiz.isProcessingAnswer) {
+                      const store = useGameUIStore.getState();
+                      store.moveSelection(
+                        (index >= 2 ? 1 : 0) -
+                          (store.quiz.selectedOptionIndex >= 2 ? 1 : 0),
+                        0,
+                      );
+                      store.moveSelection(
+                        0,
+                        (index % 2) - (store.quiz.selectedOptionIndex % 2),
+                      );
                     }
                   }}
                 />
