@@ -73,7 +73,7 @@ function PerformanceNavButton({
         : "#B88932"
       : selected
         ? "#666666"
-        : "#4A4A4A";
+        : "#999999";
 
   return (
     <Button
@@ -81,11 +81,11 @@ function PerformanceNavButton({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       sx={{
-        height: 70,
-        px: 5,
-        borderRadius: 2,
+        height: 65,
+        px: 8,
+        borderRadius: 1,
         bgcolor: bgColor,
-        color: "#FFFFFF",
+        color: "#1d1d1d",
         fontSize: "1.15rem",
         fontWeight: 700,
         textTransform: "none",
@@ -443,22 +443,22 @@ export default function QuizPanel() {
             <Stack
               sx={{
                 alignItems: "center",
-                justifyContent: "center",
+                // justifyContent: "center",
                 height: "100%",
               }}
             >
               <Box
                 sx={{
                   border: `4px solid ${performanceBorderColor}`,
-                  borderRadius: 3,
+                  borderRadius: 1.5,
                   p: 4,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 2,
-                  width: "100%",
-                  minHeight: 380,
+                  gap: 1,
+                  width: "85%",
+                  height: 370,
                 }}
               >
                 <Box
@@ -466,10 +466,10 @@ export default function QuizPanel() {
                   src={`/assets/ui/stars/${starTexture}.png`}
                   alt="Star"
                   sx={{
-                    width: 200,
-                    height: 200,
+                    width: 180,
+                    height: 180,
                     opacity: scorePercentage < 25 ? 0.5 : 1,
-                    objectFit: "contain",
+                    mt: 3,
                   }}
                 />
                 <Typography
@@ -477,6 +477,8 @@ export default function QuizPanel() {
                     color: "#D9AD56",
                     fontSize: "2.2rem",
                     fontWeight: 700,
+                    mt: 2,
+                    mb: 4,
                   }}
                 >
                   {performanceMessage}
@@ -486,6 +488,7 @@ export default function QuizPanel() {
                     color: performanceHintColor,
                     fontSize: "1.1rem",
                     fontStyle: "italic",
+                    mt: "auto",
                   }}
                 >
                   {performanceHint}
@@ -575,6 +578,7 @@ export default function QuizPanel() {
               justifyContent: "center",
               gap: 3,
               px: 4,
+              mb: 0.5,
             }}
           >
             <PerformanceNavButton
