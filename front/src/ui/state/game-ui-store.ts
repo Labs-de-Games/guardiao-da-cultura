@@ -73,6 +73,7 @@ export interface GameUIState {
 
   quiz: {
     isVisible: boolean;
+    phase: "questioning" | "performance";
     questions: QuizQuestion[];
     currentQuestionIndex: number;
     selectedOptionIndex: number;
@@ -120,6 +121,7 @@ export interface GameUIState {
   selectOption: () => void;
   moveSelection: (dRow: number, dCol: number) => void;
   nextQuestion: () => void;
+  retryQuiz: () => void;
   closeQuiz: () => void;
   resetQuiz: () => void;
 }
@@ -143,6 +145,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
 
   quiz: {
     isVisible: false,
+    phase: "questioning",
     questions: [],
     currentQuestionIndex: 0,
     selectedOptionIndex: 0,
@@ -284,6 +287,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     set((_s) => ({
       quiz: {
         isVisible: true,
+        phase: "questioning",
         questions,
         currentQuestionIndex: 0,
         selectedOptionIndex: 0,
@@ -342,7 +346,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         set((s) => ({
           quiz: {
             ...s.quiz,
-            isVisible: false,
+            phase: "performance",
             isProcessingAnswer: false,
           },
         }));
@@ -396,11 +400,27 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     }
   },
 
+  retryQuiz: () => {
+    const { quiz } = get();
+    set((_s) => ({
+      quiz: {
+        ...quiz,
+        phase: "questioning",
+        currentQuestionIndex: 0,
+        selectedOptionIndex: 0,
+        answers: new Array(quiz.questions.length).fill(null),
+        score: 0,
+        isProcessingAnswer: false,
+      },
+    }));
+  },
+
   closeQuiz: () => {
     set((s) => ({
       quiz: {
         ...s.quiz,
         isVisible: false,
+        phase: "questioning",
       },
     }));
   },
@@ -409,6 +429,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     set((_s) => ({
       quiz: {
         isVisible: false,
+        phase: "questioning",
         questions: [],
         currentQuestionIndex: 0,
         selectedOptionIndex: 0,
