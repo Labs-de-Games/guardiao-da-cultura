@@ -85,8 +85,9 @@ function PerformanceNavButton({
         px: 8,
         borderRadius: 1,
         bgcolor: bgColor,
-        color: "#1d1d1d",
-        fontSize: "1.15rem",
+        fontFamily: "'Inter', sans-serif",
+        color: "#000000",
+        fontSize: "1.5rem",
         fontWeight: 700,
         textTransform: "none",
         transform: selected ? "scale(1.05)" : "scale(1)",
@@ -377,7 +378,6 @@ export default function QuizPanel() {
         elevation={0}
         sx={{
           width: 939,
-          // maxHeight: 643,
           height: 715,
           mx: "auto",
           p: 4,
@@ -394,7 +394,7 @@ export default function QuizPanel() {
             bgcolor: "#1B1B1B",
             borderRadius: 1.8,
             px: 4,
-            py: 3,
+            py: 1.5,
             mb: 6,
             display: "flex",
             justifyContent: "space-between",
@@ -404,11 +404,12 @@ export default function QuizPanel() {
           }}
         >
           {/* QuizPanel - scoreText + questionCounterText */}
-          <Stack spacing={0.5} sx={{ alignItems: "start", width: 220 }}>
+          <Stack spacing={-1.5} sx={{ alignItems: "start", width: 220 }}>
             <Typography
               sx={{
+                fontFamily: "'Jockey One', sans-serif",
                 color: "#D9AD56",
-                fontSize: "2rem",
+                fontSize: "2.5rem",
                 fontWeight: 700,
               }}
             >
@@ -416,9 +417,10 @@ export default function QuizPanel() {
             </Typography>
             <Typography
               sx={{
-                color: "#F2EEE4",
-                fontSize: "1.3rem",
-                fontWeight: 600,
+                fontFamily: "'Jockey One', sans-serif",
+                color: "#ffffff",
+                fontSize: "1.8rem",
+                fontWeight: 500,
               }}
             >
               {isPerformance
@@ -466,18 +468,19 @@ export default function QuizPanel() {
                   src={`/assets/ui/stars/${starTexture}.png`}
                   alt="Star"
                   sx={{
-                    width: 180,
-                    height: 180,
+                    width: 170,
+                    height: 170,
                     opacity: scorePercentage < 25 ? 0.5 : 1,
                     mt: 3,
                   }}
                 />
                 <Typography
                   sx={{
+                    fontFamily: "'Jockey One', sans-serif",
                     color: "#D9AD56",
-                    fontSize: "2.2rem",
+                    fontSize: "3rem",
                     fontWeight: 700,
-                    mt: 2,
+                    mt: 1,
                     mb: 4,
                   }}
                 >
@@ -485,8 +488,9 @@ export default function QuizPanel() {
                 </Typography>
                 <Typography
                   sx={{
+                    fontFamily: "'Inter', sans-serif",
                     color: performanceHintColor,
-                    fontSize: "1.1rem",
+                    fontSize: "1.125rem",
                     fontStyle: "italic",
                     mt: "auto",
                   }}
@@ -502,6 +506,7 @@ export default function QuizPanel() {
               <Stack spacing={3} sx={{ mb: 4, alignItems: "start" }}>
                 <Typography
                   sx={{
+                    fontFamily: "'Jockey One', sans-serif",
                     color: "#D9AD56",
                     fontSize: "2rem",
                     fontWeight: 700,
@@ -511,8 +516,9 @@ export default function QuizPanel() {
                 </Typography>
                 <Typography
                   sx={{
-                    color: "#D9AD56",
-                    fontSize: "1.3rem",
+                    fontFamily: "'Inter', sans-serif",
+                    color: "#ffffff",
+                    fontSize: "1.25rem",
                     lineHeight: 1.3,
                     textAlign: "start",
                   }}
@@ -613,8 +619,9 @@ export default function QuizPanel() {
             />
             <Typography
               sx={{
-                color: "#F2EEE4",
-                fontSize: "1.25rem",
+                fontFamily: "'Inter', sans-serif",
+                color: "#888888",
+                fontSize: "1.125rem",
               }}
             >
               Utilize as teclas WASD ou as setas do teclado para selecionar.
