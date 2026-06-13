@@ -55,6 +55,8 @@ export class UIScene extends Scene {
 
     this.setupEventListeners();
     this.setupKeyboardListeners();
+    this.setupQuizCloseListener();
+    this.setupQuizVisibilityWatcher();
     registerScene(this);
 
     this.layout();
@@ -87,10 +89,7 @@ export class UIScene extends Scene {
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
         const quizState = useGameUIStore.getState().quiz;
         if (quizState.isVisible) return;
-        useGameUIStore.getState().startQuiz(questions, (score: number) => {
-          onComplete(score);
-          gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
-        });
+        useGameUIStore.getState().startQuiz(questions, onComplete);
       },
     );
 
@@ -174,6 +173,7 @@ export class UIScene extends Scene {
       unsubDialogueDismissed();
       unsubDialogueDequeueStarted();
       this.callbackRegistry.cleanup();
+      EventBus.removeAllListeners();
 
       if (gameScene?.events) {
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
@@ -193,6 +193,25 @@ export class UIScene extends Scene {
 
     onKeyDown(this, Actions.TOGGLE_CONTROLS, () => {
       this.toggleControls();
+    });
+  }
+
+  private setupQuizCloseListener() {
+    EventBus.on("quiz:close", () => {
+      useGameUIStore.getState().closeQuiz();
+      this.scene.stop(SceneNames.GAME);
+      this.scene.start(SceneNames.INTRO);
+    });
+  }
+
+  private setupQuizVisibilityWatcher() {
+    let wasVisible = useGameUIStore.getState().quiz.isVisible;
+    useGameUIStore.subscribe((state) => {
+      const isVisible = state.quiz.isVisible;
+      if (wasVisible && !isVisible) {
+        this.onDialogueEnded();
+      }
+      wasVisible = isVisible;
     });
   }
 
