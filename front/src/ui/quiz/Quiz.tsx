@@ -262,10 +262,14 @@ export default function QuizPanel() {
       if (isPerformance) {
         switch (e.key) {
           case "ArrowLeft":
+          case "a":
+          case "A":
             e.preventDefault();
             setSelectedNavIndex(0);
             break;
           case "ArrowRight":
+          case "d":
+          case "D":
             e.preventDefault();
             setSelectedNavIndex(1);
             break;
