@@ -445,7 +445,6 @@ export default function QuizPanel() {
             <Stack
               sx={{
                 alignItems: "center",
-                // justifyContent: "center",
                 height: "100%",
               }}
             >
@@ -464,16 +463,33 @@ export default function QuizPanel() {
                 }}
               >
                 <Box
-                  component="img"
-                  src={`/assets/ui/stars/${starTexture}.png`}
-                  alt="Star"
-                  sx={{
-                    width: 170,
-                    height: 170,
-                    opacity: scorePercentage < 25 ? 0.5 : 1,
-                    mt: 3,
-                  }}
-                />
+                  sx={{ position: "relative", width: 170, height: 170, mt: 3 }}
+                >
+                  {scorePercentage < 100 && (
+                    <Box
+                      component="img"
+                      src="/assets/ui/stars/star_full.png"
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        filter: "grayscale(1) brightness(0.12)",
+                      }}
+                    />
+                  )}
+                  {scorePercentage >= 25 && (
+                    <Box
+                      component="img"
+                      src={`/assets/ui/stars/${starTexture}.png`}
+                      sx={{
+                        position: "relative",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  )}
+                </Box>
                 <Typography
                   sx={{
                     fontFamily: "'Jockey One', sans-serif",
