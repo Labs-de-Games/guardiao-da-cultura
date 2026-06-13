@@ -4,7 +4,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "../state/game-ui-store";
 
@@ -179,6 +179,8 @@ export default function QuizPanel() {
   const selectOption = useGameUIStore((s) => s.selectOption);
   const retryQuiz = useGameUIStore((s) => s.retryQuiz);
 
+  const [selectedNavIndex, setSelectedNavIndex] = useState(1);
+
   const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
   const isPerformance = quiz.phase === "performance";
 
@@ -232,11 +234,50 @@ export default function QuizPanel() {
     return "Sua pontuação não foi o suficiente. Mas não desista!";
   }, [scorePercentage]);
 
+  const activateSelectedNav = useCallback(() => {
+    if (selectedNavIndex === 0) {
+      EventBus.emit("quiz:close", undefined);
+    } else if (isRetryMode) {
+      retryQuiz();
+    } else {
+      window.open(
+        "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit",
+        "_blank",
+      );
+    }
+  }, [selectedNavIndex, isRetryMode, retryQuiz]);
+
+  useEffect(() => {
+    if (isPerformance) {
+      setSelectedNavIndex(1);
+    }
+  }, [isPerformance]);
+
   useEffect(() => {
     if (!quiz.isVisible) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!quiz.isVisible) return;
+
+      if (isPerformance) {
+        switch (e.key) {
+          case "ArrowLeft":
+            e.preventDefault();
+            setSelectedNavIndex(0);
+            break;
+          case "ArrowRight":
+            e.preventDefault();
+            setSelectedNavIndex(1);
+            break;
+          case " ":
+          case "Enter":
+            e.preventDefault();
+            activateSelectedNav();
+            break;
+        }
+        return;
+      }
+
       if (quiz.isProcessingAnswer) return;
 
       switch (e.key) {
@@ -274,7 +315,14 @@ export default function QuizPanel() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [quiz.isVisible, quiz.isProcessingAnswer, moveSelection, selectOption]);
+  }, [
+    quiz.isVisible,
+    quiz.isProcessingAnswer,
+    isPerformance,
+    moveSelection,
+    selectOption,
+    activateSelectedNav,
+  ]);
 
   useEffect(() => {
     if (quiz.isVisible && cardRef.current) {
@@ -527,24 +575,17 @@ export default function QuizPanel() {
           >
             <PerformanceNavButton
               label="Voltar ao mapa"
+              selected={selectedNavIndex === 0}
               variant="dark"
               onClick={() => EventBus.emit("quiz:close", undefined)}
-              onMouseEnter={() => {}}
+              onMouseEnter={() => setSelectedNavIndex(0)}
             />
             <PerformanceNavButton
               label={isRetryMode ? "Tentar novamente" : "Dê sua opinião"}
+              selected={selectedNavIndex === 1}
               variant="gold"
-              onClick={() => {
-                if (isRetryMode) {
-                  retryQuiz();
-                } else {
-                  window.open(
-                    "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit",
-                    "_blank",
-                  );
-                }
-              }}
-              onMouseEnter={() => {}}
+              onClick={activateSelectedNav}
+              onMouseEnter={() => setSelectedNavIndex(1)}
             />
           </Box>
         ) : (
