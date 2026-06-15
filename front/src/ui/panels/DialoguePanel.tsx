@@ -13,6 +13,19 @@ interface DialoguePanelProps {
   onDismiss: (callbackId: string) => void;
 }
 
+interface ParsedLine {
+  speaker: string | null;
+  content: string;
+}
+
+function parseLine(text: string): ParsedLine {
+  const match = text.match(/^([^:]+):\s*(.+)$/);
+  if (match) {
+    return { speaker: match[1], content: match[2] };
+  }
+  return { speaker: null, content: text };
+}
+
 export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const open = useDialogueStore((s) => s.dialogueOpen);
   const mode = useDialogueStore((s) => s.dialogueMode);
@@ -35,8 +48,11 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
 
-  const currentText =
+  const rawCurrentText =
     mode === "dialogue" ? (lines[currentLine] ?? "") : confirmMessage;
+  const parsedLine = parseLine(rawCurrentText);
+  const currentText = mode === "dialogue" ? parsedLine.content : rawCurrentText;
+  const speakerName = mode === "dialogue" ? parsedLine.speaker : null;
   const isLastLine = mode === "dialogue" && currentLine === lines.length - 1;
 
   useEffect(() => {
@@ -202,6 +218,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
           {mode === "dialogue" && (
             <DialogueContent
+              speakerName={speakerName}
               text={displayedText}
               isLastLine={isLastLine}
               onAdvance={handleAdvance}
@@ -222,16 +239,31 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
 }
 
 function DialogueContent({
+  speakerName,
   text,
   isLastLine,
   onAdvance,
 }: {
+  speakerName: string | null;
   text: string;
   isLastLine: boolean;
   onAdvance: () => void;
 }) {
   return (
     <Box sx={{ cursor: "pointer" }} onClick={onAdvance}>
+      {speakerName && (
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: GAME_UI_TOKENS.colors.accentGold,
+            fontSize: "14px",
+            fontWeight: 600,
+            mb: 0.5,
+          }}
+        >
+          {speakerName}:
+        </Typography>
+      )}
       <Typography
         variant="body2"
         sx={{
