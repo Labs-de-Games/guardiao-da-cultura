@@ -502,6 +502,10 @@ export class Game extends Scene {
       this.scene.resume(SceneNames.GAME);
       this.scene.resume(SceneNames.UI);
     });
+
+    EventBus.on("ui:label-hide", () => {
+      this.events.emit(GameEvents.DIALOGUE_ENDED);
+    });
   }
 
   private async initializeCollectibles(): Promise<void> {
@@ -705,7 +709,7 @@ export class Game extends Scene {
 
         if (work) {
           const payload = this.buildLabelInfo(work);
-          this.events.emit(GameEvents.SHOW_LABEL_REQUEST, payload);
+          EventBus.emit("ui:label-show", payload);
           return;
         }
       }
@@ -801,6 +805,7 @@ export class Game extends Scene {
       this.badgeSystem.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
+      EventBus.off("ui:label-hide");
     });
 
     this.setupCameras();
