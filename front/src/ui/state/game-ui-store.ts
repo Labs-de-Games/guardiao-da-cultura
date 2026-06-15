@@ -13,6 +13,13 @@ export interface ToastEntry {
   iconSrc?: string;
   exiting: boolean;
 }
+import type { LabelInfoData } from "@/shared/events/game-events";
+
+export const UI_Z_INDEX = {
+  OVERLAY: 10,
+  SIDEBAR: 20,
+  PANEL: 30,
+} as const;
 
 export interface QuestStep {
   text: string;
@@ -44,6 +51,7 @@ export interface GameUIState {
   missions: MissionProgress[];
   collectibles: CollectibleEntry[];
   toasts: ToastEntry[];
+  labelData: LabelInfoData | null;
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -69,6 +77,7 @@ export interface GameUIState {
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
+  setLabelData: (data: LabelInfoData | null) => void;
 }
 
 export const useGameUIStore = create<GameUIState>()((set) => ({
@@ -80,6 +89,7 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   missions: [],
   collectibles: [],
   toasts: [],
+  labelData: null,
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -166,6 +176,7 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
     set((s) => ({
       toasts: s.toasts.filter((t) => t.id !== id),
     })),
+  setLabelData: (data) => set({ labelData: data }),
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
