@@ -471,6 +471,7 @@ export default function QuizPanel() {
                         inset: 0,
                         width: "100%",
                         height: "100%",
+                        objectFit: "contain",
                         filter: "grayscale(1) brightness(0.12)",
                       }}
                     />
@@ -483,6 +484,7 @@ export default function QuizPanel() {
                         position: "relative",
                         width: "100%",
                         height: "100%",
+                        objectFit: "contain",
                       }}
                     />
                   )}
