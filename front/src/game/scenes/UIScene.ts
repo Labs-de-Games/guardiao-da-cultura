@@ -8,7 +8,6 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
-import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { CallbackRegistry } from "../systems/CallbackRegistry";
@@ -27,7 +26,6 @@ export class UIScene extends Scene {
   private root!: Phaser.GameObjects.Container;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
-  private badgeGalleryPanel!: BadgeGalleryPanel;
   private callbackRegistry!: CallbackRegistry;
   private dialogueEndHandled: boolean = false;
   private dialogueActive: boolean = false;
@@ -52,7 +50,6 @@ export class UIScene extends Scene {
 
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
-    this.badgeGalleryPanel = new BadgeGalleryPanel(this);
     this.callbackRegistry = new CallbackRegistry();
     this.callbackRegistry.setupListeners();
 
@@ -187,7 +184,7 @@ export class UIScene extends Scene {
 
   private setupKeyboardListeners() {
     onKeyDown(this, Actions.TOGGLE_BADGE_GALLERY, () => {
-      this.toggleBadgeGallery();
+      EventBus.emit("ui:badge-gallery-toggle", { open: true });
     });
 
     onKeyDown(this, Actions.TOGGLE_CONTROLS, () => {
@@ -201,7 +198,6 @@ export class UIScene extends Scene {
 
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
-    this.badgeGalleryPanel.layout(w, h);
   }
 
   private toggleControls() {
@@ -216,17 +212,6 @@ export class UIScene extends Scene {
       posthog.capture("settings_opened", {
         from_screen: "game",
       });
-    }
-  }
-
-  private toggleBadgeGallery() {
-    if (this.badgeGalleryPanel.isVisible) {
-      this.badgeGalleryPanel.hide();
-      return;
-    }
-
-    if (this.canShowOverlay()) {
-      this.badgeGalleryPanel.show();
     }
   }
 
