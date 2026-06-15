@@ -1,4 +1,9 @@
 import { create } from "zustand";
+import type { BadgeConfig } from "../../lib/badgesApi";
+import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
+import { getGuestBadgeIds } from "../../lib/badgesStorage";
+
+let loadGeneration = 0;
 
 export { useDialogueStore } from "./dialogue-store";
 
@@ -53,6 +58,12 @@ export interface GameUIState {
   collectibles: CollectibleEntry[];
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
+  badgeGalleryOpen: boolean;
+  badges: BadgeConfig[];
+  unlockedBadgeIds: string[];
+  badgeError: string | null;
+  isAuthenticated: boolean;
+  guestId: string | null;
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -79,6 +90,11 @@ export interface GameUIState {
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
   setLabelData: (data: LabelInfoData | null) => void;
+  setAuthState: (isAuthenticated: boolean, guestId: string | null) => void;
+  setBadgeGalleryOpen: (open: boolean) => void;
+  setBadgeData: (badges: BadgeConfig[], unlockedIds: string[]) => void;
+  loadBadgeData: () => Promise<void>;
+  addUnlockedBadge: (badgeId: string) => void;
 }
 
 export const useGameUIStore = create<GameUIState>()((set) => ({
@@ -91,6 +107,12 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   collectibles: [],
   toasts: [],
   labelData: null,
+  badgeGalleryOpen: false,
+  badges: [],
+  unlockedBadgeIds: [],
+  badgeError: null,
+  isAuthenticated: false,
+  guestId: null,
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -178,6 +200,47 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
       toasts: s.toasts.filter((t) => t.id !== id),
     })),
   setLabelData: (data) => set({ labelData: data }),
+  setBadgeGalleryOpen: (open) => {
+    set({ badgeGalleryOpen: open, badgeError: null });
+    if (open) {
+      const state = useGameUIStore.getState();
+      void state.loadBadgeData();
+    }
+  },
+  setAuthState: (isAuthenticated, guestId) => set({ isAuthenticated, guestId }),
+  setBadgeData: (badges, unlockedIds) =>
+    set({ badges, unlockedBadgeIds: unlockedIds }),
+  loadBadgeData: async () => {
+    const gen = ++loadGeneration;
+    try {
+      const allBadges = await fetchBadges();
+      const { isAuthenticated, guestId } = useGameUIStore.getState();
+
+      let unlockedIds: string[] = [];
+      if (isAuthenticated) {
+        const userBadges = await fetchUserBadges();
+        unlockedIds = userBadges.map((ub) => ub.badgeId);
+      } else if (guestId) {
+        unlockedIds = getGuestBadgeIds(guestId);
+      }
+
+      if (gen !== loadGeneration) return;
+      set({
+        badges: allBadges,
+        unlockedBadgeIds: unlockedIds,
+        badgeError: null,
+      });
+    } catch (e) {
+      if (gen !== loadGeneration) return;
+      console.error("[BadgeGallery] Error loading badges", e);
+      set({ badgeError: "Nao foi possivel carregar as conquistas." });
+    }
+  },
+  addUnlockedBadge: (badgeId) =>
+    set((s) => {
+      if (s.unlockedBadgeIds.includes(badgeId)) return s;
+      return { unlockedBadgeIds: [...s.unlockedBadgeIds, badgeId] };
+    }),
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
