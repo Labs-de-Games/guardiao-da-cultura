@@ -503,6 +503,10 @@ export class Game extends Scene {
       this.scene.resume(SceneNames.UI);
     });
 
+    EventBus.on("ui:label-show", () => {
+      this.events.emit(GameEvents.DIALOGUE_STARTED);
+    });
+
     EventBus.on("ui:label-hide", () => {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
     });
