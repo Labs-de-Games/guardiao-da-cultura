@@ -35,6 +35,13 @@ import type {
   User,
   VerifyEmailConfirmData,
 } from "@/lib/auth/types";
+import { unlockBadgeOnServer } from "@/lib/badgesApi";
+import {
+  clearGuestBadges,
+  getAllGuestBadgeIds,
+  getStoredGuestId,
+  setGuestBadgeIds,
+} from "@/lib/badgesStorage";
 
 export interface AuthContextValue extends AuthState {
   login: (data: LoginCredentials) => Promise<void>;
@@ -61,6 +68,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAccessToken();
     clearAuthStatusCookie();
     posthog.reset();
+  }, []);
+
+  const mergeGuestBadges = useCallback(async () => {
+    const guestBadgeIds = getAllGuestBadgeIds();
+    if (guestBadgeIds.length === 0) return;
+
+    const results = await Promise.allSettled(
+      guestBadgeIds.map((id) => unlockBadgeOnServer(id)),
+    );
+
+    const failedIds = results
+      .map((r, i) => (r.status === "rejected" ? guestBadgeIds[i] : null))
+      .filter((id): id is string => id !== null);
+
+    if (failedIds.length === 0) {
+      clearGuestBadges();
+      console.log(
+        `[Auth] Merged ${guestBadgeIds.length} guest badges to server`,
+      );
+    } else {
+      const guestId = getStoredGuestId();
+      if (guestId) {
+        setGuestBadgeIds(guestId, failedIds);
+      }
+      console.warn(
+        `[Auth] Failed to merge ${failedIds.length}/${guestBadgeIds.length} guest badges. Retaining for next login.`,
+      );
+    }
   }, []);
 
   const restoreSession = useCallback(async () => {
@@ -113,25 +148,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiLogin(data);
   }, []);
 
-  const confirmLogin = useCallback(
-    async (data: LoginConfirmData) => {
-      await apiConfirmLogin(data);
+  const finalizeAuth = useCallback(
+    async (userData: User) => {
       const token = await apiRefreshToken();
       setAccessToken(token);
       setAccessTokenState(token);
       setGuestId(null);
-      const userData = await apiMe();
       setUser(userData);
       setIsAuthenticated(true);
       setAuthStatusCookie();
       posthog.identify(userData.id);
+      void mergeGuestBadges();
       const destination =
         userData.role === "institution" || userData.role === "admin"
           ? "/institution"
           : "/";
       router.push(destination);
     },
-    [router],
+    [router, mergeGuestBadges],
+  );
+
+  const confirmLogin = useCallback(
+    async (data: LoginConfirmData) => {
+      await apiConfirmLogin(data);
+      const userData = await apiMe();
+      await finalizeAuth(userData);
+    },
+    [finalizeAuth],
   );
 
   const register = useCallback(async (data: RegisterCredentials) => {
@@ -141,22 +184,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const confirmVerifyEmail = useCallback(
     async (data: VerifyEmailConfirmData) => {
       await apiConfirmVerifyEmail(data);
-      const token = await apiRefreshToken();
-      setAccessToken(token);
-      setAccessTokenState(token);
-      setGuestId(null);
       const userData = await apiMe();
-      setUser(userData);
-      setIsAuthenticated(true);
-      setAuthStatusCookie();
-      posthog.identify(userData.id);
-      const destination =
-        userData.role === "institution" || userData.role === "admin"
-          ? "/institution"
-          : "/";
-      router.push(destination);
+      await finalizeAuth(userData);
     },
-    [router],
+    [finalizeAuth],
   );
 
   const logout = useCallback(async () => {
