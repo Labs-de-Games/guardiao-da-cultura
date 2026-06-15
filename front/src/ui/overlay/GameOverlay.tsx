@@ -9,9 +9,10 @@ import { Sidebar } from "@/ui/hud/Sidebar";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
+import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
-import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
 
 export default function GameOverlay() {
   const [mounted, setMounted] = useState(false);
@@ -27,7 +28,7 @@ export default function GameOverlay() {
         position: "absolute",
         inset: 0,
         pointerEvents: "none",
-        zIndex: 10,
+        zIndex: UI_Z_INDEX.OVERLAY,
       }}
     >
       {mounted && <OverlayContent />}
@@ -45,6 +46,8 @@ function OverlayContent() {
   const setControlsOpen = useGameUIStore((s) => s.setControlsOpen);
   const addToast = useGameUIStore((s) => s.addToast);
   const dequeueDialogue = useDialogueStore((s) => s.dequeueDialogue);
+  const setLabelData = useGameUIStore((s) => s.setLabelData);
+  const labelData = useGameUIStore((s) => s.labelData);
 
   useEventBridge();
   const { emitComplete, emitDismiss } = useDialogueBridge();
@@ -58,11 +61,16 @@ function OverlayContent() {
       addToast(data.message, data.duration, data.iconSrc);
     });
 
+    const unsubLabelShow = EventBus.on("ui:label-show", (data) => {
+      setLabelData(data);
+    });
+
     return () => {
       unsubControls();
       unsubToast();
+      unsubLabelShow();
     };
-  }, [setControlsOpen, addToast]);
+  }, [setControlsOpen, addToast, setLabelData]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,7 +81,10 @@ function OverlayContent() {
         }
       }
       if (e.key === "Escape") {
-        if (sidebarOpen) {
+        if (labelData) {
+          setLabelData(null);
+          EventBus.emit("ui:label-hide", undefined);
+        } else if (sidebarOpen) {
           setSidebarOpen(false);
         }
       }
@@ -81,12 +92,14 @@ function OverlayContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
+    labelData,
     sidebarOpen,
     controlsOpen,
     dialogueOpen,
     gameStarted,
     toggleSidebar,
     setSidebarOpen,
+    setLabelData,
   ]);
 
   useEffect(() => {
@@ -106,7 +119,7 @@ function OverlayContent() {
         <ControlsPanel />
       </ErrorBoundary>
       <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
-      <Sidebar />
+      <LabelPanel />
     </>
   );
 }
