@@ -11,13 +11,14 @@ import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { LabelPanel } from "../objects/ui/LabelPanel";
+import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
+import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { CallbackRegistry } from "../systems/CallbackRegistry";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type {
   InteractionUIData,
-  LabelInfoData,
   QuizQuestion,
   UIInitData,
 } from "../types/GameDataTypes";
@@ -28,6 +29,8 @@ export class UIScene extends Scene {
 
   private root!: Phaser.GameObjects.Container;
   private labelPanel!: LabelPanel;
+  private controlsOverlay!: ControlsOverlay;
+  private dialoguePanel!: DialoguePanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private badgeGalleryPanel!: BadgeGalleryPanel;
@@ -54,6 +57,8 @@ export class UIScene extends Scene {
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
     this.labelPanel = new LabelPanel(this);
+    this.controlsOverlay = new ControlsOverlay(this);
+    this.dialoguePanel = new DialoguePanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
@@ -106,15 +111,6 @@ export class UIScene extends Scene {
         this.dialogueActive = true;
         EventBus.emit("dialogue:confirm", { message, callbackId });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
-      },
-    );
-
-    gameScene.events.on(
-      GameEvents.SHOW_LABEL_REQUEST,
-      (data: LabelInfoData) => {
-        if (this.labelPanel) {
-          this.labelPanel.showLabel(data);
-        }
       },
     );
 
@@ -191,7 +187,6 @@ export class UIScene extends Scene {
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
-        gameScene.events.off(GameEvents.SHOW_LABEL_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
         gameScene.events.off(GameEvents.SHOW_BADGE_TOAST);
@@ -214,6 +209,8 @@ export class UIScene extends Scene {
     this.cameras.main.setSize(w, h);
 
     this.labelPanel.layout(w, h);
+    this.controlsOverlay.layout(w, h);
+    this.dialoguePanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);
@@ -248,7 +245,7 @@ export class UIScene extends Scene {
   private canShowOverlay(): boolean {
     if (this.activeInteractionPrompts.size > 0) return false;
     if (this.dialogueActive) return false;
-    if (this.labelPanel?.isVisible || this.quizPanel?.isVisible) return false;
+    if (this.dialoguePanel?.isVisible || this.labelPanel?.isVisible || this.quizPanel?.isVisible) return false;
 
     return true;
   }
