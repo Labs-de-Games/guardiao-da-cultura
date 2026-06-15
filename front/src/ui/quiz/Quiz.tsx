@@ -196,7 +196,7 @@ export default function QuizPanel() {
         ? "star_three_quarter"
         : scorePercentage >= 50
           ? "star_two_quarter"
-          : "star_full";
+          : "star_one_quarter";
 
   const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
 
@@ -558,6 +558,19 @@ export default function QuizPanel() {
                       store.selectOption();
                     }
                   };
+
+                  const hoverHighlight = () => {
+                    if (!quiz.isProcessingAnswer) {
+                      const store = useGameUIStore.getState();
+                      const currentRow =
+                        store.quiz.selectedOptionIndex >= 2 ? 1 : 0;
+                      const targetRow = index >= 2 ? 1 : 0;
+                      const currentCol = store.quiz.selectedOptionIndex % 2;
+                      const targetCol = index % 2;
+                      store.moveSelection(targetRow - currentRow, 0);
+                      store.moveSelection(0, targetCol - currentCol);
+                    }
+                  };
                   return (
                     <Grid key={index} size={{ xs: 12, md: 6 }}>
                       <AnswerButton
@@ -569,7 +582,7 @@ export default function QuizPanel() {
                             : undefined
                         }
                         onClick={selectAnswer}
-                        onMouseEnter={selectAnswer}
+                        onMouseEnter={hoverHighlight}
                       />
                     </Grid>
                   );
