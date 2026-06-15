@@ -202,6 +202,12 @@ export class UIScene extends Scene {
       this.scene.stop(SceneNames.GAME);
       this.scene.start(SceneNames.INTRO);
     });
+
+    EventBus.on("quiz:retry", () => {
+      const gameScene = this.scene.get(SceneNames.GAME);
+      useGameUIStore.getState().closeQuiz();
+      gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+    });
   }
 
   private setupQuizVisibilityWatcher() {
