@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { getGuestId } from "@/lib/api/client";
+import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
@@ -13,6 +14,7 @@ import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
+import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 
 export default function GameOverlay() {
   const [mounted, setMounted] = useState(false);
@@ -41,6 +43,7 @@ function OverlayContent() {
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const dialogueOpen = useDialogueStore((s) => s.dialogueOpen);
+  const badgeGalleryOpen = useGameUIStore((s) => s.badgeGalleryOpen);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
   const setControlsOpen = useGameUIStore((s) => s.setControlsOpen);
@@ -51,6 +54,17 @@ function OverlayContent() {
 
   useEventBridge();
   const { emitComplete, emitDismiss } = useDialogueBridge();
+  const setGameStarted = useGameUIStore((s) => s.setGameStarted);
+  const setBadgeGalleryOpen = useGameUIStore((s) => s.setBadgeGalleryOpen);
+  const addUnlockedBadge = useGameUIStore((s) => s.addUnlockedBadge);
+  const setAuthState = useGameUIStore((s) => s.setAuthState);
+
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const guestId = !isAuthenticated ? getGuestId() : null;
+    setAuthState(isAuthenticated, guestId);
+  }, [isAuthenticated, setAuthState]);
 
   useEffect(() => {
     const unsubControls = EventBus.on("ui:controls-overlay", (data) => {
@@ -65,15 +79,28 @@ function OverlayContent() {
       setLabelData(data);
     });
 
+    const unsubBadgeGallery = EventBus.on("ui:badge-gallery-toggle", (data) => {
+      setBadgeGalleryOpen(data.open);
+    });
+
+    const unsubBadgeUnlocked = EventBus.on("badge:unlocked", (data) => {
+      addUnlockedBadge(data.badgeId);
+    });
+
     return () => {
       unsubControls();
       unsubToast();
       unsubLabelShow();
+      unsubBadgeGallery();
+      unsubBadgeUnlocked();
     };
-  }, [setControlsOpen, addToast, setLabelData]);
+  }, [setControlsOpen, addToast, setLabelData, setBadgeGalleryOpen, addUnlockedBadge]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+
       if (e.key === "Tab") {
         if (gameStarted && !controlsOpen && !dialogueOpen) {
           e.preventDefault();
@@ -84,8 +111,17 @@ function OverlayContent() {
         if (labelData) {
           setLabelData(null);
           EventBus.emit("ui:label-hide", undefined);
+        } else if (badgeGalleryOpen) {
+          e.preventDefault();
+          setBadgeGalleryOpen(false);
+          return;
         } else if (sidebarOpen) {
           setSidebarOpen(false);
+        }
+      }
+      if (e.key === "b" || e.key === "B") {
+        if (gameStarted) {
+          setBadgeGalleryOpen(!badgeGalleryOpen);
         }
       }
     };
@@ -97,9 +133,11 @@ function OverlayContent() {
     controlsOpen,
     dialogueOpen,
     gameStarted,
+    badgeGalleryOpen,
     toggleSidebar,
     setSidebarOpen,
     setLabelData,
+    setBadgeGalleryOpen,
   ]);
 
   useEffect(() => {
@@ -120,6 +158,7 @@ function OverlayContent() {
       </ErrorBoundary>
       <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
       <LabelPanel />
+      <BadgeGalleryPanel />
     </>
   );
 }
