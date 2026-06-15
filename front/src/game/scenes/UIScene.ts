@@ -1,6 +1,5 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
-import { submitScore } from "../../lib/scoresApi";
 import { EventBus } from "../../shared/events/event-bus";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
@@ -48,7 +47,6 @@ export class UIScene extends Scene {
     this.placeholderSystem = data.placeholderSystem;
 
     this.activeInteractionPrompts.clear();
-    this.phaseCompletePanel = null;
   }
 
   create() {
@@ -253,143 +251,5 @@ export class UIScene extends Scene {
     if (this.labelPanel?.isVisible || this.quizPanel?.isVisible) return false;
 
     return true;
-  }
-
-  private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
-
-  public async showPhaseCompleteUI(collectedStars: number, maxStars: number) {
-    if (this.phaseCompletePanel) this.phaseCompletePanel.destroy();
-
-    const { width: cx, height: cy } = this.scale;
-    this.phaseCompletePanel = this.add
-      .container(cx / 2, cy / 2)
-      .setDepth(10000);
-
-    const bg = this.add
-      .rectangle(0, 0, 800, 500, LayoutConfig.COLORS.BLACK_HEX, 0.95)
-      .setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
-    const title = this.add
-      .text(0, -210, "Fase concluída!", {
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-        color: LayoutConfig.COLORS.GOLD,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-    const message = this.add
-      .text(0, 150, "Parabéns, você completou sua exploração no museu!", {
-        fontSize: LayoutConfig.FONTS.SIZES.BODY,
-        color: LayoutConfig.COLORS.WHITE,
-        wordWrap: { width: 700 },
-        align: LayoutConfig.ALIGN.TEXT_CENTER,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-
-    const stars = this.add.container(0, -30);
-    const starSpacing = 140;
-    const startX = -((maxStars - 1) * starSpacing) / 2;
-
-    for (let i = 0; i < maxStars; i++) {
-      const star = this.add
-        .image(startX + i * starSpacing, 0, "star")
-        .setScale(8);
-      if (i >= collectedStars)
-        star.setTint(LayoutConfig.COLORS.DARK_STAR_TINT).setAlpha(0.5);
-      stars.add(star);
-    }
-
-    this.phaseCompletePanel.add([bg, title, stars, message]);
-
-    this.input.keyboard?.once("keydown-ESC", () => this.hidePhaseCompleteUI());
-
-    await this.submitScoreToBackend();
-  }
-
-  private async submitScoreToBackend() {
-    try {
-      const scoreManager = this.registry.get("scoreManager") as {
-        getPayload: () => unknown;
-      };
-      const userId = this.registry.get("userId");
-      const levelId = this.registry.get("currentLevelId");
-
-      if (!scoreManager || !userId || !levelId) {
-        console.warn("[UIScene] Missing data for score submission:", {
-          hasScoreManager: !!scoreManager,
-          hasUserId: !!userId,
-          hasLevelId: !!levelId,
-        });
-        return;
-      }
-
-      const payload = scoreManager.getPayload() as {
-        levelId: string;
-        totalQuarters: number;
-        totalStars: number;
-        rating: string;
-        floors: Array<{
-          floorIndex: number;
-          errors: number;
-          quartersEarned: number;
-        }>;
-        quiz: {
-          totalQuestions: number;
-          correctAnswers: number;
-          accuracyPercent: number;
-          quartersEarned: number;
-        };
-        collectibles: {
-          total: number;
-          interactionsCount: number;
-          quartersEarned: number;
-          interactions: Array<{
-            collectible_id: string;
-            collectible_type: string;
-          }>;
-        };
-      };
-
-      await submitScore({
-        userId,
-        levelId: payload.levelId,
-        totalQuarters: payload.totalQuarters,
-        totalStars: payload.totalStars,
-        rating: payload.rating,
-        floors: payload.floors.map((f) => ({
-          floorIndex: f.floorIndex,
-          errors: f.errors,
-          quartersEarned: f.quartersEarned,
-        })),
-        quiz: {
-          totalQuestions: payload.quiz.totalQuestions,
-          correctAnswers: payload.quiz.correctAnswers,
-          accuracyPercent: payload.quiz.accuracyPercent,
-          quartersEarned: payload.quiz.quartersEarned,
-        },
-        collectibles: {
-          total: payload.collectibles.total,
-          interactionsCount: payload.collectibles.interactionsCount,
-          quartersEarned: payload.collectibles.quartersEarned,
-        },
-        collectedCollectibles: payload.collectibles.interactions.map(
-          (interaction) => ({
-            collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as
-              | "COLLECT"
-              | "CLUE_VILLAIN"
-              | "CLUE_NEXT",
-            levelId: payload.levelId,
-          }),
-        ),
-      });
-    } catch (err) {
-      console.error("[UIScene] Failed to submit score:", err);
-    }
-  }
-
-  public hidePhaseCompleteUI() {
-    if (this.phaseCompletePanel) {
-      this.phaseCompletePanel.destroy();
-      this.phaseCompletePanel = null;
-    }
   }
 }
