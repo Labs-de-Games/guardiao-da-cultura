@@ -18,6 +18,11 @@ export function useEventBridge() {
       setGameStarted(true);
     });
 
+    const unsubEnded = EventBus.on("game:ended", () => {
+      setGameStarted(false);
+      setSidebarOpen(false);
+    });
+
     const unsubSidebar = EventBus.on("sidebar:toggled", (data) => {
       setSidebarOpen(data.open);
     });
@@ -50,6 +55,7 @@ export function useEventBridge() {
 
     return () => {
       unsubStarted();
+      unsubEnded();
       unsubSidebar();
       unsubStars();
       unsubQuestProgress();
