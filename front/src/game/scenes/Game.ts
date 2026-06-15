@@ -476,6 +476,7 @@ export class Game extends Scene {
 
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
+    EventBus.emit("ui:controls-overlay", { open: true });
 
     Object.entries(MissionRegistry).forEach(([missionId]) => {
       EventBus.emit("quest:progress-changed", {
