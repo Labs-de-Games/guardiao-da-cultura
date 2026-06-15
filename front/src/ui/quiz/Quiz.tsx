@@ -186,53 +186,55 @@ export default function QuizPanel() {
   const isPerformance = quiz.phase === "performance";
 
   const scorePercentage = useMemo(() => {
-    if (isPerformance) {
-      const total = quiz.questions.length;
-      return total > 0 ? Math.round((quiz.score / total) * 100) : 0;
-    }
-    return quiz.questions.length > 0
-      ? Math.round((quiz.score / quiz.questions.length) * 100)
-      : 0;
-  }, [isPerformance, quiz.score, quiz.questions.length]);
+    const total = quiz.questions.length;
+    return total > 0 ? Math.round((quiz.score / total) * 100) : 0;
+  }, [quiz.score, quiz.questions.length]);
 
   const isRetryMode = scorePercentage < 70;
 
-  const starTexture = useMemo(() => {
-    if (scorePercentage === 100) return "star_full";
-    if (scorePercentage >= 75) return "star_three_quarter";
-    if (scorePercentage >= 50) return "star_two_quarter";
-    if (scorePercentage >= 25) return "star_one_quarter";
-    return "star_full";
-  }, [scorePercentage]);
+  const starTexture =
+    scorePercentage === 100
+      ? "star_full"
+      : scorePercentage >= 75
+        ? "star_three_quarter"
+        : scorePercentage >= 50
+          ? "star_two_quarter"
+          : "star_full";
 
-  const performanceBorderColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
-  const performanceHintColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
+  const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
 
-  const performanceTitle = useMemo(() => {
-    if (scorePercentage < 25) return "Essa não";
-    if (scorePercentage < 70) return "Por pouco!";
-    return "Parabéns!";
-  }, [scorePercentage]);
-
-  const performanceSubTitle = useMemo(() => {
-    if (scorePercentage < 25) return "Pontuação baixa";
-    if (scorePercentage < 70) return "Pontuação baixa";
-    if (scorePercentage < 100) return "Boa pontuação";
-    return "Pontuação perfeita!";
-  }, [scorePercentage]);
-
-  const performanceMessage = useMemo(() => {
-    if (scorePercentage < 25) return "Tente novamente";
-    if (scorePercentage < 70) return "Com mais atenção, você consegue!";
-    if (scorePercentage < 100) return "Muito bom!";
-    return "Gabaritou!";
-  }, [scorePercentage]);
-
-  const performanceHint = useMemo(() => {
-    if (scorePercentage >= 70 && scorePercentage <= 100) {
-      return "Você já pode encarar o próximo nível!";
-    }
-    return "Sua pontuação não foi o suficiente. Mas não desista!";
+  const {
+    performanceTitle,
+    performanceSubTitle,
+    performanceMessage,
+    performanceHint,
+  } = useMemo(() => {
+    return {
+      performanceTitle:
+        scorePercentage < 25
+          ? "Essa não"
+          : scorePercentage < 70
+            ? "Por pouco!"
+            : "Parabéns!",
+      performanceSubTitle:
+        scorePercentage < 25 || scorePercentage < 70
+          ? "Pontuação baixa"
+          : scorePercentage < 100
+            ? "Boa pontuação"
+            : "Pontuação perfeita!",
+      performanceMessage:
+        scorePercentage < 25
+          ? "Tente novamente"
+          : scorePercentage < 70
+            ? "Com mais atenção, você consegue!"
+            : scorePercentage < 100
+              ? "Muito bom!"
+              : "Gabaritou!",
+      performanceHint:
+        scorePercentage >= 70
+          ? "Você já pode encarar o próximo nível!"
+          : "Sua pontuação não foi o suficiente. Mas não desista!",
+    };
   }, [scorePercentage]);
 
   const activateSelectedNav = useCallback(() => {
@@ -403,7 +405,6 @@ export default function QuizPanel() {
             boxShadow: "inset 0 4px 4px rgba(0, 0, 0, 0.2)",
           }}
         >
-          {/* QuizPanel - scoreText + questionCounterText */}
           <Stack spacing={-1.5} sx={{ alignItems: "start", width: 220 }}>
             <Typography
               sx={{
@@ -429,7 +430,6 @@ export default function QuizPanel() {
             </Typography>
           </Stack>
 
-          {/* QuizPanel - progressTracker */}
           <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               {progressStates.map((state, index) => (
@@ -450,7 +450,7 @@ export default function QuizPanel() {
             >
               <Box
                 sx={{
-                  border: `4px solid ${performanceBorderColor}`,
+                  border: `4px solid ${performanceColor}`,
                   borderRadius: 1.5,
                   p: 4,
                   display: "flex",
@@ -505,7 +505,7 @@ export default function QuizPanel() {
                 <Typography
                   sx={{
                     fontFamily: "'Inter', sans-serif",
-                    color: performanceHintColor,
+                    color: performanceColor,
                     fontSize: "1.125rem",
                     fontStyle: "italic",
                     mt: "auto",
@@ -545,48 +545,36 @@ export default function QuizPanel() {
 
               {/* ANSWERS */}
               <Grid container rowSpacing={4} columnSpacing={2} sx={{ mb: 4.5 }}>
-                {options.map((option, index) => (
-                  <Grid key={index} size={{ xs: 12, md: 6 }}>
-                    <AnswerButton
-                      label={option}
-                      selected={selectedOptionIndex === index}
-                      feedback={
-                        selectedOptionIndex === index
-                          ? currentAnswer
-                          : undefined
-                      }
-                      onClick={() => {
-                        if (!quiz.isProcessingAnswer) {
-                          const store = useGameUIStore.getState();
-                          store.moveSelection(
-                            (index >= 2 ? 1 : 0) -
-                              (store.quiz.selectedOptionIndex >= 2 ? 1 : 0),
-                            0,
-                          );
-                          store.moveSelection(
-                            0,
-                            (index % 2) - (store.quiz.selectedOptionIndex % 2),
-                          );
-                          store.selectOption();
+                {options.map((option, index) => {
+                  const selectAnswer = () => {
+                    if (!quiz.isProcessingAnswer) {
+                      const store = useGameUIStore.getState();
+                      const currentRow =
+                        store.quiz.selectedOptionIndex >= 2 ? 1 : 0;
+                      const targetRow = index >= 2 ? 1 : 0;
+                      const currentCol = store.quiz.selectedOptionIndex % 2;
+                      const targetCol = index % 2;
+                      store.moveSelection(targetRow - currentRow, 0);
+                      store.moveSelection(0, targetCol - currentCol);
+                      store.selectOption();
+                    }
+                  };
+                  return (
+                    <Grid key={index} size={{ xs: 12, md: 6 }}>
+                      <AnswerButton
+                        label={option}
+                        selected={selectedOptionIndex === index}
+                        feedback={
+                          selectedOptionIndex === index
+                            ? currentAnswer
+                            : undefined
                         }
-                      }}
-                      onMouseEnter={() => {
-                        if (!quiz.isProcessingAnswer) {
-                          const store = useGameUIStore.getState();
-                          store.moveSelection(
-                            (index >= 2 ? 1 : 0) -
-                              (store.quiz.selectedOptionIndex >= 2 ? 1 : 0),
-                            0,
-                          );
-                          store.moveSelection(
-                            0,
-                            (index % 2) - (store.quiz.selectedOptionIndex % 2),
-                          );
-                        }
-                      }}
-                    />
-                  </Grid>
-                ))}
+                        onClick={selectAnswer}
+                        onMouseEnter={selectAnswer}
+                      />
+                    </Grid>
+                  );
+                })}
               </Grid>
             </>
           )}
