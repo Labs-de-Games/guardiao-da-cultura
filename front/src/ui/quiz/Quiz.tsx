@@ -176,7 +176,6 @@ export default function QuizPanel() {
   const selectedOptionIndex = quiz.selectedOptionIndex;
   const moveSelection = useGameUIStore((s) => s.moveSelection);
   const selectOption = useGameUIStore((s) => s.selectOption);
-  const retryQuiz = useGameUIStore((s) => s.retryQuiz);
 
   const [selectedNavIndex, setSelectedNavIndex] = useState(1);
 
@@ -239,14 +238,14 @@ export default function QuizPanel() {
     if (selectedNavIndex === 0) {
       EventBus.emit("quiz:close", undefined);
     } else if (isRetryMode) {
-      retryQuiz();
+      EventBus.emit("quiz:retry", undefined);
     } else {
       window.open(
         "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit",
         "_blank",
       );
     }
-  }, [selectedNavIndex, isRetryMode, retryQuiz]);
+  }, [selectedNavIndex, isRetryMode]);
 
   useEffect(() => {
     if (isPerformance) {

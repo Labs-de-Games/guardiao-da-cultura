@@ -138,4 +138,5 @@ export interface GameEventMap {
   "quiz:question-change": { currentIndex: number; total: number };
   "quiz:complete": QuizCompleteData;
   "quiz:close": undefined;
+  "quiz:retry": undefined;
 }
