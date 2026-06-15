@@ -1,8 +1,10 @@
 "use client";
 
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EventBus } from "@/shared/events/event-bus";
@@ -52,7 +54,7 @@ interface AnswerButtonProps {
 }
 
 interface PerformanceNavButtonProps {
-  label: string;
+  label: React.ReactNode;
   selected?: boolean;
   variant?: "dark" | "gold";
   onClick: () => void;
@@ -67,13 +69,7 @@ function PerformanceNavButton({
   onMouseEnter,
 }: PerformanceNavButtonProps) {
   const bgColor =
-    variant === "gold"
-      ? selected
-        ? "#D9AD56"
-        : "#B88932"
-      : selected
-        ? "#666666"
-        : "#999999";
+    variant === "gold" ? (selected ? "#D9AD56" : "#B88932") : "#ffffff";
 
   return (
     <Button
@@ -90,6 +86,8 @@ function PerformanceNavButton({
         fontSize: "1.5rem",
         fontWeight: 700,
         textTransform: "none",
+        display: "flex",
+        alignItems: "center",
         transform: selected ? "scale(1.05)" : "scale(1)",
         transition: "transform 0.15s ease",
       }}
@@ -592,14 +590,24 @@ export default function QuizPanel() {
             }}
           >
             <PerformanceNavButton
-              label="Voltar ao mapa"
+              label={
+                <>
+                  <ArrowBackIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                  Voltar ao mapa
+                </>
+              }
               selected={selectedNavIndex === 0}
               variant="dark"
               onClick={() => EventBus.emit("quiz:close", undefined)}
               onMouseEnter={() => setSelectedNavIndex(0)}
             />
             <PerformanceNavButton
-              label={isRetryMode ? "Tentar novamente" : "Dê sua opinião"}
+              label={
+                <>
+                  <StarIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                  {isRetryMode ? "Tentar novamente" : "Dê sua opinião"}
+                </>
+              }
               selected={selectedNavIndex === 1}
               variant="gold"
               onClick={activateSelectedNav}
