@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import {
   selectHintCollectibles,
   selectInventoryCollectibles,
+  UI_Z_INDEX,
   useGameUIStore,
 } from "@/ui/state/game-ui-store";
 
@@ -71,7 +72,7 @@ export function Sidebar() {
         top: 0,
         right: 0,
         height: "100%",
-        zIndex: 20,
+        zIndex: UI_Z_INDEX.SIDEBAR,
         display: "flex",
         flexDirection: "row",
         alignItems: "flex-start",
