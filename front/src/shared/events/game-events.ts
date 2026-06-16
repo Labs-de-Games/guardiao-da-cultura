@@ -69,6 +69,10 @@ export interface DialogueCompletedData {
   confirmed?: boolean;
 }
 
+import type { LabelInfoData } from "@/game/types/GameDataTypes";
+
+export type { LabelInfoData };
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -94,4 +98,6 @@ export interface GameEventMap {
   "dialogue:completed": DialogueCompletedData;
   "dialogue:dequeue-started": undefined;
   "dialogue:queue-cleared": undefined;
+  "ui:label-show": LabelInfoData;
+  "ui:label-hide": undefined;
 }
