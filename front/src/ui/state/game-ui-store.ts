@@ -13,6 +13,7 @@ export interface ToastEntry {
   iconSrc?: string;
   exiting: boolean;
 }
+
 import type { LabelInfoData } from "@/shared/events/game-events";
 
 export const UI_Z_INDEX = {

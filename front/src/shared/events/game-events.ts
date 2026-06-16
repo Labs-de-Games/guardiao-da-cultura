@@ -68,6 +68,7 @@ export interface DialogueCompletedData {
   callbackId: string;
   confirmed?: boolean;
 }
+
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
 
 export type { LabelInfoData };
