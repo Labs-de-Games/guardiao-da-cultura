@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { EventBus } from "@/shared/events/event-bus";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 export default function GameOverlay() {
@@ -38,6 +39,8 @@ function OverlayContent() {
   const collectItem = useGameUIStore((s) => s.collectItem);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
   const setGameStarted = useGameUIStore((s) => s.setGameStarted);
+  const openChunkSelector = useGameUIStore((s) => s.openChunkSelector);
+  const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
 
   useEffect(() => {
     const unsubStarted = EventBus.on("game:started", () => {
@@ -74,6 +77,17 @@ function OverlayContent() {
       collectItem(data.itemId);
     });
 
+    const unsubChunkSelectorOpen = EventBus.on(
+      "ui:chunk-selector-open",
+      (data) => {
+        openChunkSelector({
+          instanceId: data.instanceId,
+          availableItems: data.availableItems,
+          filledSlots: data.filledSlots,
+        });
+      },
+    );
+
     return () => {
       unsubStarted();
       unsubSidebar();
@@ -81,6 +95,7 @@ function OverlayContent() {
       unsubQuestProgress();
       unsubCollectSync();
       unsubCollectItem();
+      unsubChunkSelectorOpen();
     };
   }, [
     setSidebarOpen,
@@ -89,10 +104,15 @@ function OverlayContent() {
     setCollectibles,
     collectItem,
     setGameStarted,
+    openChunkSelector,
   ]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (chunkSelectorOpen) {
+        return;
+      }
+
       if (e.key === "Tab") {
         if (gameStarted) {
           e.preventDefault();
@@ -107,9 +127,20 @@ function OverlayContent() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sidebarOpen, gameStarted, toggleSidebar, setSidebarOpen]);
+  }, [
+    sidebarOpen,
+    gameStarted,
+    toggleSidebar,
+    setSidebarOpen,
+    chunkSelectorOpen,
+  ]);
 
   if (!gameStarted) return null;
 
-  return <Sidebar />;
+  return (
+    <>
+      <Sidebar />
+      <ChunkSelectorPanel />
+    </>
+  );
 }

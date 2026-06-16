@@ -21,6 +21,12 @@ export interface CollectibleEntry {
   category: string;
 }
 
+export interface ChunkSelectorData {
+  instanceId: string;
+  availableItems: { id: string; name: string }[];
+  filledSlots: (string | null)[];
+}
+
 export interface GameUIState {
   sidebarOpen: boolean;
   gameStarted: boolean;
@@ -28,6 +34,8 @@ export interface GameUIState {
   totalStars: number;
   missions: MissionProgress[];
   collectibles: CollectibleEntry[];
+  chunkSelectorOpen: boolean;
+  chunkSelectorData: ChunkSelectorData | null;
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -49,6 +57,8 @@ export interface GameUIState {
   ) => void;
   setCollectibles: (entries: CollectibleEntry[]) => void;
   collectItem: (itemId: string) => void;
+  openChunkSelector: (data: ChunkSelectorData) => void;
+  closeChunkSelector: () => void;
 }
 
 export const useGameUIStore = create<GameUIState>()((set) => ({
@@ -58,6 +68,8 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   totalStars: 0,
   missions: [],
   collectibles: [],
+  chunkSelectorOpen: false,
+  chunkSelectorData: null,
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -118,6 +130,16 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
         c.id === itemId ? { ...c, collected: true } : c,
       ),
     })),
+  openChunkSelector: (data) =>
+    set({
+      chunkSelectorOpen: true,
+      chunkSelectorData: data,
+    }),
+  closeChunkSelector: () =>
+    set({
+      chunkSelectorOpen: false,
+      chunkSelectorData: null,
+    }),
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
