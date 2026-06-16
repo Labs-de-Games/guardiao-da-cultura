@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
+import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
@@ -9,7 +10,6 @@ import { SceneNames } from "../constants/SceneNames";
 import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
-import { QuizPanel } from "../objects/ui/QuizPanel";
 import { CallbackRegistry } from "../systems/CallbackRegistry";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -24,11 +24,13 @@ export class UIScene extends Scene {
   private placeholderSystem!: PlaceholderSystem;
 
   private root!: Phaser.GameObjects.Container;
-  private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private callbackRegistry!: CallbackRegistry;
   private dialogueEndHandled: boolean = false;
   private dialogueActive: boolean = false;
+  private unsubQuizClose: (() => void) | null = null;
+  private unsubQuizRetry: (() => void) | null = null;
+  private unsubQuizVisibilityWatcher: (() => void) | null = null;
 
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
     new Set();
@@ -48,7 +50,6 @@ export class UIScene extends Scene {
     this.root = this.add.container(-20, 0);
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
-    this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.callbackRegistry = new CallbackRegistry();
     this.callbackRegistry.setupListeners();
@@ -172,8 +173,10 @@ export class UIScene extends Scene {
       unsubDialogueCompleted();
       unsubDialogueDismissed();
       unsubDialogueDequeueStarted();
+      this.unsubQuizClose?.();
+      this.unsubQuizRetry?.();
+      this.unsubQuizVisibilityWatcher?.();
       this.callbackRegistry.cleanup();
-      EventBus.removeAllListeners();
 
       if (gameScene?.events) {
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
@@ -197,13 +200,13 @@ export class UIScene extends Scene {
   }
 
   private setupQuizCloseListener() {
-    EventBus.on("quiz:close", () => {
+    this.unsubQuizClose = EventBus.on("quiz:close", () => {
       useGameUIStore.getState().closeQuiz();
       this.scene.stop(SceneNames.GAME);
       this.scene.start(SceneNames.INTRO);
     });
 
-    EventBus.on("quiz:retry", () => {
+    this.unsubQuizRetry = EventBus.on("quiz:retry", () => {
       const gameScene = this.scene.get(SceneNames.GAME);
       useGameUIStore.getState().closeQuiz();
       gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
@@ -212,10 +215,12 @@ export class UIScene extends Scene {
 
   private setupQuizVisibilityWatcher() {
     let wasVisible = useGameUIStore.getState().quiz.isVisible;
-    useGameUIStore.subscribe((state) => {
+    this.unsubQuizVisibilityWatcher = useGameUIStore.subscribe((state) => {
       const isVisible = state.quiz.isVisible;
       if (wasVisible && !isVisible) {
-        this.onDialogueEnded();
+        this.dialogueActive = false;
+        this.dialogueEndHandled = false;
+        useDialogueStore.getState().closeDialogue();
       }
       wasVisible = isVisible;
     });
@@ -225,7 +230,6 @@ export class UIScene extends Scene {
     const { width: w, height: h } = this.scale;
     this.cameras.main.setSize(w, h);
 
-    this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
   }
 
