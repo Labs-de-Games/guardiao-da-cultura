@@ -44,6 +44,12 @@ export interface CollectiblesSyncData {
   }[];
 }
 
+export interface ToastShowData {
+  message: string;
+  duration: number;
+  iconSrc?: string;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -60,4 +66,5 @@ export interface GameEventMap {
   "inventory:opened": undefined;
   "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
+  "ui:toast-show": ToastShowData;
 }
