@@ -241,22 +241,32 @@ export function ChunkSelectorPanel() {
     if (!chunkSelectorOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      const key = event.key;
-      if (
-        key !== "ArrowUp" &&
-        key !== "ArrowDown" &&
-        key !== "ArrowLeft" &&
-        key !== "ArrowRight" &&
-        key !== "Enter" &&
-        key !== "Escape"
-      ) {
+      const normalizedKey =
+        event.key.length === 1 ? event.key.toLowerCase() : event.key;
+
+      const directionByKey: Record<string, ChunkArrowDir> = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        w: "up",
+        s: "down",
+        a: "left",
+        d: "right",
+      };
+
+      const isDirectionalInput = Boolean(directionByKey[normalizedKey]);
+      const isConfirmInput = normalizedKey === "Enter" || normalizedKey === " ";
+      const isCloseInput = normalizedKey === "Escape";
+
+      if (!isDirectionalInput && !isConfirmInput && !isCloseInput) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
 
-      if (key === "Escape") {
+      if (isCloseInput) {
         if (state.pickedItemIndex !== null) {
           dispatch({ type: "CANCEL_PICK" });
           return;
@@ -265,7 +275,7 @@ export function ChunkSelectorPanel() {
         return;
       }
 
-      if (key === "Enter") {
+      if (isConfirmInput) {
         if (state.cursorMode === "confirm") {
           handleSubmit();
           return;
@@ -275,14 +285,7 @@ export function ChunkSelectorPanel() {
         return;
       }
 
-      const directionByKey: Record<string, ChunkArrowDir> = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-      };
-
-      const direction = directionByKey[key];
+      const direction = directionByKey[normalizedKey];
       if (direction) {
         dispatch({ type: "MOVE", payload: direction });
       }
@@ -351,8 +354,8 @@ export function ChunkSelectorPanel() {
               Restauração de Obra
             </Typography>
             <Typography sx={{ color: "#a8a8a8", fontSize: "14px", mt: 0.5 }}>
-              Setas para navegar • Enter para selecionar/confirmar • Esc para
-              sair
+              Setas/WASD para navegar • Enter/Espaço para selecionar/confirmar •
+              Esc para sair
             </Typography>
           </Box>
           <Button
