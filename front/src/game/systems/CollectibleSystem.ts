@@ -327,10 +327,8 @@ export class CollectibleSystem {
   }
 
   private showCollectibleLabel(collectibleData: CollectibleData) {
-    this.scene.events.emit(
-      GameEvents.SHOW_LABEL_REQUEST,
-      this.buildLabelInfo(collectibleData),
-    );
+    const labelInfo = this.buildLabelInfo(collectibleData);
+    EventBus.emit("ui:label-show", labelInfo);
   }
 
   private closeInteraction(force: boolean = false) {
