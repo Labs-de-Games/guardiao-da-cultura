@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 
 import { EventBus } from "@/shared/events/event-bus";
 import { Sidebar } from "@/ui/hud/Sidebar";
-import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
+import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 export default function GameOverlay() {
