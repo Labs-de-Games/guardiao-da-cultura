@@ -80,7 +80,14 @@ function OverlayContent() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sidebarOpen, controlsOpen, dialogueOpen, gameStarted, toggleSidebar, setSidebarOpen]);
+  }, [
+    sidebarOpen,
+    controlsOpen,
+    dialogueOpen,
+    gameStarted,
+    toggleSidebar,
+    setSidebarOpen,
+  ]);
 
   useEffect(() => {
     if (!dialogueOpen && useDialogueStore.getState().dialogueQueue.length > 0) {
