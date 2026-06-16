@@ -35,6 +35,7 @@ export interface CollectibleEntry {
 
 export interface GameUIState {
   sidebarOpen: boolean;
+  controlsOpen: boolean;
   gameStarted: boolean;
   stars: number;
   totalStars: number;
@@ -44,6 +45,7 @@ export interface GameUIState {
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+  setControlsOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
   setStars: (current: number, total: number) => void;
   setMissions: (missions: MissionProgress[]) => void;
@@ -69,6 +71,7 @@ export interface GameUIState {
 
 export const useGameUIStore = create<GameUIState>()((set) => ({
   sidebarOpen: false,
+  controlsOpen: false,
   gameStarted: false,
   stars: 0,
   totalStars: 0,
@@ -78,6 +81,7 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+  setControlsOpen: (open) => set({ controlsOpen: open }),
   setGameStarted: (started) => set({ gameStarted: started }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setMissions: (missions) => set({ missions }),

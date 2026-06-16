@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { EventBus } from "@/shared/events/event-bus";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import { ControlsPanel } from "@/ui/panels/ControlsPanel";
+import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
@@ -31,6 +33,7 @@ export default function GameOverlay() {
 
 function OverlayContent() {
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
+  const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
   const setStars = useGameUIStore((s) => s.setStars);
@@ -38,6 +41,7 @@ function OverlayContent() {
   const setCollectibles = useGameUIStore((s) => s.setCollectibles);
   const collectItem = useGameUIStore((s) => s.collectItem);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
+  const setControlsOpen = useGameUIStore((s) => s.setControlsOpen);
   const setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const addToast = useGameUIStore((s) => s.addToast);
 
@@ -48,6 +52,10 @@ function OverlayContent() {
 
     const unsubSidebar = EventBus.on("sidebar:toggled", (data) => {
       setSidebarOpen(data.open);
+    });
+
+    const unsubControls = EventBus.on("ui:controls-overlay", (data) => {
+      setControlsOpen(data.open);
     });
 
     const unsubStars = EventBus.on("player:stars-changed", (data) => {
@@ -83,6 +91,7 @@ function OverlayContent() {
     return () => {
       unsubStarted();
       unsubSidebar();
+      unsubControls();
       unsubStars();
       unsubQuestProgress();
       unsubCollectSync();
@@ -91,6 +100,7 @@ function OverlayContent() {
     };
   }, [
     setSidebarOpen,
+    setControlsOpen,
     setStars,
     addOrUpdateMission,
     setCollectibles,
@@ -102,7 +112,7 @@ function OverlayContent() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
-        if (gameStarted) {
+        if (gameStarted && !controlsOpen) {
           e.preventDefault();
           toggleSidebar();
         }
@@ -115,7 +125,7 @@ function OverlayContent() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sidebarOpen, gameStarted, toggleSidebar, setSidebarOpen]);
+  }, [sidebarOpen, controlsOpen, gameStarted, toggleSidebar, setSidebarOpen]);
 
   if (!gameStarted) return null;
 
@@ -123,6 +133,10 @@ function OverlayContent() {
     <>
       <Sidebar />
       <ToastNotification />
+      <ErrorBoundary fallback={null}>
+        <ControlsPanel />
+      </ErrorBoundary>
+      <Sidebar />
     </>
   );
 }
