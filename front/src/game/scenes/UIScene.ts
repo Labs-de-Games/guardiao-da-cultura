@@ -1,6 +1,5 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
-import { submitScore } from "../../lib/scoresApi";
 import { EventBus } from "../../shared/events/event-bus";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
@@ -11,9 +10,9 @@ import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
-import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
+import { CallbackRegistry } from "../systems/CallbackRegistry";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type {
@@ -28,11 +27,13 @@ export class UIScene extends Scene {
   private placeholderSystem!: PlaceholderSystem;
 
   private root!: Phaser.GameObjects.Container;
-  private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private badgeGalleryPanel!: BadgeGalleryPanel;
+  private callbackRegistry!: CallbackRegistry;
+  private dialogueEndHandled: boolean = false;
+  private dialogueActive: boolean = false;
 
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
     new Set();
@@ -46,18 +47,18 @@ export class UIScene extends Scene {
     this.placeholderSystem = data.placeholderSystem;
 
     this.activeInteractionPrompts.clear();
-    this.phaseCompletePanel = null;
   }
 
   create() {
     this.root = this.add.container(-20, 0);
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
-    this.dialoguePanel = new DialoguePanel(this);
     this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
+    this.callbackRegistry = new CallbackRegistry();
+    this.callbackRegistry.setupListeners();
 
     this.setupEventListeners();
     this.setupKeyboardListeners();
@@ -72,9 +73,14 @@ export class UIScene extends Scene {
     gameScene.events.on(
       GameEvents.SHOW_DIALOGUE_REQUEST,
       (lines: string[], onComplete?: () => void) => {
-        if (this.dialoguePanel) {
-          this.dialoguePanel.showDialogue(lines, onComplete);
+        const callbackId = crypto.randomUUID();
+        if (onComplete) {
+          this.callbackRegistry.registerDialogue(callbackId, onComplete);
         }
+        this.dialogueEndHandled = false;
+        this.dialogueActive = true;
+        EventBus.emit("dialogue:show", { lines, callbackId });
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );
 
@@ -94,9 +100,12 @@ export class UIScene extends Scene {
     gameScene.events.on(
       GameEvents.SHOW_CONFIRMATION_REQUEST,
       (message: string, onYes: () => void, onNo: () => void) => {
-        if (this.dialoguePanel) {
-          this.dialoguePanel.showConfirmation(message, onYes, onNo);
-        }
+        const callbackId = crypto.randomUUID();
+        this.callbackRegistry.registerConfirm(callbackId, onYes, onNo);
+        this.dialogueEndHandled = false;
+        this.dialogueActive = true;
+        EventBus.emit("dialogue:confirm", { message, callbackId });
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );
 
@@ -146,10 +155,37 @@ export class UIScene extends Scene {
       },
     );
 
+    const unsubDialogueCompleted = EventBus.on("dialogue:completed", () => {
+      if (this.dialogueEndHandled) return;
+      this.dialogueEndHandled = true;
+      this.dialogueActive = false;
+      gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+    });
+
+    const unsubDialogueDismissed = EventBus.on("dialogue:dismissed", () => {
+      if (this.dialogueEndHandled) return;
+      this.dialogueEndHandled = true;
+      this.dialogueActive = false;
+      gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+    });
+
+    const unsubDialogueDequeueStarted = EventBus.on(
+      "dialogue:dequeue-started",
+      () => {
+        this.dialogueEndHandled = false;
+        this.dialogueActive = true;
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+      },
+    );
+
     this.scale.on("resize", () => this.layout());
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize");
+      unsubDialogueCompleted();
+      unsubDialogueDismissed();
+      unsubDialogueDequeueStarted();
+      this.callbackRegistry.cleanup();
 
       if (gameScene?.events) {
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
@@ -177,7 +213,6 @@ export class UIScene extends Scene {
     const { width: w, height: h } = this.scale;
     this.cameras.main.setSize(w, h);
 
-    this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
@@ -212,152 +247,9 @@ export class UIScene extends Scene {
 
   private canShowOverlay(): boolean {
     if (this.activeInteractionPrompts.size > 0) return false;
-
-    if (
-      this.dialoguePanel?.isVisible ||
-      this.labelPanel?.isVisible ||
-      this.quizPanel?.isVisible
-    )
-      return false;
+    if (this.dialogueActive) return false;
+    if (this.labelPanel?.isVisible || this.quizPanel?.isVisible) return false;
 
     return true;
-  }
-
-  private phaseCompletePanel: Phaser.GameObjects.Container | null = null;
-
-  public async showPhaseCompleteUI(collectedStars: number, maxStars: number) {
-    if (this.phaseCompletePanel) this.phaseCompletePanel.destroy();
-
-    const { width: cx, height: cy } = this.scale;
-    this.phaseCompletePanel = this.add
-      .container(cx / 2, cy / 2)
-      .setDepth(10000);
-
-    const bg = this.add
-      .rectangle(0, 0, 800, 500, LayoutConfig.COLORS.BLACK_HEX, 0.95)
-      .setStrokeStyle(4, LayoutConfig.COLORS.GOLD_HEX);
-    const title = this.add
-      .text(0, -210, "Fase concluída!", {
-        fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-        color: LayoutConfig.COLORS.GOLD,
-        fontStyle: LayoutConfig.FONTS.STYLES.BOLD,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-    const message = this.add
-      .text(0, 150, "Parabéns, você completou sua exploração no museu!", {
-        fontSize: LayoutConfig.FONTS.SIZES.BODY,
-        color: LayoutConfig.COLORS.WHITE,
-        wordWrap: { width: 700 },
-        align: LayoutConfig.ALIGN.TEXT_CENTER,
-      })
-      .setOrigin(...LayoutConfig.ALIGN.CENTER);
-
-    const stars = this.add.container(0, -30);
-    const starSpacing = 140;
-    const startX = -((maxStars - 1) * starSpacing) / 2;
-
-    for (let i = 0; i < maxStars; i++) {
-      const star = this.add
-        .image(startX + i * starSpacing, 0, "star")
-        .setScale(8);
-      if (i >= collectedStars)
-        star.setTint(LayoutConfig.COLORS.DARK_STAR_TINT).setAlpha(0.5);
-      stars.add(star);
-    }
-
-    this.phaseCompletePanel.add([bg, title, stars, message]);
-
-    this.input.keyboard?.once("keydown-ESC", () => this.hidePhaseCompleteUI());
-
-    await this.submitScoreToBackend();
-  }
-
-  private async submitScoreToBackend() {
-    try {
-      const scoreManager = this.registry.get("scoreManager") as {
-        getPayload: () => unknown;
-      };
-      const userId = this.registry.get("userId");
-      const levelId = this.registry.get("currentLevelId");
-
-      if (!scoreManager || !userId || !levelId) {
-        console.warn("[UIScene] Missing data for score submission:", {
-          hasScoreManager: !!scoreManager,
-          hasUserId: !!userId,
-          hasLevelId: !!levelId,
-        });
-        return;
-      }
-
-      const payload = scoreManager.getPayload() as {
-        levelId: string;
-        totalQuarters: number;
-        totalStars: number;
-        rating: string;
-        floors: Array<{
-          floorIndex: number;
-          errors: number;
-          quartersEarned: number;
-        }>;
-        quiz: {
-          totalQuestions: number;
-          correctAnswers: number;
-          accuracyPercent: number;
-          quartersEarned: number;
-        };
-        collectibles: {
-          total: number;
-          interactionsCount: number;
-          quartersEarned: number;
-          interactions: Array<{
-            collectible_id: string;
-            collectible_type: string;
-          }>;
-        };
-      };
-
-      await submitScore({
-        userId,
-        levelId: payload.levelId,
-        totalQuarters: payload.totalQuarters,
-        totalStars: payload.totalStars,
-        rating: payload.rating,
-        floors: payload.floors.map((f) => ({
-          floorIndex: f.floorIndex,
-          errors: f.errors,
-          quartersEarned: f.quartersEarned,
-        })),
-        quiz: {
-          totalQuestions: payload.quiz.totalQuestions,
-          correctAnswers: payload.quiz.correctAnswers,
-          accuracyPercent: payload.quiz.accuracyPercent,
-          quartersEarned: payload.quiz.quartersEarned,
-        },
-        collectibles: {
-          total: payload.collectibles.total,
-          interactionsCount: payload.collectibles.interactionsCount,
-          quartersEarned: payload.collectibles.quartersEarned,
-        },
-        collectedCollectibles: payload.collectibles.interactions.map(
-          (interaction) => ({
-            collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as
-              | "COLLECT"
-              | "CLUE_VILLAIN"
-              | "CLUE_NEXT",
-            levelId: payload.levelId,
-          }),
-        ),
-      });
-    } catch (err) {
-      console.error("[UIScene] Failed to submit score:", err);
-    }
-  }
-
-  public hidePhaseCompleteUI() {
-    if (this.phaseCompletePanel) {
-      this.phaseCompletePanel.destroy();
-      this.phaseCompletePanel = null;
-    }
   }
 }

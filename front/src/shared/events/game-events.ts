@@ -54,9 +54,25 @@ export interface ToastShowData {
   iconSrc?: string;
 }
 
+export interface DialogueShowData {
+  lines: string[];
+  callbackId: string;
+}
+
+export interface DialogueConfirmData {
+  message: string;
+  callbackId: string;
+}
+
+export interface DialogueCompletedData {
+  callbackId: string;
+  confirmed?: boolean;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
+  "game:ended": undefined;
   "game:pause-requested": GamePauseData;
   "game:resume-requested": GameResumeData;
   "player:stars-changed": StarsChangedData;
@@ -72,4 +88,10 @@ export interface GameEventMap {
   "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
   "ui:toast-show": ToastShowData;
+  "dialogue:show": DialogueShowData;
+  "dialogue:confirm": DialogueConfirmData;
+  "dialogue:dismissed": { callbackId: string };
+  "dialogue:completed": DialogueCompletedData;
+  "dialogue:dequeue-started": undefined;
+  "dialogue:queue-cleared": undefined;
 }
