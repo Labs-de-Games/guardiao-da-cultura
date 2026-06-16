@@ -39,6 +39,16 @@ export interface SidebarToggleData {
   open: boolean;
 }
 
+export interface BadgeGalleryToggleData {
+  open: boolean;
+}
+
+export interface BadgeUnlockedData {
+  badgeId: string;
+  badgeName: string;
+  iconKey: string;
+}
+
 export interface CollectiblesSyncData {
   entries: {
     id: string;
@@ -100,4 +110,6 @@ export interface GameEventMap {
   "dialogue:queue-cleared": undefined;
   "ui:label-show": LabelInfoData;
   "ui:label-hide": undefined;
+  "ui:badge-gallery-toggle": BadgeGalleryToggleData;
+  "badge:unlocked": BadgeUnlockedData;
 }
