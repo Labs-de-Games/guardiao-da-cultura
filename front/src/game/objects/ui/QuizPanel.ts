@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { EventBus } from "../../../shared/events/event-bus";
 import { GameEvents } from "../../constants/GameEvents";
 import { Actions } from "../../constants/KeyBindings";
 import { LayoutConfig } from "../../constants/LayoutConfig";
@@ -372,6 +373,7 @@ export class QuizPanel extends BasePanel {
 
     if (this.selectedNavIndex === 0) {
       this.hide(200, () => {
+        EventBus.emit("game:ended", undefined);
         this.scene.scene.stop(SceneNames.GAME);
         this.scene.scene.start(SceneNames.INTRO);
       });
