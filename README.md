@@ -174,7 +174,8 @@ flowchart LR
 
 - **Next.js App Router**: File-based routing with React Server Components
 - **Phaser Integration**: Game scenes rendered via Phaser 3 canvas, encapsulated in `src/game/`
-- **State Management**: React hooks and context for UI state; Zustand planned for complex game state
+- **UI Overlay Layer**: HUD and modal panels rendered in React over the canvas, synchronized via shared EventBus
+- **State Management**: React hooks plus Zustand for game UI state (sidebar and modal panels)
 - **Styling**: Material UI (MUI) v9 with Emotion for CSS-in-JS
 - **Analytics**: PostHog for product analytics and session replay
 

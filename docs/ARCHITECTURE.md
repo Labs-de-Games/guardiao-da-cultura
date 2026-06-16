@@ -121,7 +121,7 @@ flowchart TB
 - **Framework:** Next.js with React.
 - **Game Engine:** Phaser 3 (encapsulated entirely within `src/game`).
 - **Styling:** Material UI (MUI) v9 with Emotion for CSS-in-JS.
-- **State Management:** React hooks and context for UI state.
+- **State Management:** React hooks and Zustand for UI overlay and HUD state.
 - **Analytics:** PostHog JS SDK with autocapture disabled, canvas recording enabled in production.
 - **HTTP Client:** Axios with interceptors for auth token refresh and PostHog session headers.
 
@@ -142,6 +142,7 @@ The codebase is structured as a **Modular Monolith**.
 - The repository is split top-level into `front/` and `back/`.
 - Inside the backend (`/back/src`), features are grouped into logical, domain-driven folders (e.g., `users`, `health`, `database`).
 - Inside the frontend (`/front/src`), the web UI and the Phaser game logic (`/game`) are strictly separated. The game communicates with the outer React shell, which in turn communicates with the backend.
+- UI overlays (HUD and modal panels) are being centralized in React and synchronized with gameplay through a shared typed EventBus.
 
 ### Directory Structure
 
@@ -200,6 +201,7 @@ The gameplay itself will operate mostly as a client-side application (Next.js + 
 
 - **Authentication Module:** Implemented as passwordless magic-link authentication with JWT access tokens (15min expiry) and opaque refresh tokens (7-day rotation). See the auth implementation plan in `docs/authentication-authorization-implementation-plan.md`.
 - **Observability & Analytics:** PostHog is integrated on both frontend (`posthog-js`) and backend (`posthog-node`) for product analytics, session replay, and error tracking. See `docs/posthog-implementation-plan.md`.
+- **Chunk Selector UI Migration (Phase 7):** The photo restoration ChunkSelector panel is implemented in React overlay and wired through the shared EventBus.
 
 ### Pending
 
