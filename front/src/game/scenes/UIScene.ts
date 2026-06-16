@@ -8,7 +8,6 @@ import { SceneNames } from "../constants/SceneNames";
 import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
-import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
 import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { LabelPanel } from "../objects/ui/LabelPanel";
@@ -17,7 +16,6 @@ import { ToastNotification } from "../objects/ui/ToastNotification";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type {
-  InteractionUIData,
   LabelInfoData,
   QuizQuestion,
   UIInitData,
@@ -32,7 +30,6 @@ export class UIScene extends Scene {
   private dialoguePanel!: DialoguePanel;
   private labelPanel!: LabelPanel;
   private quizPanel!: QuizPanel;
-  private chunkSelector!: ChunkSelector;
   private toast!: ToastNotification;
   private badgeGalleryPanel!: BadgeGalleryPanel;
 
@@ -62,7 +59,6 @@ export class UIScene extends Scene {
     this.dialoguePanel = new DialoguePanel(this);
     this.labelPanel = new LabelPanel(this);
     this.quizPanel = new QuizPanel(this);
-    this.chunkSelector = new ChunkSelector(this);
     this.toast = new ToastNotification(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
 
@@ -118,19 +114,6 @@ export class UIScene extends Scene {
       (data: LabelInfoData) => {
         if (this.labelPanel) {
           this.labelPanel.showLabel(data);
-        }
-      },
-    );
-
-    gameScene.events.on(
-      GameEvents.OPEN_INTERACTION_UI_REQUEST,
-      (data: InteractionUIData) => {
-        if (this.chunkSelector) {
-          this.chunkSelector.show(
-            data.instanceId,
-            data.availableItems,
-            data.state?.filledSlots || [],
-          );
         }
       },
     );
@@ -197,7 +180,6 @@ export class UIScene extends Scene {
     this.dialoguePanel.layout(w, h);
     this.labelPanel.layout(w, h);
     this.quizPanel.layout(w, h);
-    this.chunkSelector.layout(w, h);
     this.toast.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);
   }

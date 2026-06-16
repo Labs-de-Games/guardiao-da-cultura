@@ -44,6 +44,17 @@ export interface CollectiblesSyncData {
   }[];
 }
 
+export interface ChunkSelectorOpenData {
+  instanceId: string;
+  availableItems: { id: string; name: string }[];
+  filledSlots: (string | null)[];
+}
+
+export interface ChunkSelectorSubmitData {
+  instanceId: string;
+  placedItems: (string | null)[];
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -60,4 +71,7 @@ export interface GameEventMap {
   "inventory:opened": undefined;
   "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
+  "ui:chunk-selector-open": ChunkSelectorOpenData;
+  "ui:chunk-selector-close": undefined;
+  "ui:chunk-selector-submit": ChunkSelectorSubmitData;
 }
