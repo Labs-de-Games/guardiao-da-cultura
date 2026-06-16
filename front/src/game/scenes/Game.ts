@@ -68,6 +68,7 @@ export class Game extends Scene {
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
+  private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private isQuizActive: boolean = false;
@@ -111,6 +112,7 @@ export class Game extends Scene {
 
     // Reset state for scene restarts
     this.hasInteractedWithRat = false;
+    this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
     this.isQuizActive = false;
@@ -560,6 +562,7 @@ export class Game extends Scene {
 
     const unsubControls = useGameUIStore.subscribe((state, prevState) => {
       if (state.controlsOpen !== prevState.controlsOpen) {
+        this.isControlsOpen = state.controlsOpen;
         if (state.controlsOpen && this.player) {
           this.player.isInDialogue = true;
         } else {
@@ -995,7 +998,7 @@ export class Game extends Scene {
   private checkDialogState() {
     if (
       !this.isDialogueOpen &&
-      !useGameUIStore.getState().controlsOpen &&
+      !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
       !this.isQuizActive
     ) {
