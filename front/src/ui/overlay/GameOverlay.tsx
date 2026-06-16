@@ -7,6 +7,7 @@ import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
@@ -14,7 +15,6 @@ import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
-import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 
 export default function GameOverlay() {
   const [mounted, setMounted] = useState(false);
@@ -94,7 +94,13 @@ function OverlayContent() {
       unsubBadgeGallery();
       unsubBadgeUnlocked();
     };
-  }, [setControlsOpen, addToast, setLabelData, setBadgeGalleryOpen, addUnlockedBadge]);
+  }, [
+    setControlsOpen,
+    addToast,
+    setLabelData,
+    setBadgeGalleryOpen,
+    addUnlockedBadge,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
