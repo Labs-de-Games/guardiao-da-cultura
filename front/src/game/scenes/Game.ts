@@ -874,6 +874,7 @@ export class Game extends Scene {
             questions,
             this.scoreManager,
             (score: number) => {
+              this.scoreManager.recordQuizResult(score, questions.length);
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
               console.log(

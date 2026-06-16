@@ -48,6 +48,12 @@ export interface CollectibleEntry {
   category: string;
 }
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+}
+
 export interface GameUIState {
   sidebarOpen: boolean;
   controlsOpen: boolean;
@@ -64,6 +70,18 @@ export interface GameUIState {
   badgeError: string | null;
   isAuthenticated: boolean;
   guestId: string | null;
+
+  quiz: {
+    isVisible: boolean;
+    phase: "questioning" | "performance";
+    questions: QuizQuestion[];
+    currentQuestionIndex: number;
+    selectedOptionIndex: number;
+    answers: ("correct" | "wrong" | null)[];
+    score: number;
+    isProcessingAnswer: boolean;
+    onComplete: ((score: number) => void) | null;
+  };
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -95,9 +113,20 @@ export interface GameUIState {
   setBadgeData: (badges: BadgeConfig[], unlockedIds: string[]) => void;
   loadBadgeData: () => Promise<void>;
   addUnlockedBadge: (badgeId: string) => void;
+
+  startQuiz: (
+    questions: QuizQuestion[],
+    onComplete: (score: number) => void,
+  ) => void;
+  selectOption: () => void;
+  moveSelection: (dRow: number, dCol: number) => void;
+  nextQuestion: () => void;
+  retryQuiz: () => void;
+  closeQuiz: () => void;
+  resetQuiz: () => void;
 }
 
-export const useGameUIStore = create<GameUIState>()((set) => ({
+export const useGameUIStore = create<GameUIState>()((set, get) => ({
   sidebarOpen: false,
   controlsOpen: false,
   gameStarted: false,
@@ -113,6 +142,18 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
   badgeError: null,
   isAuthenticated: false,
   guestId: null,
+
+  quiz: {
+    isVisible: false,
+    phase: "questioning",
+    questions: [],
+    currentQuestionIndex: 0,
+    selectedOptionIndex: 0,
+    answers: [],
+    score: 0,
+    isProcessingAnswer: false,
+    onComplete: null,
+  },
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -241,6 +282,164 @@ export const useGameUIStore = create<GameUIState>()((set) => ({
       if (s.unlockedBadgeIds.includes(badgeId)) return s;
       return { unlockedBadgeIds: [...s.unlockedBadgeIds, badgeId] };
     }),
+
+  startQuiz: (questions, onComplete) => {
+    set((_s) => ({
+      quiz: {
+        isVisible: true,
+        phase: "questioning",
+        questions,
+        currentQuestionIndex: 0,
+        selectedOptionIndex: 0,
+        answers: new Array(questions.length).fill(null),
+        score: 0,
+        isProcessingAnswer: false,
+        onComplete,
+      },
+    }));
+  },
+
+  selectOption: () => {
+    const { quiz } = get();
+    if (
+      !quiz.isVisible ||
+      quiz.isProcessingAnswer ||
+      quiz.questions.length === 0
+    )
+      return;
+
+    const question = quiz.questions[quiz.currentQuestionIndex];
+    if (!question) return;
+
+    const isCorrect = quiz.selectedOptionIndex === question.correctOptionIndex;
+    const newAnswers = [...quiz.answers];
+    newAnswers[quiz.currentQuestionIndex] = isCorrect ? "correct" : "wrong";
+
+    set((s) => ({
+      quiz: {
+        ...s.quiz,
+        answers: newAnswers,
+        score: isCorrect ? s.quiz.score + 1 : s.quiz.score,
+        isProcessingAnswer: true,
+      },
+    }));
+
+    setTimeout(() => {
+      const state = get();
+      if (!state.quiz.isProcessingAnswer) return;
+
+      const nextIndex = state.quiz.currentQuestionIndex + 1;
+      if (nextIndex < state.quiz.questions.length) {
+        set((s) => ({
+          quiz: {
+            ...s.quiz,
+            currentQuestionIndex: nextIndex,
+            selectedOptionIndex: 0,
+            isProcessingAnswer: false,
+          },
+        }));
+      } else {
+        const finalScore = state.quiz.score;
+        const _totalQuestions = state.quiz.questions.length;
+        const onComplete = state.quiz.onComplete;
+
+        set((s) => ({
+          quiz: {
+            ...s.quiz,
+            phase: "performance",
+            isProcessingAnswer: false,
+          },
+        }));
+
+        if (onComplete) {
+          onComplete(finalScore);
+        }
+      }
+    }, 1000);
+  },
+
+  moveSelection: (dRow: number, dCol: number) => {
+    const { quiz } = get();
+    if (
+      !quiz.isVisible ||
+      quiz.isProcessingAnswer ||
+      quiz.questions.length === 0
+    )
+      return;
+
+    const col = quiz.selectedOptionIndex % 2;
+    const row = quiz.selectedOptionIndex >= 2 ? 1 : 0;
+
+    const nextCol = (col + dCol + 2) % 2;
+    const nextRow = (row + dRow + 2) % 2;
+    const nextIndex = nextRow * 2 + nextCol;
+
+    if (nextIndex >= 4) return;
+
+    set((s) => ({
+      quiz: {
+        ...s.quiz,
+        selectedOptionIndex: nextIndex,
+      },
+    }));
+  },
+
+  nextQuestion: () => {
+    const { quiz } = get();
+    if (!quiz.isVisible || quiz.questions.length === 0) return;
+
+    const nextIndex = quiz.currentQuestionIndex + 1;
+    if (nextIndex < quiz.questions.length) {
+      set((s) => ({
+        quiz: {
+          ...s.quiz,
+          currentQuestionIndex: nextIndex,
+          selectedOptionIndex: 0,
+        },
+      }));
+    }
+  },
+
+  retryQuiz: () => {
+    const { quiz } = get();
+    set((_s) => ({
+      quiz: {
+        ...quiz,
+        phase: "questioning",
+        currentQuestionIndex: 0,
+        selectedOptionIndex: 0,
+        answers: new Array(quiz.questions.length).fill(null),
+        score: 0,
+        isProcessingAnswer: false,
+      },
+    }));
+  },
+
+  closeQuiz: () => {
+    set((s) => ({
+      quiz: {
+        ...s.quiz,
+        isVisible: false,
+        phase: "questioning",
+      },
+    }));
+  },
+
+  resetQuiz: () => {
+    set((_s) => ({
+      quiz: {
+        isVisible: false,
+        phase: "questioning",
+        questions: [],
+        currentQuestionIndex: 0,
+        selectedOptionIndex: 0,
+        answers: [],
+        score: 0,
+        isProcessingAnswer: false,
+        onComplete: null,
+      },
+    }));
+  },
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
