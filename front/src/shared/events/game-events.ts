@@ -83,6 +83,27 @@ import type { LabelInfoData } from "@/game/types/GameDataTypes";
 
 export type { LabelInfoData };
 
+export interface QuizQuestionData {
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+}
+
+export interface QuizStartData {
+  questions: QuizQuestionData[];
+  onComplete: (score: number) => void;
+}
+
+export interface QuizAnswerData {
+  optionIndex: number;
+  isCorrect: boolean;
+}
+
+export interface QuizCompleteData {
+  score: number;
+  totalQuestions: number;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -112,4 +133,10 @@ export interface GameEventMap {
   "ui:label-hide": undefined;
   "ui:badge-gallery-toggle": BadgeGalleryToggleData;
   "badge:unlocked": BadgeUnlockedData;
+  "quiz:start": QuizStartData;
+  "quiz:answer-selected": QuizAnswerData;
+  "quiz:question-change": { currentIndex: number; total: number };
+  "quiz:complete": QuizCompleteData;
+  "quiz:close": undefined;
+  "quiz:retry": undefined;
 }
