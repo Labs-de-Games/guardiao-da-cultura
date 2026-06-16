@@ -10,9 +10,6 @@ import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { BadgeGalleryPanel } from "../objects/ui/BadgeGalleryPanel";
 import { ChunkSelector } from "../objects/ui/ChunkSelector";
-import { LabelPanel } from "../objects/ui/LabelPanel";
-import { ControlsOverlay } from "../objects/ui/ControlsOverlay";
-import { DialoguePanel } from "../objects/ui/DialoguePanel";
 import { QuizPanel } from "../objects/ui/QuizPanel";
 import { CallbackRegistry } from "../systems/CallbackRegistry";
 import { onKeyDown, registerScene } from "../systems/InputManager";
@@ -28,9 +25,6 @@ export class UIScene extends Scene {
   private placeholderSystem!: PlaceholderSystem;
 
   private root!: Phaser.GameObjects.Container;
-  private labelPanel!: LabelPanel;
-  private controlsOverlay!: ControlsOverlay;
-  private dialoguePanel!: DialoguePanel;
   private quizPanel!: QuizPanel;
   private chunkSelector!: ChunkSelector;
   private badgeGalleryPanel!: BadgeGalleryPanel;
@@ -56,9 +50,6 @@ export class UIScene extends Scene {
     this.root = this.add.container(-20, 0);
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
-    this.labelPanel = new LabelPanel(this);
-    this.controlsOverlay = new ControlsOverlay(this);
-    this.dialoguePanel = new DialoguePanel(this);
     this.quizPanel = new QuizPanel(this);
     this.chunkSelector = new ChunkSelector(this);
     this.badgeGalleryPanel = new BadgeGalleryPanel(this);
@@ -208,9 +199,6 @@ export class UIScene extends Scene {
     const { width: w, height: h } = this.scale;
     this.cameras.main.setSize(w, h);
 
-    this.labelPanel.layout(w, h);
-    this.controlsOverlay.layout(w, h);
-    this.dialoguePanel.layout(w, h);
     this.quizPanel.layout(w, h);
     this.chunkSelector.layout(w, h);
     this.badgeGalleryPanel.layout(w, h);
@@ -245,7 +233,6 @@ export class UIScene extends Scene {
   private canShowOverlay(): boolean {
     if (this.activeInteractionPrompts.size > 0) return false;
     if (this.dialogueActive) return false;
-    if (this.dialoguePanel?.isVisible || this.labelPanel?.isVisible || this.quizPanel?.isVisible) return false;
 
     return true;
   }
