@@ -1,3 +1,5 @@
+import "@testing-library/jest-dom";
+
 jest.mock("phaser", () => ({
   Game: class {
     destroy() {}
@@ -6,5 +8,14 @@ jest.mock("phaser", () => ({
   Scale: {
     RESIZE: 0,
     CENTER_BOTH: 1,
+  },
+  Events: {
+    EventEmitter: class {
+      on = jest.fn();
+      off = jest.fn();
+      once = jest.fn();
+      emit = jest.fn();
+      removeAllListeners = jest.fn();
+    },
   },
 }));
