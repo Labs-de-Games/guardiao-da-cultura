@@ -5,6 +5,7 @@ import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
 import { getUserCollectibles, submitScore } from "../../lib/scoresApi";
 
 import { EventBus } from "../../shared/events/event-bus";
+import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
@@ -66,9 +67,10 @@ export class Game extends Scene {
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
-  private isControlsOverlayOpen: boolean = false;
+  private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private isQuizActive: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
@@ -109,9 +111,10 @@ export class Game extends Scene {
 
     // Reset state for scene restarts
     this.hasInteractedWithRat = false;
-    this.isControlsOverlayOpen = false;
+    this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
+    this.isQuizActive = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
@@ -386,9 +389,6 @@ export class Game extends Scene {
     }
     this.setupCameras();
 
-    if (this.isControlsOverlayOpen && this.player) {
-      this.player.isInDialogue = true;
-    }
     this.events.on(
       GameEvents.INFO_COLLECTED,
       (payload: string | { infoKey: string }) => {
@@ -479,6 +479,7 @@ export class Game extends Scene {
 
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
+    EventBus.emit("ui:controls-overlay", { open: true });
 
     Object.entries(MissionRegistry).forEach(([missionId]) => {
       EventBus.emit("quest:progress-changed", {
@@ -499,6 +500,14 @@ export class Game extends Scene {
     EventBus.on("game:resume-requested", () => {
       this.scene.resume(SceneNames.GAME);
       this.scene.resume(SceneNames.UI);
+    });
+
+    EventBus.on("ui:label-show", () => {
+      this.events.emit(GameEvents.DIALOGUE_STARTED);
+    });
+
+    EventBus.on("ui:label-hide", () => {
+      this.events.emit(GameEvents.DIALOGUE_ENDED);
     });
   }
 
@@ -558,14 +567,19 @@ export class Game extends Scene {
       this.effects.setZoom(1.0, 400);
     });
 
-    this.events.on(GameEvents.CONTROLS_OVERLAY_OPENED, () => {
-      this.isControlsOverlayOpen = true;
-      if (this.player) this.player.isInDialogue = true;
+    const unsubControls = useGameUIStore.subscribe((state, prevState) => {
+      if (state.controlsOpen !== prevState.controlsOpen) {
+        this.isControlsOpen = state.controlsOpen;
+        if (state.controlsOpen && this.player) {
+          this.player.isInDialogue = true;
+        } else {
+          this.checkDialogState();
+        }
+      }
     });
 
-    this.events.on(GameEvents.CONTROLS_OVERLAY_CLOSED, () => {
-      this.isControlsOverlayOpen = false;
-      this.checkDialogState();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      unsubControls();
     });
   }
 
@@ -698,7 +712,7 @@ export class Game extends Scene {
 
         if (work) {
           const payload = this.buildLabelInfo(work);
-          this.events.emit(GameEvents.SHOW_LABEL_REQUEST, payload);
+          EventBus.emit("ui:label-show", payload);
           return;
         }
       }
@@ -811,6 +825,7 @@ export class Game extends Scene {
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
       EventBus.off("ui:chunk-selector-close");
+      EventBus.off("ui:label-hide");
     });
 
     this.setupCameras();
@@ -869,11 +884,13 @@ export class Game extends Scene {
         GameEvents.SHOW_CONFIRMATION_REQUEST,
         "Pronto para iniciar o teste?",
         () => {
+          this.isQuizActive = true;
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
             this.scoreManager,
             (score: number) => {
+              this.scoreManager.recordQuizResult(score, questions.length);
               const required = Math.ceil(questions.length * 0.7);
               const isSuccess = score >= required;
               console.log(
@@ -986,6 +1003,8 @@ export class Game extends Scene {
               if (isSuccess) {
                 this.levelManager.updateProgress();
               }
+
+              this.isQuizActive = false;
             },
           );
         },
@@ -1004,9 +1023,10 @@ export class Game extends Scene {
 
   private checkDialogState() {
     if (
-      !this.isControlsOverlayOpen &&
+      !this.isDialogueOpen &&
+      !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
-      !this.isDialogueOpen
+      !this.isQuizActive
     ) {
       if (this.player) this.player.isInDialogue = false;
     }
