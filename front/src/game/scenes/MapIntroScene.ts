@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { EventBus } from "@/shared/events/event-bus";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
@@ -73,10 +74,6 @@ export class MapIntroScene extends Scene {
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private markerViews: Map<string, MarkerView> = new Map();
   private markerBaseScales: Map<string, number> = new Map();
-  private infoBox!: Phaser.GameObjects.Container;
-  private infoTitle!: Phaser.GameObjects.Text;
-  private infoLocation!: Phaser.GameObjects.Text;
-  private infoCta!: Phaser.GameObjects.Text;
   private activeMarkerIndex: number = 0;
   private readonly mapKey = "brazil_map";
   private readonly markerKey = "brazil_marker";
@@ -112,8 +109,6 @@ export class MapIntroScene extends Scene {
       this.markerViews.set(markerData.id, { marker });
     });
 
-    this.createInfoBox();
-
     onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame());
     onKeyDown(this, Actions.CYCLE_FORWARD, this.cycleMarkerForward);
     onKeyDown(this, Actions.CYCLE_BACKWARD, this.cycleMarkerBackward);
@@ -127,6 +122,7 @@ export class MapIntroScene extends Scene {
     });
 
     this.layout();
+    this.emitMarkerChanged();
   }
 
   private beginGame() {
@@ -135,76 +131,24 @@ export class MapIntroScene extends Scene {
     }
   }
 
-  private createInfoBox() {
-    const height = this.scale.height;
-    const padding = 15;
-
-    this.infoBox = this.add.container(padding, height - padding);
-    this.infoBox.setScrollFactor(0);
-
-    const boxBackground = this.add.rectangle(
-      50,
-      -100,
-      530,
-      200,
-      LayoutConfig.COLORS.MAP_BG,
-      0.92,
-    ); // x, y, width, height, color, alpha
-    boxBackground.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
-
-    this.infoTitle = this.add.text(65, -225, "", {
-      fontFamily: LayoutConfig.FONTS.TITLE,
-      fontSize: LayoutConfig.FONTS.SIZES.TITLE_LARGE,
-      color: LayoutConfig.COLORS.INFO_TITLE,
-    });
-    this.infoTitle.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
-
-    this.infoLocation = this.add.text(65, -180, "", {
-      fontFamily: LayoutConfig.FONTS.BODY,
-      fontSize: LayoutConfig.FONTS.SIZES.BODY,
-      color: LayoutConfig.COLORS.INFO_BODY,
-    });
-    this.infoLocation.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
-
-    this.infoCta = this.add.text(65, -130, "", {
-      fontFamily: LayoutConfig.FONTS.BODY,
-      fontSize: LayoutConfig.FONTS.SIZES.METADATA,
-      color: LayoutConfig.COLORS.AVAILABLE_GREEN,
-    });
-    this.infoCta.setOrigin(...LayoutConfig.ALIGN.BOTTOM_LEFT);
-
-    this.infoBox.add([
-      boxBackground,
-      this.infoTitle,
-      this.infoLocation,
-      this.infoCta,
-    ]);
-    this.updateInfoBox();
-  }
-
-  private updateInfoBox() {
+  private emitMarkerChanged() {
     const marker = MARKERS[this.activeMarkerIndex];
-    this.infoTitle.setText(marker.title);
-    this.infoLocation.setText(marker.location);
-
-    if (this.activeMarkerIndex === 0) {
-      this.infoCta.setText("Aperte ESPAÇO para jogar");
-      this.infoCta.setColor(LayoutConfig.COLORS.AVAILABLE_GREEN);
-    } else {
-      this.infoCta.setText("Em reforma");
-      this.infoCta.setColor(LayoutConfig.COLORS.UNAVAILABLE_RED);
-    }
+    EventBus.emit("map:marker-changed", {
+      title: marker.title,
+      location: marker.location,
+      isAvailable: this.activeMarkerIndex === 0,
+    });
   }
 
   private cycleMarkerForward = () => {
     this.activeMarkerIndex = (this.activeMarkerIndex + 1) % MARKERS.length;
-    this.updateInfoBox();
+    this.emitMarkerChanged();
   };
 
   private cycleMarkerBackward = () => {
     this.activeMarkerIndex =
       (this.activeMarkerIndex - 1 + MARKERS.length) % MARKERS.length;
-    this.updateInfoBox();
+    this.emitMarkerChanged();
   };
 
   update(time: number) {
@@ -228,17 +172,8 @@ export class MapIntroScene extends Scene {
     });
   }
 
-  private applyFontScaling(w: number, h: number) {
-    const scale = Math.min(w / 1920, h / 1080);
-    this.infoTitle.setFontSize(
-      Math.round(LayoutConfig.FONTS.SIZES.TITLE_LARGE * scale),
-    );
-    this.infoLocation.setFontSize(
-      Math.round(LayoutConfig.FONTS.SIZES.BODY * scale),
-    );
-    this.infoCta.setFontSize(
-      Math.round(LayoutConfig.FONTS.SIZES.METADATA * scale),
-    );
+  private applyFontScaling(_w: number, _h: number) {
+    // Font scaling is now handled by React/MUI in MapInfoBox component
   }
 
   private layout() {
