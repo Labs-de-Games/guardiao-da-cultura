@@ -49,9 +49,9 @@
           "place": "Catrimani, RR"
         },
         "educational": {
-          "description": "O xotehe \u00e9 um dos cestos mais tradicionais do povo yanomami. Ele \u00e9 feito com cip\u00f3-titica, tiras da raiz da palmeira paxiubinha ou fios de p\u00ebr\u0268s\u0268 (um fungo preto descoberto pelos yanomamis). As mulheres o tran\u00e7am \u00e0 m\u00e3o, e \u00e9 um item de uso di\u00e1rio na aldeia.\n\nOs tran\u00e7ados estabelecem sua finalidade: os pontos mais fechados servem para guardar alimentos, frutas, beiju, algod\u00e3o e pequenos objetos; j\u00e1 as tramas abertas s\u00e3o tradicionalmente usadas na pesca e no apoio ao preparo dos alimentos.",
-          "medium": "Cip\u00f3-titica, tiras da raiz de paxiubinha e fios de p\u00ebr\u0268s\u0268",
-          "opinion": "Que lindo cesto! \u00c9 um artesanato ricamente intricado. Hum, tem uma etiqueta embaixo."
+          "description": "O xotehe é um cesto feito pelo povo yanomami. Ele é feito com cipó-titica, tiras de raiz de palmeira ou fios de p\u00ebr\u0268s\u0268 (um fungo preto descoberto pelos yanomamis).\n\nAs mulheres o trançam à mão, e é um item de uso diário na aldeia.",
+          "medium": "Cipó-titica, tiras da raiz de paxiubinha e fios de p\u00ebr\u0268s\u0268",
+          "opinion": "Que lindo cesto! É um artesanato ricamente intricado. Hum, tem uma etiqueta embaixo."
         },
         "assets": {
           "sprite": "xotehe",
@@ -70,7 +70,7 @@
         "educational": {
           "description": "",
           "medium": "Madeira",
-          "opinion": "Um cachimbo bem fedorento, com resqu\u00edcios de plantas queimadas. Parece que foi usado recentemente, não deve ser um item em restauração aqui do museu."
+          "opinion": "Um cachimbo bem fedorento, com restos de plantas queimadas. Parece que foi usado há pouco tempo, não deve ser um item do museu."
         },
         "assets": {
           "sprite": "cachimbo",
@@ -84,12 +84,12 @@
         "id": "chimarrao",
         "type": "Clue",
         "metadata": {
-          "title": "Cuia de chimarr\u00e3o"
+          "title": "Cuia de chimarrão"
         },
         "educational": {
-          "description": "Uma cuia pr\u00f3pria para tomar chimarr\u00e3o.",
-          "medium": "Porongo, cera de carna\u00faba, resina, metal e couro",
-          "opinion": "J\u00e1 vi um neg\u00f3cio desses, mas n\u00e3o me lembro onde. Com certeza n\u00e3o foi aqui em Minas Gerais."
+          "description": "Uma cuia própria para tomar chimarrão.",
+          "medium": "Porongo, cera de carnaúba, resina, metal e couro",
+          "opinion": "Já vi um negócio desses, mas não lembro onde. Com certeza não foi aqui em Minas Gerais."
         },
         "assets": {
           "sprite": "chimarrao",
