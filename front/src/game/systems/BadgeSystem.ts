@@ -6,6 +6,8 @@ import {
   fetchUserBadges,
   unlockBadgeOnServer,
 } from "../../lib/badgesApi";
+import { addGuestBadge, getGuestBadgeIds } from "../../lib/badgesStorage";
+import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { BadgeConfig } from "../types/BadgeTypes";
@@ -36,16 +38,28 @@ export class BadgeSystem {
     try {
       this.badges = await fetchBadges();
 
-      try {
-        const userBadges = await fetchUserBadges();
-        userBadges.forEach((ub) => {
-          this.unlockedBadges.add(ub.badgeId);
-        });
-      } catch (e) {
-        console.warn(
-          "[BadgeSystem] Could not sync unlocked badges from server",
-          e,
-        );
+      const isGuest = this.scene.registry.get("isGuest") === true;
+
+      if (isGuest) {
+        const userId = this.scene.registry.get("userId");
+        if (typeof userId === "string" && userId) {
+          const guestBadges = getGuestBadgeIds(userId);
+          for (const id of guestBadges) {
+            this.unlockedBadges.add(id);
+          }
+        }
+      } else {
+        try {
+          const userBadges = await fetchUserBadges();
+          userBadges.forEach((ub) => {
+            this.unlockedBadges.add(ub.badgeId);
+          });
+        } catch (e) {
+          console.warn(
+            "[BadgeSystem] Could not sync unlocked badges from server",
+            e,
+          );
+        }
       }
 
       this.badges.forEach((badge) => {
@@ -85,6 +99,11 @@ export class BadgeSystem {
     this.unlockedBadges.add(badge.id);
 
     this.scene.events.emit(GameEvents.SHOW_BADGE_TOAST, badge);
+    EventBus.emit("badge:unlocked", {
+      badgeId: badge.id,
+      badgeName: badge.name,
+      iconKey: badge.icon_key,
+    });
 
     this.syncUnlockToServer(badge.id);
     const userId = this.scene.registry.get("userId");
@@ -114,7 +133,13 @@ export class BadgeSystem {
   private async syncUnlockToServer(badgeId: string) {
     const isGuest = this.scene.registry.get("isGuest") === true;
     if (isGuest) {
-      console.log(`[BadgeSystem] Skipping server sync for guest: ${badgeId}`);
+      const guestId = this.scene.registry.get("userId");
+      if (typeof guestId === "string" && guestId) {
+        addGuestBadge(guestId, badgeId);
+        console.log(
+          `[BadgeSystem] Saved badge to localStorage for guest: ${badgeId}`,
+        );
+      }
       return;
     }
     try {
