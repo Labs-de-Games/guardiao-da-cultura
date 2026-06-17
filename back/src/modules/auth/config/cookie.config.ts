@@ -14,7 +14,7 @@ export function getCookieConfig(isProd: boolean): CookieConfig {
     refreshToken: {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/api/v1/auth",
       maxAge: maxAgeDays,
     },
