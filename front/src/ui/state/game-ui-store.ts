@@ -48,6 +48,12 @@ export interface CollectibleEntry {
   category: string;
 }
 
+export interface ChunkSelectorData {
+  instanceId: string;
+  availableItems: { id: string; name: string }[];
+  filledSlots: (string | null)[];
+}
+
 export interface QuizQuestion {
   question: string;
   options: string[];
@@ -62,6 +68,8 @@ export interface GameUIState {
   totalStars: number;
   missions: MissionProgress[];
   collectibles: CollectibleEntry[];
+  chunkSelectorOpen: boolean;
+  chunkSelectorData: ChunkSelectorData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -104,6 +112,8 @@ export interface GameUIState {
   ) => void;
   setCollectibles: (entries: CollectibleEntry[]) => void;
   collectItem: (itemId: string) => void;
+  openChunkSelector: (data: ChunkSelectorData) => void;
+  closeChunkSelector: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -134,6 +144,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   totalStars: 0,
   missions: [],
   collectibles: [],
+  chunkSelectorOpen: false,
+  chunkSelectorData: null,
   toasts: [],
   labelData: null,
   badgeGalleryOpen: false,
@@ -215,6 +227,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         c.id === itemId ? { ...c, collected: true } : c,
       ),
     })),
+  openChunkSelector: (data) =>
+    set({
+      chunkSelectorOpen: true,
+      chunkSelectorData: data,
+    }),
+  closeChunkSelector: () =>
+    set({
+      chunkSelectorOpen: false,
+      chunkSelectorData: null,
+    }),
   addToast: (message, duration, iconSrc) =>
     set((s) => {
       const clampedDuration = Math.max(
