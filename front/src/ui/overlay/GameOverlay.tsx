@@ -13,6 +13,7 @@ import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
+import { MapInfoBox } from "@/ui/panels/MapInfoBox";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
@@ -61,6 +62,8 @@ function OverlayContent() {
   const setAuthState = useGameUIStore((s) => s.setAuthState);
   const openChunkSelector = useGameUIStore((s) => s.openChunkSelector);
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
+  const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
+  const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
 
   const { isAuthenticated } = useAuth();
 
@@ -100,6 +103,9 @@ function OverlayContent() {
         });
       },
     );
+    const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
+      setActiveMapMarker(data);
+    });
 
     return () => {
       unsubControls();
@@ -108,6 +114,7 @@ function OverlayContent() {
       unsubBadgeGallery();
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
+      unsubMapMarker();
     };
   }, [
     setControlsOpen,
@@ -116,6 +123,7 @@ function OverlayContent() {
     setBadgeGalleryOpen,
     addUnlockedBadge,
     openChunkSelector,
+    setActiveMapMarker,
   ]);
 
   useEffect(() => {
@@ -174,7 +182,14 @@ function OverlayContent() {
     }
   }, [dialogueOpen, dequeueDialogue]);
 
-  if (!gameStarted) return null;
+  if (!gameStarted) {
+    return (
+      <>
+        <ToastNotification />
+        <MapInfoBox />
+      </>
+    );
+  }
 
   return (
     <>
