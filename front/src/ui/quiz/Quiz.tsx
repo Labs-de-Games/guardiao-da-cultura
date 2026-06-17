@@ -240,10 +240,7 @@ export default function QuizPanel() {
     } else if (isRetryMode) {
       EventBus.emit("quiz:retry", undefined);
     } else {
-      window.open(
-        "https://docs.google.com/forms/d/1ryU02vG6R_J8AHz7xysroiGOmP7fUsXkSLVolSCOBy0/edit",
-        "_blank",
-      );
+      useGameUIStore.getState().openInterestDialog();
     }
   }, [selectedNavIndex, isRetryMode]);
 
@@ -619,7 +616,7 @@ export default function QuizPanel() {
               label={
                 <>
                   <StarIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  {isRetryMode ? "Tentar novamente" : "Dê sua opinião"}
+                  {isRetryMode ? "Tentar novamente" : "Próxima fase"}
                 </>
               }
               selected={selectedNavIndex === 1}
