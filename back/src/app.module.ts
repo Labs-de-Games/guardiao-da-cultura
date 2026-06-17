@@ -17,6 +17,7 @@ import { GameModule } from "./modules/game/game.module";
 import { PostHogModule } from "./modules/posthog/posthog.module";
 import { ProgressionModule } from "./modules/progression/progression.module";
 import { ScoringModule } from "./modules/scoring/scoring.module";
+import { UserInterestedModule } from "./modules/user-interested/user-interested.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
@@ -34,6 +35,7 @@ import { UsersModule } from "./modules/users/users.module";
     BadgesModule,
     ScoringModule,
     AnalyticsModule,
+    UserInterestedModule,
     DashboardModule,
     HealthModule,
     ThrottlerModule.forRoot({
