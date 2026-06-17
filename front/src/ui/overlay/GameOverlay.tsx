@@ -7,6 +7,7 @@ import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import { InterestDialog } from "@/ui/interest/InterestDialog";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -203,6 +204,7 @@ function OverlayContent() {
       <LabelPanel />
       <BadgeGalleryPanel />
       <QuizPanel />
+      <InterestDialog />
     </>
   );
 }
