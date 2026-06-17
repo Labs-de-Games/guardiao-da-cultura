@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Button, Paper, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 
 import { LEVEL_ASSETS } from "@/game/data/LevelConfig";
 import {
@@ -40,9 +40,6 @@ type ChunkSelectorAction =
   | { type: "MOVE"; payload: ChunkArrowDir }
   | { type: "CONFIRM" }
   | { type: "CANCEL_PICK" };
-
-const SLOT_WIDTH = 200;
-const SLOT_HEIGHT = 130;
 
 const chunkAssetsByKey: Map<string, string> = new Map(
   LEVEL_ASSETS.CHUNKS.map((asset) => [asset.key, `/assets/${asset.path}`]),
@@ -198,6 +195,7 @@ export function ChunkSelectorPanel() {
     reducer,
     buildInitialState([], [null, null, null, null]),
   );
+  const inventoryItemRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   useEffect(() => {
     if (!chunkSelectorOpen || !chunkSelectorData) return;
@@ -303,6 +301,20 @@ export function ChunkSelectorPanel() {
     state.pickedItemIndex,
   ]);
 
+  useEffect(() => {
+    if (!chunkSelectorOpen) return;
+    if (state.cursorMode !== "inventory") return;
+
+    const target = inventoryItemRefs.current[state.selectedInventoryIndex];
+    if (!target) return;
+
+    target.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+      behavior: "smooth",
+    });
+  }, [chunkSelectorOpen, state.cursorMode, state.selectedInventoryIndex]);
+
   const allEditableSlotsFilled = useMemo(() => {
     for (let i = 0; i < state.slots.length; i++) {
       if (state.lockedSlots[i]) continue;
@@ -354,8 +366,7 @@ export function ChunkSelectorPanel() {
               Restauração de Obra
             </Typography>
             <Typography sx={{ color: "#a8a8a8", fontSize: "14px", mt: 0.5 }}>
-              Setas/WASD para navegar • Enter/Espaço para selecionar/confirmar •
-              Esc para sair
+              Aperte SETAS para navegar • ENTER para selecionar e confirmar
             </Typography>
           </Box>
           <Button
@@ -363,16 +374,19 @@ export function ChunkSelectorPanel() {
             onClick={handleClose}
             sx={{ color: "#f4eede", alignSelf: "flex-start" }}
           >
-            Fechar (Esc)
+            Aperte ESC para fechar
           </Button>
         </Box>
 
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "minmax(260px, 320px) 1fr",
+            gridTemplateColumns: {
+              xs: "220px minmax(0, 1fr)",
+              md: "240px minmax(0, 1fr)",
+            },
             gap: 2,
-            alignItems: "start",
+            alignItems: "stretch",
           }}
         >
           <Paper
@@ -384,8 +398,13 @@ export function ChunkSelectorPanel() {
               display: "flex",
               flexDirection: "column",
               gap: 1,
-              maxHeight: "55vh",
+              height: "100%",
+              minHeight: 0,
               overflowY: "auto",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
             }}
           >
             <Typography
@@ -401,7 +420,7 @@ export function ChunkSelectorPanel() {
 
             {state.availableItems.length === 0 ? (
               <Typography sx={{ color: "#888", fontSize: "14px" }}>
-                Sem pedaços disponíveis.
+                Nenhum pedaço disponível.
               </Typography>
             ) : (
               state.availableItems.map((item, index) => {
@@ -414,10 +433,13 @@ export function ChunkSelectorPanel() {
                 return (
                   <Box
                     key={item.id}
+                    ref={(node: HTMLDivElement | null) => {
+                      inventoryItemRefs.current[index] = node;
+                    }}
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1,
+                      justifyContent: "center",
                       bgcolor: isSelected
                         ? "rgba(217, 173, 86, 0.24)"
                         : isPicked
@@ -429,31 +451,22 @@ export function ChunkSelectorPanel() {
                         : isUsed
                           ? "1px solid #2f2f2f"
                           : "1px solid #3f4040",
-                      p: 1,
+                      p: 0.75,
                       opacity: isUsed && !isSelected ? 0.5 : 1,
                     }}
                   >
                     <Box
                       component="img"
                       src={getChunkImageSrc(item.id)}
-                      alt={item.name}
                       sx={{
-                        width: 88,
-                        height: 58,
+                        width: "100%",
+                        maxWidth: 170,
+                        aspectRatio: "122 / 80",
                         borderRadius: "8px",
                         objectFit: "cover",
                         bgcolor: "#111",
                       }}
                     />
-                    <Typography
-                      sx={{
-                        color: "#f4eede",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.name}
-                    </Typography>
                   </Box>
                 );
               })
@@ -466,6 +479,7 @@ export function ChunkSelectorPanel() {
               bgcolor: "#161717",
               borderRadius: "16px",
               p: 1.5,
+              width: "100%",
             }}
           >
             <Typography
@@ -482,9 +496,10 @@ export function ChunkSelectorPanel() {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                 gap: "2px",
-                width: "fit-content",
+                width: "100%",
+                maxWidth: 920,
                 mb: 1.5,
               }}
             >
@@ -498,8 +513,8 @@ export function ChunkSelectorPanel() {
                   <Box
                     key={`grid-${idx}`}
                     sx={{
-                      width: SLOT_WIDTH,
-                      height: SLOT_HEIGHT,
+                      width: "100%",
+                      aspectRatio: "122 / 80",
                       bgcolor: "#111",
                       border: isLocked
                         ? "2px solid #4b8b5f"
@@ -518,7 +533,6 @@ export function ChunkSelectorPanel() {
                       <Box
                         component="img"
                         src={getChunkImageSrc(slot)}
-                        alt={`Pedaço ${idx + 1}`}
                         sx={{
                           width: "100%",
                           height: "100%",
@@ -527,7 +541,7 @@ export function ChunkSelectorPanel() {
                       />
                     ) : (
                       <Typography sx={{ color: "#5f6060", fontWeight: 700 }}>
-                        Vazio
+                        ?
                       </Typography>
                     )}
 
@@ -535,24 +549,14 @@ export function ChunkSelectorPanel() {
                       <Box
                         sx={{
                           position: "absolute",
-                          top: 8,
-                          right: 8,
-                          px: 0.75,
-                          py: 0.2,
-                          bgcolor: "rgba(75,139,95,0.2)",
-                          borderRadius: "8px",
+                          top: 10,
+                          right: 10,
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          bgcolor: "#8dd39d",
                         }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "#8dd39d",
-                            fontSize: "10px",
-                            fontWeight: 700,
-                          }}
-                        >
-                          FIXO
-                        </Typography>
-                      </Box>
+                      />
                     )}
                   </Box>
                 );
@@ -589,7 +593,7 @@ export function ChunkSelectorPanel() {
                   },
                 }}
               >
-                Confirmar (Enter)
+                Confirmar
               </Button>
             </Box>
           </Paper>
