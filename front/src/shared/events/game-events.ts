@@ -115,6 +115,12 @@ export interface QuizCompleteData {
   totalQuestions: number;
 }
 
+export interface MapMarkerChangedData {
+  title: string;
+  location: string;
+  isAvailable: boolean;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -153,4 +159,5 @@ export interface GameEventMap {
   "quiz:complete": QuizCompleteData;
   "quiz:close": undefined;
   "quiz:retry": undefined;
+  "map:marker-changed": MapMarkerChangedData;
 }
