@@ -19,7 +19,10 @@ export interface ToastEntry {
   exiting: boolean;
 }
 
-import type { LabelInfoData } from "@/shared/events/game-events";
+import type {
+  LabelInfoData,
+  MapMarkerChangedData,
+} from "@/shared/events/game-events";
 
 export const UI_Z_INDEX = {
   OVERLAY: 10,
@@ -64,6 +67,7 @@ export interface GameUIState {
   sidebarOpen: boolean;
   controlsOpen: boolean;
   gameStarted: boolean;
+  activeMapMarker: MapMarkerChangedData | null;
   stars: number;
   totalStars: number;
   missions: MissionProgress[];
@@ -95,6 +99,7 @@ export interface GameUIState {
   toggleSidebar: () => void;
   setControlsOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
+  setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
   setStars: (current: number, total: number) => void;
   setMissions: (missions: MissionProgress[]) => void;
   addOrUpdateMission: (
@@ -140,6 +145,11 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   sidebarOpen: false,
   controlsOpen: false,
   gameStarted: false,
+  activeMapMarker: {
+    title: "Inhotim",
+    location: "Brumadinho, Minas Gerais",
+    isAvailable: true,
+  },
   stars: 0,
   totalStars: 0,
   missions: [],
@@ -171,6 +181,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setControlsOpen: (open) => set({ controlsOpen: open }),
   setGameStarted: (started) => set({ gameStarted: started }),
+  setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setMissions: (missions) => set({ missions }),
   addOrUpdateMission: (
