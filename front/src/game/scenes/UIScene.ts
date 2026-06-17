@@ -182,6 +182,7 @@ export class UIScene extends Scene {
   private setupQuizCloseListener() {
     this.unsubQuizClose = EventBus.on("quiz:close", () => {
       useGameUIStore.getState().closeQuiz();
+      EventBus.emit("game:ended", undefined);
       this.scene.stop(SceneNames.GAME);
       this.scene.start(SceneNames.INTRO);
     });
