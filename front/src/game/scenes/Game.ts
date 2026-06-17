@@ -42,7 +42,6 @@ import { GameEventType } from "../types/AnalyticsTypes";
 import type { INpcEntity } from "../types/EntityTypes";
 import type {
   ContentJson,
-  InteractionSubmittedData,
   LabelInfoData,
   MissionDef,
   WorkData,
@@ -727,7 +726,9 @@ export class Game extends Scene {
 
       if (nearby) {
         if (nearby.isFilled) return;
-        const filled = nearby.state?.filledSlots || [null, null, null, null];
+        const filled = Array.isArray(nearby.state?.filledSlots)
+          ? (nearby.state.filledSlots as (string | null)[])
+          : [null, null, null, null];
         const availableChunks = this.player
           .getInventory()
           .filter(
@@ -735,15 +736,14 @@ export class Game extends Scene {
           );
 
         this.isChunkSelectorOpen = true;
-        this.events.emit(GameEvents.OPEN_INTERACTION_UI_REQUEST, {
-          placeholderId: nearby.id,
+        this.events.emit(GameEvents.DIALOGUE_STARTED);
+        EventBus.emit("ui:chunk-selector-open", {
           instanceId: nearby.instanceId,
-          type: nearby.type,
           availableItems: availableChunks.map((item) => ({
             id: item.itemId,
             name: item.itemName,
           })),
-          state: nearby.state || { filledSlots: filled },
+          filledSlots: filled,
         });
       }
     });
@@ -787,19 +787,33 @@ export class Game extends Scene {
       }
     });
 
+    const handleInteractionSubmitted = (data: {
+      instanceId: string;
+      placedItems: (string | null)[];
+    }) => {
+      this.isChunkSelectorOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (p) {
+        this.mechanicsManager.handleInteraction(this, p, data);
+      }
+      this.checkDialogState();
+    };
+
     this.events.on(
       GameEvents.INTERACTION_SUBMITTED,
-      (data: InteractionSubmittedData) => {
-        this.isChunkSelectorOpen = false;
-        const p = this.placeholderSystem.getPlaceholderByInstanceId(
-          data.instanceId,
-        );
-        if (p) {
-          this.mechanicsManager.handleInteraction(this, p, data);
-        }
-        this.checkDialogState();
-      },
+      handleInteractionSubmitted,
     );
+
+    EventBus.on("ui:chunk-selector-submit", handleInteractionSubmitted);
+    EventBus.on("ui:chunk-selector-close", () => {
+      if (!this.isChunkSelectorOpen) return;
+      this.isChunkSelectorOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.checkDialogState();
+    });
 
     this.events.on("item-dropped", this.handleItemDropped, this);
 
@@ -809,6 +823,8 @@ export class Game extends Scene {
       this.badgeSystem.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
+      EventBus.off("ui:chunk-selector-submit");
+      EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
 

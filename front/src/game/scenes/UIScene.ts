@@ -9,22 +9,16 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
 import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
-import { ChunkSelector } from "../objects/ui/ChunkSelector";
 import { CallbackRegistry } from "../systems/CallbackRegistry";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
-import type {
-  InteractionUIData,
-  QuizQuestion,
-  UIInitData,
-} from "../types/GameDataTypes";
+import type { QuizQuestion, UIInitData } from "../types/GameDataTypes";
 
 export class UIScene extends Scene {
   private questManager!: QuestManager;
   private placeholderSystem!: PlaceholderSystem;
 
   private root!: Phaser.GameObjects.Container;
-  private chunkSelector!: ChunkSelector;
   private callbackRegistry!: CallbackRegistry;
   private dialogueEndHandled: boolean = false;
   private dialogueActive: boolean = false;
@@ -50,7 +44,6 @@ export class UIScene extends Scene {
     this.root = this.add.container(-20, 0);
     this.root.setDepth(LayoutConfig.UI.DEPTHS.ROOT);
 
-    this.chunkSelector = new ChunkSelector(this);
     this.callbackRegistry = new CallbackRegistry();
     this.callbackRegistry.setupListeners();
 
@@ -103,19 +96,6 @@ export class UIScene extends Scene {
         this.dialogueActive = true;
         EventBus.emit("dialogue:confirm", { message, callbackId });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
-      },
-    );
-
-    gameScene.events.on(
-      GameEvents.OPEN_INTERACTION_UI_REQUEST,
-      (data: InteractionUIData) => {
-        if (this.chunkSelector) {
-          this.chunkSelector.show(
-            data.instanceId,
-            data.availableItems,
-            data.state?.filledSlots || [],
-          );
-        }
       },
     );
 
@@ -229,8 +209,6 @@ export class UIScene extends Scene {
   private layout() {
     const { width: w, height: h } = this.scale;
     this.cameras.main.setSize(w, h);
-
-    this.chunkSelector.layout(w, h);
   }
 
   private toggleControls() {

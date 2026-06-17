@@ -8,6 +8,7 @@ import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
+import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
@@ -55,10 +56,11 @@ function OverlayContent() {
 
   useEventBridge();
   const { emitComplete, emitDismiss } = useDialogueBridge();
-  const setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setBadgeGalleryOpen = useGameUIStore((s) => s.setBadgeGalleryOpen);
   const addUnlockedBadge = useGameUIStore((s) => s.addUnlockedBadge);
   const setAuthState = useGameUIStore((s) => s.setAuthState);
+  const openChunkSelector = useGameUIStore((s) => s.openChunkSelector);
+  const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
 
   const { isAuthenticated } = useAuth();
 
@@ -88,12 +90,24 @@ function OverlayContent() {
       addUnlockedBadge(data.badgeId);
     });
 
+    const unsubChunkSelectorOpen = EventBus.on(
+      "ui:chunk-selector-open",
+      (data) => {
+        openChunkSelector({
+          instanceId: data.instanceId,
+          availableItems: data.availableItems,
+          filledSlots: data.filledSlots,
+        });
+      },
+    );
+
     return () => {
       unsubControls();
       unsubToast();
       unsubLabelShow();
       unsubBadgeGallery();
       unsubBadgeUnlocked();
+      unsubChunkSelectorOpen();
     };
   }, [
     setControlsOpen,
@@ -101,10 +115,15 @@ function OverlayContent() {
     setLabelData,
     setBadgeGalleryOpen,
     addUnlockedBadge,
+    openChunkSelector,
   ]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (chunkSelectorOpen) {
+        return;
+      }
+
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
 
@@ -145,6 +164,7 @@ function OverlayContent() {
     setSidebarOpen,
     setLabelData,
     setBadgeGalleryOpen,
+    chunkSelectorOpen,
   ]);
 
   useEffect(() => {
@@ -159,6 +179,7 @@ function OverlayContent() {
   return (
     <>
       <Sidebar />
+      <ChunkSelectorPanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />
