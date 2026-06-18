@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import posthog from "posthog-js";
+import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { registerInterest } from "@/lib/api/user-interested";
 import { interestSchema } from "@/lib/validation/interest";
@@ -19,7 +20,7 @@ export function InterestDialog() {
   const isOpen = useGameUIStore((s) => s.isInterestDialogOpen);
   const closeDialog = useGameUIStore((s) => s.closeInterestDialog);
 
-  const [selection, setSelection] = useState<boolean | null>(null);
+  const [selection, setSelection] = useState<boolean | null>(true);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +32,7 @@ export function InterestDialog() {
 
   useEffect(() => {
     if (!isOpen) {
-      setSelection(null);
+      setSelection(true);
       setEmail("");
       setEmailError("");
       setIsSubmitting(false);
@@ -171,6 +172,11 @@ export function InterestDialog() {
               error={!!emailError}
               helperText={emailError}
               disabled={isSubmitting}
+              slotProps={{
+                htmlInput: {
+                  onKeyDown: (e: React.KeyboardEvent) => e.stopPropagation(),
+                },
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: GAME_UI_TOKENS.colors.bgSecondary,
