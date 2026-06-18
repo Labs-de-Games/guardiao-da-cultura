@@ -149,6 +149,10 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (!accessToken) {
+      return Promise.reject(error);
+    }
+
     if (originalRequest._retry) {
       handleAuthError(error);
     }
