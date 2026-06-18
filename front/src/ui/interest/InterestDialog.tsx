@@ -1,6 +1,13 @@
 "use client";
 
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useState } from "react";
 import { registerInterest } from "@/lib/api/user-interested";
@@ -99,6 +106,7 @@ export function InterestDialog() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        pointerEvents: "auto",
       }}
     >
       <Box
@@ -135,62 +143,21 @@ export function InterestDialog() {
             mb: 3,
           }}
         >
-          <Button
-            variant="outlined"
-            onClick={() => setSelection(true)}
-            sx={{
-              flex: 1,
-              height: 48,
-              borderColor:
-                selection === true
-                  ? GAME_UI_TOKENS.colors.accentGold
-                  : GAME_UI_TOKENS.colors.textSecondary,
-              bgcolor:
-                selection === true ? "rgba(217, 173, 86, 0.1)" : "transparent",
-              color:
-                selection === true
-                  ? GAME_UI_TOKENS.colors.accentGold
-                  : GAME_UI_TOKENS.colors.textPrimary,
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "1rem",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                borderColor: GAME_UI_TOKENS.colors.accentGold,
-                bgcolor: "rgba(217, 173, 86, 0.1)",
-              },
+          <ToggleButtonGroup
+            value={
+              selection === true ? "sim" : selection === false ? "nao" : null
+            }
+            exclusive
+            fullWidth
+            onChange={(_, newValue) => {
+              if (newValue !== null) {
+                setSelection(newValue === "sim");
+              }
             }}
           >
-            Sim
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => setSelection(false)}
-            sx={{
-              flex: 1,
-              height: 48,
-              borderColor:
-                selection === false
-                  ? GAME_UI_TOKENS.colors.accentGold
-                  : GAME_UI_TOKENS.colors.textSecondary,
-              bgcolor:
-                selection === false ? "rgba(217, 173, 86, 0.1)" : "transparent",
-              color:
-                selection === false
-                  ? GAME_UI_TOKENS.colors.accentGold
-                  : GAME_UI_TOKENS.colors.textPrimary,
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "1rem",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                borderColor: GAME_UI_TOKENS.colors.accentGold,
-                bgcolor: "rgba(217, 173, 86, 0.1)",
-              },
-            }}
-          >
-            Não
-          </Button>
+            <ToggleButton value="sim">Sim</ToggleButton>
+            <ToggleButton value="nao">Não</ToggleButton>
+          </ToggleButtonGroup>
         </Box>
 
         {selection === true && (
