@@ -13,6 +13,7 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { registerInterest } from "@/lib/api/user-interested";
 import { interestSchema } from "@/lib/validation/interest";
+import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
@@ -86,12 +87,12 @@ export function InterestDialog() {
         is_interested: isInterested,
         timestamp: Date.now(),
       });
-
-      closeDialog();
     } catch (error) {
       console.error("[InterestDialog] Error registering interest:", error);
     } finally {
       setIsSubmitting(false);
+      closeDialog();
+      EventBus.emit("quiz:close", undefined);
     }
   }, [canSubmit, isSubmitting, selection, email, closeDialog]);
 
