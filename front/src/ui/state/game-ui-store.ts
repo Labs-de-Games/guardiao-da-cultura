@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
 import { getGuestBadgeIds } from "../../lib/badgesStorage";
+import type { IntroConfig, IntroPhase } from "@/ui/intro/types";
 
 let loadGeneration = 0;
 
@@ -95,6 +96,14 @@ export interface GameUIState {
     onComplete: ((score: number) => void) | null;
   };
 
+  // Intro cinematic state
+  intro: {
+    isOpen: boolean;
+    levelId: string | null;
+    phase: IntroPhase;
+    config: IntroConfig | null;
+  };
+
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setControlsOpen: (open: boolean) => void;
@@ -139,6 +148,11 @@ export interface GameUIState {
   retryQuiz: () => void;
   closeQuiz: () => void;
   resetQuiz: () => void;
+
+  // Intro cinematic actions
+  startIntro: (levelId: string, config: IntroConfig) => void;
+  setIntroPhase: (phase: IntroPhase) => void;
+  endIntro: () => void;
 }
 
 export const useGameUIStore = create<GameUIState>()((set, get) => ({
@@ -175,6 +189,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     score: 0,
     isProcessingAnswer: false,
     onComplete: null,
+  },
+
+  intro: {
+    isOpen: false,
+    levelId: null,
+    phase: "comic",
+    config: null,
   },
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -473,6 +494,35 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
       },
     }));
   },
+
+  // Intro cinematic actions
+  startIntro: (levelId, config) =>
+    set({
+      intro: {
+        isOpen: true,
+        levelId,
+        phase: "comic",
+        config,
+      },
+    }),
+
+  setIntroPhase: (phase) =>
+    set((s) => ({
+      intro: {
+        ...s.intro,
+        phase,
+      },
+    })),
+
+  endIntro: () =>
+    set({
+      intro: {
+        isOpen: false,
+        levelId: null,
+        phase: "comic",
+        config: null,
+      },
+    }),
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>

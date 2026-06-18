@@ -184,7 +184,7 @@ export class UIScene extends Scene {
       useGameUIStore.getState().closeQuiz();
       EventBus.emit("game:ended", undefined);
       this.scene.stop(SceneNames.GAME);
-      this.scene.start(SceneNames.INTRO);
+      this.scene.start(SceneNames.LEVEL_CINEMATIC);
     });
 
     this.unsubQuizRetry = EventBus.on("quiz:retry", () => {

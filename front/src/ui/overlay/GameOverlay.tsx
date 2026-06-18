@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getGuestId } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
+import { IntroSequence } from "@/ui/intro";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
@@ -54,6 +55,11 @@ function OverlayContent() {
   const dequeueDialogue = useDialogueStore((s) => s.dequeueDialogue);
   const setLabelData = useGameUIStore((s) => s.setLabelData);
   const labelData = useGameUIStore((s) => s.labelData);
+
+  // Intro state
+  const intro = useGameUIStore((s) => s.intro);
+  const startIntro = useGameUIStore((s) => s.startIntro);
+  const endIntro = useGameUIStore((s) => s.endIntro);
 
   useEventBridge();
   const { emitComplete, emitDismiss } = useDialogueBridge();
@@ -107,6 +113,11 @@ function OverlayContent() {
       setActiveMapMarker(data);
     });
 
+    // Listen for intro:start from Phaser LevelCinematic scene
+    const unsubIntroStart = EventBus.on("intro:start", (data) => {
+      startIntro(data.levelId, data.config);
+    });
+
     return () => {
       unsubControls();
       unsubToast();
@@ -115,6 +126,7 @@ function OverlayContent() {
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
       unsubMapMarker();
+      unsubIntroStart();
     };
   }, [
     setControlsOpen,
@@ -124,6 +136,7 @@ function OverlayContent() {
     addUnlockedBadge,
     openChunkSelector,
     setActiveMapMarker,
+    startIntro,
   ]);
 
   useEffect(() => {
@@ -181,6 +194,27 @@ function OverlayContent() {
       dequeueDialogue();
     }
   }, [dialogueOpen, dequeueDialogue]);
+
+  // Handle intro completion
+  const handleIntroComplete = () => {
+    const levelId = intro.levelId;
+    endIntro();
+    // Emit event to Phaser to start the game scene
+    if (levelId) {
+      EventBus.emit("intro:complete", { levelId });
+    }
+  };
+
+  // Render intro cinematic if active
+  if (intro.isOpen && intro.config && intro.levelId) {
+    return (
+      <IntroSequence
+        config={intro.config}
+        levelId={intro.levelId}
+        onComplete={handleIntroComplete}
+      />
+    );
+  }
 
   if (!gameStarted) {
     return (

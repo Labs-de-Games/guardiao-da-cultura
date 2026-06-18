@@ -121,6 +121,15 @@ export interface MapMarkerChangedData {
   isAvailable: boolean;
 }
 
+export interface IntroStartData {
+  levelId: string;
+  config: import("../../ui/intro/types").IntroConfig;
+}
+
+export interface IntroCompleteData {
+  levelId: string;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -160,4 +169,6 @@ export interface GameEventMap {
   "quiz:close": undefined;
   "quiz:retry": undefined;
   "map:marker-changed": MapMarkerChangedData;
+  "intro:start": IntroStartData;
+  "intro:complete": IntroCompleteData;
 }
