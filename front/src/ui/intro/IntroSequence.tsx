@@ -232,7 +232,18 @@ export function IntroSequence({
     <div
       className="relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden bg-black"
       onClick={handleSkip}
-      onKeyDown={(e) => e.key === "Enter" && handleSkip()}
+      onKeyDown={(e) => {
+        if (
+          e.key === "Escape" ||
+          e.key === " " ||
+          e.key === "Enter" ||
+          e.key === "e" ||
+          e.key === "E"
+        ) {
+          e.preventDefault();
+          handleSkip();
+        }
+      }}
       role="button"
       tabIndex={0}
       aria-label="Skip intro cinematic"
@@ -252,6 +263,9 @@ export function IntroSequence({
             maxWidth: "100vw",
             maxHeight: "100vh",
             overflow: "hidden",
+            // Content is behind the click overlay
+            position: "relative",
+            zIndex: 0,
           }}
         >
           {/* SCALED STAGE: The container is sized to fit the viewport,

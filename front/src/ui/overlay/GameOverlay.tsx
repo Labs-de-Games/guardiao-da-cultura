@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { getGuestId } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
-import { IntroSequence } from "@/ui/intro";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import { IntroSequence } from "@/ui/intro";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -208,11 +208,13 @@ function OverlayContent() {
   // Render intro cinematic if active
   if (intro.isOpen && intro.config && intro.levelId) {
     return (
-      <IntroSequence
-        config={intro.config}
-        levelId={intro.levelId}
-        onComplete={handleIntroComplete}
-      />
+      <div style={{ pointerEvents: "auto", inset: 0, position: "absolute" }}>
+        <IntroSequence
+          config={intro.config}
+          levelId={intro.levelId}
+          onComplete={handleIntroComplete}
+        />
+      </div>
     );
   }
 
