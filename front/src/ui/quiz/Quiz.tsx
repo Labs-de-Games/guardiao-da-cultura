@@ -255,6 +255,7 @@ export default function QuizPanel() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!quiz.isVisible) return;
+      if (document.querySelector('[data-interest-dialog="true"]')) return;
 
       if (isPerformance) {
         switch (e.key) {

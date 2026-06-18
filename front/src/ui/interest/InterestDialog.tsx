@@ -98,10 +98,11 @@ export function InterestDialog() {
 
   return (
     <Box
+      data-interest-dialog="true"
       sx={{
         position: "fixed",
         inset: 0,
-        zIndex: 1000,
+        zIndex: 2000,
         bgcolor: "rgba(0,0,0,0.6)",
         display: "flex",
         alignItems: "center",
