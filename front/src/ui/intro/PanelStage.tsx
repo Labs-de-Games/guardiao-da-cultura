@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PixelRevealCanvas } from "./PixelRevealCanvas";
-import { PixelDissolveCanvas } from "./PixelDissolveCanvas";
 import { EASE_SHRINK } from "./constants";
+import { PixelDissolveCanvas } from "./PixelDissolveCanvas";
+import { PixelRevealCanvas } from "./PixelRevealCanvas";
 
 export type PanelStageProps = {
   src: string;
@@ -62,11 +62,16 @@ export function PanelStage({
   const firedSkip = useRef(false);
 
   // clamp sliceStart so the slice stays inside the image
-  const clampedStart = Math.max(0, Math.min(sliceStart, fullWidth - sliceWidth));
+  const clampedStart = Math.max(
+    0,
+    Math.min(sliceStart, fullWidth - sliceWidth),
+  );
 
   useEffect(() => {
     return () => {
-      timers.current.forEach((t) => window.clearTimeout(t));
+      for (const t of timers.current) {
+        window.clearTimeout(t);
+      }
       timers.current = [];
     };
   }, []);
@@ -75,7 +80,9 @@ export function PanelStage({
   useEffect(() => {
     if (!skipToEnd || firedSkip.current) return;
     firedSkip.current = true;
-    timers.current.forEach((t) => window.clearTimeout(t));
+    for (const t of timers.current) {
+      window.clearTimeout(t);
+    }
     timers.current = [];
     setPhase("done");
     onRevealed?.();
@@ -103,7 +110,9 @@ export function PanelStage({
   const containerWidth = shrunk ? sliceWidth : fullWidth;
   const translateX = shrunk ? -clampedStart : 0;
   const transition = skipToEnd ? "none" : `width ${shrinkMs}ms ${EASE_SHRINK}`;
-  const innerTransition = skipToEnd ? "none" : `transform ${shrinkMs}ms ${EASE_SHRINK}`;
+  const innerTransition = skipToEnd
+    ? "none"
+    : `transform ${shrinkMs}ms ${EASE_SHRINK}`;
 
   return (
     <div

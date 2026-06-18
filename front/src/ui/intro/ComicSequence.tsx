@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { EASE_ROLL, EASE_SHRINK } from "./constants";
 import { PanelStage } from "./PanelStage";
-import { EASE_SHRINK, EASE_ROLL } from "./constants";
 import type { PanelConfig } from "./types";
 
 export type ComicSequenceProps = {
@@ -57,7 +57,9 @@ export function ComicSequence({
   const [mountedThrough, setMountedThrough] = useState(0);
   const [allDone, setAllDone] = useState(false);
   const [preloaded, setPreloaded] = useState(false);
-  const [rolling, setRolling] = useState<boolean[]>(() => panels.map(() => false));
+  const [rolling, setRolling] = useState<boolean[]>(() =>
+    panels.map(() => false),
+  );
   const [dissolvedCount, setDissolvedCount] = useState(0);
 
   // Fire onPanelStart whenever a new panel becomes visible (mounts).
@@ -118,7 +120,11 @@ export function ComicSequence({
       }, i * rollStaggerMs);
       timers.push(t);
     });
-    return () => timers.forEach((t) => window.clearTimeout(t));
+    return () => {
+      for (const t of timers) {
+        window.clearTimeout(t);
+      }
+    };
   }, [rollOut, panels, rollStaggerMs]);
 
   // Fire onRolledOut once every panel has finished dissolving.
@@ -206,38 +212,41 @@ export function ComicSequence({
           willChange: "transform",
         }}
       >
-        {preloaded && panels.slice(0, mountedThrough + 1).map((p, i) => (
-          <div
-            key={i}
-            style={{
-              marginRight: i < panels.length - 1 ? gap : 0,
-              flex: "none",
-              transform: rolling[i] ? `translateY(-${height + 80}px)` : "translateY(0)",
-              transition: rolling[i]
-                ? `transform ${rollOutMs}ms ${EASE_ROLL}`
-                : "none",
-              willChange: "transform",
-            }}
-          >
-            <PanelStage
-              src={p.src}
-              fullWidth={fullWidth}
-              height={height}
-              sliceWidth={p.sliceWidth}
-              sliceStart={p.sliceStart}
-              revealMs={p.revealMs}
-              holdMs={p.holdMs}
-              shrinkMs={p.shrinkMs}
-              blockSize={blockSize}
-              skipToEnd={skip}
-              dissolve={rolling[i]}
-              dissolveMs={rollOutMs}
-              onShrinkStart={() => handleShrinkStart(i)}
-              onDone={() => handleDone(i)}
-              onDissolved={handleDissolved}
-            />
-          </div>
-        ))}
+        {preloaded &&
+          panels.slice(0, mountedThrough + 1).map((p, i) => (
+            <div
+              key={i}
+              style={{
+                marginRight: i < panels.length - 1 ? gap : 0,
+                flex: "none",
+                transform: rolling[i]
+                  ? `translateY(-${height + 80}px)`
+                  : "translateY(0)",
+                transition: rolling[i]
+                  ? `transform ${rollOutMs}ms ${EASE_ROLL}`
+                  : "none",
+                willChange: "transform",
+              }}
+            >
+              <PanelStage
+                src={p.src}
+                fullWidth={fullWidth}
+                height={height}
+                sliceWidth={p.sliceWidth}
+                sliceStart={p.sliceStart}
+                revealMs={p.revealMs}
+                holdMs={p.holdMs}
+                shrinkMs={p.shrinkMs}
+                blockSize={blockSize}
+                skipToEnd={skip}
+                dissolve={rolling[i]}
+                dissolveMs={rollOutMs}
+                onShrinkStart={() => handleShrinkStart(i)}
+                onDone={() => handleDone(i)}
+                onDissolved={handleDissolved}
+              />
+            </div>
+          ))}
       </div>
     </div>
   );

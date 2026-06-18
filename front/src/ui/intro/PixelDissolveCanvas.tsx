@@ -73,7 +73,7 @@ export function PixelDissolveCanvas({
       const tick = (now: number) => {
         if (cancelled) return;
         const t = Math.min(1, (now - start) / dissolveMs);
-        const eased = 1 - Math.pow(1 - t, 2);
+        const eased = 1 - (1 - t) ** 2;
         const target = Math.floor(eased * total);
         while (cleared < target) {
           const { i } = indices[cleared];

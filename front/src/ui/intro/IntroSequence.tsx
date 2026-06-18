@@ -1,24 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ComicSequence } from "./ComicSequence";
-import { KeyholeReveal } from "./KeyholeReveal";
 import { CaptionBox } from "./CaptionBox";
+import { ComicSequence } from "./ComicSequence";
 import {
-  PANEL_FULL_WIDTH,
-  PANEL_HEIGHT,
-  PANEL_GAP,
-  CAPTION_HEIGHT,
   BLOCK_SIZE,
+  CAPTION_FADE_MS,
+  CAPTION_HEIGHT,
+  CAPTION_SHOW_DELAY_FRAC,
+  KEYHOLE_DURATION_MS,
+  KEYHOLE_END_SCALE,
+  KEYHOLE_START_SCALE,
+  PANEL_FULL_WIDTH,
+  PANEL_GAP,
+  PANEL_HEIGHT,
   ROLL_DELAY_MS,
   ROLL_OUT_MS,
   ROLL_STAGGER_MS,
-  KEYHOLE_START_SCALE,
-  KEYHOLE_END_SCALE,
-  KEYHOLE_DURATION_MS,
-  CAPTION_SHOW_DELAY_FRAC,
-  CAPTION_FADE_MS,
 } from "./constants";
+import { KeyholeReveal } from "./KeyholeReveal";
 import type { IntroConfig, PanelConfig } from "./types";
 
 export type IntroSequenceProps = {
@@ -36,7 +36,11 @@ export type IntroSequenceProps = {
  * 3. Keyhole mask reveal
  * 4. Calls onComplete to transition to game
  */
-export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProps) {
+export function IntroSequence({
+  config,
+  levelId,
+  onComplete,
+}: IntroSequenceProps) {
   const [skip, setSkip] = useState(false);
   const [rollOut, setRollOut] = useState(false);
   const [keyhole, setKeyhole] = useState(false);
@@ -80,7 +84,10 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
     if (typeof window === "undefined") return;
     const vw = window.innerWidth - 48;
     const vh = window.innerHeight - 48;
-    const newScale = Math.min(vw / stageWidth, vh / (PANEL_HEIGHT + CAPTION_HEIGHT));
+    const newScale = Math.min(
+      vw / stageWidth,
+      vh / (PANEL_HEIGHT + CAPTION_HEIGHT),
+    );
     if (newScale > 0 && Number.isFinite(newScale)) {
       setScale(newScale);
     }
@@ -96,25 +103,13 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
   }, [captionPanel, stageWidth, panels]);
 
   // Scale computation - use window dimensions directly to avoid circular dependency
-  const computeScale = useCallback(
-    () => {
-      // Use window dimensions directly, accounting for padding (24px on each side = 48px total)
-      const w = window.innerWidth - 48;
-      const h = window.innerHeight - 48;
-      const s = Math.min(w / stageWidth, h / (PANEL_HEIGHT + CAPTION_HEIGHT));
-      console.log("[IntroSequence] computeScale:", { 
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        availableWidth: w, 
-        availableHeight: h, 
-        stageWidth, 
-        totalHeight: PANEL_HEIGHT + CAPTION_HEIGHT,
-        scale: s 
-      });
-      if (s > 0 && Number.isFinite(s)) setScale(s);
-    },
-    [stageWidth],
-  );
+  const computeScale = useCallback(() => {
+    // Use window dimensions directly, accounting for padding (24px on each side = 48px total)
+    const w = window.innerWidth - 48;
+    const h = window.innerHeight - 48;
+    const s = Math.min(w / stageWidth, h / (PANEL_HEIGHT + CAPTION_HEIGHT));
+    if (s > 0 && Number.isFinite(s)) setScale(s);
+  }, [stageWidth]);
 
   const fitRefCallback = useCallback(
     (el: HTMLDivElement | null) => {
@@ -159,7 +154,6 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
 
   // Skip handler
   const handleSkip = useCallback(() => {
-    console.log("[IntroSequence] handleSkip called, skipEnabled:", config.skipEnabled);
     if (!config.skipEnabled) return;
     setSkip(true);
     setRollOut(false);
@@ -169,7 +163,13 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
   // Keyboard and click skip
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === " " || e.key === "Escape" || e.key === "Enter" || e.key === "e" || e.key === "E") {
+      if (
+        e.key === " " ||
+        e.key === "Escape" ||
+        e.key === "Enter" ||
+        e.key === "e" ||
+        e.key === "E"
+      ) {
         e.preventDefault();
         handleSkip();
       }
@@ -182,23 +182,26 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
   const captionTimerRef = useRef<number | null>(null);
   const captionSequenceRef = useRef(0);
 
-  const handlePanelStart = useCallback((i: number) => {
-    const sequence = captionSequenceRef.current + 1;
-    captionSequenceRef.current = sequence;
-    setCaptionVisible(false);
-    if (captionTimerRef.current !== null) {
-      window.clearTimeout(captionTimerRef.current);
-    }
-    captionTimerRef.current = window.setTimeout(
-      () => {
-        if (captionSequenceRef.current !== sequence) return;
-        setCaptionPanel(i);
-        setCaptionVisible(true);
-        captionTimerRef.current = null;
-      },
-      Math.round(panels[i].revealMs * CAPTION_SHOW_DELAY_FRAC),
-    );
-  }, [panels]);
+  const handlePanelStart = useCallback(
+    (i: number) => {
+      const sequence = captionSequenceRef.current + 1;
+      captionSequenceRef.current = sequence;
+      setCaptionVisible(false);
+      if (captionTimerRef.current !== null) {
+        window.clearTimeout(captionTimerRef.current);
+      }
+      captionTimerRef.current = window.setTimeout(
+        () => {
+          if (captionSequenceRef.current !== sequence) return;
+          setCaptionPanel(i);
+          setCaptionVisible(true);
+          captionTimerRef.current = null;
+        },
+        Math.round(panels[i].revealMs * CAPTION_SHOW_DELAY_FRAC),
+      );
+    },
+    [panels],
+  );
 
   const handlePanelShrink = useCallback(() => {
     captionSequenceRef.current += 1;
@@ -225,12 +228,17 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
   const currentPanel = captionPanel >= 0 ? panels[captionPanel] : panels[0];
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: Full-screen skip overlay needs to be a div for layout
     <div
       className="relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden bg-black"
       onClick={handleSkip}
+      onKeyDown={(e) => e.key === "Enter" && handleSkip()}
+      role="button"
+      tabIndex={0}
+      aria-label="Skip intro cinematic"
     >
       {!keyhole && (
-        <div 
+        <div
           ref={fitRefCallback}
           style={{
             display: "flex",
@@ -292,7 +300,8 @@ export function IntroSequence({ config, levelId, onComplete }: IntroSequenceProp
                   top: PANEL_HEIGHT,
                   left: captionPanelLeft,
                   width: PANEL_FULL_WIDTH,
-                  opacity: captionPanel >= 0 && captionVisible && !rollOut ? 1 : 0,
+                  opacity:
+                    captionPanel >= 0 && captionVisible && !rollOut ? 1 : 0,
                   transition: `opacity ${CAPTION_FADE_MS}ms ease-out`,
                 }}
               >

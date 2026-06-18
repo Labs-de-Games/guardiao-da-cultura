@@ -93,7 +93,7 @@ export function PixelRevealCanvas({
         if (cancelled) return;
         const t = Math.min(1, (now - start) / revealMs);
         // Slight ease-out so the last blocks settle gently.
-        const eased = 1 - Math.pow(1 - t, 2);
+        const eased = 1 - (1 - t) ** 2;
         const target = Math.floor(eased * total);
 
         while (drawn < target) {

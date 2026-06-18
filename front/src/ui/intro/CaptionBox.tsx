@@ -2,21 +2,21 @@
 
 import {
   CAPTION_BG,
+  CAPTION_BODY_COLOR,
+  CAPTION_BODY_FONT,
+  CAPTION_BODY_LINE_HEIGHT,
+  CAPTION_BODY_SIZE,
   CAPTION_BORDER,
   CAPTION_BORDER_RADIUS,
+  CAPTION_IMAGE_MASK,
+  CAPTION_IMAGE_WIDTH,
   CAPTION_PADDING,
-  CAPTION_TITLE_FONT,
-  CAPTION_TITLE_SIZE,
+  CAPTION_TEXT_COL_WIDTH,
   CAPTION_TITLE_COLOR,
+  CAPTION_TITLE_FONT,
   CAPTION_TITLE_LETTER_SPACING,
   CAPTION_TITLE_MARGIN_BOTTOM,
-  CAPTION_BODY_FONT,
-  CAPTION_BODY_SIZE,
-  CAPTION_BODY_COLOR,
-  CAPTION_BODY_LINE_HEIGHT,
-  CAPTION_IMAGE_WIDTH,
-  CAPTION_TEXT_COL_WIDTH,
-  CAPTION_IMAGE_MASK,
+  CAPTION_TITLE_SIZE,
 } from "./constants";
 
 export type CaptionBoxProps = {
@@ -34,7 +34,12 @@ export type CaptionBoxProps = {
  * the text column is constrained to the left portion of the box so it wraps
  * before reaching the image.
  */
-export function CaptionBox({ title, text, image, imageAlt = "" }: CaptionBoxProps) {
+export function CaptionBox({
+  title,
+  text,
+  image,
+  imageAlt = "",
+}: CaptionBoxProps) {
   return (
     <div
       style={{
