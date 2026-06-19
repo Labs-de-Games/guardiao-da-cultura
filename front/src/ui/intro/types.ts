@@ -26,7 +26,7 @@ export type PanelConfig = {
 export type IntroConfig = {
   /** Array of panel configurations */
   panels: PanelConfig[];
-  /** Keyhole mask image filename */
+  /** Mask image filename (icon-shaped silhouette) */
   revealIconMask: string;
   /** Loading/scene image filename */
   loadingImage: string;
@@ -36,7 +36,7 @@ export type IntroConfig = {
   skipEnabled: boolean;
 };
 
-export type IntroPhase = "comic" | "rollout" | "keyhole" | "complete";
+export type IntroPhase = "comic" | "rollout" | "mask" | "complete";
 
 export type IntroState = {
   /** Whether the intro is currently playing */

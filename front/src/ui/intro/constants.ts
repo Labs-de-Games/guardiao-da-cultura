@@ -27,13 +27,13 @@ export const ROLL_OUT_MS = 1400; // duration of each panel's upward roll + disso
 export const ROLL_STAGGER_MS = 600; // delay between successive panels starting to roll up
 
 // ────────────────────────────────────────────────────────────────────
-// KEYHOLE REVEAL (post-comic transition into the scene).
-// The mask grows from `KEYHOLE_START_SCALE` × viewport-longest-side
-// up to `KEYHOLE_END_SCALE` × viewport-longest-side over `KEYHOLE_DURATION_MS`.
+// MASK REVEAL (post-comic transition into the scene).
+// The mask grows from `MASK_START_SCALE` × viewport-longest-side
+// up to `MASK_END_SCALE` × viewport-longest-side over `MASK_DURATION_MS`.
 // ────────────────────────────────────────────────────────────────────
-export const KEYHOLE_START_SCALE = 0.06;
-export const KEYHOLE_END_SCALE = 6;
-export const KEYHOLE_DURATION_MS = 1600;
+export const MASK_START_SCALE = 0.06;
+export const MASK_END_SCALE = 6;
+export const MASK_DURATION_MS = 1800;
 
 // ────────────────────────────────────────────────────────────────────
 // CAPTION TIMING
@@ -44,8 +44,8 @@ export const CAPTION_FADE_MS = 400; // duration of caption fade in/out
 // ────────────────────────────────────────────────────────────────────
 // CAPTION BOX STYLING
 // ────────────────────────────────────────────────────────────────────
-export const CAPTION_BG = "#262624";
-export const CAPTION_BORDER = "2px solid #c08a3e";
+export const CAPTION_BG = "#252726";
+export const CAPTION_BORDER = "2px solid #AF7E2F";
 export const CAPTION_BORDER_RADIUS = "0 0 16px 16px";
 export const CAPTION_PADDING = "26px 36px";
 

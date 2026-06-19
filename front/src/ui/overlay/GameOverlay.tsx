@@ -195,14 +195,9 @@ function OverlayContent() {
     }
   }, [dialogueOpen, dequeueDialogue]);
 
-  // Handle intro completion
+  // Handle intro completion (called after mask reveal and game loading finish)
   const handleIntroComplete = () => {
-    const levelId = intro.levelId;
     endIntro();
-    // Emit event to Phaser to start the game scene
-    if (levelId) {
-      EventBus.emit("intro:complete", { levelId });
-    }
   };
 
   // Render intro cinematic if active

@@ -1,16 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EventBus } from "../../shared/events/event-bus";
 import { CaptionBox } from "./CaptionBox";
 import { ComicSequence } from "./ComicSequence";
 import {
   BLOCK_SIZE,
+  CAPTION_BG,
+  CAPTION_BODY_COLOR,
+  CAPTION_BODY_FONT,
+  CAPTION_BORDER,
   CAPTION_FADE_MS,
   CAPTION_HEIGHT,
   CAPTION_SHOW_DELAY_FRAC,
-  KEYHOLE_DURATION_MS,
-  KEYHOLE_END_SCALE,
-  KEYHOLE_START_SCALE,
+  MASK_DURATION_MS,
+  MASK_END_SCALE,
+  MASK_START_SCALE,
   PANEL_FULL_WIDTH,
   PANEL_GAP,
   PANEL_HEIGHT,
@@ -18,7 +23,7 @@ import {
   ROLL_OUT_MS,
   ROLL_STAGGER_MS,
 } from "./constants";
-import { KeyholeReveal } from "./KeyholeReveal";
+import { MaskReveal } from "./MaskReveal";
 import type { IntroConfig, PanelConfig } from "./types";
 
 export type IntroSequenceProps = {
@@ -33,7 +38,7 @@ export type IntroSequenceProps = {
  * Plays the full intro sequence:
  * 1. Comic panels with pixel-reveal, shrink-to-slice, and captions
  * 2. Roll-out animation with pixel-dissolve
- * 3. Keyhole mask reveal
+ * 3. Mask reveal transition
  * 4. Calls onComplete to transition to game
  */
 export function IntroSequence({
@@ -43,7 +48,7 @@ export function IntroSequence({
 }: IntroSequenceProps) {
   const [skip, setSkip] = useState(false);
   const [rollOut, setRollOut] = useState(false);
-  const [keyhole, setKeyhole] = useState(false);
+  const [maskReveal, setMaskReveal] = useState(false);
   const [captionPanel, setCaptionPanel] = useState<number>(-1);
   const [captionVisible, setCaptionVisible] = useState(false);
   const fitElRef = useRef<HTMLDivElement | null>(null);
@@ -143,7 +148,7 @@ export function IntroSequence({
     };
   }, [computeScale]);
 
-  // Preload keyhole assets
+  // Preload mask reveal assets
   useEffect(() => {
     [maskSrc, sceneSrc].forEach((src) => {
       const img = new Image();
@@ -157,7 +162,7 @@ export function IntroSequence({
     if (!config.skipEnabled) return;
     setSkip(true);
     setRollOut(false);
-    setKeyhole(true);
+    setMaskReveal(true);
   }, [config.skipEnabled]);
 
   // Keyboard and click skip
@@ -217,10 +222,15 @@ export function IntroSequence({
   }, []);
 
   const handleRolledOut = useCallback(() => {
-    setKeyhole(true);
+    setMaskReveal(true);
   }, []);
 
-  const handleKeyholeDone = useCallback(() => {
+  // When mask animation starts, emit event to start game loading
+  const handleMaskAnimationStart = useCallback(() => {
+    EventBus.emit("intro:complete", { levelId });
+  }, [levelId]);
+
+  const handleMaskDone = useCallback(() => {
     onComplete();
   }, [onComplete]);
 
@@ -246,9 +256,9 @@ export function IntroSequence({
       }}
       role="button"
       tabIndex={0}
-      aria-label="Skip intro cinematic"
+      aria-label="Aperte ESC para pular a introdução"
     >
-      {!keyhole && (
+      {!maskReveal && (
         <div
           ref={fitRefCallback}
           style={{
@@ -268,6 +278,25 @@ export function IntroSequence({
             zIndex: 0,
           }}
         >
+          {/* Skip hint box - top left corner */}
+          <div
+            style={{
+              position: "absolute",
+              top: "24px",
+              left: "24px",
+              background: CAPTION_BG,
+              border: CAPTION_BORDER,
+              borderRadius: "8px",
+              padding: "12px 16px",
+              fontFamily: CAPTION_BODY_FONT,
+              fontSize: "10px",
+              color: CAPTION_BODY_COLOR,
+              zIndex: 10, // Above all content
+              pointerEvents: "none",
+            }}
+          >
+            ⏩︎ Aperte ESC para pular a introdução
+          </div>
           {/* SCALED STAGE: The container is sized to fit the viewport,
               and the inner content is scaled via transform. */}
           <div
@@ -330,14 +359,15 @@ export function IntroSequence({
         </div>
       )}
 
-      {keyhole && (
-        <KeyholeReveal
+      {maskReveal && (
+        <MaskReveal
           sceneSrc={sceneSrc}
           maskSrc={maskSrc}
-          startScale={KEYHOLE_START_SCALE}
-          endScale={KEYHOLE_END_SCALE}
-          durationMs={KEYHOLE_DURATION_MS}
-          onDone={handleKeyholeDone}
+          startScale={MASK_START_SCALE}
+          endScale={MASK_END_SCALE}
+          durationMs={MASK_DURATION_MS}
+          onAnimationStart={handleMaskAnimationStart}
+          onDone={handleMaskDone}
         />
       )}
     </div>
