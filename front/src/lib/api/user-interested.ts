@@ -7,7 +7,6 @@ export interface UserInterestedData {
 export interface UserInterestedResponse {
   id: string;
   email: string | null;
-  is_interested: boolean;
   created_at: string;
   updated_at: string;
 }
