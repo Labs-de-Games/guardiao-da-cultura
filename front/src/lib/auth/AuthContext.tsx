@@ -148,31 +148,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiLogin(data);
   }, []);
 
-  const finalizeAuth = useCallback(
-    async (userData: User) => {
-      const token = await apiRefreshToken();
-      setAccessToken(token);
-      setAccessTokenState(token);
-      setGuestId(null);
-      setUser(userData);
-      setIsAuthenticated(true);
-      setAuthStatusCookie();
-      posthog.identify(userData.id);
-      void mergeGuestBadges();
-      const destination =
-        userData.role === "institution" || userData.role === "admin"
-          ? "/institution"
-          : "/";
-      router.push(destination);
-    },
-    [router, mergeGuestBadges],
-  );
+  const finalizeAuth = useCallback(async () => {
+    // /auth/me requires Bearer token. Refresh first, then load profile.
+    const token = await apiRefreshToken();
+    setAccessToken(token);
+    setAccessTokenState(token);
+
+    const userData = await apiMe();
+
+    setGuestId(null);
+    setUser(userData);
+    setIsAuthenticated(true);
+    setAuthStatusCookie();
+    posthog.identify(userData.id);
+    void mergeGuestBadges();
+
+    const destination =
+      userData.role === "institution" || userData.role === "admin"
+        ? "/institution"
+        : "/";
+    router.push(destination);
+  }, [router, mergeGuestBadges]);
 
   const confirmLogin = useCallback(
     async (data: LoginConfirmData) => {
       await apiConfirmLogin(data);
-      const userData = await apiMe();
-      await finalizeAuth(userData);
+      await finalizeAuth();
     },
     [finalizeAuth],
   );
@@ -184,8 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const confirmVerifyEmail = useCallback(
     async (data: VerifyEmailConfirmData) => {
       await apiConfirmVerifyEmail(data);
-      const userData = await apiMe();
-      await finalizeAuth(userData);
+      await finalizeAuth();
     },
     [finalizeAuth],
   );
