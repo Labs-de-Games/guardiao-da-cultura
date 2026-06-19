@@ -11,6 +11,7 @@ import {
 import posthog from "posthog-js";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 import { registerInterest } from "@/lib/api/user-interested";
 import { interestSchema } from "@/lib/validation/interest";
 import { EventBus } from "@/shared/events/event-bus";
@@ -20,6 +21,7 @@ import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 export function InterestDialog() {
   const isOpen = useGameUIStore((s) => s.isInterestDialogOpen);
   const closeDialog = useGameUIStore((s) => s.closeInterestDialog);
+  const { showToast } = useToast();
 
   const [selection, setSelection] = useState<boolean | null>(true);
   const [email, setEmail] = useState("");
@@ -81,6 +83,8 @@ export function InterestDialog() {
           email_provided: true,
           timestamp: Date.now(),
         });
+
+        showToast("Em breve entraremos em contato", "info");
       }
     } catch (error) {
       console.error("[InterestDialog] Error registering interest:", error);
@@ -89,7 +93,7 @@ export function InterestDialog() {
       closeDialog();
       EventBus.emit("quiz:close", undefined);
     }
-  }, [canSubmit, isSubmitting, selection, email, closeDialog]);
+  }, [canSubmit, isSubmitting, selection, email, closeDialog, showToast]);
 
   if (!isOpen) return null;
 
