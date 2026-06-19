@@ -21,9 +21,10 @@ That mismatch caused server errors during guest sessions (for example score/coll
   - collectible restore from `/scores/:userId/...` is skipped for guest mode;
   - score submit to backend is skipped for guest mode.
 
-### 3) Keep badge system usable when backend is unavailable
+### 3) Keep badge system guest-first and robust
 
-- `fetchBadges()` now falls back to local mock badge definitions when API fetch fails.
+- Guest flow loads badge catalog from local source by design (no `/badges` request in guest mode).
+- Authenticated flow keeps backend badge catalog request (`/badges`).
 - Guest badge unlock behavior remains local (no server unlock call).
 - Server-side badge earned event emission is restricted to authenticated mode.
 
