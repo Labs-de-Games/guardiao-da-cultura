@@ -128,14 +128,24 @@ export function InterestDialog() {
           sx={{
             color: GAME_UI_TOKENS.colors.textPrimary,
             fontFamily: "'Inter', sans-serif",
-            fontSize: "1.125rem",
-            fontWeight: 600,
-            mb: 3,
-            lineHeight: 1.5,
+            fontWeight: 700,
+            textAlign: "center",
           }}
         >
-          A gente vai trazer mais fases logo logo. Topa receber um e-mail quando
-          uma nova fase chegar?
+          FASE NOVA EM CONSTRUÇÃO
+        </Typography>
+
+        <Typography
+          sx={{
+            color: GAME_UI_TOKENS.colors.textPrimary,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: "1rem",
+            fontWeight: 400,
+            mt: 1,
+            mb: 3,
+          }}
+        >
+          Quer receber uma notificação quando ela estiver pronta?
         </Typography>
 
         <Box
