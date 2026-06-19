@@ -287,8 +287,10 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   loadBadgeData: async () => {
     const gen = ++loadGeneration;
     try {
-      const allBadges = await fetchBadges();
       const { isAuthenticated, guestId } = useGameUIStore.getState();
+      const allBadges = await fetchBadges({
+        source: isAuthenticated ? "auth" : "guest",
+      });
 
       let unlockedIds: string[] = [];
       if (isAuthenticated) {
