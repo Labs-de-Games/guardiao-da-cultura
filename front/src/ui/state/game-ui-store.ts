@@ -82,6 +82,7 @@ export interface GameUIState {
   badgeError: string | null;
   isAuthenticated: boolean;
   guestId: string | null;
+  isInterestDialogOpen: boolean;
 
   quiz: {
     isVisible: boolean;
@@ -128,6 +129,8 @@ export interface GameUIState {
   setBadgeData: (badges: BadgeConfig[], unlockedIds: string[]) => void;
   loadBadgeData: () => Promise<void>;
   addUnlockedBadge: (badgeId: string) => void;
+  openInterestDialog: () => void;
+  closeInterestDialog: () => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -164,6 +167,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   badgeError: null,
   isAuthenticated: false,
   guestId: null,
+  isInterestDialogOpen: false,
 
   quiz: {
     isVisible: false,
@@ -317,6 +321,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
       if (s.unlockedBadgeIds.includes(badgeId)) return s;
       return { unlockedBadgeIds: [...s.unlockedBadgeIds, badgeId] };
     }),
+  openInterestDialog: () => set({ isInterestDialogOpen: true }),
+  closeInterestDialog: () => set({ isInterestDialogOpen: false }),
 
   startQuiz: (questions, onComplete) => {
     set((_s) => ({
