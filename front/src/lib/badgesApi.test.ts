@@ -14,7 +14,15 @@ describe("badgesApi", () => {
     mockGet.mockReset();
   });
 
-  it("maps badges from API response", async () => {
+  it("returns local badge catalog for guest source without API call", async () => {
+    const { fetchBadges } = await import("./badgesApi");
+    const badges = await fetchBadges({ source: "guest" });
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(badges).toEqual(MOCK_BADGES);
+  });
+
+  it("maps badges from API response for auth source", async () => {
     mockGet.mockResolvedValueOnce({
       data: [
         {
@@ -32,7 +40,7 @@ describe("badgesApi", () => {
     });
 
     const { fetchBadges } = await import("./badgesApi");
-    const badges = await fetchBadges();
+    const badges = await fetchBadges({ source: "auth" });
 
     expect(mockGet).toHaveBeenCalledWith("/badges");
     expect(badges).toEqual([
@@ -48,13 +56,13 @@ describe("badgesApi", () => {
     ]);
   });
 
-  it("falls back to local mock badges when API fails", async () => {
+  it("throws when auth source API call fails", async () => {
     mockGet.mockRejectedValueOnce(new Error("Internal Server Error"));
 
     const { fetchBadges } = await import("./badgesApi");
-    const badges = await fetchBadges();
-
+    await expect(fetchBadges({ source: "auth" })).rejects.toThrow(
+      "Internal Server Error",
+    );
     expect(mockGet).toHaveBeenCalledWith("/badges");
-    expect(badges).toEqual(MOCK_BADGES);
   });
 });

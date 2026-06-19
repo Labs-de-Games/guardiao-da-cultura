@@ -36,9 +36,8 @@ export class BadgeSystem {
 
   public async initialize() {
     try {
-      this.badges = await fetchBadges();
-
       const isGuest = this.scene.registry.get("isGuest") === true;
+      this.badges = await fetchBadges({ source: isGuest ? "guest" : "auth" });
 
       if (isGuest) {
         const userId = this.scene.registry.get("userId");

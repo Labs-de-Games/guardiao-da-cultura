@@ -24,27 +24,29 @@ export interface UserBadgeRecord {
   badge: ServerBadgeConfig;
 }
 
-export async function fetchBadges(): Promise<BadgeConfig[]> {
-  try {
-    const res = await apiClient.get<ServerBadgeConfig[]>("/badges");
-    const badges = res.data;
+export interface FetchBadgesOptions {
+  source?: "guest" | "auth";
+}
 
-    return badges.map((b) => ({
-      id: b.id,
-      name: b.name,
-      description: b.description,
-      stat_required: b.statRequired ?? "",
-      condition: b.condition,
-      goal_value: b.goalValue,
-      icon_key: b.iconUrl.split("/").pop()?.replace(".png", "") ?? b.id,
-    }));
-  } catch (error) {
-    console.warn(
-      "[badgesApi] Failed to fetch badges from API, using local mock badges",
-      error,
-    );
+export async function fetchBadges(
+  options: FetchBadgesOptions = {},
+): Promise<BadgeConfig[]> {
+  if (options.source === "guest") {
     return MOCK_BADGES;
   }
+
+  const res = await apiClient.get<ServerBadgeConfig[]>("/badges");
+  const badges = res.data;
+
+  return badges.map((b) => ({
+    id: b.id,
+    name: b.name,
+    description: b.description,
+    stat_required: b.statRequired ?? "",
+    condition: b.condition,
+    goal_value: b.goalValue,
+    icon_key: b.iconUrl.split("/").pop()?.replace(".png", "") ?? b.id,
+  }));
 }
 
 export async function unlockBadgeOnServer(badgeId: string): Promise<boolean> {
