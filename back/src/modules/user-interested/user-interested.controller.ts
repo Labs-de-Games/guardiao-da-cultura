@@ -16,9 +16,6 @@ export class UserInterestedController {
   async registerInterest(
     @Body() dto: CreateUserInterestedDto,
   ): Promise<UserInterested> {
-    return this.userInterestedService.registerInterest(
-      dto.email ?? null,
-      dto.is_interested,
-    );
+    return this.userInterestedService.registerInterest(dto.email);
   }
 }

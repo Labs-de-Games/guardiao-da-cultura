@@ -1,8 +1,7 @@
 import { apiClient } from "./client";
 
 export interface UserInterestedData {
-  email?: string;
-  is_interested: boolean;
+  email: string;
 }
 
 export interface UserInterestedResponse {
