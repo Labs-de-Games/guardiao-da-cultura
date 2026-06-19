@@ -36,9 +36,8 @@ export class BadgeSystem {
 
   public async initialize() {
     try {
-      this.badges = await fetchBadges();
-
       const isGuest = this.scene.registry.get("isGuest") === true;
+      this.badges = await fetchBadges({ source: isGuest ? "guest" : "auth" });
 
       if (isGuest) {
         const userId = this.scene.registry.get("userId");
@@ -106,15 +105,19 @@ export class BadgeSystem {
     });
 
     this.syncUnlockToServer(badge.id);
+
+    const isGuest = this.scene.registry.get("isGuest") === true;
     const userId = this.scene.registry.get("userId");
-    if (userId) {
+    if (!isGuest && userId) {
       this.emitBadgeEarnedEvent(userId, badge);
-      posthog.capture("badge_earned", {
-        badge_id: badge.id,
-        badge_name: badge.name,
-        level_id: this.scene.registry.get("currentLevelId"),
-      });
     }
+
+    posthog.capture("badge_earned", {
+      badge_id: badge.id,
+      badge_name: badge.name,
+      level_id: this.scene.registry.get("currentLevelId"),
+      is_guest: isGuest,
+    });
   }
 
   private emitBadgeEarnedEvent(userId: string, badge: BadgeConfig) {

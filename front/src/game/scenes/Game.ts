@@ -512,6 +512,10 @@ export class Game extends Scene {
   }
 
   private async initializeCollectibles(): Promise<void> {
+    if (this.registry.get("isGuest") === true) {
+      return;
+    }
+
     const userId = this.registry.get("userId") as string | undefined;
     let collected: Array<{
       collectibleId: string;
@@ -1195,6 +1199,8 @@ export class Game extends Scene {
 
   private async submitScoreToBackend() {
     try {
+      if (this.registry.get("isGuest") === true) return;
+
       const userId = this.registry.get("userId");
       if (!userId) return;
 
