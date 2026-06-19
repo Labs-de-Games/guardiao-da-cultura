@@ -74,19 +74,14 @@ export function InterestDialog() {
 
     setIsSubmitting(true);
     try {
-      const isInterested = selection === true;
-      const emailValue = isInterested ? email.trim() : null;
+      if (selection === true) {
+        await registerInterest({ email: email.trim() });
 
-      await registerInterest({
-        email: emailValue ?? undefined,
-        is_interested: isInterested,
-      });
-
-      posthog.capture("user_interest_registered", {
-        email_provided: isInterested,
-        is_interested: isInterested,
-        timestamp: Date.now(),
-      });
+        posthog.capture("user_interest_registered", {
+          email_provided: true,
+          timestamp: Date.now(),
+        });
+      }
     } catch (error) {
       console.error("[InterestDialog] Error registering interest:", error);
     } finally {

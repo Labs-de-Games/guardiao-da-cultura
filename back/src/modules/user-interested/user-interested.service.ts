@@ -10,33 +10,19 @@ export class UserInterestedService {
     private readonly userInterestedRepository: Repository<UserInterested>,
   ) {}
 
-  async registerInterest(
-    email: string | null,
-    isInterested: boolean,
-  ): Promise<UserInterested> {
-    // For null emails (anonymous), always create new record
-    if (!email) {
-      return this.userInterestedRepository.save({
-        email: null,
-        is_interested: isInterested,
-      });
-    }
-
-    // Check for existing record with this email
+  async registerInterest(email: string): Promise<UserInterested> {
     const existingRecord = await this.userInterestedRepository.findOne({
       where: { email },
     });
 
     if (existingRecord) {
-      // Update existing record (preserves created_at, updates updated_at)
-      existingRecord.is_interested = isInterested;
+      existingRecord.is_interested = true;
       return this.userInterestedRepository.save(existingRecord);
     }
 
-    // Create new record if email doesn't exist
     return this.userInterestedRepository.save({
       email,
-      is_interested: isInterested,
+      is_interested: true,
     });
   }
 }
