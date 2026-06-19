@@ -16,13 +16,9 @@ export class UserInterestedService {
     });
 
     if (existingRecord) {
-      existingRecord.is_interested = true;
       return this.userInterestedRepository.save(existingRecord);
     }
 
-    return this.userInterestedRepository.save({
-      email,
-      is_interested: true,
-    });
+    return this.userInterestedRepository.save({ email });
   }
 }
