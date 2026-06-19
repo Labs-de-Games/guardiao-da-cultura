@@ -13,7 +13,28 @@ const GameOverlay = dynamic(
   { ssr: false },
 );
 
-export default function PhaserGame() {
+interface PhaserGameProps {
+  entryFlow?: "map" | "direct";
+}
+
+const FALLBACK_GUEST_ID_KEY = "gp_fallback_guest_id";
+
+function getOrCreateFallbackGuestId(): string {
+  if (typeof window === "undefined") return "";
+
+  const existing = window.localStorage.getItem(FALLBACK_GUEST_ID_KEY);
+  if (existing) return existing;
+
+  const generated =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `guest-${Date.now()}`;
+
+  window.localStorage.setItem(FALLBACK_GUEST_ID_KEY, generated);
+  return generated;
+}
+
+export default function PhaserGame(_props?: PhaserGameProps) {
   const { user } = useAuth();
   const posthogDistinctId = usePostHogDistinctId();
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -45,15 +66,16 @@ export default function PhaserGame() {
     const initGame = async () => {
       try {
         const activeUserId = user?.id;
-        const playerId = activeUserId ?? posthogDistinctId ?? "";
         const isGuest = !activeUserId;
+        const fallbackGuestId = isGuest ? getOrCreateFallbackGuestId() : "";
+        const playerId = activeUserId ?? posthogDistinctId ?? fallbackGuestId;
 
         if (!playerId) {
           throw new Error("Player ID is required to start the game.");
         }
 
-        if (isGuest && posthogDistinctId) {
-          setGuestId(posthogDistinctId);
+        if (isGuest) {
+          setGuestId(posthogDistinctId ?? fallbackGuestId);
         }
 
         const { default: StartGame } = await import("../game/main");
