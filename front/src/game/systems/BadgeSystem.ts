@@ -1,15 +1,8 @@
 import type { Scene } from "phaser";
 import posthog from "posthog-js";
-import { sendGameEvent } from "../../lib/analyticsApi";
-import {
-  fetchBadges,
-  fetchUserBadges,
-  unlockBadgeOnServer,
-} from "../../lib/badgesApi";
-import { addGuestBadge, getGuestBadgeIds } from "../../lib/badgesStorage";
+import type { GamePersistence } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
-import { GameEventType } from "../types/AnalyticsTypes";
 import type { BadgeConfig } from "../types/BadgeTypes";
 
 const CONDITION_HANDLERS: Record<
@@ -25,40 +18,28 @@ const CONDITION_HANDLERS: Record<
 
 export class BadgeSystem {
   private scene: Scene;
+  private persistence: GamePersistence;
   private badges: BadgeConfig[] = [];
   private unlockedBadges: Set<string> = new Set();
 
-  constructor(scene: Scene) {
+  constructor(scene: Scene, persistence: GamePersistence) {
     this.scene = scene;
+    this.persistence = persistence;
 
     this.scene.registry.events.on("changedata", this.onRegistryChange, this);
   }
 
   public async initialize() {
     try {
-      const isGuest = this.scene.registry.get("isGuest") === true;
-      this.badges = await fetchBadges({ source: isGuest ? "guest" : "auth" });
+      this.badges = await this.persistence.getBadgeCatalog();
 
-      if (isGuest) {
-        const userId = this.scene.registry.get("userId");
-        if (typeof userId === "string" && userId) {
-          const guestBadges = getGuestBadgeIds(userId);
-          for (const id of guestBadges) {
-            this.unlockedBadges.add(id);
-          }
-        }
-      } else {
-        try {
-          const userBadges = await fetchUserBadges();
-          userBadges.forEach((ub) => {
-            this.unlockedBadges.add(ub.badgeId);
-          });
-        } catch (e) {
-          console.warn(
-            "[BadgeSystem] Could not sync unlocked badges from server",
-            e,
-          );
-        }
+      try {
+        const unlockedIds = await this.persistence.getUnlockedBadgeIds();
+        unlockedIds.forEach((id) => {
+          this.unlockedBadges.add(id);
+        });
+      } catch (e) {
+        console.warn("[BadgeSystem] Could not sync unlocked badges", e);
       }
 
       this.badges.forEach((badge) => {
@@ -104,52 +85,34 @@ export class BadgeSystem {
       iconKey: badge.icon_key,
     });
 
-    this.syncUnlockToServer(badge.id);
+    void this.syncUnlockToPersistence(badge.id);
 
-    const isGuest = this.scene.registry.get("isGuest") === true;
-    const userId = this.scene.registry.get("userId");
-    if (!isGuest && userId) {
-      this.emitBadgeEarnedEvent(userId, badge);
-    }
+    void this.persistence.sendBadgeEarnedEvent({
+      badgeId: badge.id,
+      badgeName: badge.name,
+    });
 
     posthog.capture("badge_earned", {
       badge_id: badge.id,
       badge_name: badge.name,
       level_id: this.scene.registry.get("currentLevelId"),
-      is_guest: isGuest,
+      is_guest: this.persistence.mode === "guest",
     });
   }
 
-  private emitBadgeEarnedEvent(userId: string, badge: BadgeConfig) {
-    const payload = {
-      userId,
-      type: GameEventType.BADGE_EARNED,
-      timestamp: new Date().toISOString(),
-      metadata: { badgeId: badge.id, badgeName: badge.name },
-    };
-
-    sendGameEvent(payload).catch((err) => {
-      console.error("[BadgeSystem] Failed to send badge.earned event:", err);
-    });
-  }
-
-  private async syncUnlockToServer(badgeId: string) {
-    const isGuest = this.scene.registry.get("isGuest") === true;
-    if (isGuest) {
-      const guestId = this.scene.registry.get("userId");
-      if (typeof guestId === "string" && guestId) {
-        addGuestBadge(guestId, badgeId);
+  private async syncUnlockToPersistence(badgeId: string) {
+    try {
+      await this.persistence.unlockBadge(badgeId);
+      if (this.persistence.mode === "guest") {
         console.log(
           `[BadgeSystem] Saved badge to localStorage for guest: ${badgeId}`,
         );
       }
-      return;
-    }
-    try {
-      await unlockBadgeOnServer(badgeId);
     } catch (err) {
       console.error(`[BadgeSystem] Failed to sync unlock for ${badgeId}`, err);
-      this.retryUnlock(badgeId);
+      if (this.persistence.mode === "auth") {
+        this.retryUnlock(badgeId);
+      }
     }
   }
 
@@ -157,7 +120,8 @@ export class BadgeSystem {
     if (attempt > 3) return;
 
     setTimeout(() => {
-      unlockBadgeOnServer(badgeId)
+      this.persistence
+        .unlockBadge(badgeId)
         .then(() =>
           console.log(
             `[BadgeSystem] Retry ${attempt} succeeded for ${badgeId}`,
