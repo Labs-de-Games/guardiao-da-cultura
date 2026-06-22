@@ -4,6 +4,7 @@ export const ScoringEvents = {
   FLOOR_COMPLETED: "floor-completed",
   COLLECTIBLE_USED: "collectible-used",
   QUIZ_COMPLETED: "quiz-completed",
+  INTERMEDIATE_QUIZ_COMPLETED: "intermediate-quiz-completed",
 } as const;
 
 export type ScoringEventName =
