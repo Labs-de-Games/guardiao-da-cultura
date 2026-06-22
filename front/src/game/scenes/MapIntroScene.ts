@@ -103,9 +103,20 @@ export class MapIntroScene extends Scene {
       .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.pathGraphics = this.add.graphics();
 
-    MARKERS.forEach((markerData) => {
+    MARKERS.forEach((markerData, index) => {
       const marker = this.add.image(0, 0, this.markerKey).setOrigin(0.5);
       marker.setTint(this.unavailableMarkerTint);
+
+      // Make markers interactive
+      marker.setInteractive({ useHandCursor: true });
+      marker.on("pointerdown", () => {
+        this.activeMarkerIndex = index;
+        this.emitMarkerChanged();
+        if (index === 0) {
+          this.beginGame();
+        }
+      });
+
       this.markerViews.set(markerData.id, { marker });
     });
 
