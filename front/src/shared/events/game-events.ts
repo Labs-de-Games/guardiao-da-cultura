@@ -121,6 +121,11 @@ export interface MapMarkerChangedData {
   isAvailable: boolean;
 }
 
+export interface AutoStartTickData {
+  remainingMs: number;
+  totalMs: number;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -160,4 +165,7 @@ export interface GameEventMap {
   "quiz:close": undefined;
   "quiz:retry": undefined;
   "map:marker-changed": MapMarkerChangedData;
+  "map:auto-start-tick": AutoStartTickData;
+  "map:auto-start-canceled": undefined;
+  "map:auto-start-completed": undefined;
 }

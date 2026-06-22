@@ -68,6 +68,7 @@ export interface GameUIState {
   controlsOpen: boolean;
   gameStarted: boolean;
   activeMapMarker: MapMarkerChangedData | null;
+  autoStartProgress: number | null;
   stars: number;
   totalStars: number;
   missions: MissionProgress[];
@@ -101,6 +102,7 @@ export interface GameUIState {
   setControlsOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
+  setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
   setMissions: (missions: MissionProgress[]) => void;
   addOrUpdateMission: (
@@ -153,6 +155,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     location: "Brumadinho, Minas Gerais",
     isAvailable: true,
   },
+  autoStartProgress: null,
   stars: 0,
   totalStars: 0,
   missions: [],
@@ -186,6 +189,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   setControlsOpen: (open) => set({ controlsOpen: open }),
   setGameStarted: (started) => set({ gameStarted: started }),
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
+  setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setMissions: (missions) => set({ missions }),
   addOrUpdateMission: (

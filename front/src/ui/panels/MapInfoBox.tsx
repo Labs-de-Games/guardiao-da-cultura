@@ -1,11 +1,13 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
+import { AUTO_START_TICK_INTERVAL_MS } from "@/game/constants/AutoStart";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 export function MapInfoBox() {
   const activeMapMarker = useGameUIStore((s) => s.activeMapMarker);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
+  const autoStartProgress = useGameUIStore((s) => s.autoStartProgress);
 
   // Only show when there's an active marker and game hasn't started
   if (!activeMapMarker || gameStarted) return null;
@@ -14,6 +16,13 @@ export function MapInfoBox() {
     ? "Aperte ESPAÇO para jogar"
     : "Em reforma";
   const ctaColor = activeMapMarker.isAvailable ? "#3B8C45" : "#A84528";
+  const showProgress =
+    activeMapMarker.isAvailable &&
+    autoStartProgress !== null &&
+    autoStartProgress < 1;
+  const progressWidth = showProgress
+    ? Math.max(0, Math.min(1, autoStartProgress)) * 100
+    : 0;
 
   return (
     <Box
@@ -64,6 +73,33 @@ export function MapInfoBox() {
       >
         {ctaText}
       </Typography>
+
+      {showProgress && (
+        <Box
+          role="progressbar"
+          aria-label="Auto-start countdown"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progressWidth)}
+          sx={{
+            mt: 1,
+            height: 4,
+            width: "100%",
+            bgcolor: "rgba(255,255,255,0.15)",
+            borderRadius: 2,
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              height: "100%",
+              width: `${progressWidth}%`,
+              bgcolor: ctaColor,
+              transition: `width ${AUTO_START_TICK_INTERVAL_MS}ms linear`,
+            }}
+          />
+        </Box>
+      )}
     </Box>
   );
 }
