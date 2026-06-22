@@ -11,6 +11,7 @@ export class ProgressionService {
     private readonly progressRepository: Repository<UserProgress>,
   ) {}
 
+
   async findByUserId(userId: string): Promise<UserProgress | null> {
     return this.progressRepository.findOne({ where: { userId } });
   }
