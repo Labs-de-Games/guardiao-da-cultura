@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { setGuestId } from "../lib/api/client";
 import { useAuth } from "../lib/auth/useAuth";
+import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
 import LoadingGameScreen from "./LoadingGameScreen";
 
@@ -15,23 +16,6 @@ const GameOverlay = dynamic(
 
 interface PhaserGameProps {
   entryFlow?: "map" | "direct";
-}
-
-const FALLBACK_GUEST_ID_KEY = "gp_fallback_guest_id";
-
-function getOrCreateFallbackGuestId(): string {
-  if (typeof window === "undefined") return "";
-
-  const existing = window.localStorage.getItem(FALLBACK_GUEST_ID_KEY);
-  if (existing) return existing;
-
-  const generated =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `guest-${Date.now()}`;
-
-  window.localStorage.setItem(FALLBACK_GUEST_ID_KEY, generated);
-  return generated;
 }
 
 export default function PhaserGame(_props?: PhaserGameProps) {
@@ -65,17 +49,19 @@ export default function PhaserGame(_props?: PhaserGameProps) {
 
     const initGame = async () => {
       try {
-        const activeUserId = user?.id;
+        const activeUserId = user?.id ?? null;
         const isGuest = !activeUserId;
-        const fallbackGuestId = isGuest ? getOrCreateFallbackGuestId() : "";
-        const playerId = activeUserId ?? posthogDistinctId ?? fallbackGuestId;
+        const guestSessionId = isGuest
+          ? getOrCreateGuestSessionId(posthogDistinctId ?? null)
+          : null;
+        const playerId = activeUserId ?? guestSessionId;
 
         if (!playerId) {
           throw new Error("Player ID is required to start the game.");
         }
 
-        if (isGuest) {
-          setGuestId(posthogDistinctId ?? fallbackGuestId);
+        if (isGuest && guestSessionId) {
+          setGuestId(guestSessionId);
         }
 
         const { default: StartGame } = await import("../game/main");
