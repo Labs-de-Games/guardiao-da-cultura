@@ -14,6 +14,7 @@ export function useEventBridge() {
   const collectItem = useGameUIStore((s) => s.collectItem);
 
   useEffect(() => {
+    setGameStarted(true);
     const unsubStarted = EventBus.on("game:started", () => {
       setGameStarted(true);
     });

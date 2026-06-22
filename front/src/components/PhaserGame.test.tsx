@@ -30,6 +30,11 @@ jest.mock("../lib/auth/useAuth", () => ({
   }),
 }));
 
+jest.mock("@/ui/overlay/GameOverlay", () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 describe("PhaserGame", () => {
   it("renders without crashing", async () => {
     const { container } = render(<PhaserGame />);
