@@ -1,10 +1,10 @@
-import PlayerGuard from "@/components/auth/PlayerGuard";
-import PhaserGame from "../components/PhaserGame";
+import { Suspense } from "react";
+import PlayLanding from "@/components/PlayLanding";
 
 export default function HomePage() {
   return (
-    <PlayerGuard>
-      <PhaserGame />
-    </PlayerGuard>
+    <Suspense>
+      <PlayLanding />
+    </Suspense>
   );
 }
