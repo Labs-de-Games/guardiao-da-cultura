@@ -102,7 +102,7 @@ export function MaskReveal({
       style={{
         position: "absolute",
         inset: 0,
-        backgroundColor: "#252726",
+        backgroundColor: "#000000",
         overflow: "hidden",
       }}
     >

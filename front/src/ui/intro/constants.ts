@@ -44,7 +44,7 @@ export const CAPTION_FADE_MS = 400; // duration of caption fade in/out
 // ────────────────────────────────────────────────────────────────────
 // CAPTION BOX STYLING
 // ────────────────────────────────────────────────────────────────────
-export const CAPTION_BG = "#252726";
+export const CAPTION_BG = "#000000";
 export const CAPTION_BORDER = "2px solid #AF7E2F";
 export const CAPTION_BORDER_RADIUS = "0 0 16px 16px";
 export const CAPTION_PADDING = "26px 36px";

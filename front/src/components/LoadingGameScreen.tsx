@@ -22,7 +22,7 @@ export default function LoadingGameScreen() {
         minHeight: "100%",
         height: "100%",
         width: "100%",
-        backgroundColor: "#252726",
+        backgroundColor: "#000000",
         color: "#D9AD56",
         fontFamily: "Jockey One, sans-serif",
         fontSize: "48px",
