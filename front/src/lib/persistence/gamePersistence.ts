@@ -19,6 +19,7 @@ import {
   submitScore,
 } from "@/lib/scoresApi";
 import { sendGameEvent } from "../analyticsApi";
+import { getOrCreateGuestSessionId } from "../guestSession";
 
 export type PersistenceMode = "guest" | "auth";
 
@@ -269,5 +270,6 @@ export function createGamePersistence(params: {
   }
 
   // In guest mode or when auth id is unavailable, always fallback to local guest persistence.
-  return buildGuestPersistence(actorId || "guest-anonymous");
+  const guestId = actorId || getOrCreateGuestSessionId();
+  return buildGuestPersistence(guestId || "guest-anonymous");
 }
