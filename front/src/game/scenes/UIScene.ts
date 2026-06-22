@@ -88,6 +88,16 @@ export class UIScene extends Scene {
     );
 
     gameScene.events.on(
+      GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+      (questions: QuizQuestion[], onComplete: (score: number) => void) => {
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        const quizState = useGameUIStore.getState().quiz;
+        if (quizState.isVisible) return;
+        useGameUIStore.getState().startQuiz(questions, onComplete, true);
+      },
+    );
+
+    gameScene.events.on(
       GameEvents.SHOW_CONFIRMATION_REQUEST,
       (message: string, onYes: () => void, onNo: () => void) => {
         const callbackId = crypto.randomUUID();
@@ -161,6 +171,7 @@ export class UIScene extends Scene {
       if (gameScene?.events) {
         gameScene.events.off(GameEvents.SHOW_DIALOGUE_REQUEST);
         gameScene.events.off(GameEvents.SHOW_QUIZ_REQUEST);
+        gameScene.events.off(GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST);
         gameScene.events.off(GameEvents.SHOW_CONFIRMATION_REQUEST);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_SHOWN);
         gameScene.events.off(GameEvents.INTERACTION_PROMPT_HIDDEN);
@@ -212,6 +223,8 @@ export class UIScene extends Scene {
         this.dialogueActive = false;
         this.dialogueEndHandled = false;
         useDialogueStore.getState().closeDialogue();
+        const gameScene = this.scene.get(SceneNames.GAME);
+        gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
       }
       wasVisible = isVisible;
     });
