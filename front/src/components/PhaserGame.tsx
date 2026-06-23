@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import type { EntryFlow } from "../game/main";
 import { setGuestId } from "../lib/api/client";
 import { useAuth } from "../lib/auth/useAuth";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
+import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import LoadingGameScreen from "./LoadingGameScreen";
 
 const GameOverlay = dynamic(
@@ -15,13 +15,10 @@ const GameOverlay = dynamic(
   { ssr: false },
 );
 
-interface PhaserGameProps {
-  entryFlow?: EntryFlow;
-}
-
-export default function PhaserGame({ entryFlow = "map" }: PhaserGameProps) {
+export default function PhaserGame() {
   const { user } = useAuth();
   const posthogDistinctId = usePostHogDistinctId();
+  const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
@@ -45,6 +42,7 @@ export default function PhaserGame({ entryFlow = "map" }: PhaserGameProps) {
 
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
+    if (isFlowLoading) return;
 
     isInitializingRef.current = true;
 
@@ -95,7 +93,7 @@ export default function PhaserGame({ entryFlow = "map" }: PhaserGameProps) {
         isInitializingRef.current = false;
       }
     };
-  }, [entryFlow, user?.id, posthogDistinctId]);
+  }, [entryFlow, isFlowLoading, user?.id, posthogDistinctId]);
 
   return (
     <div
