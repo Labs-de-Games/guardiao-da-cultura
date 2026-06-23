@@ -878,7 +878,7 @@ export class Game extends Scene {
 
       this.events.emit(
         GameEvents.SHOW_CONFIRMATION_REQUEST,
-        "Podemos iniciar o teste?",
+        "Pronto para iniciar o teste?",
         () => {
           this.isQuizActive = true;
           this.events.emit(
