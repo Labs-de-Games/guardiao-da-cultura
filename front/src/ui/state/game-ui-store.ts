@@ -222,7 +222,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
             steps?.[i]?.text || _existing?.steps[i]?.text || `Etapa ${i + 1}`,
           infoKey: steps?.[i]?.infoKey,
           done: steps?.[i]?.infoKey
-            ? collectedInfos.includes(steps[i].infoKey)
+            ? collectedInfos.includes(steps[i]?.infoKey ?? "")
             : false,
           filled: progress[i]?.filled,
           total: progress[i]?.total,
