@@ -353,6 +353,7 @@ function DraggableInventoryItem({
         alignItems: "center",
         justifyContent: "center",
         cursor: isUsed ? "default" : "grab",
+        width: "100%",
         userSelect: "none",
         bgcolor: isSelected
           ? "rgba(217, 173, 86, 0.24)"
@@ -375,7 +376,7 @@ function DraggableInventoryItem({
         draggable={false}
         sx={{
           width: "100%",
-          maxWidth: 170,
+          // maxWidth: 170,
           aspectRatio: "122 / 80",
           borderRadius: "8px",
           objectFit: "cover",
