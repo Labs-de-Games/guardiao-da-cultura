@@ -380,6 +380,7 @@ function DraggableInventoryItem({
           aspectRatio: "122 / 80",
           borderRadius: "8px",
           objectFit: "cover",
+          imageRendering: "pixelated",
           bgcolor: "#111",
         }}
       />
@@ -447,7 +448,12 @@ function DroppableGridSlot({
           component="img"
           src={getChunkImageSrc(slot)}
           draggable={false}
-          sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            imageRendering: "pixelated",
+          }}
         />
       ) : (
         <Typography sx={{ color: "#5f6060", fontWeight: 700 }}>?</Typography>
@@ -891,6 +897,7 @@ export function ChunkSelectorPanel() {
               aspectRatio: "122 / 80",
               borderRadius: "8px",
               objectFit: "cover",
+              imageRendering: "pixelated",
               opacity: 0.9,
               boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
               pointerEvents: "none",
