@@ -39,7 +39,11 @@ type ChunkSelectorAction =
     }
   | { type: "MOVE"; payload: ChunkArrowDir }
   | { type: "CONFIRM" }
-  | { type: "CANCEL_PICK" };
+  | { type: "CANCEL_PICK" }
+  | {
+      type: "DRAG_DROP";
+      payload: { fromInventoryIndex: number; toSlotIndex: number };
+    };
 
 const chunkAssetsByKey: Map<string, string> = new Map(
   LEVEL_ASSETS.CHUNKS.map((asset) => [asset.key, `/assets/${asset.path}`]),
@@ -177,6 +181,37 @@ function reducer(
     }
 
     return state;
+  }
+
+  if (action.type === "DRAG_DROP") {
+    const { fromInventoryIndex, toSlotIndex } = action.payload;
+    if (state.lockedSlots[toSlotIndex]) return state;
+    if (state.usedInventoryIndices[toSlotIndex] === fromInventoryIndex)
+      return state;
+
+    const item = state.availableItems[fromInventoryIndex];
+    if (!item) return state;
+
+    const nextSlots = [...state.slots];
+    const nextUsed = [...state.usedInventoryIndices];
+
+    // If this inventory item was already placed in another slot, clear it there first
+    const previousSlot = nextUsed.indexOf(fromInventoryIndex);
+    if (previousSlot !== -1) {
+      nextSlots[previousSlot] = null;
+      nextUsed[previousSlot] = null;
+    }
+
+    nextSlots[toSlotIndex] = item.id;
+    nextUsed[toSlotIndex] = fromInventoryIndex;
+
+    return {
+      ...state,
+      slots: nextSlots,
+      usedInventoryIndices: nextUsed,
+      pickedItemIndex: null,
+      cursorMode: "inventory",
+    };
   }
 
   return state;
