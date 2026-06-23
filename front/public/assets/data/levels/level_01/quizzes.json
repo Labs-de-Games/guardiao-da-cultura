@@ -4,12 +4,17 @@
       "id": "q1",
       "category": "MVP Escultura",
       "question": "Qual desses temas está mais presente nas obras de Edgard de Souza?",
-      "options": ["hiperrealismo", "transformação", "miniaturas", "gigantismo"],
+      "options": [
+        "hiperrealismo",
+        "transfiguração",
+        "miniaturização",
+        "megalomania"
+      ],
       "correctOptionIndex": 1,
       "explanation": "XXXXX",
       "hints": [
         "Representa coisas incomuns no mundo real.",
-        "Mostra algo que é conhecido de um jeito, mas se apresenta de outro."
+        "Também é uma matéria na Escola de Magia e Bruxaria de Hogwarts."
       ],
       "tags": ["edgards", "escultura"],
       "difficulty": "medium"
@@ -17,13 +22,13 @@
     {
       "id": "q2",
       "category": "MVP Pintura",
-      "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião?",
-      "options": ["umbanda", "protestantismo", "islamismo", "budismo"],
+      "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião de matriz africana?",
+      "options": ["Umbanda", "Kemetismo", "Santeria", "Fé bahá'í"],
       "correctOptionIndex": 0,
       "explanation": "XXXXX",
       "hint": [
         "As divindades dessa religião são chamadas orixás.",
-        "Uma religião de origem africana criada no Brasil."
+        "Uma das religiões mais populares do Brasil."
       ],
       "tags": ["pintura", "religiao", "abdiasn"],
       "difficulty": "easy"
@@ -69,7 +74,7 @@
     {
       "id": "q5",
       "category": "MVP Fotografia",
-      "question": "Uma das obras tradicionais dos yanomami são os cestos trançados a mão. Como eles chamam estes cestos?",
+      "question": "Uma das obras tradicionais dos yanomami são os cestos de cipó-titica trançados a mão com detalhes em fibras pretas de raízes ou fungos. Como eles chamam estes cestos?",
       "options": ["cocar", "pajé", "xotehe", "maracá"],
       "correctOptionIndex": 2,
       "explanation": "XXXXX",
