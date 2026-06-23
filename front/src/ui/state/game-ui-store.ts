@@ -101,6 +101,8 @@ export interface GameUIState {
   toggleSidebar: () => void;
   setControlsOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
+  startGame: () => void;
+  endGame: () => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
   setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
@@ -188,6 +190,18 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setControlsOpen: (open) => set({ controlsOpen: open }),
   setGameStarted: (started) => set({ gameStarted: started }),
+  startGame: () => {
+    const { gameStarted } = get();
+    if (!gameStarted) {
+      set({ gameStarted: true });
+    }
+  },
+  endGame: () => {
+    const { gameStarted } = get();
+    if (gameStarted) {
+      set({ gameStarted: false, sidebarOpen: false });
+    }
+  },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
   setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
