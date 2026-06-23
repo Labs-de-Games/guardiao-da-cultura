@@ -2,15 +2,13 @@
 
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { Box, Button, Stack, Typography } from "@mui/material";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function PlayLanding() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const flow = searchParams.get("flow") === "map" ? "map" : "direct";
 
   const handlePlay = () => {
-    router.push(`/game?flow=${flow}`);
+    router.push("/game");
   };
 
   return (
