@@ -87,6 +87,28 @@ function buildInitialState(
   };
 }
 
+function freeInventoryIndices(
+  usedInventoryIndices: (number | null)[],
+  count: number,
+): number[] {
+  const usedSet = new Set(
+    usedInventoryIndices.filter((x): x is number => x !== null),
+  );
+  return Array.from({ length: count }, (_, i) => i).filter(
+    (i) => !usedSet.has(i),
+  );
+}
+
+function nextFreeInventoryIndex(
+  usedInventoryIndices: (number | null)[],
+  count: number,
+  preferred: number,
+): number {
+  const free = freeInventoryIndices(usedInventoryIndices, count);
+  if (free.length === 0) return preferred;
+  return free.find((i) => i >= preferred) ?? free[0];
+}
+
 function reducer(
   state: ChunkSelectorMachineState,
   action: ChunkSelectorAction,
@@ -99,23 +121,39 @@ function reducer(
   }
 
   if (action.type === "MOVE") {
+    const free = freeInventoryIndices(
+      state.usedInventoryIndices,
+      state.availableItems.length,
+    );
+    const freeCount = free.length;
+
+    // Map current original index → virtual index within the free list
+    const virtualCurrent = free.indexOf(state.selectedInventoryIndex);
+    const safeVirtual = virtualCurrent === -1 ? 0 : virtualCurrent;
+
     const next = reduceChunkNavOnArrow(
       {
         cursorMode: state.cursorMode,
-        selectedInventoryIndex: state.selectedInventoryIndex,
+        selectedInventoryIndex: safeVirtual,
         selectedGridIndex: state.selectedGridIndex,
       },
       {
-        inventoryCount: state.availableItems.length,
+        inventoryCount: freeCount,
         lockedSlots: state.lockedSlots,
       },
       action.payload,
     );
 
+    // Map virtual index back to original index when staying in inventory
+    const nextOriginalIndex =
+      next.cursorMode === "inventory"
+        ? (free[next.selectedInventoryIndex] ?? state.selectedInventoryIndex)
+        : next.selectedInventoryIndex;
+
     return {
       ...state,
       cursorMode: next.cursorMode,
-      selectedInventoryIndex: next.selectedInventoryIndex,
+      selectedInventoryIndex: nextOriginalIndex,
       selectedGridIndex: next.selectedGridIndex,
     };
   }
@@ -180,6 +218,11 @@ function reducer(
           pickedItemIndex: null,
           cursorMode: "inventory",
           selectedGridIndex: gridIndex,
+          selectedInventoryIndex: nextFreeInventoryIndex(
+            nextUsed,
+            state.availableItems.length,
+            state.selectedInventoryIndex,
+          ),
         };
       }
 
@@ -225,6 +268,11 @@ function reducer(
       usedInventoryIndices: nextUsed,
       pickedItemIndex: null,
       cursorMode: "inventory",
+      selectedInventoryIndex: nextFreeInventoryIndex(
+        nextUsed,
+        state.availableItems.length,
+        state.selectedInventoryIndex,
+      ),
     };
   }
 
@@ -621,11 +669,13 @@ export function ChunkSelectorPanel() {
                 </Typography>
               ) : (
                 state.availableItems.map((item, index) => {
+                  const isUsed = state.usedInventoryIndices.includes(index);
+                  if (isUsed) return null;
+
                   const isSelected =
                     state.cursorMode === "inventory" &&
                     state.selectedInventoryIndex === index;
                   const isPicked = state.pickedItemIndex === index;
-                  const isUsed = state.usedInventoryIndices.includes(index);
 
                   return (
                     <DraggableInventoryItem
@@ -634,7 +684,7 @@ export function ChunkSelectorPanel() {
                       item={item}
                       isSelected={isSelected}
                       isPicked={isPicked}
-                      isUsed={isUsed}
+                      isUsed={false}
                       onSetRef={(node) => {
                         inventoryItemRefs.current[index] = node;
                       }}
