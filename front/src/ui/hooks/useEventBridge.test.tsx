@@ -39,7 +39,6 @@ jest.mock("@/shared/events/event-bus", () => ({
 
 describe("useEventBridge", () => {
   beforeEach(() => {
-    // Reset Zustand store state before each test
     useGameUIStore.setState({
       gameStarted: false,
       sidebarOpen: false,
@@ -48,7 +47,6 @@ describe("useEventBridge", () => {
       missions: [],
       collectibles: [],
     });
-    // Clean EventBus listeners
     EventBus.removeAllListeners();
   });
 
