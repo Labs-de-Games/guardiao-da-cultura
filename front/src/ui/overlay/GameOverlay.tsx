@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { EntryFlow } from "@/game/main";
 import { getGuestId } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { Sidebar } from "@/ui/hud/Sidebar";
+import { InterestDialog } from "@/ui/interest/InterestDialog";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -19,7 +21,11 @@ import QuizPanel from "@/ui/quiz/Quiz";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
 
-export default function GameOverlay() {
+export default function GameOverlay({
+  entryFlow = "map",
+}: {
+  entryFlow?: EntryFlow;
+}) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -36,12 +42,12 @@ export default function GameOverlay() {
         zIndex: UI_Z_INDEX.OVERLAY,
       }}
     >
-      {mounted && <OverlayContent />}
+      {mounted && <OverlayContent entryFlow={entryFlow} />}
     </div>
   );
 }
 
-function OverlayContent() {
+function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
@@ -55,7 +61,7 @@ function OverlayContent() {
   const setLabelData = useGameUIStore((s) => s.setLabelData);
   const labelData = useGameUIStore((s) => s.labelData);
 
-  useEventBridge();
+  useEventBridge({ entryFlow });
   const { emitComplete, emitDismiss } = useDialogueBridge();
   const setBadgeGalleryOpen = useGameUIStore((s) => s.setBadgeGalleryOpen);
   const addUnlockedBadge = useGameUIStore((s) => s.addUnlockedBadge);
@@ -64,6 +70,7 @@ function OverlayContent() {
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
+  const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
 
   const { isAuthenticated } = useAuth();
 
@@ -105,7 +112,28 @@ function OverlayContent() {
     );
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
+      if (!data.isAvailable) {
+        setAutoStartProgress(null);
+      }
     });
+
+    const unsubAutoStartTick = EventBus.on("map:auto-start-tick", (data) => {
+      setAutoStartProgress(data.remainingMs / data.totalMs);
+    });
+
+    const unsubAutoStartCanceled = EventBus.on(
+      "map:auto-start-canceled",
+      () => {
+        setAutoStartProgress(null);
+      },
+    );
+
+    const unsubAutoStartCompleted = EventBus.on(
+      "map:auto-start-completed",
+      () => {
+        setAutoStartProgress(null);
+      },
+    );
 
     return () => {
       unsubControls();
@@ -115,6 +143,9 @@ function OverlayContent() {
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
       unsubMapMarker();
+      unsubAutoStartTick();
+      unsubAutoStartCanceled();
+      unsubAutoStartCompleted();
     };
   }, [
     setControlsOpen,
@@ -124,6 +155,7 @@ function OverlayContent() {
     addUnlockedBadge,
     openChunkSelector,
     setActiveMapMarker,
+    setAutoStartProgress,
   ]);
 
   useEffect(() => {
@@ -203,6 +235,7 @@ function OverlayContent() {
       <LabelPanel />
       <BadgeGalleryPanel />
       <QuizPanel />
+      <InterestDialog />
     </>
   );
 }

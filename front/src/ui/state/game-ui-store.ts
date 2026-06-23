@@ -68,6 +68,7 @@ export interface GameUIState {
   controlsOpen: boolean;
   gameStarted: boolean;
   activeMapMarker: MapMarkerChangedData | null;
+  autoStartProgress: number | null;
   stars: number;
   totalStars: number;
   missions: MissionProgress[];
@@ -82,6 +83,7 @@ export interface GameUIState {
   badgeError: string | null;
   isAuthenticated: boolean;
   guestId: string | null;
+  isInterestDialogOpen: boolean;
 
   quiz: {
     isVisible: boolean;
@@ -99,7 +101,10 @@ export interface GameUIState {
   toggleSidebar: () => void;
   setControlsOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
+  startGame: () => void;
+  endGame: () => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
+  setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
   setMissions: (missions: MissionProgress[]) => void;
   addOrUpdateMission: (
@@ -128,6 +133,8 @@ export interface GameUIState {
   setBadgeData: (badges: BadgeConfig[], unlockedIds: string[]) => void;
   loadBadgeData: () => Promise<void>;
   addUnlockedBadge: (badgeId: string) => void;
+  openInterestDialog: () => void;
+  closeInterestDialog: () => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -150,6 +157,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     location: "Brumadinho, Minas Gerais",
     isAvailable: true,
   },
+  autoStartProgress: null,
   stars: 0,
   totalStars: 0,
   missions: [],
@@ -164,6 +172,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   badgeError: null,
   isAuthenticated: false,
   guestId: null,
+  isInterestDialogOpen: false,
 
   quiz: {
     isVisible: false,
@@ -181,7 +190,20 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setControlsOpen: (open) => set({ controlsOpen: open }),
   setGameStarted: (started) => set({ gameStarted: started }),
+  startGame: () => {
+    const { gameStarted } = get();
+    if (!gameStarted) {
+      set({ gameStarted: true });
+    }
+  },
+  endGame: () => {
+    const { gameStarted } = get();
+    if (gameStarted) {
+      set({ gameStarted: false, sidebarOpen: false });
+    }
+  },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
+  setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setMissions: (missions) => set({ missions }),
   addOrUpdateMission: (
@@ -287,8 +309,10 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   loadBadgeData: async () => {
     const gen = ++loadGeneration;
     try {
-      const allBadges = await fetchBadges();
       const { isAuthenticated, guestId } = useGameUIStore.getState();
+      const allBadges = await fetchBadges({
+        source: isAuthenticated ? "auth" : "guest",
+      });
 
       let unlockedIds: string[] = [];
       if (isAuthenticated) {
@@ -315,6 +339,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
       if (s.unlockedBadgeIds.includes(badgeId)) return s;
       return { unlockedBadgeIds: [...s.unlockedBadgeIds, badgeId] };
     }),
+  openInterestDialog: () => set({ isInterestDialogOpen: true }),
+  closeInterestDialog: () => set({ isInterestDialogOpen: false }),
 
   startQuiz: (questions, onComplete) => {
     set((_s) => ({

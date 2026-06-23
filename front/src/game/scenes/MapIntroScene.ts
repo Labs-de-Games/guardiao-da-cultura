@@ -1,5 +1,10 @@
 import { Scene } from "phaser";
 import { EventBus } from "@/shared/events/event-bus";
+import {
+  AUTO_START_DELAY_MS,
+  AUTO_START_REGISTRY_KEY,
+  AUTO_START_TICK_INTERVAL_MS,
+} from "../constants/AutoStart";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { SceneNames } from "../constants/SceneNames";
@@ -79,6 +84,8 @@ export class MapIntroScene extends Scene {
   private readonly markerKey = "brazil_marker";
   private readonly availableMarkerTint = 0x020802;
   private readonly unavailableMarkerTint = 0x292828;
+  private autoStartEvent?: Phaser.Time.TimerEvent;
+  private autoStartStartMs = 0;
 
   private readonly handleResize = () => {
     this.layout();
@@ -103,13 +110,25 @@ export class MapIntroScene extends Scene {
       .setOrigin(...LayoutConfig.ALIGN.CENTER);
     this.pathGraphics = this.add.graphics();
 
-    MARKERS.forEach((markerData) => {
+    MARKERS.forEach((markerData, index) => {
       const marker = this.add.image(0, 0, this.markerKey).setOrigin(0.5);
       marker.setTint(this.unavailableMarkerTint);
+
+      // Make markers interactive
+      marker.setInteractive({ useHandCursor: true });
+      marker.on("pointerdown", () => {
+        this.activeMarkerIndex = index;
+        this.emitMarkerChanged();
+        if (index === 0) {
+          this.beginGame();
+        }
+      });
+
       this.markerViews.set(markerData.id, { marker });
     });
 
     onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame());
+    onKeyDown(this, Actions.CONFIRM, () => this.beginGame());
     onKeyDown(this, Actions.CYCLE_FORWARD, this.cycleMarkerForward);
     onKeyDown(this, Actions.CYCLE_BACKWARD, this.cycleMarkerBackward);
 
@@ -119,15 +138,60 @@ export class MapIntroScene extends Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
+      this.cancelAutoStart("shutdown");
     });
 
     this.layout();
     this.emitMarkerChanged();
+    this.maybeStartAutoStart();
   }
 
   private beginGame() {
+    this.cancelAutoStart("started");
     if (this.activeMarkerIndex === 0) {
       this.scene.start(SceneNames.GAME, { levelId: "level_01" });
+    }
+  }
+
+  private maybeStartAutoStart() {
+    const hasAutoStarted = this.registry.get(AUTO_START_REGISTRY_KEY) === true;
+    if (hasAutoStarted || this.activeMarkerIndex !== 0) {
+      return;
+    }
+
+    this.registry.set(AUTO_START_REGISTRY_KEY, true);
+    this.autoStartStartMs = this.time.now;
+
+    this.autoStartEvent = this.time.addEvent({
+      delay: AUTO_START_TICK_INTERVAL_MS,
+      loop: true,
+      callback: () => {
+        const elapsed = this.time.now - this.autoStartStartMs;
+        const remainingMs = Math.max(0, AUTO_START_DELAY_MS - elapsed);
+        EventBus.emit("map:auto-start-tick", {
+          remainingMs,
+          totalMs: AUTO_START_DELAY_MS,
+        });
+
+        if (remainingMs <= 0) {
+          const event = this.autoStartEvent;
+          this.autoStartEvent = undefined;
+          event?.remove();
+          EventBus.emit("map:auto-start-completed", undefined);
+          this.beginGame();
+        }
+      },
+    });
+  }
+
+  private cancelAutoStart(reason: "started" | "cycled" | "shutdown") {
+    if (!this.autoStartEvent) {
+      return;
+    }
+    this.autoStartEvent.remove();
+    this.autoStartEvent = undefined;
+    if (reason === "started") {
+      EventBus.emit("map:auto-start-canceled", undefined);
     }
   }
 
@@ -141,11 +205,13 @@ export class MapIntroScene extends Scene {
   }
 
   private cycleMarkerForward = () => {
+    this.cancelAutoStart("cycled");
     this.activeMarkerIndex = (this.activeMarkerIndex + 1) % MARKERS.length;
     this.emitMarkerChanged();
   };
 
   private cycleMarkerBackward = () => {
+    this.cancelAutoStart("cycled");
     this.activeMarkerIndex =
       (this.activeMarkerIndex - 1 + MARKERS.length) % MARKERS.length;
     this.emitMarkerChanged();
