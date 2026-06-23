@@ -9,6 +9,7 @@ import {
 } from "@dnd-kit/core";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import {
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -57,6 +58,11 @@ type ChunkSelectorAction =
   | {
       type: "DRAG_DROP";
       payload: { fromInventoryIndex: number; toSlotIndex: number };
+    }
+  | { type: "GRID_TO_INVENTORY"; payload: { slotIndex: number } }
+  | {
+      type: "GRID_TO_GRID";
+      payload: { fromSlotIndex: number; toSlotIndex: number };
     };
 
 const chunkAssetsByKey: Map<string, string> = new Map(
@@ -276,6 +282,37 @@ function reducer(
     };
   }
 
+  if (action.type === "GRID_TO_INVENTORY") {
+    const { slotIndex } = action.payload;
+    if (state.lockedSlots[slotIndex]) return state;
+    if (!state.slots[slotIndex]) return state;
+
+    const nextSlots = [...state.slots];
+    const nextUsed = [...state.usedInventoryIndices];
+    nextSlots[slotIndex] = null;
+    nextUsed[slotIndex] = null;
+
+    return { ...state, slots: nextSlots, usedInventoryIndices: nextUsed };
+  }
+
+  if (action.type === "GRID_TO_GRID") {
+    const { fromSlotIndex, toSlotIndex } = action.payload;
+    if (fromSlotIndex === toSlotIndex) return state;
+    if (state.lockedSlots[fromSlotIndex]) return state;
+    if (state.lockedSlots[toSlotIndex]) return state;
+    if (!state.slots[fromSlotIndex]) return state;
+
+    const nextSlots = [...state.slots];
+    const nextUsed = [...state.usedInventoryIndices];
+
+    nextSlots[toSlotIndex] = nextSlots[fromSlotIndex];
+    nextUsed[toSlotIndex] = nextUsed[fromSlotIndex];
+    nextSlots[fromSlotIndex] = null;
+    nextUsed[fromSlotIndex] = null;
+
+    return { ...state, slots: nextSlots, usedInventoryIndices: nextUsed };
+  }
+
   return state;
 }
 
@@ -299,7 +336,7 @@ function DraggableInventoryItem({
   onSetRef: (node: HTMLDivElement | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: String(index),
+    id: `inv-${index}`,
     disabled: isUsed,
   });
 
@@ -360,14 +397,30 @@ function DroppableGridSlot({
   isSelected: boolean;
   isLocked: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: String(idx),
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `slot-${idx}`,
     disabled: isLocked,
+  });
+
+  const isDraggable = !isLocked && slot !== null;
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    isDragging,
+  } = useDraggable({
+    id: `grid-${idx}`,
+    disabled: !isDraggable,
   });
 
   return (
     <Box
-      ref={setNodeRef}
+      ref={(node: HTMLDivElement | null) => {
+        setDropRef(node);
+        setDragRef(node);
+      }}
+      {...(isDraggable ? listeners : {})}
+      {...(isDraggable ? attributes : {})}
       sx={{
         width: "100%",
         aspectRatio: "122 / 80",
@@ -383,12 +436,16 @@ function DroppableGridSlot({
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
+        cursor: isDraggable ? "grab" : "default",
+        opacity: isDragging ? 0.3 : 1,
+        userSelect: "none",
       }}
     >
       {slot ? (
         <Box
           component="img"
           src={getChunkImageSrc(slot)}
+          draggable={false}
           sx={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       ) : (
@@ -411,6 +468,36 @@ function DroppableGridSlot({
   );
 }
 
+function InventoryDropZone({ children }: { children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: "inventory" });
+
+  return (
+    <Paper
+      square
+      ref={setNodeRef}
+      sx={{
+        bgcolor: "#161717",
+        borderRadius: "16px",
+        p: 1.5,
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        height: "100%",
+        minHeight: 0,
+        overflowY: "auto",
+        scrollbarWidth: "none",
+        "&::-webkit-scrollbar": {
+          display: "none",
+        },
+        outline: isOver ? "2px solid #d9ad56" : "2px solid transparent",
+        transition: "outline-color 0.15s",
+      }}
+    >
+      {children}
+    </Paper>
+  );
+}
+
 export function ChunkSelectorPanel() {
   const chunkSelectorData = useGameUIStore((s) => s.chunkSelectorData);
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
@@ -421,7 +508,9 @@ export function ChunkSelectorPanel() {
     buildInitialState([], [null, null, null, null]),
   );
   const inventoryItemRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const [activeDragIndex, setActiveDragIndex] = useState<number | null>(null);
+  const [activeDragImageId, setActiveDragImageId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!chunkSelectorOpen || !chunkSelectorData) return;
@@ -553,20 +642,48 @@ export function ChunkSelectorPanel() {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    setActiveDragIndex(null);
+    setActiveDragImageId(null);
     if (!over) return;
-    dispatch({
-      type: "DRAG_DROP",
-      payload: {
-        fromInventoryIndex: Number(active.id),
-        toSlotIndex: Number(over.id),
-      },
-    });
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    if (activeId.startsWith("inv-") && overId.startsWith("slot-")) {
+      dispatch({
+        type: "DRAG_DROP",
+        payload: {
+          fromInventoryIndex: Number(activeId.slice(4)),
+          toSlotIndex: Number(overId.slice(5)),
+        },
+      });
+    } else if (activeId.startsWith("grid-") && overId === "inventory") {
+      dispatch({
+        type: "GRID_TO_INVENTORY",
+        payload: { slotIndex: Number(activeId.slice(5)) },
+      });
+    } else if (activeId.startsWith("grid-") && overId.startsWith("slot-")) {
+      dispatch({
+        type: "GRID_TO_GRID",
+        payload: {
+          fromSlotIndex: Number(activeId.slice(5)),
+          toSlotIndex: Number(overId.slice(5)),
+        },
+      });
+    }
   }
 
   return (
     <DndContext
-      onDragStart={({ active }) => setActiveDragIndex(Number(active.id))}
+      onDragStart={({ active }) => {
+        const id = String(active.id);
+        if (id.startsWith("inv-")) {
+          const index = Number(id.slice(4));
+          setActiveDragImageId(state.availableItems[index]?.id ?? null);
+        } else if (id.startsWith("grid-")) {
+          const slotIndex = Number(id.slice(5));
+          setActiveDragImageId(state.slots[slotIndex]);
+        }
+      }}
       onDragEnd={handleDragEnd}
     >
       <Box
@@ -634,24 +751,7 @@ export function ChunkSelectorPanel() {
               alignItems: "stretch",
             }}
           >
-            <Paper
-              square
-              sx={{
-                bgcolor: "#161717",
-                borderRadius: "16px",
-                p: 1.5,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                height: "100%",
-                minHeight: 0,
-                overflowY: "auto",
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": {
-                  display: "none",
-                },
-              }}
-            >
+            <InventoryDropZone>
               <Typography
                 sx={{
                   color: "#d9ad56",
@@ -692,7 +792,7 @@ export function ChunkSelectorPanel() {
                   );
                 })
               )}
-            </Paper>
+            </InventoryDropZone>
 
             <Paper
               square
@@ -781,22 +881,21 @@ export function ChunkSelectorPanel() {
         </Paper>
       </Box>
       <DragOverlay dropAnimation={null}>
-        {activeDragIndex !== null &&
-          state.availableItems[activeDragIndex] != null && (
-            <Box
-              component="img"
-              src={getChunkImageSrc(state.availableItems[activeDragIndex].id)}
-              sx={{
-                width: 170,
-                aspectRatio: "122 / 80",
-                borderRadius: "8px",
-                objectFit: "cover",
-                opacity: 0.9,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
-                pointerEvents: "none",
-              }}
-            />
-          )}
+        {activeDragImageId !== null && (
+          <Box
+            component="img"
+            src={getChunkImageSrc(activeDragImageId)}
+            sx={{
+              width: 170,
+              aspectRatio: "122 / 80",
+              borderRadius: "8px",
+              objectFit: "cover",
+              opacity: 0.9,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
       </DragOverlay>
     </DndContext>
   );
