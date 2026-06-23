@@ -1,6 +1,12 @@
 "use client";
 
-import { DndContext, type DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import {
   useCallback,
@@ -227,6 +233,134 @@ function reducer(
 
 function getChunkImageSrc(id: string): string {
   return chunkAssetsByKey.get(id) ?? `/assets/artworks/photos/${id}.png`;
+}
+
+function DraggableInventoryItem({
+  index,
+  item,
+  isSelected,
+  isPicked,
+  isUsed,
+  onSetRef,
+}: {
+  index: number;
+  item: ChunkItem;
+  isSelected: boolean;
+  isPicked: boolean;
+  isUsed: boolean;
+  onSetRef: (node: HTMLDivElement | null) => void;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: String(index),
+    disabled: isUsed,
+  });
+
+  return (
+    <Box
+      ref={(node: HTMLDivElement | null) => {
+        setNodeRef(node);
+        onSetRef(node);
+      }}
+      {...listeners}
+      {...attributes}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: isUsed ? "default" : "grab",
+        userSelect: "none",
+        bgcolor: isSelected
+          ? "rgba(217, 173, 86, 0.24)"
+          : isPicked
+            ? "rgba(255,255,255,0.08)"
+            : "#1c1d1d",
+        borderRadius: "12px",
+        border: isSelected
+          ? "2px solid #d9ad56"
+          : isUsed
+            ? "1px solid #2f2f2f"
+            : "1px solid #3f4040",
+        p: 0.75,
+        opacity: isDragging ? 0.3 : isUsed && !isSelected ? 0.5 : 1,
+      }}
+    >
+      <Box
+        component="img"
+        src={getChunkImageSrc(item.id)}
+        draggable={false}
+        sx={{
+          width: "100%",
+          maxWidth: 170,
+          aspectRatio: "122 / 80",
+          borderRadius: "8px",
+          objectFit: "cover",
+          bgcolor: "#111",
+        }}
+      />
+    </Box>
+  );
+}
+
+function DroppableGridSlot({
+  idx,
+  slot,
+  isSelected,
+  isLocked,
+}: {
+  idx: number;
+  slot: string | null;
+  isSelected: boolean;
+  isLocked: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: String(idx),
+    disabled: isLocked,
+  });
+
+  return (
+    <Box
+      ref={setNodeRef}
+      sx={{
+        width: "100%",
+        aspectRatio: "122 / 80",
+        bgcolor: "#111",
+        border: isLocked
+          ? "2px solid #4b8b5f"
+          : isOver || isSelected
+            ? "3px solid #d9ad56"
+            : "2px solid #454646",
+        borderRadius: "10px",
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
+      {slot ? (
+        <Box
+          component="img"
+          src={getChunkImageSrc(slot)}
+          sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <Typography sx={{ color: "#5f6060", fontWeight: 700 }}>?</Typography>
+      )}
+      {isLocked && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            bgcolor: "#8dd39d",
+          }}
+        />
+      )}
+    </Box>
+  );
 }
 
 export function ChunkSelectorPanel() {
@@ -494,43 +628,17 @@ export function ChunkSelectorPanel() {
                   const isUsed = state.usedInventoryIndices.includes(index);
 
                   return (
-                    <Box
+                    <DraggableInventoryItem
                       key={item.id}
-                      ref={(node: HTMLDivElement | null) => {
+                      index={index}
+                      item={item}
+                      isSelected={isSelected}
+                      isPicked={isPicked}
+                      isUsed={isUsed}
+                      onSetRef={(node) => {
                         inventoryItemRefs.current[index] = node;
                       }}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: isSelected
-                          ? "rgba(217, 173, 86, 0.24)"
-                          : isPicked
-                            ? "rgba(255,255,255,0.08)"
-                            : "#1c1d1d",
-                        borderRadius: "12px",
-                        border: isSelected
-                          ? "2px solid #d9ad56"
-                          : isUsed
-                            ? "1px solid #2f2f2f"
-                            : "1px solid #3f4040",
-                        p: 0.75,
-                        opacity: isUsed && !isSelected ? 0.5 : 1,
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={getChunkImageSrc(item.id)}
-                        sx={{
-                          width: "100%",
-                          maxWidth: 170,
-                          aspectRatio: "122 / 80",
-                          borderRadius: "8px",
-                          objectFit: "cover",
-                          bgcolor: "#111",
-                        }}
-                      />
-                    </Box>
+                    />
                   );
                 })
               )}
@@ -573,55 +681,13 @@ export function ChunkSelectorPanel() {
                   const isLocked = state.lockedSlots[idx];
 
                   return (
-                    <Box
+                    <DroppableGridSlot
                       key={`grid-${idx}`}
-                      sx={{
-                        width: "100%",
-                        aspectRatio: "122 / 80",
-                        bgcolor: "#111",
-                        border: isLocked
-                          ? "2px solid #4b8b5f"
-                          : isSelected
-                            ? "3px solid #d9ad56"
-                            : "2px solid #454646",
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        position: "relative",
-                      }}
-                    >
-                      {slot ? (
-                        <Box
-                          component="img"
-                          src={getChunkImageSrc(slot)}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <Typography sx={{ color: "#5f6060", fontWeight: 700 }}>
-                          ?
-                        </Typography>
-                      )}
-
-                      {isLocked && (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 10,
-                            right: 10,
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            bgcolor: "#8dd39d",
-                          }}
-                        />
-                      )}
-                    </Box>
+                      idx={idx}
+                      slot={slot}
+                      isSelected={isSelected}
+                      isLocked={isLocked}
+                    />
                   );
                 })}
               </Box>
