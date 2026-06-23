@@ -11,6 +11,7 @@ import { UserBadge } from "../src/modules/badges/user-badge.entity";
 import { UserProgress } from "../src/modules/progression/user-progress.entity";
 import { UserCollectible } from "../src/modules/scoring/user-collectible.entity";
 import { UserScore } from "../src/modules/scoring/user-score.entity";
+import { UserInterested } from "../src/modules/user-interested/user-interested.entity";
 import { User } from "../src/modules/users/user.entity";
 
 class MockDatabaseModule {}
@@ -60,6 +61,8 @@ describe("AppController (e2e)", () => {
       .overrideProvider(getRepositoryToken(UserScore))
       .useValue(repo)
       .overrideProvider(getRepositoryToken(UserCollectible))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(UserInterested))
       .useValue(repo)
       .compile();
 

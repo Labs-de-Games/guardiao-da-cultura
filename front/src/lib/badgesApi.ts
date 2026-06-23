@@ -1,5 +1,6 @@
 import type { BadgeConfig } from "../game/types/BadgeTypes";
 import { apiClient } from "./api/client";
+import { MOCK_BADGES } from "./badges.mock";
 
 export type { BadgeConfig };
 
@@ -23,7 +24,17 @@ export interface UserBadgeRecord {
   badge: ServerBadgeConfig;
 }
 
-export async function fetchBadges(): Promise<BadgeConfig[]> {
+export interface FetchBadgesOptions {
+  source?: "guest" | "auth";
+}
+
+export async function fetchBadges(
+  options: FetchBadgesOptions = {},
+): Promise<BadgeConfig[]> {
+  if (options.source === "guest") {
+    return MOCK_BADGES;
+  }
+
   const res = await apiClient.get<ServerBadgeConfig[]>("/badges");
   const badges = res.data;
 
