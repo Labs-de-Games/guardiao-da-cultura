@@ -109,7 +109,7 @@ export default function PhaserGame({ entryFlow = "map" }: PhaserGameProps) {
       }}
     >
       {isLoading && <LoadingGameScreen />}
-      {overlayMounted && <GameOverlay />}
+      {overlayMounted && <GameOverlay entryFlow={entryFlow} />}
     </div>
   );
 }
