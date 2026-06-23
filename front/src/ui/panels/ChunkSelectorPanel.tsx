@@ -376,8 +376,7 @@ function DraggableInventoryItem({
         draggable={false}
         sx={{
           width: "100%",
-          // maxWidth: 170,
-          aspectRatio: "122 / 80",
+          aspectRatio: "122 / 70",
           borderRadius: "8px",
           objectFit: "cover",
           imageRendering: "pixelated",
