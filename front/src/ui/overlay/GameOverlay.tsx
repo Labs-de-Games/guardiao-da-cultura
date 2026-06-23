@@ -65,6 +65,7 @@ function OverlayContent() {
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
+  const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
 
   const { isAuthenticated } = useAuth();
 
@@ -106,7 +107,28 @@ function OverlayContent() {
     );
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
+      if (!data.isAvailable) {
+        setAutoStartProgress(null);
+      }
     });
+
+    const unsubAutoStartTick = EventBus.on("map:auto-start-tick", (data) => {
+      setAutoStartProgress(data.remainingMs / data.totalMs);
+    });
+
+    const unsubAutoStartCanceled = EventBus.on(
+      "map:auto-start-canceled",
+      () => {
+        setAutoStartProgress(null);
+      },
+    );
+
+    const unsubAutoStartCompleted = EventBus.on(
+      "map:auto-start-completed",
+      () => {
+        setAutoStartProgress(null);
+      },
+    );
 
     return () => {
       unsubControls();
@@ -116,6 +138,9 @@ function OverlayContent() {
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
       unsubMapMarker();
+      unsubAutoStartTick();
+      unsubAutoStartCanceled();
+      unsubAutoStartCompleted();
     };
   }, [
     setControlsOpen,
@@ -125,6 +150,7 @@ function OverlayContent() {
     addUnlockedBadge,
     openChunkSelector,
     setActiveMapMarker,
+    setAutoStartProgress,
   ]);
 
   useEffect(() => {
