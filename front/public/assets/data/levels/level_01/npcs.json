@@ -5,26 +5,27 @@
       "missionId": "missao_curador",
       "dialogues": {
         "intro": [
-          "Boas-vindas ao Inhotim, sô! Tá um trem doido aqui, <b>tiraram os quadros do lugar</b>, rasgaram as fotografias… Nó! Um crime!",
-          "Já que se <b>disfarçou de zelador</b>, <b>procure pistas</b> sem chamar atenção, já basta essa bagunça que fizeram.",
-          "<b>Leia as placas</b> e <b>coloque as obras no lugar certo</b>."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: A estrada até aqui foi mais tranquila do que eu esperava. Como te avisei no caminho, esse é o Inhotim. Um museu a céu aberto aqui em Brumadinho, Minas Gerais.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Dê uma olhada nas esculturas desse andar e averigue o estrago feito.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Leia as placas e use seus poderes de observação e dedução para descobrir onde cada obra deveria estar.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Quando tiver investigado tudo, procure-me novamente. Estarei no último piso… err… inspecionando lá do alto. Vantagens de ser a chefe."
         ],
         "ready": [
-          "Uai, você <b>arredou tudo</b>? Demorou um tiquinho, quase criei raiz esperando…",
-          "As <b>pinturas</b>, <b>esculturas</b> e até a <b>fotografia</b> estão no lugar. Milagre, porque cola você não tinha.",
-          "Agora vem o <b>teste</b>. Vamos ver se você prestou atenção ou se foi só no chute. Não que eu duvide de você."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Terminou de reorganizar todos os andares?",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: As pinturas e esculturas estão em seus lugares e a fotografia foi restaurada.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Agora, vamos analisar o que você entendeu das evidências. O segredo pode estar numa dessas obras!"
         ],
         "completed": [
-          "Uai, não é que você arruma bem esses trens?",
-          "Obrigada por cuidar da nossa <b>arte</b>. Boa sorte na sua próxima missão, sô!"
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Você é um mestre da restauração! Seu trabalho investigativo ainda facilitou a organização.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Obrigado por preservar nossa história e arte."
         ],
         "success": [
-          "Uai, você sabe bastante. Merece palmas, mas sem exagero.",
-          "Já vimos tudo por aqui. Tomara que não aconteça outro ataque."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Conhecimento impecável! Você é digno do título de Mestre Curador.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Acho que já examinamos o suficiente por aqui. Espero que não haja outro ataque."
         ],
         "failure": [
-          "Hmm… Você se embolou nos detalhes igual um zé dend'água.",
-          "Veja as <b>obras</b>, <b>leia as placas</b>. Tô aqui quando quiser tentar de novo."
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Hmm... Parece que você se confundiu com alguns detalhes.",
+          "𝙄𝙉𝙎𝙋𝙀𝙏𝙊𝙍𝘼 𝘾𝙍𝙀𝙈𝙄𝙇𝘿𝘼 𝙅𝘼𝙍𝘽𝘼𝙎: Reveja as obras e fale comigo de novo quando estiver pronto."
         ]
       }
     }
