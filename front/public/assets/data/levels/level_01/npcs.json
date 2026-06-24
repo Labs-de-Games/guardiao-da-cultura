@@ -5,18 +5,18 @@
       "missionId": "missao_curador",
       "dialogues": {
         "intro": [
-          "Boas-vindas ao Inhotim, sô! Tá um trem doido aqui, <b>tiraram os quadros do lugar</b>, rasgaram as fotografias… Nó! Um crime!",
-          "Já que se <b>disfarçou de zelador</b>, <b>procure pistas</b> sem chamar atenção, já basta essa bagunça que fizeram.",
-          "<b>Leia as placas</b> e <b>coloque as obras no lugar certo</b>."
+          "Boas-vindas ao Inhotim, sô! Tá um trem doido aqui, tiraram os quadros do lugar, rasgaram as fotografias… Nó! Um crime!",
+          "Já que se disfarçou de zelador, procure pistas sem chamar atenção, já basta essa bagunça que fizeram.",
+          "Leia as placas e coloque as obras no lugar certo."
         ],
         "ready": [
-          "Uai, você <b>arredou tudo</b>? Demorou um tiquinho, quase criei raiz esperando…",
-          "As <b>pinturas</b>, <b>esculturas</b> e até a <b>fotografia</b> estão no lugar. Milagre, porque cola você não tinha.",
-          "Agora vem o <b>teste</b>. Vamos ver se você prestou atenção ou se foi só no chute. Não que eu duvide de você."
+          "Uai, você arredou tudo? Demorou um tiquinho, quase criei raiz esperando…",
+          "As pinturas, esculturas e até a fotografia estão no lugar. Milagre, porque cola você não tinha.",
+          "Agora vem o teste. Vamos ver se você prestou atenção ou se foi só no chute. Não que eu duvide de você."
         ],
         "completed": [
           "Uai, não é que você arruma bem esses trens?",
-          "Obrigada por cuidar da nossa <b>arte</b>. Boa sorte na sua próxima missão, sô!"
+          "Obrigada por cuidar da nossa arte. Boa sorte na sua próxima missão, sô!"
         ],
         "success": [
           "Uai, você sabe bastante. Merece palmas, mas sem exagero.",
@@ -24,7 +24,7 @@
         ],
         "failure": [
           "Hmm… Você se embolou nos detalhes igual um zé dend'água.",
-          "Veja as <b>obras</b>, <b>leia as placas</b>. Tô aqui quando quiser tentar de novo."
+          "Veja as obras, leia as placas. Tô aqui quando quiser tentar de novo."
         ]
       }
     }
