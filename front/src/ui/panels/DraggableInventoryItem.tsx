@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { Box } from "@mui/material";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import type { ChunkItem } from "./chunk-selector-types";
 import { getChunkImageSrc } from "./chunk-selector-types";
 
@@ -40,9 +41,11 @@ export function DraggableInventoryItem({
           ? "rgba(217, 173, 86, 0.24)"
           : isPicked
             ? "rgba(255,255,255,0.08)"
-            : "#1c1d1d",
+            : LayoutConfig.COLORS.CHUNK_BG_CSS,
         borderRadius: "12px",
-        border: isSelected ? "2px solid #d9ad56" : "1px solid #3f4040",
+        border: isSelected
+          ? `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`
+          : "1px solid #3f4040",
         p: 0.75,
         opacity: isDragging ? 0.3 : 1,
       }}
@@ -57,7 +60,7 @@ export function DraggableInventoryItem({
           borderRadius: "8px",
           objectFit: "cover",
           imageRendering: "pixelated",
-          bgcolor: "#111",
+          bgcolor: LayoutConfig.COLORS.CHUNK_BG_CSS,
         }}
       />
     </Box>
