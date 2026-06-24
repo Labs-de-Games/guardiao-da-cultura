@@ -26,8 +26,7 @@ export class Portal extends Phaser.GameObjects.Zone {
       dialogText: "Entrar",
       dialogueLines: [],
       onInteract: () => this.handleInteract(),
-      interactionDistanceX: 100,
-      interactionDistanceY: 130,
+      interactionDistance: 130,
     });
 
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
