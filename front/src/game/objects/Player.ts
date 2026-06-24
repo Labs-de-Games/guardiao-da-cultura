@@ -467,7 +467,7 @@ export class Player
       const dtScale = dtClamped / NOMINAL_DT;
       const accel = this.getMovementAcceleration() * dtScale;
 
-      if (leftDown) {
+      if (leftDown && !body.blocked.left) {
         if (this.wouldGrabbedPedestalHitWall(-1, dt, accel)) {
           body.setVelocityX(0);
         } else {
@@ -482,7 +482,7 @@ export class Player
           body.velocity.x -= accel;
           if (!this.isGrabbing) this.setFlipX(true);
         }
-      } else if (rightDown) {
+      } else if (rightDown && !body.blocked.right) {
         if (this.wouldGrabbedPedestalHitWall(1, dt, accel)) {
           body.setVelocityX(0);
         } else {
