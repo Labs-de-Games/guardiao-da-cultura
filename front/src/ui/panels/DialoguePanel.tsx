@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, CardContent, Paper, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useDialogueStore } from "@/ui/state/dialogue-store";
@@ -204,36 +204,48 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         zIndex: 30,
       }}
     >
-      <Paper
-        square
+      <Box
         role="dialog"
         aria-live="polite"
         sx={{
-          bgcolor: GAME_UI_TOKENS.colors.bgPrimary,
-          borderRadius: `${GAME_UI_TOKENS.radius.panel}px`,
-          border: "none",
-          overflow: "hidden",
+          position: "relative",
+          bgcolor: GAME_UI_TOKENS.colors.dialogueBg,
+          borderRadius: "12px",
+          px: "41px",
+          py: "36px",
+          maxWidth: "min(862px, 90vw)",
+          width: "100%",
+          overflow: "visible",
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            bottom: -12,
+            right: 40,
+            width: 0,
+            height: 0,
+            borderLeft: "12px solid transparent",
+            borderRight: "12px solid transparent",
+            borderTop: `12px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+          },
         }}
       >
-        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-          {mode === "dialogue" && (
-            <DialogueContent
-              speakerName={speakerName}
-              text={displayedText}
-              isLastLine={isLastLine}
-              onAdvance={handleAdvance}
-            />
-          )}
-          {mode === "confirmation" && (
-            <ConfirmationContent
-              message={displayedText}
-              selectedIndex={confirmSelected}
-              onSelect={moveConfirmSelection}
-              onConfirm={handleConfirm}
-            />
-          )}
-        </CardContent>
-      </Paper>
+        {mode === "dialogue" && (
+          <DialogueContent
+            speakerName={speakerName}
+            text={displayedText}
+            isLastLine={isLastLine}
+            onAdvance={handleAdvance}
+          />
+        )}
+        {mode === "confirmation" && (
+          <ConfirmationContent
+            message={displayedText}
+            selectedIndex={confirmSelected}
+            onSelect={moveConfirmSelection}
+            onConfirm={handleConfirm}
+          />
+        )}
+      </Box>
     </Box>
   );
 }
