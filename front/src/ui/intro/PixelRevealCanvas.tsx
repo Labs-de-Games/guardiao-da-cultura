@@ -47,12 +47,17 @@ export function PixelRevealCanvas({
 
     let rafId = 0;
     let cancelled = false;
+    let finished = false;
+
+    const finish = () => {
+      if (cancelled || finished) return;
+      finished = true;
+      onDoneRef.current?.();
+    };
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = src;
-
-    img.onload = () => {
+    const begin = () => {
       if (cancelled) return;
 
       // Offscreen canvas holds the fully-drawn image at native size.
@@ -111,12 +116,24 @@ export function PixelRevealCanvas({
         if (t < 1) {
           rafId = requestAnimationFrame(tick);
         } else {
-          onDoneRef.current?.();
+          finish();
         }
       };
 
       rafId = requestAnimationFrame(tick);
     };
+
+    img.onload = begin;
+    img.onerror = finish;
+    img.src = src;
+
+    if (img.complete) {
+      if (img.naturalWidth > 0) {
+        begin();
+      } else {
+        finish();
+      }
+    }
 
     return () => {
       cancelled = true;

@@ -38,11 +38,16 @@ export function PixelDissolveCanvas({
 
     let rafId = 0;
     let cancelled = false;
+    let finished = false;
+
+    const finish = () => {
+      if (cancelled || finished) return;
+      finished = true;
+      onDoneRef.current?.();
+    };
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = src;
-
     const begin = () => {
       if (cancelled) return;
       ctx.imageSmoothingEnabled = false;
@@ -89,14 +94,23 @@ export function PixelDissolveCanvas({
         if (t < 1) {
           rafId = requestAnimationFrame(tick);
         } else {
-          onDoneRef.current?.();
+          finish();
         }
       };
       rafId = requestAnimationFrame(tick);
     };
 
-    if (img.complete) begin();
-    else img.onload = begin;
+    img.onload = begin;
+    img.onerror = finish;
+    img.src = src;
+
+    if (img.complete) {
+      if (img.naturalWidth > 0) {
+        begin();
+      } else {
+        finish();
+      }
+    }
 
     return () => {
       cancelled = true;
