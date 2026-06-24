@@ -3,6 +3,19 @@ import * as Phaser from "phaser";
 import type { GameEventMap } from "./game-events";
 
 const emitter = new Phaser.Events.EventEmitter();
+const replayableEvents = new Set<keyof GameEventMap>([
+  "game:started",
+  "game:ended",
+  "sidebar:toggled",
+  "player:stars-changed",
+  "quest:progress-changed",
+  "inventory:collectibles-sync",
+]);
+
+const lastEventPayloads = new Map<
+  keyof GameEventMap,
+  GameEventMap[keyof GameEventMap]
+>();
 
 export const EventBus = {
   on<K extends keyof GameEventMap>(
@@ -11,6 +24,9 @@ export const EventBus = {
     context?: unknown,
   ) {
     emitter.on(event as string, fn, context);
+    if (replayableEvents.has(event) && lastEventPayloads.has(event)) {
+      fn(lastEventPayloads.get(event) as GameEventMap[K]);
+    }
     return () => {
       emitter.off(event as string, fn, context);
     };
@@ -25,6 +41,9 @@ export const EventBus = {
   },
 
   emit<K extends keyof GameEventMap>(event: K, data: GameEventMap[K]) {
+    if (replayableEvents.has(event)) {
+      lastEventPayloads.set(event, data);
+    }
     emitter.emit(event as string, data);
   },
 
@@ -38,5 +57,6 @@ export const EventBus = {
 
   removeAllListeners() {
     emitter.removeAllListeners();
+    lastEventPayloads.clear();
   },
 };
