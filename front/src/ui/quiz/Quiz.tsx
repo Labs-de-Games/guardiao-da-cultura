@@ -283,15 +283,6 @@ export default function QuizPanel() {
   }, [isPerformance]);
 
   useEffect(() => {
-    if (isPerformance && isIntermediate) {
-      const timer = setTimeout(() => {
-        useGameUIStore.getState().closeQuiz();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isPerformance, isIntermediate]);
-
-  useEffect(() => {
     if (!quiz.isVisible) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -722,7 +713,7 @@ export default function QuizPanel() {
         </Box>
 
         {/* FOOTER */}
-        {isPerformance && !isIntermediate ? (
+        {isPerformance ? (
           <Box
             sx={{
               display: "flex",
@@ -756,26 +747,6 @@ export default function QuizPanel() {
               onClick={activateSelectedNav}
               onMouseEnter={() => setSelectedNavIndex(1)}
             />
-          </Box>
-        ) : isPerformance && isIntermediate ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              px: 4,
-              mb: 0.5,
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: "'Inter', sans-serif",
-                color: "#888888",
-                fontSize: "1.125rem",
-              }}
-            >
-              Continuando...
-            </Typography>
           </Box>
         ) : (
           <Box
