@@ -45,7 +45,7 @@ export function DraggableInventoryItem({
         borderRadius: "12px",
         border: isSelected
           ? `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`
-          : "1px solid #3f4040",
+          : `1px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`,
         p: 0.75,
         opacity: isDragging ? 0.3 : 1,
       }}

@@ -47,7 +47,7 @@ export function DroppableGridSlot({
           ? "2px solid #4b8b5f"
           : isOver || isSelected
             ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
-            : "2px solid #454646",
+            : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`,
         borderRadius: "10px",
         overflow: "hidden",
         display: "flex",
@@ -72,7 +72,11 @@ export function DroppableGridSlot({
           }}
         />
       ) : (
-        <Typography sx={{ color: "#5f6060", fontWeight: 700 }}>?</Typography>
+        <Typography
+          sx={{ color: LayoutConfig.COLORS.TEXT_DIM, fontWeight: 700 }}
+        >
+          ?
+        </Typography>
       )}
       {isLocked && (
         <Box
