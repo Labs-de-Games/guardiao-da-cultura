@@ -265,61 +265,48 @@ function DialogueContent({
     <Box sx={{ cursor: "pointer" }} onClick={onAdvance}>
       {speakerName && (
         <Typography
-          variant="subtitle2"
           sx={{
-            color: GAME_UI_TOKENS.colors.accentGold,
-            fontSize: "14px",
-            fontWeight: 600,
-            mb: 0.5,
+            fontFamily: GAME_UI_TOKENS.fonts.display,
+            fontSize: "24px",
+            lineHeight: "1.21em",
+            color: GAME_UI_TOKENS.colors.accentGoldMuted,
+            mb: "12px",
           }}
         >
-          {speakerName}:
+          {speakerName}
         </Typography>
       )}
       <Typography
-        variant="body2"
         sx={{
-          color: GAME_UI_TOKENS.colors.textPrimary,
-          fontSize: "14px",
+          fontFamily: GAME_UI_TOKENS.fonts.body,
+          fontSize: "20px",
+          color: GAME_UI_TOKENS.colors.accentGoldMuted,
           lineHeight: 1.6,
-          mb: 2,
+          mb: "24px",
           minHeight: "2.5em",
         }}
       >
         {text}
       </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Typography
-          variant="subtitle2"
+      <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <Box
           sx={{
-            color: GAME_UI_TOKENS.colors.accentGold,
-            fontSize: "12px",
-            fontWeight: 600,
-            opacity: 0.8,
-            animation: "pulse 1.5s ease-in-out infinite",
-            "@keyframes pulse": {
-              "0%, 100%": { opacity: 0.8 },
-              "50%": { opacity: 0.4 },
-            },
+            width: 0,
+            height: 0,
+            borderLeft: "10px solid transparent",
+            borderRight: "10px solid transparent",
+            borderTop: `12px solid ${GAME_UI_TOKENS.colors.dialogueCta}`,
+          }}
+        />
+        <Typography
+          sx={{
+            fontFamily: GAME_UI_TOKENS.fonts.body,
+            fontWeight: 500,
+            fontSize: "14px",
+            color: GAME_UI_TOKENS.colors.dialogueCta,
           }}
         >
-          ▼
-        </Typography>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "12px",
-            fontWeight: 600,
-          }}
-        >
-          {isLastLine ? "Aperte E para fechar" : "Aperte E para continuar"}
+          {isLastLine ? "FECHAR" : "CONTINUAR"}
         </Typography>
       </Box>
     </Box>
