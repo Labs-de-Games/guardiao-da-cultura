@@ -2,6 +2,8 @@ import { useDroppable } from "@dnd-kit/core";
 import { Paper } from "@mui/material";
 import type { ReactNode } from "react";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
+
 export function InventoryDropZone({ children }: { children: ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: "inventory" });
 
@@ -23,7 +25,9 @@ export function InventoryDropZone({ children }: { children: ReactNode }) {
         "&::-webkit-scrollbar": {
           display: "none",
         },
-        outline: isOver ? "2px solid #d9ad56" : "2px solid transparent",
+        outline: isOver
+          ? `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`
+          : "2px solid transparent",
         transition: "outline-color 0.15s",
       }}
     >

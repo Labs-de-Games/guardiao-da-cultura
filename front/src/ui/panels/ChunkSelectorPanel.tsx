@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import type { ChunkArrowDir } from "@/game/objects/ui/chunkSelectorNavigation";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
@@ -268,7 +268,7 @@ export function ChunkSelectorPanel() {
             overflow: "hidden",
             bgcolor: "#1c1d1d",
             borderRadius: "16px",
-            border: "2px solid #d9ad56",
+            border: `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
             p: 2,
             display: "flex",
             flexDirection: "column",
@@ -281,7 +281,7 @@ export function ChunkSelectorPanel() {
             <Box>
               <Typography
                 sx={{
-                  color: "#d9ad56",
+                  color: LayoutConfig.COLORS.INFO_TITLE,
                   fontWeight: 700,
                   fontSize: "24px",
                   lineHeight: 1.2,
@@ -316,7 +316,7 @@ export function ChunkSelectorPanel() {
             <InventoryDropZone>
               <Typography
                 sx={{
-                  color: "#d9ad56",
+                  color: LayoutConfig.COLORS.INFO_TITLE,
                   fontWeight: 700,
                   fontSize: "16px",
                   mb: 0.5,
@@ -326,7 +326,12 @@ export function ChunkSelectorPanel() {
               </Typography>
 
               {state.availableItems.length === 0 ? (
-                <Typography sx={{ color: "#888", fontSize: "14px" }}>
+                <Typography
+                  sx={{
+                    color: LayoutConfig.COLORS.HINT_GREY,
+                    fontSize: "14px",
+                  }}
+                >
                   Nenhum pedaço disponível.
                 </Typography>
               ) : (
@@ -366,7 +371,7 @@ export function ChunkSelectorPanel() {
             >
               <Typography
                 sx={{
-                  color: "#d9ad56",
+                  color: LayoutConfig.COLORS.INFO_TITLE,
                   fontWeight: 700,
                   fontSize: "16px",
                   mb: 1.25,
@@ -422,7 +427,9 @@ export function ChunkSelectorPanel() {
                   onClick={handleSubmit}
                   sx={{
                     bgcolor:
-                      state.cursorMode === "confirm" ? "#d9ad56" : "#3a3b3b",
+                      state.cursorMode === "confirm"
+                        ? LayoutConfig.COLORS.INFO_TITLE
+                        : "#3a3b3b",
                     color:
                       state.cursorMode === "confirm" ? "#1c1d1d" : "#f4eede",
                     fontWeight: 700,

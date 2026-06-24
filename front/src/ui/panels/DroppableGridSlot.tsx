@@ -1,6 +1,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Box, Typography } from "@mui/material";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { getChunkImageSrc } from "./chunk-selector-types";
 
 export function DroppableGridSlot({
@@ -41,11 +42,11 @@ export function DroppableGridSlot({
       sx={{
         width: "100%",
         aspectRatio: "122 / 80",
-        bgcolor: "#111",
+        bgcolor: LayoutConfig.COLORS.CHUNK_BG_CSS,
         border: isLocked
           ? "2px solid #4b8b5f"
           : isOver || isSelected
-            ? "3px solid #d9ad56"
+            ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
             : "2px solid #454646",
         borderRadius: "10px",
         overflow: "hidden",
