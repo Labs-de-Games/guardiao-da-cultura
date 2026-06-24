@@ -12,7 +12,7 @@ export function InventoryDropZone({ children }: { children: ReactNode }) {
       square
       ref={setNodeRef}
       sx={{
-        bgcolor: "#161717",
+        bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
         borderRadius: "16px",
         p: 1.5,
         display: "flex",

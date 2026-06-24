@@ -266,7 +266,7 @@ export function ChunkSelectorPanel() {
             width: "min(1000px, 96vw)",
             maxHeight: "92vh",
             overflow: "hidden",
-            bgcolor: "#1c1d1d",
+            bgcolor: LayoutConfig.COLORS.PANEL_BG_CSS,
             borderRadius: "16px",
             border: `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
             p: 2,
@@ -363,7 +363,7 @@ export function ChunkSelectorPanel() {
             <Paper
               square
               sx={{
-                bgcolor: "#161717",
+                bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
                 borderRadius: "16px",
                 p: 1.5,
                 width: "100%",
@@ -431,7 +431,9 @@ export function ChunkSelectorPanel() {
                         ? LayoutConfig.COLORS.INFO_TITLE
                         : "#3a3b3b",
                     color:
-                      state.cursorMode === "confirm" ? "#1c1d1d" : "#f4eede",
+                      state.cursorMode === "confirm"
+                        ? LayoutConfig.COLORS.PANEL_BG_CSS
+                        : "#f4eede",
                     fontWeight: 700,
                     borderRadius: "12px",
                     px: 2,
