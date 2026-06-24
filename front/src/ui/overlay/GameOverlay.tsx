@@ -73,11 +73,16 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
 
   const { isAuthenticated } = useAuth();
-
   useEffect(() => {
     const guestId = !isAuthenticated ? getGuestId() : null;
     setAuthState(isAuthenticated, guestId);
   }, [isAuthenticated, setAuthState]);
+
+  useEffect(() => {
+    if (gameStarted && !useGameUIStore.getState().sidebarOpen) {
+      setSidebarOpen(true);
+    }
+  }, [gameStarted, setSidebarOpen]);
 
   useEffect(() => {
     const unsubControls = EventBus.on("ui:controls-overlay", (data) => {
