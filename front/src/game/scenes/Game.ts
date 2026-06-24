@@ -102,7 +102,7 @@ export class Game extends Scene {
   }
 
   init(data?: { levelId: string }) {
-    this.levelId = data?.levelId || "level_01";
+    this.levelId = data?.levelId ?? this.levelId ?? "level_01";
     this.levelDef = LEVEL_REGISTRY[this.levelId];
 
     if (!this.levelDef) {
@@ -265,7 +265,10 @@ export class Game extends Scene {
     });
 
     let mapData: MapData | null = null;
-    const tileset = map.addTilesetImage("museum", this.levelDef.map.tileset);
+    const tileset = map.addTilesetImage(
+      this.levelDef.map.tilesetName,
+      this.levelDef.map.tileset,
+    );
 
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
@@ -622,13 +625,18 @@ export class Game extends Scene {
     }
 
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
-    this.player.setDepth(20);
+    this.player.setDepth(22);
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
+    }
+
+    const portals = MapManager.createPortals(this, mapData, this.mapScale);
+    for (const portal of portals) {
+      portal.setPlayerTracking(this.player);
     }
 
     // Teleport curator NPC when either sculptures or paintings are marked done
