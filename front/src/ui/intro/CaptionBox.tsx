@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   CAPTION_BG,
   CAPTION_BODY_COLOR,
@@ -55,9 +56,7 @@ export function CaptionBox({
       }}
     >
       {image ? (
-        <img
-          src={image}
-          alt={imageAlt}
+        <div
           aria-hidden={imageAlt ? undefined : true}
           style={{
             // Pinned to the right edge, full height of the box.
@@ -66,14 +65,23 @@ export function CaptionBox({
             right: 0,
             height: "100%",
             width: CAPTION_IMAGE_WIDTH,
-            objectFit: "cover",
-            objectPosition: "right center",
             pointerEvents: "none",
             // Fade gradient (left → right)
             WebkitMaskImage: CAPTION_IMAGE_MASK,
             maskImage: CAPTION_IMAGE_MASK,
           }}
-        />
+        >
+          <Image
+            src={image}
+            alt={imageAlt}
+            fill
+            sizes="45vw"
+            style={{
+              objectFit: "cover",
+              objectPosition: "right center",
+            }}
+          />
+        </div>
       ) : null}
       {/* TEXT COLUMN: width caps how far the text can run before wrapping */}
       <div style={{ position: "relative", width: CAPTION_TEXT_COL_WIDTH }}>

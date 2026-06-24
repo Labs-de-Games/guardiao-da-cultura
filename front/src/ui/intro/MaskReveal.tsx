@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { EASE_SHRINK } from "./constants";
 
@@ -107,12 +108,13 @@ export function MaskReveal({
       }}
     >
       <div style={{ position: "absolute", inset: 0, ...maskStyle }}>
-        <img
+        <Image
           src={sceneSrc}
           alt=""
+          fill
+          priority
+          sizes="100vw"
           style={{
-            width: "100%",
-            height: "100%",
             objectFit: "cover",
             display: "block",
             imageRendering: "pixelated",

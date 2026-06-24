@@ -28,22 +28,6 @@ const MARKERS: MapMarker[] = [
     location: "Brumadinho, Minas Gerais",
   },
   {
-    id: "blumenau",
-    label: "Blumenau, SC",
-    x: 0.57,
-    y: 0.83,
-    title: "Oktoberfest",
-    location: "Blumenau, Santa Catarina",
-  },
-  {
-    id: "cuiaba",
-    label: "Cuiabá, MT",
-    x: 0.46,
-    y: 0.53,
-    title: "FIT Pantanal",
-    location: "Cuiabá, Mato Grosso",
-  },
-  {
     id: "manaus",
     label: "Manaus, AM",
     x: 0.34,
@@ -52,24 +36,32 @@ const MARKERS: MapMarker[] = [
     location: "Manaus, Amazonas",
   },
   {
-    id: "recife",
-    label: "Recife, PE",
+    id: "campinagrande",
+    label: "Campina Grande, PB",
     x: 0.72,
     y: 0.46,
-    title: "Galo da Madrugada",
-    location: "Recife, Pernambuco",
+    title: "São João de Campina Grande",
+    location: "Campina Grande, Paraíba",
+  },
+  {
+    id: "curitiba",
+    label: "Curitiba, PR",
+    x: 0.57,
+    y: 0.83,
+    title: "Teatro Guaíra",
+    location: "Curitiba, Paraná",
   },
   {
     id: "brasilia",
     label: "Brasília, DF",
     x: 0.59,
     y: 0.58,
-    title: "Grande Centro Cultural",
+    title: "Palácio Itamaraty",
     location: "Brasília, Distrito Federal",
   },
 ];
 
-export class MapScene extends Scene {
+export class MapIntro extends Scene {
   private mapImage!: Phaser.GameObjects.Image;
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private markerViews: Map<string, MarkerView> = new Map();
@@ -85,7 +77,7 @@ export class MapScene extends Scene {
   };
 
   constructor() {
-    super(SceneNames.MAIN);
+    super(SceneNames.INTRO);
   }
 
   preload() {
