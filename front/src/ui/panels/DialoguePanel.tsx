@@ -1,5 +1,6 @@
 "use client";
 
+import VolumeUp from "@mui/icons-material/VolumeUp";
 import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -229,6 +230,18 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           },
         }}
       >
+        {mode === "dialogue" && (
+          <VolumeUp
+            sx={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              fontSize: 32,
+              color: GAME_UI_TOKENS.colors.textPrimary,
+              pointerEvents: "none",
+            }}
+          />
+        )}
         {mode === "dialogue" && (
           <DialogueContent
             speakerName={speakerName}
