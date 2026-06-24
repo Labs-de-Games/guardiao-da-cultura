@@ -10,6 +10,8 @@ import type { IPlayerState } from "../types/EntityTypes";
 
 export interface InteractionOptions {
   interactionDistance?: number;
+  interactionDistanceX?: number;
+  interactionDistanceY?: number;
   dialogText?: string;
   dialogueLines?: string[];
   infoKey?: string;
@@ -36,6 +38,8 @@ export class InteractionComponent {
   public isPromptVisible: boolean = false;
 
   private interactionDistance: number;
+  private interactionDistanceX?: number;
+  private interactionDistanceY?: number;
   private dialogMessage: string;
   private dialogueLines: string[] | null = null;
   private infoKey: string | null = null;
@@ -63,6 +67,8 @@ export class InteractionComponent {
     this.scene = scene;
     this.parent = parent;
     this.interactionDistance = options?.interactionDistance ?? 130;
+    this.interactionDistanceX = options?.interactionDistanceX;
+    this.interactionDistanceY = options?.interactionDistanceY;
     this.dialogMessage = options?.dialogText ?? "Interação!";
     this.dialogueLines = options?.dialogueLines ?? null;
     this.infoKey = options?.infoKey ?? null;
@@ -180,18 +186,37 @@ export class InteractionComponent {
 
     if (!this.playerRef) return;
 
-    const dist = Phaser.Math.Distance.Between(
-      this.parent.x,
-      this.parent.y,
-      this.playerRef.x,
-      this.playerRef.y,
-    );
+    const playerX = this.playerRef.body
+      ? this.playerRef.body.center.x
+      : this.playerRef.x;
+    const playerY = this.playerRef.body
+      ? this.playerRef.body.center.y
+      : this.playerRef.y;
 
-    if (dist <= this.interactionDistance && !this.isPromptVisible) {
+    let inRange = false;
+    if (
+      this.interactionDistanceX !== undefined &&
+      this.interactionDistanceY !== undefined
+    ) {
+      const dx = Math.abs(this.parent.x - (playerX + 50));
+      const dy = Math.abs(this.parent.y - playerY);
+      inRange =
+        dx <= this.interactionDistanceX && dy <= this.interactionDistanceY;
+    } else {
+      const dist = Phaser.Math.Distance.Between(
+        this.parent.x,
+        this.parent.y,
+        playerX,
+        playerY,
+      );
+      inRange = dist <= this.interactionDistance;
+    }
+
+    if (inRange && !this.isPromptVisible) {
       this.isPromptVisible = true;
       this.promptContainer.setVisible(true);
       this.scene.events.emit(GameEvents.INTERACTION_PROMPT_SHOWN, this.parent);
-    } else if (dist > this.interactionDistance && this.isPromptVisible) {
+    } else if (!inRange && this.isPromptVisible) {
       this.isPromptVisible = false;
       this.promptContainer.setVisible(false);
       this.scene.events.emit(GameEvents.INTERACTION_PROMPT_HIDDEN, this.parent);
