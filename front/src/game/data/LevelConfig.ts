@@ -13,6 +13,7 @@ export interface LevelDefinition {
     key: string;
     json: string;
     tileset: string;
+    tilesetName: string;
     tilesetImg: string;
   };
   data: {
@@ -35,6 +36,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       key: "map",
       json: "maps/museum-mvp/map.json",
       tileset: "tiles",
+      tilesetName: "museum",
       tilesetImg: "maps/museum-mvp/spritesheet.png",
     },
     data: {
@@ -43,6 +45,27 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
       collectibles: ["data/levels/level_01/collectibles.json"],
+    },
+  },
+  level_02: {
+    id: "level_02",
+    levelNumber: 2,
+    title: "Teatro Amazonas",
+    maxStars: 2,
+    initialGrayscale: 0.82,
+    map: {
+      key: "map",
+      json: "maps/teatro-amazonas/map.json",
+      tileset: "tiles",
+      tilesetName: "teatro",
+      tilesetImg: "maps/teatro-amazonas/spritesheet.png",
+    },
+    data: {
+      works: [],
+      quizzes: [],
+      npcs: [],
+      messages: [],
+      collectibles: [],
     },
   },
 };
@@ -149,6 +172,7 @@ export const BADGE_ASSETS = [
   { key: "badge_persistent", path: "data/badges/badge_persistent.png" },
 ] as const;
 
+// Why is this here if not being used? @abg
 export const PHASE_SETTINGS = {
   TITLE: LEVEL_REGISTRY.level_01.title,
   MAX_STARS: LEVEL_REGISTRY.level_01.maxStars,
