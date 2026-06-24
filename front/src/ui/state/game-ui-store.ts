@@ -405,19 +405,33 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         }));
       } else {
         const finalScore = state.quiz.score;
-        const _totalQuestions = state.quiz.questions.length;
         const onComplete = state.quiz.onComplete;
 
-        set((s) => ({
-          quiz: {
-            ...s.quiz,
-            phase: "performance",
-            isProcessingAnswer: false,
-          },
-        }));
+        if (state.quiz.isIntermediate) {
+          if (onComplete) {
+            onComplete(finalScore);
+          }
+          set((s) => ({
+            quiz: {
+              ...s.quiz,
+              isProcessingAnswer: false,
+              isVisible: false,
+              phase: "questioning",
+              isIntermediate: false,
+            },
+          }));
+        } else {
+          set((s) => ({
+            quiz: {
+              ...s.quiz,
+              phase: "performance",
+              isProcessingAnswer: false,
+            },
+          }));
 
-        if (onComplete) {
-          onComplete(finalScore);
+          if (onComplete) {
+            onComplete(finalScore);
+          }
         }
       }
     }, 1000);
