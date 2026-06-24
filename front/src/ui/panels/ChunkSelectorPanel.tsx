@@ -514,9 +514,11 @@ export function ChunkSelectorPanel() {
     buildInitialState([], [null, null, null, null]),
   );
   const inventoryItemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const [activeDragImageId, setActiveDragImageId] = useState<string | null>(
     null,
   );
+  const [slotWidth, setSlotWidth] = useState(170);
 
   useEffect(() => {
     if (!chunkSelectorOpen || !chunkSelectorData) return;
@@ -529,6 +531,19 @@ export function ChunkSelectorPanel() {
       },
     });
   }, [chunkSelectorData, chunkSelectorOpen]);
+
+  useEffect(() => {
+    if (!chunkSelectorOpen) return;
+    const el = gridContainerRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width;
+      setSlotWidth(Math.max((w - 2) / 2, 100));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [chunkSelectorOpen]);
 
   const handleClose = useCallback(() => {
     EventBus.emit("ui:chunk-selector-close", undefined);
@@ -821,6 +836,7 @@ export function ChunkSelectorPanel() {
               </Typography>
 
               <Box
+                ref={gridContainerRef}
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -892,7 +908,7 @@ export function ChunkSelectorPanel() {
             component="img"
             src={getChunkImageSrc(activeDragImageId)}
             sx={{
-              width: 170,
+              width: slotWidth,
               aspectRatio: "122 / 80",
               borderRadius: "8px",
               objectFit: "cover",
