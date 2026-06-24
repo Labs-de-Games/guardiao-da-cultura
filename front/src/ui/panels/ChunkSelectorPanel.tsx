@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  useDraggable,
-  useDroppable,
-} from "@dnd-kit/core";
+import { DndContext, type DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import {
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -18,490 +11,42 @@ import {
   useState,
 } from "react";
 
-import { LEVEL_ASSETS } from "@/game/data/LevelConfig";
-import {
-  type ChunkArrowDir,
-  type ChunkCursorMode,
-  ensureValidGridIndex,
-  hasAnyFreeGridSlot,
-  initChunkNavState,
-  normalizeFilledSlots,
-  reduceChunkNavOnArrow,
-} from "@/game/objects/ui/chunkSelectorNavigation";
+import type { ChunkArrowDir } from "@/game/objects/ui/chunkSelectorNavigation";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
-type ChunkItem = { id: string; name: string };
+import {
+  buildInitialState,
+  getChunkImageSrc,
+  reducer,
+} from "./chunk-selector-types";
+import { DraggableInventoryItem } from "./DraggableInventoryItem";
+import { DroppableGridSlot } from "./DroppableGridSlot";
+import { InventoryDropZone } from "./InventoryDropZone";
 
-type ChunkSelectorMachineState = {
-  cursorMode: ChunkCursorMode;
-  selectedInventoryIndex: number;
-  selectedGridIndex: number;
-  pickedItemIndex: number | null;
-  availableItems: ChunkItem[];
-  slots: (string | null)[];
-  usedInventoryIndices: (number | null)[];
-  lockedSlots: boolean[];
+const directionByKey: Record<string, ChunkArrowDir> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  w: "up",
+  s: "down",
+  a: "left",
+  d: "right",
 };
 
-type ChunkSelectorAction =
-  | {
-      type: "RESET";
-      payload: {
-        availableItems: ChunkItem[];
-        filledSlots: (string | null)[];
-      };
-    }
-  | { type: "MOVE"; payload: ChunkArrowDir }
-  | { type: "CONFIRM" }
-  | { type: "CANCEL_PICK" }
-  | {
-      type: "DRAG_DROP";
-      payload: { fromInventoryIndex: number; toSlotIndex: number };
-    }
-  | { type: "GRID_TO_INVENTORY"; payload: { slotIndex: number } }
-  | {
-      type: "GRID_TO_GRID";
-      payload: { fromSlotIndex: number; toSlotIndex: number };
-    };
+type DragIdPrefix = "inv" | "slot" | "grid";
 
-const chunkAssetsByKey: Map<string, string> = new Map(
-  LEVEL_ASSETS.CHUNKS.map((asset) => [asset.key, `/assets/${asset.path}`]),
-);
-
-function buildInitialState(
-  availableItems: ChunkItem[],
-  filledSlots: (string | null)[],
-): ChunkSelectorMachineState {
-  const slots = normalizeFilledSlots(filledSlots);
-  const lockedSlots = slots.map((slot) => Boolean(slot));
-
-  const nav = initChunkNavState({
-    inventoryCount: availableItems.length,
-    lockedSlots,
-  });
-
-  return {
-    cursorMode: nav.cursorMode,
-    selectedInventoryIndex: nav.selectedInventoryIndex,
-    selectedGridIndex: nav.selectedGridIndex,
-    pickedItemIndex: null,
-    availableItems,
-    slots,
-    usedInventoryIndices: [null, null, null, null],
-    lockedSlots,
-  };
-}
-
-function freeInventoryIndices(
-  usedInventoryIndices: (number | null)[],
-  count: number,
-): number[] {
-  const usedSet = new Set(
-    usedInventoryIndices.filter((x): x is number => x !== null),
-  );
-  return Array.from({ length: count }, (_, i) => i).filter(
-    (i) => !usedSet.has(i),
-  );
-}
-
-function nextFreeInventoryIndex(
-  usedInventoryIndices: (number | null)[],
-  count: number,
-  preferred: number,
-): number {
-  const free = freeInventoryIndices(usedInventoryIndices, count);
-  if (free.length === 0) return preferred;
-  return free.find((i) => i >= preferred) ?? free[0];
-}
-
-function reducer(
-  state: ChunkSelectorMachineState,
-  action: ChunkSelectorAction,
-): ChunkSelectorMachineState {
-  if (action.type === "RESET") {
-    return buildInitialState(
-      action.payload.availableItems,
-      action.payload.filledSlots,
-    );
-  }
-
-  if (action.type === "MOVE") {
-    const free = freeInventoryIndices(
-      state.usedInventoryIndices,
-      state.availableItems.length,
-    );
-    const freeCount = free.length;
-
-    // Map current original index → virtual index within the free list
-    const virtualCurrent = free.indexOf(state.selectedInventoryIndex);
-    const safeVirtual = virtualCurrent === -1 ? 0 : virtualCurrent;
-
-    const next = reduceChunkNavOnArrow(
-      {
-        cursorMode: state.cursorMode,
-        selectedInventoryIndex: safeVirtual,
-        selectedGridIndex: state.selectedGridIndex,
-      },
-      {
-        inventoryCount: freeCount,
-        lockedSlots: state.lockedSlots,
-      },
-      action.payload,
-    );
-
-    // Map virtual index back to original index when staying in inventory
-    const nextOriginalIndex =
-      next.cursorMode === "inventory"
-        ? (free[next.selectedInventoryIndex] ?? state.selectedInventoryIndex)
-        : next.selectedInventoryIndex;
-
-    return {
-      ...state,
-      cursorMode: next.cursorMode,
-      selectedInventoryIndex: nextOriginalIndex,
-      selectedGridIndex: next.selectedGridIndex,
-    };
-  }
-
-  if (action.type === "CANCEL_PICK") {
-    return {
-      ...state,
-      pickedItemIndex: null,
-      cursorMode: "inventory",
-    };
-  }
-
-  if (action.type === "CONFIRM") {
-    if (state.cursorMode === "inventory") {
-      if (state.availableItems.length <= 0) return state;
-
-      if (!hasAnyFreeGridSlot(state.lockedSlots)) {
-        return {
-          ...state,
-          cursorMode: "confirm",
-          pickedItemIndex: null,
-        };
-      }
-
-      const isAlreadyUsed = state.usedInventoryIndices.includes(
-        state.selectedInventoryIndex,
-      );
-      if (isAlreadyUsed) return state;
-
-      return {
-        ...state,
-        pickedItemIndex: state.selectedInventoryIndex,
-        cursorMode: "grid",
-        selectedGridIndex: ensureValidGridIndex(
-          state.selectedGridIndex,
-          state.lockedSlots,
-        ),
-      };
-    }
-
-    if (state.cursorMode === "grid") {
-      const gridIndex = ensureValidGridIndex(
-        state.selectedGridIndex,
-        state.lockedSlots,
-      );
-      if (state.lockedSlots[gridIndex]) return state;
-
-      const nextSlots = [...state.slots];
-      const nextUsed = [...state.usedInventoryIndices];
-
-      if (state.pickedItemIndex !== null) {
-        const item = state.availableItems[state.pickedItemIndex];
-        if (!item) return state;
-
-        nextSlots[gridIndex] = item.id;
-        nextUsed[gridIndex] = state.pickedItemIndex;
-
-        return {
-          ...state,
-          slots: nextSlots,
-          usedInventoryIndices: nextUsed,
-          pickedItemIndex: null,
-          cursorMode: "inventory",
-          selectedGridIndex: gridIndex,
-          selectedInventoryIndex: nextFreeInventoryIndex(
-            nextUsed,
-            state.availableItems.length,
-            state.selectedInventoryIndex,
-          ),
-        };
-      }
-
-      nextSlots[gridIndex] = null;
-      nextUsed[gridIndex] = null;
-
-      return {
-        ...state,
-        slots: nextSlots,
-        usedInventoryIndices: nextUsed,
-        selectedGridIndex: gridIndex,
-      };
-    }
-
-    return state;
-  }
-
-  if (action.type === "DRAG_DROP") {
-    const { fromInventoryIndex, toSlotIndex } = action.payload;
-    if (state.lockedSlots[toSlotIndex]) return state;
-    if (state.usedInventoryIndices[toSlotIndex] === fromInventoryIndex)
-      return state;
-
-    const item = state.availableItems[fromInventoryIndex];
-    if (!item) return state;
-
-    const nextSlots = [...state.slots];
-    const nextUsed = [...state.usedInventoryIndices];
-
-    // If this inventory item was already placed in another slot, clear it there first
-    const previousSlot = nextUsed.indexOf(fromInventoryIndex);
-    if (previousSlot !== -1) {
-      nextSlots[previousSlot] = null;
-      nextUsed[previousSlot] = null;
-    }
-
-    nextSlots[toSlotIndex] = item.id;
-    nextUsed[toSlotIndex] = fromInventoryIndex;
-
-    return {
-      ...state,
-      slots: nextSlots,
-      usedInventoryIndices: nextUsed,
-      pickedItemIndex: null,
-      cursorMode: "inventory",
-      selectedInventoryIndex: nextFreeInventoryIndex(
-        nextUsed,
-        state.availableItems.length,
-        state.selectedInventoryIndex,
-      ),
-    };
-  }
-
-  if (action.type === "GRID_TO_INVENTORY") {
-    const { slotIndex } = action.payload;
-    if (state.lockedSlots[slotIndex]) return state;
-    if (!state.slots[slotIndex]) return state;
-
-    const nextSlots = [...state.slots];
-    const nextUsed = [...state.usedInventoryIndices];
-    nextSlots[slotIndex] = null;
-    nextUsed[slotIndex] = null;
-
-    return { ...state, slots: nextSlots, usedInventoryIndices: nextUsed };
-  }
-
-  if (action.type === "GRID_TO_GRID") {
-    const { fromSlotIndex, toSlotIndex } = action.payload;
-    if (fromSlotIndex === toSlotIndex) return state;
-    if (state.lockedSlots[fromSlotIndex]) return state;
-    if (state.lockedSlots[toSlotIndex]) return state;
-    if (!state.slots[fromSlotIndex]) return state;
-
-    const nextSlots = [...state.slots];
-    const nextUsed = [...state.usedInventoryIndices];
-
-    nextSlots[toSlotIndex] = nextSlots[fromSlotIndex];
-    nextUsed[toSlotIndex] = nextUsed[fromSlotIndex];
-    nextSlots[fromSlotIndex] = null;
-    nextUsed[fromSlotIndex] = null;
-
-    return { ...state, slots: nextSlots, usedInventoryIndices: nextUsed };
-  }
-
-  return state;
-}
-
-function getChunkImageSrc(id: string): string {
-  return chunkAssetsByKey.get(id) ?? `/assets/artworks/photos/${id}.png`;
-}
-
-function DraggableInventoryItem({
-  index,
-  item,
-  isSelected,
-  isPicked,
-  isUsed,
-  onSetRef,
-}: {
-  index: number;
-  item: ChunkItem;
-  isSelected: boolean;
-  isPicked: boolean;
-  isUsed: boolean;
-  onSetRef: (node: HTMLDivElement | null) => void;
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `inv-${index}`,
-    disabled: isUsed,
-  });
-
-  return (
-    <Box
-      ref={(node: HTMLDivElement | null) => {
-        setNodeRef(node);
-        onSetRef(node);
-      }}
-      {...listeners}
-      {...attributes}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: isUsed ? "default" : "grab",
-        width: "100%",
-        userSelect: "none",
-        bgcolor: isSelected
-          ? "rgba(217, 173, 86, 0.24)"
-          : isPicked
-            ? "rgba(255,255,255,0.08)"
-            : "#1c1d1d",
-        borderRadius: "12px",
-        border: isSelected
-          ? "2px solid #d9ad56"
-          : isUsed
-            ? "1px solid #2f2f2f"
-            : "1px solid #3f4040",
-        p: 0.75,
-        opacity: isDragging ? 0.3 : isUsed && !isSelected ? 0.5 : 1,
-      }}
-    >
-      <Box
-        component="img"
-        src={getChunkImageSrc(item.id)}
-        draggable={false}
-        sx={{
-          width: "100%",
-          aspectRatio: "122 / 70",
-          borderRadius: "8px",
-          objectFit: "cover",
-          imageRendering: "pixelated",
-          bgcolor: "#111",
-        }}
-      />
-    </Box>
-  );
-}
-
-function DroppableGridSlot({
-  idx,
-  slot,
-  isSelected,
-  isLocked,
-}: {
-  idx: number;
-  slot: string | null;
-  isSelected: boolean;
-  isLocked: boolean;
-}) {
-  const { setNodeRef: setDropRef, isOver } = useDroppable({
-    id: `slot-${idx}`,
-    disabled: isLocked,
-  });
-
-  const isDraggable = !isLocked && slot !== null;
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setDragRef,
-    isDragging,
-  } = useDraggable({
-    id: `grid-${idx}`,
-    disabled: !isDraggable,
-  });
-
-  return (
-    <Box
-      ref={(node: HTMLDivElement | null) => {
-        setDropRef(node);
-        setDragRef(node);
-      }}
-      {...(isDraggable ? listeners : {})}
-      {...(isDraggable ? attributes : {})}
-      sx={{
-        width: "100%",
-        aspectRatio: "122 / 80",
-        bgcolor: "#111",
-        border: isLocked
-          ? "2px solid #4b8b5f"
-          : isOver || isSelected
-            ? "3px solid #d9ad56"
-            : "2px solid #454646",
-        borderRadius: "10px",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
-        cursor: isDraggable ? "grab" : "default",
-        opacity: isDragging ? 0.3 : 1,
-        userSelect: "none",
-      }}
-    >
-      {slot ? (
-        <Box
-          component="img"
-          src={getChunkImageSrc(slot)}
-          draggable={false}
-          sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            imageRendering: "pixelated",
-          }}
-        />
-      ) : (
-        <Typography sx={{ color: "#5f6060", fontWeight: 700 }}>?</Typography>
-      )}
-      {isLocked && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            bgcolor: "#8dd39d",
-          }}
-        />
-      )}
-    </Box>
-  );
-}
-
-function InventoryDropZone({ children }: { children: ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: "inventory" });
-
-  return (
-    <Paper
-      square
-      ref={setNodeRef}
-      sx={{
-        bgcolor: "#161717",
-        borderRadius: "16px",
-        p: 1.5,
-        display: "flex",
-        flexDirection: "column",
-        gap: 1,
-        height: "100%",
-        minHeight: 0,
-        overflowY: "auto",
-        scrollbarWidth: "none",
-        "&::-webkit-scrollbar": {
-          display: "none",
-        },
-        outline: isOver ? "2px solid #d9ad56" : "2px solid transparent",
-        transition: "outline-color 0.15s",
-      }}
-    >
-      {children}
-    </Paper>
-  );
+function parseDragId(
+  id: string,
+): { prefix: DragIdPrefix; index: number } | null {
+  if (id.startsWith("inv-"))
+    return { prefix: "inv", index: Number(id.slice(4)) };
+  if (id.startsWith("slot-"))
+    return { prefix: "slot", index: Number(id.slice(5)) };
+  if (id.startsWith("grid-"))
+    return { prefix: "grid", index: Number(id.slice(5)) };
+  return null;
 }
 
 export function ChunkSelectorPanel() {
@@ -578,17 +123,6 @@ export function ChunkSelectorPanel() {
       const normalizedKey =
         event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
-      const directionByKey: Record<string, ChunkArrowDir> = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-        w: "up",
-        s: "down",
-        a: "left",
-        d: "right",
-      };
-
       const isDirectionalInput = Boolean(directionByKey[normalizedKey]);
       const isConfirmInput = normalizedKey === "Enter" || normalizedKey === " ";
       const isCloseInput = normalizedKey === "Escape";
@@ -659,54 +193,61 @@ export function ChunkSelectorPanel() {
     return true;
   }, [state.lockedSlots, state.slots]);
 
-  if (!chunkSelectorOpen || !chunkSelectorData) return null;
+  const handleDragStart = useCallback(
+    ({ active }: { active: { id: string | number } }) => {
+      const id = String(active.id);
+      const parsed = parseDragId(id);
+      if (!parsed) return;
 
-  function handleDragEnd(event: DragEndEvent) {
+      if (parsed.prefix === "inv") {
+        setActiveDragImageId(state.availableItems[parsed.index]?.id ?? null);
+      } else if (parsed.prefix === "grid") {
+        setActiveDragImageId(state.slots[parsed.index]);
+      }
+    },
+    [state.availableItems, state.slots],
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragImageId(null);
     if (!over) return;
 
-    const activeId = String(active.id);
+    const activeParsed = parseDragId(String(active.id));
+    const overParsed = parseDragId(String(over.id));
     const overId = String(over.id);
 
-    if (activeId.startsWith("inv-") && overId.startsWith("slot-")) {
+    if (activeParsed?.prefix === "inv" && overParsed?.prefix === "slot") {
       dispatch({
         type: "DRAG_DROP",
         payload: {
-          fromInventoryIndex: Number(activeId.slice(4)),
-          toSlotIndex: Number(overId.slice(5)),
+          fromInventoryIndex: activeParsed.index,
+          toSlotIndex: overParsed.index,
         },
       });
-    } else if (activeId.startsWith("grid-") && overId === "inventory") {
+    } else if (activeParsed?.prefix === "grid" && overId === "inventory") {
       dispatch({
         type: "GRID_TO_INVENTORY",
-        payload: { slotIndex: Number(activeId.slice(5)) },
+        payload: { slotIndex: activeParsed.index },
       });
-    } else if (activeId.startsWith("grid-") && overId.startsWith("slot-")) {
+    } else if (
+      activeParsed?.prefix === "grid" &&
+      overParsed?.prefix === "slot"
+    ) {
       dispatch({
         type: "GRID_TO_GRID",
         payload: {
-          fromSlotIndex: Number(activeId.slice(5)),
-          toSlotIndex: Number(overId.slice(5)),
+          fromSlotIndex: activeParsed.index,
+          toSlotIndex: overParsed.index,
         },
       });
     }
-  }
+  }, []);
+
+  if (!chunkSelectorOpen || !chunkSelectorData) return null;
 
   return (
-    <DndContext
-      onDragStart={({ active }) => {
-        const id = String(active.id);
-        if (id.startsWith("inv-")) {
-          const index = Number(id.slice(4));
-          setActiveDragImageId(state.availableItems[index]?.id ?? null);
-        } else if (id.startsWith("grid-")) {
-          const slotIndex = Number(id.slice(5));
-          setActiveDragImageId(state.slots[slotIndex]);
-        }
-      }}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Box
         sx={{
           position: "absolute",
@@ -805,7 +346,6 @@ export function ChunkSelectorPanel() {
                       item={item}
                       isSelected={isSelected}
                       isPicked={isPicked}
-                      isUsed={false}
                       onSetRef={(node) => {
                         inventoryItemRefs.current[index] = node;
                       }}
