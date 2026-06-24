@@ -251,6 +251,18 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           />
         )}
         {mode === "confirmation" && (
+          <VolumeUp
+            sx={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              fontSize: 32,
+              color: GAME_UI_TOKENS.colors.textPrimary,
+              pointerEvents: "none",
+            }}
+          />
+        )}
+        {mode === "confirmation" && (
           <ConfirmationContent
             message={displayedText}
             selectedIndex={confirmSelected}
@@ -340,12 +352,12 @@ function ConfirmationContent({
   return (
     <Box>
       <Typography
-        variant="subtitle2"
         sx={{
-          color: GAME_UI_TOKENS.colors.textPrimary,
-          fontSize: "14px",
+          fontFamily: GAME_UI_TOKENS.fonts.body,
+          fontSize: "20px",
+          color: GAME_UI_TOKENS.colors.accentGoldMuted,
           lineHeight: 1.6,
-          mb: 3,
+          mb: "24px",
         }}
       >
         {message}
@@ -355,22 +367,22 @@ function ConfirmationContent({
           display: "flex",
           justifyContent: "center",
           gap: 4,
-          mb: 2,
+          mb: "16px",
         }}
       >
         <Typography
-          variant="subtitle2"
           sx={{
+            fontFamily: GAME_UI_TOKENS.fonts.body,
+            fontSize: "14px",
+            fontWeight: selectedIndex === 0 ? 700 : 500,
             color:
               selectedIndex === 0
-                ? GAME_UI_TOKENS.colors.accentGold
+                ? GAME_UI_TOKENS.colors.dialogueCta
                 : GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "14px",
-            fontWeight: selectedIndex === 0 ? 700 : 600,
             cursor: "pointer",
             transition: "all 0.15s",
             transform: selectedIndex === 0 ? "scale(1.1)" : "scale(1)",
-            "&:hover": { color: GAME_UI_TOKENS.colors.accentGold },
+            "&:hover": { color: GAME_UI_TOKENS.colors.dialogueCta },
           }}
           onClick={() => onConfirm(true)}
           onMouseEnter={() => onSelect(0)}
@@ -378,18 +390,18 @@ function ConfirmationContent({
           Sim
         </Typography>
         <Typography
-          variant="subtitle2"
           sx={{
+            fontFamily: GAME_UI_TOKENS.fonts.body,
+            fontSize: "14px",
+            fontWeight: selectedIndex === 1 ? 700 : 500,
             color:
               selectedIndex === 1
-                ? GAME_UI_TOKENS.colors.accentGold
+                ? GAME_UI_TOKENS.colors.dialogueCta
                 : GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "14px",
-            fontWeight: selectedIndex === 1 ? 700 : 600,
             cursor: "pointer",
             transition: "all 0.15s",
             transform: selectedIndex === 1 ? "scale(1.1)" : "scale(1)",
-            "&:hover": { color: GAME_UI_TOKENS.colors.accentGold },
+            "&:hover": { color: GAME_UI_TOKENS.colors.dialogueCta },
           }}
           onClick={() => onConfirm(false)}
           onMouseEnter={() => onSelect(1)}
@@ -404,21 +416,21 @@ function ConfirmationContent({
         }}
       >
         <Typography
-          variant="subtitle2"
           sx={{
-            color: GAME_UI_TOKENS.colors.textSecondary,
+            fontFamily: GAME_UI_TOKENS.fonts.body,
             fontSize: "12px",
-            fontWeight: 600,
+            fontWeight: 500,
+            color: GAME_UI_TOKENS.colors.textSecondary,
           }}
         >
           Aperte ESC para cancelar
         </Typography>
         <Typography
-          variant="subtitle2"
           sx={{
-            color: GAME_UI_TOKENS.colors.textSecondary,
+            fontFamily: GAME_UI_TOKENS.fonts.body,
             fontSize: "12px",
-            fontWeight: 600,
+            fontWeight: 500,
+            color: GAME_UI_TOKENS.colors.textSecondary,
           }}
         >
           Aperte E para confirmar
