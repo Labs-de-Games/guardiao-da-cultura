@@ -115,7 +115,10 @@ export const useDialogueStore = create<DialogueState>()((set) => ({
       };
       if (s.dialogueOpen) {
         return {
-          dialogueQueue: [...s.dialogueQueue, item],
+          dialogueQueue: [
+            ...s.dialogueQueue,
+            { ...item, position: s.dialoguePosition ?? item.position },
+          ],
         };
       }
       return getActiveState(item);
