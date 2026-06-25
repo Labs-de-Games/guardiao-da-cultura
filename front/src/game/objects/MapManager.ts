@@ -3,6 +3,7 @@ import { MissionIds } from "../constants/MissionConstants";
 import type { MapData } from "../systems/TiledMapLoader";
 import type { ContentJson } from "../types/GameDataTypes";
 import type { TiledProperty } from "../utils/TiledUtils";
+import { MovingPlatform, type PlatformDirection } from "./MovingPlatform";
 import { Npc, type NpcConfig } from "./Npc";
 import { Portal } from "./Portal";
 
@@ -117,4 +118,64 @@ export namespace MapManager {
 
     return portals;
   }
-}
+    /**
+     * Scan all object layers for Tiled objects whose Class (type) is
+     * "MovingPlatform" and instantiate them.
+     *
+     * Expected custom properties on each Tiled object:
+     *  - `speed`     (float)  – pixels/second at full speed (default 100)
+     *  - `direction` (string) – "left" | "right" | "up" | "down" (default "right")
+     *  - `distance`  (float)  – travel distance in Tiled-unit pixels (default 100)
+     *
+     * The object's rectangle (x, y, width, height) defines the platform bounds.
+     */
+    export function createMovingPlatforms(
+      scene: Phaser.Scene,
+      mapData: MapData,
+      scale: number = 6,
+    ): MovingPlatform[] {
+      const platforms: MovingPlatform[] = [];
+
+      Object.values(mapData.objectLayers).forEach((layer) => {
+        layer.objects.forEach((obj: Phaser.Types.Tilemaps.TiledObject) => {
+          const objectType =
+            obj.type || (obj as Record<string, unknown>).class || "";
+
+          if (objectType !== "MovingPlatform") return;
+          if (obj.x === undefined || obj.y === undefined) return;
+
+          const properties = obj.properties as TiledProperty[] | undefined;
+
+          const speedProp = properties?.find((p) => p.name === "speed");
+          const speed = speedProp ? Number(speedProp.value) : 100;
+
+          const dirProp = properties?.find((p) => p.name === "direction");
+          const direction = (
+            dirProp ? String(dirProp.value) : "right"
+          ) as PlatformDirection;
+
+          const distProp = properties?.find((p) => p.name === "distance");
+          const distance = distProp ? Number(distProp.value) * scale : 100;
+
+          const textureProp = properties?.find((p) => p.name === "texture");
+          const texture = textureProp ? String(textureProp.value) : undefined;
+
+          const platform = new MovingPlatform(scene, {
+            x: obj.x * scale,
+            y: obj.y * scale,
+            width: (obj.width || 16) * scale,
+            height: (obj.height || 16) * scale,
+            speed,
+            direction,
+            distance,
+            texture,
+            scale,
+          });
+
+          platforms.push(platform);
+        });
+      });
+
+      return platforms;
+    }
+  }
