@@ -53,6 +53,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const lines = useDialogueStore((s) => s.dialogueLines);
   const currentLine = useDialogueStore((s) => s.dialogueCurrentLine);
   const confirmMessage = useDialogueStore((s) => s.dialogueConfirmMessage);
+  const confirmSpeaker = useDialogueStore((s) => s.dialogueConfirmSpeaker);
   const confirmSelected = useDialogueStore((s) => s.dialogueConfirmSelected);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
 
@@ -72,7 +73,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const rawCurrentText =
     mode === "dialogue" ? (lines[currentLine] ?? "") : confirmMessage;
   const parsedLine = parseLine(rawCurrentText);
-  const currentText = mode === "dialogue" ? parsedLine.content : rawCurrentText;
+  const currentText = parsedLine.content;
   const speakerName = mode === "dialogue" ? parsedLine.speaker : null;
   const isLastLine = mode === "dialogue" && currentLine === lines.length - 1;
 
@@ -233,7 +234,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           bgcolor: GAME_UI_TOKENS.colors.dialogueBg,
           borderRadius: "12px",
           px: "41px",
-          py: "36px",
+          py: "28px",
           maxWidth: "min(862px, 90vw)",
           width: "100%",
           overflow: "visible",
@@ -263,6 +264,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         {mode === "confirmation" && (
           <ConfirmationContent
             message={displayedText}
+            speakerName={confirmSpeaker}
             selectedIndex={confirmSelected}
             onSelect={moveConfirmSelection}
             onConfirm={handleConfirm}
@@ -304,18 +306,20 @@ function DialogueContent({
           fontFamily: GAME_UI_TOKENS.fonts.body,
           fontSize: "20px",
           color: GAME_UI_TOKENS.colors.accentGoldMuted,
-          lineHeight: 1.6,
-          mb: "24px",
+          lineHeight: 1.2,
+          mb: "16px",
           minHeight: "2.5em",
         }}
       >
         {text}
       </Typography>
-      <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <ArrowRight
           sx={{
             fontSize: 32,
             color: GAME_UI_TOKENS.colors.dialogueCta,
+            mx: -1.5,
+            my: -1.5,
           }}
         />
         <Typography
@@ -335,24 +339,40 @@ function DialogueContent({
 
 function ConfirmationContent({
   message,
+  speakerName,
   selectedIndex,
   onSelect,
   onConfirm,
 }: {
   message: string;
+  speakerName: string;
   selectedIndex: number;
   onSelect: (dir: number) => void;
   onConfirm: (confirmed: boolean) => void;
 }) {
   return (
     <Box>
+      {speakerName && (
+        <Typography
+          sx={{
+            fontFamily: GAME_UI_TOKENS.fonts.display,
+            fontSize: "24px",
+            lineHeight: "1.21em",
+            color: GAME_UI_TOKENS.colors.accentGoldMuted,
+            mb: "12px",
+          }}
+        >
+          {speakerName}
+        </Typography>
+      )}
       <Typography
         sx={{
           fontFamily: GAME_UI_TOKENS.fonts.body,
           fontSize: "20px",
           color: GAME_UI_TOKENS.colors.accentGoldMuted,
-          lineHeight: 1.6,
+          lineHeight: 1.2,
           mb: "24px",
+          minHeight: "2.5em",
         }}
       >
         {message}
@@ -419,7 +439,7 @@ function ConfirmationContent({
             color: GAME_UI_TOKENS.colors.dialogueCta,
           }}
         >
-          CONTINUAR
+          CONFIRMAR
         </Typography>
       </Box>
     </Box>
