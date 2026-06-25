@@ -1,7 +1,6 @@
 "use client";
 
 import ArrowRight from "@mui/icons-material/ArrowRight";
-import VolumeUp from "@mui/icons-material/VolumeUp";
 import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -26,6 +25,26 @@ function parseLine(text: string): ParsedLine {
     return { speaker: match[1], content: match[2] };
   }
   return { speaker: null, content: text };
+}
+
+function TextToSpeechIcon() {
+  return (
+    <Box
+      component="img"
+      src="/images/etiqueta/icon-text-to-speech.svg"
+      alt=""
+      aria-hidden="true"
+      sx={{
+        position: "absolute",
+        top: 16,
+        right: 16,
+        width: 36,
+        height: 36,
+        pointerEvents: "none",
+        filter: "brightness(0) invert(1)",
+      }}
+    />
+  );
 }
 
 export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
@@ -231,18 +250,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           },
         }}
       >
-        {mode === "dialogue" && (
-          <VolumeUp
-            sx={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              fontSize: 32,
-              color: GAME_UI_TOKENS.colors.textPrimary,
-              pointerEvents: "none",
-            }}
-          />
-        )}
+        {mode === "dialogue" && <TextToSpeechIcon />}
         {mode === "dialogue" && (
           <DialogueContent
             speakerName={speakerName}
@@ -251,18 +259,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
             onAdvance={handleAdvance}
           />
         )}
-        {mode === "confirmation" && (
-          <VolumeUp
-            sx={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              fontSize: 32,
-              color: GAME_UI_TOKENS.colors.textPrimary,
-              pointerEvents: "none",
-            }}
-          />
-        )}
+        {mode === "confirmation" && <TextToSpeechIcon />}
         {mode === "confirmation" && (
           <ConfirmationContent
             message={displayedText}
