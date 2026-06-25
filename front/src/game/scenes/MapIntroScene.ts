@@ -61,7 +61,7 @@ const MARKERS: MapMarker[] = [
   },
 ];
 
-export class MapIntro extends Scene {
+export class MapIntroScene extends Scene {
   private mapImage!: Phaser.GameObjects.Image;
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private markerViews: Map<string, MarkerView> = new Map();
