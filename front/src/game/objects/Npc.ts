@@ -137,15 +137,19 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
         () => {
           this.questManager?.clearPendingResult(missionId);
         },
+        { x: this.x, y: this.y },
       );
       return;
     }
 
     const lines = this.getDialogueLines(status);
     if (!lines || lines.length === 0) {
-      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Olá! No momento não tenho nada para dizer.",
-      ]);
+      this.scene.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        ["Olá! No momento não tenho nada para dizer."],
+        undefined,
+        { x: this.x, y: this.y },
+      );
       return;
     }
 
@@ -155,6 +159,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       () => {
         this.onDialogueComplete(status, game);
       },
+      { x: this.x, y: this.y },
     );
   }
 
