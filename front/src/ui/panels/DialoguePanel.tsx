@@ -371,7 +371,6 @@ function ConfirmationContent({
           fontSize: "20px",
           color: GAME_UI_TOKENS.colors.accentGoldMuted,
           lineHeight: 1.2,
-          mb: "24px",
           minHeight: "2.5em",
         }}
       >
@@ -382,7 +381,6 @@ function ConfirmationContent({
           display: "flex",
           justifyContent: "center",
           gap: 4,
-          mb: "24px",
         }}
       >
         <Typography
