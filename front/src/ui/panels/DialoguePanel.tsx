@@ -365,7 +365,7 @@ function ConfirmationContent({
           display: "flex",
           justifyContent: "center",
           gap: 4,
-          mb: "16px",
+          mb: "24px",
         }}
       >
         <Typography
@@ -407,31 +407,22 @@ function ConfirmationContent({
           Não
         </Typography>
       </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <ArrowRight
+          sx={{
+            fontSize: 32,
+            color: GAME_UI_TOKENS.colors.dialogueCta,
+          }}
+        />
         <Typography
           sx={{
             fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "12px",
             fontWeight: 500,
-            color: GAME_UI_TOKENS.colors.textSecondary,
+            fontSize: "14px",
+            color: GAME_UI_TOKENS.colors.dialogueCta,
           }}
         >
-          Aperte ESC para cancelar
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "12px",
-            fontWeight: 500,
-            color: GAME_UI_TOKENS.colors.textSecondary,
-          }}
-        >
-          Aperte E para confirmar
+          CONTINUAR
         </Typography>
       </Box>
     </Box>
