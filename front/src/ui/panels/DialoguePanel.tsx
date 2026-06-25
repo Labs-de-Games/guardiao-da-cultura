@@ -1,5 +1,6 @@
 "use client";
 
+import ArrowRight from "@mui/icons-material/ArrowRight";
 import VolumeUp from "@mui/icons-material/VolumeUp";
 import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -314,13 +315,10 @@ function DialogueContent({
         {text}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <Box
+        <ArrowRight
           sx={{
-            width: 0,
-            height: 0,
-            borderLeft: "10px solid transparent",
-            borderRight: "10px solid transparent",
-            borderTop: `12px solid ${GAME_UI_TOKENS.colors.dialogueCta}`,
+            fontSize: 32,
+            color: GAME_UI_TOKENS.colors.dialogueCta,
           }}
         />
         <Typography
