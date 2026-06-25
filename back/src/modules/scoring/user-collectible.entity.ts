@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
-export type CollectibleType = "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+export type CollectibleType = "CLUE_VILLAIN";
 
 @Entity()
 @Index(["userId", "collectibleId", "collectibleType"], { unique: true })

@@ -64,8 +64,8 @@ class CollectibleRecordDto {
   collectibleId!: string;
 
   @IsString()
-  @IsIn(["COLLECT", "CLUE_VILLAIN", "CLUE_NEXT"])
-  collectibleType!: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  @IsIn(["CLUE_VILLAIN"])
+  collectibleType!: "CLUE_VILLAIN";
 
   @IsString()
   levelId!: string;
