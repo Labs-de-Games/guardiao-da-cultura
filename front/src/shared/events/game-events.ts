@@ -82,6 +82,7 @@ export interface DialogueShowData {
 
 export interface DialogueConfirmData {
   message: string;
+  speakerName: string;
   callbackId: string;
 }
 
