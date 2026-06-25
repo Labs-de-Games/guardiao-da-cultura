@@ -371,7 +371,7 @@ function ConfirmationContent({
         <Typography
           sx={{
             fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "14px",
+            fontSize: "18px",
             fontWeight: selectedIndex === 0 ? 700 : 500,
             color:
               selectedIndex === 0
@@ -390,7 +390,7 @@ function ConfirmationContent({
         <Typography
           sx={{
             fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "14px",
+            fontSize: "18px",
             fontWeight: selectedIndex === 1 ? 700 : 500,
             color:
               selectedIndex === 1
