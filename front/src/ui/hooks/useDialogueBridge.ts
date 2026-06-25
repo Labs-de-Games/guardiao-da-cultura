@@ -14,7 +14,7 @@ export function useDialogueBridge() {
       showDialogue(data.lines, data.callbackId);
     });
     const unsubConfirm = EventBus.on("dialogue:confirm", (data) => {
-      showConfirmation(data.message, data.callbackId);
+      showConfirmation(data.message, data.speakerName, data.callbackId);
     });
     return () => {
       unsubShow();

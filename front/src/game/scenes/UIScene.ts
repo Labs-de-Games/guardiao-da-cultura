@@ -89,12 +89,17 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.SHOW_CONFIRMATION_REQUEST,
-      (message: string, onYes: () => void, onNo: () => void) => {
+      (
+        message: string,
+        speakerName: string,
+        onYes: () => void,
+        onNo: () => void,
+      ) => {
         const callbackId = crypto.randomUUID();
         this.callbackRegistry.registerConfirm(callbackId, onYes, onNo);
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:confirm", { message, callbackId });
+        EventBus.emit("dialogue:confirm", { message, speakerName, callbackId });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );

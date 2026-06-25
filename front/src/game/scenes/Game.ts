@@ -876,9 +876,18 @@ export class Game extends Scene {
         return;
       }
 
+      const dialogues = npc?.getDialogues();
+      const quizQuestionLines = dialogues?.start_quiz_question;
+      const rawLine =
+        quizQuestionLines && quizQuestionLines.length > 0
+          ? quizQuestionLines[0]
+          : "Podemos iniciar o teste?";
+      const npcName = npc?.getName() || "";
+
       this.events.emit(
         GameEvents.SHOW_CONFIRMATION_REQUEST,
-        "Podemos iniciar o teste?",
+        rawLine,
+        npcName,
         () => {
           this.isQuizActive = true;
           this.events.emit(
