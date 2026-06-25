@@ -64,6 +64,7 @@ export interface NpcDialogues {
   completed: string[];
   success: string[];
   failure: string[];
+  start_quiz_question?: string[];
 }
 
 export interface NpcData {
