@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 function CustomCheckbox({ checked }: { checked: boolean }) {
@@ -51,7 +52,7 @@ export function ObjectiveList() {
   return (
     <Card
       sx={{
-        bgcolor: "#161717",
+        bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
         borderRadius: "16px",
         border: "none",
       }}
@@ -60,7 +61,7 @@ export function ObjectiveList() {
         <Typography
           variant="subtitle2"
           sx={{
-            color: "#d9ad56",
+            color: LayoutConfig.COLORS.INFO_TITLE,
             fontWeight: 700,
             fontSize: "16px",
             mb: 1.5,
