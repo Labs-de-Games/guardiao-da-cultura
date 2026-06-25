@@ -241,13 +241,13 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           "&::after": {
             content: '""',
             position: "absolute",
-            bottom: -12,
+            bottom: -32,
             right: 40,
             width: 0,
             height: 0,
-            borderLeft: "12px solid transparent",
-            borderRight: "12px solid transparent",
-            borderTop: `12px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+            borderLeft: "24px solid transparent",
+            borderRight: "24px solid transparent",
+            borderTop: `32px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
           },
         }}
       >
