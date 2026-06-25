@@ -2,12 +2,17 @@
 
 import ArrowRight from "@mui/icons-material/ArrowRight";
 import { Box, Typography } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 const TYPING_SPEED = 30;
+const BUBBLE_MAX_WIDTH = 900;
+const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
+const VIEWPORT_MARGIN = 24;
+const TRIANGLE_HEIGHT = 32;
+const HEAD_OFFSET = 100;
 
 interface DialoguePanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -56,6 +61,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const confirmSpeaker = useDialogueStore((s) => s.dialogueConfirmSpeaker);
   const confirmSelected = useDialogueStore((s) => s.dialogueConfirmSelected);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
+  const speakerPos = useDialogueStore((s) => s.dialoguePosition);
 
   const advanceDialogue = useDialogueStore((s) => s.advanceDialogue);
   const moveConfirmSelection = useDialogueStore((s) => s.moveConfirmSelection);
@@ -76,6 +82,49 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const currentText = parsedLine.content;
   const speakerName = mode === "dialogue" ? parsedLine.speaker : null;
   const isLastLine = mode === "dialogue" && currentLine === lines.length - 1;
+
+  const positioning = useMemo(() => {
+    if (!speakerPos) {
+      return {
+        outerStyle: {
+          position: "absolute" as const,
+          top: 24,
+          left: "50%" as const,
+          transform: "translateX(-50%)",
+        },
+        triangleLeft: null,
+      };
+    }
+
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+
+    const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
+    const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
+    const clampedLeft = Math.max(minLeft, Math.min(speakerPos.x, maxLeft));
+
+    const bottom = Math.min(
+      vh - VIEWPORT_MARGIN,
+      Math.max(
+        VIEWPORT_MARGIN,
+        vh - (speakerPos.y - TRIANGLE_HEIGHT - HEAD_OFFSET),
+      ),
+    );
+
+    const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
+    const ratio = (speakerPos.x - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
+    const triangleLeft = Math.max(15, Math.min(ratio * 100, 85));
+
+    return {
+      outerStyle: {
+        position: "absolute" as const,
+        left: clampedLeft,
+        bottom,
+        transform: "translateX(-50%)",
+      },
+      triangleLeft,
+    };
+  }, [speakerPos]);
 
   useEffect(() => {
     if (!open) return;
@@ -216,12 +265,9 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   return (
     <Box
       sx={{
-        position: "absolute",
-        top: 24,
-        left: "50%",
-        transform: "translateX(-50%)",
+        ...positioning.outerStyle,
         maxWidth: "min(900px, 90vw)",
-        width: "100%",
+        width: "min(900px, 90vw)",
         pointerEvents: "auto",
         zIndex: 30,
       }}
@@ -238,17 +284,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           maxWidth: "min(862px, 90vw)",
           width: "100%",
           overflow: "visible",
-          "&::after": {
-            content: '""',
-            position: "absolute",
-            bottom: -32,
-            right: 40,
-            width: 0,
-            height: 0,
-            borderLeft: "24px solid transparent",
-            borderRight: "24px solid transparent",
-            borderTop: `32px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
-          },
         }}
       >
         {mode === "dialogue" && <TextToSpeechIcon />}
@@ -270,6 +305,23 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
             onConfirm={handleConfirm}
           />
         )}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: -TRIANGLE_HEIGHT,
+            ...(positioning.triangleLeft !== null
+              ? {
+                  left: `${positioning.triangleLeft}%`,
+                  transform: "translateX(-50%)",
+                }
+              : { right: 40 }),
+            width: 0,
+            height: 0,
+            borderLeft: "24px solid transparent",
+            borderRight: "24px solid transparent",
+            borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+          }}
+        />
       </Box>
     </Box>
   );
