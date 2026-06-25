@@ -502,9 +502,4 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
-  s.collectibles.filter(
-    (c) => c.category === "CLUE_VILLAIN" || c.category === "CLUE_NEXT",
-  );
-
-export const selectInventoryCollectibles = (s: GameUIState) =>
-  s.collectibles.filter((c) => c.category === "COLLECT");
+  s.collectibles.filter((c) => c.category === "CLUE_VILLAIN");
