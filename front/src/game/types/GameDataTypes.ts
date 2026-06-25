@@ -126,9 +126,7 @@ export interface CollectibleData {
 }
 
 export interface CollectiblesJson {
-  COLLECT: Record<string, CollectibleData>;
   CLUE_VILLAIN: Record<string, CollectibleData>;
-  CLUE_NEXT: Record<string, CollectibleData>;
 }
 
 export interface ContentJson {

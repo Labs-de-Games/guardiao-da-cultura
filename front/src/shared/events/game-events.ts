@@ -138,11 +138,9 @@ export interface GameEventMap {
     missionId: string;
     status: "accepted" | "completed" | "failed";
   };
-  "inventory:item-collected": ItemCollectedData;
-  "inventory:collectibles-sync": CollectiblesSyncData;
+  "collectible:item-collected": ItemCollectedData;
+  "collectible:collectibles-sync": CollectiblesSyncData;
   "ui:controls-overlay": ControlsOverlayData;
-  "inventory:opened": undefined;
-  "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
   "ui:chunk-selector-open": ChunkSelectorOpenData;
   "ui:chunk-selector-close": undefined;
