@@ -13,6 +13,7 @@ const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
 const VIEWPORT_MARGIN = 24;
 const TRIANGLE_HEIGHT = 32;
 const HEAD_OFFSET = 100;
+const MAX_DIALOGUE_LENGTH = 144;
 
 interface DialoguePanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -30,6 +31,11 @@ function parseLine(text: string): ParsedLine {
     return { speaker: match[1], content: match[2] };
   }
   return { speaker: null, content: text };
+}
+
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "…";
 }
 
 function TextToSpeechIcon() {
@@ -363,7 +369,7 @@ function DialogueContent({
           minHeight: "2.5em",
         }}
       >
-        {text}
+        {truncateText(text, MAX_DIALOGUE_LENGTH)}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <ArrowRight
@@ -426,7 +432,7 @@ function ConfirmationContent({
           minHeight: "2.5em",
         }}
       >
-        {message}
+        {truncateText(message, MAX_DIALOGUE_LENGTH)}
       </Typography>
       <Box
         sx={{
