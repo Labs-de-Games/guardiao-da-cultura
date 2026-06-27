@@ -7,6 +7,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
+function useWindowSize() {
+  const [size, setSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
+    height: typeof window !== "undefined" ? window.innerHeight : 768,
+  });
+  useEffect(() => {
+    const handler = () =>
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return size;
+}
+
 const TYPING_SPEED = 30;
 const BUBBLE_MAX_WIDTH = 900;
 const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
@@ -79,13 +93,15 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // suppresses spurious input immediately after dialogue opens
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
+  const { width: vw, height: vh } = useWindowSize();
 
   const rawCurrentText =
     mode === "dialogue" ? (lines[currentLine] ?? "") : confirmMessage;
   const parsedLine = parseLine(rawCurrentText);
-  const currentText = parsedLine.content;
+  const currentText = truncateText(parsedLine.content, MAX_DIALOGUE_LENGTH);
   const speakerName = mode === "dialogue" ? parsedLine.speaker : null;
   const isLastLine = mode === "dialogue" && currentLine === lines.length - 1;
 
@@ -101,9 +117,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         triangleLeft: null,
       };
     }
-
-    const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-    const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
@@ -130,7 +143,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
       },
       triangleLeft,
     };
-  }, [speakerPos]);
+  }, [speakerPos, vw, vh]);
 
   useEffect(() => {
     if (!open) return;
@@ -182,6 +195,8 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     }
     if (isLastLine) {
       onComplete(callbackId);
+      advanceDialogue();
+      return;
     }
     advanceDialogue();
   }, [
@@ -292,22 +307,24 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           overflow: "visible",
         }}
       >
-        {mode === "dialogue" && <TextToSpeechIcon />}
-        {mode === "dialogue" && (
+        <TextToSpeechIcon />
+        {mode === "dialogue" ? (
           <DialogueContent
             speakerName={speakerName}
             text={displayedText}
             isLastLine={isLastLine}
             onAdvance={handleAdvance}
           />
-        )}
-        {mode === "confirmation" && <TextToSpeechIcon />}
-        {mode === "confirmation" && (
+        ) : (
           <ConfirmationContent
             message={displayedText}
             speakerName={confirmSpeaker}
             selectedIndex={confirmSelected}
-            onSelect={moveConfirmSelection}
+            onHover={(targetIndex) => {
+              const cur = useDialogueStore.getState().dialogueConfirmSelected;
+              if (cur !== targetIndex)
+                moveConfirmSelection(targetIndex === 0 ? -1 : 1);
+            }}
             onConfirm={handleConfirm}
           />
         )}
@@ -369,7 +386,7 @@ function DialogueContent({
           minHeight: "2.5em",
         }}
       >
-        {truncateText(text, MAX_DIALOGUE_LENGTH)}
+        {text}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <ArrowRight
@@ -399,13 +416,13 @@ function ConfirmationContent({
   message,
   speakerName,
   selectedIndex,
-  onSelect,
+  onHover,
   onConfirm,
 }: {
   message: string;
   speakerName: string;
   selectedIndex: number;
-  onSelect: (dir: number) => void;
+  onHover: (index: number) => void;
   onConfirm: (confirmed: boolean) => void;
 }) {
   return (
@@ -432,7 +449,7 @@ function ConfirmationContent({
           minHeight: "2.5em",
         }}
       >
-        {truncateText(message, MAX_DIALOGUE_LENGTH)}
+        {message}
       </Typography>
       <Box
         sx={{
@@ -456,7 +473,7 @@ function ConfirmationContent({
             "&:hover": { color: GAME_UI_TOKENS.colors.dialogueCta },
           }}
           onClick={() => onConfirm(true)}
-          onMouseEnter={() => onSelect(0)}
+          onMouseEnter={() => onHover(0)}
         >
           Sim
         </Typography>
@@ -475,7 +492,7 @@ function ConfirmationContent({
             "&:hover": { color: GAME_UI_TOKENS.colors.dialogueCta },
           }}
           onClick={() => onConfirm(false)}
-          onMouseEnter={() => onSelect(1)}
+          onMouseEnter={() => onHover(1)}
         >
           Não
         </Typography>
