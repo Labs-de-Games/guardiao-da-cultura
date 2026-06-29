@@ -1,6 +1,7 @@
 export interface StarsChangedData {
   current: number;
   total: number;
+  score: number;
 }
 
 export interface StepProgress {
