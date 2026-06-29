@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
+import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
+import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 const ANIMATION_DURATION_MS = 400;
 
-function formatScore(value: number): string {
-  return value.toLocaleString("pt-BR");
+export function formatScore(value: number): string {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 export function ScorePanel() {
@@ -58,12 +60,12 @@ export function ScorePanel() {
         position: "absolute",
         top: 16,
         left: 16,
-        zIndex: 30,
+        zIndex: UI_Z_INDEX.PANEL,
         display: "flex",
         alignItems: "center",
         gap: 8,
-        background: "#252726",
-        borderRadius: 8,
+        background: LayoutConfig.COLORS.MAP_BG,
+        borderRadius: GAME_UI_TOKENS.radius.small,
         padding: "12px 20px",
         boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.25)",
         pointerEvents: "none",
@@ -71,10 +73,10 @@ export function ScorePanel() {
     >
       <span
         style={{
-          fontFamily: "Inter",
+          fontFamily: "Inter, sans-serif",
           fontSize: 20,
           fontWeight: 700,
-          color: "#F5F5F5",
+          color: GAME_UI_TOKENS.colors.textPrimary,
           lineHeight: 1,
         }}
       >
@@ -85,7 +87,7 @@ export function ScorePanel() {
           fontFamily: "Inter, sans-serif",
           fontSize: 20,
           fontWeight: 700,
-          color: "#D9AD56",
+          color: GAME_UI_TOKENS.colors.accentGold,
           lineHeight: 1,
         }}
       >
