@@ -77,13 +77,13 @@ function PerformanceNavButton({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       sx={{
-        height: 65,
-        px: 8,
+        height: { xs: 50, md: 65 },
+        px: { xs: 4, md: 8 },
         borderRadius: 1,
         bgcolor: bgColor,
         fontFamily: "'Inter', sans-serif",
         color: "#000000",
-        fontSize: "1.5rem",
+        fontSize: { xs: "1rem", md: "1.5rem" },
         fontWeight: 700,
         textTransform: "none",
         display: "flex",
@@ -188,51 +188,39 @@ export default function QuizPanel() {
   }, [quiz.score, quiz.questions.length]);
 
   const isRetryMode = scorePercentage < 70;
+  const isPerfectScore = scorePercentage === 100;
 
-  const starTexture =
-    scorePercentage === 100
-      ? "star_full"
-      : scorePercentage >= 75
-        ? "star_three_quarter"
-        : scorePercentage >= 50
-          ? "star_two_quarter"
-          : "star_one_quarter";
+  const starCount = isPerfectScore || isRetryMode ? 3 : 1;
+  const starAsset = isRetryMode ? "star_gray" : "gold_star";
 
   const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
 
-  const {
-    performanceTitle,
-    performanceSubTitle,
-    performanceMessage,
-    performanceHint,
-  } = useMemo(() => {
-    return {
-      performanceTitle:
-        scorePercentage < 25
-          ? "Essa não"
-          : scorePercentage < 70
-            ? "Por pouco!"
-            : "Parabéns!",
-      performanceSubTitle:
-        scorePercentage < 25 || scorePercentage < 70
-          ? "Pontuação baixa"
-          : scorePercentage < 100
-            ? "Boa pontuação"
-            : "Pontuação perfeita!",
-      performanceMessage:
-        scorePercentage < 25
-          ? "Tente novamente"
-          : scorePercentage < 70
-            ? "Com mais atenção, você consegue!"
-            : scorePercentage < 100
-              ? "Muito bom!"
-              : "Gabaritou!",
-      performanceHint:
-        scorePercentage >= 70
-          ? "Você já pode encarar o próximo nível!"
-          : "Sua pontuação não foi o suficiente. Mas não desista!",
-    };
-  }, [scorePercentage]);
+  const { headerTitle, headerSubTitle, performanceTitle, performanceMessage } =
+    useMemo(() => {
+      if (isRetryMode) {
+        return {
+          headerTitle: `Pontos: ${scorePercentage}%`,
+          headerSubTitle: "Pontuação baixa",
+          performanceTitle: "Quase lá...",
+          performanceMessage:
+            "Sua pontuação ainda não foi suficiente, mas não desista! Volte e inspecione os objetos com atenção para conquistar o conhecimento necessário e avançar de nível!",
+        };
+      }
+      if (isPerfectScore) {
+        return {
+          headerTitle: "Parabéns!",
+          headerSubTitle: "Pontuação perfeita",
+          performanceTitle: "GABARITOU!",
+          performanceMessage: "você está pronto para o próximo nível",
+        };
+      }
+      return {
+        headerTitle: "Parabéns!",
+        headerSubTitle: "Pontuação boa",
+        performanceTitle: "MUITO BOM!",
+        performanceMessage: "você está pronto para o próximo nível",
+      };
+    }, [scorePercentage, isRetryMode, isPerfectScore]);
 
   const activateSelectedNav = useCallback(() => {
     if (selectedNavIndex === 0) {
@@ -377,7 +365,7 @@ export default function QuizPanel() {
           width: 939,
           height: 715,
           mx: "auto",
-          p: 4,
+          p: { xs: 2, md: 4 },
           borderRadius: 1.8,
           bgcolor: "#222624",
           outline: "none",
@@ -390,9 +378,9 @@ export default function QuizPanel() {
           sx={{
             bgcolor: "#1B1B1B",
             borderRadius: 1.8,
-            px: 4,
-            py: 1.5,
-            mb: 6,
+            px: { xs: 2, md: 4 },
+            py: { xs: 1, md: 1.5 },
+            mb: { xs: 3, md: 6 },
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -400,33 +388,40 @@ export default function QuizPanel() {
             boxShadow: "inset 0 4px 4px rgba(0, 0, 0, 0.2)",
           }}
         >
-          <Stack spacing={-1.5} sx={{ alignItems: "start", width: 220 }}>
+          <Stack spacing={-1.5} sx={{ alignItems: "start", minWidth: 0 }}>
             <Typography
               sx={{
                 fontFamily: "'Jockey One', sans-serif",
                 color: "#D9AD56",
-                fontSize: "2.5rem",
+                fontSize: "clamp(1.5rem, 3vw, 2.5rem)",
                 fontWeight: 700,
               }}
             >
-              {isPerformance ? performanceTitle : `Pontos: ${scorePercentage}%`}
+              {isPerformance ? headerTitle : `Pontos: ${scorePercentage}%`}
             </Typography>
             <Typography
               sx={{
                 fontFamily: "'Jockey One', sans-serif",
                 color: "#ffffff",
-                fontSize: "1.8rem",
+                fontSize: "clamp(1rem, 2vw, 1.8rem)",
                 fontWeight: 500,
               }}
             >
               {isPerformance
-                ? performanceSubTitle
+                ? headerSubTitle
                 : `Pergunta ${quiz.currentQuestionIndex + 1}/${quiz.questions.length}`}
             </Typography>
           </Stack>
 
-          <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               {progressStates.map((state, index) => (
                 <ProgressStep key={index} state={state} />
               ))}
@@ -434,12 +429,19 @@ export default function QuizPanel() {
           </Box>
         </Box>
 
-        <Box sx={{ px: 4, flex: 1 }}>
+        <Box
+          sx={{
+            px: { xs: 2, md: 4 },
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           {isPerformance ? (
             /* PERFORMANCE CONTENT */
             <Stack
               sx={{
                 alignItems: "center",
+                justifyContent: "center",
                 height: "100%",
               }}
             >
@@ -447,70 +449,125 @@ export default function QuizPanel() {
                 sx={{
                   border: `4px solid ${performanceColor}`,
                   borderRadius: 1.5,
-                  p: 4,
+                  p: { xs: 1.5, md: 2 },
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 1,
+                  gap: { xs: 0.5, md: 0.5 },
                   width: "85%",
-                  height: 370,
                 }}
               >
-                <Box
-                  sx={{ position: "relative", width: 170, height: 170, mt: 3 }}
+                {/* STARS */}
+                <Stack
+                  direction="row"
+                  spacing={
+                    isRetryMode || isPerfectScore ? { xs: 0.5, md: 1 } : 0
+                  }
+                  sx={{
+                    mt: 0,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                 >
-                  {scorePercentage < 100 && (
-                    <Box
-                      component="img"
-                      src="/assets/ui/stars/star_full.png"
-                      sx={{
-                        position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain",
-                        filter: "grayscale(1) brightness(0.12)",
-                      }}
-                    />
-                  )}
-                  {scorePercentage >= 25 && (
-                    <Box
-                      component="img"
-                      src={`/assets/ui/stars/${starTexture}.png`}
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain",
-                      }}
-                    />
-                  )}
-                </Box>
+                  {Array.from({ length: starCount }).map((_, i) => {
+                    const isMiddleStar = starCount === 3 && i === 1;
+                    const isSingleStar = starCount === 1;
+                    const isLargeStar = isMiddleStar || isSingleStar;
+                    return (
+                      <Box
+                        key={i}
+                        component="img"
+                        src={`/assets/ui/stars/${starAsset}.png`}
+                        sx={{
+                          width: isLargeStar
+                            ? { xs: 56, md: 93 }
+                            : { xs: 40, md: 66 },
+                          height: isLargeStar
+                            ? { xs: 53, md: 89 }
+                            : { xs: 38, md: 63 },
+                          objectFit: "contain",
+                          transform: isMiddleStar
+                            ? {
+                                xs: "translateY(-7px)",
+                                md: "translateY(-12px)",
+                              }
+                            : isSingleStar
+                              ? "none"
+                              : {
+                                  xs: "translateY(5px)",
+                                  md: "translateY(8px)",
+                                },
+                        }}
+                      />
+                    );
+                  })}
+                </Stack>
+
+                {/* TITLE */}
                 <Typography
                   sx={{
                     fontFamily: "'Jockey One', sans-serif",
                     color: "#D9AD56",
-                    fontSize: "3rem",
+                    fontSize: "clamp(1.5rem, 4vw, 3rem)",
                     fontWeight: 700,
-                    mt: 1,
-                    mb: 4,
+                    mt: 0,
+                    mb: { xs: 0.25, md: 0.5 },
+                    textAlign: "center",
                   }}
                 >
-                  {performanceMessage}
+                  {performanceTitle}
                 </Typography>
+
+                {/* MESSAGE / SUBTITLE */}
                 <Typography
                   sx={{
                     fontFamily: "'Inter', sans-serif",
                     color: performanceColor,
-                    fontSize: "1.125rem",
-                    fontStyle: "italic",
-                    mt: "auto",
+                    fontSize: "clamp(0.875rem, 1.5vw, 1.125rem)",
+                    fontStyle: isRetryMode ? "italic" : "normal",
+                    textAlign: "center",
+                    lineHeight: 1.4,
+                    px: { xs: 1, md: 2 },
                   }}
                 >
-                  {performanceHint}
+                  {performanceMessage}
                 </Typography>
               </Box>
+
+              {/* BUTTONS - outside the golden border */}
+              <Stack
+                direction="row"
+                sx={{
+                  mt: { xs: 2, md: 3 },
+                  gap: { xs: 2, md: 3 },
+                }}
+              >
+                <PerformanceNavButton
+                  label={
+                    <>
+                      <ArrowBackIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                      Voltar ao mapa
+                    </>
+                  }
+                  selected={selectedNavIndex === 0}
+                  variant="dark"
+                  onClick={() => EventBus.emit("quiz:close", undefined)}
+                  onMouseEnter={() => setSelectedNavIndex(0)}
+                />
+                <PerformanceNavButton
+                  label={
+                    <>
+                      <StarIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                      {isRetryMode ? "Tentar novamente" : "Próxima fase"}
+                    </>
+                  }
+                  selected={selectedNavIndex === 1}
+                  variant="gold"
+                  onClick={activateSelectedNav}
+                  onMouseEnter={() => setSelectedNavIndex(1)}
+                />
+              </Stack>
             </Stack>
           ) : (
             /* QUESTIONING CONTENT */
@@ -590,43 +647,8 @@ export default function QuizPanel() {
           )}
         </Box>
 
-        {/* FOOTER */}
-        {isPerformance ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 3,
-              px: 4,
-              mb: 0.5,
-            }}
-          >
-            <PerformanceNavButton
-              label={
-                <>
-                  <ArrowBackIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  Voltar ao mapa
-                </>
-              }
-              selected={selectedNavIndex === 0}
-              variant="dark"
-              onClick={() => EventBus.emit("quiz:close", undefined)}
-              onMouseEnter={() => setSelectedNavIndex(0)}
-            />
-            <PerformanceNavButton
-              label={
-                <>
-                  <StarIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  {isRetryMode ? "Tentar novamente" : "Próxima fase"}
-                </>
-              }
-              selected={selectedNavIndex === 1}
-              variant="gold"
-              onClick={activateSelectedNav}
-              onMouseEnter={() => setSelectedNavIndex(1)}
-            />
-          </Box>
-        ) : (
+        {/* FOOTER - WASD hint (questioning only) */}
+        {!isPerformance && (
           <Box
             sx={{
               display: "flex",
