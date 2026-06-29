@@ -16,6 +16,7 @@ export function useEventBridge({
   const endGame = useGameUIStore((s) => s.endGame);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
   const setStars = useGameUIStore((s) => s.setStars);
+  const setScore = useGameUIStore((s) => s.setScore);
   const addOrUpdateMission = useGameUIStore((s) => s.addOrUpdateMission);
   const setCollectibles = useGameUIStore((s) => s.setCollectibles);
   const collectItem = useGameUIStore((s) => s.collectItem);
@@ -55,6 +56,7 @@ export function useEventBridge({
 
     const unsubStars = safeSubscribe("player:stars-changed", (data) => {
       setStars(data.current, data.total);
+      setScore(data.score);
     });
 
     const unsubQuestProgress = safeSubscribe(
@@ -100,6 +102,7 @@ export function useEventBridge({
     endGame,
     setSidebarOpen,
     setStars,
+    setScore,
     addOrUpdateMission,
     setCollectibles,
     collectItem,
