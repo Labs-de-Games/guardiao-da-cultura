@@ -202,7 +202,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   endGame: () => {
     const { gameStarted } = get();
     if (gameStarted) {
-      set({ gameStarted: false, sidebarOpen: false });
+      set({ gameStarted: false, sidebarOpen: false, score: 0 });
     }
   },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
