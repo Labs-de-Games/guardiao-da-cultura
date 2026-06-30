@@ -96,6 +96,12 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
 
     const filledSlots = placeholder.state.filledSlots as (string | null)[];
     filledSlots[index] = itemId;
+
+    gameScene.placeholderSystem.updatePhotoCell(
+      placeholder.instanceId,
+      index,
+      itemId,
+    );
   }
 
   private emitFeedback(
@@ -109,24 +115,6 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
 
     if (allCorrect) {
       gameScene.completePhotoFloor();
-
-      // Derive the full photo key from the works data's parent_id convention.
-      const fullPhotoKey = "candujar_sem_titulo_yanomami";
-
-      // Scale full image to fit the placeholder area (native chunks: 122x80 each, 2x2 = 244x160).
-      const nativeW = 244;
-      const nativeH = 160;
-      const scaleX = placeholder.area.width / nativeW;
-      const scaleY = placeholder.area.height / nativeH;
-      const scale = Math.min(scaleX, scaleY);
-
-      const cx = placeholder.area.centerX;
-      const cy = placeholder.area.centerY;
-
-      gameScene.add
-        .image(cx, cy, fullPhotoKey)
-        .setScale(scale * 2.7)
-        .setDepth(2);
 
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Incrível! Agora sim é possível ver a fotografia completa!",
