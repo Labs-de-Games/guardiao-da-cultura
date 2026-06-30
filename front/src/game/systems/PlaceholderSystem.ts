@@ -11,7 +11,7 @@ export interface PlaceholderInstance {
   type: InteractiveType;
   id: string | string[];
   state?: Record<string, unknown>;
-  hintSprite?: Phaser.GameObjects.Sprite;
+  hintSprite?: Phaser.GameObjects.GameObject;
   isFilled?: boolean;
 }
 
@@ -179,7 +179,9 @@ export class PlaceholderSystem {
       item.disableInteractive();
 
       if (placeholder.hintSprite) {
-        placeholder.hintSprite.stop();
+        if (placeholder.hintSprite instanceof Phaser.GameObjects.Sprite) {
+          placeholder.hintSprite.stop();
+        }
         placeholder.hintSprite.destroy();
         placeholder.hintSprite = undefined;
       }
@@ -260,6 +262,9 @@ export class PlaceholderSystem {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
       if (p.hintSprite) {
+        if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
+          p.hintSprite.stop();
+        }
         p.hintSprite.destroy();
         p.hintSprite = undefined;
       }
