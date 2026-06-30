@@ -293,12 +293,12 @@ export function LabelPanel() {
             sx={{
               flex: 1,
               display: "flex",
-              alignItems: "flex-start",
-              px: { xs: 3, md: "120px" },
-              pt: "88px",
-              pb: 2,
+              alignItems: "center",
+              px: "32px",
+              pt: "32px",
+              pb: "48px",
               overflowY: "auto",
-              gap: 2,
+              gap: "32px",
             }}
           >
             <Box
@@ -336,7 +336,7 @@ export function LabelPanel() {
                 display: "flex",
                 justifyContent: "center",
                 pb: "32px",
-                pt: 2,
+                pt: "48px",
               }}
             >
               <Pagination
