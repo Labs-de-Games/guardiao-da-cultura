@@ -99,6 +99,7 @@ export class PlaceholderSystem {
       for (let i = 0; i < 4; i++) {
         const cell = this.scene.add.image(0, 0, "rec");
         cell.setDisplaySize(cellW, cellH);
+        cell.setAlpha(0.45);
         const col = i % 2;
         const row = Math.floor(i / 2);
         cell.setPosition(
@@ -107,8 +108,6 @@ export class PlaceholderSystem {
         );
         container.add(cell);
       }
-
-      container.setAlpha(0.45);
       container.setDepth(10);
       instance.hintSprite = container;
     } else {
@@ -292,6 +291,7 @@ export class PlaceholderSystem {
     if (cell instanceof Phaser.GameObjects.Image) {
       cell.setTexture(chunkTextureKey);
       cell.setDisplaySize(122, 80);
+      cell.setAlpha(1);
     }
   }
 
