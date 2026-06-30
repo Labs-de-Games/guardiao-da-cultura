@@ -3,6 +3,7 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useShallow } from "zustand/react/shallow";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import {
   selectHintCollectibles,
   useGameUIStore,
@@ -26,13 +27,13 @@ export function HintCard({ isActive, onToggle }: HintCardProps) {
     <Card
       onClick={onToggle}
       sx={{
-        bgcolor: "#161717",
+        bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
         borderRadius: isActive ? "0 16px 16px 0" : "16px",
         border: "none",
         cursor: "pointer",
         transition: "all 0.15s",
         "&:hover": {
-          bgcolor: "#1e1f1f",
+          bgcolor: LayoutConfig.COLORS.PANEL_BG_CSS,
         },
       }}
     >
@@ -75,7 +76,7 @@ export function HintCard({ isActive, onToggle }: HintCardProps) {
                 textAlign: "center",
               }}
             >
-              Dica do Vândalo
+              Pistas
             </Typography>
             {collectedHintCount > 0 && (
               <Box

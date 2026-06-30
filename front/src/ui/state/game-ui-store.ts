@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
 import { getGuestBadgeIds } from "../../lib/badgesStorage";
@@ -72,6 +73,7 @@ export interface GameUIState {
   autoStartProgress: number | null;
   stars: number;
   totalStars: number;
+  score: number;
   missions: MissionProgress[];
   collectibles: CollectibleEntry[];
   chunkSelectorOpen: boolean;
@@ -108,6 +110,7 @@ export interface GameUIState {
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
   setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
+  setScore: (score: number) => void;
   setMissions: (missions: MissionProgress[]) => void;
   addOrUpdateMission: (
     missionId: string,
@@ -155,14 +158,11 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   sidebarOpen: false,
   controlsOpen: false,
   gameStarted: false,
-  activeMapMarker: {
-    title: "Inhotim",
-    location: "Brumadinho, Minas Gerais",
-    isAvailable: true,
-  },
+  activeMapMarker: DEFAULT_MAP_MARKER,
   autoStartProgress: null,
   stars: 0,
   totalStars: 0,
+  score: 0,
   missions: [],
   collectibles: [],
   chunkSelectorOpen: false,
@@ -203,12 +203,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   endGame: () => {
     const { gameStarted } = get();
     if (gameStarted) {
-      set({ gameStarted: false, sidebarOpen: false });
+      set({ gameStarted: false, sidebarOpen: false, score: 0 });
     }
   },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
   setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
+  setScore: (score) => set({ score }),
   setMissions: (missions) => set({ missions }),
   addOrUpdateMission: (
     missionId,
@@ -507,9 +508,4 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
-  s.collectibles.filter(
-    (c) => c.category === "CLUE_VILLAIN" || c.category === "CLUE_NEXT",
-  );
-
-export const selectInventoryCollectibles = (s: GameUIState) =>
-  s.collectibles.filter((c) => c.category === "COLLECT");
+  s.collectibles.filter((c) => c.category === "CLUE_VILLAIN");
