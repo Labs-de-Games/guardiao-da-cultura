@@ -279,10 +279,26 @@ export class PlaceholderSystem {
     return this.placeholders.find((p) => p.instanceId === instanceId) || null;
   }
 
+  public updatePhotoCell(
+    instanceId: string,
+    slotIndex: number,
+    chunkTextureKey: string,
+  ) {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (!p) return;
+    const hint = p.hintSprite;
+    if (!(hint instanceof Phaser.GameObjects.Container)) return;
+    const cell = hint.getAt(slotIndex);
+    if (cell instanceof Phaser.GameObjects.Image) {
+      cell.setTexture(chunkTextureKey);
+      cell.setDisplaySize(122, 80);
+    }
+  }
+
   public lockPlaceholder(instanceId: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
-      if (p.hintSprite) {
+      if (p.type !== InteractiveType.PHOTO && p.hintSprite) {
         if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
           p.hintSprite.stop();
         }
