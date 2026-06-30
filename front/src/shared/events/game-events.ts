@@ -1,6 +1,7 @@
 export interface StarsChangedData {
   current: number;
   total: number;
+  score: number;
 }
 
 export interface StepProgress {
@@ -149,6 +150,11 @@ export interface IntroCompleteData {
   levelId: string;
 }
 
+export interface AutoStartTickData {
+  remainingMs: number;
+  totalMs: number;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -161,11 +167,9 @@ export interface GameEventMap {
     missionId: string;
     status: "accepted" | "completed" | "failed";
   };
-  "inventory:item-collected": ItemCollectedData;
-  "inventory:collectibles-sync": CollectiblesSyncData;
+  "collectible:item-collected": ItemCollectedData;
+  "collectible:collectibles-sync": CollectiblesSyncData;
   "ui:controls-overlay": ControlsOverlayData;
-  "inventory:opened": undefined;
-  "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
   "ui:chunk-selector-open": ChunkSelectorOpenData;
   "ui:chunk-selector-close": undefined;
@@ -190,4 +194,7 @@ export interface GameEventMap {
   "map:marker-changed": MapMarkerChangedData;
   "intro:start": IntroStartData;
   "intro:complete": IntroCompleteData;
+  "map:auto-start-tick": AutoStartTickData;
+  "map:auto-start-canceled": undefined;
+  "map:auto-start-completed": undefined;
 }

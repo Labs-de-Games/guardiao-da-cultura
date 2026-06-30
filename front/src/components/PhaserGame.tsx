@@ -4,7 +4,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { setGuestId } from "../lib/api/client";
 import { useAuth } from "../lib/auth/useAuth";
+import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
+import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import LoadingGameScreen from "./LoadingGameScreen";
 
 const GameOverlay = dynamic(
@@ -16,6 +18,7 @@ const GameOverlay = dynamic(
 export default function PhaserGame() {
   const { user } = useAuth();
   const posthogDistinctId = usePostHogDistinctId();
+  const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
@@ -39,25 +42,34 @@ export default function PhaserGame() {
 
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
+    if (isFlowLoading) return;
 
     isInitializingRef.current = true;
 
     const initGame = async () => {
       try {
-        const activeUserId = user?.id;
-        const playerId = activeUserId ?? posthogDistinctId ?? "";
+        const activeUserId = user?.id ?? null;
         const isGuest = !activeUserId;
+        const guestSessionId = isGuest
+          ? getOrCreateGuestSessionId(posthogDistinctId ?? null)
+          : null;
+        const playerId = activeUserId ?? guestSessionId;
 
         if (!playerId) {
           throw new Error("Player ID is required to start the game.");
         }
 
-        if (isGuest && posthogDistinctId) {
-          setGuestId(posthogDistinctId);
+        if (isGuest && guestSessionId) {
+          setGuestId(guestSessionId);
         }
 
         const { default: StartGame } = await import("../game/main");
-        gameRef.current = StartGame("game-container", playerId, isGuest);
+        gameRef.current = StartGame(
+          "game-container",
+          playerId,
+          isGuest,
+          entryFlow,
+        );
         setIsLoading(false);
         setOverlayMounted(true);
       } catch (err) {
@@ -81,7 +93,7 @@ export default function PhaserGame() {
         isInitializingRef.current = false;
       }
     };
-  }, [user?.id, posthogDistinctId]);
+  }, [entryFlow, isFlowLoading, user?.id, posthogDistinctId]);
 
   return (
     <div
@@ -95,7 +107,7 @@ export default function PhaserGame() {
       }}
     >
       {isLoading && <LoadingGameScreen />}
-      {overlayMounted && <GameOverlay />}
+      {overlayMounted && <GameOverlay entryFlow={entryFlow} />}
     </div>
   );
 }

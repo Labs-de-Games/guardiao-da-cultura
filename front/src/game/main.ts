@@ -4,9 +4,11 @@ import { LevelCinematic } from "./scenes/LevelCinematic";
 import { MapIntroScene } from "./scenes/MapIntroScene";
 import { UIScene } from "./scenes/UIScene";
 
+export type EntryFlow = "map" | "direct";
+
 // Find out more information about the Game Config at:
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
-const config: Types.Core.GameConfig = {
+const baseConfig: Types.Core.GameConfig = {
   type: AUTO,
   width: 1920,
   height: 1080,
@@ -24,15 +26,26 @@ const config: Types.Core.GameConfig = {
     mode: Scale.RESIZE,
     autoCenter: Scale.CENTER_BOTH,
   },
-  scene: [MapIntroScene, LevelCinematic, MainGame, UIScene],
 };
 
-const StartGame = (parent: string, userId: string, isGuest = false) => {
-  const game = new Game({ ...config, parent });
+function getScenes(entryFlow: EntryFlow) {
+  return entryFlow === "direct"
+    ? [MainGame, MapIntroScene, LevelCinematic, UIScene]
+    : [MapIntroScene, LevelCinematic, MainGame, UIScene];
+}
+
+const StartGame = (
+  parent: string,
+  userId: string,
+  isGuest = false,
+  entryFlow: EntryFlow = "map",
+) => {
+  const game = new Game({ ...baseConfig, parent, scene: getScenes(entryFlow) });
   if (userId) {
     game.registry.set("userId", userId);
   }
   game.registry.set("isGuest", isGuest);
+  game.registry.set("entryFlow", entryFlow);
   return game;
 };
 

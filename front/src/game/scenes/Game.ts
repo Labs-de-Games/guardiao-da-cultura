@@ -1,8 +1,10 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
-import { sendQuizOutcomeEvent } from "../../lib/gameEventsApi";
-
-import { getUserCollectibles, submitScore } from "../../lib/scoresApi";
+import {
+  createGamePersistence,
+  type GamePersistence,
+  type ScorePersistencePayload,
+} from "@/lib/persistence/gamePersistence";
 
 import { EventBus } from "../../shared/events/event-bus";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
@@ -41,6 +43,7 @@ import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { INpcEntity } from "../types/EntityTypes";
 import type {
+  CollectibleData,
   ContentJson,
   LabelInfoData,
   MissionDef,
@@ -51,6 +54,8 @@ import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
 export class Game extends Scene {
+  private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
+
   player!: Player;
   rat!: Enemy;
   private hasInteractedWithRat: boolean = false;
@@ -80,6 +85,7 @@ export class Game extends Scene {
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
+  private persistence!: GamePersistence;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
@@ -91,7 +97,7 @@ export class Game extends Scene {
     quizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
-    collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+    collectibles: Game.EMPTY_COLLECTIBLES,
   };
 
   constructor() {
@@ -123,7 +129,7 @@ export class Game extends Scene {
       quizzes: {},
       npcs: {},
       messages: { SYSTEM_DIALOGUES: {} },
-      collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+      collectibles: Game.EMPTY_COLLECTIBLES,
     };
   }
 
@@ -272,6 +278,13 @@ export class Game extends Scene {
     this.questManager = new QuestManager(MissionRequirements);
     this.scoreManager = new ScoreManager({ levelId: this.levelId });
 
+    const actorId = (this.registry.get("userId") as string | undefined) ?? null;
+    const isGuest = this.registry.get("isGuest") === true;
+    this.persistence = createGamePersistence({
+      mode: isGuest ? "guest" : "auth",
+      actorId,
+    });
+
     this.registry.set("scoreManager", this.scoreManager);
 
     this.scoreManager.on(
@@ -283,6 +296,7 @@ export class Game extends Scene {
         EventBus.emit("player:stars-changed", {
           current: stars,
           total: Math.ceil(payload.totalQuarters / 4),
+          score: payload.totalQuarters,
         });
       },
     );
@@ -329,7 +343,7 @@ export class Game extends Scene {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.badgeSystem = new BadgeSystem(this);
+    this.badgeSystem = new BadgeSystem(this, this.persistence);
     this.badgeSystem.initialize();
 
     this.collectibleSystem = new CollectibleSystem(
@@ -461,21 +475,24 @@ export class Game extends Scene {
     EventBus.emit("player:stars-changed", {
       current: initialStars,
       total: Math.ceil(initialPayload.totalQuarters / 4),
+      score: initialPayload.totalQuarters,
     });
 
     const allCollectibles = Object.entries(
       this.contentData.collectibles,
     ).flatMap(([category, items]) =>
-      Object.entries(
-        items as Record<string, { metadata: { title?: string } }>,
-      ).map(([id, data]) => ({
-        id,
-        name: data.metadata.title || id,
-        category,
-        collected: false,
-      })),
+      Object.entries(items as Record<string, CollectibleData>).map(
+        ([id, data]) => ({
+          id,
+          name: data.metadata.title || id,
+          category,
+          collected: false,
+        }),
+      ),
     );
-    EventBus.emit("inventory:collectibles-sync", { entries: allCollectibles });
+    EventBus.emit("collectible:collectibles-sync", {
+      entries: allCollectibles,
+    });
 
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
@@ -512,32 +529,16 @@ export class Game extends Scene {
   }
 
   private async initializeCollectibles(): Promise<void> {
-    const userId = this.registry.get("userId") as string | undefined;
-    let collected: Array<{
-      collectibleId: string;
-      collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
-    }> = [];
+    try {
+      const collected = await this.persistence.loadCollectibles(this.levelId);
 
-    if (userId) {
-      try {
-        const records = await getUserCollectibles(userId, {
-          levelId: this.levelId,
-        });
-        collected = records.map((record) => ({
-          collectibleId: record.collectibleId,
-          collectibleType: record.collectibleType,
-        }));
+      this.collectibleSystem.applyCollectedCollectibles(collected);
 
-        this.collectibleSystem.applyCollectedCollectibles(collected);
-
-        for (const record of collected) {
-          if (record.collectibleType === "CLUE_VILLAIN") {
-            this.questManager.collectInfo(`pista_${record.collectibleId}`);
-          }
-        }
-      } catch (err) {
-        console.warn("[Game] Failed to load user collectibles:", err);
+      for (const record of collected) {
+        this.questManager.collectInfo(`pista_${record.collectibleId}`);
       }
+    } catch (err) {
+      console.warn("[Game] Failed to load collectibles from persistence:", err);
     }
   }
 
@@ -882,7 +883,7 @@ export class Game extends Scene {
 
       this.events.emit(
         GameEvents.SHOW_CONFIRMATION_REQUEST,
-        "Pronto para iniciar o teste?",
+        "Podemos iniciar o teste?",
         () => {
           this.isQuizActive = true;
           this.events.emit(
@@ -960,7 +961,7 @@ export class Game extends Scene {
                 passed: isSuccess,
               });
 
-              void sendQuizOutcomeEvent({
+              void this.persistence.sendQuizOutcome({
                 type: isSuccess ? "quiz.completed" : "quiz.failed",
                 metadata: {
                   missionId,
@@ -971,6 +972,7 @@ export class Game extends Scene {
                   passed: isSuccess,
                   payload: scoringPayload as unknown as Record<string, unknown>,
                 },
+                timestamp: new Date().toISOString(),
               });
 
               const npc = this.npcs.find((n) => {
@@ -1195,13 +1197,9 @@ export class Game extends Scene {
 
   private async submitScoreToBackend() {
     try {
-      const userId = this.registry.get("userId");
-      if (!userId) return;
-
       const payload = this.scoreManager.getPayload();
 
-      await submitScore({
-        userId,
+      const persistencePayload: ScorePersistencePayload = {
         levelId: payload.levelId,
         totalQuarters: payload.totalQuarters,
         totalStars: payload.totalStars,
@@ -1225,16 +1223,15 @@ export class Game extends Scene {
         collectedCollectibles: payload.collectibles.interactions.map(
           (interaction) => ({
             collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as
-              | "COLLECT"
-              | "CLUE_VILLAIN"
-              | "CLUE_NEXT",
+            collectibleType: interaction.collectible_type as "CLUE_VILLAIN",
             levelId: payload.levelId,
           }),
         ),
-      });
+      };
+
+      await this.persistence.saveScore(persistencePayload);
     } catch (err) {
-      console.error("[Game] Failed to submit score:", err);
+      console.error("[Game] Failed to save score in persistence layer:", err);
     }
   }
 

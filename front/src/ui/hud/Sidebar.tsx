@@ -4,41 +4,30 @@ import { Box, Paper } from "@mui/material";
 import { useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import {
   selectHintCollectibles,
-  selectInventoryCollectibles,
   UI_Z_INDEX,
   useGameUIStore,
 } from "@/ui/state/game-ui-store";
 
 import { CollectibleGrid } from "./CollectibleGrid";
 import { HintCard } from "./HintCard";
-import { InventoryCard } from "./InventoryCard";
 import { ObjectiveList } from "./ObjectiveList";
+import { PhaseInfoCard } from "./PhaseInfoCard";
 
 const SIDEBAR_WIDTH = 217;
 const DRAWER_WIDTH = 475;
 
-type ActivePanel = "none" | "topCard" | "bottomCard";
+type ActivePanel = "none" | "topCard";
 
 function HintPanel() {
   const items = useGameUIStore(useShallow(selectHintCollectibles));
   return (
     <CollectibleGrid
-      title="Dica do Vândalo"
+      title="Pistas"
       items={items}
-      emptySlotLabel="???"
-    />
-  );
-}
-
-function InventoryPanel() {
-  const items = useGameUIStore(useShallow(selectInventoryCollectibles));
-  return (
-    <CollectibleGrid
-      title="Artefatos"
-      items={items}
-      emptySlotLabel="item secreto"
+      emptySlotLabel="Item secreto"
     />
   );
 }
@@ -48,17 +37,12 @@ export function Sidebar() {
   const [activePanel, setActivePanel] = useState<ActivePanel>("none");
 
   const hintCardRef = useRef<HTMLDivElement>(null);
-  const inventoryCardRef = useRef<HTMLDivElement>(null);
 
   const drawerTop =
-    activePanel === "topCard"
-      ? (hintCardRef.current?.offsetTop ?? 0)
-      : activePanel === "bottomCard"
-        ? (inventoryCardRef.current?.offsetTop ?? 0)
-        : 0;
+    activePanel === "topCard" ? (hintCardRef.current?.offsetTop ?? 0) : 0;
 
-  const handleToggle = (panel: "topCard" | "bottomCard") => {
-    setActivePanel((prev) => (prev === panel ? "none" : panel));
+  const handleToggle = () => {
+    setActivePanel((prev) => (prev === "topCard" ? "none" : "topCard"));
   };
 
   const drawerOpen = activePanel !== "none";
@@ -88,14 +72,13 @@ export function Sidebar() {
             minHeight: "320px",
             maxHeight: `calc(100% - ${drawerTop}px)`,
             mt: `${drawerTop}px`,
-            bgcolor: "#161717",
+            bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
             borderRadius: "16px 0 0 16px",
             overflow: "hidden",
             flexShrink: 0,
           }}
         >
           {activePanel === "topCard" && <HintPanel />}
-          {activePanel === "bottomCard" && <InventoryPanel />}
         </Paper>
       )}
 
@@ -104,7 +87,7 @@ export function Sidebar() {
         sx={{
           width: SIDEBAR_WIDTH,
           height: "100%",
-          bgcolor: "#1c1d1d",
+          bgcolor: LayoutConfig.COLORS.PANEL_BG_CSS,
           borderRadius: 0,
           display: "flex",
           flexDirection: "column",
@@ -129,19 +112,11 @@ export function Sidebar() {
           >
             <HintCard
               isActive={activePanel === "topCard"}
-              onToggle={() => handleToggle("topCard")}
-            />
-          </Box>
-          <Box
-            ref={inventoryCardRef}
-            sx={activePanel === "bottomCard" ? { ml: -1.5 } : undefined}
-          >
-            <InventoryCard
-              isActive={activePanel === "bottomCard"}
-              onToggle={() => handleToggle("bottomCard")}
+              onToggle={handleToggle}
             />
           </Box>
           <ObjectiveList />
+          <PhaseInfoCard sx={{ mt: "auto" }} />
         </Box>
       </Paper>
     </Box>

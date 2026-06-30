@@ -118,31 +118,6 @@
       "objects": [
         {
           "height": 0,
-          "id": 52,
-          "name": "I4",
-          "opacity": 1,
-          "point": true,
-          "properties": [
-            {
-              "name": "collectible_id",
-              "type": "string",
-              "value": "xotehe"
-            },
-            {
-              "name": "collectible_type",
-              "type": "string",
-              "value": "collect"
-            }
-          ],
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "x": 222.756756193177,
-          "y": 82.0440403703395
-        },
-        {
-          "height": 0,
           "id": 53,
           "name": "I3",
           "opacity": 1,
@@ -165,86 +140,11 @@
           "width": 0,
           "x": 30.0807406789557,
           "y": 177.48502794228
-        },
-        {
-          "height": 0,
-          "id": 54,
-          "name": "I2",
-          "opacity": 1,
-          "point": true,
-          "properties": [
-            {
-              "name": "collectible_id",
-              "type": "string",
-              "value": "abebe"
-            },
-            {
-              "name": "collectible_type",
-              "type": "string",
-              "value": "collect"
-            }
-          ],
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "x": 502.416761558841,
-          "y": 380.776114267538
-        },
-        {
-          "height": 0,
-          "id": 55,
-          "name": "I1",
-          "opacity": 1,
-          "point": true,
-          "properties": [
-            {
-              "name": "collectible_id",
-              "type": "string",
-              "value": "fusca"
-            },
-            {
-              "name": "collectible_type",
-              "type": "string",
-              "value": "collect"
-            }
-          ],
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "x": 735.587496872133,
-          "y": 512.955083826841
-        },
-        {
-          "height": 0,
-          "id": 56,
-          "name": "I5",
-          "opacity": 1,
-          "point": true,
-          "properties": [
-            {
-              "name": "collectible_id",
-              "type": "string",
-              "value": "chimarrao"
-            },
-            {
-              "name": "collectible_type",
-              "type": "string",
-              "value": "clue_next"
-            }
-          ],
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "x": 376.75,
-          "y": 225
         }
       ],
       "opacity": 1,
       "type": "objectgroup",
-      "visible": false,
+      "visible": true,
       "x": 0,
       "y": 0
     },
@@ -1409,7 +1309,7 @@
   "nextobjectid": 57,
   "orientation": "orthogonal",
   "renderorder": "right-down",
-  "tiledversion": "1.12.1",
+  "tiledversion": "1.12.2",
   "tileheight": 16,
   "tilesets": [
     {
