@@ -576,7 +576,7 @@ export default function QuizPanel() {
               <Stack spacing={3} sx={{ mb: 4, alignItems: "start" }}>
                 <Stack
                   direction="row"
-                  spacing={1}
+                  spacing={4}
                   sx={{ alignItems: "center" }}
                 >
                   <Button
