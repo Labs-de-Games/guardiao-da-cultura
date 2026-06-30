@@ -121,9 +121,28 @@ export interface MapMarkerChangedData {
   isAvailable: boolean;
 }
 
+export interface PanelConfig {
+  src: string;
+  sliceWidth: number;
+  sliceStart: number;
+  revealMs: number;
+  holdMs: number;
+  shrinkMs: number;
+  title?: string;
+  caption?: string;
+}
+
+export interface IntroConfig {
+  panels: PanelConfig[];
+  revealIconMask: string;
+  loadingImage: string;
+  captionImage?: string;
+  skipEnabled: boolean;
+}
+
 export interface IntroStartData {
   levelId: string;
-  config: import("../../ui/intro/types").IntroConfig;
+  config: IntroConfig;
 }
 
 export interface IntroCompleteData {

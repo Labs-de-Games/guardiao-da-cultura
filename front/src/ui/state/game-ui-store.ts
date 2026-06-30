@@ -1,8 +1,8 @@
 import { create } from "zustand";
+import type { IntroConfig, IntroPhase } from "@/ui/intro/types";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
 import { getGuestBadgeIds } from "../../lib/badgesStorage";
-import type { IntroConfig, IntroPhase } from "@/ui/intro/types";
 
 let loadGeneration = 0;
 

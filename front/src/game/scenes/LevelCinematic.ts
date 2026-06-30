@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
-import { SceneNames } from "../constants/SceneNames";
 import type { IntroConfig } from "../../ui/intro/types";
+import { SceneNames } from "../constants/SceneNames";
 
 /**
  * LevelCinematic - Triggers the React-based comic cinematic introduction
@@ -33,7 +33,7 @@ export class LevelCinematic extends Scene {
     // Load the intro configuration JSON
     this.load.json(
       "intro_config",
-      `assets/data/levels/${this.levelId}/intro/intro_config.json`
+      `assets/data/levels/${this.levelId}/intro/intro_config.json`,
     );
   }
 
@@ -42,7 +42,9 @@ export class LevelCinematic extends Scene {
     const configData = this.cache.json.get("intro_config") as IntroConfig;
 
     if (!configData) {
-      console.warn(`LevelCinematic: No intro_config.json found for level ${this.levelId}, skipping to game`);
+      console.warn(
+        `LevelCinematic: No intro_config.json found for level ${this.levelId}, skipping to game`,
+      );
       this.transitionToGame();
       return;
     }
@@ -55,6 +57,9 @@ export class LevelCinematic extends Scene {
         this.transitionToGame();
       }
     });
+
+    // Listen for scene shutdown to clean up event listeners
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
 
     // Emit event to React to start the intro
     EventBus.emit("intro:start", {
