@@ -127,6 +127,7 @@ export const LEVEL_ASSETS = {
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
+    { key: "rec", path: "misc/rec.png" },
   ],
   COLLECTIBLES: [
     { key: "fusca", path: "collectibles/fusca.png" },
