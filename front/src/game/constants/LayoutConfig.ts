@@ -23,6 +23,7 @@ export const LayoutConfig = {
     DARK_STAR_TINT: 0x444444,
     HINT_GREY: "#888888",
     MAP_BG: 0x252726,
+    MAP_BG_CSS: "#252726",
     INFO_TITLE: "#D9AD56",
     INFO_BODY: "#F5F5F5",
     AVAILABLE_GREEN: "#3B8C45",

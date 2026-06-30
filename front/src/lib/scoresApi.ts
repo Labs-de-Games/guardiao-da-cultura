@@ -24,7 +24,7 @@ export interface SubmitScoreRequest {
   };
   collectedCollectibles: Array<{
     collectibleId: string;
-    collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+    collectibleType: "CLUE_VILLAIN";
     levelId: string;
   }>;
 }
@@ -50,7 +50,7 @@ export interface UserCollectibleRecord {
   id: string;
   userId: string;
   collectibleId: string;
-  collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  collectibleType: "CLUE_VILLAIN";
   levelId: string;
   collectedAt: string;
 }
@@ -59,7 +59,7 @@ export async function getUserCollectibles(
   userId: string,
   options?: {
     levelId?: string;
-    collectibleType?: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+    collectibleType?: "CLUE_VILLAIN";
   },
 ): Promise<UserCollectibleRecord[]> {
   const params = new URLSearchParams();

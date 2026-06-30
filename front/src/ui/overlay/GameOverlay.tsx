@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
+import { ScorePanel } from "@/ui/hud/ScorePanel";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
@@ -230,6 +231,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
 
   return (
     <>
+      <ScorePanel />
       <Sidebar />
       <ChunkSelectorPanel />
       <ToastNotification />

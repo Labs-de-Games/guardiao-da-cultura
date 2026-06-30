@@ -27,7 +27,7 @@ export type PersistenceMode = "guest" | "auth";
 
 export type PersistedCollectible = {
   collectibleId: string;
-  collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  collectibleType: "CLUE_VILLAIN";
 };
 
 export type ScorePersistencePayload = Omit<SubmitScoreRequest, "userId">;
