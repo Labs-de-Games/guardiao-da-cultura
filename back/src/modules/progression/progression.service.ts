@@ -3,6 +3,7 @@ import { OnEvent } from "@nestjs/event-emitter";
 import { InjectRepository } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
 import type { GameEventPayload } from "../../shared/events/game-events";
+import { UpdateProgressionDto } from "./dto/update-progression.dto";
 import { UserProgress } from "./user-progress.entity";
 
 function parseJson(value: unknown): Record<string, unknown> {
@@ -149,6 +150,31 @@ export class ProgressionService {
 
   async findByUserId(userId: string): Promise<UserProgress | null> {
     return this.progressRepository.findOne({ where: { userId } });
+  }
+
+  async upsertProgress(
+    userId: string,
+    dto: UpdateProgressionDto,
+  ): Promise<UserProgress> {
+    const progress = await this.findOrCreate(userId);
+
+    const updateData: Partial<UserProgress> = {};
+
+    if (dto.currentLevel !== undefined)
+      updateData.currentLevel = dto.currentLevel;
+    if (dto.totalStars !== undefined) updateData.totalStars = dto.totalStars;
+    if (dto.completedLevels !== undefined) {
+      updateData.completedLevels = JSON.stringify(dto.completedLevels);
+    }
+    if (dto.clues !== undefined) updateData.clues = JSON.stringify(dto.clues);
+    if (dto.quizResults !== undefined) {
+      updateData.quizResults = JSON.stringify(dto.quizResults);
+    }
+
+    await this.progressRepository.update(progress.id, updateData);
+    return this.progressRepository.findOneOrFail({
+      where: { id: progress.id },
+    });
   }
 
   private async findOrCreate(userId: string): Promise<UserProgress> {
