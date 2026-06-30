@@ -608,7 +608,7 @@ export default function QuizPanel() {
                 <Typography
                   sx={{
                     fontFamily: "'Inter', sans-serif",
-                    color: "#ffffff",
+                    color: "#D9AD56",
                     fontSize: "1.25rem",
                     lineHeight: 1.3,
                     textAlign: "start",
