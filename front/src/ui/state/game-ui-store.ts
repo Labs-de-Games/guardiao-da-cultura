@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
 import { getGuestBadgeIds } from "../../lib/badgesStorage";
@@ -152,11 +153,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   sidebarOpen: false,
   controlsOpen: false,
   gameStarted: false,
-  activeMapMarker: {
-    title: "Inhotim",
-    location: "Brumadinho, Minas Gerais",
-    isAvailable: true,
-  },
+  activeMapMarker: DEFAULT_MAP_MARKER,
   autoStartProgress: null,
   stars: 0,
   totalStars: 0,
