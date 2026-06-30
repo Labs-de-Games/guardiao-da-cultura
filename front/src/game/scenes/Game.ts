@@ -11,6 +11,7 @@ import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MissionIds, MissionKeys } from "../constants/MissionConstants";
+import { ProgressionEvents } from "../constants/ProgressionEvents";
 import { SceneNames } from "../constants/SceneNames";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import {
@@ -31,6 +32,7 @@ import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
 import { PLAYER_SPAWN } from "../objects/PlayerConfig";
+import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
@@ -49,6 +51,10 @@ import type {
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
+import type {
+  QuizResultRecord,
+  UserProgressState,
+} from "../types/ProgressionTypes";
 import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
@@ -83,6 +89,9 @@ export class Game extends Scene {
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
   private persistence!: GamePersistence;
+  private progressionManager!: ProgressionManager;
+  private quizStartedAt: number | null = null;
+  private quizAttemptsForMission: number = 0;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
@@ -119,6 +128,8 @@ export class Game extends Scene {
     this.isDialogueOpen = false;
     this.isQuizActive = false;
     this.photoChunksCollected = 0;
+    this.quizStartedAt = null;
+    this.quizAttemptsForMission = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
@@ -282,6 +293,16 @@ export class Game extends Scene {
       actorId,
     });
 
+    this.progressionManager = new ProgressionManager();
+    void this.initializeProgression();
+
+    this.progressionManager.on(
+      ProgressionEvents.PROGRESSION_UPDATED,
+      (state: UserProgressState) => {
+        EventBus.emit("progression:updated", state);
+      },
+    );
+
     this.registry.set("scoreManager", this.scoreManager);
 
     this.scoreManager.on(
@@ -361,6 +382,10 @@ export class Game extends Scene {
         levelId: this.levelId,
         levelNumber: this.levelDef.levelNumber,
       });
+      this.progressionManager?.removeAllListeners(
+        ProgressionEvents.PROGRESSION_UPDATED,
+      );
+      EventBus.off("progression:updated");
     });
 
     posthog.capture("game_started", {
@@ -412,6 +437,13 @@ export class Game extends Scene {
           const currentSecrets =
             this.registry.get("secret_clues_collected") || 0;
           this.registry.set("secret_clues_collected", currentSecrets + 1);
+        }
+
+        if (typeof payload === "object" && infoKey.startsWith("pista_")) {
+          const clueId = infoKey.slice("pista_".length);
+          if (clueId && this.progressionManager) {
+            this.progressionManager.recordClueUnlocked(clueId, this.levelId);
+          }
         }
       },
     );
@@ -530,10 +562,25 @@ export class Game extends Scene {
       for (const record of collected) {
         if (record.collectibleType === "CLUE_VILLAIN") {
           this.questManager.collectInfo(`pista_${record.collectibleId}`);
+          this.progressionManager.recordClueUnlocked(
+            record.collectibleId,
+            this.levelId,
+          );
         }
       }
     } catch (err) {
       console.warn("[Game] Failed to load collectibles from persistence:", err);
+    }
+  }
+
+  private async initializeProgression(): Promise<void> {
+    try {
+      const snapshot = await this.persistence.loadProgress();
+      if (snapshot) {
+        this.progressionManager.hydrate(snapshot);
+      }
+    } catch (err) {
+      console.warn("[Game] Failed to load progression from persistence:", err);
     }
   }
 
@@ -881,6 +928,8 @@ export class Game extends Scene {
         "Podemos iniciar o teste?",
         () => {
           this.isQuizActive = true;
+          this.quizStartedAt = Date.now();
+          this.quizAttemptsForMission += 1;
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
@@ -969,6 +1018,38 @@ export class Game extends Scene {
                 },
                 timestamp: new Date().toISOString(),
               });
+
+              const quizResultRecord: QuizResultRecord = {
+                completedAt: new Date().toISOString(),
+                passed: isSuccess,
+                score,
+                totalQuestions: questions.length,
+                accuracyPercent: scoringPayload.quiz.accuracyPercent,
+                quartersEarned: scoringPayload.quiz.quartersEarned,
+                timeSpentMs:
+                  this.quizStartedAt !== null
+                    ? Date.now() - this.quizStartedAt
+                    : null,
+                attempts: this.quizAttemptsForMission,
+                payload: null,
+              };
+
+              this.progressionManager.recordQuizResult(
+                missionId,
+                quizResultRecord,
+              );
+
+              if (isSuccess) {
+                this.progressionManager.recordLevelCompleted(
+                  this.levelId,
+                  this.levelDef.levelNumber,
+                  scoringPayload.totalStars,
+                  scoringPayload.totalQuarters,
+                  new Date().toISOString(),
+                );
+              }
+
+              void this.saveProgressToBackend();
 
               const npc = this.npcs.find((n) => {
                 const ent = n as unknown as INpcEntity;
@@ -1230,6 +1311,18 @@ export class Game extends Scene {
       await this.persistence.saveScore(persistencePayload);
     } catch (err) {
       console.error("[Game] Failed to save score in persistence layer:", err);
+    }
+  }
+
+  private async saveProgressToBackend() {
+    try {
+      const state = this.progressionManager.getState();
+      await this.persistence.saveProgress(state);
+    } catch (err) {
+      console.error(
+        "[Game] Failed to save progression in persistence layer:",
+        err,
+      );
     }
   }
 
