@@ -25,6 +25,7 @@ function CustomCheckbox({ checked }: { checked: boolean }) {
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
+        mt: "2px",
         transition: "all 0.15s",
       }}
     >
@@ -65,6 +66,7 @@ export function ObjectiveList() {
             fontWeight: 700,
             fontSize: "16px",
             mb: 1.5,
+            textAlign: "center",
           }}
         >
           Objetivos da fase:
@@ -77,7 +79,7 @@ export function ObjectiveList() {
                   <Box
                     sx={{
                       display: "flex",
-                      alignItems: "center",
+                      alignItems: "flex-start",
                       gap: 1,
                       width: "100%",
                     }}
