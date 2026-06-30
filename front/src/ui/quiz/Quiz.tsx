@@ -323,7 +323,7 @@ export default function QuizPanel() {
   if (!quiz.isVisible || (!currentQuestion && !isPerformance)) return null;
 
   const progressStates: ProgressState[] = quiz.questions.map((_, i) => {
-    if (i < quiz.currentQuestionIndex) {
+    if (i <= quiz.currentQuestionIndex) {
       const answer = quiz.answers[i];
       if (answer === "correct") return "success";
       if (answer === "wrong") return "error";
@@ -417,7 +417,7 @@ export default function QuizPanel() {
             sx={{
               flex: 1,
               display: "flex",
-              justifyContent: "center",
+              justifyContent: "flex-end",
               overflow: "hidden",
             }}
           >
@@ -574,16 +574,37 @@ export default function QuizPanel() {
             <>
               {/* QUESTION */}
               <Stack spacing={3} sx={{ mb: 4, alignItems: "start" }}>
-                <Typography
-                  sx={{
-                    fontFamily: "'Jockey One', sans-serif",
-                    color: "#D9AD56",
-                    fontSize: "2rem",
-                    fontWeight: 700,
-                  }}
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
                 >
-                  Pergunta {quiz.currentQuestionIndex + 1}
-                </Typography>
+                  <Button
+                    disableElevation
+                    sx={{
+                      minWidth: 0,
+                      p: 0.5,
+                      borderRadius: 1,
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src="/assets/ui/tts-icon.png"
+                      sx={{ width: 32, height: 32, objectFit: "contain" }}
+                    />
+                  </Button>
+                  <Typography
+                    sx={{
+                      fontFamily: "'Jockey One', sans-serif",
+                      color: "#D9AD56",
+                      fontSize: "2rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Pergunta {quiz.currentQuestionIndex + 1}
+                  </Typography>
+                </Stack>
                 <Typography
                   sx={{
                     fontFamily: "'Inter', sans-serif",
