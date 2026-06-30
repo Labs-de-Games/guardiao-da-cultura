@@ -293,6 +293,7 @@ export class Game extends Scene {
         EventBus.emit("player:stars-changed", {
           current: stars,
           total: Math.ceil(payload.totalQuarters / 4),
+          score: payload.totalQuarters,
         });
       },
     );
@@ -471,6 +472,7 @@ export class Game extends Scene {
     EventBus.emit("player:stars-changed", {
       current: initialStars,
       total: Math.ceil(initialPayload.totalQuarters / 4),
+      score: initialPayload.totalQuarters,
     });
 
     const allCollectibles = Object.entries(
