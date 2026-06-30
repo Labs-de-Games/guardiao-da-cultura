@@ -293,7 +293,7 @@ export function LabelPanel() {
             sx={{
               flex: 1,
               display: "flex",
-              alignItems: "center",
+              alignItems: "flex-start",
               px: "32px",
               pt: "32px",
               pb: "48px",
@@ -348,7 +348,6 @@ export function LabelPanel() {
                   "& .MuiPagination-ul": {
                     gap: "8px",
                     justifyContent: "center",
-                    alignItems: "center",
                   },
                 }}
               />
