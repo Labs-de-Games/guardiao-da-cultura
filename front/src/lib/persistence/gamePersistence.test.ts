@@ -111,8 +111,8 @@ describe("createGamePersistence", () => {
     mockFetchUserBadges.mockResolvedValueOnce([{ badgeId: "b-auth" }]);
     mockGetUserCollectibles.mockResolvedValueOnce([
       {
-        collectibleId: "collect_1",
-        collectibleType: "COLLECT",
+        collectibleId: "villain_1",
+        collectibleType: "CLUE_VILLAIN",
       },
     ]);
 
@@ -145,8 +145,8 @@ describe("createGamePersistence", () => {
       },
       collectedCollectibles: [
         {
-          collectibleId: "collect_1",
-          collectibleType: "COLLECT",
+          collectibleId: "villain_1",
+          collectibleType: "CLUE_VILLAIN",
           levelId: "level_01",
         },
       ],
@@ -173,8 +173,8 @@ describe("createGamePersistence", () => {
     expect(unlocked).toEqual(["b-auth"]);
     expect(collectibles).toEqual([
       {
-        collectibleId: "collect_1",
-        collectibleType: "COLLECT",
+        collectibleId: "villain_1",
+        collectibleType: "CLUE_VILLAIN",
       },
     ]);
 

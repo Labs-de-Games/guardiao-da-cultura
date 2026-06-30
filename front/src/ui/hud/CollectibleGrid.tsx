@@ -2,9 +2,10 @@
 
 import { Box } from "@mui/material";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import type { CollectibleEntry } from "@/ui/state/game-ui-store";
 
-const SLOT_COUNT = 6;
+const SLOT_COUNT = 5;
 
 interface CollectibleGridProps {
   title: string;
@@ -51,7 +52,7 @@ export function CollectibleGrid({
           <Box
             key={slot?.id ?? `empty-${i}`}
             sx={{
-              bgcolor: "#161717",
+              bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
               borderRadius: "12px",
               p: 1,
               minWidth: 0,
@@ -162,7 +163,9 @@ export function CollectibleGrid({
                   <Box
                     component="span"
                     sx={{
-                      color: slot.collected ? "#ffffff" : "#666",
+                      color: slot.collected
+                        ? LayoutConfig.COLORS.WHITE
+                        : LayoutConfig.COLORS.TEXT_DIM,
                       fontSize: "10px",
                       fontWeight: 600,
                       lineHeight: 1.2,

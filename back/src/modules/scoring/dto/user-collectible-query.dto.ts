@@ -7,6 +7,6 @@ export class UserCollectibleQueryDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(["COLLECT", "CLUE_VILLAIN", "CLUE_NEXT"])
-  collectibleType?: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  @IsIn(["CLUE_VILLAIN"])
+  collectibleType?: "CLUE_VILLAIN";
 }

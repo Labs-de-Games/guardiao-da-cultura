@@ -43,6 +43,7 @@ import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { INpcEntity } from "../types/EntityTypes";
 import type {
+  CollectibleData,
   ContentJson,
   LabelInfoData,
   MissionDef,
@@ -53,6 +54,8 @@ import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
 export class Game extends Scene {
+  private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
+
   player!: Player;
   rat!: Enemy;
   private hasInteractedWithRat: boolean = false;
@@ -94,7 +97,7 @@ export class Game extends Scene {
     quizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
-    collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+    collectibles: Game.EMPTY_COLLECTIBLES,
   };
 
   constructor() {
@@ -126,7 +129,7 @@ export class Game extends Scene {
       quizzes: {},
       npcs: {},
       messages: { SYSTEM_DIALOGUES: {} },
-      collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+      collectibles: Game.EMPTY_COLLECTIBLES,
     };
   }
 
@@ -478,16 +481,18 @@ export class Game extends Scene {
     const allCollectibles = Object.entries(
       this.contentData.collectibles,
     ).flatMap(([category, items]) =>
-      Object.entries(
-        items as Record<string, { metadata: { title?: string } }>,
-      ).map(([id, data]) => ({
-        id,
-        name: data.metadata.title || id,
-        category,
-        collected: false,
-      })),
+      Object.entries(items as Record<string, CollectibleData>).map(
+        ([id, data]) => ({
+          id,
+          name: data.metadata.title || id,
+          category,
+          collected: false,
+        }),
+      ),
     );
-    EventBus.emit("inventory:collectibles-sync", { entries: allCollectibles });
+    EventBus.emit("collectible:collectibles-sync", {
+      entries: allCollectibles,
+    });
 
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
@@ -530,9 +535,7 @@ export class Game extends Scene {
       this.collectibleSystem.applyCollectedCollectibles(collected);
 
       for (const record of collected) {
-        if (record.collectibleType === "CLUE_VILLAIN") {
-          this.questManager.collectInfo(`pista_${record.collectibleId}`);
-        }
+        this.questManager.collectInfo(`pista_${record.collectibleId}`);
       }
     } catch (err) {
       console.warn("[Game] Failed to load collectibles from persistence:", err);
@@ -1220,10 +1223,7 @@ export class Game extends Scene {
         collectedCollectibles: payload.collectibles.interactions.map(
           (interaction) => ({
             collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as
-              | "COLLECT"
-              | "CLUE_VILLAIN"
-              | "CLUE_NEXT",
+            collectibleType: interaction.collectible_type as "CLUE_VILLAIN",
             levelId: payload.levelId,
           }),
         ),
