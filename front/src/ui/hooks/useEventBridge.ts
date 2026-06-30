@@ -74,14 +74,14 @@ export function useEventBridge({
     );
 
     const unsubCollectSync = safeSubscribe(
-      "inventory:collectibles-sync",
+      "collectible:collectibles-sync",
       (data) => {
         setCollectibles(data.entries);
       },
     );
 
     const unsubCollectItem = safeSubscribe(
-      "inventory:item-collected",
+      "collectible:item-collected",
       (data) => {
         collectItem(data.itemId);
       },
