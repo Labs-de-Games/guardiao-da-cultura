@@ -89,40 +89,61 @@ export class PlaceholderSystem {
       isFilled: false,
     };
 
-    let textureKey = "placeholder";
     const primaryId = Array.isArray(config.id) ? config.id[0] : config.id;
+
     if (config.type === InteractiveType.PHOTO) {
-      textureKey = "candujar_sem_titulo_yanomami_ph";
-    } else if (primaryId) {
-      textureKey = `${primaryId}_ph`;
-    }
+      const cellW = 122;
+      const cellH = 80;
+      const container = this.scene.add.container(rect.centerX, rect.centerY);
 
-    const placeholder = this.scene.add.sprite(
-      rect.centerX,
-      rect.centerY,
-      textureKey,
-      0,
-    );
-    let scale = 1;
-    if (config.scale !== undefined && !Number.isNaN(config.scale)) {
-      scale = config.scale;
-    }
-    placeholder.setScale(scale);
-    placeholder.setAlpha(0.45);
-    placeholder.setDepth(10);
+      for (let i = 0; i < 4; i++) {
+        const cell = this.scene.add.image(0, 0, "rec");
+        cell.setDisplaySize(cellW, cellH);
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        cell.setPosition(
+          col === 0 ? -cellW / 2 : cellW / 2,
+          row === 0 ? -cellH / 2 : cellH / 2,
+        );
+        container.add(cell);
+      }
 
-    if (config.type === InteractiveType.PAINTING) {
-      placeholder.setOrigin(0.5, 1);
-    }
+      container.setAlpha(0.45);
+      container.setDepth(10);
+      instance.hintSprite = container;
+    } else {
+      let textureKey = "placeholder";
+      if (primaryId) {
+        textureKey = `${primaryId}_ph`;
+      }
 
-    if (
-      textureKey === "placeholder" &&
-      this.scene.anims.exists("placeholder_hint_anim")
-    ) {
-      placeholder.play("placeholder_hint_anim", true);
-    }
+      const placeholder = this.scene.add.sprite(
+        rect.centerX,
+        rect.centerY,
+        textureKey,
+        0,
+      );
+      let scale = 1;
+      if (config.scale !== undefined && !Number.isNaN(config.scale)) {
+        scale = config.scale;
+      }
+      placeholder.setScale(scale);
+      placeholder.setAlpha(0.45);
+      placeholder.setDepth(10);
 
-    instance.hintSprite = placeholder;
+      if (config.type === InteractiveType.PAINTING) {
+        placeholder.setOrigin(0.5, 1);
+      }
+
+      if (
+        textureKey === "placeholder" &&
+        this.scene.anims.exists("placeholder_hint_anim")
+      ) {
+        placeholder.play("placeholder_hint_anim", true);
+      }
+
+      instance.hintSprite = placeholder;
+    }
     this.placeholders.push(instance);
   }
 
