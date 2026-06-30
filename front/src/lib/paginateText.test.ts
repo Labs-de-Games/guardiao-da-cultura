@@ -83,4 +83,43 @@ describe("paginateText", () => {
     expect(pages[0]).toContain(short);
     expect(pages[0]).toContain(medium);
   });
+
+  it("breaks at sentence end within 144-char window", () => {
+    const first = `${"First sentence here. ".repeat(7)}Different last.`;
+    expect(first.length).toBeGreaterThan(144);
+    const pages = paginateText(first);
+    expect(pages.length).toBeGreaterThanOrEqual(2);
+    expect(pages[0]).toMatch(/\.$/);
+    expect(pages[0]).not.toContain("Different");
+  });
+
+  it("breaks at clause comma when no sentence end in window", () => {
+    const clause = `${"a".repeat(50)}, ${"b".repeat(50)}, ${"c".repeat(50)}`;
+    const pages = paginateText(clause);
+    expect(pages).toHaveLength(2);
+    expect(pages[0]).toContain(",");
+    expect(pages[1]).toContain("c");
+  });
+
+  it("prefers sentence end over clause break", () => {
+    const text = `${"word, ".repeat(20)}end. ${"next ".repeat(20)}clause.`;
+    const pages = paginateText(text);
+    expect(pages.length).toBeGreaterThanOrEqual(2);
+    expect(pages[0]).toMatch(/\./);
+    expect(pages[0]).not.toContain("next");
+  });
+
+  it("breaks at semicolon when no comma or sentence end", () => {
+    const text = `${"a".repeat(50)}; ${"b".repeat(100)}`;
+    const pages = paginateText(text);
+    expect(pages).toHaveLength(2);
+    expect(pages[0]).toContain(";");
+  });
+
+  it("breaks at space when no punctuation", () => {
+    const text = "word ".repeat(40);
+    const pages = paginateText(text.trim());
+    expect(pages).toHaveLength(2);
+    expect(pages[0]).not.toMatch(/[.,;:!?]$/);
+  });
 });
