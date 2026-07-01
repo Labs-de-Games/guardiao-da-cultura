@@ -22,11 +22,14 @@ export class MapIntroScene extends Scene {
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private markerViews: Map<string, MarkerView> = new Map();
   private markerBaseScales: Map<string, number> = new Map();
+  private markerScreenPositions = new Map<string, { x: number; y: number }>();
   private activeMarkerIndex: number = 0;
   private readonly mapKey = "brazil_map";
   private readonly markerKey = "brazil_marker";
-  private readonly availableMarkerTint = 0x020802;
+  private readonly availableMarkerTint = 0x3b8c45;
   private readonly unavailableMarkerTint = 0x292828;
+  private readonly selectedAvailableTint = 0xd9ad56;
+  private readonly selectedUnavailableTint = 0x6b6767;
   private autoStartEvent?: Phaser.Time.TimerEvent;
   private autoStartStartMs = 0;
 
@@ -60,11 +63,9 @@ export class MapIntroScene extends Scene {
       // Make markers interactive
       marker.setInteractive({ useHandCursor: true });
       marker.on("pointerdown", () => {
+        this.cancelAutoStart("cycled");
         this.activeMarkerIndex = index;
         this.emitMarkerChanged();
-        if (index === 0) {
-          this.beginGame();
-        }
       });
 
       this.markerViews.set(markerData.id, { marker });
@@ -85,7 +86,6 @@ export class MapIntroScene extends Scene {
     });
 
     this.layout();
-    this.emitMarkerChanged();
     this.maybeStartAutoStart();
   }
 
@@ -140,10 +140,15 @@ export class MapIntroScene extends Scene {
 
   private emitMarkerChanged() {
     const marker = MARKERS[this.activeMarkerIndex];
+    const position = this.markerScreenPositions.get(marker.id);
+
     EventBus.emit("map:marker-changed", {
+      markerId: marker.id,
       title: marker.title,
       location: marker.location,
       isAvailable: this.activeMarkerIndex === 0,
+      screenX: position?.x ?? 0,
+      screenY: position?.y ?? 0,
     });
   }
 
@@ -171,12 +176,22 @@ export class MapIntroScene extends Scene {
         return;
       }
 
-      // Only pulsate the active marker
-      if (index === this.activeMarkerIndex) {
-        const scale = baseScale * (1 + normalizedPulse * 0.55); // Pulsating effect of the active marker.
+      const isActive = index === this.activeMarkerIndex;
+      const isAvailable = index === 0;
+
+      if (isActive) {
+        const scale = baseScale * (1 + normalizedPulse * 0.55);
         view.marker.setScale(scale);
+        view.marker.setTint(
+          isAvailable
+            ? this.selectedAvailableTint
+            : this.selectedUnavailableTint,
+        );
       } else {
-        view.marker.setScale(baseScale);
+        view.marker.setScale(baseScale * 0.85);
+        view.marker.setTint(
+          isAvailable ? this.availableMarkerTint : this.unavailableMarkerTint,
+        );
       }
     });
   }
@@ -211,12 +226,10 @@ export class MapIntroScene extends Scene {
     this.pathGraphics.clear();
     this.pathGraphics.lineStyle(3, LayoutConfig.COLORS.BLACK_HEX, 0.95);
 
-    const markerPositions = new Map<string, { x: number; y: number }>();
-
     MARKERS.forEach((markerData, index) => {
       const x = mapLeft + mapWidth * markerData.x;
       const y = mapTop + mapHeight * markerData.y;
-      markerPositions.set(markerData.id, { x, y });
+      this.markerScreenPositions.set(markerData.id, { x, y });
 
       const view = this.markerViews.get(markerData.id);
       if (!view) {
@@ -235,19 +248,28 @@ export class MapIntroScene extends Scene {
         42,
       );
       const markerScale = markerTargetSize / markerSource.width;
+      const isActive = index === this.activeMarkerIndex;
       const isAvailable = index === 0;
 
       this.markerBaseScales.set(markerData.id, markerScale);
-      view.marker.setScale(markerScale);
+      view.marker.setScale(isActive ? markerScale : markerScale * 0.85);
       view.marker.setPosition(x, y);
       view.marker.setTint(
-        isAvailable ? this.availableMarkerTint : this.unavailableMarkerTint,
+        isActive
+          ? isAvailable
+            ? this.selectedAvailableTint
+            : this.selectedUnavailableTint
+          : isAvailable
+            ? this.availableMarkerTint
+            : this.unavailableMarkerTint,
       );
     });
 
+    this.emitMarkerChanged();
+
     for (let i = 0; i < MARKERS.length - 1; i++) {
-      const current = markerPositions.get(MARKERS[i].id);
-      const next = markerPositions.get(MARKERS[i + 1].id);
+      const current = this.markerScreenPositions.get(MARKERS[i].id);
+      const next = this.markerScreenPositions.get(MARKERS[i + 1].id);
 
       if (current && next) {
         this.drawDottedLine(current.x, current.y, next.x, next.y);

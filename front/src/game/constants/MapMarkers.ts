@@ -59,7 +59,10 @@ export const MAP_MARKERS: MapMarker[] = [
 ];
 
 export const DEFAULT_MAP_MARKER = {
+  markerId: MAP_MARKERS[0].id,
   title: MAP_MARKERS[0].title,
   location: MAP_MARKERS[0].location,
   isAvailable: true,
+  screenX: 0,
+  screenY: 0,
 };

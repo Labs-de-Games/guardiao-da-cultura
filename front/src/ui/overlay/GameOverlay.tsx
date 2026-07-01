@@ -17,6 +17,7 @@ import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { MapInfoBox } from "@/ui/panels/MapInfoBox";
+import { MapPinTooltip } from "@/ui/panels/MapPinTooltip";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
@@ -224,6 +225,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
     return (
       <>
         <ToastNotification />
+        <MapPinTooltip />
         <MapInfoBox />
       </>
     );
