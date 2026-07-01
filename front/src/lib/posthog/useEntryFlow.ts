@@ -20,7 +20,10 @@ export function useEntryFlow(): { entryFlow: EntryFlow; isLoading: boolean } {
     return () => clearTimeout(timer);
   }, [flagValue]);
 
-  if (flowParam === "direct" || flowParam === "map") {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (flowParam === "direct" || flowParam === "map")
+  ) {
     return { entryFlow: flowParam as EntryFlow, isLoading: false };
   }
 
