@@ -1,6 +1,21 @@
-import type { IntroConfig, PanelConfig } from "../../shared/events/game-events";
+export interface PanelConfig {
+  src: string;
+  sliceWidth: number;
+  sliceStart: number;
+  revealMs: number;
+  holdMs: number;
+  shrinkMs: number;
+  title?: string;
+  caption?: string;
+}
 
-export type { IntroConfig, PanelConfig };
+export interface IntroConfig {
+  revealIconMask: string;
+  loadingImage: string;
+  captionImage?: string;
+  skipEnabled: boolean;
+  panels: PanelConfig[];
+}
 
 export type IntroPhase = "comic" | "rollout" | "mask" | "complete";
 

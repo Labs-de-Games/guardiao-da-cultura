@@ -98,6 +98,7 @@ export class Game extends Scene {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
+  private skipIntro: boolean = false;
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
@@ -113,8 +114,9 @@ export class Game extends Scene {
     super(SceneNames.GAME);
   }
 
-  init(data?: { levelId: string }) {
+  init(data?: { levelId: string; skipIntro?: boolean }) {
     this.levelId = data?.levelId || "level_01";
+    this.skipIntro = data?.skipIntro ?? false;
     this.levelDef = LEVEL_REGISTRY[this.levelId];
 
     if (!this.levelDef) {
@@ -558,6 +560,12 @@ export class Game extends Scene {
     EventBus.on("ui:label-hide", () => {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
     });
+
+    if (!this.skipIntro) {
+      this.scene.pause(SceneNames.GAME);
+      this.scene.pause(SceneNames.UI);
+      this.scene.launch(SceneNames.LEVEL_CINEMATIC, { levelId: this.levelId });
+    }
   }
 
   private async initializeCollectibles(): Promise<void> {

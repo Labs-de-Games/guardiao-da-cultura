@@ -10,6 +10,7 @@ import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { ScorePanel } from "@/ui/hud/ScorePanel";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
+import { IntroSequence } from "@/ui/intro/IntroSequence";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -61,6 +62,8 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   const dequeueDialogue = useDialogueStore((s) => s.dequeueDialogue);
   const setLabelData = useGameUIStore((s) => s.setLabelData);
   const labelData = useGameUIStore((s) => s.labelData);
+  const introData = useGameUIStore((s) => s.introData);
+  const setIntroData = useGameUIStore((s) => s.setIntroData);
 
   useEventBridge({ entryFlow });
   const { emitComplete, emitDismiss } = useDialogueBridge();
@@ -96,6 +99,10 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
 
     const unsubLabelShow = EventBus.on("ui:label-show", (data) => {
       setLabelData(data);
+    });
+
+    const unsubIntroStart = EventBus.on("intro:start", (data) => {
+      setIntroData(data);
     });
 
     const unsubBadgeGallery = EventBus.on("ui:badge-gallery-toggle", (data) => {
@@ -145,6 +152,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
       unsubControls();
       unsubToast();
       unsubLabelShow();
+      unsubIntroStart();
       unsubBadgeGallery();
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
@@ -157,6 +165,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
     setControlsOpen,
     addToast,
     setLabelData,
+    setIntroData,
     setBadgeGalleryOpen,
     addUnlockedBadge,
     openChunkSelector,
@@ -223,6 +232,22 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   if (!gameStarted) {
     return (
       <>
+        {introData && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: UI_Z_INDEX.OVERLAY + 1000,
+              pointerEvents: "auto",
+            }}
+          >
+            <IntroSequence
+              config={introData.config}
+              levelId={introData.levelId}
+              onComplete={() => setIntroData(null)}
+            />
+          </div>
+        )}
         <ToastNotification />
         <MapInfoBox />
       </>
@@ -231,6 +256,22 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
 
   return (
     <>
+      {introData && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: UI_Z_INDEX.OVERLAY + 1000,
+            pointerEvents: "auto",
+          }}
+        >
+          <IntroSequence
+            config={introData.config}
+            levelId={introData.levelId}
+            onComplete={() => setIntroData(null)}
+          />
+        </div>
+      )}
       <ScorePanel />
       <Sidebar />
       <ChunkSelectorPanel />
