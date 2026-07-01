@@ -58,6 +58,10 @@ jest.mock("@/ui/panels/MapInfoBox", () => ({
   MapInfoBox: () => null,
 }));
 
+jest.mock("@/ui/panels/MapPinTooltip", () => ({
+  MapPinTooltip: () => null,
+}));
+
 jest.mock("@/ui/panels/ToastNotification", () => ({
   ToastNotification: () => null,
 }));

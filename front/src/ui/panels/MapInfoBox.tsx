@@ -12,10 +12,6 @@ export function MapInfoBox() {
   // Only show when there's an active marker and game hasn't started
   if (!activeMapMarker || gameStarted) return null;
 
-  const ctaText = activeMapMarker.isAvailable
-    ? "Aperte ESPAÇO para jogar"
-    : "Em reforma";
-  const ctaColor = activeMapMarker.isAvailable ? "#3B8C45" : "#A84528";
   const showProgress =
     activeMapMarker.isAvailable &&
     autoStartProgress !== null &&
@@ -23,6 +19,10 @@ export function MapInfoBox() {
   const progressWidth = showProgress
     ? Math.max(0, Math.min(1, autoStartProgress)) * 100
     : 0;
+  const statusColor = activeMapMarker.isAvailable ? "#3B8C45" : "#A84528";
+  const statusText = activeMapMarker.isAvailable
+    ? "Disponível para visita"
+    : "Em reforma";
 
   return (
     <Box
@@ -67,11 +67,11 @@ export function MapInfoBox() {
         sx={{
           fontFamily: "Inter, sans-serif",
           fontSize: "clamp(12px, 2vw, 14px)",
-          color: ctaColor,
+          color: statusColor,
           lineHeight: 1.3,
         }}
       >
-        {ctaText}
+        {statusText}
       </Typography>
 
       {showProgress && (
@@ -94,7 +94,7 @@ export function MapInfoBox() {
             sx={{
               height: "100%",
               width: `${progressWidth}%`,
-              bgcolor: ctaColor,
+              bgcolor: statusColor,
               transition: `width ${AUTO_START_TICK_INTERVAL_MS}ms linear`,
             }}
           />
