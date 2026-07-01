@@ -25,8 +25,10 @@ import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
 
 export default function GameOverlay({
   entryFlow = "map",
+  isEntryFlowLoading = false,
 }: {
   entryFlow?: EntryFlow;
+  isEntryFlowLoading?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -44,12 +46,23 @@ export default function GameOverlay({
         zIndex: UI_Z_INDEX.OVERLAY,
       }}
     >
-      {mounted && <OverlayContent entryFlow={entryFlow} />}
+      {mounted && (
+        <OverlayContent
+          entryFlow={entryFlow}
+          isEntryFlowLoading={isEntryFlowLoading}
+        />
+      )}
     </div>
   );
 }
 
-function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
+function OverlayContent({
+  entryFlow,
+  isEntryFlowLoading,
+}: {
+  entryFlow: EntryFlow;
+  isEntryFlowLoading: boolean;
+}) {
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
@@ -63,7 +76,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   const setLabelData = useGameUIStore((s) => s.setLabelData);
   const labelData = useGameUIStore((s) => s.labelData);
 
-  useEventBridge({ entryFlow });
+  useEventBridge({ entryFlow, isEntryFlowLoading });
   const { emitComplete, emitDismiss } = useDialogueBridge();
   const setBadgeGalleryOpen = useGameUIStore((s) => s.setBadgeGalleryOpen);
   const addUnlockedBadge = useGameUIStore((s) => s.addUnlockedBadge);

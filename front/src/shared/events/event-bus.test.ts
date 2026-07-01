@@ -14,6 +14,29 @@ describe("EventBus", () => {
     expect(handler).toHaveBeenCalledWith({ open: true });
   });
 
+  it("replays map marker state for late overlay subscribers", () => {
+    EventBus.emit("map:marker-changed", {
+      markerId: "brumadinho",
+      title: "Instituto Inhotim",
+      location: "Brumadinho, Minas Gerais",
+      isAvailable: true,
+      screenX: 960,
+      screenY: 700,
+    });
+
+    const handler = jest.fn();
+    EventBus.on("map:marker-changed", handler);
+
+    expect(handler).toHaveBeenCalledWith({
+      markerId: "brumadinho",
+      title: "Instituto Inhotim",
+      location: "Brumadinho, Minas Gerais",
+      isAvailable: true,
+      screenX: 960,
+      screenY: 700,
+    });
+  });
+
   it("does not replay unrelated events without a prior emit", () => {
     const handler = jest.fn();
     EventBus.on("player:stars-changed", handler);
