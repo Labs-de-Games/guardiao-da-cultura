@@ -102,7 +102,6 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
     });
 
     const unsubIntroStart = EventBus.on("intro:start", (data) => {
-      console.log("[DEBUG Flow] GameOverlay: received intro:start event", data);
       setIntroData(data);
     });
 
@@ -230,43 +229,9 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
     }
   }, [dialogueOpen, dequeueDialogue]);
 
-  if (!gameStarted) {
-    console.log(
-      "[DEBUG Flow] GameOverlay: Rendering because gameStarted is false. introData present?",
-      !!introData,
-    );
+  if (introData) {
     return (
       <>
-        {introData && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: UI_Z_INDEX.OVERLAY + 1000,
-              pointerEvents: "auto",
-            }}
-          >
-            <IntroSequence
-              config={introData.config}
-              levelId={introData.levelId}
-              onComplete={() => {
-                console.log(
-                  "[DEBUG Flow] GameOverlay: IntroSequence onComplete triggered, clearing introData",
-                );
-                setIntroData(null);
-              }}
-            />
-          </div>
-        )}
-        <ToastNotification />
-        <MapInfoBox />
-      </>
-    );
-  }
-
-  return (
-    <>
-      {introData && (
         <div
           style={{
             position: "absolute",
@@ -278,10 +243,27 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
           <IntroSequence
             config={introData.config}
             levelId={introData.levelId}
-            onComplete={() => setIntroData(null)}
+            onComplete={() => {
+              setIntroData(null);
+            }}
           />
         </div>
-      )}
+        <ToastNotification />
+      </>
+    );
+  }
+
+  if (!gameStarted) {
+    return (
+      <>
+        <ToastNotification />
+        <MapInfoBox />
+      </>
+    );
+  }
+
+  return (
+    <>
       <ScorePanel />
       <Sidebar />
       <ChunkSelectorPanel />
