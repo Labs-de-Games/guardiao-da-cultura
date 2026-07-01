@@ -101,6 +101,7 @@ export class Game extends Scene {
   public mechanicsManager!: MechanicsManager;
   private persistence!: GamePersistence;
   private progressionManager!: ProgressionManager;
+  private isQuizActive: boolean = false;
   private quizStartedAt: number | null = null;
   private quizAttemptsForMission: number = 0;
   private draggableItems: DraggableItem[] = [];
@@ -138,6 +139,7 @@ export class Game extends Scene {
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
+    this.isQuizActive = false;
     this.quizMode = "none";
     this.photoChunksCollected = 0;
     this.quizStartedAt = null;
@@ -592,7 +594,6 @@ export class Game extends Scene {
           this.quizMode === "none"
         ) {
           this.startIntermediateQuiz(infoKey);
-        }
         }
       },
     );
@@ -1073,6 +1074,9 @@ export class Game extends Scene {
           this.quizStartedAt = Date.now();
           this.quizAttemptsForMission += 1;
           this.quizMode = "regular";
+          this.isQuizActive = true;
+          this.quizStartedAt = Date.now();
+          this.quizAttemptsForMission += 1;
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
@@ -1238,6 +1242,7 @@ export class Game extends Scene {
               }
 
               this.quizMode = "none";
+              this.isQuizActive = false;
             },
           );
         },
@@ -1327,6 +1332,14 @@ export class Game extends Scene {
       this.scoreManager.recordIntermediateQuizResult(infoKey, passed);
       this.questManager.markIntermediateQuizDone(infoKey);
 
+      if (this.progressionManager) {
+        this.progressionManager.recordIntermediateQuizResult(infoKey, {
+          completedAt: new Date().toISOString(),
+          passed,
+          missionId: MissionIds.CURATOR,
+        });
+      }
+
       const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
 
       if (floorCompleted) {
@@ -1394,7 +1407,8 @@ export class Game extends Scene {
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
-      this.quizMode === "none"
+      this.quizMode === "none" &&
+      !this.isQuizActive
     ) {
       if (this.player) this.player.isInDialogue = false;
     }
