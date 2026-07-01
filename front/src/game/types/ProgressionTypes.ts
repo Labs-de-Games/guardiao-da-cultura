@@ -22,10 +22,17 @@ export interface QuizResultRecord {
   payload: Record<string, unknown> | null;
 }
 
+export interface IntermediateQuizResultRecord {
+  completedAt: string;
+  passed: boolean;
+  missionId: string | null;
+}
+
 export interface UserProgressState {
   currentLevel: number;
   totalStars: number;
   completedLevels: Record<string, CompletedLevelRecord>;
   clues: Record<string, ClueRecord>;
   quizResults: Record<string, QuizResultRecord>;
+  intermediateQuizResults: Record<string, IntermediateQuizResultRecord>;
 }
