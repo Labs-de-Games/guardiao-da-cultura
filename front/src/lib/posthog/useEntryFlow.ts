@@ -9,7 +9,7 @@ const FLAG_TIMEOUT_MS = 5000;
 
 export function useEntryFlow(): { entryFlow: EntryFlow; isLoading: boolean } {
   const searchParams = useSearchParams();
-  const flowParam = searchParams.get("flow");
+  const flowParam = searchParams?.get("flow");
   const flagValue = useFeatureFlag("entry_flow_experiment");
 
   const [timedOut, setTimedOut] = useState(false);
