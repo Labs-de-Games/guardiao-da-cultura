@@ -300,7 +300,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         {mode === "confirmation" && (
           <ConfirmationPanel
             message={displayedText}
-            selectedIndex={confirmSelected}
             onSelect={moveConfirmSelection}
             onConfirm={handleConfirm}
           />
