@@ -1,4 +1,3 @@
-import ArrowRight from "@mui/icons-material/ArrowRight";
 import { Box, Typography } from "@mui/material";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
@@ -72,24 +71,6 @@ export function ConfirmationPanel({
           onMouseEnter={() => onSelect(1)}
         >
           Não
-        </Typography>
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <ArrowRight
-          sx={{
-            fontSize: 32,
-            color: GAME_UI_TOKENS.colors.dialogueCta,
-          }}
-        />
-        <Typography
-          sx={{
-            fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontWeight: 500,
-            fontSize: "14px",
-            color: GAME_UI_TOKENS.colors.dialogueCta,
-          }}
-        >
-          CONFIRMAR
         </Typography>
       </Box>
     </Box>
