@@ -1370,6 +1370,8 @@ export class Game extends Scene {
         metadata: {
           infoKey,
           passed,
+          score,
+          totalQuestions: questions.length,
           missionId: MissionIds.CURATOR,
         },
         timestamp: new Date().toISOString(),

@@ -22,6 +22,8 @@ export interface QuizEventMetadata {
 export interface IntermediateQuizEventMetadata {
   infoKey: string;
   passed: boolean;
+  score: number;
+  totalQuestions: number;
   missionId: string;
 }
 
