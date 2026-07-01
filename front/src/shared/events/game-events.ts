@@ -92,6 +92,7 @@ export interface DialogueCompletedData {
 }
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
+import type { UserProgressState } from "@/game/types/ProgressionTypes";
 
 export type { LabelInfoData };
 
@@ -167,4 +168,5 @@ export interface GameEventMap {
   "map:auto-start-tick": AutoStartTickData;
   "map:auto-start-canceled": undefined;
   "map:auto-start-completed": undefined;
+  "progression:updated": UserProgressState;
 }
