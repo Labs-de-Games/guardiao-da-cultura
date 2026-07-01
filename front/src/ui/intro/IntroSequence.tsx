@@ -56,7 +56,7 @@ export function IntroSequence({
 
   // Build panel configs with full asset paths
   const panels: PanelConfig[] = useMemo(() => {
-    return config.panels.map((p) => ({
+    return config.panels.map((p: PanelConfig) => ({
       ...p,
       src: `/assets/data/levels/${levelId}/intro/${p.src}`,
     }));
