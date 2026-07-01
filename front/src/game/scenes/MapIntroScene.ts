@@ -90,15 +90,8 @@ export class MapIntroScene extends Scene {
   }
 
   private beginGame() {
-    console.log(
-      "[DEBUG Flow] MapIntroScene: beginGame called. Active marker:",
-      this.activeMarkerIndex,
-    );
     this.cancelAutoStart("started");
     if (this.activeMarkerIndex === 0) {
-      console.log(
-        "[DEBUG Flow] MapIntroScene: Transitioning to LEVEL_CINEMATIC",
-      );
       EventBus.emit("map:marker-changed", null);
       this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
     }

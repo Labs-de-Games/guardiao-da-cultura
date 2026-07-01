@@ -23,7 +23,6 @@ export class LevelCinematic extends Scene {
   }
 
   init(data?: { levelId: string }) {
-    console.log("[DEBUG Flow] LevelCinematic: init with data", data);
     if (data?.levelId) {
       this.levelId = data.levelId;
     }
@@ -39,14 +38,10 @@ export class LevelCinematic extends Scene {
   }
 
   create() {
-    console.log("[DEBUG Flow] LevelCinematic: create started");
     // Get the loaded config
     const configData = this.cache.json.get("intro_config") as IntroConfig;
 
     if (!configData) {
-      console.warn(
-        `[DEBUG Flow] LevelCinematic: No intro_config.json found for level ${this.levelId}, skipping to game`,
-      );
       this.transitionToGame();
       return;
     }
@@ -55,10 +50,6 @@ export class LevelCinematic extends Scene {
 
     // Listen for intro completion from React
     EventBus.once("intro:complete", (data: { levelId: string }) => {
-      console.log(
-        "[DEBUG Flow] LevelCinematic: received intro:complete event",
-        data,
-      );
       if (data.levelId === this.levelId) {
         this.transitionToGame();
       }
@@ -68,7 +59,6 @@ export class LevelCinematic extends Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
 
     // Emit event to React to start the intro
-    console.log("[DEBUG Flow] LevelCinematic: Emitting intro:start");
     EventBus.emit("intro:start", {
       levelId: this.levelId,
       config: this.introConfig,
@@ -79,9 +69,6 @@ export class LevelCinematic extends Scene {
    * Transition to the Game scene
    */
   private transitionToGame() {
-    console.log(
-      "[DEBUG Flow] LevelCinematic: transitionToGame - starting GAME scene",
-    );
     this.scene.start(SceneNames.GAME, { levelId: this.levelId });
   }
 
