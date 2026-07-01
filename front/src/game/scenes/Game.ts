@@ -436,7 +436,9 @@ export class Game extends Scene {
             return item.displayHeight;
           },
           get active() {
-            return item.active && !item.isGrabbed;
+            return (
+              item.active && !item.isGrabbed && item.input?.enabled !== false
+            );
           },
           interactionDistance: PLAYER_MOVEMENT.GRAB_DISTANCE,
         })),
@@ -454,7 +456,9 @@ export class Game extends Scene {
             return item.displayHeight;
           },
           get active() {
-            return item.active && !item.isCarried;
+            return (
+              item.active && !item.isCarried && item.input?.enabled !== false
+            );
           },
           interactionDistance: 150,
         })),
@@ -1360,11 +1364,14 @@ export class Game extends Scene {
         this.isQuizActive ||
         useGameUIStore.getState().labelData !== null;
 
+      const isPlayerBusy = this.player.isGrabbing || this.player.isCarrying;
+
       this.hintKeySystem.update(
         this.player.x,
         this.player.y,
         this.player.body as Phaser.Physics.Arcade.Body,
         isPanelOpen,
+        isPlayerBusy,
       );
     }
   }
