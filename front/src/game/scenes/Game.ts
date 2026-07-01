@@ -1056,6 +1056,21 @@ export class Game extends Scene {
 
               void this.saveProgressToBackend();
 
+              const progressState = this.progressionManager.getState();
+              posthog.capture("progress_updated", {
+                level_id: this.levelId,
+                level_number: this.levelDef.levelNumber,
+                current_level: progressState.currentLevel,
+                total_stars: progressState.totalStars,
+                completed_levels_count: Object.keys(
+                  progressState.completedLevels,
+                ).length,
+                mission_id: missionId,
+                passed: isSuccess,
+                score,
+                total_questions: questions.length,
+              });
+
               const npc = this.npcs.find((n) => {
                 const ent = n as unknown as INpcEntity;
                 return ent.config && ent.config.missionId === missionId;
