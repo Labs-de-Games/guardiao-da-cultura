@@ -25,6 +25,8 @@ export interface QuizResultRecord {
 export interface IntermediateQuizResultRecord {
   completedAt: string;
   passed: boolean;
+  score: number;
+  totalQuestions: number;
   missionId: string | null;
 }
 

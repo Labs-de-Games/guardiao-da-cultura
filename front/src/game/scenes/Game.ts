@@ -1336,6 +1336,8 @@ export class Game extends Scene {
         this.progressionManager.recordIntermediateQuizResult(infoKey, {
           completedAt: new Date().toISOString(),
           passed,
+          score,
+          totalQuestions: questions.length,
           missionId: MissionIds.CURATOR,
         });
       }
