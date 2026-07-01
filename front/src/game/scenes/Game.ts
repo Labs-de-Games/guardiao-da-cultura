@@ -1342,6 +1342,8 @@ export class Game extends Scene {
         });
       }
 
+      void this.saveProgressToBackend();
+
       const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
 
       if (floorCompleted) {
