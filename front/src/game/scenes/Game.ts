@@ -526,6 +526,7 @@ export class Game extends Scene {
       entries: allCollectibles,
     });
 
+    console.log("[DEBUG Flow] Game: Emitting game:started");
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
     EventBus.emit("ui:controls-overlay", { open: true });

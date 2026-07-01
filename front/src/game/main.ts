@@ -30,8 +30,8 @@ const baseConfig: Types.Core.GameConfig = {
 
 function getScenes(entryFlow: EntryFlow) {
   return entryFlow === "direct"
-    ? [MainGame, MapIntroScene, UIScene, LevelCinematic]
-    : [MapIntroScene, MainGame, UIScene, LevelCinematic];
+    ? [LevelCinematic, MainGame, UIScene, MapIntroScene]
+    : [MapIntroScene, LevelCinematic, MainGame, UIScene];
 }
 
 const StartGame = (
