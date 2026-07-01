@@ -72,9 +72,7 @@ export class LevelCinematic extends Scene {
    * Transition to the Game scene
    */
   private transitionToGame() {
-    this.scene.resume(SceneNames.GAME);
-    this.scene.resume(SceneNames.UI);
-    this.scene.stop();
+    this.scene.start(SceneNames.GAME, { levelId: this.levelId });
   }
 
   shutdown() {
