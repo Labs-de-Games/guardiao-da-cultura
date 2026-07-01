@@ -1,16 +1,14 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 interface ConfirmationPanelProps {
   message: string;
-  selectedIndex: number;
   onSelect: (dir: number) => void;
   onConfirm: (confirmed: boolean) => void;
 }
 
 export function ConfirmationPanel({
   message,
-  selectedIndex,
   onSelect,
   onConfirm,
 }: ConfirmationPanelProps) {
@@ -38,47 +36,48 @@ export function ConfirmationPanel({
         sx={{
           display: "flex",
           justifyContent: "center",
-          gap: 4,
+          gap: 2,
+          mt: 2,
         }}
       >
-        <Typography
+        <Button
           sx={{
             fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "18px",
-            fontWeight: selectedIndex === 0 ? 700 : 500,
-            color:
-              selectedIndex === 0
-                ? GAME_UI_TOKENS.colors.dialogueCta
-                : GAME_UI_TOKENS.colors.textSecondary,
-            cursor: "pointer",
-            transition: "all 0.15s",
-            transform: selectedIndex === 0 ? "scale(1.1)" : "scale(1)",
-            "&:hover": { color: GAME_UI_TOKENS.colors.dialogueCta },
+            fontSize: "16px",
+            fontWeight: 500,
+            textTransform: "none",
+            bgcolor: GAME_UI_TOKENS.colors.accentGold,
+            color: "#252726",
+            borderRadius: "5px",
+            px: 3,
+            py: 1.5,
+            minWidth: 83,
+            "&:hover": { bgcolor: GAME_UI_TOKENS.colors.accentGoldHover },
           }}
           onClick={() => onConfirm(true)}
           onMouseEnter={() => onSelect(0)}
         >
           Sim
-        </Typography>
-        <Typography
+        </Button>
+        <Button
           sx={{
             fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "18px",
-            fontWeight: selectedIndex === 1 ? 700 : 500,
-            color:
-              selectedIndex === 1
-                ? GAME_UI_TOKENS.colors.dialogueCta
-                : GAME_UI_TOKENS.colors.textSecondary,
-            cursor: "pointer",
-            transition: "all 0.15s",
-            transform: selectedIndex === 1 ? "scale(1.1)" : "scale(1)",
-            "&:hover": { color: GAME_UI_TOKENS.colors.dialogueCta },
+            fontSize: "16px",
+            fontWeight: 500,
+            textTransform: "none",
+            bgcolor: GAME_UI_TOKENS.colors.white,
+            color: "#252726",
+            borderRadius: "5px",
+            px: 3,
+            py: 1.5,
+            minWidth: 91,
+            "&:hover": { bgcolor: "#e0e0e0" },
           }}
           onClick={() => onConfirm(false)}
           onMouseEnter={() => onSelect(1)}
         >
           Não
-        </Typography>
+        </Button>
       </Box>
     </Box>
   );
