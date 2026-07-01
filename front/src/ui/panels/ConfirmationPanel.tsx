@@ -4,7 +4,6 @@ import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 interface ConfirmationPanelProps {
   message: string;
-  speakerName: string;
   selectedIndex: number;
   onSelect: (dir: number) => void;
   onConfirm: (confirmed: boolean) => void;
@@ -12,26 +11,12 @@ interface ConfirmationPanelProps {
 
 export function ConfirmationPanel({
   message,
-  speakerName,
   selectedIndex,
   onSelect,
   onConfirm,
 }: ConfirmationPanelProps) {
   return (
     <Box>
-      {speakerName && (
-        <Typography
-          sx={{
-            fontFamily: GAME_UI_TOKENS.fonts.display,
-            fontSize: "24px",
-            lineHeight: "1.21em",
-            color: GAME_UI_TOKENS.colors.accentGoldMuted,
-            mb: "12px",
-          }}
-        >
-          {speakerName}
-        </Typography>
-      )}
       <Typography
         sx={{
           fontFamily: GAME_UI_TOKENS.fonts.body,
