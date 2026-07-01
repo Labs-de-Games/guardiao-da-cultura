@@ -181,7 +181,6 @@ export default function QuizPanel() {
 
   const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
   const isPerformance = quiz.phase === "performance";
-  const isIntermediate = quiz.isIntermediate;
 
   const scorePercentage = useMemo(() => {
     const total = quiz.questions.length;
@@ -712,43 +711,8 @@ export default function QuizPanel() {
           )}
         </Box>
 
-        {/* FOOTER */}
-        {isPerformance ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 3,
-              px: 4,
-              mb: 0.5,
-            }}
-          >
-            <PerformanceNavButton
-              label={
-                <>
-                  <ArrowBackIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  Voltar ao mapa
-                </>
-              }
-              selected={selectedNavIndex === 0}
-              variant="dark"
-              onClick={() => EventBus.emit("quiz:close", undefined)}
-              onMouseEnter={() => setSelectedNavIndex(0)}
-            />
-            <PerformanceNavButton
-              label={
-                <>
-                  <StarIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  {isRetryMode ? "Tentar novamente" : "Próxima fase"}
-                </>
-              }
-              selected={selectedNavIndex === 1}
-              variant="gold"
-              onClick={activateSelectedNav}
-              onMouseEnter={() => setSelectedNavIndex(1)}
-            />
-          </Box>
-        ) : (
+        {/* FOOTER - WASD hint (questioning only) */}
+        {!isPerformance && (
           <Box
             sx={{
               display: "flex",
