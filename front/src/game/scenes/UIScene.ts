@@ -188,7 +188,10 @@ export class UIScene extends Scene {
 
       if (entryFlow === "direct") {
         this.scene.stop(SceneNames.GAME);
-        this.scene.start(SceneNames.GAME, { levelId: "level_01" });
+        this.scene.start(SceneNames.GAME, {
+          levelId: "level_01",
+          skipIntro: true,
+        });
         return;
       }
 

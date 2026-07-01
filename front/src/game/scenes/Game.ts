@@ -91,6 +91,7 @@ export class Game extends Scene {
   private itemsInteracted: Set<string> = new Set();
 
   private levelId: string = "level_01";
+  private skipIntro = false;
   private levelDef!: LevelDefinition;
   private contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
@@ -104,8 +105,9 @@ export class Game extends Scene {
     super(SceneNames.GAME);
   }
 
-  init(data?: { levelId: string }) {
+  init(data?: { levelId?: string; skipIntro?: boolean }) {
     this.levelId = data?.levelId || "level_01";
+    this.skipIntro = data?.skipIntro === true;
     this.levelDef = LEVEL_REGISTRY[this.levelId];
 
     if (!this.levelDef) {
@@ -256,6 +258,11 @@ export class Game extends Scene {
 
   create() {
     window.dispatchEvent(new CustomEvent("phaser-loading-complete"));
+
+    if (!this.skipIntro) {
+      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: this.levelId });
+      return;
+    }
 
     this.processModularData();
     this.effects = new EffectsManager(this);
