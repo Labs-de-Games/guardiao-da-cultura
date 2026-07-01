@@ -18,7 +18,7 @@ export function useEntryFlow(): { entryFlow: EntryFlow; isLoading: boolean } {
   }, [flagValue]);
 
   const isLoading = flagValue === undefined && !timedOut;
-  const entryFlow: EntryFlow = flagValue === "map" ? "map" : "direct";
+  const entryFlow: EntryFlow = flagValue === "direct" ? "direct" : "map";
 
   return { entryFlow, isLoading };
 }

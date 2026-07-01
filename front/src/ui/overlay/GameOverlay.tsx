@@ -102,6 +102,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
     });
 
     const unsubIntroStart = EventBus.on("intro:start", (data) => {
+      console.log("[DEBUG Flow] GameOverlay: received intro:start event", data);
       setIntroData(data);
     });
 
@@ -125,7 +126,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
     );
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
-      if (!data.isAvailable) {
+      if (data && !data.isAvailable) {
         setAutoStartProgress(null);
       }
     });
@@ -230,6 +231,10 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   }, [dialogueOpen, dequeueDialogue]);
 
   if (!gameStarted) {
+    console.log(
+      "[DEBUG Flow] GameOverlay: Rendering because gameStarted is false. introData present?",
+      !!introData,
+    );
     return (
       <>
         {introData && (
@@ -244,7 +249,12 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
             <IntroSequence
               config={introData.config}
               levelId={introData.levelId}
-              onComplete={() => setIntroData(null)}
+              onComplete={() => {
+                console.log(
+                  "[DEBUG Flow] GameOverlay: IntroSequence onComplete triggered, clearing introData",
+                );
+                setIntroData(null);
+              }}
             />
           </div>
         )}
