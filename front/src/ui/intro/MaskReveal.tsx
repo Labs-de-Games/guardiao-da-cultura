@@ -42,7 +42,6 @@ export function MaskReveal({
   // Start animation and notify parent to begin game loading
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
-      console.log("[DEBUG Flow] MaskReveal: Animation starting");
       setOpen(true);
       onAnimationStart?.();
     });
@@ -56,7 +55,6 @@ export function MaskReveal({
   // Listen for game loading completion
   useEffect(() => {
     const handleLoadingComplete = () => {
-      console.log("[DEBUG Flow] MaskReveal: phaser-loading-complete received");
       setGameLoaded(true);
     };
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
@@ -71,9 +69,6 @@ export function MaskReveal({
   // Call onDone when both animation and loading are complete
   useEffect(() => {
     if (animationDone && gameLoaded) {
-      console.log(
-        "[DEBUG Flow] MaskReveal: Both animation and loading complete, calling onDone",
-      );
       onDone?.();
     }
   }, [animationDone, gameLoaded, onDone]);
