@@ -15,14 +15,21 @@ export function ConfirmationPanel({
   onConfirm,
 }: ConfirmationPanelProps) {
   return (
-    <Box>
+    <Box
+      sx={{
+        bgcolor: "#1f1f1f",
+        borderRadius: "8px",
+        p: 3,
+      }}
+    >
       <Typography
         sx={{
           fontFamily: GAME_UI_TOKENS.fonts.body,
           fontSize: "20px",
-          color: GAME_UI_TOKENS.colors.accentGoldMuted,
+          color: GAME_UI_TOKENS.colors.accentGold,
           lineHeight: 1.2,
           minHeight: "2.5em",
+          textAlign: "center",
         }}
       >
         {message}
