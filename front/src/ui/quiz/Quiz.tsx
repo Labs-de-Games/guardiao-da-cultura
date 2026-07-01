@@ -181,6 +181,7 @@ export default function QuizPanel() {
 
   const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
   const isPerformance = quiz.phase === "performance";
+  const isIntermediate = quiz.isIntermediate;
 
   const scorePercentage = useMemo(() => {
     const total = quiz.questions.length;
@@ -206,7 +207,8 @@ export default function QuizPanel() {
     if (isIntermediate) {
       return {
         headerTitle: `Pontos: ${scorePercentage}%`,
-        headerSubTitle: scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
+        headerSubTitle:
+          scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
         performanceTitle:
           scorePercentage >= 70
             ? "Parabéns!"
@@ -232,12 +234,14 @@ export default function QuizPanel() {
       };
     }
     return {
-      headerTitle: scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
-      headerSubTitle: scorePercentage >= 70
-        ? scorePercentage === 100
-          ? "Pontuação perfeita"
-          : "Pontuação boa"
-        : "Pontuação baixa",
+      headerTitle:
+        scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
+      headerSubTitle:
+        scorePercentage >= 70
+          ? scorePercentage === 100
+            ? "Pontuação perfeita"
+            : "Pontuação boa"
+          : "Pontuação baixa",
       performanceTitle:
         scorePercentage < 25
           ? "Essa não"
