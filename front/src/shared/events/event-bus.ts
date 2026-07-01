@@ -10,6 +10,7 @@ const replayableEvents = new Set<keyof GameEventMap>([
   "player:stars-changed",
   "quest:progress-changed",
   "collectible:collectibles-sync",
+  "map:marker-changed",
 ]);
 
 const lastEventPayloads = new Map<
