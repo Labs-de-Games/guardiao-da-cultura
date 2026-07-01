@@ -32,8 +32,9 @@ export class HintKeySystem {
     playerY: number,
     playerBody?: Phaser.Physics.Arcade.Body | null,
     isPanelOpen = false,
+    isPlayerBusy = false,
   ) {
-    if (isPanelOpen) {
+    if (isPanelOpen || isPlayerBusy) {
       this.hide();
       return;
     }
