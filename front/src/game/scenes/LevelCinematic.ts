@@ -33,7 +33,7 @@ export class LevelCinematic extends Scene {
     // Load the intro configuration JSON
     this.load.json(
       "intro_config",
-      `assets/data/levels/${this.levelId}/intro/intro_config.json`,
+      `/assets/data/levels/${this.levelId}/intro/intro_config.json`,
     );
   }
 
