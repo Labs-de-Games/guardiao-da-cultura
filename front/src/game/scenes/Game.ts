@@ -1311,6 +1311,25 @@ export class Game extends Scene {
       };
 
       await this.persistence.saveScore(persistencePayload);
+
+      posthog.capture("score_updated", {
+        level_id: payload.levelId,
+        total_quarters: payload.totalQuarters,
+        total_stars: payload.totalStars,
+        rating: payload.rating,
+        floor_scores: payload.floors,
+        quiz_score: {
+          total_questions: payload.quiz.totalQuestions,
+          correct_answers: payload.quiz.correctAnswers,
+          accuracy_percent: payload.quiz.accuracyPercent,
+          quarters_earned: payload.quiz.quartersEarned,
+        },
+        collectible_score: {
+          total: payload.collectibles.total,
+          interactions_count: payload.collectibles.interactionsCount,
+          quarters_earned: payload.collectibles.quartersEarned,
+        },
+      });
     } catch (err) {
       console.error("[Game] Failed to save score in persistence layer:", err);
     }
