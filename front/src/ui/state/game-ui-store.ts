@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
@@ -86,6 +87,7 @@ export interface GameUIState {
   isAuthenticated: boolean;
   guestId: string | null;
   isInterestDialogOpen: boolean;
+  progression: UserProgressState | null;
 
   quiz: {
     isVisible: boolean;
@@ -138,6 +140,7 @@ export interface GameUIState {
   addUnlockedBadge: (badgeId: string) => void;
   openInterestDialog: () => void;
   closeInterestDialog: () => void;
+  setProgression: (state: UserProgressState) => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -173,6 +176,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   isAuthenticated: false,
   guestId: null,
   isInterestDialogOpen: false,
+  progression: null,
 
   quiz: {
     isVisible: false,
@@ -342,6 +346,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     }),
   openInterestDialog: () => set({ isInterestDialogOpen: true }),
   closeInterestDialog: () => set({ isInterestDialogOpen: false }),
+  setProgression: (state) => set({ progression: state }),
 
   startQuiz: (questions, onComplete) => {
     set((_s) => ({
