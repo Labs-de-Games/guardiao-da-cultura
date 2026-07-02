@@ -217,11 +217,6 @@ export class Game extends Scene {
     });
 
     this.load.image("label", "misc/label.png");
-
-    this.load.image("ui_star_full", "ui/stars/star_full.png");
-    this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
-    this.load.image("ui_star_2q", "ui/stars/star_two_quarter.png");
-    this.load.image("ui_star_1q", "ui/stars/star_one_quarter.png");
   }
 
   private processModularData() {
@@ -1066,9 +1061,18 @@ export class Game extends Scene {
         return;
       }
 
+      const dialogues = npc?.getDialogues();
+      const quizQuestionLines = dialogues?.start_quiz_question;
+      const rawLine =
+        quizQuestionLines && quizQuestionLines.length > 0
+          ? quizQuestionLines[0]
+          : "Podemos iniciar o teste?";
+      const npcName = npc?.getName() || "";
+
       this.events.emit(
         GameEvents.SHOW_CONFIRMATION_REQUEST,
-        "Podemos iniciar o teste?",
+        rawLine,
+        npcName,
         () => {
           this.isQuizActive = true;
           this.quizStartedAt = Date.now();

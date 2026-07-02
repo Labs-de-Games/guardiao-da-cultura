@@ -13,6 +13,7 @@ import { CallbackRegistry } from "../systems/CallbackRegistry";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import type { QuizQuestion, UIInitData } from "../types/GameDataTypes";
+import type { Game } from "./Game";
 
 export class UIScene extends Scene {
   private questManager!: QuestManager;
@@ -57,18 +58,33 @@ export class UIScene extends Scene {
   }
 
   private setupEventListeners() {
-    const gameScene = this.scene.get(SceneNames.GAME);
+    const gameScene = this.scene.get(SceneNames.GAME) as unknown as Game;
 
     gameScene.events.on(
       GameEvents.SHOW_DIALOGUE_REQUEST,
-      (lines: string[], onComplete?: () => void) => {
+      (
+        lines: string[],
+        onComplete?: () => void,
+        worldPosition?: { x: number; y: number },
+      ) => {
         const callbackId = crypto.randomUUID();
         if (onComplete) {
           this.callbackRegistry.registerDialogue(callbackId, onComplete);
         }
+
+        const pos = worldPosition ?? {
+          x: gameScene.player.x,
+          y: gameScene.player.y,
+        };
+        const camera = gameScene.cameras.main;
+        const screenPosition = {
+          x: pos.x - camera.worldView.x,
+          y: pos.y - camera.worldView.y,
+        };
+
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:show", { lines, callbackId });
+        EventBus.emit("dialogue:show", { lines, callbackId, screenPosition });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );
@@ -99,12 +115,34 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.SHOW_CONFIRMATION_REQUEST,
-      (message: string, onYes: () => void, onNo: () => void) => {
+      (
+        message: string,
+        speakerName: string,
+        onYes: () => void,
+        onNo: () => void,
+        worldPosition?: { x: number; y: number },
+      ) => {
         const callbackId = crypto.randomUUID();
         this.callbackRegistry.registerConfirm(callbackId, onYes, onNo);
+
+        const pos = worldPosition ?? {
+          x: gameScene.player.x,
+          y: gameScene.player.y,
+        };
+        const camera = gameScene.cameras.main;
+        const screenPosition = {
+          x: pos.x - camera.worldView.x,
+          y: pos.y - camera.worldView.y,
+        };
+
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:confirm", { message, callbackId });
+        EventBus.emit("dialogue:confirm", {
+          message,
+          speakerName,
+          callbackId,
+          screenPosition,
+        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );
