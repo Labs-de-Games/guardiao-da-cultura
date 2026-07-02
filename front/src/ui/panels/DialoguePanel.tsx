@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
-import { ConfirmationPanel } from "./ConfirmationPanel";
 
 const TYPING_SPEED = 30;
 const BUBBLE_MAX_WIDTH = 900;
@@ -255,10 +254,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
             isLastLine={isLastLine}
             onAdvance={handleAdvance}
           />
-        )}
-        {mode === "confirmation" && <TextToSpeechIcon />}
-        {mode === "confirmation" && (
-          <ConfirmationPanel onComplete={onComplete} onDismiss={onDismiss} />
         )}
         <Box
           sx={{
