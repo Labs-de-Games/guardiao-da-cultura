@@ -75,12 +75,14 @@ export function ConfirmationPanel({
   return (
     <Box
       sx={{
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
+        position: "absolute",
+        inset: 0,
         zIndex: 30,
         pointerEvents: "auto",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <Box
