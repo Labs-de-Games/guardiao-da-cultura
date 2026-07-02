@@ -25,6 +25,7 @@ import type {
   LabelInfoData,
   MapMarkerChangedData,
 } from "@/shared/events/game-events";
+import type { IntroConfig } from "@/ui/intro/types";
 
 export const UI_Z_INDEX = {
   OVERLAY: 10,
@@ -84,6 +85,7 @@ export interface GameUIState {
   guestId: string | null;
   isInterestDialogOpen: boolean;
   progression: UserProgressState | null;
+  introData: { levelId: string; config: IntroConfig } | null;
 
   quiz: {
     isVisible: boolean;
@@ -138,6 +140,7 @@ export interface GameUIState {
   openInterestDialog: () => void;
   closeInterestDialog: () => void;
   setProgression: (state: UserProgressState) => void;
+  setIntroData: (data: { levelId: string; config: IntroConfig } | null) => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -175,6 +178,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   guestId: null,
   isInterestDialogOpen: false,
   progression: null,
+  introData: null,
 
   quiz: {
     isVisible: false,
@@ -346,6 +350,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   openInterestDialog: () => set({ isInterestDialogOpen: true }),
   closeInterestDialog: () => set({ isInterestDialogOpen: false }),
   setProgression: (state) => set({ progression: state }),
+  setIntroData: (data) => set({ introData: data }),
 
   startQuiz: (questions, onComplete, isIntermediate = false) => {
     set((_s) => ({

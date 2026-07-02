@@ -92,7 +92,8 @@ export class MapIntroScene extends Scene {
   private beginGame() {
     this.cancelAutoStart("started");
     if (this.activeMarkerIndex === 0) {
-      this.scene.start(SceneNames.GAME, { levelId: "level_01" });
+      EventBus.emit("map:marker-changed", null);
+      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
     }
   }
 
