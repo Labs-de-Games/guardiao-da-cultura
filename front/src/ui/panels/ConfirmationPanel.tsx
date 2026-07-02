@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from "@mui/material";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
@@ -14,12 +14,26 @@ export function ConfirmationPanel({
 }: ConfirmationPanelProps) {
   const message = useDialogueStore((s) => s.dialogueConfirmMessage);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
+  const dialogueConfirmSelected = useDialogueStore(
+    (s) => s.dialogueConfirmSelected,
+  );
   const setConfirmSelection = useDialogueStore((s) => s.setConfirmSelection);
   const moveConfirmSelection = useDialogueStore((s) => s.moveConfirmSelection);
   const confirmDialogueSelection = useDialogueStore(
     (s) => s.confirmDialogueSelection,
   );
   const closeDialogue = useDialogueStore((s) => s.closeDialogue);
+
+  const simButtonRef = useRef<HTMLButtonElement>(null);
+  const naoButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const target =
+      dialogueConfirmSelected === 0
+        ? simButtonRef.current
+        : naoButtonRef.current;
+    target?.focus();
+  }, [dialogueConfirmSelected]);
 
   const handleConfirm = useCallback(
     (confirmed: boolean) => {
@@ -50,16 +64,17 @@ export function ConfirmationPanel({
           e.key === "ArrowRight" || e.key === "d" || e.key === "D" ? 1 : -1,
         );
       }
-      if (e.key === "e" || e.key === "E") {
+      if (
+        e.key === "e" ||
+        e.key === "E" ||
+        e.key === " " ||
+        e.key === "Enter"
+      ) {
         e.preventDefault();
         e.stopPropagation();
         const currentSelected =
           useDialogueStore.getState().dialogueConfirmSelected;
         handleConfirm(currentSelected === 0);
-      }
-      if (e.key === " ") {
-        e.preventDefault();
-        e.stopPropagation();
       }
       if (e.key === "Escape") {
         e.preventDefault();
@@ -117,6 +132,7 @@ export function ConfirmationPanel({
           }}
         >
           <Button
+            ref={simButtonRef}
             sx={{
               fontFamily: GAME_UI_TOKENS.fonts.body,
               fontSize: "16px",
@@ -137,6 +153,7 @@ export function ConfirmationPanel({
             Sim
           </Button>
           <Button
+            ref={naoButtonRef}
             sx={{
               fontFamily: GAME_UI_TOKENS.fonts.body,
               fontSize: "16px",
