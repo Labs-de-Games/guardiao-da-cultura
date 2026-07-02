@@ -117,18 +117,11 @@ export const LEVEL_ASSETS = {
     { key: "chunk_1-2", path: "artworks/photos/chunk-1.png" },
     { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
     { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
-    {
-      key: "candujar_sem_titulo_yanomami",
-      path: "artworks/photos/candujar_sem_titulo_yanomami.png",
-    },
-    {
-      key: "candujar_sem_titulo_yanomami_ph",
-      path: "artworks/photos/candujar_sem_titulo_yanomami_ph.png",
-    },
   ],
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
+    { key: "rec", path: "misc/rec.png" },
     { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
   ],
   COLLECTIBLES: [
