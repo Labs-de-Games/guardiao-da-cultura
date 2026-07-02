@@ -54,69 +54,80 @@ export function ConfirmationPanel({
   return (
     <Box
       sx={{
-        bgcolor: "#1f1f1f",
-        borderRadius: "8px",
-        p: 3,
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        zIndex: 30,
+        pointerEvents: "auto",
       }}
     >
-      <Typography
-        sx={{
-          fontFamily: GAME_UI_TOKENS.fonts.body,
-          fontSize: "20px",
-          color: GAME_UI_TOKENS.colors.accentGold,
-          lineHeight: 1.2,
-          minHeight: "2.5em",
-          textAlign: "center",
-        }}
-      >
-        {message}
-      </Typography>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 2,
-          mt: 2,
+          bgcolor: "#1f1f1f",
+          borderRadius: "8px",
+          p: 3,
         }}
       >
-        <Button
+        <Typography
           sx={{
             fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "16px",
-            fontWeight: 500,
-            textTransform: "none",
-            bgcolor: GAME_UI_TOKENS.colors.accentGold,
-            color: "#252726",
-            borderRadius: "5px",
-            px: 3,
-            py: 1.5,
-            minWidth: 83,
-            "&:hover": { bgcolor: GAME_UI_TOKENS.colors.accentGoldHover },
+            fontSize: "20px",
+            color: GAME_UI_TOKENS.colors.accentGold,
+            lineHeight: 1.2,
+            minHeight: "2.5em",
+            textAlign: "center",
           }}
-          onClick={() => onConfirm(true)}
-          onMouseEnter={() => onSelect(0)}
         >
-          Sim
-        </Button>
-        <Button
+          {message}
+        </Typography>
+        <Box
           sx={{
-            fontFamily: GAME_UI_TOKENS.fonts.body,
-            fontSize: "16px",
-            fontWeight: 500,
-            textTransform: "none",
-            bgcolor: GAME_UI_TOKENS.colors.white,
-            color: "#252726",
-            borderRadius: "5px",
-            px: 3,
-            py: 1.5,
-            minWidth: 91,
-            "&:hover": { bgcolor: "#e0e0e0" },
+            display: "flex",
+            justifyContent: "center",
+            gap: 2,
+            mt: 2,
           }}
-          onClick={() => onConfirm(false)}
-          onMouseEnter={() => onSelect(1)}
         >
-          Não
-        </Button>
+          <Button
+            sx={{
+              fontFamily: GAME_UI_TOKENS.fonts.body,
+              fontSize: "16px",
+              fontWeight: 500,
+              textTransform: "none",
+              bgcolor: GAME_UI_TOKENS.colors.accentGold,
+              color: "#252726",
+              borderRadius: "5px",
+              px: 3,
+              py: 1.5,
+              minWidth: 83,
+              "&:hover": { bgcolor: GAME_UI_TOKENS.colors.accentGoldHover },
+            }}
+            onClick={() => onConfirm(true)}
+            onMouseEnter={() => onSelect(0)}
+          >
+            Sim
+          </Button>
+          <Button
+            sx={{
+              fontFamily: GAME_UI_TOKENS.fonts.body,
+              fontSize: "16px",
+              fontWeight: 500,
+              textTransform: "none",
+              bgcolor: GAME_UI_TOKENS.colors.white,
+              color: "#252726",
+              borderRadius: "5px",
+              px: 3,
+              py: 1.5,
+              minWidth: 91,
+              "&:hover": { bgcolor: "#e0e0e0" },
+            }}
+            onClick={() => onConfirm(false)}
+            onMouseEnter={() => onSelect(1)}
+          >
+            Não
+          </Button>
+        </Box>
       </Box>
     </Box>
   );
