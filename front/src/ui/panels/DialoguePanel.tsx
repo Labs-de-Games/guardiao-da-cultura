@@ -54,6 +54,7 @@ function TextToSpeechIcon() {
 
 export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const open = useDialogueStore((s) => s.dialogueOpen);
+  const mode = useDialogueStore((s) => s.dialogueMode);
   const lines = useDialogueStore((s) => s.dialogueLines);
   const currentLine = useDialogueStore((s) => s.dialogueCurrentLine);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
@@ -203,7 +204,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     return () => window.removeEventListener("keydown", handler, true);
   }, [open, handleAdvance, handleDismiss]);
 
-  if (!open) return null;
+  if (!open || mode !== "dialogue") return null;
 
   return (
     <Box
