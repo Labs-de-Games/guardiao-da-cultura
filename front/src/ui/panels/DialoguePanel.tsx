@@ -298,12 +298,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         )}
         {mode === "confirmation" && <TextToSpeechIcon />}
         {mode === "confirmation" && (
-          <ConfirmationPanel
-            message={displayedText}
-            onSelect={moveConfirmSelection}
-            onConfirm={handleConfirm}
-            onDismiss={handleDismiss}
-          />
+          <ConfirmationPanel onComplete={onComplete} onDismiss={onDismiss} />
         )}
         <Box
           sx={{

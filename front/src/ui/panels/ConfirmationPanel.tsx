@@ -1,20 +1,39 @@
 import { Box, Button, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 interface ConfirmationPanelProps {
-  message: string;
-  onSelect: (dir: number) => void;
-  onConfirm: (confirmed: boolean) => void;
-  onDismiss: () => void;
+  onComplete: (callbackId: string, confirmed?: boolean) => void;
+  onDismiss: (callbackId: string) => void;
 }
 
 export function ConfirmationPanel({
-  message,
-  onSelect,
-  onConfirm,
+  onComplete,
   onDismiss,
 }: ConfirmationPanelProps) {
+  const message = useDialogueStore((s) => s.dialogueConfirmMessage);
+  const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
+  const setConfirmSelection = useDialogueStore((s) => s.setConfirmSelection);
+  const moveConfirmSelection = useDialogueStore((s) => s.moveConfirmSelection);
+  const confirmDialogueSelection = useDialogueStore(
+    (s) => s.confirmDialogueSelection,
+  );
+  const closeDialogue = useDialogueStore((s) => s.closeDialogue);
+
+  const handleConfirm = useCallback(
+    (confirmed: boolean) => {
+      onComplete(callbackId, confirmed);
+      confirmDialogueSelection();
+    },
+    [callbackId, confirmDialogueSelection, onComplete],
+  );
+
+  const handleDismiss = useCallback(() => {
+    onDismiss(callbackId);
+    closeDialogue();
+  }, [closeDialogue, callbackId, onDismiss]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
@@ -27,14 +46,16 @@ export function ConfirmationPanel({
       ) {
         e.preventDefault();
         e.stopPropagation();
-        onSelect(
+        moveConfirmSelection(
           e.key === "ArrowRight" || e.key === "d" || e.key === "D" ? 1 : -1,
         );
       }
       if (e.key === "e" || e.key === "E") {
         e.preventDefault();
         e.stopPropagation();
-        onConfirm(true);
+        const currentSelected =
+          useDialogueStore.getState().dialogueConfirmSelected;
+        handleConfirm(currentSelected === 0);
       }
       if (e.key === " ") {
         e.preventDefault();
@@ -43,13 +64,13 @@ export function ConfirmationPanel({
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        onDismiss();
+        handleDismiss();
       }
     };
 
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [onSelect, onConfirm, onDismiss]);
+  }, [moveConfirmSelection, handleConfirm, handleDismiss]);
 
   return (
     <Box
@@ -103,8 +124,8 @@ export function ConfirmationPanel({
               minWidth: 83,
               "&:hover": { bgcolor: GAME_UI_TOKENS.colors.accentGoldHover },
             }}
-            onClick={() => onConfirm(true)}
-            onMouseEnter={() => onSelect(0)}
+            onClick={() => handleConfirm(true)}
+            onMouseEnter={() => setConfirmSelection(0)}
           >
             Sim
           </Button>
@@ -122,8 +143,8 @@ export function ConfirmationPanel({
               minWidth: 91,
               "&:hover": { bgcolor: "#e0e0e0" },
             }}
-            onClick={() => onConfirm(false)}
-            onMouseEnter={() => onSelect(1)}
+            onClick={() => handleConfirm(false)}
+            onMouseEnter={() => setConfirmSelection(1)}
           >
             Não
           </Button>
