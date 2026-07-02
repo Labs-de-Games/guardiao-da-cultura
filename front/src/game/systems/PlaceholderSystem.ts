@@ -11,7 +11,7 @@ export interface PlaceholderInstance {
   type: InteractiveType;
   id: string | string[];
   state?: Record<string, unknown>;
-  hintSprite?: Phaser.GameObjects.Sprite;
+  hintSprite?: Phaser.GameObjects.GameObject;
   isFilled?: boolean;
 }
 
@@ -89,40 +89,60 @@ export class PlaceholderSystem {
       isFilled: false,
     };
 
-    let textureKey = "placeholder";
     const primaryId = Array.isArray(config.id) ? config.id[0] : config.id;
+
     if (config.type === InteractiveType.PHOTO) {
-      textureKey = "candujar_sem_titulo_yanomami_ph";
-    } else if (primaryId) {
-      textureKey = `${primaryId}_ph`;
-    }
+      const cellW = 122;
+      const cellH = 80;
+      const container = this.scene.add.container(rect.centerX, rect.centerY);
 
-    const placeholder = this.scene.add.sprite(
-      rect.centerX,
-      rect.centerY,
-      textureKey,
-      0,
-    );
-    let scale = 1;
-    if (config.scale !== undefined && !Number.isNaN(config.scale)) {
-      scale = config.scale;
-    }
-    placeholder.setScale(scale);
-    placeholder.setAlpha(0.45);
-    placeholder.setDepth(10);
+      for (let i = 0; i < 4; i++) {
+        const cell = this.scene.add.image(0, 0, "rec");
+        cell.setDisplaySize(cellW, cellH);
+        cell.setAlpha(0.45);
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        cell.setPosition(
+          col === 0 ? -cellW / 2 : cellW / 2,
+          row === 0 ? -cellH / 2 : cellH / 2,
+        );
+        container.add(cell);
+      }
+      container.setDepth(10);
+      instance.hintSprite = container;
+    } else {
+      let textureKey = "placeholder";
+      if (primaryId) {
+        textureKey = `${primaryId}_ph`;
+      }
 
-    if (config.type === InteractiveType.PAINTING) {
-      placeholder.setOrigin(0.5, 1);
-    }
+      const placeholder = this.scene.add.sprite(
+        rect.centerX,
+        rect.centerY,
+        textureKey,
+        0,
+      );
+      let scale = 1;
+      if (config.scale !== undefined && !Number.isNaN(config.scale)) {
+        scale = config.scale;
+      }
+      placeholder.setScale(scale);
+      placeholder.setAlpha(0.45);
+      placeholder.setDepth(10);
 
-    if (
-      textureKey === "placeholder" &&
-      this.scene.anims.exists("placeholder_hint_anim")
-    ) {
-      placeholder.play("placeholder_hint_anim", true);
-    }
+      if (config.type === InteractiveType.PAINTING) {
+        placeholder.setOrigin(0.5, 1);
+      }
 
-    instance.hintSprite = placeholder;
+      if (
+        textureKey === "placeholder" &&
+        this.scene.anims.exists("placeholder_hint_anim")
+      ) {
+        placeholder.play("placeholder_hint_anim", true);
+      }
+
+      instance.hintSprite = placeholder;
+    }
     this.placeholders.push(instance);
   }
 
@@ -179,7 +199,9 @@ export class PlaceholderSystem {
       item.disableInteractive();
 
       if (placeholder.hintSprite) {
-        placeholder.hintSprite.stop();
+        if (placeholder.hintSprite instanceof Phaser.GameObjects.Sprite) {
+          placeholder.hintSprite.stop();
+        }
         placeholder.hintSprite.destroy();
         placeholder.hintSprite = undefined;
       }
@@ -256,10 +278,30 @@ export class PlaceholderSystem {
     return this.placeholders.find((p) => p.instanceId === instanceId) || null;
   }
 
+  public updatePhotoCell(
+    instanceId: string,
+    slotIndex: number,
+    chunkTextureKey: string,
+  ) {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (!p) return;
+    const hint = p.hintSprite;
+    if (!(hint instanceof Phaser.GameObjects.Container)) return;
+    const cell = hint.getAt(slotIndex);
+    if (cell instanceof Phaser.GameObjects.Image) {
+      cell.setTexture(chunkTextureKey);
+      cell.setDisplaySize(122, 80);
+      cell.setAlpha(1);
+    }
+  }
+
   public lockPlaceholder(instanceId: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
-      if (p.hintSprite) {
+      if (p.type !== InteractiveType.PHOTO && p.hintSprite) {
+        if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
+          p.hintSprite.stop();
+        }
         p.hintSprite.destroy();
         p.hintSprite = undefined;
       }

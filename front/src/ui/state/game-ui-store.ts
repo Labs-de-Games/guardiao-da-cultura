@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
 import { getGuestBadgeIds } from "../../lib/badgesStorage";
@@ -23,6 +25,7 @@ import type {
   LabelInfoData,
   MapMarkerChangedData,
 } from "@/shared/events/game-events";
+import type { IntroConfig } from "@/ui/intro/types";
 
 export const UI_Z_INDEX = {
   OVERLAY: 10,
@@ -57,11 +60,7 @@ export interface ChunkSelectorData {
   filledSlots: (string | null)[];
 }
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctOptionIndex: number;
-}
+import type { QuizQuestion } from "../../game/types/GameDataTypes";
 
 export interface GameUIState {
   sidebarOpen: boolean;
@@ -71,6 +70,7 @@ export interface GameUIState {
   autoStartProgress: number | null;
   stars: number;
   totalStars: number;
+  score: number;
   missions: MissionProgress[];
   collectibles: CollectibleEntry[];
   chunkSelectorOpen: boolean;
@@ -84,6 +84,8 @@ export interface GameUIState {
   isAuthenticated: boolean;
   guestId: string | null;
   isInterestDialogOpen: boolean;
+  progression: UserProgressState | null;
+  introData: { levelId: string; config: IntroConfig } | null;
 
   quiz: {
     isVisible: boolean;
@@ -94,6 +96,7 @@ export interface GameUIState {
     answers: ("correct" | "wrong" | null)[];
     score: number;
     isProcessingAnswer: boolean;
+    isIntermediate: boolean;
     onComplete: ((score: number) => void) | null;
   };
 
@@ -106,6 +109,7 @@ export interface GameUIState {
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
   setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
+  setScore: (score: number) => void;
   setMissions: (missions: MissionProgress[]) => void;
   addOrUpdateMission: (
     missionId: string,
@@ -135,10 +139,13 @@ export interface GameUIState {
   addUnlockedBadge: (badgeId: string) => void;
   openInterestDialog: () => void;
   closeInterestDialog: () => void;
+  setProgression: (state: UserProgressState) => void;
+  setIntroData: (data: { levelId: string; config: IntroConfig } | null) => void;
 
   startQuiz: (
     questions: QuizQuestion[],
     onComplete: (score: number) => void,
+    isIntermediate?: boolean,
   ) => void;
   selectOption: () => void;
   moveSelection: (dRow: number, dCol: number) => void;
@@ -152,14 +159,11 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   sidebarOpen: false,
   controlsOpen: false,
   gameStarted: false,
-  activeMapMarker: {
-    title: "Inhotim",
-    location: "Brumadinho, Minas Gerais",
-    isAvailable: true,
-  },
+  activeMapMarker: DEFAULT_MAP_MARKER,
   autoStartProgress: null,
   stars: 0,
   totalStars: 0,
+  score: 0,
   missions: [],
   collectibles: [],
   chunkSelectorOpen: false,
@@ -173,6 +177,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   isAuthenticated: false,
   guestId: null,
   isInterestDialogOpen: false,
+  progression: null,
+  introData: null,
 
   quiz: {
     isVisible: false,
@@ -183,6 +189,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     answers: [],
     score: 0,
     isProcessingAnswer: false,
+    isIntermediate: false,
     onComplete: null,
   },
 
@@ -199,12 +206,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   endGame: () => {
     const { gameStarted } = get();
     if (gameStarted) {
-      set({ gameStarted: false, sidebarOpen: false });
+      set({ gameStarted: false, sidebarOpen: false, score: 0 });
     }
   },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
   setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
+  setScore: (score) => set({ score }),
   setMissions: (missions) => set({ missions }),
   addOrUpdateMission: (
     missionId,
@@ -341,8 +349,10 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     }),
   openInterestDialog: () => set({ isInterestDialogOpen: true }),
   closeInterestDialog: () => set({ isInterestDialogOpen: false }),
+  setProgression: (state) => set({ progression: state }),
+  setIntroData: (data) => set({ introData: data }),
 
-  startQuiz: (questions, onComplete) => {
+  startQuiz: (questions, onComplete, isIntermediate = false) => {
     set((_s) => ({
       quiz: {
         isVisible: true,
@@ -353,6 +363,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         answers: new Array(questions.length).fill(null),
         score: 0,
         isProcessingAnswer: false,
+        isIntermediate,
         onComplete,
       },
     }));
@@ -399,19 +410,33 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         }));
       } else {
         const finalScore = state.quiz.score;
-        const _totalQuestions = state.quiz.questions.length;
         const onComplete = state.quiz.onComplete;
 
-        set((s) => ({
-          quiz: {
-            ...s.quiz,
-            phase: "performance",
-            isProcessingAnswer: false,
-          },
-        }));
+        if (state.quiz.isIntermediate) {
+          if (onComplete) {
+            onComplete(finalScore);
+          }
+          set((s) => ({
+            quiz: {
+              ...s.quiz,
+              isProcessingAnswer: false,
+              isVisible: false,
+              phase: "questioning",
+              isIntermediate: false,
+            },
+          }));
+        } else {
+          set((s) => ({
+            quiz: {
+              ...s.quiz,
+              phase: "performance",
+              isProcessingAnswer: false,
+            },
+          }));
 
-        if (onComplete) {
-          onComplete(finalScore);
+          if (onComplete) {
+            onComplete(finalScore);
+          }
         }
       }
     }, 1000);
@@ -480,6 +505,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         ...s.quiz,
         isVisible: false,
         phase: "questioning",
+        isIntermediate: false,
       },
     }));
   },
@@ -495,6 +521,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         answers: [],
         score: 0,
         isProcessingAnswer: false,
+        isIntermediate: false,
         onComplete: null,
       },
     }));
@@ -502,9 +529,4 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
-  s.collectibles.filter(
-    (c) => c.category === "CLUE_VILLAIN" || c.category === "CLUE_NEXT",
-  );
-
-export const selectInventoryCollectibles = (s: GameUIState) =>
-  s.collectibles.filter((c) => c.category === "COLLECT");
+  s.collectibles.filter((c) => c.category === "CLUE_VILLAIN");

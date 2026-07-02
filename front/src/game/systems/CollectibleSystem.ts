@@ -5,19 +5,14 @@ import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractiveButton } from "../objects/InteractiveButton";
 import type { ScoreManager } from "../objects/ScoreManager";
-import type {
-  CollectibleData,
-  CollectiblesJson,
-  ContentJson,
-  LabelInfoData,
-} from "../types/GameDataTypes";
+import type { CollectibleData, ContentJson } from "../types/GameDataTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 
-type CollectibleInspectMode = "idle" | "inspect" | "label";
+type CollectibleInspectMode = "idle" | "inspect";
 
 export interface CollectibleInstance {
   collectibleId: string;
-  collectibleType: keyof CollectiblesJson;
+  collectibleType: "CLUE_VILLAIN";
   collectibleData: CollectibleData;
   isCollected: boolean;
   sprite: Phaser.GameObjects.Sprite;
@@ -26,7 +21,7 @@ export interface CollectibleInstance {
 
 export interface PersistedCollectible {
   collectibleId: string;
-  collectibleType: keyof CollectiblesJson;
+  collectibleType: "CLUE_VILLAIN";
 }
 
 export class CollectibleSystem {
@@ -38,9 +33,7 @@ export class CollectibleSystem {
   private inspectMode: CollectibleInspectMode = "idle";
   private inspectContainer: Phaser.GameObjects.Container | null = null;
   private readonly dialogueEndedHandler = () => {
-    if (this.inspectMode === "label") {
-      this.closeInteraction(true);
-    }
+    this.closeInteraction(true);
   };
 
   constructor(
@@ -77,7 +70,7 @@ export class CollectibleSystem {
         return;
       }
 
-      const typeKey = collectibleType.toUpperCase() as keyof CollectiblesJson;
+      const typeKey = collectibleType.toUpperCase() as "CLUE_VILLAIN";
       const collectibleData =
         contentJson.collectibles[typeKey]?.[collectibleId];
 
@@ -116,6 +109,10 @@ export class CollectibleSystem {
     }
   }
 
+  public getAllCollectibles(): CollectibleInstance[] {
+    return this.collectibles;
+  }
+
   public destroy() {
     this.scene.events.off(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
     this.hideInspectCard();
@@ -132,7 +129,7 @@ export class CollectibleSystem {
   private registerCollectible(
     obj: Phaser.Types.Tilemaps.TiledObject,
     collectibleData: CollectibleData,
-    collectibleType: keyof CollectiblesJson,
+    collectibleType: "CLUE_VILLAIN",
     collectibleId: string,
     player: Phaser.Physics.Arcade.Sprite,
     isCollected: boolean,
@@ -199,18 +196,15 @@ export class CollectibleSystem {
           total_available: this.collectibles.length,
         });
 
-        EventBus.emit("inventory:item-collected", {
+        EventBus.emit("collectible:item-collected", {
           itemId: instance.collectibleId,
           itemName:
             instance.collectibleData.metadata.title || instance.collectibleId,
           category: instance.collectibleType,
         });
-        // Track secret clue collection for Detetive achievement (CLUE_VILLAIN only)
-        if (instance.collectibleType === "CLUE_VILLAIN") {
-          this.scene.events.emit(GameEvents.INFO_COLLECTED, {
-            infoKey: `pista_${instance.collectibleId}`,
-          });
-        }
+        this.scene.events.emit(GameEvents.INFO_COLLECTED, {
+          infoKey: `pista_${instance.collectibleId}`,
+        });
       }
 
       this.showInspectCard(instance, player);
@@ -219,13 +213,8 @@ export class CollectibleSystem {
     }
 
     if (this.inspectMode === "inspect") {
-      if (this.isEvidence(instance.collectibleType)) {
-        this.closeInteraction();
-        return;
-      }
-
-      this.showCollectibleLabel(instance.collectibleData);
-      this.inspectMode = "label";
+      this.closeInteraction();
+      return;
     }
   }
 
@@ -295,12 +284,7 @@ export class CollectibleSystem {
       }
 
       if (!opinion) {
-        if (this.isEvidence(instance.collectibleType)) {
-          this.closeInteraction(true);
-        } else {
-          this.showCollectibleLabel(instance.collectibleData);
-          this.inspectMode = "label";
-        }
+        this.closeInteraction(true);
         return;
       }
 
@@ -312,23 +296,12 @@ export class CollectibleSystem {
             return;
           }
 
-          if (this.isEvidence(instance.collectibleType)) {
-            this.closeInteraction(true);
-            return;
-          }
-
-          this.showCollectibleLabel(instance.collectibleData);
-          this.inspectMode = "label";
+          this.closeInteraction(true);
         },
       );
     };
 
     this.scene.time.delayedCall(0, startDialogue);
-  }
-
-  private showCollectibleLabel(collectibleData: CollectibleData) {
-    const labelInfo = this.buildLabelInfo(collectibleData);
-    EventBus.emit("ui:label-show", labelInfo);
   }
 
   private closeInteraction(force: boolean = false) {
@@ -339,24 +312,6 @@ export class CollectibleSystem {
     this.hideInspectCard();
     this.activeCollectible = null;
     this.inspectMode = "idle";
-  }
-
-  private isEvidence(collectibleType: keyof CollectiblesJson): boolean {
-    return collectibleType !== "COLLECT";
-  }
-
-  private buildLabelInfo(collectibleData: CollectibleData): LabelInfoData {
-    return {
-      title: collectibleData.metadata.title || collectibleData.id,
-      author: collectibleData.metadata.author || "",
-      description: collectibleData.educational.description || "",
-      year: collectibleData.metadata.year,
-      dimensions:
-        collectibleData.metadata.dimensions ||
-        collectibleData.educational.dimensions,
-      medium: collectibleData.educational.medium,
-      place: collectibleData.metadata.place,
-    };
   }
 
   private getCardPosition(

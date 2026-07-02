@@ -2,6 +2,7 @@ import {
   type GameEventPayload,
   GameEventType,
 } from "@/game/types/AnalyticsTypes";
+import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import {
   type BadgeConfig,
   fetchBadges,
@@ -10,9 +11,12 @@ import {
 } from "@/lib/badgesApi";
 import { addGuestBadge, getGuestBadgeIds } from "@/lib/badgesStorage";
 import {
+  type IntermediateQuizEventPayload,
   type GameEventPayload as QuizEventPayload,
+  type RegularQuizEventPayload,
   sendQuizOutcomeEvent,
 } from "@/lib/gameEventsApi";
+import { getProgression, saveProgression } from "@/lib/progressionApi";
 import {
   getUserCollectibles,
   type SubmitScoreRequest,
@@ -25,7 +29,7 @@ export type PersistenceMode = "guest" | "auth";
 
 export type PersistedCollectible = {
   collectibleId: string;
-  collectibleType: "COLLECT" | "CLUE_VILLAIN" | "CLUE_NEXT";
+  collectibleType: "CLUE_VILLAIN";
 };
 
 export type ScorePersistencePayload = Omit<SubmitScoreRequest, "userId">;
@@ -44,6 +48,8 @@ export interface GamePersistence {
     badgeId: string;
     badgeName: string;
   }): Promise<void>;
+  loadProgress(): Promise<UserProgressState | null>;
+  saveProgress(state: UserProgressState): Promise<void>;
 }
 
 type GuestSnapshot = {
@@ -59,6 +65,7 @@ type GuestSnapshot = {
     at: string;
     payload: Record<string, unknown>;
   }>;
+  progression?: UserProgressState | null;
 };
 
 type GuestPersistenceStore = {
@@ -198,6 +205,19 @@ function buildGuestPersistence(guestId: string): GamePersistence {
 
       writeGuestStore(store);
     },
+
+    async loadProgress() {
+      const store = readGuestStore();
+      const snapshot = getOrCreateGuestSnapshot(store, guestId);
+      return snapshot.progression ?? null;
+    },
+
+    async saveProgress(state: UserProgressState) {
+      const store = readGuestStore();
+      const snapshot = getOrCreateGuestSnapshot(store, guestId);
+      snapshot.progression = state;
+      writeGuestStore(store);
+    },
   };
 }
 
@@ -234,10 +254,28 @@ function buildAuthPersistence(userId: string): GamePersistence {
     },
 
     async sendQuizOutcome(payload: QuizOutcomePayload) {
-      await sendQuizOutcomeEvent({
-        ...payload,
+      if (payload.type === "quiz.completed" || payload.type === "quiz.failed") {
+        const metadata =
+          payload.metadata as RegularQuizEventPayload["metadata"];
+        const event: RegularQuizEventPayload = {
+          userId,
+          type: payload.type,
+          timestamp: payload.timestamp,
+          metadata,
+        };
+        await sendQuizOutcomeEvent(event);
+        return;
+      }
+
+      const metadata =
+        payload.metadata as IntermediateQuizEventPayload["metadata"];
+      const event: IntermediateQuizEventPayload = {
         userId,
-      });
+        type: payload.type,
+        timestamp: payload.timestamp,
+        metadata,
+      };
+      await sendQuizOutcomeEvent(event);
     },
 
     async sendBadgeEarnedEvent(payload: {
@@ -255,6 +293,14 @@ function buildAuthPersistence(userId: string): GamePersistence {
       };
 
       await sendGameEvent(eventPayload);
+    },
+
+    async loadProgress() {
+      return getProgression(userId);
+    },
+
+    async saveProgress(state: UserProgressState) {
+      await saveProgression(userId, state);
     },
   };
 }
