@@ -118,10 +118,11 @@ export function ConfirmationPanel({
               textTransform: "none",
               bgcolor: GAME_UI_TOKENS.colors.accentGold,
               color: "#252726",
-              borderRadius: "5px",
+              borderRadius: "8px",
               px: 3,
               py: 1.5,
-              minWidth: 83,
+              width: 82,
+              height: 56,
               "&:hover": { bgcolor: GAME_UI_TOKENS.colors.accentGoldHover },
             }}
             onClick={() => handleConfirm(true)}
@@ -137,10 +138,11 @@ export function ConfirmationPanel({
               textTransform: "none",
               bgcolor: GAME_UI_TOKENS.colors.white,
               color: "#252726",
-              borderRadius: "5px",
+              borderRadius: "8px",
               px: 3,
               py: 1.5,
-              minWidth: 91,
+              width: 82,
+              height: 56,
               "&:hover": { bgcolor: "#e0e0e0" },
             }}
             onClick={() => handleConfirm(false)}
