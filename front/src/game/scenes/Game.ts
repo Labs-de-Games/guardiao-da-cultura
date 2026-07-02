@@ -217,11 +217,6 @@ export class Game extends Scene {
     });
 
     this.load.image("label", "misc/label.png");
-
-    this.load.image("ui_star_full", "ui/stars/star_full.png");
-    this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
-    this.load.image("ui_star_2q", "ui/stars/star_two_quarter.png");
-    this.load.image("ui_star_1q", "ui/stars/star_one_quarter.png");
   }
 
   private processModularData() {
