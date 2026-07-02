@@ -61,8 +61,8 @@ function TextToSpeechIcon() {
       aria-hidden="true"
       sx={{
         position: "absolute",
-        top: 16,
-        right: 16,
+        top: 32,
+        right: 40,
         width: 36,
         height: 36,
         pointerEvents: "none",
