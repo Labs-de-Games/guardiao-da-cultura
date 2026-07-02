@@ -186,8 +186,8 @@ describe("ProgressionManager", () => {
       manager.recordClueUnlocked("clue-1", "level-1");
       const state = manager.getState();
       expect(state.clues["clue-1"]).toBeDefined();
-      expect(state.clues["clue-1"]!.levelId).toBe("level-1");
-      expect(state.clues["clue-1"]!.unlockedAt).toBeDefined();
+      expect(state.clues["clue-1"]?.levelId).toBe("level-1");
+      expect(state.clues["clue-1"]?.unlockedAt).toBeDefined();
     });
 
     it("emits PROGRESSION_UPDATED event", () => {

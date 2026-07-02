@@ -109,6 +109,10 @@ export class CollectibleSystem {
     }
   }
 
+  public getAllCollectibles(): CollectibleInstance[] {
+    return this.collectibles;
+  }
+
   public destroy() {
     this.scene.events.off(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
     this.hideInspectCard();

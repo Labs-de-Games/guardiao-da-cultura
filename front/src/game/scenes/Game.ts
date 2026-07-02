@@ -31,13 +31,14 @@ import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
-import { PLAYER_SPAWN } from "../objects/PlayerConfig";
+import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -88,6 +89,7 @@ export class Game extends Scene {
   private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
+  private hintKeySystem!: HintKeySystem;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
@@ -417,6 +419,109 @@ export class Game extends Scene {
         this.placeholderSystem.registerAllFromLayer(placeholderLayer);
         this.labelSystem.registerAllFromLayer(placeholderLayer);
       }
+
+      this.hintKeySystem = new HintKeySystem(this);
+      this.hintKeySystem.registerItems([
+        ...this.draggableItems.map((item) => ({
+          get x() {
+            return item.x;
+          },
+          get y() {
+            return item.y;
+          },
+          get interactionY() {
+            return item.y;
+          },
+          get displayHeight() {
+            return item.displayHeight;
+          },
+          get active() {
+            return (
+              item.active && !item.isGrabbed && item.input?.enabled !== false
+            );
+          },
+          interactionDistance: PLAYER_MOVEMENT.GRAB_DISTANCE,
+        })),
+        ...this.carryableItems.map((item) => ({
+          get x() {
+            return item.x;
+          },
+          get y() {
+            return item.y;
+          },
+          get interactionY() {
+            return item.y;
+          },
+          get displayHeight() {
+            return item.displayHeight;
+          },
+          get active() {
+            return (
+              item.active && !item.isCarried && item.input?.enabled !== false
+            );
+          },
+          interactionDistance: 150,
+        })),
+        ...this.labelSystem.getAllLabels().map((l) => ({
+          get x() {
+            return l.sprite.x;
+          },
+          get y() {
+            return l.sprite.y;
+          },
+          get interactionY() {
+            return l.sprite.y + l.sprite.displayHeight / 2;
+          },
+          get displayHeight() {
+            return l.sprite.displayHeight;
+          },
+          get hintY() {
+            return l.sprite.y - l.sprite.displayHeight / 2;
+          },
+          active: l.sprite.active,
+          interactionDistance: 120,
+        })),
+        ...this.npcs.map((npc) => ({
+          get x() {
+            return npc.x;
+          },
+          get y() {
+            return npc.y;
+          },
+          get interactionY() {
+            return npc.y + npc.displayHeight / 2;
+          },
+          get displayHeight() {
+            return npc.displayHeight;
+          },
+          get hintY() {
+            return npc.y - npc.displayHeight / 2;
+          },
+          active: npc.active,
+          interactionDistance: 130,
+        })),
+        ...this.collectibleSystem
+          .getAllCollectibles()
+          .filter((c) => c.collectibleType === "CLUE_VILLAIN")
+          .map((c) => ({
+            get x() {
+              return c.sprite.x;
+            },
+            get y() {
+              return c.sprite.y;
+            },
+            get interactionY() {
+              return c.sprite.y;
+            },
+            get displayHeight() {
+              return c.sprite.displayHeight;
+            },
+            get active() {
+              return !c.isCollected;
+            },
+            interactionDistance: 130,
+          })),
+      ]);
 
       this.analyticsSystem.trackLevelEvent(
         GameEventType.LEVEL_STARTED,
@@ -868,6 +973,7 @@ export class Game extends Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
+      this.hintKeySystem?.destroy();
       this.badgeSystem.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
@@ -1249,6 +1355,25 @@ export class Game extends Scene {
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    if (this.player && this.hintKeySystem) {
+      const isPanelOpen =
+        this.isDialogueOpen ||
+        this.isControlsOpen ||
+        this.isChunkSelectorOpen ||
+        this.isQuizActive ||
+        useGameUIStore.getState().labelData !== null;
+
+      const isPlayerBusy = this.player.isGrabbing || this.player.isCarrying;
+
+      this.hintKeySystem.update(
+        this.player.x,
+        this.player.y,
+        this.player.body as Phaser.Physics.Arcade.Body,
+        isPanelOpen,
+        isPlayerBusy,
+      );
+    }
   }
 
   public recordFloorError(floorIndex: number) {

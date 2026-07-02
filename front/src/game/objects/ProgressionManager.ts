@@ -1,7 +1,6 @@
 import * as Phaser from "phaser";
 import { ProgressionEvents } from "../constants/ProgressionEvents";
 import type {
-  ClueRecord,
   CompletedLevelRecord,
   QuizResultRecord,
   UserProgressState,
