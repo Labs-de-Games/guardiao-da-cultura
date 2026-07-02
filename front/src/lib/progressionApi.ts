@@ -25,6 +25,9 @@ function normalizeProgress(data: Record<string, unknown>): UserProgressState {
     quizResults: parseJsonField<Record<string, unknown>>(
       data.quizResults as string | Record<string, unknown>,
     ) as UserProgressState["quizResults"],
+    intermediateQuizResults: parseJsonField<Record<string, unknown>>(
+      data.intermediateQuizResults as string | Record<string, unknown>,
+    ) as UserProgressState["intermediateQuizResults"],
   };
 }
 

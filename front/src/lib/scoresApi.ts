@@ -17,6 +17,11 @@ export interface SubmitScoreRequest {
     accuracyPercent: number;
     quartersEarned: number;
   };
+  intermediateQuizzes: {
+    total: number;
+    passed: number;
+    quartersNet: number;
+  };
   collectibles: {
     total: number;
     interactionsCount: number;

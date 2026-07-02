@@ -59,11 +59,7 @@ export interface ChunkSelectorData {
   filledSlots: (string | null)[];
 }
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctOptionIndex: number;
-}
+import type { QuizQuestion } from "../../game/types/GameDataTypes";
 
 export interface GameUIState {
   sidebarOpen: boolean;
@@ -98,6 +94,7 @@ export interface GameUIState {
     answers: ("correct" | "wrong" | null)[];
     score: number;
     isProcessingAnswer: boolean;
+    isIntermediate: boolean;
     onComplete: ((score: number) => void) | null;
   };
 
@@ -145,6 +142,7 @@ export interface GameUIState {
   startQuiz: (
     questions: QuizQuestion[],
     onComplete: (score: number) => void,
+    isIntermediate?: boolean,
   ) => void;
   selectOption: () => void;
   moveSelection: (dRow: number, dCol: number) => void;
@@ -187,6 +185,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     answers: [],
     score: 0,
     isProcessingAnswer: false,
+    isIntermediate: false,
     onComplete: null,
   },
 
@@ -348,7 +347,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   closeInterestDialog: () => set({ isInterestDialogOpen: false }),
   setProgression: (state) => set({ progression: state }),
 
-  startQuiz: (questions, onComplete) => {
+  startQuiz: (questions, onComplete, isIntermediate = false) => {
     set((_s) => ({
       quiz: {
         isVisible: true,
@@ -359,6 +358,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         answers: new Array(questions.length).fill(null),
         score: 0,
         isProcessingAnswer: false,
+        isIntermediate,
         onComplete,
       },
     }));
@@ -405,19 +405,33 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         }));
       } else {
         const finalScore = state.quiz.score;
-        const _totalQuestions = state.quiz.questions.length;
         const onComplete = state.quiz.onComplete;
 
-        set((s) => ({
-          quiz: {
-            ...s.quiz,
-            phase: "performance",
-            isProcessingAnswer: false,
-          },
-        }));
+        if (state.quiz.isIntermediate) {
+          if (onComplete) {
+            onComplete(finalScore);
+          }
+          set((s) => ({
+            quiz: {
+              ...s.quiz,
+              isProcessingAnswer: false,
+              isVisible: false,
+              phase: "questioning",
+              isIntermediate: false,
+            },
+          }));
+        } else {
+          set((s) => ({
+            quiz: {
+              ...s.quiz,
+              phase: "performance",
+              isProcessingAnswer: false,
+            },
+          }));
 
-        if (onComplete) {
-          onComplete(finalScore);
+          if (onComplete) {
+            onComplete(finalScore);
+          }
         }
       }
     }, 1000);
@@ -486,6 +500,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         ...s.quiz,
         isVisible: false,
         phase: "questioning",
+        isIntermediate: false,
       },
     }));
   },
@@ -501,6 +516,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         answers: [],
         score: 0,
         isProcessingAnswer: false,
+        isIntermediate: false,
         onComplete: null,
       },
     }));

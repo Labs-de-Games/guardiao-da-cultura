@@ -1,0 +1,23 @@
+{
+  "sculptures_done": [
+    {
+      "question": "Example question about sculptures",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctOptionIndex": 0
+    }
+  ],
+  "paintings_done": [
+    {
+      "question": "Example question about paintings",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctOptionIndex": 1
+    }
+  ],
+  "photo_done": [
+    {
+      "question": "Example question about photo reassembly",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctOptionIndex": 3
+    }
+  ]
+}

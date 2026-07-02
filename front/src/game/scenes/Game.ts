@@ -10,7 +10,12 @@ import { EventBus } from "../../shared/events/event-bus";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import { MissionIds, MissionKeys } from "../constants/MissionConstants";
+import {
+  FLOOR_COMPLETE_KEYS,
+  MissionIds,
+  MissionKeys,
+  NPC_FLOOR_3_POSITION,
+} from "../constants/MissionConstants";
 import { ProgressionEvents } from "../constants/ProgressionEvents";
 import { SceneNames } from "../constants/SceneNames";
 import { ScoringEvents } from "../constants/ScoringEvents";
@@ -44,12 +49,13 @@ import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import { GameEventType } from "../types/AnalyticsTypes";
-import type { INpcEntity } from "../types/EntityTypes";
+
 import type {
   CollectibleData,
   ContentJson,
   LabelInfoData,
   MissionDef,
+  QuizQuestion,
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
@@ -82,7 +88,7 @@ export class Game extends Scene {
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
-  private isQuizActive: boolean = false;
+  private quizMode: "none" | "regular" | "intermediate" = "none";
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
@@ -95,6 +101,7 @@ export class Game extends Scene {
   public mechanicsManager!: MechanicsManager;
   private persistence!: GamePersistence;
   private progressionManager!: ProgressionManager;
+  private isQuizActive: boolean = false;
   private quizStartedAt: number | null = null;
   private quizAttemptsForMission: number = 0;
   private draggableItems: DraggableItem[] = [];
@@ -106,6 +113,7 @@ export class Game extends Scene {
   private contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
     quizzes: {},
+    intermediateQuizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
     collectibles: Game.EMPTY_COLLECTIBLES,
@@ -132,6 +140,7 @@ export class Game extends Scene {
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
     this.isQuizActive = false;
+    this.quizMode = "none";
     this.photoChunksCollected = 0;
     this.quizStartedAt = null;
     this.quizAttemptsForMission = 0;
@@ -140,6 +149,7 @@ export class Game extends Scene {
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
       quizzes: {},
+      intermediateQuizzes: {},
       npcs: {},
       messages: { SYSTEM_DIALOGUES: {} },
       collectibles: Game.EMPTY_COLLECTIBLES,
@@ -188,6 +198,9 @@ export class Game extends Scene {
     this.levelDef.data.quizzes.forEach((path, index) => {
       this.load.json(`quizzes_${index}`, path);
     });
+    this.levelDef.data.intermediateQuizzes.forEach((path, index) => {
+      this.load.json(`intermediateQuizzes_${index}`, path);
+    });
     this.levelDef.data.npcs.forEach((path, index) => {
       this.load.json(`npcs_${index}`, path);
     });
@@ -232,6 +245,26 @@ export class Game extends Scene {
         console.warn(`[Game] Could not load quiz data from: ${path}`);
       }
     });
+
+    this.levelDef.data.intermediateQuizzes.forEach((path, i) => {
+      const data = this.cache.json.get(`intermediateQuizzes_${i}`);
+      if (data) {
+        DataUtils.deepMerge(this.contentData.intermediateQuizzes, data);
+      } else {
+        console.warn(
+          `[Game] Could not load intermediate quiz data from: ${path}`,
+        );
+      }
+    });
+
+    const knownKeys = new Set<string>(Object.values(MissionKeys));
+    for (const key of Object.keys(this.contentData.intermediateQuizzes)) {
+      if (!knownKeys.has(key)) {
+        console.warn(
+          `[Game] Unknown intermediate quiz key "${key}" — will never trigger. Check intermediate-quizzes.json.`,
+        );
+      }
+    }
 
     this.levelDef.data.npcs.forEach((path, i) => {
       const data = this.cache.json.get(`npcs_${i}`);
@@ -554,6 +587,14 @@ export class Game extends Scene {
             this.progressionManager.recordClueUnlocked(clueId, this.levelId);
           }
         }
+
+        if (
+          this.contentData.intermediateQuizzes[infoKey] &&
+          !this.questManager.isIntermediateQuizDone(infoKey) &&
+          this.quizMode === "none"
+        ) {
+          this.startIntermediateQuiz(infoKey);
+        }
       },
     );
 
@@ -793,16 +834,10 @@ export class Game extends Scene {
       "info-collected",
       (payload: { missionId: string; infoKey: string }) => {
         const key = payload.infoKey;
-        if (
-          key === MissionKeys.PAINTINGS_DONE ||
-          key === MissionKeys.SCULPTURES_DONE
-        ) {
-          const curator = this.npcs.find((n) => {
-            const ent = n as unknown as INpcEntity;
-            return ent.config && ent.config.missionId === MissionIds.CURATOR;
-          });
+        if (FLOOR_COMPLETE_KEYS.has(key)) {
+          const curator = this.findCuratorNpc();
           if (curator) {
-            (curator as unknown as Npc).teleportTo(2100, 400);
+            curator.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
           }
         }
       },
@@ -1017,10 +1052,7 @@ export class Game extends Scene {
         throw new Error("QuestManager não inicializado");
       }
 
-      const npc = this.npcs.find((n) => {
-        const ent = n as unknown as INpcEntity;
-        return ent.config && ent.config.missionId === missionId;
-      });
+      const npc = this.findNpcByMission(missionId);
 
       const questions = npc?.getQuiz();
 
@@ -1038,6 +1070,10 @@ export class Game extends Scene {
         GameEvents.SHOW_CONFIRMATION_REQUEST,
         "Podemos iniciar o teste?",
         () => {
+          this.isQuizActive = true;
+          this.quizStartedAt = Date.now();
+          this.quizAttemptsForMission += 1;
+          this.quizMode = "regular";
           this.isQuizActive = true;
           this.quizStartedAt = Date.now();
           this.quizAttemptsForMission += 1;
@@ -1177,10 +1213,7 @@ export class Game extends Scene {
                 total_questions: questions.length,
               });
 
-              const npc = this.npcs.find((n) => {
-                const ent = n as unknown as INpcEntity;
-                return ent.config && ent.config.missionId === missionId;
-              });
+              const npc = this.findNpcByMission(missionId);
 
               if (!npc) {
                 console.error(
@@ -1208,6 +1241,7 @@ export class Game extends Scene {
                 this.levelManager.updateProgress();
               }
 
+              this.quizMode = "none";
               this.isQuizActive = false;
             },
           );
@@ -1225,11 +1259,161 @@ export class Game extends Scene {
     }
   }
 
+  public startIntermediateQuiz(infoKey: string) {
+    try {
+      const questions = this.contentData.intermediateQuizzes[infoKey];
+      if (!questions || questions.length === 0) {
+        return;
+      }
+
+      if (this.questManager.isIntermediateQuizDone(infoKey)) {
+        return;
+      }
+
+      const npc = this.findCuratorNpc();
+
+      if (!npc) {
+        console.warn(
+          `[Game] NPC not found for intermediate quiz, infoKey: ${infoKey}`,
+        );
+        return;
+      }
+
+      this.quizMode = "intermediate";
+
+      const spawnPos = npc.getSpawnPosition();
+      const playerX = this.player.x;
+      const npcX = playerX + 150;
+      const npcY = this.player.y;
+
+      npc.showForQuiz(npcX, npcY);
+
+      const onComplete = this.createIntermediateQuizCallback(
+        infoKey,
+        questions,
+        npc,
+        spawnPos,
+      );
+
+      const explanationLines = npc.getIntermediateQuizDialogues();
+      if (explanationLines.length > 0) {
+        this.events.emit(
+          GameEvents.SHOW_DIALOGUE_REQUEST,
+          explanationLines,
+          () => {
+            this.events.emit(
+              GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+              questions,
+              onComplete,
+            );
+          },
+        );
+      } else {
+        this.events.emit(
+          GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+          questions,
+          onComplete,
+        );
+      }
+    } catch (error) {
+      console.error("[Game] Error starting intermediate quiz:", error);
+      this.quizMode = "none";
+    }
+  }
+
+  private createIntermediateQuizCallback(
+    infoKey: string,
+    questions: QuizQuestion[],
+    npc: Npc,
+    spawnPos: { x: number; y: number } | null,
+  ) {
+    return (score: number) => {
+      const passed = score > 0;
+      this.scoreManager.recordIntermediateQuizResult(infoKey, passed);
+      this.questManager.markIntermediateQuizDone(infoKey);
+
+      if (this.progressionManager) {
+        this.progressionManager.recordIntermediateQuizResult(infoKey, {
+          completedAt: new Date().toISOString(),
+          passed,
+          score,
+          totalQuestions: questions.length,
+          missionId: MissionIds.CURATOR,
+        });
+      }
+
+      void this.saveProgressToBackend();
+
+      const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
+
+      if (floorCompleted) {
+        npc.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+      } else {
+        npc.hideAfterQuiz();
+        if (spawnPos) {
+          npc.teleportTo(spawnPos.x, spawnPos.y);
+        }
+      }
+
+      this.quizMode = "none";
+
+      posthog.capture("intermediate_quiz_completed", {
+        level_id: this.levelId,
+        info_key: infoKey,
+        score,
+        total_questions: questions.length,
+        passed,
+      });
+
+      void this.persistence.sendQuizOutcome({
+        type: passed
+          ? "intermediate-quiz.completed"
+          : "intermediate-quiz.failed",
+        metadata: {
+          infoKey,
+          passed,
+          score,
+          totalQuestions: questions.length,
+          missionId: MissionIds.CURATOR,
+        },
+        timestamp: new Date().toISOString(),
+      });
+
+      if (
+        this.questManager.hasCollectedAll(MissionIds.CURATOR) &&
+        this.questManager.getStatus(MissionIds.CURATOR) !==
+          QuestStatus.READY_FOR_QUIZ &&
+        this.questManager.getStatus(MissionIds.CURATOR) !==
+          QuestStatus.QUIZ_ACTIVE &&
+        this.questManager.getStatus(MissionIds.CURATOR) !==
+          QuestStatus.COMPLETED
+      ) {
+        this.questManager.setStatus(
+          MissionIds.CURATOR,
+          QuestStatus.READY_FOR_QUIZ,
+        );
+      }
+    };
+  }
+
+  private findCuratorNpc(): Npc | undefined {
+    return this.npcs.find(
+      (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
+    ) as Npc | undefined;
+  }
+
+  private findNpcByMission(missionId: string): Npc | undefined {
+    return this.npcs.find(
+      (n) => n instanceof Npc && n.getMissionId() === missionId,
+    ) as Npc | undefined;
+  }
+
   private checkDialogState() {
     if (
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
+      this.quizMode === "none" &&
       !this.isQuizActive
     ) {
       if (this.player) this.player.isInDialogue = false;
@@ -1435,6 +1619,11 @@ export class Game extends Scene {
           correctAnswers: payload.quiz.correctAnswers,
           accuracyPercent: payload.quiz.accuracyPercent,
           quartersEarned: payload.quiz.quartersEarned,
+        },
+        intermediateQuizzes: {
+          total: payload.intermediateQuizzes.total,
+          passed: payload.intermediateQuizzes.passed,
+          quartersNet: payload.intermediateQuizzes.quartersNet,
         },
         collectibles: {
           total: payload.collectibles.total,

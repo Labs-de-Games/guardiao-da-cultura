@@ -11,6 +11,7 @@ describe("ProgressionManager", () => {
     completedLevels: {},
     clues: {},
     quizResults: {},
+    intermediateQuizResults: {},
   };
 
   beforeEach(() => {
@@ -51,6 +52,7 @@ describe("ProgressionManager", () => {
             payload: null,
           },
         },
+        intermediateQuizResults: {},
       };
       manager.hydrate(snapshot);
       expect(manager.getState()).toEqual(snapshot);
@@ -69,6 +71,7 @@ describe("ProgressionManager", () => {
         completedLevels: {},
         clues: {},
         quizResults: {},
+        intermediateQuizResults: {},
       };
       manager.hydrate(snapshot);
       expect(manager.emit).toHaveBeenCalledWith(
@@ -92,6 +95,7 @@ describe("ProgressionManager", () => {
         },
         clues: { "clue-1": { unlockedAt: "2024-01-01", levelId: "level-1" } },
         quizResults: {},
+        intermediateQuizResults: {},
       });
 
       const state = manager.getState();

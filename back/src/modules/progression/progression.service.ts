@@ -33,6 +33,11 @@ export class ProgressionService {
     if (dto.quizResults !== undefined) {
       updateData.quizResults = JSON.stringify(dto.quizResults);
     }
+    if (dto.intermediateQuizResults !== undefined) {
+      updateData.intermediateQuizResults = JSON.stringify(
+        dto.intermediateQuizResults,
+      );
+    }
 
     await this.progressRepository.update(progress.id, updateData);
     return this.progressRepository.findOneOrFail({

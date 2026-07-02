@@ -45,6 +45,9 @@ export namespace MapManager {
                 missionId: npcData.missionId || finalMissionId || "unknown",
                 dialogues: npcData.dialogues,
                 quiz: contentJson.quizzes?.[npcData.missionId || ""],
+                intermediateQuiz: npcData.dialogues.intermediateQuiz,
+                spawnX: obj.x * scale,
+                spawnY: obj.y * scale,
               };
             }
           }

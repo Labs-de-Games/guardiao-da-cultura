@@ -7,6 +7,7 @@ export const GameEvents = {
 
   SHOW_DIALOGUE_REQUEST: "show-dialogue-request",
   SHOW_QUIZ_REQUEST: "show-quiz-request",
+  SHOW_INTERMEDIATE_QUIZ_REQUEST: "show-intermediate-quiz-request",
   SHOW_CONFIRMATION_REQUEST: "show-confirmation-request",
 
   MISSION_ACCEPTED: "mission-accepted",
