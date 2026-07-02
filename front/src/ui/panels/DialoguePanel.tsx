@@ -54,20 +54,12 @@ function TextToSpeechIcon() {
 
 export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const open = useDialogueStore((s) => s.dialogueOpen);
-  const mode = useDialogueStore((s) => s.dialogueMode);
   const lines = useDialogueStore((s) => s.dialogueLines);
   const currentLine = useDialogueStore((s) => s.dialogueCurrentLine);
-  const confirmMessage = useDialogueStore((s) => s.dialogueConfirmMessage);
-  const confirmSpeaker = useDialogueStore((s) => s.dialogueConfirmSpeaker);
-  const confirmSelected = useDialogueStore((s) => s.dialogueConfirmSelected);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
   const speakerPos = useDialogueStore((s) => s.dialoguePosition);
 
   const advanceDialogue = useDialogueStore((s) => s.advanceDialogue);
-  const moveConfirmSelection = useDialogueStore((s) => s.moveConfirmSelection);
-  const confirmDialogueSelection = useDialogueStore(
-    (s) => s.confirmDialogueSelection,
-  );
   const closeDialogue = useDialogueStore((s) => s.closeDialogue);
 
   const [displayedText, setDisplayedText] = useState("");
@@ -76,12 +68,11 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
 
-  const rawCurrentText =
-    mode === "dialogue" ? (lines[currentLine] ?? "") : confirmMessage;
+  const rawCurrentText = lines[currentLine] ?? "";
   const parsedLine = parseLine(rawCurrentText);
   const currentText = parsedLine.content;
-  const speakerName = mode === "dialogue" ? parsedLine.speaker : null;
-  const isLastLine = mode === "dialogue" && currentLine === lines.length - 1;
+  const speakerName = parsedLine.speaker;
+  const isLastLine = currentLine === lines.length - 1;
 
   const positioning = useMemo(() => {
     if (!speakerPos) {
@@ -187,14 +178,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     onComplete,
   ]);
 
-  const handleConfirm = useCallback(
-    (confirmed: boolean) => {
-      onComplete(callbackId, confirmed);
-      confirmDialogueSelection();
-    },
-    [callbackId, confirmDialogueSelection, onComplete],
-  );
-
   const handleDismiss = useCallback(() => {
     onDismiss(callbackId);
     closeDialogue();
@@ -246,15 +229,13 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           overflow: "visible",
         }}
       >
-        {mode === "dialogue" && <TextToSpeechIcon />}
-        {mode === "dialogue" && (
-          <DialogueContent
-            speakerName={speakerName}
-            text={displayedText}
-            isLastLine={isLastLine}
-            onAdvance={handleAdvance}
-          />
-        )}
+        <TextToSpeechIcon />
+        <DialogueContent
+          speakerName={speakerName}
+          text={displayedText}
+          isLastLine={isLastLine}
+          onAdvance={handleAdvance}
+        />
         <Box
           sx={{
             position: "absolute",
