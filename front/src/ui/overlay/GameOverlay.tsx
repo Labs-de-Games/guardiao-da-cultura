@@ -11,6 +11,7 @@ import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
+import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
@@ -52,6 +53,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const dialogueOpen = useDialogueStore((s) => s.dialogueOpen);
+  const dialogueMode = useDialogueStore((s) => s.dialogueMode);
   const badgeGalleryOpen = useGameUIStore((s) => s.badgeGalleryOpen);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
@@ -237,6 +239,9 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
         <ControlsPanel />
       </ErrorBoundary>
       <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
+      {dialogueOpen && dialogueMode === "confirmation" && (
+        <ConfirmationPanel onComplete={emitComplete} onDismiss={emitDismiss} />
+      )}
       <LabelPanel />
       <BadgeGalleryPanel />
       <QuizPanel />
