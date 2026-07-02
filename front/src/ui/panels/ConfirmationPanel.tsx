@@ -87,7 +87,9 @@ export function ConfirmationPanel({
         sx={{
           bgcolor: "#1f1f1f",
           borderRadius: "8px",
-          p: 3,
+          px: 3,
+          pt: 4,
+          pb: 4,
           width: 811,
           height: 182,
         }}
@@ -98,8 +100,9 @@ export function ConfirmationPanel({
             fontSize: "20px",
             color: GAME_UI_TOKENS.colors.accentGold,
             lineHeight: 1.2,
-            minHeight: "2.5em",
+            minHeight: "1.5em",
             textAlign: "center",
+            mb: 4,
           }}
         >
           {message}
@@ -108,8 +111,7 @@ export function ConfirmationPanel({
           sx={{
             display: "flex",
             justifyContent: "center",
-            gap: 2,
-            mt: 2,
+            gap: 6,
           }}
         >
           <Button
