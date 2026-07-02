@@ -87,7 +87,7 @@ export function ConfirmationPanel({
         sx={{
           bgcolor: "#1f1f1f",
           borderRadius: "8px",
-          px: 3,
+          px: 5,
           pt: 4,
           pb: 4,
           width: 811,
