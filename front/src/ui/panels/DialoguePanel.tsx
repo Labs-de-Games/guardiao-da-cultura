@@ -302,6 +302,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
             message={displayedText}
             onSelect={moveConfirmSelection}
             onConfirm={handleConfirm}
+            onDismiss={handleDismiss}
           />
         )}
         <Box

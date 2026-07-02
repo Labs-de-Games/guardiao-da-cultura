@@ -1,17 +1,56 @@
 import { Box, Button, Typography } from "@mui/material";
+import { useEffect } from "react";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 interface ConfirmationPanelProps {
   message: string;
   onSelect: (dir: number) => void;
   onConfirm: (confirmed: boolean) => void;
+  onDismiss: () => void;
 }
 
 export function ConfirmationPanel({
   message,
   onSelect,
   onConfirm,
+  onDismiss,
 }: ConfirmationPanelProps) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === "a" ||
+        e.key === "A" ||
+        e.key === "d" ||
+        e.key === "D"
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        onSelect(
+          e.key === "ArrowRight" || e.key === "d" || e.key === "D" ? 1 : -1,
+        );
+      }
+      if (e.key === "e" || e.key === "E") {
+        e.preventDefault();
+        e.stopPropagation();
+        onConfirm(true);
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onDismiss();
+      }
+    };
+
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [onSelect, onConfirm, onDismiss]);
+
   return (
     <Box
       sx={{
