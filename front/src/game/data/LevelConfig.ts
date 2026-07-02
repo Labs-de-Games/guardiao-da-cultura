@@ -126,13 +126,7 @@ export const LEVEL_ASSETS = {
     { key: "rec", path: "misc/rec.png" },
     { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
   ],
-  COLLECTIBLES: [
-    { key: "fusca", path: "collectibles/fusca.png" },
-    { key: "abebe", path: "collectibles/abebe.png" },
-    { key: "xotehe", path: "collectibles/xotehe.png" },
-    { key: "cachimbo", path: "collectibles/cachimbo.png" },
-    { key: "chimarrao", path: "collectibles/chimarrao.png" },
-  ],
+  COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
   CONTENT: {
     key: "content",
     path: "data/content.json",
