@@ -112,10 +112,15 @@ describe("useEventBridge", () => {
     await flushEffects();
 
     await act(async () => {
-      EventBus.emit("player:stars-changed", { current: 5, total: 10 });
+      EventBus.emit("player:stars-changed", {
+        current: 5,
+        total: 10,
+        score: 20,
+      });
     });
     expect(useGameUIStore.getState().stars).toBe(5);
     expect(useGameUIStore.getState().totalStars).toBe(10);
+    expect(useGameUIStore.getState().score).toBe(20);
   });
 
   it("should update mission progress when quest:progress-changed event is emitted", async () => {

@@ -11,6 +11,9 @@ export interface NpcConfig {
   dialogues: NpcDialogues;
   quiz?: QuizQuestion[];
   name?: string;
+  intermediateQuiz?: string[];
+  spawnX?: number;
+  spawnY?: number;
 }
 
 export class Npc extends Phaser.Physics.Arcade.Sprite {
@@ -82,6 +85,10 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  public getMissionId(): string {
+    return this.config.missionId;
+  }
+
   public getQuiz() {
     return this.config.quiz;
   }
@@ -92,6 +99,42 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
   public getDialogues() {
     return this.config.dialogues;
+  }
+
+  public getIntermediateQuizDialogues(): string[] {
+    return this.config.intermediateQuiz || [];
+  }
+
+  public getSpawnPosition(): { x: number; y: number } | null {
+    if (this.config.spawnX !== undefined && this.config.spawnY !== undefined) {
+      return { x: this.config.spawnX, y: this.config.spawnY };
+    }
+    return null;
+  }
+
+  public showForQuiz(x: number, y: number) {
+    this.teleportTo(x, y);
+    this.setVisible(true);
+    const body = this.body as Phaser.Physics.Arcade.Body | undefined;
+    if (body) {
+      body.enable = true;
+      body.reset(x, y);
+    }
+    if (this.exclamationIcon) {
+      this.exclamationIcon.setVisible(true);
+      this.exclamationIcon.setPosition(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y);
+    }
+  }
+
+  public hideAfterQuiz() {
+    this.setVisible(false);
+    const body = this.body as Phaser.Physics.Arcade.Body | undefined;
+    if (body) {
+      body.enable = false;
+    }
+    if (this.exclamationIcon) {
+      this.exclamationIcon.setVisible(false);
+    }
   }
 
   setQuestManager(qm: QuestManager) {

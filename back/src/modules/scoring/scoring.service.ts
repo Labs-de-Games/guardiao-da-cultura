@@ -13,8 +13,8 @@ export class ScoringService {
     private readonly logger: PinoLogger,
     @InjectRepository(UserScore)
     private readonly userScoreRepository: Repository<UserScore>,
-    private readonly posthog: PostHogService,
     private readonly userCollectibleService: UserCollectibleService,
+    private readonly posthog: PostHogService,
   ) {}
 
   async submitScore(dto: SubmitScoreDto): Promise<UserScore> {
@@ -36,6 +36,7 @@ export class ScoringService {
       rating: dto.rating,
       floorScores: dto.floors,
       quizScore: dto.quiz,
+      intermediateQuizScore: dto.intermediateQuizzes,
       collectibleScore: dto.collectibles,
     });
 
@@ -52,6 +53,9 @@ export class ScoringService {
         quiz_correct: dto.quiz.correctAnswers,
         quiz_total: dto.quiz.totalQuestions,
         quiz_accuracy: dto.quiz.accuracyPercent,
+        intermediate_quiz_total: dto.intermediateQuizzes.total,
+        intermediate_quiz_passed: dto.intermediateQuizzes.passed,
+        intermediate_quiz_net: dto.intermediateQuizzes.quartersNet,
       },
     });
 

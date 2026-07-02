@@ -1,6 +1,11 @@
 import { apiClient } from "./api/client";
 
-type QuizEventType = "quiz.completed" | "quiz.failed";
+export type RegularQuizEventType = "quiz.completed" | "quiz.failed";
+export type IntermediateQuizEventType =
+  | "intermediate-quiz.completed"
+  | "intermediate-quiz.failed";
+
+export type QuizEventType = RegularQuizEventType | IntermediateQuizEventType;
 
 export interface QuizEventMetadata {
   missionId: string;
@@ -14,12 +19,31 @@ export interface QuizEventMetadata {
   payload?: Record<string, unknown>;
 }
 
-export interface GameEventPayload {
+export interface IntermediateQuizEventMetadata {
+  infoKey: string;
+  passed: boolean;
+  score: number;
+  totalQuestions: number;
+  missionId: string;
+}
+
+export interface RegularQuizEventPayload {
   userId?: string;
-  type: QuizEventType;
-  timestamp: string; // ISO string
+  type: RegularQuizEventType;
+  timestamp: string;
   metadata: QuizEventMetadata;
 }
+
+export interface IntermediateQuizEventPayload {
+  userId?: string;
+  type: IntermediateQuizEventType;
+  timestamp: string;
+  metadata: IntermediateQuizEventMetadata;
+}
+
+export type GameEventPayload =
+  | RegularQuizEventPayload
+  | IntermediateQuizEventPayload;
 
 type QueuedEvent = {
   id: string;
@@ -140,21 +164,11 @@ export function initGameEventQueue(): void {
 }
 
 export async function sendQuizOutcomeEvent(
-  payload: Omit<GameEventPayload, "timestamp" | "userId"> & {
-    userId?: string;
-    timestamp?: string;
-  },
+  payload: GameEventPayload,
 ): Promise<void> {
-  const event: GameEventPayload = {
-    userId: payload.userId,
-    type: payload.type,
-    timestamp: payload.timestamp ?? new Date().toISOString(),
-    metadata: payload.metadata,
-  };
-
   try {
-    await postEvent(event);
+    await postEvent(payload);
   } catch {
-    enqueue(event);
+    enqueue(payload);
   }
 }

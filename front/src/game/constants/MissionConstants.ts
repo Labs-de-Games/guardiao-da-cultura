@@ -9,5 +9,13 @@ export const MissionKeys = {
   PHOTO_DONE: "photo_done",
 } as const;
 
+export const NPC_FLOOR_3_POSITION = { x: 2100, y: 400 } as const;
+
+export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
+  MissionKeys.SCULPTURES_DONE,
+  MissionKeys.PAINTINGS_DONE,
+  MissionKeys.PHOTO_DONE,
+]);
+
 export type MissionId = (typeof MissionIds)[keyof typeof MissionIds];
 export type MissionKey = (typeof MissionKeys)[keyof typeof MissionKeys];

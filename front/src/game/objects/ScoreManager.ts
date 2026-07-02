@@ -4,6 +4,7 @@ import type {
   CollectibleInteraction,
   CollectiblesScore,
   FloorScore,
+  IntermediateQuizzesScore,
   IsoTimestamp,
   QuizScore,
   ScoringEventRecord,
@@ -28,6 +29,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
   private floors: [FloorScore, FloorScore, FloorScore];
   private collectibles: CollectiblesScore;
   private quiz: QuizScore;
+  private intermediateQuizzes: IntermediateQuizzesScore;
   private events: ScoringEventRecord[];
 
   constructor(options: ScoreManagerOptions) {
@@ -66,6 +68,12 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       accuracyPercent: 0,
       quartersEarned: 0,
       completedAt: null,
+    };
+
+    this.intermediateQuizzes = {
+      total: 0,
+      passed: 0,
+      quartersNet: 0,
     };
 
     this.events = [{ type: "level-started", occurredAt: this.startedAt }];
@@ -207,6 +215,33 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
+  recordIntermediateQuizResult(infoKey: string, passed: boolean) {
+    const occurredAt = this.touch();
+    this.intermediateQuizzes.total += 1;
+
+    if (passed) {
+      this.intermediateQuizzes.passed += 1;
+      this.intermediateQuizzes.quartersNet += 1;
+    } else {
+      this.intermediateQuizzes.quartersNet -= 1;
+    }
+
+    this.events.push({
+      type: "intermediate-quiz-completed",
+      infoKey,
+      passed,
+      occurredAt,
+    });
+
+    const payload = this.getPayload();
+    this.emit(ScoringEvents.INTERMEDIATE_QUIZ_COMPLETED, {
+      infoKey,
+      passed,
+      payload,
+    });
+    this.emit(ScoringEvents.SCORE_UPDATED, payload);
+  }
+
   getLevelId(): string {
     return this.levelId;
   }
@@ -216,9 +251,14 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     return {
       levelId: this.levelId,
       startedAt: this.startedAt,
-      floors: this.floors,
+      floors: this.floors.map((floor) => ({ ...floor })) as [
+        FloorScore,
+        FloorScore,
+        FloorScore,
+      ],
       collectibles: { ...this.collectibles },
       quiz: { ...this.quiz },
+      intermediateQuizzes: { ...this.intermediateQuizzes },
       totalQuarters,
       totalStars: totalQuarters / 4,
       rating: this.computeRating(totalQuarters),
@@ -232,10 +272,12 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       (sum, floorScore) => sum + (floorScore.quartersEarned || 0),
       0,
     );
-    return (
+    return Math.max(
+      0,
       floorsQuarters +
-      this.collectibles.quartersEarned +
-      this.quiz.quartersEarned
+        this.collectibles.quartersEarned +
+        this.quiz.quartersEarned +
+        this.intermediateQuizzes.quartersNet,
     );
   }
 
