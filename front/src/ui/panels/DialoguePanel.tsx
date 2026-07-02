@@ -244,8 +244,8 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           position: "relative",
           bgcolor: GAME_UI_TOKENS.colors.dialogueBg,
           borderRadius: "12px",
-          px: "41px",
-          py: "28px",
+          px: "40px",
+          py: "32px",
           maxWidth: "min(862px, 90vw)",
           width: "100%",
           overflow: "visible",
@@ -300,7 +300,7 @@ function DialogueContent({
             fontSize: "24px",
             lineHeight: "1.21em",
             color: GAME_UI_TOKENS.colors.accentGoldMuted,
-            mb: "12px",
+            mb: "16px",
           }}
         >
           {speakerName}
