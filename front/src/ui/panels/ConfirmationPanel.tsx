@@ -88,6 +88,8 @@ export function ConfirmationPanel({
           bgcolor: "#1f1f1f",
           borderRadius: "8px",
           p: 3,
+          width: 811,
+          height: 182,
         }}
       >
         <Typography
