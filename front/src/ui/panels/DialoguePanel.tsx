@@ -205,61 +205,21 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     if (!open) return;
 
     const handler = (e: KeyboardEvent) => {
-      if (mode === "dialogue") {
-        if (e.key === " " || e.key === "e" || e.key === "E") {
-          e.preventDefault();
-          e.stopPropagation();
-          handleAdvance();
-        }
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          handleDismiss();
-        }
-      } else {
-        if (
-          e.key === "ArrowLeft" ||
-          e.key === "ArrowRight" ||
-          e.key === "a" ||
-          e.key === "A" ||
-          e.key === "d" ||
-          e.key === "D"
-        ) {
-          e.preventDefault();
-          e.stopPropagation();
-          moveConfirmSelection(
-            e.key === "ArrowRight" || e.key === "d" || e.key === "D" ? 1 : -1,
-          );
-        }
-        if (e.key === "e" || e.key === "E") {
-          e.preventDefault();
-          e.stopPropagation();
-          const currentSelected =
-            useDialogueStore.getState().dialogueConfirmSelected;
-          handleConfirm(currentSelected === 0);
-        }
-        if (e.key === " ") {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          handleDismiss();
-        }
+      if (e.key === " " || e.key === "e" || e.key === "E") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAdvance();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDismiss();
       }
     };
 
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [
-    open,
-    mode,
-    handleAdvance,
-    handleConfirm,
-    handleDismiss,
-    moveConfirmSelection,
-  ]);
+  }, [open, handleAdvance, handleDismiss]);
 
   if (!open) return null;
 
