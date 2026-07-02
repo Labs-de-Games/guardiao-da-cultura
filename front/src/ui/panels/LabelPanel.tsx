@@ -301,7 +301,7 @@ export function LabelPanel() {
               gap: "32px",
             }}
           >
-            <Box
+            {/*<Box
               component="img"
               src="/images/etiqueta/icon-text-to-speech.svg"
               alt="Ouvir descrição"
@@ -312,7 +312,7 @@ export function LabelPanel() {
                 mt: "4px",
                 color: TTS_ICON_COLOR,
               }}
-            />
+            />*/}
 
             <Typography
               sx={{

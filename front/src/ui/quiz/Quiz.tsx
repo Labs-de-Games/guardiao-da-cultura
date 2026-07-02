@@ -626,7 +626,7 @@ export default function QuizPanel() {
                   spacing={4}
                   sx={{ alignItems: "center" }}
                 >
-                  <Button
+                  {/*<Button
                     disableElevation
                     sx={{
                       minWidth: 0,
@@ -640,7 +640,7 @@ export default function QuizPanel() {
                       src="/assets/ui/tts-icon.png"
                       sx={{ width: 32, height: 32, objectFit: "contain" }}
                     />
-                  </Button>
+                  </Button>*/}
                   <Typography
                     sx={{
                       fontFamily: "'Jockey One', sans-serif",

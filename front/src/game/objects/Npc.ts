@@ -157,6 +157,12 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  private prependName(lines: string[]): string[] {
+    const name = this.config.name;
+    if (!name) return lines;
+    return lines.map((line) => `${name}: ${line}`);
+  }
+
   private handleInteraction() {
     if (!this.questManager) {
       console.warn("[Npc] QuestManager not found!");
@@ -168,23 +174,36 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
     const pending = this.questManager.getPendingResult(missionId);
     if (pending) {
-      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, pending, () => {
-        this.questManager?.clearPendingResult(missionId);
-      });
+      this.scene.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        this.prependName(pending),
+        () => {
+          this.questManager?.clearPendingResult(missionId);
+        },
+        { x: this.x, y: this.y },
+      );
       return;
     }
 
     const lines = this.getDialogueLines(status);
     if (!lines || lines.length === 0) {
-      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Olá! No momento não tenho nada para dizer.",
-      ]);
+      this.scene.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        ["Olá! No momento não tenho nada para dizer."],
+        undefined,
+        { x: this.x, y: this.y },
+      );
       return;
     }
 
-    this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, lines, () => {
-      this.onDialogueComplete(status, game);
-    });
+    this.scene.events.emit(
+      GameEvents.SHOW_DIALOGUE_REQUEST,
+      this.prependName(lines),
+      () => {
+        this.onDialogueComplete(status, game);
+      },
+      { x: this.x, y: this.y },
+    );
   }
 
   private getDialogueLines(status: QuestStatus): string[] {
