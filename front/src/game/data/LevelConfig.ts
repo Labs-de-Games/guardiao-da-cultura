@@ -3,6 +3,8 @@
 //  Central source of truth for phase settings and dynamic assets.
 // ============================================================
 
+import { MAP_MARKERS } from "../constants/MapMarkers";
+
 export interface LevelDefinition {
   id: string;
   levelNumber: number;
@@ -18,6 +20,7 @@ export interface LevelDefinition {
   data: {
     works: string[];
     quizzes: string[];
+    intermediateQuizzes: string[];
     npcs: string[];
     messages: string[];
     collectibles: string[];
@@ -28,7 +31,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_01: {
     id: "level_01",
     levelNumber: 1,
-    title: "Inhotim",
+    title: MAP_MARKERS[0].title,
     maxStars: 2,
     initialGrayscale: 0.82,
     map: {
@@ -40,6 +43,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     data: {
       works: ["data/levels/level_01/works.json"],
       quizzes: ["data/levels/level_01/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_01/intermediate-quizzes.json"],
       npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
       collectibles: ["data/levels/level_01/collectibles.json"],
@@ -115,26 +119,14 @@ export const LEVEL_ASSETS = {
     { key: "chunk_1-2", path: "artworks/photos/chunk-1.png" },
     { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
     { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
-    {
-      key: "candujar_sem_titulo_yanomami",
-      path: "artworks/photos/candujar_sem_titulo_yanomami.png",
-    },
-    {
-      key: "candujar_sem_titulo_yanomami_ph",
-      path: "artworks/photos/candujar_sem_titulo_yanomami_ph.png",
-    },
   ],
   OTHERS: [
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
+    { key: "rec", path: "misc/rec.png" },
+    { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
   ],
-  COLLECTIBLES: [
-    { key: "fusca", path: "collectibles/fusca.png" },
-    { key: "abebe", path: "collectibles/abebe.png" },
-    { key: "xotehe", path: "collectibles/xotehe.png" },
-    { key: "cachimbo", path: "collectibles/cachimbo.png" },
-    { key: "chimarrao", path: "collectibles/chimarrao.png" },
-  ],
+  COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
   CONTENT: {
     key: "content",
     path: "data/content.json",

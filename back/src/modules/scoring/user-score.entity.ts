@@ -47,6 +47,13 @@ export class UserScore {
     quartersEarned: number;
   };
 
+  @Column({ type: "jsonb", nullable: true })
+  intermediateQuizScore!: {
+    total: number;
+    passed: number;
+    quartersNet: number;
+  };
+
   @CreateDateColumn()
   timestamp!: Date;
 }

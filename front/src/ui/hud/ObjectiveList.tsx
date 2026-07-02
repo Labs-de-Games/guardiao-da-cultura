@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 function CustomCheckbox({ checked }: { checked: boolean }) {
@@ -24,6 +25,7 @@ function CustomCheckbox({ checked }: { checked: boolean }) {
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
+        mt: "2px",
         transition: "all 0.15s",
       }}
     >
@@ -51,7 +53,7 @@ export function ObjectiveList() {
   return (
     <Card
       sx={{
-        bgcolor: "#161717",
+        bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
         borderRadius: "16px",
         border: "none",
       }}
@@ -60,10 +62,11 @@ export function ObjectiveList() {
         <Typography
           variant="subtitle2"
           sx={{
-            color: "#d9ad56",
+            color: LayoutConfig.COLORS.INFO_TITLE,
             fontWeight: 700,
             fontSize: "16px",
             mb: 1.5,
+            textAlign: "center",
           }}
         >
           Objetivos da fase:
@@ -76,7 +79,7 @@ export function ObjectiveList() {
                   <Box
                     sx={{
                       display: "flex",
-                      alignItems: "center",
+                      alignItems: "flex-start",
                       gap: 1,
                       width: "100%",
                     }}

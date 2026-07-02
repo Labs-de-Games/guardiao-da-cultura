@@ -1,8 +1,8 @@
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
+import type { UpdateProgressionDto } from "../../../src/modules/progression/dto/update-progression.dto";
 import { ProgressionService } from "../../../src/modules/progression/progression.service";
 import { UserProgress } from "../../../src/modules/progression/user-progress.entity";
-import { GameEventType } from "../../../src/shared/events/game-events";
 
 type QueryBuilderMock = {
   insert: jest.Mock<QueryBuilderMock, []>;
@@ -14,6 +14,7 @@ type QueryBuilderMock = {
 
 type ProgressRepoMock = {
   findOne: jest.Mock<Promise<unknown>, [unknown]>;
+  findOneOrFail: jest.Mock<Promise<unknown>, [unknown]>;
   create: jest.Mock<unknown, [unknown]>;
   save: jest.Mock<Promise<unknown>, [unknown]>;
   update: jest.Mock<Promise<{ affected: number }>, [unknown, unknown]>;
@@ -34,6 +35,16 @@ function createQueryBuilderMock(): QueryBuilderMock {
   return builder;
 }
 
+const BASE_PROGRESS = {
+  id: "p1",
+  userId: "test-user",
+  completedLevels: "{}",
+  clues: "{}",
+  quizResults: "{}",
+  totalStars: 0,
+  currentLevel: 1,
+};
+
 describe("ProgressionService", () => {
   let service: ProgressionService;
   let repo: ProgressRepoMock;
@@ -42,6 +53,7 @@ describe("ProgressionService", () => {
     const queryBuilder = createQueryBuilderMock();
     repo = {
       findOne: jest.fn(async (_options: unknown) => null),
+      findOneOrFail: jest.fn(async (_options: unknown) => null),
       create: jest.fn((dto: unknown) => dto),
       save: jest.fn(async (entity: unknown) => entity),
       update: jest.fn(async (_id: unknown, _data: unknown) => ({
@@ -63,224 +75,88 @@ describe("ProgressionService", () => {
     service = moduleRef.get(ProgressionService);
   });
 
-  it("stores quiz result by missionId on quiz.completed", async () => {
-    const userId = "9a8d8071-4d3c-4d0b-a8a6-d41079831ae1";
-    const progress = {
-      id: "p1",
-      userId,
-      completedLevels: "{}",
-      clues: "{}",
-      quizResults: JSON.stringify({ other_mission: { passed: true } }),
-      totalStars: 0,
-      currentLevel: 1,
-    };
-
-    repo.findOne.mockImplementation(async () => progress);
-
-    const now = new Date("2026-05-06T00:00:00.000Z");
-    await service.handleQuizCompleted({
-      userId,
-      type: GameEventType.QUIZ_COMPLETED,
-      timestamp: now,
-      metadata: {
-        missionId: "mission_1",
-        score: 3,
-        totalQuestions: 4,
-        accuracyPercent: 75,
-        quartersEarned: 3,
-        passed: true,
-      },
+  describe("findByUserId", () => {
+    it("returns null when no record exists", async () => {
+      const result = await service.findByUserId("nonexistent");
+      expect(result).toBeNull();
     });
 
-    expect(repo.update).toHaveBeenCalledTimes(1);
-    const updatePayload = repo.update.mock.calls[0][1] as any;
-    const stored = JSON.parse(updatePayload.quizResults);
-    expect(stored.other_mission.passed).toBe(true);
-    expect(stored.mission_1.passed).toBe(true);
-    expect(stored.mission_1.score).toBe(3);
-    expect(stored.mission_1.totalQuestions).toBe(4);
-    expect(stored.mission_1.accuracyPercent).toBe(75);
-    expect(stored.mission_1.quartersEarned).toBe(3);
-    expect(new Date(stored.mission_1.completedAt).toISOString()).toBe(
-      now.toISOString(),
-    );
+    it("returns the record when found", async () => {
+      repo.findOne.mockResolvedValue(BASE_PROGRESS);
+
+      const result = await service.findByUserId("test-user");
+      expect(result).toEqual(BASE_PROGRESS);
+    });
   });
 
-  it("does nothing when userId is missing", async () => {
-    await service.handleQuizFailed({
-      type: GameEventType.QUIZ_FAILED,
-      timestamp: new Date(),
-      metadata: {
-        missionId: "mission_1",
-        score: 1,
-        totalQuestions: 4,
-        accuracyPercent: 25,
-        quartersEarned: 1,
-        passed: false,
-      },
+  describe("upsertProgress", () => {
+    beforeEach(() => {
+      repo.findOne.mockResolvedValue(BASE_PROGRESS);
+      repo.findOneOrFail.mockResolvedValue(BASE_PROGRESS);
     });
 
-    expect(repo.findOne).not.toHaveBeenCalled();
-    expect(repo.update).not.toHaveBeenCalled();
-  });
-
-  describe("handleLevelCompleted", () => {
-    it("advances currentLevel when levelNumber is provided", async () => {
-      const userId = "user_1";
-      const progress = {
-        id: "p1",
-        userId,
-        completedLevels: "{}",
-        clues: "{}",
-        quizResults: "{}",
-        totalStars: 0,
-        currentLevel: 1,
-      };
-
-      repo.findOne.mockImplementation(async () => progress);
-
-      await service.handleLevelCompleted({
-        userId,
-        type: GameEventType.LEVEL_COMPLETED,
-        timestamp: new Date(),
-        metadata: {
-          levelId: "level_01",
-          levelNumber: 1,
-        },
-      });
+    it("partial update — only currentLevel provided", async () => {
+      const dto: UpdateProgressionDto = { currentLevel: 5 };
+      await service.upsertProgress("test-user", dto);
 
       expect(repo.update).toHaveBeenCalledTimes(1);
       const updatePayload = repo.update.mock.calls[0][1] as any;
-      expect(updatePayload.currentLevel).toBe(2);
+      expect(updatePayload.currentLevel).toBe(5);
+      expect(updatePayload.totalStars).toBeUndefined();
+      expect(updatePayload.completedLevels).toBeUndefined();
     });
 
-    it("does not increment currentLevel when replaying a lower level", async () => {
-      const userId = "user_1";
-      const progress = {
-        id: "p1",
-        userId,
-        completedLevels: "{}",
-        clues: "{}",
-        quizResults: "{}",
-        totalStars: 0,
-        currentLevel: 4,
-      };
-
-      repo.findOne.mockImplementation(async () => progress);
-
-      await service.handleLevelCompleted({
-        userId,
-        type: GameEventType.LEVEL_COMPLETED,
-        timestamp: new Date(),
-        metadata: {
-          levelId: "level_01",
-          levelNumber: 1,
-        },
-      });
+    it("partial update — only totalStars provided", async () => {
+      const dto: UpdateProgressionDto = { totalStars: 42 };
+      await service.upsertProgress("test-user", dto);
 
       expect(repo.update).toHaveBeenCalledTimes(1);
       const updatePayload = repo.update.mock.calls[0][1] as any;
-      expect(updatePayload.currentLevel).toBe(4);
+      expect(updatePayload.totalStars).toBe(42);
+      expect(updatePayload.currentLevel).toBeUndefined();
     });
 
-    it("does not change currentLevel when levelNumber is missing", async () => {
-      const userId = "user_1";
-      const progress = {
-        id: "p1",
-        userId,
-        completedLevels: "{}",
-        clues: "{}",
-        quizResults: "{}",
-        totalStars: 0,
-        currentLevel: 3,
-      };
-
-      repo.findOne.mockImplementation(async () => progress);
-
-      await service.handleLevelCompleted({
-        userId,
-        type: GameEventType.LEVEL_COMPLETED,
-        timestamp: new Date(),
-        metadata: {
-          levelId: "level_01",
-        },
-      });
+    it("completedLevels provided as object → stored as JSON string", async () => {
+      const completedLevels = { level_01: { stars: 3, score: 100 } };
+      const dto: UpdateProgressionDto = { completedLevels };
+      await service.upsertProgress("test-user", dto);
 
       expect(repo.update).toHaveBeenCalledTimes(1);
       const updatePayload = repo.update.mock.calls[0][1] as any;
-      expect(updatePayload.currentLevel).toBe(3);
+      expect(updatePayload.completedLevels).toBe(
+        JSON.stringify(completedLevels),
+      );
     });
 
-    it("increments totalStars and stores highest stars when replaying with better stars", async () => {
-      const userId = "user_1";
-      const progress = {
-        id: "p1",
-        userId,
-        completedLevels: JSON.stringify({
-          level_01: { completedAt: new Date(), score: 100, stars: 1 },
-        }),
-        clues: "{}",
-        quizResults: "{}",
-        totalStars: 1,
-        currentLevel: 2,
-      };
-
-      repo.findOne.mockImplementation(async () => progress);
-
-      await service.handleLevelCompleted({
-        userId,
-        type: GameEventType.LEVEL_COMPLETED,
-        timestamp: new Date(),
-        metadata: {
-          levelId: "level_01",
-          levelNumber: 1,
-          score: 150,
-          stars: 3,
-        },
-      });
+    it("clues provided as object → stored as JSON string", async () => {
+      const clues = { clue_01: { usedAt: new Date().toISOString() } };
+      const dto: UpdateProgressionDto = { clues };
+      await service.upsertProgress("test-user", dto);
 
       expect(repo.update).toHaveBeenCalledTimes(1);
       const updatePayload = repo.update.mock.calls[0][1] as any;
-      expect(updatePayload.totalStars).toBe(3);
-      const stored = JSON.parse(updatePayload.completedLevels);
-      expect(stored.level_01.stars).toBe(3);
-      expect(stored.level_01.score).toBe(150);
+      expect(updatePayload.clues).toBe(JSON.stringify(clues));
     });
 
-    it("does not increment totalStars when replaying with lower or equal stars", async () => {
-      const userId = "user_1";
-      const progress = {
-        id: "p1",
-        userId,
-        completedLevels: JSON.stringify({
-          level_01: { completedAt: new Date(), score: 200, stars: 3 },
-        }),
-        clues: "{}",
-        quizResults: "{}",
-        totalStars: 3,
-        currentLevel: 2,
-      };
-
-      repo.findOne.mockImplementation(async () => progress);
-
-      await service.handleLevelCompleted({
-        userId,
-        type: GameEventType.LEVEL_COMPLETED,
-        timestamp: new Date(),
-        metadata: {
-          levelId: "level_01",
-          levelNumber: 1,
-          score: 250,
-          stars: 2,
-        },
-      });
+    it("quizResults provided as object → stored as JSON string", async () => {
+      const quizResults = { mission_01: { passed: true, score: 3 } };
+      const dto: UpdateProgressionDto = { quizResults };
+      await service.upsertProgress("test-user", dto);
 
       expect(repo.update).toHaveBeenCalledTimes(1);
       const updatePayload = repo.update.mock.calls[0][1] as any;
-      expect(updatePayload.totalStars).toBe(3);
-      const stored = JSON.parse(updatePayload.completedLevels);
-      expect(stored.level_01.stars).toBe(3);
-      expect(stored.level_01.score).toBe(250);
+      expect(updatePayload.quizResults).toBe(JSON.stringify(quizResults));
+    });
+
+    it("no existing record → findOrCreate inserts before updating", async () => {
+      const dto: UpdateProgressionDto = { currentLevel: 2 };
+      await service.upsertProgress("new-user", dto);
+
+      expect(repo.createQueryBuilder).toHaveBeenCalled();
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: { userId: "new-user" },
+      });
+      expect(repo.update).toHaveBeenCalledTimes(1);
     });
   });
 });

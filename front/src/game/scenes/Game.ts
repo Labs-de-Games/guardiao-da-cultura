@@ -10,7 +10,13 @@ import { EventBus } from "../../shared/events/event-bus";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import { MissionIds, MissionKeys } from "../constants/MissionConstants";
+import {
+  FLOOR_COMPLETE_KEYS,
+  MissionIds,
+  MissionKeys,
+  NPC_FLOOR_3_POSITION,
+} from "../constants/MissionConstants";
+import { ProgressionEvents } from "../constants/ProgressionEvents";
 import { SceneNames } from "../constants/SceneNames";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import {
@@ -30,29 +36,39 @@ import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
-import { PLAYER_SPAWN } from "../objects/PlayerConfig";
+import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
+import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import { GameEventType } from "../types/AnalyticsTypes";
-import type { INpcEntity } from "../types/EntityTypes";
+
 import type {
+  CollectibleData,
   ContentJson,
   LabelInfoData,
   MissionDef,
+  QuizQuestion,
   WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
+import type {
+  QuizResultRecord,
+  UserProgressState,
+} from "../types/ProgressionTypes";
 import type { ScoringPayload } from "../types/ScoringTypes";
 import { DataUtils } from "../utils/DataUtils";
 
 export class Game extends Scene {
+  private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
+
   player!: Player;
   rat!: Enemy;
   private hasInteractedWithRat: boolean = false;
@@ -72,17 +88,22 @@ export class Game extends Scene {
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
-  private isQuizActive: boolean = false;
+  private quizMode: "none" | "regular" | "intermediate" = "none";
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
+  private hintKeySystem!: HintKeySystem;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
   private persistence!: GamePersistence;
+  private progressionManager!: ProgressionManager;
+  private isQuizActive: boolean = false;
+  private quizStartedAt: number | null = null;
+  private quizAttemptsForMission: number = 0;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
@@ -92,9 +113,10 @@ export class Game extends Scene {
   private contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
     quizzes: {},
+    intermediateQuizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
-    collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+    collectibles: Game.EMPTY_COLLECTIBLES,
   };
 
   constructor() {
@@ -118,15 +140,19 @@ export class Game extends Scene {
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
     this.isQuizActive = false;
+    this.quizMode = "none";
     this.photoChunksCollected = 0;
+    this.quizStartedAt = null;
+    this.quizAttemptsForMission = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
       quizzes: {},
+      intermediateQuizzes: {},
       npcs: {},
       messages: { SYSTEM_DIALOGUES: {} },
-      collectibles: { COLLECT: {}, CLUE_VILLAIN: {}, CLUE_NEXT: {} },
+      collectibles: Game.EMPTY_COLLECTIBLES,
     };
   }
 
@@ -172,6 +198,9 @@ export class Game extends Scene {
     this.levelDef.data.quizzes.forEach((path, index) => {
       this.load.json(`quizzes_${index}`, path);
     });
+    this.levelDef.data.intermediateQuizzes.forEach((path, index) => {
+      this.load.json(`intermediateQuizzes_${index}`, path);
+    });
     this.levelDef.data.npcs.forEach((path, index) => {
       this.load.json(`npcs_${index}`, path);
     });
@@ -188,11 +217,6 @@ export class Game extends Scene {
     });
 
     this.load.image("label", "misc/label.png");
-
-    this.load.image("ui_star_full", "ui/stars/star_full.png");
-    this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
-    this.load.image("ui_star_2q", "ui/stars/star_two_quarter.png");
-    this.load.image("ui_star_1q", "ui/stars/star_one_quarter.png");
   }
 
   private processModularData() {
@@ -216,6 +240,26 @@ export class Game extends Scene {
         console.warn(`[Game] Could not load quiz data from: ${path}`);
       }
     });
+
+    this.levelDef.data.intermediateQuizzes.forEach((path, i) => {
+      const data = this.cache.json.get(`intermediateQuizzes_${i}`);
+      if (data) {
+        DataUtils.deepMerge(this.contentData.intermediateQuizzes, data);
+      } else {
+        console.warn(
+          `[Game] Could not load intermediate quiz data from: ${path}`,
+        );
+      }
+    });
+
+    const knownKeys = new Set<string>(Object.values(MissionKeys));
+    for (const key of Object.keys(this.contentData.intermediateQuizzes)) {
+      if (!knownKeys.has(key)) {
+        console.warn(
+          `[Game] Unknown intermediate quiz key "${key}" — will never trigger. Check intermediate-quizzes.json.`,
+        );
+      }
+    }
 
     this.levelDef.data.npcs.forEach((path, i) => {
       const data = this.cache.json.get(`npcs_${i}`);
@@ -282,6 +326,16 @@ export class Game extends Scene {
       actorId,
     });
 
+    this.progressionManager = new ProgressionManager();
+    void this.initializeProgression();
+
+    this.progressionManager.on(
+      ProgressionEvents.PROGRESSION_UPDATED,
+      (state: UserProgressState) => {
+        EventBus.emit("progression:updated", state);
+      },
+    );
+
     this.registry.set("scoreManager", this.scoreManager);
 
     this.scoreManager.on(
@@ -293,6 +347,7 @@ export class Game extends Scene {
         EventBus.emit("player:stars-changed", {
           current: stars,
           total: Math.ceil(payload.totalQuarters / 4),
+          score: payload.totalQuarters,
         });
       },
     );
@@ -361,6 +416,10 @@ export class Game extends Scene {
         levelId: this.levelId,
         levelNumber: this.levelDef.levelNumber,
       });
+      this.progressionManager?.removeAllListeners(
+        ProgressionEvents.PROGRESSION_UPDATED,
+      );
+      EventBus.off("progression:updated");
     });
 
     posthog.capture("game_started", {
@@ -389,6 +448,109 @@ export class Game extends Scene {
         this.labelSystem.registerAllFromLayer(placeholderLayer);
       }
 
+      this.hintKeySystem = new HintKeySystem(this);
+      this.hintKeySystem.registerItems([
+        ...this.draggableItems.map((item) => ({
+          get x() {
+            return item.x;
+          },
+          get y() {
+            return item.y;
+          },
+          get interactionY() {
+            return item.y;
+          },
+          get displayHeight() {
+            return item.displayHeight;
+          },
+          get active() {
+            return (
+              item.active && !item.isGrabbed && item.input?.enabled !== false
+            );
+          },
+          interactionDistance: PLAYER_MOVEMENT.GRAB_DISTANCE,
+        })),
+        ...this.carryableItems.map((item) => ({
+          get x() {
+            return item.x;
+          },
+          get y() {
+            return item.y;
+          },
+          get interactionY() {
+            return item.y;
+          },
+          get displayHeight() {
+            return item.displayHeight;
+          },
+          get active() {
+            return (
+              item.active && !item.isCarried && item.input?.enabled !== false
+            );
+          },
+          interactionDistance: 150,
+        })),
+        ...this.labelSystem.getAllLabels().map((l) => ({
+          get x() {
+            return l.sprite.x;
+          },
+          get y() {
+            return l.sprite.y;
+          },
+          get interactionY() {
+            return l.sprite.y + l.sprite.displayHeight / 2;
+          },
+          get displayHeight() {
+            return l.sprite.displayHeight;
+          },
+          get hintY() {
+            return l.sprite.y - l.sprite.displayHeight / 2;
+          },
+          active: l.sprite.active,
+          interactionDistance: 120,
+        })),
+        ...this.npcs.map((npc) => ({
+          get x() {
+            return npc.x;
+          },
+          get y() {
+            return npc.y;
+          },
+          get interactionY() {
+            return npc.y + npc.displayHeight / 2;
+          },
+          get displayHeight() {
+            return npc.displayHeight;
+          },
+          get hintY() {
+            return npc.y - npc.displayHeight / 2;
+          },
+          active: npc.active,
+          interactionDistance: 130,
+        })),
+        ...this.collectibleSystem
+          .getAllCollectibles()
+          .filter((c) => c.collectibleType === "CLUE_VILLAIN")
+          .map((c) => ({
+            get x() {
+              return c.sprite.x;
+            },
+            get y() {
+              return c.sprite.y;
+            },
+            get interactionY() {
+              return c.sprite.y;
+            },
+            get displayHeight() {
+              return c.sprite.displayHeight;
+            },
+            get active() {
+              return !c.isCollected;
+            },
+            interactionDistance: 130,
+          })),
+      ]);
+
       this.analyticsSystem.trackLevelEvent(
         GameEventType.LEVEL_STARTED,
         this.levelId,
@@ -412,6 +574,21 @@ export class Game extends Scene {
           const currentSecrets =
             this.registry.get("secret_clues_collected") || 0;
           this.registry.set("secret_clues_collected", currentSecrets + 1);
+        }
+
+        if (typeof payload === "object" && infoKey.startsWith("pista_")) {
+          const clueId = infoKey.slice("pista_".length);
+          if (clueId && this.progressionManager) {
+            this.progressionManager.recordClueUnlocked(clueId, this.levelId);
+          }
+        }
+
+        if (
+          this.contentData.intermediateQuizzes[infoKey] &&
+          !this.questManager.isIntermediateQuizDone(infoKey) &&
+          this.quizMode === "none"
+        ) {
+          this.startIntermediateQuiz(infoKey);
         }
       },
     );
@@ -471,21 +648,24 @@ export class Game extends Scene {
     EventBus.emit("player:stars-changed", {
       current: initialStars,
       total: Math.ceil(initialPayload.totalQuarters / 4),
+      score: initialPayload.totalQuarters,
     });
 
     const allCollectibles = Object.entries(
       this.contentData.collectibles,
     ).flatMap(([category, items]) =>
-      Object.entries(
-        items as Record<string, { metadata: { title?: string } }>,
-      ).map(([id, data]) => ({
-        id,
-        name: data.metadata.title || id,
-        category,
-        collected: false,
-      })),
+      Object.entries(items as Record<string, CollectibleData>).map(
+        ([id, data]) => ({
+          id,
+          name: data.metadata.title || id,
+          category,
+          collected: false,
+        }),
+      ),
     );
-    EventBus.emit("inventory:collectibles-sync", { entries: allCollectibles });
+    EventBus.emit("collectible:collectibles-sync", {
+      entries: allCollectibles,
+    });
 
     EventBus.emit("game:started", undefined);
     EventBus.emit("sidebar:toggled", { open: true });
@@ -528,12 +708,25 @@ export class Game extends Scene {
       this.collectibleSystem.applyCollectedCollectibles(collected);
 
       for (const record of collected) {
-        if (record.collectibleType === "CLUE_VILLAIN") {
-          this.questManager.collectInfo(`pista_${record.collectibleId}`);
-        }
+        this.progressionManager.recordClueUnlocked(
+          record.collectibleId,
+          this.levelId,
+        );
+        this.questManager.collectInfo(`pista_${record.collectibleId}`);
       }
     } catch (err) {
       console.warn("[Game] Failed to load collectibles from persistence:", err);
+    }
+  }
+
+  private async initializeProgression(): Promise<void> {
+    try {
+      const snapshot = await this.persistence.loadProgress();
+      if (snapshot) {
+        this.progressionManager.hydrate(snapshot);
+      }
+    } catch (err) {
+      console.warn("[Game] Failed to load progression from persistence:", err);
     }
   }
 
@@ -636,16 +829,10 @@ export class Game extends Scene {
       "info-collected",
       (payload: { missionId: string; infoKey: string }) => {
         const key = payload.infoKey;
-        if (
-          key === MissionKeys.PAINTINGS_DONE ||
-          key === MissionKeys.SCULPTURES_DONE
-        ) {
-          const curator = this.npcs.find((n) => {
-            const ent = n as unknown as INpcEntity;
-            return ent.config && ent.config.missionId === MissionIds.CURATOR;
-          });
+        if (FLOOR_COMPLETE_KEYS.has(key)) {
+          const curator = this.findCuratorNpc();
           if (curator) {
-            (curator as unknown as Npc).teleportTo(2100, 400);
+            curator.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
           }
         }
       },
@@ -816,6 +1003,7 @@ export class Game extends Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
+      this.hintKeySystem?.destroy();
       this.badgeSystem.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
@@ -859,10 +1047,7 @@ export class Game extends Scene {
         throw new Error("QuestManager não inicializado");
       }
 
-      const npc = this.npcs.find((n) => {
-        const ent = n as unknown as INpcEntity;
-        return ent.config && ent.config.missionId === missionId;
-      });
+      const npc = this.findNpcByMission(missionId);
 
       const questions = npc?.getQuiz();
 
@@ -890,6 +1075,12 @@ export class Game extends Scene {
         npcName,
         () => {
           this.isQuizActive = true;
+          this.quizStartedAt = Date.now();
+          this.quizAttemptsForMission += 1;
+          this.quizMode = "regular";
+          this.isQuizActive = true;
+          this.quizStartedAt = Date.now();
+          this.quizAttemptsForMission += 1;
           this.events.emit(
             GameEvents.SHOW_QUIZ_REQUEST,
             questions,
@@ -979,10 +1170,54 @@ export class Game extends Scene {
                 timestamp: new Date().toISOString(),
               });
 
-              const npc = this.npcs.find((n) => {
-                const ent = n as unknown as INpcEntity;
-                return ent.config && ent.config.missionId === missionId;
+              const quizResultRecord: QuizResultRecord = {
+                completedAt: new Date().toISOString(),
+                passed: isSuccess,
+                score,
+                totalQuestions: questions.length,
+                accuracyPercent: scoringPayload.quiz.accuracyPercent,
+                quartersEarned: scoringPayload.quiz.quartersEarned,
+                timeSpentMs:
+                  this.quizStartedAt !== null
+                    ? Date.now() - this.quizStartedAt
+                    : null,
+                attempts: this.quizAttemptsForMission,
+                payload: null,
+              };
+
+              this.progressionManager.recordQuizResult(
+                missionId,
+                quizResultRecord,
+              );
+
+              if (isSuccess) {
+                this.progressionManager.recordLevelCompleted(
+                  this.levelId,
+                  this.levelDef.levelNumber,
+                  scoringPayload.totalStars,
+                  scoringPayload.totalQuarters,
+                  new Date().toISOString(),
+                );
+              }
+
+              void this.saveProgressToBackend();
+
+              const progressState = this.progressionManager.getState();
+              posthog.capture("progress_updated", {
+                level_id: this.levelId,
+                level_number: this.levelDef.levelNumber,
+                current_level: progressState.currentLevel,
+                total_stars: progressState.totalStars,
+                completed_levels_count: Object.keys(
+                  progressState.completedLevels,
+                ).length,
+                mission_id: missionId,
+                passed: isSuccess,
+                score,
+                total_questions: questions.length,
               });
+
+              const npc = this.findNpcByMission(missionId);
 
               if (!npc) {
                 console.error(
@@ -1010,6 +1245,7 @@ export class Game extends Scene {
                 this.levelManager.updateProgress();
               }
 
+              this.quizMode = "none";
               this.isQuizActive = false;
             },
           );
@@ -1027,11 +1263,161 @@ export class Game extends Scene {
     }
   }
 
+  public startIntermediateQuiz(infoKey: string) {
+    try {
+      const questions = this.contentData.intermediateQuizzes[infoKey];
+      if (!questions || questions.length === 0) {
+        return;
+      }
+
+      if (this.questManager.isIntermediateQuizDone(infoKey)) {
+        return;
+      }
+
+      const npc = this.findCuratorNpc();
+
+      if (!npc) {
+        console.warn(
+          `[Game] NPC not found for intermediate quiz, infoKey: ${infoKey}`,
+        );
+        return;
+      }
+
+      this.quizMode = "intermediate";
+
+      const spawnPos = npc.getSpawnPosition();
+      const playerX = this.player.x;
+      const npcX = playerX + 150;
+      const npcY = this.player.y;
+
+      npc.showForQuiz(npcX, npcY);
+
+      const onComplete = this.createIntermediateQuizCallback(
+        infoKey,
+        questions,
+        npc,
+        spawnPos,
+      );
+
+      const explanationLines = npc.getIntermediateQuizDialogues();
+      if (explanationLines.length > 0) {
+        this.events.emit(
+          GameEvents.SHOW_DIALOGUE_REQUEST,
+          explanationLines,
+          () => {
+            this.events.emit(
+              GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+              questions,
+              onComplete,
+            );
+          },
+        );
+      } else {
+        this.events.emit(
+          GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+          questions,
+          onComplete,
+        );
+      }
+    } catch (error) {
+      console.error("[Game] Error starting intermediate quiz:", error);
+      this.quizMode = "none";
+    }
+  }
+
+  private createIntermediateQuizCallback(
+    infoKey: string,
+    questions: QuizQuestion[],
+    npc: Npc,
+    spawnPos: { x: number; y: number } | null,
+  ) {
+    return (score: number) => {
+      const passed = score > 0;
+      this.scoreManager.recordIntermediateQuizResult(infoKey, passed);
+      this.questManager.markIntermediateQuizDone(infoKey);
+
+      if (this.progressionManager) {
+        this.progressionManager.recordIntermediateQuizResult(infoKey, {
+          completedAt: new Date().toISOString(),
+          passed,
+          score,
+          totalQuestions: questions.length,
+          missionId: MissionIds.CURATOR,
+        });
+      }
+
+      void this.saveProgressToBackend();
+
+      const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
+
+      if (floorCompleted) {
+        npc.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+      } else {
+        npc.hideAfterQuiz();
+        if (spawnPos) {
+          npc.teleportTo(spawnPos.x, spawnPos.y);
+        }
+      }
+
+      this.quizMode = "none";
+
+      posthog.capture("intermediate_quiz_completed", {
+        level_id: this.levelId,
+        info_key: infoKey,
+        score,
+        total_questions: questions.length,
+        passed,
+      });
+
+      void this.persistence.sendQuizOutcome({
+        type: passed
+          ? "intermediate-quiz.completed"
+          : "intermediate-quiz.failed",
+        metadata: {
+          infoKey,
+          passed,
+          score,
+          totalQuestions: questions.length,
+          missionId: MissionIds.CURATOR,
+        },
+        timestamp: new Date().toISOString(),
+      });
+
+      if (
+        this.questManager.hasCollectedAll(MissionIds.CURATOR) &&
+        this.questManager.getStatus(MissionIds.CURATOR) !==
+          QuestStatus.READY_FOR_QUIZ &&
+        this.questManager.getStatus(MissionIds.CURATOR) !==
+          QuestStatus.QUIZ_ACTIVE &&
+        this.questManager.getStatus(MissionIds.CURATOR) !==
+          QuestStatus.COMPLETED
+      ) {
+        this.questManager.setStatus(
+          MissionIds.CURATOR,
+          QuestStatus.READY_FOR_QUIZ,
+        );
+      }
+    };
+  }
+
+  private findCuratorNpc(): Npc | undefined {
+    return this.npcs.find(
+      (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
+    ) as Npc | undefined;
+  }
+
+  private findNpcByMission(missionId: string): Npc | undefined {
+    return this.npcs.find(
+      (n) => n instanceof Npc && n.getMissionId() === missionId,
+    ) as Npc | undefined;
+  }
+
   private checkDialogState() {
     if (
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
+      this.quizMode === "none" &&
       !this.isQuizActive
     ) {
       if (this.player) this.player.isInDialogue = false;
@@ -1157,6 +1543,25 @@ export class Game extends Scene {
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    if (this.player && this.hintKeySystem) {
+      const isPanelOpen =
+        this.isDialogueOpen ||
+        this.isControlsOpen ||
+        this.isChunkSelectorOpen ||
+        this.isQuizActive ||
+        useGameUIStore.getState().labelData !== null;
+
+      const isPlayerBusy = this.player.isGrabbing || this.player.isCarrying;
+
+      this.hintKeySystem.update(
+        this.player.x,
+        this.player.y,
+        this.player.body as Phaser.Physics.Arcade.Body,
+        isPanelOpen,
+        isPlayerBusy,
+      );
+    }
   }
 
   public recordFloorError(floorIndex: number) {
@@ -1219,6 +1624,11 @@ export class Game extends Scene {
           accuracyPercent: payload.quiz.accuracyPercent,
           quartersEarned: payload.quiz.quartersEarned,
         },
+        intermediateQuizzes: {
+          total: payload.intermediateQuizzes.total,
+          passed: payload.intermediateQuizzes.passed,
+          quartersNet: payload.intermediateQuizzes.quartersNet,
+        },
         collectibles: {
           total: payload.collectibles.total,
           interactionsCount: payload.collectibles.interactionsCount,
@@ -1227,18 +1637,46 @@ export class Game extends Scene {
         collectedCollectibles: payload.collectibles.interactions.map(
           (interaction) => ({
             collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as
-              | "COLLECT"
-              | "CLUE_VILLAIN"
-              | "CLUE_NEXT",
+            collectibleType: interaction.collectible_type as "CLUE_VILLAIN",
             levelId: payload.levelId,
           }),
         ),
       };
 
       await this.persistence.saveScore(persistencePayload);
+
+      posthog.capture("score_updated", {
+        level_id: payload.levelId,
+        total_quarters: payload.totalQuarters,
+        total_stars: payload.totalStars,
+        rating: payload.rating,
+        floor_scores: payload.floors,
+        quiz_score: {
+          total_questions: payload.quiz.totalQuestions,
+          correct_answers: payload.quiz.correctAnswers,
+          accuracy_percent: payload.quiz.accuracyPercent,
+          quarters_earned: payload.quiz.quartersEarned,
+        },
+        collectible_score: {
+          total: payload.collectibles.total,
+          interactions_count: payload.collectibles.interactionsCount,
+          quarters_earned: payload.collectibles.quartersEarned,
+        },
+      });
     } catch (err) {
       console.error("[Game] Failed to save score in persistence layer:", err);
+    }
+  }
+
+  private async saveProgressToBackend() {
+    try {
+      const state = this.progressionManager.getState();
+      await this.persistence.saveProgress(state);
+    } catch (err) {
+      console.error(
+        "[Game] Failed to save progression in persistence layer:",
+        err,
+      );
     }
   }
 
