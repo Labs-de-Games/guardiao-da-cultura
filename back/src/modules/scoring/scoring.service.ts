@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { PinoLogger } from "nestjs-pino";
 import type { Repository } from "typeorm";
+import { PostHogService } from "../posthog/posthog.service";
 import type { SubmitScoreDto } from "./dto/submit-score.dto";
 import { UserCollectibleService } from "./user-collectible.service";
 import { UserScore } from "./user-score.entity";
@@ -13,6 +14,7 @@ export class ScoringService {
     @InjectRepository(UserScore)
     private readonly userScoreRepository: Repository<UserScore>,
     private readonly userCollectibleService: UserCollectibleService,
+    private readonly posthog: PostHogService,
   ) {}
 
   async submitScore(dto: SubmitScoreDto): Promise<UserScore> {
