@@ -26,6 +26,7 @@
           "Hmm… Você se embolou nos detalhes igual um zé dend'água.",
           "Veja as obras, leia as placas. Tô aqui quando quiser tentar de novo."
         ],
+        "start_quiz_question": ["Podemos iniciar o teste?"],
         "intermediateQuiz": [
           "Antes de continuar, vamos ver o que você aprendeu sobre esta parte da restauração."
         ]
