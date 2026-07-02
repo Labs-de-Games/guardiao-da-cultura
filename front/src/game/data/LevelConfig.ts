@@ -20,6 +20,7 @@ export interface LevelDefinition {
   data: {
     works: string[];
     quizzes: string[];
+    intermediateQuizzes: string[];
     npcs: string[];
     messages: string[];
     collectibles: string[];
@@ -42,6 +43,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     data: {
       works: ["data/levels/level_01/works.json"],
       quizzes: ["data/levels/level_01/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_01/intermediate-quizzes.json"],
       npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
       collectibles: ["data/levels/level_01/collectibles.json"],
