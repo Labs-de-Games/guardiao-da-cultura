@@ -7,12 +7,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
+function useWindowSize() {
+  const [size, setSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
+    height: typeof window !== "undefined" ? window.innerHeight : 768,
+  });
+  useEffect(() => {
+    const handler = () =>
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return size;
+}
+
 const TYPING_SPEED = 30;
 const BUBBLE_MAX_WIDTH = 900;
 const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
 const VIEWPORT_MARGIN = 24;
 const TRIANGLE_HEIGHT = 32;
 const HEAD_OFFSET = 100;
+const MAX_DIALOGUE_LENGTH = 144;
 
 interface DialoguePanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -30,6 +45,11 @@ function parseLine(text: string): ParsedLine {
     return { speaker: match[1], content: match[2] };
   }
   return { speaker: null, content: text };
+}
+
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "…";
 }
 
 function TextToSpeechIcon() {
@@ -66,12 +86,14 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // suppresses spurious input immediately after dialogue opens
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
+  const { width: vw, height: vh } = useWindowSize();
 
   const rawCurrentText = lines[currentLine] ?? "";
   const parsedLine = parseLine(rawCurrentText);
-  const currentText = parsedLine.content;
+  const currentText = truncateText(parsedLine.content, MAX_DIALOGUE_LENGTH);
   const speakerName = parsedLine.speaker;
   const isLastLine = currentLine === lines.length - 1;
 
@@ -87,9 +109,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         triangleLeft: null,
       };
     }
-
-    const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-    const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
@@ -116,7 +135,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
       },
       triangleLeft,
     };
-  }, [speakerPos]);
+  }, [speakerPos, vw, vh]);
 
   useEffect(() => {
     if (!open) return;
@@ -168,6 +187,8 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     }
     if (isLastLine) {
       onComplete(callbackId);
+      advanceDialogue();
+      return;
     }
     advanceDialogue();
   }, [
