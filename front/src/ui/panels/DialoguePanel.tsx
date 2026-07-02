@@ -251,7 +251,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           overflow: "visible",
         }}
       >
-        <TextToSpeechIcon />
+        {/* <TextToSpeechIcon /> */}
         <DialogueContent
           speakerName={speakerName}
           text={displayedText}
