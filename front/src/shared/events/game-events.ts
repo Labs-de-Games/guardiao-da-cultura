@@ -1,6 +1,7 @@
 export interface StarsChangedData {
   current: number;
   total: number;
+  score: number;
 }
 
 export interface StepProgress {
@@ -94,6 +95,8 @@ export interface DialogueCompletedData {
 }
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
+import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import type { IntroConfig } from "@/ui/intro/types";
 
 export type { LabelInfoData };
 
@@ -141,11 +144,9 @@ export interface GameEventMap {
     missionId: string;
     status: "accepted" | "completed" | "failed";
   };
-  "inventory:item-collected": ItemCollectedData;
-  "inventory:collectibles-sync": CollectiblesSyncData;
+  "collectible:item-collected": ItemCollectedData;
+  "collectible:collectibles-sync": CollectiblesSyncData;
   "ui:controls-overlay": ControlsOverlayData;
-  "inventory:opened": undefined;
-  "inventory:closed": undefined;
   "sidebar:toggled": SidebarToggleData;
   "ui:chunk-selector-open": ChunkSelectorOpenData;
   "ui:chunk-selector-close": undefined;
@@ -167,8 +168,11 @@ export interface GameEventMap {
   "quiz:complete": QuizCompleteData;
   "quiz:close": undefined;
   "quiz:retry": undefined;
-  "map:marker-changed": MapMarkerChangedData;
+  "map:marker-changed": MapMarkerChangedData | null;
   "map:auto-start-tick": AutoStartTickData;
   "map:auto-start-canceled": undefined;
   "map:auto-start-completed": undefined;
+  "progression:updated": UserProgressState;
+  "intro:start": { levelId: string; config: IntroConfig };
+  "intro:complete": { levelId: string };
 }

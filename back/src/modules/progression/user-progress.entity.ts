@@ -36,6 +36,9 @@ export class UserProgress {
   @Column({ type: "jsonb", default: "{}" })
   quizResults = "{}";
 
+  @Column({ type: "jsonb", default: "{}" })
+  intermediateQuizResults = "{}";
+
   @CreateDateColumn()
   createdAt!: Date;
 

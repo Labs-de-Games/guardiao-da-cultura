@@ -1,69 +1,8 @@
 {
   "collectibles": {
-    "COLLECT": {
-      "fusca": {
-        "id": "fusca",
-        "type": "Collectible",
-        "metadata": {
-          "title": "Troca-troca",
-          "author": "Jarbas Lopes",
-          "year": "2002",
-          "place": "Rio de Janeiro, RJ"
-        },
-        "educational": {
-          "description": "Esta obra usa três fuscas coloridos com peças trocadas.\n\nOs carros andaram por cidades do Brasil. Jarbas Lopes e amigos colaram adesivos com frases noutros carros que passavam no caminho.",
-          "medium": "Fusca com aparelhagem de som",
-          "opinion": "Legal! Uma réplica da obra que vi lá fora! Opa! O que tem nesse papel aqui embaixo?"
-        },
-        "assets": {
-          "sprite": "fusca",
-          "scaleOnMap": 0.8,
-          "scaleOnInspect": 8
-        }
-      },
-      "abebe": {
-        "id": "abebe",
-        "type": "Collectible",
-        "metadata": {
-          "title": "Abeb\u00e9 de Oxum",
-          "year": "Século XIX",
-          "place": "Rio de Janeiro, RJ"
-        },
-        "educational": {
-          "description": "O abebé é um objeto de origem africana que pode servir de leque, espelho ou instrumento. Ele é de Oxum, deusa rainha das águas doces e das mães.\n\nEsse objeto pertence à coleção Polícia da Corte.",
-          "medium": "Latão",
-          "opinion": "O que é isso? É de metal e consigo ver meu rosto nele, como um espelho. Tem um papel aqui embaixo."
-        },
-        "assets": {
-          "sprite": "abebe",
-          "scaleOnMap": 0.4,
-          "scaleOnInspect": 4.3
-        }
-      },
-      "xotehe": {
-        "id": "xotehe",
-        "type": "Collectible",
-        "metadata": {
-          "title": "Xotehe",
-          "author": "Mulheres yanomamis",
-          "place": "Catrimani, RR"
-        },
-        "educational": {
-          "description": "O xotehe é um cesto feito pelo povo yanomami. Ele é feito com cipó-titica, tiras de raiz de palmeira ou fios de p\u00ebr\u0268s\u0268 (um fungo preto descoberto pelos yanomamis).\n\nAs mulheres o trançam à mão, e é um item de uso diário na aldeia.",
-          "medium": "Cipó-titica, tiras da raiz de paxiubinha e fios de p\u00ebr\u0268s\u0268",
-          "opinion": "Que lindo cesto! É um artesanato cheio de detalhes. Hum, tem uma etiqueta embaixo."
-        },
-        "assets": {
-          "sprite": "xotehe",
-          "scaleOnMap": 0.4,
-          "scaleOnInspect": 4.2
-        }
-      }
-    },
     "CLUE_VILLAIN": {
       "cachimbo": {
         "id": "cachimbo",
-        "type": "Clue",
         "metadata": {
           "title": "Cachimbo"
         },
@@ -76,25 +15,6 @@
           "sprite": "cachimbo",
           "scaleOnMap": 0.4,
           "scaleOnInspect": 5
-        }
-      }
-    },
-    "CLUE_NEXT": {
-      "chimarrao": {
-        "id": "chimarrao",
-        "type": "Clue",
-        "metadata": {
-          "title": "Cuia de chimarrão"
-        },
-        "educational": {
-          "description": "Uma cuia própria para tomar chimarrão.",
-          "medium": "Porongo, cera de carnaúba, resina, metal e couro",
-          "opinion": "Já vi um negócio desses, mas não lembro onde. Com certeza não foi aqui em Minas Gerais."
-        },
-        "assets": {
-          "sprite": "chimarrao",
-          "scaleOnMap": 0.3,
-          "scaleOnInspect": 4
         }
       }
     }

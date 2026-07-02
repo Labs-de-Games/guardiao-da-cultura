@@ -14,6 +14,7 @@ export interface QuestData {
   requiredInfos: string[];
   collectedInfos: Set<string>;
   status: QuestStatus;
+  completedIntermediateQuizzes: Set<string>;
 }
 
 export class QuestManager extends Phaser.Events.EventEmitter {
@@ -28,6 +29,7 @@ export class QuestManager extends Phaser.Events.EventEmitter {
         requiredInfos: q.requiredInfos,
         collectedInfos: new Set<string>(),
         status: QuestStatus.IDLE,
+        completedIntermediateQuizzes: new Set<string>(),
       });
     }
   }
@@ -153,10 +155,30 @@ export class QuestManager extends Phaser.Events.EventEmitter {
     return q.requiredInfos.every((info) => q.collectedInfos.has(info));
   }
 
+  markIntermediateQuizDone(infoKey: string) {
+    for (const q of this.quests.values()) {
+      if (q.requiredInfos.includes(infoKey)) {
+        q.completedIntermediateQuizzes.add(infoKey);
+        this.emit("intermediate-quiz-done", { infoKey });
+        break;
+      }
+    }
+  }
+
+  isIntermediateQuizDone(infoKey: string): boolean {
+    for (const q of this.quests.values()) {
+      if (q.completedIntermediateQuizzes.has(infoKey)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   reset(missionId: string) {
     const q = this.quests.get(missionId);
     if (q) {
       q.collectedInfos.clear();
+      q.completedIntermediateQuizzes.clear();
       q.status = QuestStatus.IDLE;
     }
     this.pendingResultLines.delete(missionId);
