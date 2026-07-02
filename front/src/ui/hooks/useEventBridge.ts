@@ -20,6 +20,7 @@ export function useEventBridge({
   const addOrUpdateMission = useGameUIStore((s) => s.addOrUpdateMission);
   const setCollectibles = useGameUIStore((s) => s.setCollectibles);
   const collectItem = useGameUIStore((s) => s.collectItem);
+  const setProgression = useGameUIStore((s) => s.setProgression);
 
   useEffect(() => {
     const currentStatus = useGameUIStore.getState().gameStarted;
@@ -74,18 +75,22 @@ export function useEventBridge({
     );
 
     const unsubCollectSync = safeSubscribe(
-      "inventory:collectibles-sync",
+      "collectible:collectibles-sync",
       (data) => {
         setCollectibles(data.entries);
       },
     );
 
     const unsubCollectItem = safeSubscribe(
-      "inventory:item-collected",
+      "collectible:item-collected",
       (data) => {
         collectItem(data.itemId);
       },
     );
+
+    const unsubProgression = safeSubscribe("progression:updated", (data) => {
+      setProgression(data);
+    });
 
     return () => {
       unsubStarted();
@@ -95,6 +100,7 @@ export function useEventBridge({
       unsubQuestProgress();
       unsubCollectSync();
       unsubCollectItem();
+      unsubProgression();
     };
   }, [
     entryFlow,
@@ -106,5 +112,6 @@ export function useEventBridge({
     addOrUpdateMission,
     setCollectibles,
     collectItem,
+    setProgression,
   ]);
 }

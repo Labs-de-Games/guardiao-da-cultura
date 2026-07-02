@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
 import { getGuestBadgeIds } from "../../lib/badgesStorage";
@@ -85,6 +87,7 @@ export interface GameUIState {
   isAuthenticated: boolean;
   guestId: string | null;
   isInterestDialogOpen: boolean;
+  progression: UserProgressState | null;
 
   quiz: {
     isVisible: boolean;
@@ -137,6 +140,7 @@ export interface GameUIState {
   addUnlockedBadge: (badgeId: string) => void;
   openInterestDialog: () => void;
   closeInterestDialog: () => void;
+  setProgression: (state: UserProgressState) => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -154,11 +158,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   sidebarOpen: false,
   controlsOpen: false,
   gameStarted: false,
-  activeMapMarker: {
-    title: "Inhotim",
-    location: "Brumadinho, Minas Gerais",
-    isAvailable: true,
-  },
+  activeMapMarker: DEFAULT_MAP_MARKER,
   autoStartProgress: null,
   stars: 0,
   totalStars: 0,
@@ -176,6 +176,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   isAuthenticated: false,
   guestId: null,
   isInterestDialogOpen: false,
+  progression: null,
 
   quiz: {
     isVisible: false,
@@ -345,6 +346,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     }),
   openInterestDialog: () => set({ isInterestDialogOpen: true }),
   closeInterestDialog: () => set({ isInterestDialogOpen: false }),
+  setProgression: (state) => set({ progression: state }),
 
   startQuiz: (questions, onComplete) => {
     set((_s) => ({
@@ -506,9 +508,4 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
 }));
 
 export const selectHintCollectibles = (s: GameUIState) =>
-  s.collectibles.filter(
-    (c) => c.category === "CLUE_VILLAIN" || c.category === "CLUE_NEXT",
-  );
-
-export const selectInventoryCollectibles = (s: GameUIState) =>
-  s.collectibles.filter((c) => c.category === "COLLECT");
+  s.collectibles.filter((c) => c.category === "CLUE_VILLAIN");

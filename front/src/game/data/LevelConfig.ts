@@ -3,6 +3,8 @@
 //  Central source of truth for phase settings and dynamic assets.
 // ============================================================
 
+import { MAP_MARKERS } from "../constants/MapMarkers";
+
 export interface LevelDefinition {
   id: string;
   levelNumber: number;
@@ -28,7 +30,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_01: {
     id: "level_01",
     levelNumber: 1,
-    title: "Inhotim",
+    title: MAP_MARKERS[0].title,
     maxStars: 2,
     initialGrayscale: 0.82,
     map: {
@@ -120,6 +122,7 @@ export const LEVEL_ASSETS = {
     { key: "exclamation", path: "misc/exclamation.png" },
     { key: "star", path: "misc/star.png" },
     { key: "rec", path: "misc/rec.png" },
+    { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
   ],
   COLLECTIBLES: [
     { key: "fusca", path: "collectibles/fusca.png" },
