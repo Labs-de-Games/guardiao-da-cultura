@@ -1056,6 +1056,21 @@ export class Game extends Scene {
 
               void this.saveProgressToBackend();
 
+              const progressState = this.progressionManager.getState();
+              posthog.capture("progress_updated", {
+                level_id: this.levelId,
+                level_number: this.levelDef.levelNumber,
+                current_level: progressState.currentLevel,
+                total_stars: progressState.totalStars,
+                completed_levels_count: Object.keys(
+                  progressState.completedLevels,
+                ).length,
+                mission_id: missionId,
+                passed: isSuccess,
+                score,
+                total_questions: questions.length,
+              });
+
               const npc = this.npcs.find((n) => {
                 const ent = n as unknown as INpcEntity;
                 return ent.config && ent.config.missionId === missionId;
@@ -1311,6 +1326,25 @@ export class Game extends Scene {
       };
 
       await this.persistence.saveScore(persistencePayload);
+
+      posthog.capture("score_updated", {
+        level_id: payload.levelId,
+        total_quarters: payload.totalQuarters,
+        total_stars: payload.totalStars,
+        rating: payload.rating,
+        floor_scores: payload.floors,
+        quiz_score: {
+          total_questions: payload.quiz.totalQuestions,
+          correct_answers: payload.quiz.correctAnswers,
+          accuracy_percent: payload.quiz.accuracyPercent,
+          quarters_earned: payload.quiz.quartersEarned,
+        },
+        collectible_score: {
+          total: payload.collectibles.total,
+          interactions_count: payload.collectibles.interactionsCount,
+          quarters_earned: payload.collectibles.quartersEarned,
+        },
+      });
     } catch (err) {
       console.error("[Game] Failed to save score in persistence layer:", err);
     }
