@@ -38,6 +38,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           src="https://t.contentsquare.net/uxa/bb88b6a708c9e.js"
           strategy="afterInteractive"
         />
+        <Script
+          src="https://cdn.responsivevoice.org/sdk/latest/responsivevoice.js"
+          strategy="afterInteractive"
+        />
+        <Script id="rv-verify" strategy="afterInteractive">
+          {`responsiveVoice.init({ apiKey: "${process.env.NEXT_PUBLIC_RESPONSIVE_VOICE_KEY}" });`}
+        </Script>
       </body>
     </html>
   );
