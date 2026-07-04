@@ -11,6 +11,7 @@ const schema = z.object({
     .string()
     .url()
     .default("https://us.i.posthog.com"),
+  NEXT_PUBLIC_RESPONSIVE_VOICE_KEY: z.string().optional(),
 });
 
 export const env = schema.parse({
@@ -20,4 +21,6 @@ export const env = schema.parse({
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
   NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  NEXT_PUBLIC_RESPONSIVE_VOICE_KEY:
+    process.env.NEXT_PUBLIC_RESPONSIVE_VOICE_KEY,
 });
