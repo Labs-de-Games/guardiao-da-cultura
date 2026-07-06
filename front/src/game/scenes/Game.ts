@@ -171,20 +171,30 @@ export class Game extends Scene {
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
-    LEVEL_ASSETS.OTHERS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.SCULPTURES.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.PAINTINGS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.CHUNKS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].SCULPTURES.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].PAINTINGS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].CHUNKS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
 
-    LEVEL_ASSETS.COLLECTIBLES.forEach((asset) => {
+    LEVEL_ASSETS[
+      this.levelId as keyof typeof LEVEL_ASSETS
+    ].COLLECTIBLES.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -925,6 +935,7 @@ export class Game extends Scene {
           availableItems: availableChunks.map((item) => ({
             id: item.itemId,
             name: item.itemName,
+            levelId: this.levelId,
           })),
           filledSlots: filled,
         });
