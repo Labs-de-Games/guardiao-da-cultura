@@ -377,8 +377,8 @@ export function IntroSequence({
               gap: "4px",
             }}
           >
+            <div>⏭ Aperte ESPAÇO para avançar quadrinhos</div>
             <div>⏩︎ Aperte ESC para pular a introdução</div>
-            <div>→ ou ESPAÇO Avance para o próximo painel</div>
           </div>
           {/* SCALED STAGE: The container is sized to fit the viewport,
               and the inner content is scaled via transform. */}
