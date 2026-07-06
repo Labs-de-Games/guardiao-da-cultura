@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
         />
         <Script id="rv-verify" strategy="afterInteractive">
-          {`responsiveVoice.init({ apiKey: "${process.env.NEXT_PUBLIC_RESPONSIVE_VOICE_KEY}" });`}
+          {`if (typeof responsiveVoice !== 'undefined') responsiveVoice.init({ apiKey: "${process.env.NEXT_PUBLIC_RESPONSIVE_VOICE_KEY}" });`}
         </Script>
       </body>
     </html>
