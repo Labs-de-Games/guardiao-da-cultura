@@ -51,6 +51,11 @@ export function IntroSequence({
   const [maskReveal, setMaskReveal] = useState(false);
   const [captionPanel, setCaptionPanel] = useState<number>(-1);
   const [captionVisible, setCaptionVisible] = useState(false);
+  // Panel navigation state
+  const [navigatingPanel, setNavigatingPanel] = useState<number>(-1); // -1 = not navigating, 0+ = current panel index
+  const [manuallyAdvanced, setManuallyAdvanced] = useState(false); // true if user manually advanced
+  const lastViewedPanelRef = useRef<number>(-1); // Track last panel user has seen
+  const isNavigatingRef = useRef(false); // Debounce flag to prevent rapid key presses
   const fitElRef = useRef<HTMLDivElement | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
 
@@ -157,7 +162,7 @@ export function IntroSequence({
     });
   }, [maskSrc, sceneSrc]);
 
-  // Skip handler
+  // Skip handler - skips entire animation
   const handleSkip = useCallback(() => {
     if (!config.skipEnabled) return;
     setSkip(true);
@@ -165,11 +170,54 @@ export function IntroSequence({
     setMaskReveal(true);
   }, [config.skipEnabled]);
 
+  // Navigate to next panel
+  const handleNextPanel = useCallback(() => {
+    if (skip || rollOut || maskReveal) return;
+
+    // Debounce: prevent rapid key presses
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+
+    // Determine current panel: use the max of navigatingPanel, captionPanel, or lastViewedPanel
+    const currentPanel = Math.max(
+      navigatingPanel,
+      captionPanel,
+      lastViewedPanelRef.current,
+    );
+
+    const next = currentPanel + 1;
+
+    if (next >= panels.length) {
+      // If on last panel, skip to end
+      handleSkip();
+      isNavigatingRef.current = false;
+      return;
+    }
+
+    // Update the ref to track what we've seen
+    lastViewedPanelRef.current = next;
+    setNavigatingPanel(next);
+    setManuallyAdvanced(true);
+
+    // Reset debounce after a short delay
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 300);
+  }, [
+    skip,
+    rollOut,
+    maskReveal,
+    navigatingPanel,
+    captionPanel,
+    panels.length,
+    handleSkip,
+  ]);
+
   // Keyboard and click skip
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Skip entire animation
       if (
-        e.key === " " ||
         e.key === "Escape" ||
         e.key === "Enter" ||
         e.key === "e" ||
@@ -177,11 +225,18 @@ export function IntroSequence({
       ) {
         e.preventDefault();
         handleSkip();
+        return;
+      }
+      // Advance to next panel
+      if (e.key === " " || e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNextPanel();
+        return;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handleSkip]);
+  }, [handleSkip, handleNextPanel]);
 
   // Caption timing
   const captionTimerRef = useRef<number | null>(null);
@@ -208,6 +263,16 @@ export function IntroSequence({
     [panels],
   );
 
+  // Track last viewed panel when caption changes
+  useEffect(() => {
+    if (captionPanel >= 0) {
+      lastViewedPanelRef.current = Math.max(
+        lastViewedPanelRef.current,
+        captionPanel,
+      );
+    }
+  }, [captionPanel]);
+
   const handlePanelShrink = useCallback(() => {
     captionSequenceRef.current += 1;
     if (captionTimerRef.current !== null) {
@@ -216,6 +281,20 @@ export function IntroSequence({
     }
     setCaptionVisible(false);
   }, []);
+
+  // Hide caption when navigating - let the normal animation flow show it
+  useEffect(() => {
+    if (navigatingPanel >= 0 && manuallyAdvanced) {
+      // Cancel any pending caption timer
+      if (captionTimerRef.current !== null) {
+        window.clearTimeout(captionTimerRef.current);
+        captionTimerRef.current = null;
+      }
+      // Hide caption - it will reappear when the panel's animation triggers handlePanelStart
+      setCaptionVisible(false);
+      setManuallyAdvanced(false);
+    }
+  }, [navigatingPanel, manuallyAdvanced]);
 
   const handleComplete = useCallback(() => {
     window.setTimeout(() => setRollOut(true), ROLL_DELAY_MS);
@@ -293,9 +372,13 @@ export function IntroSequence({
               color: CAPTION_BODY_COLOR,
               zIndex: 10, // Above all content
               pointerEvents: "none",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
             }}
           >
-            ⏩︎ Aperte ESC para pular a introdução
+            <div>⏩︎ Aperte ESC para pular a introdução</div>
+            <div>→ ou ESPAÇO Avance para o próximo painel</div>
           </div>
           {/* SCALED STAGE: The container is sized to fit the viewport,
               and the inner content is scaled via transform. */}
@@ -331,6 +414,7 @@ export function IntroSequence({
                 rollStaggerMs={ROLL_STAGGER_MS}
                 skip={skip}
                 rollOut={rollOut}
+                navigateToPanel={navigatingPanel}
                 onComplete={handleComplete}
                 onRolledOut={handleRolledOut}
                 onPanelStart={handlePanelStart}

@@ -15,6 +15,8 @@ export type ComicSequenceProps = {
   rollStaggerMs: number;
   skip?: boolean;
   rollOut?: boolean;
+  /** Index of panel to navigate to (instant display). -1 for no navigation. */
+  navigateToPanel?: number;
   onComplete?: () => void;
   onRolledOut?: () => void;
   /** Fired when each panel begins its pixel-reveal (index 0..n-1). */
@@ -49,6 +51,7 @@ export function ComicSequence({
   rollStaggerMs,
   skip = false,
   rollOut = false,
+  navigateToPanel = -1,
   onComplete,
   onRolledOut,
   onPanelStart,
@@ -104,6 +107,18 @@ export function ComicSequence({
       onComplete?.();
     }
   }, [skip, panels.length, allDone, onComplete]);
+
+  // When navigating to a specific panel, mount all panels up to that index
+  // and mark them as done instantly
+  useEffect(() => {
+    if (navigateToPanel < 0 || skip) return;
+
+    // Mount all panels up to and including the target
+    setMountedThrough(navigateToPanel);
+
+    // If navigating to a panel that's already mounted, just update caption
+    // If navigating forward, the panels will be shown instantly via skipToEnd
+  }, [navigateToPanel, skip]);
 
   // Stagger the credits-style roll-up + dissolve for each panel.
   useEffect(() => {
@@ -238,7 +253,9 @@ export function ComicSequence({
                 holdMs={p.holdMs}
                 shrinkMs={p.shrinkMs}
                 blockSize={blockSize}
-                skipToEnd={skip}
+                skipToEnd={
+                  skip || (navigateToPanel >= 0 && i < navigateToPanel)
+                }
                 dissolve={rolling[i]}
                 dissolveMs={rollOutMs}
                 onShrinkStart={() => handleShrinkStart(i)}
