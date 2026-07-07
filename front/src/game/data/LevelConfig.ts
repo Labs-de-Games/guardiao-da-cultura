@@ -145,12 +145,7 @@ export const LEVEL_ASSETS = {
       { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
       { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
     ],
-    OTHERS: [
-      { key: "exclamation", path: "misc/exclamation.png" },
-      { key: "star", path: "misc/star.png" },
-      { key: "rec", path: "misc/rec.png" },
-      { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
-    ],
+    OTHERS: [{ key: "rec", path: "misc/rec.png" }],
     COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
     CONTENT: {
       key: "content",
@@ -158,6 +153,12 @@ export const LEVEL_ASSETS = {
     },
   },
 } as const;
+
+export const GLOBAL_ASSETS = [
+  { key: "exclamation", path: "misc/exclamation.png" },
+  { key: "star", path: "misc/star.png" },
+  { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
+] as const;
 
 export const BADGE_ASSETS = [
   { key: "badge_explorer", path: "data/badges/badge_explorer.png" },
