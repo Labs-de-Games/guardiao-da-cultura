@@ -202,8 +202,8 @@ export function ComicSequence({
   const offsetMs = skip
     ? 0
     : allDone
-      ? panels[panels.length - 1].shrinkMs
-      : panels[0].shrinkMs;
+      ? (panels[panels.length - 1]?.shrinkMs ?? 0)
+      : (panels[0]?.shrinkMs ?? 0);
 
   return (
     <div
