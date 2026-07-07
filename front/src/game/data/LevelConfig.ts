@@ -16,6 +16,7 @@ export interface LevelDefinition {
     json: string;
     tileset: string;
     tilesetImg: string;
+    tilesetName: string;
   };
   data: {
     works: string[];
@@ -39,6 +40,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       json: "maps/museum-mvp/map.json",
       tileset: "tiles",
       tilesetImg: "maps/museum-mvp/spritesheet.png",
+      tilesetName: "museum",
     },
     data: {
       works: ["data/levels/level_01/works.json"],
@@ -47,6 +49,28 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
       collectibles: ["data/levels/level_01/collectibles.json"],
+    },
+  },
+  level_02: {
+    id: "level_02",
+    levelNumber: 2,
+    title: MAP_MARKERS[1].title,
+    maxStars: 2,
+    initialGrayscale: 0.82,
+    map: {
+      key: "map",
+      json: "maps/teatro-amazonas/map.json",
+      tileset: "tiles",
+      tilesetImg: "maps/teatro-amazonas/spritesheet.png",
+      tilesetName: "teatro",
+    },
+    data: {
+      works: ["data/levels/level_02/works.json"],
+      quizzes: ["data/levels/level_02/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
+      npcs: ["data/levels/level_02/npcs.json"],
+      messages: ["data/global/messages.json"],
+      collectibles: ["data/levels/level_02/collectibles.json"],
     },
   },
 };
