@@ -319,7 +319,10 @@ export class Game extends Scene {
     });
 
     let mapData: MapData | null = null;
-    const tileset = map.addTilesetImage("museum", this.levelDef.map.tileset);
+    const tileset = map.addTilesetImage(
+      this.levelDef.map.tilesetName,
+      this.levelDef.map.tileset,
+    );
 
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
