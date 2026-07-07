@@ -21,6 +21,7 @@ import { SceneNames } from "../constants/SceneNames";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import {
   BADGE_ASSETS,
+  GLOBAL_ASSETS,
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
@@ -195,6 +196,10 @@ export class Game extends Scene {
     LEVEL_ASSETS[
       this.levelId as keyof typeof LEVEL_ASSETS
     ].COLLECTIBLES.forEach((asset) => {
+      this.load.image(asset.key, asset.path);
+    });
+
+    GLOBAL_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
