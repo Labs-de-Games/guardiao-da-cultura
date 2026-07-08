@@ -4,7 +4,7 @@
       "id": "q1",
       "category": "Escultura",
       "question": "Qual desses temas está mais presente nas obras de Edgard de Souza?",
-      "options": ["hiperrealismo", "transformação", "miniaturas", "gigantismo"],
+      "options": ["Hiperrealismo", "Transformação", "Miniaturas", "Gigantismo"],
       "correctOptionIndex": 1,
       "explanation": "XXXXX",
       "hints": [
@@ -18,7 +18,7 @@
       "id": "q2",
       "category": "Pintura",
       "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião?",
-      "options": ["umbanda", "protestantismo", "islamismo", "budismo"],
+      "options": ["Umbanda", "Protestantismo", "Islamismo", "Budismo"],
       "correctOptionIndex": 0,
       "explanation": "XXXXX",
       "hint": [
@@ -70,7 +70,7 @@
       "id": "q5",
       "category": "Pintura",
       "question": "Abdias Nascimento pintou itens dos orixás, como o oxé e o ofá. O que é um ofá?",
-      "options": ["machado", "espelho", "arco e flecha", "lança"],
+      "options": ["Machado", "Espelho", "Arco e flecha", "Lança"],
       "correctOptionIndex": 2,
       "explanation": "XXXXX",
       "hints": ["É um instrumento de Oxóssi.", "É usado em combate."],
