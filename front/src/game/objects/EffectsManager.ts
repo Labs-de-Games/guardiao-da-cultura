@@ -10,6 +10,8 @@ export class EffectsManager {
   private camera: Phaser.Cameras.Scene2D.Camera;
   private colorMatrix?: Phaser.FX.ColorMatrix;
   private vignette?: Phaser.FX.Vignette;
+  private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
+  private spotlightVisible = false;
 
   static preload(scene: Phaser.Scene) {
     if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
@@ -113,5 +115,49 @@ export class EffectsManager {
       (color >> 8) & 0xff,
       color & 0xff,
     );
+  }
+
+  /** Cria o Graphics object para o feixe de spotlight */
+  public initSpotlight() {
+    this.spotlightBeam = this.scene.add.graphics();
+    this.spotlightBeam.setDepth(15);
+  }
+
+  /** Mostra o feixe de spotlight por uma duração (ms) */
+  public showSpotlightBeam(duration: number = 1000) {
+    this.spotlightVisible = true;
+    this.scene.time.delayedCall(duration, () => {
+      this.spotlightVisible = false;
+      this.spotlightBeam?.clear();
+    });
+  }
+
+  /** Desenha o feixe de spotlight na posição do jogador */
+  private drawSpotlightBeam(px: number, py: number) {
+    if (!this.spotlightBeam || !this.spotlightVisible) return;
+
+    const beam = this.spotlightBeam;
+    beam.clear();
+
+    const topHalfWidth = 10;
+    const bottomHalfWidth = 120;
+    const topOffsetY = -500;
+    const bottomOffsetY = 100;
+
+    beam.fillStyle(0xffffaa, 0.35);
+    beam.beginPath();
+    beam.moveTo(px - topHalfWidth, py + topOffsetY);
+    beam.lineTo(px + topHalfWidth, py + topOffsetY);
+    beam.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
+    beam.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
+    beam.closePath();
+    beam.fillPath();
+    beam.setDepth(1000);
+  }
+
+  /** Atualiza o spotlight (chamar a cada frame) */
+  public updateSpotlight(px: number, py: number) {
+    if (!this.spotlightVisible) return;
+    this.drawSpotlightBeam(px, py);
   }
 }
