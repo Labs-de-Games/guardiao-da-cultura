@@ -125,7 +125,7 @@ export interface MapMarkerChangedData {
   title: string;
   location: string;
   isAvailable: boolean;
-  image: string;
+  image?: string;
 }
 
 export interface AutoStartTickData {
