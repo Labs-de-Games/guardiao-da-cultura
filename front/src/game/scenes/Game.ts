@@ -104,8 +104,6 @@ export class Game extends Scene implements GameDataAccessor {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
-  private spotlightBeam!: Phaser.GameObjects.Graphics;
-  private spotlightVisible: boolean = false;
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
@@ -793,8 +791,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
-    this.spotlightBeam = this.add.graphics();
-    this.spotlightBeam.setDepth(15);
+    this.effects.initSpotlight();
 
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
@@ -1127,7 +1124,7 @@ export class Game extends Scene implements GameDataAccessor {
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
 
-    this.drawSpotlightBeam();
+    this.effects.updateSpotlight(this.player.x, this.player.y);
 
     if (this.player && this.hintKeySystem) {
       const isPanelOpen =
@@ -1170,36 +1167,7 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   public showSpotlightBeam(duration: number = 1000) {
-    this.spotlightVisible = true;
-    this.time.delayedCall(duration, () => {
-      this.spotlightVisible = false;
-      this.spotlightBeam?.clear();
-    });
-  }
-
-  private drawSpotlightBeam() {
-    if (!this.player || !this.spotlightBeam || !this.spotlightVisible) return;
-
-    const beam = this.spotlightBeam;
-    beam.clear();
-
-    const px = this.player.x;
-    const py = this.player.y;
-
-    const topHalfWidth = 10;
-    const bottomHalfWidth = 120;
-    const topOffsetY = -500;
-    const bottomOffsetY = 100;
-
-    beam.fillStyle(0xffffaa, 0.35);
-    beam.beginPath();
-    beam.moveTo(px - topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
-    beam.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
-    beam.closePath();
-    beam.fillPath();
-    beam.setDepth(1000);
+    this.effects.showSpotlightBeam(duration);
   }
 
   public recordFloorError(floorIndex: number) {
