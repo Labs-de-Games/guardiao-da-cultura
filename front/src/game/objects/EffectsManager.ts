@@ -140,12 +140,16 @@ export class EffectsManager {
     const bottomHalfWidth = 120;
     const topOffsetY = -500;
     const bottomOffsetY = 100;
+    const bottomBulge = bottomHalfWidth * 0.12;
 
     beam.fillStyle(0xffffaa, 0.35);
     beam.beginPath();
     beam.moveTo(px - topHalfWidth, py + topOffsetY);
     beam.lineTo(px + topHalfWidth, py + topOffsetY);
     beam.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
+    beam.lineTo(px + bottomHalfWidth * 0.2, py + bottomOffsetY + bottomBulge);
+    beam.lineTo(px, py + bottomOffsetY + bottomBulge * 1);
+    beam.lineTo(px - bottomHalfWidth * 0.2, py + bottomOffsetY + bottomBulge);
     beam.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
     beam.closePath();
     beam.fillPath();
