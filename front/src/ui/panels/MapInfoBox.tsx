@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { Box, Typography } from "@mui/material";
+import Image from "next/image";
 import { AUTO_START_TICK_INTERVAL_MS } from "@/game/constants/AutoStart";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
-
 
 export function MapInfoBox() {
   const activeMapMarker = useGameUIStore((s) => s.activeMapMarker);
