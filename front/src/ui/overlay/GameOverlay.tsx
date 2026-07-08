@@ -202,6 +202,12 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
           setSidebarOpen(false);
         }
       }
+      if ((e.key === " " || e.key === "e" || e.key === "E") && labelData) {
+        e.preventDefault();
+        e.stopPropagation();
+        setLabelData(null);
+        EventBus.emit("ui:label-hide", undefined);
+      }
       if (e.key === "b" || e.key === "B") {
         if (gameStarted) {
           setBadgeGalleryOpen(!badgeGalleryOpen);
