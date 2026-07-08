@@ -122,6 +122,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
           instanceId: data.instanceId,
           availableItems: data.availableItems,
           filledSlots: data.filledSlots,
+          expectedSlots: data.expectedSlots,
         });
       },
     );
