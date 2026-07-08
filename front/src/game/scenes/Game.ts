@@ -105,6 +105,7 @@ export class Game extends Scene implements GameDataAccessor {
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
   private spotlightBeam!: Phaser.GameObjects.Graphics;
+  private spotlightVisible: boolean = false;
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
@@ -1148,8 +1149,36 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
+  public recordFloorError(floorIndex: number) {
+    this.scoreManager.recordFloorError(floorIndex);
+  }
+
+  public completeFloor(floorIndex: number) {
+    this.scoreManager.completeFloor(floorIndex);
+  }
+
+  public recordPhotoFloorError() {
+    this.recordFloorError(this.scoringFloors.photo);
+  }
+
+  public completePhotoFloor() {
+    this.completeFloor(this.scoringFloors.photo);
+  }
+
+  public shakePhotoFailure() {
+    this.effects.shake();
+  }
+
+  public showSpotlightBeam(duration: number = 1000) {
+    this.spotlightVisible = true;
+    this.time.delayedCall(duration, () => {
+      this.spotlightVisible = false;
+      this.spotlightBeam?.clear();
+    });
+  }
+
   private drawSpotlightBeam() {
-    if (!this.player || !this.spotlightBeam) return;
+    if (!this.player || !this.spotlightBeam || !this.spotlightVisible) return;
 
     const beam = this.spotlightBeam;
     beam.clear();
@@ -1192,6 +1221,7 @@ export class Game extends Scene implements GameDataAccessor {
   public shakePhotoFailure() {
     this.effects.shakeHorizontal();
   }
+
 
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();

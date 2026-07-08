@@ -115,6 +115,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     gameScene.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
     if (allCorrect) {
+      gameScene.showSpotlightBeam();
       gameScene.completePhotoFloor();
 
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
