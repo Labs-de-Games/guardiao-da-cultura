@@ -77,7 +77,7 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
     g: Game,
     placeholder?: PlaceholderInstance | null,
   ): void {
-    g.effects.shakeHorizontal();
+    g.effects.shakeHorizontal(400, 0.05);
     g.recordFloorError(this.scoringFloor);
 
     const workId = placeholder
