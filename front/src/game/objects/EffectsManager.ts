@@ -138,8 +138,16 @@ export class EffectsManager {
     });
 
     this.scene.time.delayedCall(duration, () => {
-      this.spotlightVisible = false;
-      this.spotlightBeam?.clear();
+      this.scene.tweens.add({
+        targets: this,
+        revealProgress: 0,
+        duration: revealDuration,
+        ease: "Power2",
+        onComplete: () => {
+          this.spotlightVisible = false;
+          this.spotlightBeam?.clear();
+        },
+      });
     });
   }
 
