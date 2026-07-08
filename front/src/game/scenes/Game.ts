@@ -1,10 +1,5 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
-import {
-  createGamePersistence,
-  type GamePersistence,
-  type ScorePersistencePayload,
-} from "@/lib/persistence/gamePersistence";
 
 import { EventBus } from "../../shared/events/event-bus";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
@@ -27,7 +22,9 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
+import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
@@ -44,30 +41,31 @@ import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
+import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
+import { QuizManager } from "../systems/QuizManager";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import { GameEventType } from "../types/AnalyticsTypes";
-
+import type { GameDataAccessor } from "../types/GameDataAccessor";
 import type {
   CollectibleData,
   ContentJson,
-  LabelInfoData,
   MissionDef,
-  QuizQuestion,
-  WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
-import type {
-  QuizResultRecord,
-  UserProgressState,
-} from "../types/ProgressionTypes";
+import type { UserProgressState } from "../types/ProgressionTypes";
 import type { ScoringPayload } from "../types/ScoringTypes";
-import { DataUtils } from "../utils/DataUtils";
+import {
+  buildLabelInfo,
+  findWorkDataById,
+  resolveWorkIdFromPlaceholder,
+} from "../utils/WorkDataHelper";
 
-export class Game extends Scene {
+export class Game extends Scene implements GameDataAccessor {
   private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
 
   player!: Player;
@@ -78,7 +76,7 @@ export class Game extends Scene {
   private scoreManager!: ScoreManager;
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
 
-  private readonly scoringFloors = {
+  public readonly scoringFloors = {
     paintings: 0,
     sculptures: 1,
     photo: 2,
@@ -89,7 +87,6 @@ export class Game extends Scene {
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
-  private quizMode: "none" | "regular" | "intermediate" = "none";
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
@@ -100,18 +97,16 @@ export class Game extends Scene {
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
-  private persistence!: GamePersistence;
+  public persistenceBridge!: PersistenceBridge;
   private progressionManager!: ProgressionManager;
-  private isQuizActive: boolean = false;
-  private quizStartedAt: number | null = null;
-  private quizAttemptsForMission: number = 0;
+  private quizManager!: QuizManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
-  private contentData: ContentJson = {
+  public contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
     quizzes: {},
     intermediateQuizzes: {},
@@ -122,6 +117,19 @@ export class Game extends Scene {
 
   constructor() {
     super(SceneNames.GAME);
+  }
+
+  // GameDataAccessor implementation
+  public getWorks() {
+    return this.contentData.works;
+  }
+
+  public getMessages() {
+    return this.contentData.messages;
+  }
+
+  public getCollectibles() {
+    return this.contentData.collectibles;
   }
 
   init(data?: { levelId: string }) {
@@ -140,11 +148,7 @@ export class Game extends Scene {
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
-    this.isQuizActive = false;
-    this.quizMode = "none";
     this.photoChunksCollected = 0;
-    this.quizStartedAt = null;
-    this.quizAttemptsForMission = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
@@ -235,79 +239,9 @@ export class Game extends Scene {
   }
 
   private processModularData() {
-    this.levelDef.data.works.forEach((path, i) => {
-      const data = this.cache.json.get(`works_${i}`);
-      if (data) {
-        DataUtils.deepMerge(
-          this.contentData.works as unknown as Record<string, unknown>,
-          data as unknown as Record<string, unknown>,
-        );
-      } else {
-        console.warn(`[Game] Could not load works data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.quizzes.forEach((path, i) => {
-      const data = this.cache.json.get(`quizzes_${i}`);
-      if (data) {
-        DataUtils.deepMerge(this.contentData.quizzes, data);
-      } else {
-        console.warn(`[Game] Could not load quiz data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.intermediateQuizzes.forEach((path, i) => {
-      const data = this.cache.json.get(`intermediateQuizzes_${i}`);
-      if (data) {
-        DataUtils.deepMerge(this.contentData.intermediateQuizzes, data);
-      } else {
-        console.warn(
-          `[Game] Could not load intermediate quiz data from: ${path}`,
-        );
-      }
-    });
-
-    const knownKeys = new Set<string>(Object.values(MissionKeys));
-    for (const key of Object.keys(this.contentData.intermediateQuizzes)) {
-      if (!knownKeys.has(key)) {
-        console.warn(
-          `[Game] Unknown intermediate quiz key "${key}" — will never trigger. Check intermediate-quizzes.json.`,
-        );
-      }
-    }
-
-    this.levelDef.data.npcs.forEach((path, i) => {
-      const data = this.cache.json.get(`npcs_${i}`);
-      if (data?.npcs) {
-        DataUtils.deepMerge(this.contentData.npcs, data.npcs);
-      } else {
-        console.warn(`[Game] Could not load NPC data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.messages.forEach((path, i) => {
-      const data = this.cache.json.get(`messages_${i}`);
-      if (data) {
-        DataUtils.deepMerge(
-          this.contentData.messages as unknown as Record<string, unknown>,
-          data as unknown as Record<string, unknown>,
-        );
-      } else {
-        console.warn(`[Game] Could not load messages data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.collectibles.forEach((path, i) => {
-      const data = this.cache.json.get(`collectibles_${i}`);
-      if (data?.collectibles) {
-        DataUtils.deepMerge(
-          this.contentData.collectibles as unknown as Record<string, unknown>,
-          data.collectibles as unknown as Record<string, unknown>,
-        );
-      } else {
-        console.warn(`[Game] Could not load collectibles data from: ${path}`);
-      }
-    });
+    processModularData(this.levelDef, this.contentData, (key) =>
+      this.cache.json.get(key),
+    );
   }
 
   create() {
@@ -337,15 +271,7 @@ export class Game extends Scene {
     this.questManager = new QuestManager(MissionRequirements);
     this.scoreManager = new ScoreManager({ levelId: this.levelId });
 
-    const actorId = (this.registry.get("userId") as string | undefined) ?? null;
-    const isGuest = this.registry.get("isGuest") === true;
-    this.persistence = createGamePersistence({
-      mode: isGuest ? "guest" : "auth",
-      actorId,
-    });
-
     this.progressionManager = new ProgressionManager();
-    void this.initializeProgression();
 
     this.progressionManager.on(
       ProgressionEvents.PROGRESSION_UPDATED,
@@ -412,14 +338,51 @@ export class Game extends Scene {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.badgeSystem = new BadgeSystem(this, this.persistence);
-    this.badgeSystem.initialize();
-
     this.collectibleSystem = new CollectibleSystem(
       this,
       this.scoreManager,
       this.mapScale,
     );
+
+    const actorId = (this.registry.get("userId") as string | undefined) ?? null;
+    const isGuest = this.registry.get("isGuest") === true;
+    this.persistenceBridge = new PersistenceBridge(
+      isGuest ? "guest" : "auth",
+      actorId,
+      this.scoreManager,
+      this.progressionManager,
+      this.collectibleSystem,
+      this.questManager,
+      this.levelId,
+    );
+
+    this.badgeSystem = new BadgeSystem(
+      this,
+      this.persistenceBridge.persistence,
+    );
+    this.badgeSystem.initialize();
+
+    this.quizManager = new QuizManager(
+      {
+        getLevelId: () => this.levelId,
+        getLevelDef: () => this.levelDef,
+        getRegistry: () => this.registry,
+        getNpcs: () => this.npcs,
+        getPlayer: () => this.player,
+        getEvents: () => this.events,
+        getContentData: () => this.contentData,
+      },
+      this.scoreManager,
+      this.questManager,
+      this.progressionManager,
+      this.badgeSystem,
+      this.persistenceBridge,
+      this.analyticsSystem,
+      this.levelManager,
+    );
+
+    void this.persistenceBridge.initializeProgression();
+    void this.persistenceBridge.initializeCollectibles();
 
     this.registry.set("currentLevelId", this.levelId);
     this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
@@ -450,10 +413,15 @@ export class Game extends Scene {
 
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
+    this.mechanicsManager.registerHandler(
+      new PaintingMechanicHandler(this.scoringFloors.paintings),
+    );
+    this.mechanicsManager.registerHandler(
+      new SculptureMechanicHandler(this.scoringFloors.sculptures),
+    );
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
-      void this.initializeCollectibles();
       this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
 
       const placeholderLayer =
@@ -604,7 +572,7 @@ export class Game extends Scene {
         if (
           this.contentData.intermediateQuizzes[infoKey] &&
           !this.questManager.isIntermediateQuizDone(infoKey) &&
-          this.quizMode === "none"
+          this.quizManager.getQuizMode() === "none"
         ) {
           this.startIntermediateQuiz(infoKey);
         }
@@ -719,35 +687,6 @@ export class Game extends Scene {
     });
   }
 
-  private async initializeCollectibles(): Promise<void> {
-    try {
-      const collected = await this.persistence.loadCollectibles(this.levelId);
-
-      this.collectibleSystem.applyCollectedCollectibles(collected);
-
-      for (const record of collected) {
-        this.progressionManager.recordClueUnlocked(
-          record.collectibleId,
-          this.levelId,
-        );
-        this.questManager.collectInfo(`pista_${record.collectibleId}`);
-      }
-    } catch (err) {
-      console.warn("[Game] Failed to load collectibles from persistence:", err);
-    }
-  }
-
-  private async initializeProgression(): Promise<void> {
-    try {
-      const snapshot = await this.persistence.loadProgress();
-      if (snapshot) {
-        this.progressionManager.hydrate(snapshot);
-      }
-    } catch (err) {
-      console.warn("[Game] Failed to load progression from persistence:", err);
-    }
-  }
-
   private setupEvents() {
     this.events.on(GameEvents.DIALOGUE_STARTED, () => {
       this.isDialogueOpen = true;
@@ -848,7 +787,9 @@ export class Game extends Scene {
       (payload: { missionId: string; infoKey: string }) => {
         const key = payload.infoKey;
         if (FLOOR_COMPLETE_KEYS.has(key)) {
-          const curator = this.findCuratorNpc();
+          const curator = this.npcs.find(
+            (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
+          ) as Npc | undefined;
           if (curator) {
             curator.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
           }
@@ -908,11 +849,16 @@ export class Game extends Scene {
         const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
           label.placeholderId,
         );
-        const workId = this.resolveWorkIdFromPlaceholder(placeholder?.id);
-        const work = workId ? this.findWorkDataById(workId) : null;
+        const workId = resolveWorkIdFromPlaceholder(
+          placeholder?.id,
+          this.contentData,
+        );
+        const work = workId ? findWorkDataById(workId, this.contentData) : null;
 
         if (work) {
-          const payload = this.buildLabelInfo(work);
+          const payload = buildLabelInfo(work, (id) =>
+            findWorkDataById(id, this.contentData),
+          );
           EventBus.emit("ui:label-show", payload);
           return;
         }
@@ -1061,374 +1007,11 @@ export class Game extends Scene {
   }
 
   public startQuiz(missionId: string) {
-    try {
-      if (!this.questManager) {
-        throw new Error("QuestManager não inicializado");
-      }
-
-      const npc = this.findNpcByMission(missionId);
-
-      const questions = npc?.getQuiz();
-
-      if (!questions || questions.length === 0) {
-        console.error(
-          `[Game] Quiz data missing or empty for missionId: ${missionId}`,
-        );
-        this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-          "[Erro de Sistema] Não há perguntas cadastradas para esta missão.",
-        ]);
-        return;
-      }
-
-      const dialogues = npc?.getDialogues();
-      const quizQuestionLines = dialogues?.start_quiz_question;
-      const rawLine =
-        quizQuestionLines && quizQuestionLines.length > 0
-          ? quizQuestionLines[0]
-          : "Podemos iniciar o teste?";
-      const npcName = npc?.getName() || "";
-
-      this.events.emit(
-        GameEvents.SHOW_CONFIRMATION_REQUEST,
-        rawLine,
-        npcName,
-        () => {
-          this.isQuizActive = true;
-          this.quizStartedAt = Date.now();
-          this.quizAttemptsForMission += 1;
-          this.quizMode = "regular";
-          this.isQuizActive = true;
-          this.quizStartedAt = Date.now();
-          this.quizAttemptsForMission += 1;
-          this.events.emit(
-            GameEvents.SHOW_QUIZ_REQUEST,
-            questions,
-            this.scoreManager,
-            (score: number) => {
-              this.scoreManager.recordQuizResult(score, questions.length);
-              const required = Math.ceil(questions.length * 0.7);
-              const isSuccess = score >= required;
-              console.log(
-                `[Game] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
-              );
-
-              if (isSuccess) {
-                if (score === questions.length) {
-                  this.registry.set("quiz_perfect_score", 1);
-                  this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
-                }
-
-                if (this.registry.get("has_failed_quiz") === 1) {
-                  this.registry.set("quiz_solved_after_failure", 1);
-                  this.badgeSystem.checkRequirements(
-                    "quiz_solved_after_failure",
-                    1,
-                  );
-                }
-
-                const payload = this.scoreManager.getPayload();
-                this.analyticsSystem.trackLevelEvent(
-                  GameEventType.LEVEL_COMPLETED,
-                  this.levelId,
-                  {
-                    levelNumber: this.levelDef.levelNumber,
-                    score: payload.totalQuarters,
-                    stars: payload.totalStars,
-                    rating: payload.rating,
-                    missionId: missionId,
-                  },
-                );
-
-                posthog.capture("level_completed", {
-                  level_id: this.levelId,
-                  level_number: this.levelDef.levelNumber,
-                  score: payload.totalQuarters,
-                  stars: payload.totalStars,
-                  rating: payload.rating,
-                  mission_id: missionId,
-                  time_spent_ms:
-                    Date.now() - new Date(payload.startedAt).getTime(),
-                  attempts: this.registry.get("has_failed_quiz") || 0,
-                });
-
-                void this.submitScoreToBackend();
-              } else {
-                this.registry.set("has_failed_quiz", 1);
-                posthog.capture("level_failed", {
-                  level_id: this.levelId,
-                  level_number: this.levelDef.levelNumber,
-                  mission_id: missionId,
-                  score,
-                  total_questions: questions.length,
-                });
-                void this.submitScoreToBackend();
-              }
-
-              const scoringPayload = this.scoreManager.getPayload();
-              posthog.capture("quiz_completed", {
-                level_id: this.levelId,
-                mission_id: missionId,
-                score,
-                correct_answers: scoringPayload.quiz.correctAnswers,
-                total_questions: questions.length,
-                accuracy_percent: scoringPayload.quiz.accuracyPercent,
-                passed: isSuccess,
-              });
-
-              void this.persistence.sendQuizOutcome({
-                type: isSuccess ? "quiz.completed" : "quiz.failed",
-                metadata: {
-                  missionId,
-                  score,
-                  totalQuestions: questions.length,
-                  accuracyPercent: scoringPayload.quiz.accuracyPercent,
-                  quartersEarned: scoringPayload.quiz.quartersEarned,
-                  passed: isSuccess,
-                  payload: scoringPayload as unknown as Record<string, unknown>,
-                },
-                timestamp: new Date().toISOString(),
-              });
-
-              const quizResultRecord: QuizResultRecord = {
-                completedAt: new Date().toISOString(),
-                passed: isSuccess,
-                score,
-                totalQuestions: questions.length,
-                accuracyPercent: scoringPayload.quiz.accuracyPercent,
-                quartersEarned: scoringPayload.quiz.quartersEarned,
-                timeSpentMs:
-                  this.quizStartedAt !== null
-                    ? Date.now() - this.quizStartedAt
-                    : null,
-                attempts: this.quizAttemptsForMission,
-                payload: null,
-              };
-
-              this.progressionManager.recordQuizResult(
-                missionId,
-                quizResultRecord,
-              );
-
-              if (isSuccess) {
-                this.progressionManager.recordLevelCompleted(
-                  this.levelId,
-                  this.levelDef.levelNumber,
-                  scoringPayload.totalStars,
-                  scoringPayload.totalQuarters,
-                  new Date().toISOString(),
-                );
-              }
-
-              void this.saveProgressToBackend();
-
-              const progressState = this.progressionManager.getState();
-              posthog.capture("progress_updated", {
-                level_id: this.levelId,
-                level_number: this.levelDef.levelNumber,
-                current_level: progressState.currentLevel,
-                total_stars: progressState.totalStars,
-                completed_levels_count: Object.keys(
-                  progressState.completedLevels,
-                ).length,
-                mission_id: missionId,
-                passed: isSuccess,
-                score,
-                total_questions: questions.length,
-              });
-
-              const npc = this.findNpcByMission(missionId);
-
-              if (!npc) {
-                console.error(
-                  `[Game] NPC não encontrado para a missão: ${missionId}`,
-                );
-                return;
-              }
-
-              const dialogues = npc.getDialogues();
-              const lines = isSuccess ? dialogues.success : dialogues.failure;
-
-              if (isSuccess) {
-                this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-              } else {
-                this.questManager.setStatus(
-                  missionId,
-                  QuestStatus.READY_FOR_QUIZ,
-                );
-              }
-
-              this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-              this.questManager.setPendingResult(missionId, lines);
-
-              if (isSuccess) {
-                this.levelManager.updateProgress();
-              }
-
-              this.quizMode = "none";
-              this.isQuizActive = false;
-            },
-          );
-        },
-        () => {
-          this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
-          this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-        },
-      );
-    } catch (error) {
-      console.error("[Game] Erro fatal ao iniciar Quiz:", error);
-      this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Ocorreu um erro ao carregar o desafio.",
-      ]);
-    }
+    this.quizManager.startQuiz(missionId);
   }
 
   public startIntermediateQuiz(infoKey: string) {
-    try {
-      const questions = this.contentData.intermediateQuizzes[infoKey];
-      if (!questions || questions.length === 0) {
-        return;
-      }
-
-      if (this.questManager.isIntermediateQuizDone(infoKey)) {
-        return;
-      }
-
-      const npc = this.findCuratorNpc();
-
-      if (!npc) {
-        console.warn(
-          `[Game] NPC not found for intermediate quiz, infoKey: ${infoKey}`,
-        );
-        return;
-      }
-
-      this.quizMode = "intermediate";
-
-      const spawnPos = npc.getSpawnPosition();
-      const playerX = this.player.x;
-      const npcX = playerX + 150;
-      const npcY = this.player.y;
-
-      npc.showForQuiz(npcX, npcY);
-
-      const onComplete = this.createIntermediateQuizCallback(
-        infoKey,
-        questions,
-        npc,
-        spawnPos,
-      );
-
-      const explanationLines = npc.getIntermediateQuizDialogues();
-      if (explanationLines.length > 0) {
-        this.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          explanationLines,
-          () => {
-            this.events.emit(
-              GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-              questions,
-              onComplete,
-            );
-          },
-        );
-      } else {
-        this.events.emit(
-          GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-          questions,
-          onComplete,
-        );
-      }
-    } catch (error) {
-      console.error("[Game] Error starting intermediate quiz:", error);
-      this.quizMode = "none";
-    }
-  }
-
-  private createIntermediateQuizCallback(
-    infoKey: string,
-    questions: QuizQuestion[],
-    npc: Npc,
-    spawnPos: { x: number; y: number } | null,
-  ) {
-    return (score: number) => {
-      const passed = score > 0;
-      this.scoreManager.recordIntermediateQuizResult(infoKey, passed);
-      this.questManager.markIntermediateQuizDone(infoKey);
-
-      if (this.progressionManager) {
-        this.progressionManager.recordIntermediateQuizResult(infoKey, {
-          completedAt: new Date().toISOString(),
-          passed,
-          score,
-          totalQuestions: questions.length,
-          missionId: MissionIds.CURATOR,
-        });
-      }
-
-      void this.saveProgressToBackend();
-
-      const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
-
-      if (floorCompleted) {
-        npc.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
-      } else {
-        npc.hideAfterQuiz();
-        if (spawnPos) {
-          npc.teleportTo(spawnPos.x, spawnPos.y);
-        }
-      }
-
-      this.quizMode = "none";
-
-      posthog.capture("intermediate_quiz_completed", {
-        level_id: this.levelId,
-        info_key: infoKey,
-        score,
-        total_questions: questions.length,
-        passed,
-      });
-
-      void this.persistence.sendQuizOutcome({
-        type: passed
-          ? "intermediate-quiz.completed"
-          : "intermediate-quiz.failed",
-        metadata: {
-          infoKey,
-          passed,
-          score,
-          totalQuestions: questions.length,
-          missionId: MissionIds.CURATOR,
-        },
-        timestamp: new Date().toISOString(),
-      });
-
-      if (
-        this.questManager.hasCollectedAll(MissionIds.CURATOR) &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.READY_FOR_QUIZ &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.QUIZ_ACTIVE &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.COMPLETED
-      ) {
-        this.questManager.setStatus(
-          MissionIds.CURATOR,
-          QuestStatus.READY_FOR_QUIZ,
-        );
-      }
-    };
-  }
-
-  private findCuratorNpc(): Npc | undefined {
-    return this.npcs.find(
-      (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
-    ) as Npc | undefined;
-  }
-
-  private findNpcByMission(missionId: string): Npc | undefined {
-    return this.npcs.find(
-      (n) => n instanceof Npc && n.getMissionId() === missionId,
-    ) as Npc | undefined;
+    this.quizManager.startIntermediateQuiz(infoKey);
   }
 
   private checkDialogState() {
@@ -1436,8 +1019,8 @@ export class Game extends Scene {
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
-      this.quizMode === "none" &&
-      !this.isQuizActive
+      this.quizManager.getQuizMode() === "none" &&
+      !this.quizManager.getIsQuizActive()
     ) {
       if (this.player) this.player.isInDialogue = false;
     }
@@ -1499,64 +1082,6 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  private resolveWorkIdFromPlaceholder(
-    rawId?: string | string[],
-  ): string | null {
-    if (!rawId) return null;
-
-    const ids = Array.isArray(rawId) ? rawId : [rawId];
-    for (const id of ids) {
-      if (this.findWorkDataById(id)) return id;
-    }
-
-    return ids[0] || null;
-  }
-
-  private findWorkDataById(id: string): WorkData | null {
-    const groups = Object.values(this.contentData.works);
-    for (const group of groups) {
-      if (!group) continue;
-      const match = group[id];
-      if (match) return match;
-    }
-    return null;
-  }
-
-  private buildLabelInfo(work: WorkData): LabelInfoData {
-    // Check if this work has a parent_id (for chunks that belong to a larger work)
-    const workAny = work as unknown as Record<string, unknown>;
-    const parentId = workAny.parent_id as string | undefined;
-
-    // If there's a parent, use the parent's data for the label
-    if (parentId) {
-      const parentWork = this.findWorkDataById(parentId);
-      if (parentWork) {
-        return this.buildLabelInfo(parentWork);
-      }
-    }
-
-    const metadata = work.metadata || {};
-    // Cast to access fields from educational (actual JSON structure)
-    const educational = (work.educational || {}) as Record<string, unknown>;
-
-    // These fields are in educational in the actual works.json
-    const description = (educational.description as string | undefined) || "";
-    const dimensions =
-      (educational.dimensions as string | undefined) || metadata.dimensions;
-    const medium =
-      (educational.medium as string | undefined) || metadata.medium;
-
-    return {
-      title: metadata.title || work.id,
-      author: metadata.author || "",
-      description,
-      year: metadata.year,
-      dimensions,
-      medium,
-      place: metadata.place,
-    };
-  }
-
   update(_time: number, delta: number) {
     const NOMINAL_DT = 1000 / 60;
     const dtClamped = Math.min(delta, 50);
@@ -1568,7 +1093,7 @@ export class Game extends Scene {
         this.isDialogueOpen ||
         this.isControlsOpen ||
         this.isChunkSelectorOpen ||
-        this.isQuizActive ||
+        this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
       const isPlayerBusy = this.player.isGrabbing || this.player.isCarrying;
@@ -1603,7 +1128,7 @@ export class Game extends Scene {
     return this.scoreManager.getPayload();
   }
 
-  private getMissionStepProgress(
+  public getMissionStepProgress(
     missionId: string,
   ): { filled: number; total: number }[] {
     const def = MissionRegistry[missionId];
@@ -1623,191 +1148,19 @@ export class Game extends Scene {
     });
   }
 
-  private async submitScoreToBackend() {
-    try {
-      const payload = this.scoreManager.getPayload();
-
-      const persistencePayload: ScorePersistencePayload = {
-        levelId: payload.levelId,
-        totalQuarters: payload.totalQuarters,
-        totalStars: payload.totalStars,
-        rating: payload.rating,
-        floors: payload.floors.map((f) => ({
-          floorIndex: f.floorIndex,
-          errors: f.errors,
-          quartersEarned: f.quartersEarned,
-        })),
-        quiz: {
-          totalQuestions: payload.quiz.totalQuestions,
-          correctAnswers: payload.quiz.correctAnswers,
-          accuracyPercent: payload.quiz.accuracyPercent,
-          quartersEarned: payload.quiz.quartersEarned,
-        },
-        intermediateQuizzes: {
-          total: payload.intermediateQuizzes.total,
-          passed: payload.intermediateQuizzes.passed,
-          quartersNet: payload.intermediateQuizzes.quartersNet,
-        },
-        collectibles: {
-          total: payload.collectibles.total,
-          interactionsCount: payload.collectibles.interactionsCount,
-          quartersEarned: payload.collectibles.quartersEarned,
-        },
-        collectedCollectibles: payload.collectibles.interactions.map(
-          (interaction) => ({
-            collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as "CLUE_VILLAIN",
-            levelId: payload.levelId,
-          }),
-        ),
-      };
-
-      await this.persistence.saveScore(persistencePayload);
-
-      posthog.capture("score_updated", {
-        level_id: payload.levelId,
-        total_quarters: payload.totalQuarters,
-        total_stars: payload.totalStars,
-        rating: payload.rating,
-        floor_scores: payload.floors,
-        quiz_score: {
-          total_questions: payload.quiz.totalQuestions,
-          correct_answers: payload.quiz.correctAnswers,
-          accuracy_percent: payload.quiz.accuracyPercent,
-          quarters_earned: payload.quiz.quartersEarned,
-        },
-        collectible_score: {
-          total: payload.collectibles.total,
-          interactions_count: payload.collectibles.interactionsCount,
-          quarters_earned: payload.collectibles.quartersEarned,
-        },
-      });
-    } catch (err) {
-      console.error("[Game] Failed to save score in persistence layer:", err);
-    }
-  }
-
-  private async saveProgressToBackend() {
-    try {
-      const state = this.progressionManager.getState();
-      await this.persistence.saveProgress(state);
-    } catch (err) {
-      console.error(
-        "[Game] Failed to save progression in persistence layer:",
-        err,
-      );
-    }
-  }
-
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
-    const typeKey =
-      item.interactiveType === InteractiveType.PAINTING
-        ? "PAINTING"
-        : "SCULPTURE";
-
-    const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
-
-    if (result.snapped) {
-      // Badge: Restaurador
-      const currentFlawless =
-        this.registry.get("puzzles_solved_flawlessly") || 0;
-      this.registry.set("puzzles_solved_flawlessly", currentFlawless + 1);
-
-      this.events.emit(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
-      );
-      const missionId = MissionIds.CURATOR;
-
-      // Always emit progress on every successful drop
-      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-      const reqs = this.questManager.getRequiredInfos(missionId);
-      EventBus.emit("quest:progress-changed", {
-        missionId,
-        missionTitle: MissionRegistry[missionId]?.title || "",
-        collectedInfos: this.questManager.getCollectedInfos(missionId),
-        totalSteps: reqs.length,
-        steps: MissionRegistry[missionId]?.steps,
-        stepProgress: this.getMissionStepProgress(missionId),
-      });
-
-      if (item.interactiveType === InteractiveType.PAINTING) {
-        if (
-          this.placeholderSystem.checkCategoryCompletion(
-            InteractiveType.PAINTING,
-          )
-        ) {
-          this.completeFloor(this.scoringFloors.paintings);
-          // Two-phase: show 3/3 first, then [✓] after delay
-          this.time.delayedCall(500, () => {
-            this.events.emit(GameEvents.INFO_COLLECTED, {
-              missionId,
-              infoKey: MissionKeys.PAINTINGS_DONE,
-            });
-            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-            const reqs2 = this.questManager.getRequiredInfos(missionId);
-            EventBus.emit("quest:progress-changed", {
-              missionId,
-              missionTitle: MissionRegistry[missionId]?.title || "",
-              collectedInfos: this.questManager.getCollectedInfos(missionId),
-              totalSteps: reqs2.length,
-              steps: MissionRegistry[missionId]?.steps,
-              stepProgress: this.getMissionStepProgress(missionId),
-            });
-          });
-        }
-      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
-        if (
-          this.placeholderSystem.checkCategoryCompletion(
-            InteractiveType.SCULPTURE,
-          )
-        ) {
-          this.completeFloor(this.scoringFloors.sculptures);
-          // Two-phase: show 3/3 first, then [✓] after delay
-          this.time.delayedCall(500, () => {
-            this.events.emit(GameEvents.INFO_COLLECTED, {
-              missionId,
-              infoKey: MissionKeys.SCULPTURES_DONE,
-            });
-            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-            const reqs2 = this.questManager.getRequiredInfos(missionId);
-            EventBus.emit("quest:progress-changed", {
-              missionId,
-              missionTitle: MissionRegistry[missionId]?.title || "",
-              collectedInfos: this.questManager.getCollectedInfos(missionId),
-              totalSteps: reqs2.length,
-              steps: MissionRegistry[missionId]?.steps,
-              stepProgress: this.getMissionStepProgress(missionId),
-            });
-          });
-        }
-      }
-    } else if (result.mismatch) {
-      if (item.interactiveType === InteractiveType.PAINTING) {
-        this.recordFloorError(this.scoringFloors.paintings);
-      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
-        this.recordFloorError(this.scoringFloors.sculptures);
-      }
-
-      const placeholderWorkId = result.placeholder
-        ? this.resolveWorkIdFromPlaceholder(result.placeholder.id)
-        : null;
-      const placeholderWork = placeholderWorkId
-        ? this.findWorkDataById(placeholderWorkId)
-        : null;
-      const feedback = placeholderWork?.educational?.feedbackError;
-
-      if (feedback) {
-        this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [feedback]);
-      } else {
-        this.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          sysDialogs[typeKey]?.ERROR || [
-            "Esta obra não pertence a este local.",
-          ],
-        );
+    if (result.snapped || result.mismatch) {
+      const handler = this.mechanicsManager.getHandler(item.interactiveType);
+      if (
+        handler &&
+        "handleDropResult" in handler &&
+        typeof handler.handleDropResult === "function"
+      ) {
+        (
+          handler as PaintingMechanicHandler | SculptureMechanicHandler
+        ).handleDropResult(this, result);
       }
     }
   }
