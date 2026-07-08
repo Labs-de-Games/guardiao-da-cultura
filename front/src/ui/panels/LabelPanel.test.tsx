@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { LabelPanel } from "./LabelPanel";
 
@@ -165,5 +166,89 @@ describe("LabelPanel", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("renders the close button with correct aria-label", () => {
+    openLabel();
+    render(<LabelPanel />);
+
+    expect(screen.getByLabelText("Fechar")).toBeInTheDocument();
+  });
+
+  it("renders the close hint text", () => {
+    openLabel();
+    render(<LabelPanel />);
+
+    expect(screen.getByText("Aperte ESC para fechar")).toBeInTheDocument();
+  });
+
+  it("closes the label when the close button is clicked", () => {
+    openLabel();
+    render(<LabelPanel />);
+
+    expect(screen.getByText("Obra Teste")).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Fechar"));
+    });
+
+    expect(useGameUIStore.getState().labelData).toBeNull();
+  });
+
+  it("emits ui:label-hide when the close button is clicked", () => {
+    const emitSpy = jest.spyOn(EventBus, "emit");
+    openLabel();
+    render(<LabelPanel />);
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Fechar"));
+    });
+
+    expect(emitSpy).toHaveBeenCalledWith("ui:label-hide", undefined);
+    emitSpy.mockRestore();
+  });
+
+  it("starts with hint visible and hides it after the fade delay", () => {
+    jest.useFakeTimers();
+    openLabel();
+    render(<LabelPanel />);
+
+    expect(screen.getByText("Aperte ESC para fechar")).toBeInTheDocument();
+
+    // Advance past the fade delay (4000ms)
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    // The text element still exists in the DOM but the animation class is applied
+    expect(screen.getByText("Aperte ESC para fechar")).toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
+  it("resets hint visibility when a new label opens", () => {
+    jest.useFakeTimers();
+    openLabel();
+    render(<LabelPanel />);
+
+    // Advance past the fade delay
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    // Open a new label — hint should reset
+    act(() => {
+      useGameUIStore.setState({
+        labelData: {
+          title: "Nova Obra",
+          author: "Autor",
+          description: "Nova descrição.",
+        },
+      });
+    });
+
+    expect(screen.getByText("Aperte ESC para fechar")).toBeInTheDocument();
+
+    jest.useRealTimers();
   });
 });
