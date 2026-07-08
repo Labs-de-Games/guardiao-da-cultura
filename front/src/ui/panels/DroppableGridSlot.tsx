@@ -44,15 +44,16 @@ export function DroppableGridSlot({
     disabled: !isDraggable,
   });
 
-  const borderStyle = isOver || isSelected
-    ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
-    : isRejecting
-      ? "2px solid #e57373"
-      : isJustPlaced
-        ? "3px solid #52b788"
-        : isLocked
-          ? "2px solid #4b8b5f"
-          : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`;
+  const borderStyle =
+    isOver || isSelected
+      ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
+      : isRejecting
+        ? "2px solid #e57373"
+        : isJustPlaced
+          ? "3px solid #52b788"
+          : isLocked
+            ? "2px solid #4b8b5f"
+            : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`;
 
   return (
     <Box
