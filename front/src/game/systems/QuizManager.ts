@@ -46,6 +46,9 @@ export class QuizManager {
   private isQuizActive = false;
   private quizStartedAt: number | null = null;
   private quizAttemptsForMission = 0;
+  private pendingIntermediateQuizQuestions: QuizQuestion[] | null = null;
+  private pendingIntermediateQuizOnComplete: ((score: number) => void) | null =
+    null;
 
   constructor(
     private readonly context: QuizManagerContext,
@@ -336,9 +339,13 @@ export class QuizManager {
 
       const explanationLines = npc.getIntermediateQuizDialogues();
       if (explanationLines.length > 0) {
+        this.pendingIntermediateQuizQuestions = questions;
+        this.pendingIntermediateQuizOnComplete = onComplete;
         this.context
           .getEvents()
           .emit(GameEvents.SHOW_DIALOGUE_REQUEST, explanationLines, () => {
+            this.pendingIntermediateQuizQuestions = null;
+            this.pendingIntermediateQuizOnComplete = null;
             this.context
               .getEvents()
               .emit(
@@ -359,6 +366,23 @@ export class QuizManager {
     } catch (error) {
       console.error(`[QuizManager] Error starting intermediate quiz: ${error}`);
     }
+  }
+
+  public triggerPendingIntermediateQuiz(): boolean {
+    if (
+      this.quizMode === "intermediate" &&
+      this.pendingIntermediateQuizQuestions
+    ) {
+      const questions = this.pendingIntermediateQuizQuestions;
+      const onComplete = this.pendingIntermediateQuizOnComplete!;
+      this.pendingIntermediateQuizQuestions = null;
+      this.pendingIntermediateQuizOnComplete = null;
+      this.context
+        .getEvents()
+        .emit(GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST, questions, onComplete);
+      return true;
+    }
+    return false;
   }
 
   private createIntermediateQuizCallback(
