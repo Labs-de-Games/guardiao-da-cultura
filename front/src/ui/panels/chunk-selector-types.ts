@@ -20,6 +20,7 @@ export type ChunkSelectorMachineState = {
   slots: (string | null)[];
   usedInventoryIndices: (number | null)[];
   lockedSlots: boolean[];
+  justPlacedSlots: number[];
 };
 
 export type ChunkSelectorAction =
@@ -72,6 +73,7 @@ export function buildInitialState(
     slots,
     usedInventoryIndices: [null, null, null, null],
     lockedSlots,
+    justPlacedSlots: [],
   };
 }
 
@@ -189,6 +191,7 @@ export function reducer(
 
       const nextSlots = [...state.slots];
       const nextUsed = [...state.usedInventoryIndices];
+      const nextLocked = [...state.lockedSlots];
 
       if (state.pickedItemIndex !== null) {
         const item = state.availableItems[state.pickedItemIndex];
@@ -196,11 +199,14 @@ export function reducer(
 
         nextSlots[gridIndex] = item.id;
         nextUsed[gridIndex] = state.pickedItemIndex;
+        nextLocked[gridIndex] = true;
 
         return {
           ...state,
           slots: nextSlots,
           usedInventoryIndices: nextUsed,
+          lockedSlots: nextLocked,
+          justPlacedSlots: [...state.justPlacedSlots, gridIndex],
           pickedItemIndex: null,
           cursorMode: "inventory",
           selectedGridIndex: gridIndex,
@@ -237,6 +243,7 @@ export function reducer(
 
     const nextSlots = [...state.slots];
     const nextUsed = [...state.usedInventoryIndices];
+    const nextLocked = [...state.lockedSlots];
 
     const previousSlot = nextUsed.indexOf(fromInventoryIndex);
     if (previousSlot !== -1) {
@@ -246,11 +253,14 @@ export function reducer(
 
     nextSlots[toSlotIndex] = item.id;
     nextUsed[toSlotIndex] = fromInventoryIndex;
+    nextLocked[toSlotIndex] = true;
 
     return {
       ...state,
       slots: nextSlots,
       usedInventoryIndices: nextUsed,
+      lockedSlots: nextLocked,
+      justPlacedSlots: [...state.justPlacedSlots, toSlotIndex],
       pickedItemIndex: null,
       cursorMode: "inventory",
       selectedInventoryIndex: nextFreeInventoryIndex(

@@ -920,6 +920,11 @@ export class Game extends Scene {
 
         this.isChunkSelectorOpen = true;
         this.events.emit(GameEvents.DIALOGUE_STARTED);
+        const expectedSlots = Array.isArray(nearby.id)
+          ? nearby.id
+          : String(nearby.id)
+              .split(",")
+              .map((s) => s.trim());
         EventBus.emit("ui:chunk-selector-open", {
           instanceId: nearby.instanceId,
           availableItems: availableChunks.map((item) => ({
@@ -927,6 +932,7 @@ export class Game extends Scene {
             name: item.itemName,
           })),
           filledSlots: filled,
+          expectedSlots,
         });
       }
     });

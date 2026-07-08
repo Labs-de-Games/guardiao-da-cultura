@@ -49,6 +49,8 @@ function parseDragId(
   return null;
 }
 
+const REJECT_DURATION_MS = 400;
+
 export function ChunkSelectorPanel() {
   const chunkSelectorData = useGameUIStore((s) => s.chunkSelectorData);
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
@@ -64,6 +66,9 @@ export function ChunkSelectorPanel() {
     null,
   );
   const [slotWidth, setSlotWidth] = useState(170);
+  const [rejectedSlotIndex, setRejectedSlotIndex] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!chunkSelectorOpen || !chunkSelectorData) return;
@@ -89,6 +94,20 @@ export function ChunkSelectorPanel() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [chunkSelectorOpen]);
+
+  const triggerReject = useCallback(
+    (slotIndex: number, itemId: string) => {
+      if (!chunkSelectorData) return;
+      setRejectedSlotIndex(slotIndex);
+      EventBus.emit("ui:chunk-slot-rejected", {
+        instanceId: chunkSelectorData.instanceId,
+        slotIndex,
+        itemId,
+      });
+      setTimeout(() => setRejectedSlotIndex(null), REJECT_DURATION_MS);
+    },
+    [chunkSelectorData],
+  );
 
   const handleClose = useCallback(() => {
     EventBus.emit("ui:chunk-selector-close", undefined);
@@ -149,6 +168,27 @@ export function ChunkSelectorPanel() {
           return;
         }
 
+        // Validate placement when user confirms a picked item onto a grid slot
+        if (state.cursorMode === "grid" && state.pickedItemIndex !== null) {
+          const item = state.availableItems[state.pickedItemIndex];
+          const gridIndex = state.selectedGridIndex;
+          if (item && !state.lockedSlots[gridIndex]) {
+            const expectedId = chunkSelectorData?.expectedSlots[gridIndex];
+            if (expectedId && item.id === expectedId) {
+              dispatch({ type: "CONFIRM" });
+              EventBus.emit("ui:chunk-slot-placed", {
+                instanceId: chunkSelectorData!.instanceId,
+                slotIndex: gridIndex,
+                itemId: item.id,
+              });
+            } else {
+              triggerReject(gridIndex, item.id);
+              dispatch({ type: "CANCEL_PICK" });
+            }
+            return;
+          }
+        }
+
         dispatch({ type: "CONFIRM" });
         return;
       }
@@ -164,11 +204,16 @@ export function ChunkSelectorPanel() {
       window.removeEventListener("keydown", onKeyDown, { capture: true });
     };
   }, [
+    chunkSelectorData,
     chunkSelectorOpen,
     handleClose,
     handleSubmit,
     state.cursorMode,
     state.pickedItemIndex,
+    state.availableItems,
+    state.lockedSlots,
+    state.selectedGridIndex,
+    triggerReject,
   ]);
 
   useEffect(() => {
@@ -208,41 +253,58 @@ export function ChunkSelectorPanel() {
     [state.availableItems, state.slots],
   );
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveDragImageId(null);
-    if (!over) return;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveDragImageId(null);
+      if (!over) return;
 
-    const activeParsed = parseDragId(String(active.id));
-    const overParsed = parseDragId(String(over.id));
-    const overId = String(over.id);
+      const activeParsed = parseDragId(String(active.id));
+      const overParsed = parseDragId(String(over.id));
+      const overId = String(over.id);
 
-    if (activeParsed?.prefix === "inv" && overParsed?.prefix === "slot") {
-      dispatch({
-        type: "DRAG_DROP",
-        payload: {
-          fromInventoryIndex: activeParsed.index,
-          toSlotIndex: overParsed.index,
-        },
-      });
-    } else if (activeParsed?.prefix === "grid" && overId === "inventory") {
-      dispatch({
-        type: "GRID_TO_INVENTORY",
-        payload: { slotIndex: activeParsed.index },
-      });
-    } else if (
-      activeParsed?.prefix === "grid" &&
-      overParsed?.prefix === "slot"
-    ) {
-      dispatch({
-        type: "GRID_TO_GRID",
-        payload: {
-          fromSlotIndex: activeParsed.index,
-          toSlotIndex: overParsed.index,
-        },
-      });
-    }
-  }, []);
+      if (activeParsed?.prefix === "inv" && overParsed?.prefix === "slot") {
+        const slotIndex = overParsed.index;
+        const item = state.availableItems[activeParsed.index];
+        if (!item) return;
+
+        const expectedId = chunkSelectorData?.expectedSlots[slotIndex];
+        if (expectedId && item.id === expectedId) {
+          dispatch({
+            type: "DRAG_DROP",
+            payload: {
+              fromInventoryIndex: activeParsed.index,
+              toSlotIndex: slotIndex,
+            },
+          });
+          EventBus.emit("ui:chunk-slot-placed", {
+            instanceId: chunkSelectorData!.instanceId,
+            slotIndex,
+            itemId: item.id,
+          });
+        } else {
+          triggerReject(slotIndex, item.id);
+        }
+      } else if (activeParsed?.prefix === "grid" && overId === "inventory") {
+        dispatch({
+          type: "GRID_TO_INVENTORY",
+          payload: { slotIndex: activeParsed.index },
+        });
+      } else if (
+        activeParsed?.prefix === "grid" &&
+        overParsed?.prefix === "slot"
+      ) {
+        dispatch({
+          type: "GRID_TO_GRID",
+          payload: {
+            fromSlotIndex: activeParsed.index,
+            toSlotIndex: overParsed.index,
+          },
+        });
+      }
+    },
+    [chunkSelectorData, state.availableItems, triggerReject],
+  );
 
   if (!chunkSelectorOpen || !chunkSelectorData) return null;
 
@@ -396,6 +458,8 @@ export function ChunkSelectorPanel() {
                     state.cursorMode === "grid" &&
                     state.selectedGridIndex === idx;
                   const isLocked = state.lockedSlots[idx];
+                  const isJustPlaced = state.justPlacedSlots.includes(idx);
+                  const isRejecting = rejectedSlotIndex === idx;
 
                   return (
                     <DroppableGridSlot
@@ -404,6 +468,8 @@ export function ChunkSelectorPanel() {
                       slot={slot}
                       isSelected={isSelected}
                       isLocked={isLocked}
+                      isJustPlaced={isJustPlaced}
+                      isRejecting={isRejecting}
                     />
                   );
                 })}
