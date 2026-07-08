@@ -1138,6 +1138,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.completeFloor(this.scoringFloors.photo);
   }
 
+  public shakePhotoFailure() {
+    this.effects.shakeHorizontal();
+  }
+
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
   }
