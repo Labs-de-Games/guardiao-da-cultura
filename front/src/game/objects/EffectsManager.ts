@@ -1,15 +1,6 @@
 import type * as Phaser from "phaser";
 
-const ERROR_AUDIO_KEYS = [
-  "error_1",
-  "error_2",
-  "error_3",
-  "error_4",
-  "error_5",
-  "error_6",
-  "error_7",
-  "error_8",
-];
+const ERROR_AUDIO_KEY = "error";
 
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
@@ -21,10 +12,8 @@ export class EffectsManager {
   private vignette?: Phaser.FX.Vignette;
 
   static preload(scene: Phaser.Scene) {
-    for (const key of ERROR_AUDIO_KEYS) {
-      if (!scene.cache.audio.exists(key)) {
-        scene.load.audio(key, `sound/${key}.mp3`);
-      }
+    if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
+      scene.load.audio(ERROR_AUDIO_KEY, "sound/error.mp3");
     }
   }
 
@@ -99,9 +88,7 @@ export class EffectsManager {
     const steps = Math.ceil(duration / 16);
     let step = 0;
 
-    const key =
-      ERROR_AUDIO_KEYS[Math.floor(Math.random() * ERROR_AUDIO_KEYS.length)];
-    this.scene.sound.play(key, { volume: 0.5 });
+    this.scene.sound.play(ERROR_AUDIO_KEY, { volume: 0.5 });
 
     this.scene.time.addEvent({
       delay: 16,
