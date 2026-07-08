@@ -40,7 +40,7 @@ export const MAP_MARKERS: MapMarker[] = [
     id: "curitiba",
     label: "Curitiba, PR",
     x: 0.57,
-    y: 0.80,
+    y: 0.8,
     title: "Teatro Guaíra",
     location: "Curitiba, Paraná",
     image: "/assets/ui/map-cards/teatro-guaira.png",
@@ -48,7 +48,7 @@ export const MAP_MARKERS: MapMarker[] = [
   {
     id: "campina-grande",
     label: "Campina Grande, PB",
-    x: 0.70,
+    x: 0.7,
     y: 0.41,
     title: "Festa de São João",
     location: "Campina Grande, Paraíba",
