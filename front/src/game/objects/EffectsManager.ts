@@ -74,6 +74,25 @@ export class EffectsManager {
     this.camera.shake(duration, intensity);
   }
 
+  public shakeHorizontal(duration = 150, intensity = 0.015) {
+    const cam = this.camera;
+    const startX = cam.scrollX;
+    const steps = Math.ceil(duration / 16);
+    let step = 0;
+
+    this.scene.time.addEvent({
+      delay: 16,
+      repeat: steps - 1,
+      callback: () => {
+        step++;
+        const t = step / steps;
+        const decay = 1 - t;
+        const offset = (Math.random() * 2 - 1) * intensity * cam.width * decay;
+        cam.scrollX = startX + offset;
+      },
+    });
+  }
+
   /** Flash de tela para feedback positivo */
   public flash(duration: number = 300, color: number = 0xffffff) {
     this.camera.flash(
