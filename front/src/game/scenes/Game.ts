@@ -700,6 +700,9 @@ export class Game extends Scene implements GameDataAccessor {
     this.events.on(GameEvents.DIALOGUE_ENDED, () => {
       this.isChunkSelectorOpen = false;
       this.isDialogueOpen = false;
+
+      this.quizManager.triggerPendingIntermediateQuiz();
+
       this.time.delayedCall(200, () => {
         this.checkDialogState();
 
