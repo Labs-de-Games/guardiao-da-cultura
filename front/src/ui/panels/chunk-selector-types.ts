@@ -9,7 +9,7 @@ import {
   reduceChunkNavOnArrow,
 } from "@/game/objects/ui/chunkSelectorNavigation";
 
-export type ChunkItem = { id: string; name: string };
+export type ChunkItem = { id: string; name: string; levelId: string };
 
 export type ChunkSelectorMachineState = {
   cursorMode: ChunkCursorMode;
@@ -44,7 +44,15 @@ export type ChunkSelectorAction =
     };
 
 export const chunkAssetsByKey: Map<string, string> = new Map(
-  LEVEL_ASSETS.CHUNKS.map((asset) => [asset.key, `/assets/${asset.path}`]),
+  (
+    Object.values(LEVEL_ASSETS) as {
+      CHUNKS: readonly { key: string; path: string }[];
+    }[]
+  ).flatMap((level) =>
+    level.CHUNKS.map(
+      (asset) => [asset.key, `/assets/${asset.path}`] as [string, string],
+    ),
+  ),
 );
 
 export function getChunkImageSrc(id: string): string {

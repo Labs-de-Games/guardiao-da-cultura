@@ -21,6 +21,7 @@ import { SceneNames } from "../constants/SceneNames";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import {
   BADGE_ASSETS,
+  GLOBAL_ASSETS,
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
@@ -171,20 +172,34 @@ export class Game extends Scene {
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
-    LEVEL_ASSETS.OTHERS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.SCULPTURES.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.PAINTINGS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.CHUNKS.forEach((asset) => {
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].SCULPTURES.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].PAINTINGS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].CHUNKS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+
+    LEVEL_ASSETS[
+      this.levelId as keyof typeof LEVEL_ASSETS
+    ].COLLECTIBLES.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
-    LEVEL_ASSETS.COLLECTIBLES.forEach((asset) => {
+    GLOBAL_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -309,7 +324,10 @@ export class Game extends Scene {
     });
 
     let mapData: MapData | null = null;
-    const tileset = map.addTilesetImage("museum", this.levelDef.map.tileset);
+    const tileset = map.addTilesetImage(
+      this.levelDef.map.tilesetName,
+      this.levelDef.map.tileset,
+    );
 
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
@@ -925,6 +943,7 @@ export class Game extends Scene {
           availableItems: availableChunks.map((item) => ({
             id: item.itemId,
             name: item.itemName,
+            levelId: this.levelId,
           })),
           filledSlots: filled,
         });
