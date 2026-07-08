@@ -66,12 +66,8 @@ class AudioAccessibilityServiceImpl {
       this.rv = await getResponsiveVoice({
         apiKey: rvKey || undefined,
         defaultVoice: DEFAULT_VOICE,
-        forceFallback: true,
-        prosodyFallback: false,
       });
-      console.log(
-        "[AudioAccessibility] ResponsiveVoice ready (npm, forceFallback)",
-      );
+      console.log("[AudioAccessibility] ResponsiveVoice ready (npm)");
       return;
     } catch (err) {
       console.warn("[AudioAccessibility] npm import/init failed:", err);
