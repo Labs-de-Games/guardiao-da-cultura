@@ -336,36 +336,23 @@ export class QuizManager {
 
       const explanationLines = npc.getIntermediateQuizDialogues();
       if (explanationLines.length > 0) {
-        const explanationText = explanationLines.join("\n");
-        this.context.getEvents().emit(
-          GameEvents.SHOW_CONFIRMATION_REQUEST,
-          explanationText,
-          "",
-          () => {
+        this.context
+          .getEvents()
+          .emit(GameEvents.SHOW_DIALOGUE_REQUEST, explanationLines, () => {
             this.context
               .getEvents()
               .emit(
-                GameEvents.SHOW_QUIZ_REQUEST,
+                GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
                 questions,
-                this.scoreManager,
                 onComplete,
               );
-          },
-          () => {
-            this.quizMode = "none";
-            npc.hideAfterQuiz();
-            if (spawnPos) {
-              npc.teleportTo(spawnPos.x, spawnPos.y);
-            }
-          },
-        );
+          });
       } else {
         this.context
           .getEvents()
           .emit(
-            GameEvents.SHOW_QUIZ_REQUEST,
+            GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
             questions,
-            this.scoreManager,
             onComplete,
           );
       }

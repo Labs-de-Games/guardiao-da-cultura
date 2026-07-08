@@ -1,11 +1,8 @@
 import { GameEvents } from "../constants/GameEvents";
 import { MissionIds } from "../constants/MissionConstants";
-import { LevelManager } from "../objects/LevelManager";
 import type { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestStatus } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
-import { AnalyticsSystem } from "./AnalyticsSystem";
-import { PersistenceBridge } from "./PersistenceBridge";
 import { QuizManager } from "./QuizManager";
 
 jest.mock("posthog-js", () => ({
@@ -294,6 +291,139 @@ describe("QuizManager", () => {
 
     quizManager.startIntermediateQuiz("info_1");
     expect(questManager.isIntermediateQuizDone).toHaveBeenCalledWith("info_1");
+  });
+
+  it("should emit SHOW_DIALOGUE_REQUEST with explanation lines for intermediate quiz", () => {
+    const curatorNpc = createMockNpc({
+      missionId: MissionIds.CURATOR,
+      intermediateQuizDialogues: ["Linha 1", "Linha 2"],
+    });
+    const curatorContext = {
+      ...context,
+      getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
+      getContentData: () => ({
+        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+      }),
+    };
+    const quizManager = new QuizManager(
+      curatorContext,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startIntermediateQuiz("info_1");
+
+    expect(events.emit).toHaveBeenCalledWith(
+      GameEvents.SHOW_DIALOGUE_REQUEST,
+      ["Linha 1", "Linha 2"],
+      expect.any(Function),
+    );
+  });
+
+  it("should emit SHOW_INTERMEDIATE_QUIZ_REQUEST after explanation callback", () => {
+    const curatorNpc = createMockNpc({
+      missionId: MissionIds.CURATOR,
+      intermediateQuizDialogues: ["Explique"],
+    });
+    const curatorContext = {
+      ...context,
+      getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
+      getContentData: () => ({
+        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+      }),
+    };
+    const quizManager = new QuizManager(
+      curatorContext,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startIntermediateQuiz("info_1");
+
+    const dialogueCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_DIALOGUE_REQUEST,
+    );
+    const onDialogueEnd = dialogueCall[2];
+    onDialogueEnd();
+
+    expect(events.emit).toHaveBeenCalledWith(
+      GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+      [{ q: "Pergunta?" }],
+      expect.any(Function),
+    );
+  });
+
+  it("should emit SHOW_INTERMEDIATE_QUIZ_REQUEST directly when no explanation lines", () => {
+    const curatorNpc = createMockNpc({
+      missionId: MissionIds.CURATOR,
+      intermediateQuizDialogues: [],
+    });
+    const curatorContext = {
+      ...context,
+      getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
+      getContentData: () => ({
+        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+      }),
+    };
+    const quizManager = new QuizManager(
+      curatorContext,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startIntermediateQuiz("info_1");
+
+    expect(events.emit).toHaveBeenCalledWith(
+      GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
+      [{ q: "Pergunta?" }],
+      expect.any(Function),
+    );
+  });
+
+  it("should not emit SHOW_QUIZ_REQUEST for intermediate quiz", () => {
+    const curatorNpc = createMockNpc({
+      missionId: MissionIds.CURATOR,
+      intermediateQuizDialogues: [],
+    });
+    const curatorContext = {
+      ...context,
+      getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
+      getContentData: () => ({
+        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+      }),
+    };
+    const quizManager = new QuizManager(
+      curatorContext,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startIntermediateQuiz("info_1");
+
+    const quizRequestCalls = events.emit.mock.calls.filter(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_QUIZ_REQUEST,
+    );
+    expect(quizRequestCalls).toHaveLength(0);
   });
 
   it("should record score when quiz callback fires with passing score", () => {
