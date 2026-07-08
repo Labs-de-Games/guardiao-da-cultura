@@ -173,6 +173,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
+    EffectsManager.preload(this);
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);

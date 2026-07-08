@@ -1,5 +1,16 @@
 import type * as Phaser from "phaser";
 
+const ERROR_AUDIO_KEYS = [
+  "error_1",
+  "error_2",
+  "error_3",
+  "error_4",
+  "error_5",
+  "error_6",
+  "error_7",
+  "error_8",
+];
+
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
  */
@@ -8,6 +19,14 @@ export class EffectsManager {
   private camera: Phaser.Cameras.Scene2D.Camera;
   private colorMatrix?: Phaser.FX.ColorMatrix;
   private vignette?: Phaser.FX.Vignette;
+
+  static preload(scene: Phaser.Scene) {
+    for (const key of ERROR_AUDIO_KEYS) {
+      if (!scene.cache.audio.exists(key)) {
+        scene.load.audio(key, `sound/${key}.mp3`);
+      }
+    }
+  }
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -74,11 +93,15 @@ export class EffectsManager {
     this.camera.shake(duration, intensity);
   }
 
-  public shakeHorizontal(duration = 150, intensity = 0.015) {
+  public shakeHorizontal(duration = 150, intensity = 0.015): number {
     const cam = this.camera;
     const startX = cam.scrollX;
     const steps = Math.ceil(duration / 16);
     let step = 0;
+
+    const key =
+      ERROR_AUDIO_KEYS[Math.floor(Math.random() * ERROR_AUDIO_KEYS.length)];
+    this.scene.sound.play(key, { volume: 0.5 });
 
     this.scene.time.addEvent({
       delay: 16,
@@ -91,6 +114,8 @@ export class EffectsManager {
         cam.scrollX = startX + offset;
       },
     });
+
+    return steps * 16;
   }
 
   /** Flash de tela para feedback positivo */
