@@ -1,4 +1,4 @@
-import type * as Phaser from "phaser";
+import * as Phaser from "phaser";
 
 const ERROR_AUDIO_KEY = "error";
 
@@ -12,6 +12,7 @@ export class EffectsManager {
   private vignette?: Phaser.FX.Vignette;
   private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
   private spotlightVisible = false;
+  private revealProgress = 1;
 
   static preload(scene: Phaser.Scene) {
     if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
@@ -122,8 +123,20 @@ export class EffectsManager {
     this.spotlightBeam.setDepth(15);
   }
 
-  public showSpotlightBeam(duration: number = 2000) {
+  public showSpotlightBeam(
+    duration: number = 2000,
+    revealDuration: number = 200,
+  ) {
     this.spotlightVisible = true;
+    this.revealProgress = 0;
+
+    this.scene.tweens.add({
+      targets: this,
+      revealProgress: 1,
+      duration: revealDuration,
+      ease: "Power2",
+    });
+
     this.scene.time.delayedCall(duration, () => {
       this.spotlightVisible = false;
       this.spotlightBeam?.clear();
@@ -142,15 +155,23 @@ export class EffectsManager {
     const bottomOffsetY = 100;
     const bottomBulge = bottomHalfWidth * 0.12;
 
-    beam.fillStyle(0xffffaa, 0.35);
+    const progress = this.revealProgress;
+    const currentBottomY = Phaser.Math.Linear(
+      topOffsetY,
+      bottomOffsetY,
+      progress,
+    );
+    const currentBulge = bottomBulge * progress;
+
+    beam.fillStyle(0xffffaa, 0.35 * progress);
     beam.beginPath();
     beam.moveTo(px - topHalfWidth, py + topOffsetY);
     beam.lineTo(px + topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
-    beam.lineTo(px + bottomHalfWidth * 0.2, py + bottomOffsetY + bottomBulge);
-    beam.lineTo(px, py + bottomOffsetY + bottomBulge * 1);
-    beam.lineTo(px - bottomHalfWidth * 0.2, py + bottomOffsetY + bottomBulge);
-    beam.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
+    beam.lineTo(px + bottomHalfWidth, py + currentBottomY);
+    beam.lineTo(px + bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
+    beam.lineTo(px, py + currentBottomY + currentBulge * 1);
+    beam.lineTo(px - bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
+    beam.lineTo(px - bottomHalfWidth, py + currentBottomY);
     beam.closePath();
     beam.fillPath();
     beam.setDepth(1000);
