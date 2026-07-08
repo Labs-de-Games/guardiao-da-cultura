@@ -42,7 +42,8 @@ export type ChunkSelectorAction =
   | {
       type: "GRID_TO_GRID";
       payload: { fromSlotIndex: number; toSlotIndex: number };
-    };
+    }
+  | { type: "LOCK_SLOTS"; payload: { indices: number[] } };
 
 export const chunkAssetsByKey: Map<string, string> = new Map(
   LEVEL_ASSETS.CHUNKS.map((asset) => [asset.key, `/assets/${asset.path}`]),
@@ -191,7 +192,6 @@ export function reducer(
 
       const nextSlots = [...state.slots];
       const nextUsed = [...state.usedInventoryIndices];
-      const nextLocked = [...state.lockedSlots];
 
       if (state.pickedItemIndex !== null) {
         const item = state.availableItems[state.pickedItemIndex];
@@ -199,14 +199,11 @@ export function reducer(
 
         nextSlots[gridIndex] = item.id;
         nextUsed[gridIndex] = state.pickedItemIndex;
-        nextLocked[gridIndex] = true;
 
         return {
           ...state,
           slots: nextSlots,
           usedInventoryIndices: nextUsed,
-          lockedSlots: nextLocked,
-          justPlacedSlots: [...state.justPlacedSlots, gridIndex],
           pickedItemIndex: null,
           cursorMode: "inventory",
           selectedGridIndex: gridIndex,
@@ -243,7 +240,6 @@ export function reducer(
 
     const nextSlots = [...state.slots];
     const nextUsed = [...state.usedInventoryIndices];
-    const nextLocked = [...state.lockedSlots];
 
     const previousSlot = nextUsed.indexOf(fromInventoryIndex);
     if (previousSlot !== -1) {
@@ -253,14 +249,11 @@ export function reducer(
 
     nextSlots[toSlotIndex] = item.id;
     nextUsed[toSlotIndex] = fromInventoryIndex;
-    nextLocked[toSlotIndex] = true;
 
     return {
       ...state,
       slots: nextSlots,
       usedInventoryIndices: nextUsed,
-      lockedSlots: nextLocked,
-      justPlacedSlots: [...state.justPlacedSlots, toSlotIndex],
       pickedItemIndex: null,
       cursorMode: "inventory",
       selectedInventoryIndex: nextFreeInventoryIndex(
@@ -268,6 +261,18 @@ export function reducer(
         state.availableItems.length,
         state.selectedInventoryIndex,
       ),
+    };
+  }
+
+  if (action.type === "LOCK_SLOTS") {
+    const nextLocked = [...state.lockedSlots];
+    for (const i of action.payload.indices) {
+      nextLocked[i] = true;
+    }
+    return {
+      ...state,
+      lockedSlots: nextLocked,
+      justPlacedSlots: [...state.justPlacedSlots, ...action.payload.indices],
     };
   }
 

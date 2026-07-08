@@ -48,11 +48,11 @@ export function DroppableGridSlot({
     isOver || isSelected
       ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
       : isRejecting
-        ? "2px solid #e57373"
+        ? `2px solid ${LayoutConfig.COLORS.UNAVAILABLE_RED}`
         : isJustPlaced
-          ? "3px solid #52b788"
+          ? `3px solid ${LayoutConfig.COLORS.AVAILABLE_GREEN}`
           : isLocked
-            ? "2px solid #4b8b5f"
+            ? `2px solid ${LayoutConfig.COLORS.AVAILABLE_GREEN}`
             : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`;
 
   return (
@@ -108,7 +108,7 @@ export function DroppableGridSlot({
             width: 8,
             height: 8,
             borderRadius: "50%",
-            bgcolor: "#8dd39d",
+            bgcolor: LayoutConfig.COLORS.SUCCESS_GREEN,
           }}
         />
       )}
