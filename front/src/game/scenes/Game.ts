@@ -104,6 +104,7 @@ export class Game extends Scene implements GameDataAccessor {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
+  private spotlightBeam!: Phaser.GameObjects.Graphics;
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
@@ -791,6 +792,9 @@ export class Game extends Scene implements GameDataAccessor {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
+    this.spotlightBeam = this.add.graphics();
+    this.spotlightBeam.setDepth(15);
+
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
@@ -1122,6 +1126,8 @@ export class Game extends Scene implements GameDataAccessor {
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
 
+    this.drawSpotlightBeam();
+
     if (this.player && this.hintKeySystem) {
       const isPanelOpen =
         this.isDialogueOpen ||
@@ -1140,6 +1146,31 @@ export class Game extends Scene implements GameDataAccessor {
         isPlayerBusy,
       );
     }
+  }
+
+  private drawSpotlightBeam() {
+    if (!this.player || !this.spotlightBeam) return;
+
+    const beam = this.spotlightBeam;
+    beam.clear();
+
+    const px = this.player.x;
+    const py = this.player.y;
+
+    const topHalfWidth = 10;
+    const bottomHalfWidth = 120;
+    const topOffsetY = -500;
+    const bottomOffsetY = 100;
+
+    beam.fillStyle(0xffffaa, 0.35);
+    beam.beginPath();
+    beam.moveTo(px - topHalfWidth, py + topOffsetY);
+    beam.lineTo(px + topHalfWidth, py + topOffsetY);
+    beam.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
+    beam.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
+    beam.closePath();
+    beam.fillPath();
+    beam.setDepth(1000);
   }
 
   public recordFloorError(floorIndex: number) {
