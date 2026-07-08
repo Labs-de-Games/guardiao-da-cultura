@@ -117,14 +117,12 @@ export class EffectsManager {
     );
   }
 
-  /** Cria o Graphics object para o feixe de spotlight */
   public initSpotlight() {
     this.spotlightBeam = this.scene.add.graphics();
     this.spotlightBeam.setDepth(15);
   }
 
-  /** Mostra o feixe de spotlight por uma duração (ms) */
-  public showSpotlightBeam(duration: number = 1000) {
+  public showSpotlightBeam(duration: number = 2000) {
     this.spotlightVisible = true;
     this.scene.time.delayedCall(duration, () => {
       this.spotlightVisible = false;
@@ -132,7 +130,6 @@ export class EffectsManager {
     });
   }
 
-  /** Desenha o feixe de spotlight na posição do jogador */
   private drawSpotlightBeam(px: number, py: number) {
     if (!this.spotlightBeam || !this.spotlightVisible) return;
 
