@@ -1166,7 +1166,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects.shake();
   }
 
-  public showSpotlightBeam(duration: number = 1000) {
+  public showSpotlightBeam(duration: number = 2000) {
     this.effects.showSpotlightBeam(duration);
   }
 
