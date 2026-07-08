@@ -146,6 +146,7 @@ export class MapIntroScene extends Scene {
       location: marker.location,
       isAvailable: this.activeMarkerIndex === 0,
       image: marker.image,
+      levelId: marker.levelId,
     });
   }
 

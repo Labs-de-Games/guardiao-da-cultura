@@ -126,6 +126,7 @@ export interface MapMarkerChangedData {
   location: string;
   isAvailable: boolean;
   image?: string;
+  levelId?: string;
 }
 
 export interface AutoStartTickData {

@@ -9,17 +9,47 @@ export function MapInfoBox() {
   const activeMapMarker = useGameUIStore((s) => s.activeMapMarker);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const autoStartProgress = useGameUIStore((s) => s.autoStartProgress);
+  const progression = useGameUIStore((s) => s.progression);
 
   if (!activeMapMarker || gameStarted) return null;
 
-  const isAvailable = activeMapMarker.isAvailable;
-  const ctaColor = isAvailable ? "#3B8C45" : "#A84528";
-  const ctaText = isAvailable ? "Aperte ESPAÇO para jogar" : "Em reforma";
+  const { isAvailable, levelId } = activeMapMarker;
+  const isCompleted = !!(levelId && progression?.completedLevels?.[levelId]);
+
   const showProgress =
-    isAvailable && autoStartProgress !== null && autoStartProgress < 1;
+    isAvailable &&
+    !isCompleted &&
+    autoStartProgress !== null &&
+    autoStartProgress < 1;
   const progressWidth = showProgress
     ? Math.max(0, Math.min(1, autoStartProgress)) * 100
     : 0;
+
+  const phaseNumber = activeMapMarker.levelId
+    ? activeMapMarker.levelId.replace("level_", "").padStart(2, "0")
+    : null;
+
+  let headerLabel: string | null = null;
+  let ctaColor: string;
+  let ctaText: string;
+  let ctaIcon: string | null = "▶";
+
+  if (isCompleted) {
+    headerLabel = "Você visitou:";
+    ctaColor = "#D9AD56";
+    ctaText = "Fase concluída";
+    ctaIcon = "✓";
+  } else if (isAvailable) {
+    headerLabel = "Você está aqui:";
+    ctaColor = "#3B8C45";
+    ctaText = 'Pressione "ESPAÇO" para jogar';
+    ctaIcon = "▶";
+  } else {
+    headerLabel = phaseNumber ? `Fase ${phaseNumber}:` : null;
+    ctaColor = "#6B7280";
+    ctaText = "Finalize a Fase 01 para jogar";
+    ctaIcon = "▶";
+  }
 
   return (
     <Box
@@ -51,7 +81,7 @@ export function MapInfoBox() {
         }}
       />
 
-      {/* imagem direita com fade */}
+      {/* imagem direita */}
       {activeMapMarker.image && (
         <Box
           aria-hidden="true"
@@ -62,6 +92,7 @@ export function MapInfoBox() {
             width: "34%",
             height: "122px",
             pointerEvents: "none",
+            opacity: isCompleted ? 0.7 : 1,
           }}
         >
           <Image
@@ -76,7 +107,7 @@ export function MapInfoBox() {
 
       {/* conteúdo de texto */}
       <Box sx={{ position: "absolute", inset: 0 }}>
-        {isAvailable && (
+        {headerLabel && (
           <Typography
             sx={{
               position: "absolute",
@@ -88,7 +119,7 @@ export function MapInfoBox() {
               lineHeight: 1,
             }}
           >
-            Você está aqui:
+            {headerLabel}
           </Typography>
         )}
 
@@ -132,13 +163,13 @@ export function MapInfoBox() {
             gap: "6px",
           }}
         >
-          {isAvailable && (
+          {ctaIcon && (
             <Box
               component="span"
               aria-hidden="true"
               sx={{ fontSize: "10px", color: ctaColor, lineHeight: 1 }}
             >
-              ▶
+              {ctaIcon}
             </Box>
           )}
           <Typography
