@@ -1166,8 +1166,12 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects.shake();
   }
 
-  public showSpotlightBeam(duration: number = 2000) {
-    this.effects.showSpotlightBeam(duration);
+  public showSpotlightBeam(
+    duration: number = 2000,
+    px: number = 0,
+    py: number = 0,
+  ) {
+    this.effects.showSpotlightBeam(duration, 200, px, py);
   }
 
   public recordFloorError(floorIndex: number) {
@@ -1232,6 +1236,14 @@ export class Game extends Scene implements GameDataAccessor {
         (
           handler as PaintingMechanicHandler | SculptureMechanicHandler
         ).handleDropResult(this, result);
+      }
+
+      if (result.snapped) {
+        this.showSpotlightBeam(
+          2000,
+          result.placeholder?.area.centerX,
+          result.placeholder?.area.centerY,
+        );
       }
     }
   }
