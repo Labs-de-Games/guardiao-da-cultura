@@ -216,7 +216,7 @@ export class PlaceholderSystem {
 
       placeholder.isFilled = true;
 
-      return { snapped: true };
+      return { snapped: true, placeholder };
     }
 
     let nearbyMismatch = false;
