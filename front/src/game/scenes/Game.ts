@@ -363,6 +363,10 @@ export class Game extends Scene implements GameDataAccessor {
     );
     this.badgeSystem.initialize();
 
+    this.analyticsSystem = new AnalyticsSystem(this);
+    this.analyticsSystem.track(GameEventType.GAME_STARTED);
+    this.analyticsSystem.setupAbandonmentTracking();
+
     this.quizManager = new QuizManager(
       {
         getLevelId: () => this.levelId,
@@ -387,9 +391,6 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("currentLevelId", this.levelId);
     this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
-    this.analyticsSystem = new AnalyticsSystem(this);
-    this.analyticsSystem.track(GameEventType.GAME_STARTED);
-    this.analyticsSystem.setupAbandonmentTracking();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.analyticsSystem.track(GameEventType.SESSION_END, {
