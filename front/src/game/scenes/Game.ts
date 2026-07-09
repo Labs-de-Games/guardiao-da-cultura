@@ -791,6 +791,8 @@ export class Game extends Scene implements GameDataAccessor {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
+    this.effects.initSpotlight();
+
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
@@ -1122,6 +1124,8 @@ export class Game extends Scene implements GameDataAccessor {
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
 
+    this.effects.updateSpotlight(this.player.x, this.player.y);
+
     if (this.player && this.hintKeySystem) {
       const isPanelOpen =
         this.isDialogueOpen ||
@@ -1160,6 +1164,14 @@ export class Game extends Scene implements GameDataAccessor {
 
   public shakePhotoFailure() {
     this.effects.shakeHorizontal();
+  }
+
+  public showSpotlightBeam(
+    duration: number = 2000,
+    px: number = 0,
+    py: number = 0,
+  ) {
+    this.effects.showSpotlightBeam(duration, 200, px, py);
   }
 
   public getScoringPayload(): ScoringPayload {
@@ -1203,6 +1215,14 @@ export class Game extends Scene implements GameDataAccessor {
         (
           handler as PaintingMechanicHandler | SculptureMechanicHandler
         ).handleDropResult(this, result);
+      }
+
+      if (result.snapped) {
+        this.showSpotlightBeam(
+          2000,
+          result.placeholder?.area.centerX,
+          result.placeholder?.area.centerY,
+        );
       }
     }
   }

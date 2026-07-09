@@ -1,19 +1,29 @@
-import type * as Phaser from "phaser";
+import * as Phaser from "phaser";
 
 const ERROR_AUDIO_KEY = "error";
 
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
  */
+const SUCCEED_AUDIO_KEY = "succeed";
+
 export class EffectsManager {
   private scene: Phaser.Scene;
   private camera: Phaser.Cameras.Scene2D.Camera;
   private colorMatrix?: Phaser.FX.ColorMatrix;
   private vignette?: Phaser.FX.Vignette;
+  private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
+  private spotlightVisible = false;
+  private revealProgress = 1;
+  private spotlightTargetX = 0;
+  private spotlightTargetY = 0;
 
   static preload(scene: Phaser.Scene) {
     if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
       scene.load.audio(ERROR_AUDIO_KEY, "sound/error.mp3");
+    }
+    if (!scene.cache.audio.exists(SUCCEED_AUDIO_KEY)) {
+      scene.load.audio(SUCCEED_AUDIO_KEY, "sound/succeed.ogg");
     }
   }
 
@@ -113,5 +123,83 @@ export class EffectsManager {
       (color >> 8) & 0xff,
       color & 0xff,
     );
+  }
+
+  public initSpotlight() {
+    this.spotlightBeam = this.scene.add.graphics();
+    this.spotlightBeam.setDepth(15);
+  }
+
+  public showSpotlightBeam(
+    duration: number = 2000,
+    revealDuration: number = 200,
+    px: number = 0,
+    py: number = 0,
+  ) {
+    this.spotlightTargetX = px;
+    this.spotlightTargetY = py;
+    this.spotlightVisible = true;
+    this.revealProgress = 0;
+    this.scene.sound.play(SUCCEED_AUDIO_KEY, { volume: 0.5 });
+
+    this.scene.tweens.add({
+      targets: this,
+      revealProgress: 1,
+      duration: revealDuration,
+      ease: "Power2",
+    });
+
+    this.scene.time.delayedCall(duration, () => {
+      this.scene.tweens.add({
+        targets: this,
+        revealProgress: 0,
+        duration: revealDuration,
+        ease: "Power2",
+        onComplete: () => {
+          this.spotlightVisible = false;
+          this.spotlightBeam?.clear();
+        },
+      });
+    });
+  }
+
+  private drawSpotlightBeam(px: number, py: number) {
+    if (!this.spotlightBeam || !this.spotlightVisible) return;
+
+    const beam = this.spotlightBeam;
+    beam.clear();
+
+    const topHalfWidth = 10;
+    const bottomHalfWidth = 120;
+    const topOffsetY = -500;
+    const bottomOffsetY = 100;
+    const bottomBulge = bottomHalfWidth * 0.12;
+
+    const progress = this.revealProgress;
+    const currentBottomY = Phaser.Math.Linear(
+      topOffsetY,
+      bottomOffsetY,
+      progress,
+    );
+    const currentBulge = bottomBulge * progress;
+
+    beam.fillStyle(0xffffff, 0.35 * progress);
+    beam.beginPath();
+    beam.moveTo(px - topHalfWidth, py + topOffsetY);
+    beam.lineTo(px + topHalfWidth, py + topOffsetY);
+    beam.lineTo(px + bottomHalfWidth, py + currentBottomY);
+    beam.lineTo(px + bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
+    beam.lineTo(px, py + currentBottomY + currentBulge * 1);
+    beam.lineTo(px - bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
+    beam.lineTo(px - bottomHalfWidth, py + currentBottomY);
+    beam.closePath();
+    beam.fillPath();
+    beam.setDepth(1000);
+  }
+
+  /** Atualiza o spotlight (chamar a cada frame) */
+  public updateSpotlight(_px: number, _py: number) {
+    if (!this.spotlightVisible) return;
+    this.drawSpotlightBeam(this.spotlightTargetX, this.spotlightTargetY);
   }
 }
