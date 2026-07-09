@@ -10,8 +10,13 @@ const BAR_HEIGHT_PX = 32;
 const TRACK_HEIGHT_PX = 3;
 const DOT_SIZE_PX = 8;
 const STAR_FONT_SIZE_PX = 40;
-const POP_TRANSITION =
-  "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s";
+const STAR_POP_KEYFRAMES = `
+@keyframes scorePanelStarPop {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.4); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+`;
 
 export function ScorePanel() {
   const stars = useGameUIStore((s) => s.stars);
@@ -39,6 +44,7 @@ export function ScorePanel() {
         pointerEvents: "none",
       }}
     >
+      <style>{STAR_POP_KEYFRAMES}</style>
       <div
         style={{
           position: "relative",
@@ -99,9 +105,7 @@ export function ScorePanel() {
                 position: "absolute",
                 top: "50%",
                 left: `${(node / totalStars) * 100}%`,
-                transform: `translate(-50%, -50%) scale(${
-                  isCompleted ? 1 : 0.85
-                })`,
+                transform: "translate(-50%, -50%)",
                 fontSize: STAR_FONT_SIZE_PX,
                 lineHeight: 1,
                 color: isCompleted
@@ -109,7 +113,8 @@ export function ScorePanel() {
                   : GAME_UI_TOKENS.colors.textSecondary,
                 WebkitTextStroke: "1px #000000",
                 paintOrder: "stroke fill",
-                transition: POP_TRANSITION,
+                transition: "color 0.2s",
+                animation: isCompleted ? "scorePanelStarPop 0.3s ease" : "none",
               }}
             >
               {"★"}
