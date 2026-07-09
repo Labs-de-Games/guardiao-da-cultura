@@ -17,7 +17,7 @@ describe("MapIntroScene", () => {
     jest.clearAllMocks();
   });
 
-  it("clears the map marker and starts the cinematic when beginning Phase 1", () => {
+  it("keeps the active map marker when starting the game", () => {
     const scene = new MapIntroScene();
     const cancelAutoStart = jest.fn();
     const sceneStart = jest.fn();
@@ -36,8 +36,7 @@ describe("MapIntroScene", () => {
     scene.beginGame();
 
     expect(cancelAutoStart).toHaveBeenCalledWith("started");
-    // null emit clears MapInfoBox before the scene transition
-    expect(EventBus.emit).toHaveBeenCalledWith("map:marker-changed", null);
+    expect(EventBus.emit).not.toHaveBeenCalledWith("map:marker-changed", null);
     expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
       levelId: "level_01",
     });
