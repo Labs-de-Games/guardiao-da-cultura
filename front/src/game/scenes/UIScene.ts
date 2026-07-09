@@ -175,14 +175,14 @@ export class UIScene extends Scene {
       if (this.dialogueEndHandled) return;
       this.dialogueEndHandled = true;
       this.dialogueActive = false;
-      gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+      gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { dismissed: false });
     });
 
     const unsubDialogueDismissed = EventBus.on("dialogue:dismissed", () => {
       if (this.dialogueEndHandled) return;
       this.dialogueEndHandled = true;
       this.dialogueActive = false;
-      gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+      gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { dismissed: true });
     });
 
     const unsubDialogueDequeueStarted = EventBus.on(
