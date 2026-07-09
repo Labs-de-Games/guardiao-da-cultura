@@ -9,7 +9,7 @@ const MIN_BAR_WIDTH_PX = 120;
 const BAR_HEIGHT_PX = 32;
 const TRACK_HEIGHT_PX = 3;
 const DOT_SIZE_PX = 8;
-const STAR_FONT_SIZE_PX = 20;
+const STAR_FONT_SIZE_PX = 40;
 const POP_TRANSITION =
   "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s";
 
@@ -107,6 +107,8 @@ export function ScorePanel() {
                 color: isCompleted
                   ? GAME_UI_TOKENS.colors.accentGold
                   : GAME_UI_TOKENS.colors.textSecondary,
+                WebkitTextStroke: "1px #000000",
+                paintOrder: "stroke fill",
                 transition: POP_TRANSITION,
               }}
             >
