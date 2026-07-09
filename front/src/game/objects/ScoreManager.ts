@@ -246,6 +246,13 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     return this.levelId;
   }
 
+  getMaxStars(): number {
+    const quizMaxQuarters = 4;
+    const maxQuarters =
+      this.floorsTotal * 4 + quizMaxQuarters + this.collectiblesTotal;
+    return maxQuarters / 4;
+  }
+
   getPayload(): ScoringPayload {
     const totalQuarters = this.computeTotalQuarters();
     return {

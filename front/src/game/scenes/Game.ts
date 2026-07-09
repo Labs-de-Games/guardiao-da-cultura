@@ -291,7 +291,7 @@ export class Game extends Scene implements GameDataAccessor {
           : 0;
         EventBus.emit("player:stars-changed", {
           current: stars,
-          total: Math.ceil(payload.totalQuarters / 4),
+          total: this.scoreManager.getMaxStars(),
           score: payload.totalQuarters,
         });
       },
@@ -635,7 +635,7 @@ export class Game extends Scene implements GameDataAccessor {
       : 0;
     EventBus.emit("player:stars-changed", {
       current: initialStars,
-      total: Math.ceil(initialPayload.totalQuarters / 4),
+      total: this.scoreManager.getMaxStars(),
       score: initialPayload.totalQuarters,
     });
 
