@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import posthog from "posthog-js";
 
 import { EventBus } from "../../shared/events/event-bus";
+import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -697,21 +698,33 @@ export class Game extends Scene implements GameDataAccessor {
       this.effects.setZoom(1.2, 400);
     });
 
-    this.events.on(GameEvents.DIALOGUE_ENDED, () => {
-      this.isChunkSelectorOpen = false;
-      this.isDialogueOpen = false;
-      this.time.delayedCall(200, () => {
-        this.checkDialogState();
+    this.events.on(
+      GameEvents.DIALOGUE_ENDED,
+      (data?: { dismissed?: boolean }) => {
+        this.isChunkSelectorOpen = false;
+        this.isDialogueOpen = false;
 
-        if (this.npcs) {
-          for (const npc of this.npcs) {
-            npc.play("npc_idle_anim", true);
-          }
+        const isDismissed = data?.dismissed === true;
+        const hasQueuedDialogue =
+          useDialogueStore.getState().dialogueQueue.length > 0;
+
+        if (isDismissed || !hasQueuedDialogue) {
+          this.quizManager.triggerPendingIntermediateQuiz();
         }
-      });
 
-      this.effects.setZoom(1.0, 400);
-    });
+        this.time.delayedCall(200, () => {
+          this.checkDialogState();
+
+          if (this.npcs) {
+            for (const npc of this.npcs) {
+              npc.play("npc_idle_anim", true);
+            }
+          }
+        });
+
+        this.effects.setZoom(1.0, 400);
+      },
+    );
 
     const unsubControls = useGameUIStore.subscribe((state, prevState) => {
       if (state.controlsOpen !== prevState.controlsOpen) {
