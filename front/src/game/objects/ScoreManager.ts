@@ -222,8 +222,6 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     if (passed) {
       this.intermediateQuizzes.passed += 1;
       this.intermediateQuizzes.quartersNet += 1;
-    } else {
-      this.intermediateQuizzes.quartersNet -= 1;
     }
 
     this.events.push({
