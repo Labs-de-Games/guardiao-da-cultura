@@ -56,7 +56,7 @@ export interface CollectibleEntry {
 
 export interface ChunkSelectorData {
   instanceId: string;
-  availableItems: { id: string; name: string }[];
+  availableItems: { id: string; name: string; levelId: string }[];
   filledSlots: (string | null)[];
   expectedSlots: string[];
 }
