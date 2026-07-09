@@ -1,65 +1,55 @@
 import { render } from "@testing-library/react";
-import { formatScore, ScorePanel } from "./ScorePanel";
+import { ScorePanel } from "./ScorePanel";
 
-let mockScore = 0;
+let mockStars = 0;
+let mockTotalStars = 0;
 
 jest.mock("@/ui/state/game-ui-store", () => ({
-  useGameUIStore: (selector: (state: { score: number }) => unknown) =>
-    selector({ score: mockScore }),
+  useGameUIStore: (
+    selector: (state: { stars: number; totalStars: number }) => unknown,
+  ) => selector({ stars: mockStars, totalStars: mockTotalStars }),
   UI_Z_INDEX: { PANEL: 30 },
 }));
 
 jest.mock("@/game/constants/LayoutConfig", () => ({
   LayoutConfig: {
-    COLORS: { MAP_BG: "#252726" },
+    COLORS: { MAP_BG_CSS: "#252726" },
   },
 }));
 
 jest.mock("@/ui/theme/tokens", () => ({
   GAME_UI_TOKENS: {
-    colors: { textPrimary: "#f4eede", accentGold: "#d9ad56" },
+    colors: { accentGold: "#d9ad56", textSecondary: "#a0a0a0" },
     radius: { small: 8 },
   },
 }));
 
 beforeEach(() => {
-  mockScore = 0;
+  mockStars = 0;
+  mockTotalStars = 0;
 });
 
 describe("ScorePanel", () => {
-  it("renders the Pontuação label", () => {
-    const { getByText } = render(<ScorePanel />);
-    expect(getByText("Pontuação:")).toBeTruthy();
+  it("renders nothing when totalStars is 0", () => {
+    const { container } = render(<ScorePanel />);
+    expect(container.firstChild).toBeNull();
   });
 
-  it("shows initial score as 0", () => {
-    const { getByText } = render(<ScorePanel />);
-    expect(getByText("0")).toBeTruthy();
-  });
-});
-
-describe("formatScore", () => {
-  it("returns 0 for zero", () => {
-    expect(formatScore(0)).toBe("0");
+  it("renders one star node per totalStars", () => {
+    mockTotalStars = 5;
+    mockStars = 2;
+    const { getAllByText } = render(<ScorePanel />);
+    expect(getAllByText("★")).toHaveLength(5);
   });
 
-  it("formats single digit", () => {
-    expect(formatScore(5)).toBe("5");
-  });
+  it("marks stars at or below current stars as completed", () => {
+    mockTotalStars = 3;
+    mockStars = 2;
+    const { getAllByText } = render(<ScorePanel />);
+    const [star1, star2, star3] = getAllByText("★");
 
-  it("formats number with dot separators", () => {
-    expect(formatScore(18999)).toBe("18.999");
-  });
-
-  it("formats large numbers", () => {
-    expect(formatScore(1000000)).toBe("1.000.000");
-  });
-
-  it("formats numbers under 1000 without dots", () => {
-    expect(formatScore(999)).toBe("999");
-  });
-
-  it("formats exact thousands", () => {
-    expect(formatScore(1000)).toBe("1.000");
+    expect(star1).toHaveStyle({ color: "#d9ad56" });
+    expect(star2).toHaveStyle({ color: "#d9ad56" });
+    expect(star3).toHaveStyle({ color: "#a0a0a0" });
   });
 });

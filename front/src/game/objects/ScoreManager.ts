@@ -221,9 +221,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
 
     if (passed) {
       this.intermediateQuizzes.passed += 1;
-      this.intermediateQuizzes.quartersNet += 1;
-    } else {
-      this.intermediateQuizzes.quartersNet -= 1;
+      this.intermediateQuizzes.quartersNet += 2;
     }
 
     this.events.push({
@@ -244,6 +242,13 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
 
   getLevelId(): string {
     return this.levelId;
+  }
+
+  getMaxStars(): number {
+    const quizMaxQuarters = 4;
+    const maxQuarters =
+      this.floorsTotal * 4 + quizMaxQuarters + this.collectiblesTotal;
+    return maxQuarters / 4;
   }
 
   getPayload(): ScoringPayload {
