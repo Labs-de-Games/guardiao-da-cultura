@@ -1,0 +1,99 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
+
+## [1.4.0] - 2026-07-09
+
+### Added
+
+- Intermediate quiz flow: full question set, nine new questions added (#438, #499)
+- Proximity-based hint key prompts (#488)
+- Photo placeholder redesigned as a 2x2 chunk grid with confirm-then-feedback flow (#487, #524)
+- Decoupled cinematic intro scene; panels can be skipped without skipping the cinematic (#494, #512)
+- `DialoguePanel` redesigned with speech-bubble shape and dynamic positioning (#474)
+- `MapInfoBox` card redesign (#517)
+- Camera shake feedback on player errors (#523)
+- Spotlight beam and succeed sound on minigame success (#535)
+- Star progress bar in `ScorePanel`, scoring engine fixes (#538)
+- Close ("x") button added to labels, label font size adjusted (#526)
+
+### Fixed
+
+- Score/progression PostHog events moved to frontend (#491)
+- Early platforms on phase 1 made easier for onboarding (#497)
+- Audio (TTS) buttons disabled until the accessibility module lands (#500)
+- `PhaseInfoCard` no longer hidden by marker reset in sidebar (#510)
+- Player freeze on ESC during intermediate quiz dialog (#521)
+- `analyticsSystem` initialization order corrected in Game scene (#533)
+- Intermediate quiz text adapted so the player has a basis for the answer (#529)
+- Intermediate quiz quarter reward doubled from +1 to +2
+
+### Changed
+
+- Level asset loading made modular (#513)
+- `Game` scene modularized for multi-level readiness (#520)
+
+### Chore
+
+- Level 2 assets and configuration added (#530)
+
+## [1.3.0] - 2026-07-02
+
+### Added
+
+- `DialoguePanel` redesigned with speech-bubble shape and dynamic positioning relative to the speaking NPC (#474)
+- `ConfirmationPanel` extracted as an independent component with keyboard navigation, dimming backdrop, and Figma-aligned styling (#474)
+- Nine new intermediate questions added to level 01 content (#499)
+
+### Fixed
+
+- Audio (text-to-speech) buttons temporarily disabled on quiz and label panels until the accessibility module lands (#500)
+
+## [1.2.0] - 2026-07-02
+
+### Added
+
+- Intermediate quizzes: full scoring, migrations, and progression flow (#438)
+- Cinematic intro decoupled from game loading (#494)
+- Photo placeholder redesigned as a 2x2 chunk grid (#487)
+- Hint key with proximity-based prompts (#488)
+- Client-driven progression: `user_progress` computation moved to the frontend (#484)
+- Quiz result screen redesign (#477)
+- `LabelPanel` redesign with MUI Pagination and Figma spec, including TTS icon (#462)
+- `ScorePanel` — new score HUD component (#481)
+- Text accessibility: 144-character page limit (#464)
+- Easier early platforms on phase 1 + player spawn position fix (#497)
+
+### Fixed
+
+- Score/progression PostHog events moved to the frontend (#491)
+
+### Changed
+
+- Removed `COLLECT` and `CLUE_NEXT` collectible types, keeping only `CLUE_VILLAIN` (#472)
+
+### Database
+
+- `RemoveNonVillainCollectibleTypes`
+- `AddIntermediateQuizResultsToUserProgress`
+- `AddIntermediateQuizScoreToUserScore`
+
+## [1.1.0] - 2026-06-24
+
+### Added
+
+- Migrated the Chunk Selector UI from Phaser to React (`ChunkSelectorPanel.tsx`), improving styling, extensibility, and maintainability
+- Integrated `@dnd-kit/core` to support native, accessible drag-and-drop mechanics in the React chunk inventory grid
+- Modularized the chunk selection interface into clean React subcomponents (`DraggableInventoryItem`, `DroppableGridSlot`, `InventoryDropZone`)
+
+### Removed
+
+- Obsolete Phaser UI files (`BasePanel.ts` and `ChunkSelector.ts`)
+
+### Changed
+
+- Cleaned up remaining static hardcoded colors with layout configuration constants
