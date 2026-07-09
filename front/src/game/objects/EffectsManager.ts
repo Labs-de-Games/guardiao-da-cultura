@@ -15,6 +15,8 @@ export class EffectsManager {
   private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
   private spotlightVisible = false;
   private revealProgress = 1;
+  private spotlightTargetX = 0;
+  private spotlightTargetY = 0;
 
   static preload(scene: Phaser.Scene) {
     if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
@@ -131,7 +133,11 @@ export class EffectsManager {
   public showSpotlightBeam(
     duration: number = 2000,
     revealDuration: number = 200,
+    px: number = 0,
+    py: number = 0,
   ) {
+    this.spotlightTargetX = px;
+    this.spotlightTargetY = py;
     this.spotlightVisible = true;
     this.revealProgress = 0;
     this.scene.sound.play(SUCCEED_AUDIO_KEY, { volume: 0.5 });
@@ -194,6 +200,6 @@ export class EffectsManager {
   /** Atualiza o spotlight (chamar a cada frame) */
   public updateSpotlight(px: number, py: number) {
     if (!this.spotlightVisible) return;
-    this.drawSpotlightBeam(px, py);
+    this.drawSpotlightBeam(this.spotlightTargetX, this.spotlightTargetY);
   }
 }
