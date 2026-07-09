@@ -28,28 +28,36 @@ export function MapInfoBox() {
   const phaseNumber = activeMapMarker.levelId
     ? activeMapMarker.levelId.replace("level_", "").padStart(2, "0")
     : null;
+  const phaseLabel = phaseNumber ? `Fase ${phaseNumber}:` : null;
 
-  let headerLabel: string | null = null;
+  let stateLabel: string | null = null;
   let ctaColor: string;
   let ctaText: string;
   let ctaIcon: string | null = "▶";
 
   if (isCompleted) {
-    headerLabel = "Você visitou:";
+    stateLabel = "Você visitou:";
     ctaColor = "#D9AD56";
     ctaText = "Fase concluída";
     ctaIcon = "✓";
   } else if (isAvailable) {
-    headerLabel = "Você está aqui:";
+    stateLabel = "Você está aqui:";
     ctaColor = "#3B8C45";
     ctaText = 'Pressione "ESPAÇO" para jogar';
     ctaIcon = "▶";
   } else {
-    headerLabel = phaseNumber ? `Fase ${phaseNumber}:` : null;
+    stateLabel = null;
     ctaColor = "#6B7280";
     ctaText = "Finalize a Fase 01 para jogar";
     ctaIcon = "▶";
   }
+
+  // quando fase e estado coexistem, empilham o header e deslocam o conteúdo
+  const dualHeader = !!(phaseLabel && stateLabel);
+  const titleTop = dualHeader ? "63px" : "57px";
+  const locationTop = dualHeader ? "105px" : "99px";
+  const ctaTop = dualHeader ? "140px" : "134px";
+  const phaseLabelTop = dualHeader ? "29px" : "40px";
 
   return (
     <Box
@@ -107,11 +115,11 @@ export function MapInfoBox() {
 
       {/* conteúdo de texto */}
       <Box sx={{ position: "absolute", inset: 0 }}>
-        {headerLabel && (
+        {phaseLabel && (
           <Typography
             sx={{
               position: "absolute",
-              top: "40px",
+              top: phaseLabelTop,
               left: "45px",
               fontFamily: "Inter, sans-serif",
               fontSize: "14px",
@@ -119,14 +127,30 @@ export function MapInfoBox() {
               lineHeight: 1,
             }}
           >
-            {headerLabel}
+            {phaseLabel}
+          </Typography>
+        )}
+
+        {stateLabel && (
+          <Typography
+            sx={{
+              position: "absolute",
+              top: "46px",
+              left: "45px",
+              fontFamily: "Inter, sans-serif",
+              fontSize: "14px",
+              color: "#D9AD56",
+              lineHeight: 1,
+            }}
+          >
+            {stateLabel}
           </Typography>
         )}
 
         <Typography
           sx={{
             position: "absolute",
-            top: "57px",
+            top: titleTop,
             left: "45px",
             right: "55%",
             fontFamily: "Jockey One, sans-serif",
@@ -141,7 +165,7 @@ export function MapInfoBox() {
         <Typography
           sx={{
             position: "absolute",
-            top: "99px",
+            top: locationTop,
             left: "45px",
             fontFamily: "Inter, sans-serif",
             fontWeight: 500,
@@ -156,7 +180,7 @@ export function MapInfoBox() {
         <Box
           sx={{
             position: "absolute",
-            top: "134px",
+            top: ctaTop,
             left: "42px",
             display: "flex",
             alignItems: "center",
