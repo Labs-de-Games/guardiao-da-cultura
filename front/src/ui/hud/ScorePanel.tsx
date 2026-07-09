@@ -39,7 +39,7 @@ export function ScorePanel() {
         alignItems: "center",
         background: LayoutConfig.COLORS.MAP_BG_CSS,
         borderRadius: GAME_UI_TOKENS.radius.small,
-        padding: "12px 20px",
+        padding: "12px 32px 12px 20px",
         boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.25)",
         pointerEvents: "none",
       }}
