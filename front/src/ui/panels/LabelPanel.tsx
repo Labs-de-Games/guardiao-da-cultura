@@ -26,8 +26,8 @@ const DOT_INACTIVE_BG = "#1F1F1F";
 const FONT_TITLE = '"Jockey One", sans-serif';
 const FONT_BODY = "Inter, sans-serif";
 const CLOSE_HINT_FONT = "Inter, sans-serif";
-const CLOSE_HINT_SIZE = { xs: "0.625rem", md: "0.75rem" };
-const CLOSE_X_SIZE = { xs: 20, md: 26 };
+const CLOSE_HINT_SIZE = { xs: "0.8rem", md: "0.9rem" };
+const CLOSE_X_SIZE = { xs: 20, md: 24 };
 const CLOSE_HINT_FADE_DELAY_MS = 4000;
 const CLOSE_HINT_FADE_DURATION_MS = 1500;
 
@@ -336,6 +336,8 @@ export function LabelPanel() {
                 lineHeight: 1,
                 userSelect: "none",
                 whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
                 animation: hintVisible
                   ? "none"
                   : `${CLOSE_HINT_FADE_DURATION_MS}ms ease forwards closeHintFade`,
@@ -363,7 +365,7 @@ export function LabelPanel() {
           <Typography
             sx={{
               fontFamily: FONT_TITLE,
-              fontSize: { xs: "2rem", md: "3rem" },
+              fontSize: { xs: "2rem", md: "2.4rem" },
               fontWeight: 400,
               color: TEXT_COLOR,
               lineHeight: 1.2,
@@ -377,7 +379,7 @@ export function LabelPanel() {
             <Typography
               sx={{
                 fontFamily: FONT_BODY,
-                fontSize: { xs: "1.25rem", md: "2rem" },
+                fontSize: { xs: "1.2rem", md: "1.7rem" },
                 fontWeight: 400,
                 color: TEXT_COLOR,
                 lineHeight: 1.3,
