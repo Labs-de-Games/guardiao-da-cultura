@@ -61,7 +61,7 @@ export interface CollectiblesSyncData {
 
 export interface ChunkSelectorOpenData {
   instanceId: string;
-  availableItems: { id: string; name: string }[];
+  availableItems: { id: string; name: string; levelId: string }[];
   filledSlots: (string | null)[];
 }
 
