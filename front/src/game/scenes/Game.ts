@@ -287,7 +287,7 @@ export class Game extends Scene implements GameDataAccessor {
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
         const stars = Number.isFinite(payload.totalStars)
-          ? Math.max(0, Math.floor(payload.totalStars))
+          ? Math.max(0, payload.totalStars)
           : 0;
         EventBus.emit("player:stars-changed", {
           current: stars,
@@ -631,7 +631,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     const initialPayload = this.scoreManager.getPayload();
     const initialStars = Number.isFinite(initialPayload.totalStars)
-      ? Math.max(0, Math.floor(initialPayload.totalStars))
+      ? Math.max(0, initialPayload.totalStars)
       : 0;
     EventBus.emit("player:stars-changed", {
       current: initialStars,
