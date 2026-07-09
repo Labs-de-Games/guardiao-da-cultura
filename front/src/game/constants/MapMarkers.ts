@@ -66,6 +66,7 @@ export const DEFAULT_MAP_MARKER = {
   title: MAP_MARKERS[0].title,
   location: MAP_MARKERS[0].location,
   isAvailable: true,
+  isCompleted: false,
   image: MAP_MARKERS[0].image,
   levelId: MAP_MARKERS[0].levelId,
 };
