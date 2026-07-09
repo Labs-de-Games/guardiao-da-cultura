@@ -65,17 +65,17 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       tilesetName: "teatro",
     },
     data: {
+      // using level 1 data temporarily
       works: ["data/levels/level_02/works.json"],
-      quizzes: ["data/levels/level_02/quizzes.json"],
-      intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
-      npcs: ["data/levels/level_02/npcs.json"],
+      quizzes: ["data/levels/level_01/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_01/intermediate-quizzes.json"],
+      npcs: ["data/levels/level_01/npcs.json"],
       messages: ["data/global/messages.json"],
-      collectibles: ["data/levels/level_02/collectibles.json"],
+      collectibles: ["data/levels/level_01/collectibles.json"],
     },
   },
 };
 
-// Legacy support while refactoring
 export const LEVEL_ASSETS = {
   level_01: {
     MAP: LEVEL_REGISTRY.level_01.map,
@@ -147,6 +147,44 @@ export const LEVEL_ASSETS = {
     ],
     OTHERS: [{ key: "rec", path: "misc/rec.png" }],
     COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
+    CONTENT: {
+      key: "content",
+      path: "data/content.json",
+    },
+  },
+  level_02: {
+    MAP: LEVEL_REGISTRY.level_02.map,
+    SCULPTURES: [
+      {
+        key: "sam",
+        path: "artworks/sculptures/sam.png",
+      },
+      {
+        key: "soldado-caixa",
+        path: "artworks/sculptures/soldado-caixa.png",
+      },
+    ],
+    PAINTINGS: [
+      {
+        key: "ajuricaba",
+        path: "artworks/paintings/ajuricaba.png",
+      },
+      {
+        key: "anel-do-nibelungo",
+        path: "artworks/paintings/anel-do-nibelungo.png",
+      },
+      {
+        key: "opera-do-malandro",
+        path: "artworks/paintings/opera-do-malandro.png",
+      },
+      {
+        key: "zona-franca",
+        path: "artworks/paintings/zona-franca.png",
+      },
+    ],
+    CHUNKS: [],
+    OTHERS: [],
+    COLLECTIBLES: [],
     CONTENT: {
       key: "content",
       path: "data/content.json",
