@@ -20,6 +20,7 @@ export type ChunkSelectorMachineState = {
   slots: (string | null)[];
   usedInventoryIndices: (number | null)[];
   lockedSlots: boolean[];
+  justPlacedSlots: number[];
 };
 
 export type ChunkSelectorAction =
@@ -41,7 +42,8 @@ export type ChunkSelectorAction =
   | {
       type: "GRID_TO_GRID";
       payload: { fromSlotIndex: number; toSlotIndex: number };
-    };
+    }
+  | { type: "LOCK_SLOTS"; payload: { indices: number[] } };
 
 export const chunkAssetsByKey: Map<string, string> = new Map(
   (
@@ -80,6 +82,7 @@ export function buildInitialState(
     slots,
     usedInventoryIndices: [null, null, null, null],
     lockedSlots,
+    justPlacedSlots: [],
   };
 }
 
@@ -266,6 +269,18 @@ export function reducer(
         state.availableItems.length,
         state.selectedInventoryIndex,
       ),
+    };
+  }
+
+  if (action.type === "LOCK_SLOTS") {
+    const nextLocked = [...state.lockedSlots];
+    for (const i of action.payload.indices) {
+      nextLocked[i] = true;
+    }
+    return {
+      ...state,
+      lockedSlots: nextLocked,
+      justPlacedSlots: [...state.justPlacedSlots, ...action.payload.indices],
     };
   }
 

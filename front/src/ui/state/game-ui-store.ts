@@ -58,6 +58,7 @@ export interface ChunkSelectorData {
   instanceId: string;
   availableItems: { id: string; name: string; levelId: string }[];
   filledSlots: (string | null)[];
+  expectedSlots: string[];
 }
 
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
