@@ -177,7 +177,7 @@ export class EffectsManager {
     );
     const currentBulge = bottomBulge * progress;
 
-    beam.fillStyle(0xffffaa, 0.35 * progress);
+    beam.fillStyle(0xffffff, 0.35 * progress);
     beam.beginPath();
     beam.moveTo(px - topHalfWidth, py + topOffsetY);
     beam.lineTo(px + topHalfWidth, py + topOffsetY);
