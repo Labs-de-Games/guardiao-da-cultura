@@ -99,6 +99,7 @@ export class Game extends Scene {
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
+  private photoMechanicHandler!: PhotoMechanicHandler;
   private persistence!: GamePersistence;
   private progressionManager!: ProgressionManager;
   private isQuizActive: boolean = false;
@@ -431,7 +432,8 @@ export class Game extends Scene {
     this.registry.set("quiz_solved_after_failure", 0);
 
     this.mechanicsManager = new MechanicsManager();
-    this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
+    this.photoMechanicHandler = new PhotoMechanicHandler();
+    this.mechanicsManager.registerHandler(this.photoMechanicHandler);
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
@@ -997,6 +999,20 @@ export class Game extends Scene {
     );
 
     EventBus.on("ui:chunk-selector-submit", handleInteractionSubmitted);
+    EventBus.on("ui:chunk-slot-placed", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      this.photoMechanicHandler.placeCorrectChunk(
+        this,
+        p,
+        data.itemId,
+        data.slotIndex,
+      );
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+    });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
@@ -1014,6 +1030,7 @@ export class Game extends Scene {
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
+      EventBus.off("ui:chunk-slot-placed");
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
