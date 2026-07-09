@@ -129,7 +129,6 @@ export class MapIntroScene extends Scene {
     this.cancelAutoStart("started");
     const marker = MARKERS[this.activeMarkerIndex];
     if (marker.levelId === "level_01") {
-      EventBus.emit("map:marker-changed", null);
       this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
     }
   }
