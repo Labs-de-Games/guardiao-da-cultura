@@ -18,6 +18,13 @@ export class MechanicsManager {
   }
 
   /**
+   * Retorna o handler registrado para o tipo informado.
+   */
+  public getHandler(type: InteractiveType): BaseMechanicHandler | undefined {
+    return this.handlers.get(type);
+  }
+
+  /**
    * Delega a interação para o handler correspondente.
    * @param scene A cena principal do jogo
    * @param placeholder O placeholder que está sendo interagido

@@ -81,7 +81,8 @@ front/src/
 
 - Phaser game logic lives **exclusively** in `/front/src/game/`. Never import Phaser into React components outside the `PhaserGame` bootstrap.
 - The React shell (`PhaserGame.tsx`) creates the Phaser instance, passes user data, and forwards API calls.
-- Game-to-React communication uses DOM events or callbacks passed via the game config.
+- Game-to-React communication uses **two parallel channels**: the shared `EventBus` (for event-driven consumers) and a direct Zustand store write via `useGameUIStore.getState().set*()` (for time-sensitive state that must survive React mount-timing races caused by Turbopack module isolation). Phaser scenes that expose UI state must write to **both**.
+- Phaser scenes may read from the Zustand store via `useGameUIStore.getState()` at scene start to seed initial state (e.g., reading `progression.completedLevels` when re-entering the map after a completed level).
 - Scene transitions, asset loading, and game state are managed inside Phaser scenes, not React.
 
 ### Styling (MUI + Emotion)
