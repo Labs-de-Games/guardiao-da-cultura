@@ -1163,7 +1163,7 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   public shakePhotoFailure() {
-    this.effects.shake();
+    this.effects.shakeHorizontal();
   }
 
   public showSpotlightBeam(
@@ -1173,27 +1173,6 @@ export class Game extends Scene implements GameDataAccessor {
   ) {
     this.effects.showSpotlightBeam(duration, 200, px, py);
   }
-
-  public recordFloorError(floorIndex: number) {
-    this.scoreManager.recordFloorError(floorIndex);
-  }
-
-  public completeFloor(floorIndex: number) {
-    this.scoreManager.completeFloor(floorIndex);
-  }
-
-  public recordPhotoFloorError() {
-    this.recordFloorError(this.scoringFloors.photo);
-  }
-
-  public completePhotoFloor() {
-    this.completeFloor(this.scoringFloors.photo);
-  }
-
-  public shakePhotoFailure() {
-    this.effects.shakeHorizontal();
-  }
-
 
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
