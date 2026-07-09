@@ -68,6 +68,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     // Completion is handled inside emitFeedback when allCorrect.
     if (attempted && !allCorrect) {
       gameScene.recordPhotoFloorError();
+      gameScene.shakePhotoFailure();
     }
 
     return anyCorrect;
