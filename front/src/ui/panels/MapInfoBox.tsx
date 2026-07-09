@@ -9,12 +9,10 @@ export function MapInfoBox() {
   const activeMapMarker = useGameUIStore((s) => s.activeMapMarker);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const autoStartProgress = useGameUIStore((s) => s.autoStartProgress);
-  const progression = useGameUIStore((s) => s.progression);
 
   if (!activeMapMarker || gameStarted) return null;
 
-  const { isAvailable, levelId } = activeMapMarker;
-  const isCompleted = !!(levelId && progression?.completedLevels?.[levelId]);
+  const { isAvailable, isCompleted = false } = activeMapMarker;
 
   const showProgress =
     isAvailable &&
