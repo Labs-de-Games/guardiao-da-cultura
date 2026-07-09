@@ -5,6 +5,8 @@ const ERROR_AUDIO_KEY = "error";
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
  */
+const SUCCEED_AUDIO_KEY = "succeed";
+
 export class EffectsManager {
   private scene: Phaser.Scene;
   private camera: Phaser.Cameras.Scene2D.Camera;
@@ -17,6 +19,9 @@ export class EffectsManager {
   static preload(scene: Phaser.Scene) {
     if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
       scene.load.audio(ERROR_AUDIO_KEY, "sound/error.mp3");
+    }
+    if (!scene.cache.audio.exists(SUCCEED_AUDIO_KEY)) {
+      scene.load.audio(SUCCEED_AUDIO_KEY, "sound/succeed.ogg");
     }
   }
 
@@ -129,6 +134,7 @@ export class EffectsManager {
   ) {
     this.spotlightVisible = true;
     this.revealProgress = 0;
+    this.scene.sound.play(SUCCEED_AUDIO_KEY, { volume: 0.5 });
 
     this.scene.tweens.add({
       targets: this,
