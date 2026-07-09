@@ -1167,6 +1167,10 @@ export class Game extends Scene implements GameDataAccessor {
     });
   }
 
+  public shakeHorizontal(duration = 400, intensity = 0.05) {
+    this.effects.shakeHorizontal(duration, intensity);
+  }
+
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
