@@ -198,7 +198,7 @@ export class EffectsManager {
   }
 
   /** Atualiza o spotlight (chamar a cada frame) */
-  public updateSpotlight(px: number, py: number) {
+  public updateSpotlight(_px: number, _py: number) {
     if (!this.spotlightVisible) return;
     this.drawSpotlightBeam(this.spotlightTargetX, this.spotlightTargetY);
   }
