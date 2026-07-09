@@ -98,7 +98,6 @@ export class Game extends Scene implements GameDataAccessor {
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
-  private photoMechanicHandler!: PhotoMechanicHandler;
   public persistenceBridge!: PersistenceBridge;
   private progressionManager!: ProgressionManager;
   private quizManager!: QuizManager;
@@ -415,8 +414,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.registry.set("quiz_solved_after_failure", 0);
 
     this.mechanicsManager = new MechanicsManager();
-    this.photoMechanicHandler = new PhotoMechanicHandler();
-    this.mechanicsManager.registerHandler(this.photoMechanicHandler);
+    this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
     this.mechanicsManager.registerHandler(
       new PaintingMechanicHandler(this.scoringFloors.paintings),
     );
@@ -984,12 +982,10 @@ export class Game extends Scene implements GameDataAccessor {
       );
       if (!p) return;
 
-      this.photoMechanicHandler.placeCorrectChunk(
-        this,
-        p,
-        data.itemId,
-        data.slotIndex,
-      );
+      const handler = this.mechanicsManager.getHandler(InteractiveType.PHOTO);
+      if (!(handler instanceof PhotoMechanicHandler)) return;
+
+      handler.placeCorrectChunk(this, p, data.itemId, data.slotIndex);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     });
     EventBus.on("ui:chunk-selector-close", () => {
