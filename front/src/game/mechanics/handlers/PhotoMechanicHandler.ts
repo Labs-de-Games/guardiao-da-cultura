@@ -80,7 +80,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     return [String(id)];
   }
 
-  private placeCorrectChunk(
+  public placeCorrectChunk(
     gameScene: Game,
     placeholder: PlaceholderInstance,
     itemId: string,

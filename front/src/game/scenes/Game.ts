@@ -898,6 +898,11 @@ export class Game extends Scene implements GameDataAccessor {
 
         this.isChunkSelectorOpen = true;
         this.events.emit(GameEvents.DIALOGUE_STARTED);
+        const expectedSlots = Array.isArray(nearby.id)
+          ? nearby.id
+          : String(nearby.id)
+              .split(",")
+              .map((s) => s.trim());
         EventBus.emit("ui:chunk-selector-open", {
           instanceId: nearby.instanceId,
           availableItems: availableChunks.map((item) => ({
@@ -906,6 +911,7 @@ export class Game extends Scene implements GameDataAccessor {
             levelId: this.levelId,
           })),
           filledSlots: filled,
+          expectedSlots,
         });
       }
     });
@@ -970,6 +976,18 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     EventBus.on("ui:chunk-selector-submit", handleInteractionSubmitted);
+    EventBus.on("ui:chunk-slot-placed", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      const handler = this.mechanicsManager.getHandler(InteractiveType.PHOTO);
+      if (!(handler instanceof PhotoMechanicHandler)) return;
+
+      handler.placeCorrectChunk(this, p, data.itemId, data.slotIndex);
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+    });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
@@ -987,6 +1005,7 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
+      EventBus.off("ui:chunk-slot-placed");
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
