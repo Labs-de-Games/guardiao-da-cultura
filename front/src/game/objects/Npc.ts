@@ -56,6 +56,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    this.setDepth(20);
     this.setScale(NPC_PHYSICS.SCALE);
 
     this.play(NPC_ANIMS.IDLE.key);
@@ -69,7 +70,8 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
     this.exclamationIcon = scene.add
       .image(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y, "exclamation")
-      .setScale(4);
+      .setScale(4)
+      .setDepth(21);
 
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     this.once(
