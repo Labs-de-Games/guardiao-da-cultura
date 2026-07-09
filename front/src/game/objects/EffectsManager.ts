@@ -1,5 +1,7 @@
 import type * as Phaser from "phaser";
 
+const ERROR_AUDIO_KEY = "error";
+
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
  */
@@ -8,6 +10,12 @@ export class EffectsManager {
   private camera: Phaser.Cameras.Scene2D.Camera;
   private colorMatrix?: Phaser.FX.ColorMatrix;
   private vignette?: Phaser.FX.Vignette;
+
+  static preload(scene: Phaser.Scene) {
+    if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
+      scene.load.audio(ERROR_AUDIO_KEY, "sound/error.mp3");
+    }
+  }
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -72,6 +80,29 @@ export class EffectsManager {
   /** Shake de câmera para feedback de erro/dano */
   public shake(duration: number = 200, intensity: number = 0.005) {
     this.camera.shake(duration, intensity);
+  }
+
+  public shakeHorizontal(duration = 150, intensity = 0.015): number {
+    const cam = this.camera;
+    const startX = cam.scrollX;
+    const steps = Math.ceil(duration / 16);
+    let step = 0;
+
+    this.scene.sound.play(ERROR_AUDIO_KEY, { volume: 0.5 });
+
+    this.scene.time.addEvent({
+      delay: 16,
+      repeat: steps - 1,
+      callback: () => {
+        step++;
+        const t = step / steps;
+        const decay = 1 - t;
+        const offset = (Math.random() * 2 - 1) * intensity * cam.width * decay;
+        cam.scrollX = startX + offset;
+      },
+    });
+
+    return steps * 16;
   }
 
   /** Flash de tela para feedback positivo */

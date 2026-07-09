@@ -74,6 +74,7 @@ export class SculptureMechanicHandler implements BaseMechanicHandler {
     g: Game,
     placeholder?: PlaceholderInstance | null,
   ): void {
+    g.shakeHorizontal(400, 0.05);
     g.recordFloorError(this.scoringFloor);
 
     const workId = placeholder

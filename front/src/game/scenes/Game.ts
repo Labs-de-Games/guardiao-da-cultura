@@ -173,6 +173,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
+    EffectsManager.preload(this);
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
@@ -1157,6 +1158,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.completeFloor(this.scoringFloors.photo);
   }
 
+  public shakePhotoFailure() {
+    this.effects.shakeHorizontal();
+  }
+
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
   }
@@ -1179,6 +1184,10 @@ export class Game extends Scene implements GameDataAccessor {
       }
       return { filled: 0, total: 0 };
     });
+  }
+
+  public shakeHorizontal(duration = 400, intensity = 0.05) {
+    this.effects.shakeHorizontal(duration, intensity);
   }
 
   private handleItemDropped(item: DraggableItem) {
