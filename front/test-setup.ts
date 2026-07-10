@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom";
 
+class MockEventEmitter {
+  on = jest.fn();
+  off = jest.fn();
+  once = jest.fn();
+  emit = jest.fn();
+  removeAllListeners = jest.fn();
+}
+
 jest.mock("phaser", () => ({
   Game: class {
     destroy() {}
@@ -9,13 +17,18 @@ jest.mock("phaser", () => ({
     RESIZE: 0,
     CENTER_BOTH: 1,
   },
-  Events: {
-    EventEmitter: class {
-      on = jest.fn();
-      off = jest.fn();
-      once = jest.fn();
-      emit = jest.fn();
-      removeAllListeners = jest.fn();
+  Data: {
+    DataManager: class {
+      private data: Record<string, unknown> = {};
+      get(key: string) {
+        return this.data[key];
+      }
+      set(key: string, value: unknown) {
+        this.data[key] = value;
+      }
     },
+  },
+  Events: {
+    EventEmitter: MockEventEmitter,
   },
 }));

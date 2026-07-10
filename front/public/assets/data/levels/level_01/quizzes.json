@@ -2,9 +2,9 @@
   "missao_curador": [
     {
       "id": "q1",
-      "category": "MVP Escultura",
+      "category": "Escultura",
       "question": "Qual desses temas está mais presente nas obras de Edgard de Souza?",
-      "options": ["hiperrealismo", "transformação", "miniaturas", "gigantismo"],
+      "options": ["Hiperrealismo", "Transformação", "Miniaturas", "Gigantismo"],
       "correctOptionIndex": 1,
       "explanation": "XXXXX",
       "hints": [
@@ -16,9 +16,9 @@
     },
     {
       "id": "q2",
-      "category": "MVP Pintura",
+      "category": "Pintura",
       "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião?",
-      "options": ["umbanda", "protestantismo", "islamismo", "budismo"],
+      "options": ["Umbanda", "Protestantismo", "Islamismo", "Budismo"],
       "correctOptionIndex": 0,
       "explanation": "XXXXX",
       "hint": [
@@ -30,7 +30,7 @@
     },
     {
       "id": "q3",
-      "category": "MVP Pintura",
+      "category": "Pintura",
       "question": "Na obra Okê Oxóssi de Abdias Nascimento, a saudação “okê” substitui qual lema brasileiro?",
       "options": [
         "Ordem e progresso",
@@ -49,7 +49,7 @@
     },
     {
       "id": "q4",
-      "category": "MVP Fotografia",
+      "category": "Fotografia",
       "question": "Qual fotógrafa foi ativa na luta pela demarcação das terras yanomamis?",
       "options": [
         "Luisa Dörr",
@@ -68,16 +68,13 @@
     },
     {
       "id": "q5",
-      "category": "MVP Fotografia",
-      "question": "Uma das obras tradicionais dos yanomami são os cestos trançados a mão. Como eles chamam estes cestos?",
-      "options": ["cocar", "pajé", "xotehe", "maracá"],
+      "category": "Pintura",
+      "question": "Abdias Nascimento pintou itens dos orixás, como o oxé e o ofá. O que é um ofá?",
+      "options": ["Machado", "Espelho", "Arco e flecha", "Lança"],
       "correctOptionIndex": 2,
       "explanation": "XXXXX",
-      "hints": [
-        "É uma palavra de três sílabas.",
-        "Tem uma letra pouco usada na língua portuguesa."
-      ],
-      "tags": ["indigenas", "artesanato", "cultura"],
+      "hints": ["É um instrumento de Oxóssi.", "É usado em combate."],
+      "tags": ["abdiasn", "pintura", "cultura", "religiao"],
       "difficulty": "medium"
     }
   ]

@@ -61,13 +61,26 @@ export interface CollectiblesSyncData {
 
 export interface ChunkSelectorOpenData {
   instanceId: string;
-  availableItems: { id: string; name: string }[];
+  availableItems: { id: string; name: string; levelId: string }[];
   filledSlots: (string | null)[];
+  expectedSlots: string[];
 }
 
 export interface ChunkSelectorSubmitData {
   instanceId: string;
   placedItems: (string | null)[];
+}
+
+export interface ChunkSlotPlacedData {
+  instanceId: string;
+  slotIndex: number;
+  itemId: string;
+}
+
+export interface ChunkSlotRejectedData {
+  instanceId: string;
+  slotIndex: number;
+  itemId: string;
 }
 
 export interface ToastShowData {
@@ -125,6 +138,9 @@ export interface MapMarkerChangedData {
   title: string;
   location: string;
   isAvailable: boolean;
+  isCompleted?: boolean;
+  image?: string;
+  levelId?: string;
 }
 
 export interface AutoStartTickData {
@@ -151,6 +167,8 @@ export interface GameEventMap {
   "ui:chunk-selector-open": ChunkSelectorOpenData;
   "ui:chunk-selector-close": undefined;
   "ui:chunk-selector-submit": ChunkSelectorSubmitData;
+  "ui:chunk-slot-placed": ChunkSlotPlacedData;
+  "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
   "dialogue:show": DialogueShowData;
   "dialogue:confirm": DialogueConfirmData;

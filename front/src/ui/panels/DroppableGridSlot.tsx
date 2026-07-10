@@ -1,19 +1,32 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Box, Typography } from "@mui/material";
+import { keyframes } from "@mui/system";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { getChunkImageSrc } from "./chunk-selector-types";
+
+const shake = keyframes`
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+`;
 
 export function DroppableGridSlot({
   idx,
   slot,
   isSelected,
   isLocked,
+  isJustPlaced,
+  isRejecting,
 }: {
   idx: number;
   slot: string | null;
   isSelected: boolean;
   isLocked: boolean;
+  isJustPlaced?: boolean;
+  isRejecting?: boolean;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `slot-${idx}`,
@@ -31,6 +44,17 @@ export function DroppableGridSlot({
     disabled: !isDraggable,
   });
 
+  const borderStyle =
+    isOver || isSelected
+      ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
+      : isRejecting
+        ? `2px solid ${LayoutConfig.COLORS.UNAVAILABLE_RED}`
+        : isJustPlaced
+          ? `3px solid ${LayoutConfig.COLORS.AVAILABLE_GREEN}`
+          : isLocked
+            ? `2px solid ${LayoutConfig.COLORS.AVAILABLE_GREEN}`
+            : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`;
+
   return (
     <Box
       ref={(node: HTMLDivElement | null) => {
@@ -43,11 +67,7 @@ export function DroppableGridSlot({
         width: "100%",
         aspectRatio: "122 / 80",
         bgcolor: LayoutConfig.COLORS.CHUNK_BG_CSS,
-        border: isLocked
-          ? "2px solid #4b8b5f"
-          : isOver || isSelected
-            ? `3px solid ${LayoutConfig.COLORS.INFO_TITLE}`
-            : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`,
+        border: borderStyle,
         borderRadius: "10px",
         overflow: "hidden",
         display: "flex",
@@ -57,6 +77,7 @@ export function DroppableGridSlot({
         cursor: isDraggable ? "grab" : "default",
         opacity: isDragging ? 0.3 : 1,
         userSelect: "none",
+        animation: isRejecting ? `${shake} 0.4s ease` : "none",
       }}
     >
       {slot ? (
@@ -78,7 +99,7 @@ export function DroppableGridSlot({
           ?
         </Typography>
       )}
-      {isLocked && (
+      {isLocked && !isJustPlaced && (
         <Box
           sx={{
             position: "absolute",
@@ -87,7 +108,7 @@ export function DroppableGridSlot({
             width: 8,
             height: 8,
             borderRadius: "50%",
-            bgcolor: "#8dd39d",
+            bgcolor: LayoutConfig.COLORS.SUCCESS_GREEN,
           }}
         />
       )}

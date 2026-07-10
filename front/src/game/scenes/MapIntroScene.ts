@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { EventBus } from "@/shared/events/event-bus";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
 import {
   AUTO_START_DELAY_MS,
   AUTO_START_REGISTRY_KEY,
@@ -10,6 +11,10 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
 import { SceneNames } from "../constants/SceneNames";
 import { onKeyDown, registerScene } from "../systems/InputManager";
+import type {
+  CompletedLevelRecord,
+  UserProgressState,
+} from "../types/ProgressionTypes";
 
 type MarkerView = {
   marker: Phaser.GameObjects.Image;
@@ -29,6 +34,7 @@ export class MapIntroScene extends Scene {
   private readonly unavailableMarkerTint = 0x292828;
   private autoStartEvent?: Phaser.Time.TimerEvent;
   private autoStartStartMs = 0;
+  private completedLevels: Record<string, CompletedLevelRecord> = {};
 
   private readonly handleResize = () => {
     this.layout();
@@ -62,7 +68,7 @@ export class MapIntroScene extends Scene {
       marker.on("pointerdown", () => {
         this.activeMarkerIndex = index;
         this.emitMarkerChanged();
-        if (index === 0) {
+        if (this.isMarkerAvailable(index)) {
           this.beginGame();
         }
       });
@@ -79,20 +85,50 @@ export class MapIntroScene extends Scene {
 
     this.scale.on("resize", this.handleResize);
 
+    // Seed completedLevels from Zustand store (set when returning from a completed level)
+    const storedProgression = useGameUIStore.getState().progression;
+    if (storedProgression?.completedLevels) {
+      this.completedLevels = storedProgression.completedLevels;
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const raw = localStorage.getItem("gameplate:debug:completedLevels");
+        if (raw) {
+          this.completedLevels = JSON.parse(raw) as Record<
+            string,
+            CompletedLevelRecord
+          >;
+        }
+      } catch {
+        // ignore malformed JSON
+      }
+    }
+
+    const onProgression = (data: UserProgressState) => {
+      this.completedLevels = data.completedLevels;
+      this.layout();
+      this.emitMarkerChanged();
+    };
+    EventBus.on("progression:updated", onProgression, this);
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
       this.cancelAutoStart("shutdown");
+      EventBus.off("progression:updated", onProgression, this);
     });
 
     this.layout();
     this.emitMarkerChanged();
+    // defer re-emit so GameOverlay's "map:marker-changed" listener is active
+    window.setTimeout(() => this.emitMarkerChanged(), 200);
     this.maybeStartAutoStart();
   }
 
   private beginGame() {
     this.cancelAutoStart("started");
-    if (this.activeMarkerIndex === 0) {
-      EventBus.emit("map:marker-changed", null);
+    const marker = MARKERS[this.activeMarkerIndex];
+    if (marker.levelId === "level_01") {
       this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
     }
   }
@@ -139,13 +175,28 @@ export class MapIntroScene extends Scene {
     }
   }
 
+  private isMarkerAvailable(index: number): boolean {
+    if (index === 0) return true;
+    const prev = MARKERS[index - 1];
+    return !!(prev.levelId && this.completedLevels[prev.levelId]);
+  }
+
   private emitMarkerChanged() {
     const marker = MARKERS[this.activeMarkerIndex];
-    EventBus.emit("map:marker-changed", {
+    const isAvailable = this.isMarkerAvailable(this.activeMarkerIndex);
+    const isCompleted = !!(
+      marker.levelId && this.completedLevels[marker.levelId]
+    );
+    const data = {
       title: marker.title,
       location: marker.location,
-      isAvailable: this.activeMarkerIndex === 0,
-    });
+      isAvailable,
+      isCompleted,
+      image: marker.image,
+      levelId: marker.levelId,
+    };
+    EventBus.emit("map:marker-changed", data);
+    useGameUIStore.getState().setActiveMapMarker(data);
   }
 
   private cycleMarkerForward = () => {
@@ -236,7 +287,7 @@ export class MapIntroScene extends Scene {
         42,
       );
       const markerScale = markerTargetSize / markerSource.width;
-      const isAvailable = index === 0;
+      const isAvailable = this.isMarkerAvailable(index);
 
       this.markerBaseScales.set(markerData.id, markerScale);
       view.marker.setScale(markerScale);

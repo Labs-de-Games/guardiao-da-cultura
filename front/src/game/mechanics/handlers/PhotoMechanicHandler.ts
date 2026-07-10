@@ -68,6 +68,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     // Completion is handled inside emitFeedback when allCorrect.
     if (attempted && !allCorrect) {
       gameScene.recordPhotoFloorError();
+      gameScene.shakePhotoFailure();
     }
 
     return anyCorrect;
@@ -80,7 +81,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     return [String(id)];
   }
 
-  private placeCorrectChunk(
+  public placeCorrectChunk(
     gameScene: Game,
     placeholder: PlaceholderInstance,
     itemId: string,
@@ -114,6 +115,11 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     gameScene.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
     if (allCorrect) {
+      gameScene.showSpotlightBeam(
+        2000,
+        placeholder.area.centerX,
+        placeholder.area.centerY,
+      );
       gameScene.completePhotoFloor();
 
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [

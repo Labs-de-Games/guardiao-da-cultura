@@ -122,6 +122,7 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
           instanceId: data.instanceId,
           availableItems: data.availableItems,
           filledSlots: data.filledSlots,
+          expectedSlots: data.expectedSlots,
         });
       },
     );
@@ -201,6 +202,12 @@ function OverlayContent({ entryFlow }: { entryFlow: EntryFlow }) {
         } else if (sidebarOpen) {
           setSidebarOpen(false);
         }
+      }
+      if ((e.key === " " || e.key === "e" || e.key === "E") && labelData) {
+        e.preventDefault();
+        e.stopPropagation();
+        setLabelData(null);
+        EventBus.emit("ui:label-hide", undefined);
       }
       if (e.key === "b" || e.key === "B") {
         if (gameStarted) {
