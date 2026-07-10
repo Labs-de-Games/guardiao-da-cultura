@@ -3,7 +3,7 @@
 //  Central manager for all game audio playback.
 // ============================================================
 
-import { getPoolVariations, isPoolKey } from "./loader";
+import { getPoolVariations, isSoundPoolKey } from "./loader";
 import type {
   AudioCategory,
   AudioKey,
@@ -250,7 +250,7 @@ export class AudioManager {
 
     // Check if this is a sound pool
     let actualKey: string = key;
-    if (isPoolKey(key)) {
+    if (isSoundPoolKey(key)) {
       const variationKey = this.selectPoolVariation(key);
       if (!variationKey) {
         console.warn(

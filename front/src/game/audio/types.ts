@@ -84,7 +84,7 @@ export type AudioAssetDefinition = AudioAssetConfig | AudioPoolConfig;
 /**
  * Type guard to check if an asset definition is a pool config.
  */
-export function isPoolConfig(
+export function isSoundPoolConfig(
   asset: AudioAssetDefinition,
 ): asset is AudioPoolConfig {
   return "paths" in asset;

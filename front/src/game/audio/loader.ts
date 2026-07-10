@@ -5,7 +5,7 @@
 
 import { getGlobalAudioAssets, getLevelAudioManifest } from "./registry";
 import type { AudioAssetDefinition, AudioPoolConfig } from "./types";
-import { isPoolConfig } from "./types";
+import { isSoundPoolConfig } from "./types";
 
 /**
  * Registry of loaded sound pools.
@@ -24,7 +24,7 @@ export function getPoolVariations(poolKey: string): string[] | undefined {
 /**
  * Check if a key is registered as a sound pool.
  */
-export function isPoolKey(key: string): boolean {
+export function isSoundPoolKey(key: string): boolean {
   return soundPoolRegistry.has(key);
 }
 
@@ -76,7 +76,7 @@ export function loadAudioAssets(
   assets: AudioAssetDefinition[],
 ): void {
   assets.forEach((asset) => {
-    if (isPoolConfig(asset)) {
+    if (isSoundPoolConfig(asset)) {
       loadSoundPool(scene, asset);
     } else {
       scene.load.audio(asset.key, asset.path);
@@ -115,7 +115,7 @@ export function registerAudio(
   scene: Phaser.Scene,
   config: AudioAssetDefinition,
 ): void {
-  if (isPoolConfig(config)) {
+  if (isSoundPoolConfig(config)) {
     loadSoundPool(scene, config);
   } else {
     scene.load.audio(config.key, config.path);
