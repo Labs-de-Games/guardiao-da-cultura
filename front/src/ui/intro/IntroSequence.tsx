@@ -304,9 +304,10 @@ export function IntroSequence({
     setMaskReveal(true);
   }, []);
 
-  // When mask animation starts, emit event to start game loading
+  // When mask animation starts, emit events to start game loading and music
   const handleMaskAnimationStart = useCallback(() => {
     EventBus.emit("intro:complete", { levelId });
+    EventBus.emit("intro:music-start", { levelId });
   }, [levelId]);
 
   const handleMaskDone = useCallback(() => {

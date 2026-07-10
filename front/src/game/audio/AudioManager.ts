@@ -52,9 +52,6 @@ export class AudioManager {
   private settings: AudioSettings;
   private currentMusic: SoundInstance | null = null;
   private activeSounds: Map<string, SoundInstance> = new Map();
-  private userHasInteracted: boolean = false;
-  private pendingMusicKey: AudioKey | null = null;
-  private interactionListeners: Array<() => void> = [];
   /** Tracks last played variation index for each pool (for avoidRepeat) */
   private lastPoolVariation: Map<string, number> = new Map();
 
@@ -75,11 +72,25 @@ export class AudioManager {
   /**
    * Initialize the AudioManager with a Phaser scene.
    * Must be called before playing any audio.
+   * If music was already playing on a previous scene, it will be resumed
+   * on the new scene to handle scene transitions seamlessly.
    */
   public static init(scene: Phaser.Scene): void {
     const instance = AudioManager.getInstance();
+    const previousMusicKey = instance.currentMusic?.key ?? null;
+
+    // Clean up sounds from the previous scene
+    if (instance.scene && previousMusicKey) {
+      instance.stopAllInternal();
+      instance.currentMusic = null;
+    }
+
     instance.setScene(scene);
-    instance.setupInteractionListeners();
+
+    // Resume music on the new scene if it was playing before
+    if (previousMusicKey) {
+      instance.playMusicInternal(previousMusicKey as AudioKey);
+    }
   }
 
   /**
@@ -89,7 +100,6 @@ export class AudioManager {
   public static destroy(): void {
     const instance = AudioManager.getInstance();
     instance.stopAllInternal();
-    instance.clearInteractionListeners();
     instance.scene = null;
     AudioManager.instance = null;
   }
@@ -197,38 +207,6 @@ export class AudioManager {
     this.scene = scene;
   }
 
-  private setupInteractionListeners(): void {
-    if (!this.scene) return;
-
-    const handleInteraction = () => {
-      if (this.userHasInteracted) return;
-      this.userHasInteracted = true;
-      this.clearInteractionListeners();
-
-      // Play any pending music
-      if (this.pendingMusicKey) {
-        this.playMusicInternal(this.pendingMusicKey);
-        this.pendingMusicKey = null;
-      }
-    };
-
-    // Use Phaser's input system (not window) since canvas captures all events
-    this.scene.input.on("pointerdown", handleInteraction);
-    this.scene.input.keyboard?.on("keydown", handleInteraction);
-
-    this.interactionListeners.push(() => {
-      this.scene?.input.off("pointerdown", handleInteraction);
-      this.scene?.input.keyboard?.off("keydown", handleInteraction);
-    });
-  }
-
-  private clearInteractionListeners(): void {
-    this.interactionListeners.forEach((cleanup) => {
-      cleanup();
-    });
-    this.interactionListeners = [];
-  }
-
   private playSound(
     key: AudioKey,
     category: AudioCategory,
@@ -322,12 +300,6 @@ export class AudioManager {
   }
 
   private playMusicInternal(key: AudioKey, fadeInMs?: number): void {
-    // Check autoplay restriction
-    if (!this.userHasInteracted) {
-      this.pendingMusicKey = key;
-      return;
-    }
-
     // Stop current music if playing
     if (this.currentMusic) {
       this.stopMusicInternal(0);
@@ -431,7 +403,6 @@ export class AudioManager {
     });
     this.activeSounds.clear();
     this.currentMusic = null;
-    this.pendingMusicKey = null;
   }
 
   private loadSettings(): AudioSettings {

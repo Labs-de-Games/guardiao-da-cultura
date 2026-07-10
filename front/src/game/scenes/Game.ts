@@ -4,7 +4,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
-import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
+import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -240,9 +240,8 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.load.image("label", "misc/label.png");
 
-    // Load audio assets
-    loadGlobalAudio(this);
-    loadLevelAudio(this, this.levelId);
+    // Audio assets are preloaded by LevelCinematic scene
+    // during the cinematic intro to avoid loading delays
   }
 
   private processModularData() {
@@ -258,12 +257,9 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects = new EffectsManager(this);
     this.createAnimations();
 
-    // Initialize audio manager
+    // Initialize audio manager with this scene
+    // Music was already started by LevelCinematic during the mask reveal
     AudioManager.init(this);
-
-    // Start level background music
-    // Music will play after first user interaction due to browser autoplay restrictions
-    AudioManager.playMusic("music.level_1.main", 2000); // 2 second fade-in
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,

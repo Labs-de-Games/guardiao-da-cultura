@@ -193,4 +193,5 @@ export interface GameEventMap {
   "progression:updated": UserProgressState;
   "intro:start": { levelId: string; config: IntroConfig };
   "intro:complete": { levelId: string };
+  "intro:music-start": { levelId: string };
 }
