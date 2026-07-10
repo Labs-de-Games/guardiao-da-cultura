@@ -1163,15 +1163,22 @@ export class Game extends Scene implements GameDataAccessor {
           const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
           const platformBody = platform.body as Phaser.Physics.Arcade.Body;
 
+          // With setDirectControl(true), velocity is not set explicitly.
+          // Use position delta to determine the platform's actual movement.
+          const platformDeltaY = platformBody.position.y - platformBody.prev.y;
+
           // Player must be moving downwards relative to the platform
           const relativeVelocityY =
-            playerBody.velocity.y - platformBody.velocity.y;
+            playerBody.velocity.y -
+            platformDeltaY / (this.game.loop.delta / 1000 || 1 / 60);
           if (relativeVelocityY < -0.01) {
             return false;
           }
 
-          // Player's feet must be above or very close to the platform's top
-          return playerBody.bottom <= platformBody.y + 16;
+          // Player's feet must have been above or at the platform's top in the previous frame
+          return (
+            playerBody.prev.y + playerBody.height <= platformBody.prev.y + 10
+          );
         },
         this,
       );
