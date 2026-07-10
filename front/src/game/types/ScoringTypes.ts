@@ -42,7 +42,7 @@ export interface QuizScore {
 export interface IntermediateQuizzesScore {
   total: number; // number of intermediate quizzes attempted
   passed: number; // number of intermediate quizzes passed
-  quartersNet: number; // net quarters gained/lost (+1 per pass, -1 per fail)
+  quartersNet: number; // quarters gained (+1 per pass, 0 per fail — no penalty)
 }
 
 export type ScoringEventRecord =
