@@ -1,84 +1,84 @@
-# **Diretrizes e Estrutura do Processo de *Release* do *Game* Rouanet**
+# **Release Process Guidelines and Structure — Rouanet Game**
 
-Este documento estabelece o padrão oficial para o gerenciamento, planejamento e execução de *releases* do *Game* Rouanet, garantindo a estabilidade do ambiente de produção e a previsibilidade das entregas.
+This document establishes the official standard for managing, planning, and executing releases of the Rouanet Game, ensuring production environment stability and delivery predictability.
 
-## **1\. Janelas de *Release* (Dias e Horários)**
+## **1. Release Windows (Days and Times)**
 
-Para mitigar riscos e garantir a disponibilidade da equipe de suporte, *as releases* em produção devem seguir estritamente o cronograma abaixo:
+To mitigate risk and guarantee support team availability, production releases must strictly follow the schedule below:
 
-| Tipo de *Release* | Dias Permitidos | Horário Limite | Impacto Esperado   |
+| Release Type | Allowed Days | Time Limit | Expected Impact |
 | :---- | :---- | :---- | :---- |
-| ***Release*** **Ordinária (*Minor/Patch*)** | Segunda-feira | 13h às 15h | Baixo / Transparente |
-|  | Terça-feira | 13h às 19h |  |
-|  | Quinta-feira | 13h às 19h |  |
-| **Nova Versão (*Major*)** | Quinta-feira | 13h às 15h | Médio a Alto (Indisponibilidade programada) |
-| **Emergencial (*Hotfix*)** | Qualquer dia (Sujeito a aprovação) | Imediato após validação, evitar fim do dia | Crítico (Correção de *bug* bloqueante) |
+| **Ordinary Release (Minor/Patch)** | Monday | 1pm–3pm | Low / Transparent |
+|  | Tuesday | 1pm–7pm |  |
+|  | Thursday | 1pm–7pm |  |
+| **New Version (Major)** | Thursday | 1pm–3pm | Medium to High (Scheduled downtime) |
+| **Emergency (Hotfix)** | Any day (Subject to approval) | Immediately after validation, avoid end of day | Critical (Blocking bug fix) |
 
-*Nota: É estritamente proibida a realização de deploys ordinários em sextas-feiras, vésperas de feriados ou períodos de alta carga comercial, como datas de divulgação ao público.*
+*Note: Ordinary deploys are strictly prohibited on Fridays, the day before holidays, or periods of high public engagement, such as public announcement dates.*
 
-Maiores detalhes sobre a janela de uso do game, verificar o [Plano de Release Técnica](https://docs.google.com/document/d/1-QBGFMwnMgHSds0LesnqVGQxeC38-H3ouVTGK2lNV1M/edit?usp=sharing).
+For more details on the game's usage window, see the [Technical Release Plan](https://docs.google.com/document/d/1-QBGFMwnMgHSds0LesnqVGQxeC38-H3ouVTGK2lNV1M/edit?usp=sharing).
 
-## **2\. Nomenclatura e Versionamento**
+## **2. Naming and Versioning**
 
-Adotamos o padrão ***Semantic Versioning*** **(SemVer)** no formato *MAJOR.MINOR.PATCH*:
+We adopt the **Semantic Versioning (SemVer)** standard in the *MAJOR.MINOR.PATCH* format:
 
-* ***MAJOR*****:** Incrementado quando há mudanças incompatíveis com versões anteriores (*breaking changes*).  
-* ***MINOR*****:** Incrementado quando novas funcionalidades são adicionadas de maneira retrocompatível.  
-* ***PATCH*****:** Incrementado quando correções de *bugs* retrocompatíveis são aplicadas.
+* **MAJOR:** Incremented when there are backward-incompatible changes (breaking changes).
+* **MINOR:** Incremented when new features are added in a backward-compatible way.
+* **PATCH:** Incremented when backward-compatible bug fixes are applied.
 
-### **Nomenclatura de *Branches* e *Tags Git***
+### **Branch and Git Tag Naming**
 
-A estrutura de ramificação do código deve seguir o fluxo abaixo:
+The code branching structure must follow the flow below:
 
-* ***main*****:** reflete sempre o código em ambiente de produção  
-* ***develop*****:** versão mais atualizada e completa do código, ainda em validação  
-* ***release*****/vX.Y.Z:** *branch* de preparação para a *release*, criada a partir da *develop*  
-* ***hotfix*****/vX.Y.Z:** *branch* para correções urgentes em produção
+* **master:** always reflects the code currently in production
+* **develop:** the most up-to-date, complete version of the code, still under validation
+* **release/vX.Y.Z:** preparation branch for a release, created from `develop`
+* **hotfix/vX.Y.Z:** branch for urgent production fixes
 
-***Tags*****:** Toda *release* bem-sucedida deve gerar uma *tag* semântica imutável (ex: v1.4.2).
+**Tags:** Every successful release must generate an immutable semantic tag (e.g., v1.4.2).
 
-## **3\. Ambientes de *Staging* e *Prod***
+## **3. Staging and Production Environments**
 
-Exemplo Prod: v1.0.0 \-\> Versão 1.0.0 com as seguintes funcionalidades:
+Production example: v1.0.0 -> Version 1.0.0 with the following features:
 
-* Descrição completa das alterações incluídas na versão.
+* Full description of the changes included in the version.
 
-Exemplo QA: qa-v1.0.0 \-\> Versão de validação 1.0.0, \<Motivo da correção\> 
+QA example: qa-v1.0.0 -> Validation version 1.0.0, \<Reason for the fix\>
 
-### **Histórico de versões e subidas**
+### **Version and Deployment History**
 
-Detalhar essa parte  
+See [docs/CHANGELOG.md](./CHANGELOG.md) for the full per-version changelog, and the Coolify dashboard for deployment history:
 http://<coolify-host>/
 
-## **4\. Passo a Passo do Processo de Execução**
+## **4. Step-by-Step Execution Process**
 
-O processo é dividido em três etapas obrigatórias:
+The process is divided into three mandatory stages:
 
-1. **Pré-*Release*:**  
-   * Garantir que todos os testes e alterações estejam aprovados na esteira de *CI*.  
-   * Gerar o *Changelog* com a lista de funcionalidades e correções incluídas.  
-   * Congelar novas alterações (*Code Freeze*) na *branch* de *release*.  
-2. **Execução (*Deploy*):**  
-   * Realizar o *backup* preventivo do banco de dados e estados da aplicação.  
-   * Disparar a esteira de *CD* para o ambiente de produção.  
-   * Monitorar os *logs* em tempo real durante a virada de chave.  
-3. **Pós-*Release* (*Sanity Check*):**  
-   * Executar testes nas principais mecânicas do jogo e jornadas do usuário.  
-   * Validar métricas de performance e infraestrutura (*CPU*, Memória, Erros).
+1. **Pre-Release:**
+   * Ensure all tests and changes have been approved in the CI pipeline.
+   * Generate the Changelog with the list of features and fixes included.
+   * Freeze new changes (Code Freeze) on the release branch.
+2. **Execution (Deploy):**
+   * Perform a preventive backup of the database and application state.
+   * Trigger the CD pipeline for the production environment.
+   * Monitor logs in real time during the cutover.
+3. **Post-Release (Sanity Check):**
+   * Run tests on the main game mechanics and user journeys.
+   * Validate performance and infrastructure metrics (CPU, Memory, Errors).
 
-## **5\. Plano de *Rollback* (Retorno de Versão)**
+## **5. Rollback Plan (Version Reversion)**
 
-Caso a *release* apresente instabilidade insustentável na etapa de Pós-*Release*, os seguintes critérios e passos de *rollback* devem ser acionados imediatamente:
+If a release presents unsustainable instability during the Post-Release stage, the following activation criteria and rollback steps must be triggered immediately:
 
-### **Critérios de Ativação**
+### **Activation Criteria**
 
-* Indisponibilidade total do sistema sem diagnóstico rápido.  
-* Falha crítica em fluxo importante ou *core business*.  
-* Taxa de erro superior a 5% nas requisições globais após o *deploy*.
+* Total system unavailability with no quick diagnosis.
+* Critical failure in an important flow or core business function.
+* Error rate above 5% on global requests after the deploy.
 
-### **Procedimento de *Rollback***
+### **Rollback Procedure**
 
-1. **Passo 1:** Interromper o tráfego para a nova versão, redirecionando 100% dos usuários para o cluster ou container contendo a versão anterior estável (validar no histórico).  
-2. **Passo 2:** Se houver alteração de esquema no banco de dados (*migrations*), aplicar o *script* de reversão correspondente, garantindo a integridade dos dados inseridos no intervalo.  
-3. **Passo 3:** Notificar a equipe e stakeholders sobre o retorno à versão anterior.  
-4. **Passo 4:** Abrir uma sessão de *Post-Mortem* em até 24 horas para analisar a causa raiz da falha.
+1. **Step 1:** Stop traffic to the new version, redirecting 100% of users to the cluster or container running the previous stable version (verify in history).
+2. **Step 2:** If there was a database schema change (migrations), apply the corresponding reversion script, ensuring the integrity of data inserted during the interval.
+3. **Step 3:** Notify the team and stakeholders about the return to the previous version.
+4. **Step 4:** Open a Post-Mortem session within 24 hours to analyze the root cause of the failure.
