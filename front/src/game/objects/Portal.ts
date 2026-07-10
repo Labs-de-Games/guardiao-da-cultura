@@ -50,24 +50,52 @@ export class Portal extends Phaser.GameObjects.Zone {
       p.isInDialogue = true;
       p.setVelocity(0, 0);
 
-      this.scene.time.delayedCall(100, () => {
-        const cam = this.scene.cameras.main;
-        cam.stopFollow();
+      const body = p.body as Phaser.Physics.Arcade.Body | null;
+      if (body) {
+        body.enable = false;
+      }
 
-        p.setPosition(target.x - 40, target.y);
-        const body = p.body as Phaser.Physics.Arcade.Body;
-        if (body) {
-          body.reset(target.x - 40, target.y);
-        }
+      const originalScaleX = p.scaleX;
+      const originalScaleY = p.scaleY;
+      const spinDirection = p.flipX ? -1 : 1;
 
-        cam.pan(target.x, target.y, 1000, "Sine.easeInOut");
+      this.scene.tweens.add({
+        targets: p,
+        scaleX: 0,
+        scaleY: 0,
+        angle: 720 * spinDirection,
+        duration: 500,
+        ease: "Cubic.in",
+        onComplete: () => {
+          const cam = this.scene.cameras.main;
+          cam.stopFollow();
 
-        this.scene.time.delayedCall(1000, () => {
-          this.scene.time.delayedCall(100, () => {
-            cam.startFollow(p, true, 0.05, 0.05, -40, 0);
-            p.isInDialogue = false;
+          p.setPosition(target.x - 40, target.y);
+          if (body) {
+            body.reset(target.x - 40, target.y);
+          }
+
+          cam.pan(target.x, target.y, 1000, "Sine.easeInOut");
+
+          this.scene.time.delayedCall(1000, () => {
+            this.scene.tweens.add({
+              targets: p,
+              scaleX: originalScaleX,
+              scaleY: originalScaleY,
+              angle: 1440 * spinDirection,
+              duration: 500,
+              ease: "Cubic.out",
+              onComplete: () => {
+                if (body) {
+                  body.enable = true;
+                }
+                p.angle = 0;
+                cam.startFollow(p, true, 0.05, 0.05, -40, 0);
+                p.isInDialogue = false;
+              },
+            });
           });
-        });
+        },
       });
     }
   }
