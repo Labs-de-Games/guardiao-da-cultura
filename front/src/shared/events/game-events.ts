@@ -61,13 +61,26 @@ export interface CollectiblesSyncData {
 
 export interface ChunkSelectorOpenData {
   instanceId: string;
-  availableItems: { id: string; name: string }[];
+  availableItems: { id: string; name: string; levelId: string }[];
   filledSlots: (string | null)[];
+  expectedSlots: string[];
 }
 
 export interface ChunkSelectorSubmitData {
   instanceId: string;
   placedItems: (string | null)[];
+}
+
+export interface ChunkSlotPlacedData {
+  instanceId: string;
+  slotIndex: number;
+  itemId: string;
+}
+
+export interface ChunkSlotRejectedData {
+  instanceId: string;
+  slotIndex: number;
+  itemId: string;
 }
 
 export interface ToastShowData {
@@ -79,11 +92,14 @@ export interface ToastShowData {
 export interface DialogueShowData {
   lines: string[];
   callbackId: string;
+  screenPosition?: { x: number; y: number };
 }
 
 export interface DialogueConfirmData {
   message: string;
+  speakerName: string;
   callbackId: string;
+  screenPosition?: { x: number; y: number };
 }
 
 export interface DialogueCompletedData {
@@ -93,6 +109,7 @@ export interface DialogueCompletedData {
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import type { IntroConfig } from "@/ui/intro/types";
 
 export type { LabelInfoData };
 
@@ -124,6 +141,9 @@ export interface MapMarkerChangedData {
   isAvailable: boolean;
   screenX: number;
   screenY: number;
+  isCompleted?: boolean;
+  image?: string;
+  levelId?: string;
 }
 
 export interface AutoStartTickData {
@@ -150,6 +170,8 @@ export interface GameEventMap {
   "ui:chunk-selector-open": ChunkSelectorOpenData;
   "ui:chunk-selector-close": undefined;
   "ui:chunk-selector-submit": ChunkSelectorSubmitData;
+  "ui:chunk-slot-placed": ChunkSlotPlacedData;
+  "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
   "dialogue:show": DialogueShowData;
   "dialogue:confirm": DialogueConfirmData;
@@ -167,9 +189,11 @@ export interface GameEventMap {
   "quiz:complete": QuizCompleteData;
   "quiz:close": undefined;
   "quiz:retry": undefined;
-  "map:marker-changed": MapMarkerChangedData;
+  "map:marker-changed": MapMarkerChangedData | null;
   "map:auto-start-tick": AutoStartTickData;
   "map:auto-start-canceled": undefined;
   "map:auto-start-completed": undefined;
   "progression:updated": UserProgressState;
+  "intro:start": { levelId: string; config: IntroConfig };
+  "intro:complete": { levelId: string };
 }

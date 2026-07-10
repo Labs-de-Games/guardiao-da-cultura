@@ -18,8 +18,11 @@ describe("EventBus", () => {
     EventBus.emit("map:marker-changed", {
       markerId: "brumadinho",
       title: "Instituto Inhotim",
-      location: "Brumadinho, Minas Gerais",
+      location: "Brumadinho - MG",
       isAvailable: true,
+      isCompleted: false,
+      image: "/assets/ui/map-cards/inhotim.png",
+      levelId: "level_01",
       screenX: 960,
       screenY: 700,
     });
@@ -30,8 +33,11 @@ describe("EventBus", () => {
     expect(handler).toHaveBeenCalledWith({
       markerId: "brumadinho",
       title: "Instituto Inhotim",
-      location: "Brumadinho, Minas Gerais",
+      location: "Brumadinho - MG",
       isAvailable: true,
+      isCompleted: false,
+      image: "/assets/ui/map-cards/inhotim.png",
+      levelId: "level_01",
       screenX: 960,
       screenY: 700,
     });

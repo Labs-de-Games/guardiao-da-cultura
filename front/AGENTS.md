@@ -81,7 +81,8 @@ front/src/
 
 - Phaser game logic lives **exclusively** in `/front/src/game/`. Never import Phaser into React components outside the `PhaserGame` bootstrap.
 - The React shell (`PhaserGame.tsx`) creates the Phaser instance, passes user data, and forwards API calls.
-- Game-to-React communication uses DOM events or callbacks passed via the game config.
+- Game-to-React communication uses **two parallel channels**: the shared `EventBus` (for event-driven consumers) and a direct Zustand store write via `useGameUIStore.getState().set*()` (for time-sensitive state that must survive React mount-timing races caused by Turbopack module isolation). Phaser scenes that expose UI state must write to **both**.
+- Phaser scenes may read from the Zustand store via `useGameUIStore.getState()` at scene start to seed initial state (e.g., reading `progression.completedLevels` when re-entering the map after a completed level).
 - Scene transitions, asset loading, and game state are managed inside Phaser scenes, not React.
 
 ### Styling (MUI + Emotion)
@@ -142,6 +143,22 @@ front/src/
 2. Define TypeScript interfaces for request/response
 3. Handle errors using the custom error classes in `lib/api/errors.ts`
 4. Update `lib/env.ts` if new env vars are needed (ask first)
+
+## Implementing from Figma (MCP)
+
+When implementing a component from a Figma spec via the MCP server:
+
+1. **Always fetch the node in isolation first.** Use `get_screenshot` with the component's own `nodeId` (not the full-screen frame). This gives the true bounding box and avoids coordinate offset errors from the parent frame.
+
+2. **Figma coordinates are relative to the direct parent frame.** A child at `x=101, y=846` inside `text_box_fase` (which is at `x=33, y=784` inside the 1440px Home frame) does NOT mean 846px from the top of the screen. Always subtract the parent's origin when translating to CSS `top`/`left`.
+
+3. **Convert absolute coordinates to MUI `sx` with ±2px tolerance.** After converting, compare a browser screenshot to the Figma screenshot. Font rendering (Inter, Jockey One loaded via Google Fonts) introduces 1–4px shift versus Figma's engine. Never assume pixel-perfect match without browser verification.
+
+4. **The MCP reference code is Tailwind — convert to MUI `sx`.** The note in the response says "SUPER CRITICAL: convert to target stack." Do not copy Tailwind classes verbatim. Map `absolute top-10 left-12` → `sx={{ position: 'absolute', top: '40px', left: '45px' }}`.
+
+5. **Fonts must be loaded before measuring.** If a font is not in the Next.js layout (via `next/font` or `<link>` in `_document`), the browser falls back to `sans-serif` and all spacing shifts. Verify font loading before closing a spacing investigation.
+
+6. **For multi-state components, find ALL state frames before coding.** Ask the designer for the node IDs of each state (available, unavailable, completed, etc.) and fetch them separately. Do not infer state visuals from a single frame.
 
 ## Escalation
 

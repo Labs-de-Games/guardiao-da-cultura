@@ -4,6 +4,7 @@ import type { GameEventMap } from "./game-events";
 
 const emitter = new Phaser.Events.EventEmitter();
 const replayableEvents = new Set<keyof GameEventMap>([
+  "intro:start",
   "game:started",
   "game:ended",
   "sidebar:toggled",

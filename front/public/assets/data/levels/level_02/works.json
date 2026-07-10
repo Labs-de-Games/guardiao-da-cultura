@@ -1,0 +1,126 @@
+{
+  "SCULPTURES": {
+    "sam": {
+      "id": "sam",
+      "type": "Sculpture",
+      "metadata": {
+        "title": "Sam",
+        "author": "",
+        "year": "",
+        "place": ""
+      },
+      "educational": {
+        "description": "",
+        "medium": "",
+        "opinion": "",
+        "feedbackError": "",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "sam"
+      }
+    },
+    "soldado-caixa": {
+      "id": "soldado-caixa",
+      "type": "Sculpture",
+      "metadata": {
+        "title": "Soldado Caixa",
+        "author": "",
+        "year": "",
+        "place": ""
+      },
+      "educational": {
+        "description": "",
+        "medium": "",
+        "opinion": "",
+        "feedbackError": "",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "soldado-caixa"
+      }
+    }
+  },
+  "PAINTINGS": {
+    "ajuricaba": {
+      "id": "ajuricaba",
+      "type": "Painting",
+      "metadata": {
+        "title": "Ajuricaba",
+        "author": "",
+        "year": "",
+        "place": ""
+      },
+      "educational": {
+        "description": "",
+        "medium": "",
+        "opinion": "",
+        "feedbackError": "",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "ajuricaba"
+      }
+    },
+    "anel-do-nibelungo": {
+      "id": "anel-do-nibelungo",
+      "type": "Painting",
+      "metadata": {
+        "title": "Anel do Nibelungo",
+        "author": "",
+        "year": "",
+        "place": ""
+      },
+      "educational": {
+        "description": "",
+        "medium": "",
+        "opinion": "",
+        "feedbackError": "",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "anel-do-nibelungo"
+      }
+    },
+    "opera-do-malandro": {
+      "id": "opera-do-malandro",
+      "type": "Painting",
+      "metadata": {
+        "title": "Ópera do Malandro",
+        "author": "",
+        "year": "",
+        "place": ""
+      },
+      "educational": {
+        "description": "",
+        "medium": "",
+        "opinion": "",
+        "feedbackError": "",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "opera-do-malandro"
+      }
+    },
+    "zona-franca": {
+      "id": "zona-franca",
+      "type": "Painting",
+      "metadata": {
+        "title": "Zona Franca",
+        "author": "",
+        "year": "",
+        "place": ""
+      },
+      "educational": {
+        "description": "",
+        "medium": "",
+        "opinion": "",
+        "feedbackError": "",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "zona-franca"
+      }
+    }
+  }
+}

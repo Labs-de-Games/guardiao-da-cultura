@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 describe("gameEventsApi", () => {
-  it("enqueues event when POST fails and flushes later", async () => {
+  it("enqueues regular quiz event when POST fails and flushes later", async () => {
     const { flushGameEventQueue, sendQuizOutcomeEvent } = await import(
       "./gameEventsApi"
     );
@@ -62,6 +62,24 @@ describe("gameEventsApi", () => {
       "gameplate:eventQueue:v1",
     );
     expect(rawAfterFlush).toBe("[]");
+  });
+
+  it("accepts intermediate quiz events", async () => {
+    const { sendQuizOutcomeEvent } = await import("./gameEventsApi");
+
+    await expect(
+      sendQuizOutcomeEvent({
+        type: "intermediate-quiz.failed",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        metadata: {
+          infoKey: "paintings_done",
+          passed: false,
+          missionId: "missao_curador",
+        },
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(mockApi.count).toBe(1);
   });
 
   it("drops events with excessive failed attempts", async () => {

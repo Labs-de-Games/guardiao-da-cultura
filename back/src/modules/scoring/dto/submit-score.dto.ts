@@ -59,6 +59,19 @@ class CollectibleScoreDto {
   quartersEarned!: number;
 }
 
+class IntermediateQuizScoreDto {
+  @IsInt()
+  @Min(0)
+  total!: number;
+
+  @IsInt()
+  @Min(0)
+  passed!: number;
+
+  @IsInt()
+  quartersNet!: number;
+}
+
 class CollectibleRecordDto {
   @IsString()
   collectibleId!: string;
@@ -97,6 +110,10 @@ export class SubmitScoreDto {
   @ValidateNested()
   @Type(() => QuizScoreDto)
   quiz!: QuizScoreDto;
+
+  @ValidateNested()
+  @Type(() => IntermediateQuizScoreDto)
+  intermediateQuizzes!: IntermediateQuizScoreDto;
 
   @ValidateNested()
   @Type(() => CollectibleScoreDto)

@@ -1,6 +1,7 @@
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { act } from "react";
+import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import GameOverlay from "./GameOverlay";
 
@@ -118,5 +119,92 @@ describe("GameOverlay", () => {
     });
 
     expect(useGameUIStore.getState().sidebarOpen).toBe(true);
+  });
+
+  it("closes the label when Escape is pressed while a label is open", () => {
+    useGameUIStore.setState({
+      gameStarted: true,
+      labelData: { title: "Obra", author: "Art", description: "Desc" },
+    });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      fireEvent.keyDown(window, { key: "Escape" });
+    });
+
+    expect(useGameUIStore.getState().labelData).toBeNull();
+  });
+
+  it("closes the label when E is pressed while a label is open", () => {
+    useGameUIStore.setState({
+      gameStarted: true,
+      labelData: { title: "Obra", author: "Art", description: "Desc" },
+    });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      fireEvent.keyDown(window, { key: "e" });
+    });
+
+    expect(useGameUIStore.getState().labelData).toBeNull();
+  });
+
+  it("closes the label when SPACE is pressed while a label is open", () => {
+    useGameUIStore.setState({
+      gameStarted: true,
+      labelData: { title: "Obra", author: "Art", description: "Desc" },
+    });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      fireEvent.keyDown(window, { key: " " });
+    });
+
+    expect(useGameUIStore.getState().labelData).toBeNull();
+  });
+
+  it("emits ui:label-hide when closing the label via keyboard", () => {
+    const emitSpy = jest.spyOn(EventBus, "emit");
+    useGameUIStore.setState({
+      gameStarted: true,
+      labelData: { title: "Obra", author: "Art", description: "Desc" },
+    });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      fireEvent.keyDown(window, { key: "e" });
+    });
+
+    expect(emitSpy).toHaveBeenCalledWith("ui:label-hide", undefined);
+    emitSpy.mockRestore();
+  });
+
+  it("does not close the label when E is pressed and no label is open", () => {
+    useGameUIStore.setState({ gameStarted: true, labelData: null });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      fireEvent.keyDown(window, { key: "e" });
+    });
+
+    // labelData should remain null (no crash, no state change)
+    expect(useGameUIStore.getState().labelData).toBeNull();
+  });
+
+  it("does not close the label when SPACE is pressed and no label is open", () => {
+    useGameUIStore.setState({ gameStarted: true, labelData: null });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      fireEvent.keyDown(window, { key: " " });
+    });
+
+    expect(useGameUIStore.getState().labelData).toBeNull();
   });
 });

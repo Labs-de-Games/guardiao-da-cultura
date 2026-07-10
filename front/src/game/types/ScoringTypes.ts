@@ -39,6 +39,12 @@ export interface QuizScore {
   completedAt: IsoTimestamp | null;
 }
 
+export interface IntermediateQuizzesScore {
+  total: number; // number of intermediate quizzes attempted
+  passed: number; // number of intermediate quizzes passed
+  quartersNet: number; // quarters gained (+1 per pass, 0 per fail — no penalty)
+}
+
 export type ScoringEventRecord =
   | { type: "level-started"; occurredAt: IsoTimestamp }
   | {
@@ -61,6 +67,12 @@ export type ScoringEventRecord =
       accuracyPercent: number;
       quartersEarned: number;
       occurredAt: IsoTimestamp;
+    }
+  | {
+      type: "intermediate-quiz-completed";
+      infoKey: string;
+      passed: boolean;
+      occurredAt: IsoTimestamp;
     };
 
 export interface ScoringPayload {
@@ -70,6 +82,7 @@ export interface ScoringPayload {
   floors: [FloorScore, FloorScore, FloorScore];
   collectibles: CollectiblesScore;
   quiz: QuizScore;
+  intermediateQuizzes: IntermediateQuizzesScore;
 
   totalQuarters: number; // 0..20
   totalStars: number; // totalQuarters / 4

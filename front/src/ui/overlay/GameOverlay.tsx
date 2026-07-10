@@ -10,8 +10,10 @@ import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { ScorePanel } from "@/ui/hud/ScorePanel";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
+import { IntroSequence } from "@/ui/intro/IntroSequence";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
+import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
@@ -67,6 +69,7 @@ function OverlayContent({
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const dialogueOpen = useDialogueStore((s) => s.dialogueOpen);
+  const dialogueMode = useDialogueStore((s) => s.dialogueMode);
   const badgeGalleryOpen = useGameUIStore((s) => s.badgeGalleryOpen);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
@@ -75,6 +78,8 @@ function OverlayContent({
   const dequeueDialogue = useDialogueStore((s) => s.dequeueDialogue);
   const setLabelData = useGameUIStore((s) => s.setLabelData);
   const labelData = useGameUIStore((s) => s.labelData);
+  const introData = useGameUIStore((s) => s.introData);
+  const setIntroData = useGameUIStore((s) => s.setIntroData);
 
   useEventBridge({ entryFlow, isEntryFlowLoading });
   const { emitComplete, emitDismiss } = useDialogueBridge();
@@ -112,6 +117,10 @@ function OverlayContent({
       setLabelData(data);
     });
 
+    const unsubIntroStart = EventBus.on("intro:start", (data) => {
+      setIntroData(data);
+    });
+
     const unsubBadgeGallery = EventBus.on("ui:badge-gallery-toggle", (data) => {
       setBadgeGalleryOpen(data.open);
     });
@@ -127,12 +136,13 @@ function OverlayContent({
           instanceId: data.instanceId,
           availableItems: data.availableItems,
           filledSlots: data.filledSlots,
+          expectedSlots: data.expectedSlots,
         });
       },
     );
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
-      if (!data.isAvailable) {
+      if (data && !data.isAvailable) {
         setAutoStartProgress(null);
       }
     });
@@ -159,6 +169,7 @@ function OverlayContent({
       unsubControls();
       unsubToast();
       unsubLabelShow();
+      unsubIntroStart();
       unsubBadgeGallery();
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
@@ -171,6 +182,7 @@ function OverlayContent({
     setControlsOpen,
     addToast,
     setLabelData,
+    setIntroData,
     setBadgeGalleryOpen,
     addUnlockedBadge,
     openChunkSelector,
@@ -205,6 +217,12 @@ function OverlayContent({
           setSidebarOpen(false);
         }
       }
+      if ((e.key === " " || e.key === "e" || e.key === "E") && labelData) {
+        e.preventDefault();
+        e.stopPropagation();
+        setLabelData(null);
+        EventBus.emit("ui:label-hide", undefined);
+      }
       if (e.key === "b" || e.key === "B") {
         if (gameStarted) {
           setBadgeGalleryOpen(!badgeGalleryOpen);
@@ -234,6 +252,30 @@ function OverlayContent({
     }
   }, [dialogueOpen, dequeueDialogue]);
 
+  if (introData) {
+    return (
+      <>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: UI_Z_INDEX.OVERLAY + 1000,
+            pointerEvents: "auto",
+          }}
+        >
+          <IntroSequence
+            config={introData.config}
+            levelId={introData.levelId}
+            onComplete={() => {
+              setIntroData(null);
+            }}
+          />
+        </div>
+        <ToastNotification />
+      </>
+    );
+  }
+
   if (!gameStarted) {
     return (
       <>
@@ -254,6 +296,9 @@ function OverlayContent({
         <ControlsPanel />
       </ErrorBoundary>
       <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
+      {dialogueOpen && dialogueMode === "confirmation" && (
+        <ConfirmationPanel onComplete={emitComplete} onDismiss={emitDismiss} />
+      )}
       <LabelPanel />
       <BadgeGalleryPanel />
       <QuizPanel />

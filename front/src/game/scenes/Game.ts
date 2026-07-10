@@ -1,27 +1,31 @@
 import { Scene } from "phaser";
 import posthog from "posthog-js";
-import {
-  createGamePersistence,
-  type GamePersistence,
-  type ScorePersistencePayload,
-} from "@/lib/persistence/gamePersistence";
 
 import { EventBus } from "../../shared/events/event-bus";
+import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import { MissionIds, MissionKeys } from "../constants/MissionConstants";
+import {
+  FLOOR_COMPLETE_KEYS,
+  MissionIds,
+  MissionKeys,
+  NPC_FLOOR_3_POSITION,
+} from "../constants/MissionConstants";
 import { ProgressionEvents } from "../constants/ProgressionEvents";
 import { SceneNames } from "../constants/SceneNames";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import {
   BADGE_ASSETS,
+  GLOBAL_ASSETS,
   LEVEL_ASSETS,
   LEVEL_REGISTRY,
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
+import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
@@ -31,35 +35,38 @@ import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
-import { PLAYER_SPAWN } from "../objects/PlayerConfig";
+import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { processModularData } from "../systems/GameDataLoader";
+import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
+import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
+import { QuizManager } from "../systems/QuizManager";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
 import { GameEventType } from "../types/AnalyticsTypes";
-import type { INpcEntity } from "../types/EntityTypes";
+import type { GameDataAccessor } from "../types/GameDataAccessor";
 import type {
   CollectibleData,
   ContentJson,
-  LabelInfoData,
   MissionDef,
-  WorkData,
 } from "../types/GameDataTypes";
 import { InteractiveType } from "../types/InteractiveTypes";
-import type {
-  QuizResultRecord,
-  UserProgressState,
-} from "../types/ProgressionTypes";
+import type { UserProgressState } from "../types/ProgressionTypes";
 import type { ScoringPayload } from "../types/ScoringTypes";
-import { DataUtils } from "../utils/DataUtils";
+import {
+  buildLabelInfo,
+  findWorkDataById,
+  resolveWorkIdFromPlaceholder,
+} from "../utils/WorkDataHelper";
 
-export class Game extends Scene {
+export class Game extends Scene implements GameDataAccessor {
   private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
 
   player!: Player;
@@ -70,7 +77,7 @@ export class Game extends Scene {
   private scoreManager!: ScoreManager;
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
 
-  private readonly scoringFloors = {
+  public readonly scoringFloors = {
     paintings: 0,
     sculptures: 1,
     photo: 2,
@@ -81,29 +88,29 @@ export class Game extends Scene {
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
-  private isQuizActive: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
+  private hintKeySystem!: HintKeySystem;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
-  private persistence!: GamePersistence;
+  public persistenceBridge!: PersistenceBridge;
   private progressionManager!: ProgressionManager;
-  private quizStartedAt: number | null = null;
-  private quizAttemptsForMission: number = 0;
+  private quizManager!: QuizManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private itemsInteracted: Set<string> = new Set();
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
-  private contentData: ContentJson = {
+  public contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
     quizzes: {},
+    intermediateQuizzes: {},
     npcs: {},
     messages: { SYSTEM_DIALOGUES: {} },
     collectibles: Game.EMPTY_COLLECTIBLES,
@@ -111,6 +118,19 @@ export class Game extends Scene {
 
   constructor() {
     super(SceneNames.GAME);
+  }
+
+  // GameDataAccessor implementation
+  public getWorks() {
+    return this.contentData.works;
+  }
+
+  public getMessages() {
+    return this.contentData.messages;
+  }
+
+  public getCollectibles() {
+    return this.contentData.collectibles;
   }
 
   init(data?: { levelId: string }) {
@@ -129,15 +149,13 @@ export class Game extends Scene {
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
     this.isDialogueOpen = false;
-    this.isQuizActive = false;
     this.photoChunksCollected = 0;
-    this.quizStartedAt = null;
-    this.quizAttemptsForMission = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
       quizzes: {},
+      intermediateQuizzes: {},
       npcs: {},
       messages: { SYSTEM_DIALOGUES: {} },
       collectibles: Game.EMPTY_COLLECTIBLES,
@@ -155,24 +173,39 @@ export class Game extends Scene {
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
+    EffectsManager.preload(this);
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
-    LEVEL_ASSETS.OTHERS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.SCULPTURES.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.PAINTINGS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
-    });
-    LEVEL_ASSETS.CHUNKS.forEach((asset) => {
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].SCULPTURES.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].PAINTINGS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+    LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].CHUNKS.forEach(
+      (asset) => {
+        this.load.image(asset.key, asset.path);
+      },
+    );
+
+    LEVEL_ASSETS[
+      this.levelId as keyof typeof LEVEL_ASSETS
+    ].COLLECTIBLES.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
-    LEVEL_ASSETS.COLLECTIBLES.forEach((asset) => {
+    GLOBAL_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
 
@@ -185,6 +218,9 @@ export class Game extends Scene {
     });
     this.levelDef.data.quizzes.forEach((path, index) => {
       this.load.json(`quizzes_${index}`, path);
+    });
+    this.levelDef.data.intermediateQuizzes.forEach((path, index) => {
+      this.load.json(`intermediateQuizzes_${index}`, path);
     });
     this.levelDef.data.npcs.forEach((path, index) => {
       this.load.json(`npcs_${index}`, path);
@@ -202,67 +238,12 @@ export class Game extends Scene {
     });
 
     this.load.image("label", "misc/label.png");
-
-    this.load.image("ui_star_full", "ui/stars/star_full.png");
-    this.load.image("ui_star_3q", "ui/stars/star_three_quarter.png");
-    this.load.image("ui_star_2q", "ui/stars/star_two_quarter.png");
-    this.load.image("ui_star_1q", "ui/stars/star_one_quarter.png");
   }
 
   private processModularData() {
-    this.levelDef.data.works.forEach((path, i) => {
-      const data = this.cache.json.get(`works_${i}`);
-      if (data) {
-        DataUtils.deepMerge(
-          this.contentData.works as unknown as Record<string, unknown>,
-          data as unknown as Record<string, unknown>,
-        );
-      } else {
-        console.warn(`[Game] Could not load works data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.quizzes.forEach((path, i) => {
-      const data = this.cache.json.get(`quizzes_${i}`);
-      if (data) {
-        DataUtils.deepMerge(this.contentData.quizzes, data);
-      } else {
-        console.warn(`[Game] Could not load quiz data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.npcs.forEach((path, i) => {
-      const data = this.cache.json.get(`npcs_${i}`);
-      if (data?.npcs) {
-        DataUtils.deepMerge(this.contentData.npcs, data.npcs);
-      } else {
-        console.warn(`[Game] Could not load NPC data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.messages.forEach((path, i) => {
-      const data = this.cache.json.get(`messages_${i}`);
-      if (data) {
-        DataUtils.deepMerge(
-          this.contentData.messages as unknown as Record<string, unknown>,
-          data as unknown as Record<string, unknown>,
-        );
-      } else {
-        console.warn(`[Game] Could not load messages data from: ${path}`);
-      }
-    });
-
-    this.levelDef.data.collectibles.forEach((path, i) => {
-      const data = this.cache.json.get(`collectibles_${i}`);
-      if (data?.collectibles) {
-        DataUtils.deepMerge(
-          this.contentData.collectibles as unknown as Record<string, unknown>,
-          data.collectibles as unknown as Record<string, unknown>,
-        );
-      } else {
-        console.warn(`[Game] Could not load collectibles data from: ${path}`);
-      }
-    });
+    processModularData(this.levelDef, this.contentData, (key) =>
+      this.cache.json.get(key),
+    );
   }
 
   create() {
@@ -279,7 +260,10 @@ export class Game extends Scene {
     });
 
     let mapData: MapData | null = null;
-    const tileset = map.addTilesetImage("museum", this.levelDef.map.tileset);
+    const tileset = map.addTilesetImage(
+      this.levelDef.map.tilesetName,
+      this.levelDef.map.tileset,
+    );
 
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
@@ -289,15 +273,7 @@ export class Game extends Scene {
     this.questManager = new QuestManager(MissionRequirements);
     this.scoreManager = new ScoreManager({ levelId: this.levelId });
 
-    const actorId = (this.registry.get("userId") as string | undefined) ?? null;
-    const isGuest = this.registry.get("isGuest") === true;
-    this.persistence = createGamePersistence({
-      mode: isGuest ? "guest" : "auth",
-      actorId,
-    });
-
     this.progressionManager = new ProgressionManager();
-    void this.initializeProgression();
 
     this.progressionManager.on(
       ProgressionEvents.PROGRESSION_UPDATED,
@@ -312,11 +288,11 @@ export class Game extends Scene {
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
         const stars = Number.isFinite(payload.totalStars)
-          ? Math.max(0, Math.floor(payload.totalStars))
+          ? Math.max(0, payload.totalStars)
           : 0;
         EventBus.emit("player:stars-changed", {
           current: stars,
-          total: Math.ceil(payload.totalQuarters / 4),
+          total: this.scoreManager.getMaxStars(),
           score: payload.totalQuarters,
         });
       },
@@ -364,20 +340,58 @@ export class Game extends Scene {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.badgeSystem = new BadgeSystem(this, this.persistence);
-    this.badgeSystem.initialize();
-
     this.collectibleSystem = new CollectibleSystem(
       this,
       this.scoreManager,
       this.mapScale,
     );
 
-    this.registry.set("currentLevelId", this.levelId);
-    this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
+    const actorId = (this.registry.get("userId") as string | undefined) ?? null;
+    const isGuest = this.registry.get("isGuest") === true;
+    this.persistenceBridge = new PersistenceBridge(
+      isGuest ? "guest" : "auth",
+      actorId,
+      this.scoreManager,
+      this.progressionManager,
+      this.collectibleSystem,
+      this.questManager,
+      this.levelId,
+    );
+
+    this.badgeSystem = new BadgeSystem(
+      this,
+      this.persistenceBridge.persistence,
+    );
+    this.badgeSystem.initialize();
+
     this.analyticsSystem = new AnalyticsSystem(this);
     this.analyticsSystem.track(GameEventType.GAME_STARTED);
     this.analyticsSystem.setupAbandonmentTracking();
+
+    this.quizManager = new QuizManager(
+      {
+        getLevelId: () => this.levelId,
+        getLevelDef: () => this.levelDef,
+        getRegistry: () => this.registry,
+        getNpcs: () => this.npcs,
+        getPlayer: () => this.player,
+        getEvents: () => this.events,
+        getContentData: () => this.contentData,
+      },
+      this.scoreManager,
+      this.questManager,
+      this.progressionManager,
+      this.badgeSystem,
+      this.persistenceBridge,
+      this.analyticsSystem,
+      this.levelManager,
+    );
+
+    void this.persistenceBridge.initializeProgression();
+    void this.persistenceBridge.initializeCollectibles();
+
+    this.registry.set("currentLevelId", this.levelId);
+    this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.analyticsSystem.track(GameEventType.SESSION_END, {
@@ -402,10 +416,15 @@ export class Game extends Scene {
 
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
+    this.mechanicsManager.registerHandler(
+      new PaintingMechanicHandler(this.scoringFloors.paintings),
+    );
+    this.mechanicsManager.registerHandler(
+      new SculptureMechanicHandler(this.scoringFloors.sculptures),
+    );
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
-      void this.initializeCollectibles();
       this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
 
       const placeholderLayer =
@@ -417,6 +436,109 @@ export class Game extends Scene {
         this.placeholderSystem.registerAllFromLayer(placeholderLayer);
         this.labelSystem.registerAllFromLayer(placeholderLayer);
       }
+
+      this.hintKeySystem = new HintKeySystem(this);
+      this.hintKeySystem.registerItems([
+        ...this.draggableItems.map((item) => ({
+          get x() {
+            return item.x;
+          },
+          get y() {
+            return item.y;
+          },
+          get interactionY() {
+            return item.y;
+          },
+          get displayHeight() {
+            return item.displayHeight;
+          },
+          get active() {
+            return (
+              item.active && !item.isGrabbed && item.input?.enabled !== false
+            );
+          },
+          interactionDistance: PLAYER_MOVEMENT.GRAB_DISTANCE,
+        })),
+        ...this.carryableItems.map((item) => ({
+          get x() {
+            return item.x;
+          },
+          get y() {
+            return item.y;
+          },
+          get interactionY() {
+            return item.y;
+          },
+          get displayHeight() {
+            return item.displayHeight;
+          },
+          get active() {
+            return (
+              item.active && !item.isCarried && item.input?.enabled !== false
+            );
+          },
+          interactionDistance: 150,
+        })),
+        ...this.labelSystem.getAllLabels().map((l) => ({
+          get x() {
+            return l.sprite.x;
+          },
+          get y() {
+            return l.sprite.y;
+          },
+          get interactionY() {
+            return l.sprite.y + l.sprite.displayHeight / 2;
+          },
+          get displayHeight() {
+            return l.sprite.displayHeight;
+          },
+          get hintY() {
+            return l.sprite.y - l.sprite.displayHeight / 2;
+          },
+          active: l.sprite.active,
+          interactionDistance: 120,
+        })),
+        ...this.npcs.map((npc) => ({
+          get x() {
+            return npc.x;
+          },
+          get y() {
+            return npc.y;
+          },
+          get interactionY() {
+            return npc.y + npc.displayHeight / 2;
+          },
+          get displayHeight() {
+            return npc.displayHeight;
+          },
+          get hintY() {
+            return npc.y - npc.displayHeight / 2;
+          },
+          active: npc.active,
+          interactionDistance: 130,
+        })),
+        ...this.collectibleSystem
+          .getAllCollectibles()
+          .filter((c) => c.collectibleType === "CLUE_VILLAIN")
+          .map((c) => ({
+            get x() {
+              return c.sprite.x;
+            },
+            get y() {
+              return c.sprite.y;
+            },
+            get interactionY() {
+              return c.sprite.y;
+            },
+            get displayHeight() {
+              return c.sprite.displayHeight;
+            },
+            get active() {
+              return !c.isCollected;
+            },
+            interactionDistance: 130,
+          })),
+      ]);
 
       this.analyticsSystem.trackLevelEvent(
         GameEventType.LEVEL_STARTED,
@@ -448,6 +570,14 @@ export class Game extends Scene {
           if (clueId && this.progressionManager) {
             this.progressionManager.recordClueUnlocked(clueId, this.levelId);
           }
+        }
+
+        if (
+          this.contentData.intermediateQuizzes[infoKey] &&
+          !this.questManager.isIntermediateQuizDone(infoKey) &&
+          this.quizManager.getQuizMode() === "none"
+        ) {
+          this.startIntermediateQuiz(infoKey);
         }
       },
     );
@@ -502,11 +632,11 @@ export class Game extends Scene {
 
     const initialPayload = this.scoreManager.getPayload();
     const initialStars = Number.isFinite(initialPayload.totalStars)
-      ? Math.max(0, Math.floor(initialPayload.totalStars))
+      ? Math.max(0, initialPayload.totalStars)
       : 0;
     EventBus.emit("player:stars-changed", {
       current: initialStars,
-      total: Math.ceil(initialPayload.totalQuarters / 4),
+      total: this.scoreManager.getMaxStars(),
       score: initialPayload.totalQuarters,
     });
 
@@ -560,35 +690,6 @@ export class Game extends Scene {
     });
   }
 
-  private async initializeCollectibles(): Promise<void> {
-    try {
-      const collected = await this.persistence.loadCollectibles(this.levelId);
-
-      this.collectibleSystem.applyCollectedCollectibles(collected);
-
-      for (const record of collected) {
-        this.progressionManager.recordClueUnlocked(
-          record.collectibleId,
-          this.levelId,
-        );
-        this.questManager.collectInfo(`pista_${record.collectibleId}`);
-      }
-    } catch (err) {
-      console.warn("[Game] Failed to load collectibles from persistence:", err);
-    }
-  }
-
-  private async initializeProgression(): Promise<void> {
-    try {
-      const snapshot = await this.persistence.loadProgress();
-      if (snapshot) {
-        this.progressionManager.hydrate(snapshot);
-      }
-    } catch (err) {
-      console.warn("[Game] Failed to load progression from persistence:", err);
-    }
-  }
-
   private setupEvents() {
     this.events.on(GameEvents.DIALOGUE_STARTED, () => {
       this.isDialogueOpen = true;
@@ -599,21 +700,33 @@ export class Game extends Scene {
       this.effects.setZoom(1.2, 400);
     });
 
-    this.events.on(GameEvents.DIALOGUE_ENDED, () => {
-      this.isChunkSelectorOpen = false;
-      this.isDialogueOpen = false;
-      this.time.delayedCall(200, () => {
-        this.checkDialogState();
+    this.events.on(
+      GameEvents.DIALOGUE_ENDED,
+      (data?: { dismissed?: boolean }) => {
+        this.isChunkSelectorOpen = false;
+        this.isDialogueOpen = false;
 
-        if (this.npcs) {
-          for (const npc of this.npcs) {
-            npc.play("npc_idle_anim", true);
-          }
+        const isDismissed = data?.dismissed === true;
+        const hasQueuedDialogue =
+          useDialogueStore.getState().dialogueQueue.length > 0;
+
+        if (isDismissed || !hasQueuedDialogue) {
+          this.quizManager.triggerPendingIntermediateQuiz();
         }
-      });
 
-      this.effects.setZoom(1.0, 400);
-    });
+        this.time.delayedCall(200, () => {
+          this.checkDialogState();
+
+          if (this.npcs) {
+            for (const npc of this.npcs) {
+              npc.play("npc_idle_anim", true);
+            }
+          }
+        });
+
+        this.effects.setZoom(1.0, 400);
+      },
+    );
 
     const unsubControls = useGameUIStore.subscribe((state, prevState) => {
       if (state.controlsOpen !== prevState.controlsOpen) {
@@ -678,6 +791,8 @@ export class Game extends Scene {
     this.player.stairsLayer = this.stairsLayer;
     this.player.setCollisionLayers(mapData.colliders);
 
+    this.effects.initSpotlight();
+
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
@@ -688,16 +803,12 @@ export class Game extends Scene {
       "info-collected",
       (payload: { missionId: string; infoKey: string }) => {
         const key = payload.infoKey;
-        if (
-          key === MissionKeys.PAINTINGS_DONE ||
-          key === MissionKeys.SCULPTURES_DONE
-        ) {
-          const curator = this.npcs.find((n) => {
-            const ent = n as unknown as INpcEntity;
-            return ent.config && ent.config.missionId === MissionIds.CURATOR;
-          });
+        if (FLOOR_COMPLETE_KEYS.has(key)) {
+          const curator = this.npcs.find(
+            (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
+          ) as Npc | undefined;
           if (curator) {
-            (curator as unknown as Npc).teleportTo(2100, 400);
+            curator.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
           }
         }
       },
@@ -755,11 +866,16 @@ export class Game extends Scene {
         const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
           label.placeholderId,
         );
-        const workId = this.resolveWorkIdFromPlaceholder(placeholder?.id);
-        const work = workId ? this.findWorkDataById(workId) : null;
+        const workId = resolveWorkIdFromPlaceholder(
+          placeholder?.id,
+          this.contentData,
+        );
+        const work = workId ? findWorkDataById(workId, this.contentData) : null;
 
         if (work) {
-          const payload = this.buildLabelInfo(work);
+          const payload = buildLabelInfo(work, (id) =>
+            findWorkDataById(id, this.contentData),
+          );
           EventBus.emit("ui:label-show", payload);
           return;
         }
@@ -785,13 +901,20 @@ export class Game extends Scene {
 
         this.isChunkSelectorOpen = true;
         this.events.emit(GameEvents.DIALOGUE_STARTED);
+        const expectedSlots = Array.isArray(nearby.id)
+          ? nearby.id
+          : String(nearby.id)
+              .split(",")
+              .map((s) => s.trim());
         EventBus.emit("ui:chunk-selector-open", {
           instanceId: nearby.instanceId,
           availableItems: availableChunks.map((item) => ({
             id: item.itemId,
             name: item.itemName,
+            levelId: this.levelId,
           })),
           filledSlots: filled,
+          expectedSlots,
         });
       }
     });
@@ -856,6 +979,18 @@ export class Game extends Scene {
     );
 
     EventBus.on("ui:chunk-selector-submit", handleInteractionSubmitted);
+    EventBus.on("ui:chunk-slot-placed", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      const handler = this.mechanicsManager.getHandler(InteractiveType.PHOTO);
+      if (!(handler instanceof PhotoMechanicHandler)) return;
+
+      handler.placeCorrectChunk(this, p, data.itemId, data.slotIndex);
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+    });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
@@ -868,10 +1003,12 @@ export class Game extends Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
+      this.hintKeySystem?.destroy();
       this.badgeSystem.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
+      EventBus.off("ui:chunk-slot-placed");
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
@@ -906,202 +1043,11 @@ export class Game extends Scene {
   }
 
   public startQuiz(missionId: string) {
-    try {
-      if (!this.questManager) {
-        throw new Error("QuestManager não inicializado");
-      }
+    this.quizManager.startQuiz(missionId);
+  }
 
-      const npc = this.npcs.find((n) => {
-        const ent = n as unknown as INpcEntity;
-        return ent.config && ent.config.missionId === missionId;
-      });
-
-      const questions = npc?.getQuiz();
-
-      if (!questions || questions.length === 0) {
-        console.error(
-          `[Game] Quiz data missing or empty for missionId: ${missionId}`,
-        );
-        this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-          "[Erro de Sistema] Não há perguntas cadastradas para esta missão.",
-        ]);
-        return;
-      }
-
-      this.events.emit(
-        GameEvents.SHOW_CONFIRMATION_REQUEST,
-        "Podemos iniciar o teste?",
-        () => {
-          this.isQuizActive = true;
-          this.quizStartedAt = Date.now();
-          this.quizAttemptsForMission += 1;
-          this.events.emit(
-            GameEvents.SHOW_QUIZ_REQUEST,
-            questions,
-            this.scoreManager,
-            (score: number) => {
-              this.scoreManager.recordQuizResult(score, questions.length);
-              const required = Math.ceil(questions.length * 0.7);
-              const isSuccess = score >= required;
-              console.log(
-                `[Game] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
-              );
-
-              if (isSuccess) {
-                if (score === questions.length) {
-                  this.registry.set("quiz_perfect_score", 1);
-                  this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
-                }
-
-                if (this.registry.get("has_failed_quiz") === 1) {
-                  this.registry.set("quiz_solved_after_failure", 1);
-                  this.badgeSystem.checkRequirements(
-                    "quiz_solved_after_failure",
-                    1,
-                  );
-                }
-
-                const payload = this.scoreManager.getPayload();
-                this.analyticsSystem.trackLevelEvent(
-                  GameEventType.LEVEL_COMPLETED,
-                  this.levelId,
-                  {
-                    levelNumber: this.levelDef.levelNumber,
-                    score: payload.totalQuarters,
-                    stars: payload.totalStars,
-                    rating: payload.rating,
-                    missionId: missionId,
-                  },
-                );
-
-                posthog.capture("level_completed", {
-                  level_id: this.levelId,
-                  level_number: this.levelDef.levelNumber,
-                  score: payload.totalQuarters,
-                  stars: payload.totalStars,
-                  rating: payload.rating,
-                  mission_id: missionId,
-                  time_spent_ms:
-                    Date.now() - new Date(payload.startedAt).getTime(),
-                  attempts: this.registry.get("has_failed_quiz") || 0,
-                });
-
-                void this.submitScoreToBackend();
-              } else {
-                this.registry.set("has_failed_quiz", 1);
-                posthog.capture("level_failed", {
-                  level_id: this.levelId,
-                  level_number: this.levelDef.levelNumber,
-                  mission_id: missionId,
-                  score,
-                  total_questions: questions.length,
-                });
-                void this.submitScoreToBackend();
-              }
-
-              const scoringPayload = this.scoreManager.getPayload();
-              posthog.capture("quiz_completed", {
-                level_id: this.levelId,
-                mission_id: missionId,
-                score,
-                correct_answers: scoringPayload.quiz.correctAnswers,
-                total_questions: questions.length,
-                accuracy_percent: scoringPayload.quiz.accuracyPercent,
-                passed: isSuccess,
-              });
-
-              void this.persistence.sendQuizOutcome({
-                type: isSuccess ? "quiz.completed" : "quiz.failed",
-                metadata: {
-                  missionId,
-                  score,
-                  totalQuestions: questions.length,
-                  accuracyPercent: scoringPayload.quiz.accuracyPercent,
-                  quartersEarned: scoringPayload.quiz.quartersEarned,
-                  passed: isSuccess,
-                  payload: scoringPayload as unknown as Record<string, unknown>,
-                },
-                timestamp: new Date().toISOString(),
-              });
-
-              const quizResultRecord: QuizResultRecord = {
-                completedAt: new Date().toISOString(),
-                passed: isSuccess,
-                score,
-                totalQuestions: questions.length,
-                accuracyPercent: scoringPayload.quiz.accuracyPercent,
-                quartersEarned: scoringPayload.quiz.quartersEarned,
-                timeSpentMs:
-                  this.quizStartedAt !== null
-                    ? Date.now() - this.quizStartedAt
-                    : null,
-                attempts: this.quizAttemptsForMission,
-                payload: null,
-              };
-
-              this.progressionManager.recordQuizResult(
-                missionId,
-                quizResultRecord,
-              );
-
-              if (isSuccess) {
-                this.progressionManager.recordLevelCompleted(
-                  this.levelId,
-                  this.levelDef.levelNumber,
-                  scoringPayload.totalStars,
-                  scoringPayload.totalQuarters,
-                  new Date().toISOString(),
-                );
-              }
-
-              void this.saveProgressToBackend();
-
-              const npc = this.npcs.find((n) => {
-                const ent = n as unknown as INpcEntity;
-                return ent.config && ent.config.missionId === missionId;
-              });
-
-              if (!npc) {
-                console.error(
-                  `[Game] NPC não encontrado para a missão: ${missionId}`,
-                );
-                return;
-              }
-
-              const dialogues = npc.getDialogues();
-              const lines = isSuccess ? dialogues.success : dialogues.failure;
-
-              if (isSuccess) {
-                this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-              } else {
-                this.questManager.setStatus(
-                  missionId,
-                  QuestStatus.READY_FOR_QUIZ,
-                );
-              }
-
-              this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-              this.questManager.setPendingResult(missionId, lines);
-
-              if (isSuccess) {
-                this.levelManager.updateProgress();
-              }
-
-              this.isQuizActive = false;
-            },
-          );
-        },
-        () => {
-          this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
-          this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-        },
-      );
-    } catch (error) {
-      console.error("[Game] Erro fatal ao iniciar Quiz:", error);
-      this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Ocorreu um erro ao carregar o desafio.",
-      ]);
-    }
+  public startIntermediateQuiz(infoKey: string) {
+    this.quizManager.startIntermediateQuiz(infoKey);
   }
 
   private checkDialogState() {
@@ -1109,7 +1055,8 @@ export class Game extends Scene {
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
-      !this.isQuizActive
+      this.quizManager.getQuizMode() === "none" &&
+      !this.quizManager.getIsQuizActive()
     ) {
       if (this.player) this.player.isInDialogue = false;
     }
@@ -1171,69 +1118,32 @@ export class Game extends Scene {
     this.levelManager.updateProgress();
   }
 
-  private resolveWorkIdFromPlaceholder(
-    rawId?: string | string[],
-  ): string | null {
-    if (!rawId) return null;
-
-    const ids = Array.isArray(rawId) ? rawId : [rawId];
-    for (const id of ids) {
-      if (this.findWorkDataById(id)) return id;
-    }
-
-    return ids[0] || null;
-  }
-
-  private findWorkDataById(id: string): WorkData | null {
-    const groups = Object.values(this.contentData.works);
-    for (const group of groups) {
-      if (!group) continue;
-      const match = group[id];
-      if (match) return match;
-    }
-    return null;
-  }
-
-  private buildLabelInfo(work: WorkData): LabelInfoData {
-    // Check if this work has a parent_id (for chunks that belong to a larger work)
-    const workAny = work as unknown as Record<string, unknown>;
-    const parentId = workAny.parent_id as string | undefined;
-
-    // If there's a parent, use the parent's data for the label
-    if (parentId) {
-      const parentWork = this.findWorkDataById(parentId);
-      if (parentWork) {
-        return this.buildLabelInfo(parentWork);
-      }
-    }
-
-    const metadata = work.metadata || {};
-    // Cast to access fields from educational (actual JSON structure)
-    const educational = (work.educational || {}) as Record<string, unknown>;
-
-    // These fields are in educational in the actual works.json
-    const description = (educational.description as string | undefined) || "";
-    const dimensions =
-      (educational.dimensions as string | undefined) || metadata.dimensions;
-    const medium =
-      (educational.medium as string | undefined) || metadata.medium;
-
-    return {
-      title: metadata.title || work.id,
-      author: metadata.author || "",
-      description,
-      year: metadata.year,
-      dimensions,
-      medium,
-      place: metadata.place,
-    };
-  }
-
   update(_time: number, delta: number) {
     const NOMINAL_DT = 1000 / 60;
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    this.effects.updateSpotlight(this.player.x, this.player.y);
+
+    if (this.player && this.hintKeySystem) {
+      const isPanelOpen =
+        this.isDialogueOpen ||
+        this.isControlsOpen ||
+        this.isChunkSelectorOpen ||
+        this.quizManager.getIsQuizActive() ||
+        useGameUIStore.getState().labelData !== null;
+
+      const isPlayerBusy = this.player.isGrabbing || this.player.isCarrying;
+
+      this.hintKeySystem.update(
+        this.player.x,
+        this.player.y,
+        this.player.body as Phaser.Physics.Arcade.Body,
+        isPanelOpen,
+        isPlayerBusy,
+      );
+    }
   }
 
   public recordFloorError(floorIndex: number) {
@@ -1252,11 +1162,23 @@ export class Game extends Scene {
     this.completeFloor(this.scoringFloors.photo);
   }
 
+  public shakePhotoFailure() {
+    this.effects.shakeHorizontal();
+  }
+
+  public showSpotlightBeam(
+    duration: number = 2000,
+    px: number = 0,
+    py: number = 0,
+  ) {
+    this.effects.showSpotlightBeam(duration, 200, px, py);
+  }
+
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
   }
 
-  private getMissionStepProgress(
+  public getMissionStepProgress(
     missionId: string,
   ): { filled: number; total: number }[] {
     const def = MissionRegistry[missionId];
@@ -1276,166 +1198,30 @@ export class Game extends Scene {
     });
   }
 
-  private async submitScoreToBackend() {
-    try {
-      const payload = this.scoreManager.getPayload();
-
-      const persistencePayload: ScorePersistencePayload = {
-        levelId: payload.levelId,
-        totalQuarters: payload.totalQuarters,
-        totalStars: payload.totalStars,
-        rating: payload.rating,
-        floors: payload.floors.map((f) => ({
-          floorIndex: f.floorIndex,
-          errors: f.errors,
-          quartersEarned: f.quartersEarned,
-        })),
-        quiz: {
-          totalQuestions: payload.quiz.totalQuestions,
-          correctAnswers: payload.quiz.correctAnswers,
-          accuracyPercent: payload.quiz.accuracyPercent,
-          quartersEarned: payload.quiz.quartersEarned,
-        },
-        collectibles: {
-          total: payload.collectibles.total,
-          interactionsCount: payload.collectibles.interactionsCount,
-          quartersEarned: payload.collectibles.quartersEarned,
-        },
-        collectedCollectibles: payload.collectibles.interactions.map(
-          (interaction) => ({
-            collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as "CLUE_VILLAIN",
-            levelId: payload.levelId,
-          }),
-        ),
-      };
-
-      await this.persistence.saveScore(persistencePayload);
-    } catch (err) {
-      console.error("[Game] Failed to save score in persistence layer:", err);
-    }
-  }
-
-  private async saveProgressToBackend() {
-    try {
-      const state = this.progressionManager.getState();
-      await this.persistence.saveProgress(state);
-    } catch (err) {
-      console.error(
-        "[Game] Failed to save progression in persistence layer:",
-        err,
-      );
-    }
+  public shakeHorizontal(duration = 400, intensity = 0.05) {
+    this.effects.shakeHorizontal(duration, intensity);
   }
 
   private handleItemDropped(item: DraggableItem) {
     const result = this.placeholderSystem.handleDrop(item);
 
-    const typeKey =
-      item.interactiveType === InteractiveType.PAINTING
-        ? "PAINTING"
-        : "SCULPTURE";
-
-    const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
-
-    if (result.snapped) {
-      // Badge: Restaurador
-      const currentFlawless =
-        this.registry.get("puzzles_solved_flawlessly") || 0;
-      this.registry.set("puzzles_solved_flawlessly", currentFlawless + 1);
-
-      this.events.emit(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        sysDialogs[typeKey]?.SUCCESS || ["Excelente! Obra posicionada."],
-      );
-      const missionId = MissionIds.CURATOR;
-
-      // Always emit progress on every successful drop
-      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-      const reqs = this.questManager.getRequiredInfos(missionId);
-      EventBus.emit("quest:progress-changed", {
-        missionId,
-        missionTitle: MissionRegistry[missionId]?.title || "",
-        collectedInfos: this.questManager.getCollectedInfos(missionId),
-        totalSteps: reqs.length,
-        steps: MissionRegistry[missionId]?.steps,
-        stepProgress: this.getMissionStepProgress(missionId),
-      });
-
-      if (item.interactiveType === InteractiveType.PAINTING) {
-        if (
-          this.placeholderSystem.checkCategoryCompletion(
-            InteractiveType.PAINTING,
-          )
-        ) {
-          this.completeFloor(this.scoringFloors.paintings);
-          // Two-phase: show 3/3 first, then [✓] after delay
-          this.time.delayedCall(500, () => {
-            this.events.emit(GameEvents.INFO_COLLECTED, {
-              missionId,
-              infoKey: MissionKeys.PAINTINGS_DONE,
-            });
-            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-            const reqs2 = this.questManager.getRequiredInfos(missionId);
-            EventBus.emit("quest:progress-changed", {
-              missionId,
-              missionTitle: MissionRegistry[missionId]?.title || "",
-              collectedInfos: this.questManager.getCollectedInfos(missionId),
-              totalSteps: reqs2.length,
-              steps: MissionRegistry[missionId]?.steps,
-              stepProgress: this.getMissionStepProgress(missionId),
-            });
-          });
-        }
-      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
-        if (
-          this.placeholderSystem.checkCategoryCompletion(
-            InteractiveType.SCULPTURE,
-          )
-        ) {
-          this.completeFloor(this.scoringFloors.sculptures);
-          // Two-phase: show 3/3 first, then [✓] after delay
-          this.time.delayedCall(500, () => {
-            this.events.emit(GameEvents.INFO_COLLECTED, {
-              missionId,
-              infoKey: MissionKeys.SCULPTURES_DONE,
-            });
-            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-            const reqs2 = this.questManager.getRequiredInfos(missionId);
-            EventBus.emit("quest:progress-changed", {
-              missionId,
-              missionTitle: MissionRegistry[missionId]?.title || "",
-              collectedInfos: this.questManager.getCollectedInfos(missionId),
-              totalSteps: reqs2.length,
-              steps: MissionRegistry[missionId]?.steps,
-              stepProgress: this.getMissionStepProgress(missionId),
-            });
-          });
-        }
-      }
-    } else if (result.mismatch) {
-      if (item.interactiveType === InteractiveType.PAINTING) {
-        this.recordFloorError(this.scoringFloors.paintings);
-      } else if (item.interactiveType === InteractiveType.SCULPTURE) {
-        this.recordFloorError(this.scoringFloors.sculptures);
+    if (result.snapped || result.mismatch) {
+      const handler = this.mechanicsManager.getHandler(item.interactiveType);
+      if (
+        handler &&
+        "handleDropResult" in handler &&
+        typeof handler.handleDropResult === "function"
+      ) {
+        (
+          handler as PaintingMechanicHandler | SculptureMechanicHandler
+        ).handleDropResult(this, result);
       }
 
-      const placeholderWorkId = result.placeholder
-        ? this.resolveWorkIdFromPlaceholder(result.placeholder.id)
-        : null;
-      const placeholderWork = placeholderWorkId
-        ? this.findWorkDataById(placeholderWorkId)
-        : null;
-      const feedback = placeholderWork?.educational?.feedbackError;
-
-      if (feedback) {
-        this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [feedback]);
-      } else {
-        this.events.emit(
-          GameEvents.SHOW_DIALOGUE_REQUEST,
-          sysDialogs[typeKey]?.ERROR || [
-            "Esta obra não pertence a este local.",
-          ],
+      if (result.snapped) {
+        this.showSpotlightBeam(
+          2000,
+          result.placeholder?.area.centerX,
+          result.placeholder?.area.centerY,
         );
       }
     }

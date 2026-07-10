@@ -17,6 +17,9 @@ export enum GameEventType {
   QUIZ_COMPLETED = "quiz.completed",
   QUIZ_FAILED = "quiz.failed",
 
+  INTERMEDIATE_QUIZ_COMPLETED = "intermediate-quiz.completed",
+  INTERMEDIATE_QUIZ_FAILED = "intermediate-quiz.failed",
+
   BADGE_EARNED = "badge.earned",
   BADGE_VIEWED = "badge.viewed",
 
@@ -65,4 +68,10 @@ export interface QuizCompletedMetadata {
   timeSpentMs?: number;
   attempts?: number;
   payload?: Record<string, unknown>;
+}
+
+export interface IntermediateQuizCompletedMetadata {
+  infoKey: string;
+  passed: boolean;
+  missionId: string;
 }

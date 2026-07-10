@@ -1,8 +1,8 @@
 import * as Phaser from "phaser";
 import { ProgressionEvents } from "../constants/ProgressionEvents";
 import type {
-  ClueRecord,
   CompletedLevelRecord,
+  IntermediateQuizResultRecord,
   QuizResultRecord,
   UserProgressState,
 } from "../types/ProgressionTypes";
@@ -13,6 +13,7 @@ const DEFAULT_STATE: UserProgressState = {
   completedLevels: {},
   clues: {},
   quizResults: {},
+  intermediateQuizResults: {},
 };
 
 export class ProgressionManager extends Phaser.Events.EventEmitter {
@@ -25,6 +26,7 @@ export class ProgressionManager extends Phaser.Events.EventEmitter {
       completedLevels: {},
       clues: {},
       quizResults: {},
+      intermediateQuizResults: {},
     };
   }
 
@@ -35,6 +37,7 @@ export class ProgressionManager extends Phaser.Events.EventEmitter {
       completedLevels: { ...(snapshot.completedLevels ?? {}) },
       clues: { ...(snapshot.clues ?? {}) },
       quizResults: { ...(snapshot.quizResults ?? {}) },
+      intermediateQuizResults: { ...(snapshot.intermediateQuizResults ?? {}) },
     };
     this.emit(ProgressionEvents.PROGRESSION_UPDATED, this.getState());
   }
@@ -89,6 +92,14 @@ export class ProgressionManager extends Phaser.Events.EventEmitter {
     this.emit(ProgressionEvents.PROGRESSION_UPDATED, this.getState());
   }
 
+  recordIntermediateQuizResult(
+    infoKey: string,
+    data: IntermediateQuizResultRecord,
+  ): void {
+    this.state.intermediateQuizResults[infoKey] = { ...data };
+    this.emit(ProgressionEvents.PROGRESSION_UPDATED, this.getState());
+  }
+
   getState(): UserProgressState {
     return {
       currentLevel: this.state.currentLevel,
@@ -96,6 +107,7 @@ export class ProgressionManager extends Phaser.Events.EventEmitter {
       completedLevels: { ...this.state.completedLevels },
       clues: { ...this.state.clues },
       quizResults: { ...this.state.quizResults },
+      intermediateQuizResults: { ...this.state.intermediateQuizResults },
     };
   }
 }

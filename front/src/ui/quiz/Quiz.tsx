@@ -181,6 +181,7 @@ export default function QuizPanel() {
 
   const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
   const isPerformance = quiz.phase === "performance";
+  const isIntermediate = quiz.isIntermediate;
 
   const scorePercentage = useMemo(() => {
     const total = quiz.questions.length;
@@ -195,32 +196,78 @@ export default function QuizPanel() {
 
   const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
 
-  const { headerTitle, headerSubTitle, performanceTitle, performanceMessage } =
-    useMemo(() => {
-      if (isRetryMode) {
-        return {
-          headerTitle: `Pontos: ${scorePercentage}%`,
-          headerSubTitle: "Pontuação baixa",
-          performanceTitle: "Quase lá...",
-          performanceMessage:
-            "Sua pontuação ainda não foi suficiente, mas não desista! Volte e inspecione os objetos com atenção para conquistar o conhecimento necessário e avançar de nível!",
-        };
-      }
-      if (isPerfectScore) {
-        return {
-          headerTitle: "Parabéns!",
-          headerSubTitle: "Pontuação perfeita",
-          performanceTitle: "GABARITOU!",
-          performanceMessage: "você está pronto para o próximo nível",
-        };
-      }
+  const {
+    headerTitle,
+    headerSubTitle,
+    performanceTitle,
+    performanceSubTitle,
+    performanceMessage,
+    performanceHint,
+  } = useMemo(() => {
+    if (isIntermediate) {
       return {
-        headerTitle: "Parabéns!",
-        headerSubTitle: "Pontuação boa",
-        performanceTitle: "MUITO BOM!",
-        performanceMessage: "você está pronto para o próximo nível",
+        headerTitle: `Pontos: ${scorePercentage}%`,
+        headerSubTitle:
+          scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
+        performanceTitle:
+          scorePercentage >= 70
+            ? "Parabéns!"
+            : scorePercentage < 25
+              ? "Essa não"
+              : "Por pouco!",
+        performanceSubTitle:
+          scorePercentage >= 70
+            ? scorePercentage === 100
+              ? "Pontuação perfeita!"
+              : "Boa pontuação"
+            : "Pontuação baixa",
+        performanceMessage:
+          scorePercentage >= 70
+            ? scorePercentage === 100
+              ? "Gabaritou!"
+              : "Muito bom!"
+            : "Revise as placas das obras",
+        performanceHint:
+          scorePercentage >= 70
+            ? ""
+            : "Leia com atenção as informações antes de continuar.",
       };
-    }, [scorePercentage, isRetryMode, isPerfectScore]);
+    }
+    return {
+      headerTitle:
+        scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
+      headerSubTitle:
+        scorePercentage >= 70
+          ? scorePercentage === 100
+            ? "Pontuação perfeita"
+            : "Pontuação boa"
+          : "Pontuação baixa",
+      performanceTitle:
+        scorePercentage < 25
+          ? "Essa não"
+          : scorePercentage < 70
+            ? "Por pouco!"
+            : "Parabéns!",
+      performanceSubTitle:
+        scorePercentage < 25 || scorePercentage < 70
+          ? "Pontuação baixa"
+          : scorePercentage < 100
+            ? "Boa pontuação"
+            : "Pontuação perfeita!",
+      performanceMessage:
+        scorePercentage < 25
+          ? "Tente novamente"
+          : scorePercentage < 70
+            ? "Com mais atenção, você consegue!"
+            : scorePercentage < 100
+              ? "Muito bom!"
+              : "Gabaritou!",
+      performanceHint:
+        scorePercentage >= 70
+          ? "Você já pode encarar o próximo nível!"
+          : "Sua pontuação não foi o suficiente. Mas não desista!",
+    };
+  }, [scorePercentage, isIntermediate]);
 
   const activateSelectedNav = useCallback(() => {
     if (selectedNavIndex === 0) {
@@ -579,7 +626,7 @@ export default function QuizPanel() {
                   spacing={4}
                   sx={{ alignItems: "center" }}
                 >
-                  <Button
+                  {/*<Button
                     disableElevation
                     sx={{
                       minWidth: 0,
@@ -593,7 +640,7 @@ export default function QuizPanel() {
                       src="/assets/ui/tts-icon.png"
                       sx={{ width: 32, height: 32, objectFit: "contain" }}
                     />
-                  </Button>
+                  </Button>*/}
                   <Typography
                     sx={{
                       fontFamily: "'Jockey One', sans-serif",

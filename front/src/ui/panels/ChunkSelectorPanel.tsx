@@ -2,14 +2,7 @@
 
 import { DndContext, type DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Box, Button, Paper, Typography } from "@mui/material";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import type { ChunkArrowDir } from "@/game/objects/ui/chunkSelectorNavigation";
 import { EventBus } from "@/shared/events/event-bus";
@@ -49,6 +42,8 @@ function parseDragId(
   return null;
 }
 
+const REJECT_DURATION_MS = 400;
+
 export function ChunkSelectorPanel() {
   const chunkSelectorData = useGameUIStore((s) => s.chunkSelectorData);
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
@@ -64,6 +59,8 @@ export function ChunkSelectorPanel() {
     null,
   );
   const [slotWidth, setSlotWidth] = useState(170);
+  const [rejectedSlotIndices, setRejectedSlotIndices] = useState<number[]>([]);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!chunkSelectorOpen || !chunkSelectorData) return;
@@ -75,6 +72,8 @@ export function ChunkSelectorPanel() {
         filledSlots: chunkSelectorData.filledSlots,
       },
     });
+    setFeedbackMessage(null);
+    setRejectedSlotIndices([]);
   }, [chunkSelectorData, chunkSelectorOpen]);
 
   useEffect(() => {
@@ -90,6 +89,12 @@ export function ChunkSelectorPanel() {
     return () => ro.disconnect();
   }, [chunkSelectorOpen]);
 
+  const triggerReject = useCallback((indices: number[]) => {
+    if (indices.length === 0) return;
+    setRejectedSlotIndices(indices);
+    setTimeout(() => setRejectedSlotIndices([]), REJECT_DURATION_MS);
+  }, []);
+
   const handleClose = useCallback(() => {
     EventBus.emit("ui:chunk-selector-close", undefined);
     closeChunkSelector();
@@ -98,13 +103,64 @@ export function ChunkSelectorPanel() {
   const handleSubmit = useCallback(() => {
     if (!chunkSelectorData) return;
 
+    const { expectedSlots, instanceId } = chunkSelectorData;
+    const wrongIndices: number[] = [];
+    const newlyCorrectIndices: number[] = [];
+
+    for (let i = 0; i < state.slots.length; i++) {
+      if (state.lockedSlots[i]) continue;
+      const placed = state.slots[i];
+      if (placed && placed === expectedSlots[i]) {
+        newlyCorrectIndices.push(i);
+      } else {
+        wrongIndices.push(i);
+      }
+    }
+
+    if (newlyCorrectIndices.length > 0) {
+      dispatch({
+        type: "LOCK_SLOTS",
+        payload: { indices: newlyCorrectIndices },
+      });
+      for (const idx of newlyCorrectIndices) {
+        const itemId = state.slots[idx];
+        if (!itemId) continue;
+        EventBus.emit("ui:chunk-slot-placed", {
+          instanceId,
+          slotIndex: idx,
+          itemId,
+        });
+      }
+    }
+
+    if (wrongIndices.length > 0) {
+      for (const idx of wrongIndices) {
+        EventBus.emit("ui:chunk-slot-rejected", {
+          instanceId,
+          slotIndex: idx,
+          itemId: state.slots[idx] ?? "",
+        });
+      }
+      triggerReject(wrongIndices);
+      setFeedbackMessage(
+        "Algumas partes ainda estão fora do lugar. Revise a posição dos fragmentos antes de confirmar.",
+      );
+      return;
+    }
+
+    setFeedbackMessage(null);
     EventBus.emit("ui:chunk-selector-submit", {
-      instanceId: chunkSelectorData.instanceId,
+      instanceId,
       placedItems: state.slots,
     });
-
     handleClose();
-  }, [chunkSelectorData, handleClose, state.slots]);
+  }, [
+    chunkSelectorData,
+    handleClose,
+    state.slots,
+    state.lockedSlots,
+    triggerReject,
+  ]);
 
   useEffect(() => {
     if (!chunkSelectorOpen) return;
@@ -185,14 +241,6 @@ export function ChunkSelectorPanel() {
     });
   }, [chunkSelectorOpen, state.cursorMode, state.selectedInventoryIndex]);
 
-  const allEditableSlotsFilled = useMemo(() => {
-    for (let i = 0; i < state.slots.length; i++) {
-      if (state.lockedSlots[i]) continue;
-      if (!state.slots[i]) return false;
-    }
-    return true;
-  }, [state.lockedSlots, state.slots]);
-
   const handleDragStart = useCallback(
     ({ active }: { active: { id: string | number } }) => {
       const id = String(active.id);
@@ -208,41 +256,46 @@ export function ChunkSelectorPanel() {
     [state.availableItems, state.slots],
   );
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveDragImageId(null);
-    if (!over) return;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveDragImageId(null);
+      if (!over) return;
 
-    const activeParsed = parseDragId(String(active.id));
-    const overParsed = parseDragId(String(over.id));
-    const overId = String(over.id);
+      const activeParsed = parseDragId(String(active.id));
+      const overParsed = parseDragId(String(over.id));
+      const overId = String(over.id);
 
-    if (activeParsed?.prefix === "inv" && overParsed?.prefix === "slot") {
-      dispatch({
-        type: "DRAG_DROP",
-        payload: {
-          fromInventoryIndex: activeParsed.index,
-          toSlotIndex: overParsed.index,
-        },
-      });
-    } else if (activeParsed?.prefix === "grid" && overId === "inventory") {
-      dispatch({
-        type: "GRID_TO_INVENTORY",
-        payload: { slotIndex: activeParsed.index },
-      });
-    } else if (
-      activeParsed?.prefix === "grid" &&
-      overParsed?.prefix === "slot"
-    ) {
-      dispatch({
-        type: "GRID_TO_GRID",
-        payload: {
-          fromSlotIndex: activeParsed.index,
-          toSlotIndex: overParsed.index,
-        },
-      });
-    }
-  }, []);
+      if (activeParsed?.prefix === "inv" && overParsed?.prefix === "slot") {
+        const item = state.availableItems[activeParsed.index];
+        if (!item) return;
+        dispatch({
+          type: "DRAG_DROP",
+          payload: {
+            fromInventoryIndex: activeParsed.index,
+            toSlotIndex: overParsed.index,
+          },
+        });
+      } else if (activeParsed?.prefix === "grid" && overId === "inventory") {
+        dispatch({
+          type: "GRID_TO_INVENTORY",
+          payload: { slotIndex: activeParsed.index },
+        });
+      } else if (
+        activeParsed?.prefix === "grid" &&
+        overParsed?.prefix === "slot"
+      ) {
+        dispatch({
+          type: "GRID_TO_GRID",
+          payload: {
+            fromSlotIndex: activeParsed.index,
+            toSlotIndex: overParsed.index,
+          },
+        });
+      }
+    },
+    [state.availableItems],
+  );
 
   if (!chunkSelectorOpen || !chunkSelectorData) return null;
 
@@ -276,7 +329,11 @@ export function ChunkSelectorPanel() {
           }}
         >
           <Box
-            sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
           >
             <Box>
               <Typography
@@ -285,20 +342,37 @@ export function ChunkSelectorPanel() {
                   fontWeight: 700,
                   fontSize: "24px",
                   lineHeight: 1.2,
+                  fontFamily: LayoutConfig.FONTS.TITLE,
                 }}
               >
                 Restauração de Obra
               </Typography>
-              <Typography sx={{ color: "#a8a8a8", fontSize: "14px", mt: 0.5 }}>
-                Aperte SETAS para navegar • ENTER para selecionar e confirmar
-              </Typography>
+              {feedbackMessage && (
+                <Typography
+                  sx={{
+                    color: LayoutConfig.COLORS.UNAVAILABLE_RED,
+                    fontSize: "14px",
+                    mt: 0.5,
+                  }}
+                >
+                  {feedbackMessage}
+                </Typography>
+              )}
             </Box>
             <Button
               variant="text"
               onClick={handleClose}
-              sx={{ color: "#f4eede", alignSelf: "flex-start" }}
+              sx={{
+                color: "#f4eede",
+                alignSelf: "flex-start",
+                minWidth: 0,
+                px: 1,
+                fontSize: "20px",
+                lineHeight: 1,
+              }}
+              aria-label="Fechar"
             >
-              Aperte ESC para fechar
+              ×
             </Button>
           </Box>
 
@@ -320,6 +394,7 @@ export function ChunkSelectorPanel() {
                   fontWeight: 700,
                   fontSize: "16px",
                   mb: 0.5,
+                  fontFamily: LayoutConfig.FONTS.TITLE,
                 }}
               >
                 Inventário
@@ -375,6 +450,7 @@ export function ChunkSelectorPanel() {
                   fontWeight: 700,
                   fontSize: "16px",
                   mb: 1.25,
+                  fontFamily: LayoutConfig.FONTS.TITLE,
                 }}
               >
                 Moldura
@@ -396,6 +472,8 @@ export function ChunkSelectorPanel() {
                     state.cursorMode === "grid" &&
                     state.selectedGridIndex === idx;
                   const isLocked = state.lockedSlots[idx];
+                  const isJustPlaced = state.justPlacedSlots.includes(idx);
+                  const isRejecting = rejectedSlotIndices.includes(idx);
 
                   return (
                     <DroppableGridSlot
@@ -404,24 +482,14 @@ export function ChunkSelectorPanel() {
                       slot={slot}
                       isSelected={isSelected}
                       isLocked={isLocked}
+                      isJustPlaced={isJustPlaced}
+                      isRejecting={isRejecting}
                     />
                   );
                 })}
               </Box>
 
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Typography sx={{ color: "#a8a8a8", fontSize: "13px" }}>
-                  {allEditableSlotsFilled
-                    ? "Todos os espaços editáveis foram preenchidos."
-                    : "Preencha os espaços e confirme."}
-                </Typography>
-
+              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button
                   variant="contained"
                   onClick={handleSubmit}
@@ -449,6 +517,11 @@ export function ChunkSelectorPanel() {
               </Box>
             </Paper>
           </Box>
+
+          <Typography sx={{ color: "#a8a8a8", fontSize: "13px" }}>
+            Aperte WASD ou setas para navegar | ENTER para selecionar e
+            confirmar
+          </Typography>
         </Paper>
       </Box>
       <DragOverlay dropAnimation={null}>

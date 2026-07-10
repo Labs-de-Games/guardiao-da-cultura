@@ -22,4 +22,8 @@ export class UpdateProgressionDto {
   @IsObject()
   @IsOptional()
   quizResults?: Record<string, unknown>;
+
+  @IsObject()
+  @IsOptional()
+  intermediateQuizResults?: Record<string, unknown>;
 }
