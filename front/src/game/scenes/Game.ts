@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -238,6 +239,10 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.load.image("label", "misc/label.png");
+
+    // Load audio assets
+    loadGlobalAudio(this);
+    loadLevelAudio(this, this.levelId);
   }
 
   private processModularData() {
@@ -252,6 +257,9 @@ export class Game extends Scene implements GameDataAccessor {
     this.processModularData();
     this.effects = new EffectsManager(this);
     this.createAnimations();
+
+    // Initialize audio manager
+    AudioManager.init(this);
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
@@ -1005,6 +1013,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.collectibleSystem?.destroy();
       this.hintKeySystem?.destroy();
       this.badgeSystem.destroy();
+      AudioManager.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");

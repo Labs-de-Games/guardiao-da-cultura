@@ -409,9 +409,14 @@ preload() {
   this.load.tilemapTiledJSON('map', 'assets/level1.json');
   this.load.image('tiles', 'assets/tileset.png');
 
-  // Audio
-  this.load.audio('bgm', 'assets/music.mp3');
-  this.load.audio('sfx', ['assets/sound.ogg', 'assets/sound.mp3']);
+  // Audio (organized in sound/sfx/ and sound/music/)
+  this.load.audio('bgm', 'assets/sound/music/level_1.mp3');
+  this.load.audio('sfx', 'assets/sound/sfx/ui-click.mp3');
+
+  // Sound pools (multiple variations for variety)
+  // Use AudioManager for automatic pool handling
+  this.load.audio('footstep_1', 'assets/sound/sfx/footstep_1.mp3');
+  this.load.audio('footstep_2', 'assets/sound/sfx/footstep_2.mp3');
 
   // Progress tracking
   this.load.on('progress', (value) => {
@@ -526,7 +531,9 @@ game/
 │   └── main.js
 ├── assets/
 │   ├── images/
-│   ├── audio/
+│   ├── sound/
+│   │   ├── sfx/
+│   │   └── music/
 │   ├── tilemaps/
 │   └── fonts/
 ├── index.html

@@ -1,0 +1,130 @@
+// ============================================================
+//  AUDIO REGISTRY
+//  Central registry for all audio assets.
+// ============================================================
+
+import type {
+  AudioAssetDefinition,
+  GlobalAudioManifest,
+  LevelAudioManifest,
+} from "./types";
+
+/**
+ * Global sound effects used across all levels.
+ * These are preloaded at game start.
+ *
+ * Supports both single sounds (AudioAssetConfig) and sound pools (AudioPoolConfig).
+ * Pools play a random variation each time, useful for avoiding repetition.
+ */
+export const GLOBAL_SFX: AudioAssetDefinition[] = [
+  // Clue interaction - pool of "hmm" variations
+  {
+    key: "sfx.clue.inspect",
+    paths: [
+      "sound/sfx/clue.inspect_1.mp3",
+      "sound/sfx/clue.inspect_2.mp3",
+      "sound/sfx/clue.inspect_3.mp3",
+      "sound/sfx/clue.inspect_4.mp3",
+      "sound/sfx/clue.inspect_5.mp3",
+      "sound/sfx/clue.inspect_6.mp3",
+      "sound/sfx/clue.inspect_7.mp3",
+    ],
+    avoidRepeat: true,
+  },
+  // Object manipulation - placeholders
+  { key: "sfx.object.drag_start", path: "sound/sfx/placeholder.mp3" },
+  {
+    key: "sfx.object.drag_loop",
+    path: "sound/sfx/placeholder.mp3",
+    loop: true,
+  },
+  { key: "sfx.object.drop", path: "sound/sfx/placeholder.mp3" },
+  // Player movement
+  {
+    key: "sfx.player.footstep",
+    path: "sound/sfx/player.footstep.ogg",
+    loop: true,
+  },
+  // Rat sounds
+  { key: "sfx.rat.squeak", path: "sound/sfx/rat.squeak.mp3" },
+  { key: "sfx.rat.flee", path: "sound/sfx/rat.flee.mp3" },
+  // Magnifying glass sounds
+  { key: "sfx.magnifying.up", path: "sound/sfx/magnifying.up.mp3" },
+  { key: "sfx.magnifying.down", path: "sound/sfx/magnifying.down.mp3" },
+  // UI feedback - placeholders
+  { key: "sfx.ui.click", path: "sound/sfx/placeholder.mp3" },
+  { key: "sfx.ui.hover", path: "sound/sfx/placeholder.mp3" },
+  { key: "sfx.ui.modal_open", path: "sound/sfx/placeholder.mp3" },
+  { key: "sfx.ui.modal_close", path: "sound/sfx/placeholder.mp3" },
+  // Puzzle/quiz - using existing sounds
+  { key: "sfx.puzzle.success", path: "sound/sfx/puzzle.succeed.ogg" },
+  { key: "sfx.puzzle.failure", path: "sound/sfx/puzzle.error.mp3" },
+  // Rewards - placeholders
+  { key: "sfx.badge.unlock", path: "sound/sfx/placeholder.mp3" },
+  { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
+];
+
+/**
+ * Global audio manifest.
+ */
+export const GLOBAL_AUDIO_MANIFEST: GlobalAudioManifest = {
+  sfx: GLOBAL_SFX,
+  menuMusic: { key: "music.menu", path: "sound/music/menu.mp3", loop: true },
+};
+
+/**
+ * Level-specific audio manifests.
+ * Each level can define its own background music.
+ */
+export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
+  level_1: {
+    levelId: "level_1",
+    music: {
+      key: "music.level_1.main",
+      path: "sound/music/level_1.mp3",
+      loop: true,
+    },
+  },
+  // Future levels can be added here:
+  // level_2: {
+  //   levelId: "level_2",
+  //   music: { key: "music.level_2.main", path: "sound/music/level_2.mp3", loop: true },
+  // },
+};
+
+/**
+ * Get the audio manifest for a specific level.
+ */
+export function getLevelAudioManifest(
+  levelId: string,
+): LevelAudioManifest | undefined {
+  return LEVEL_AUDIO_MANIFESTS[levelId];
+}
+
+/**
+ * Get all audio assets that should be preloaded globally.
+ */
+export function getGlobalAudioAssets(): AudioAssetDefinition[] {
+  const assets = [...GLOBAL_AUDIO_MANIFEST.sfx];
+  if (GLOBAL_AUDIO_MANIFEST.menuMusic) {
+    assets.push(GLOBAL_AUDIO_MANIFEST.menuMusic);
+  }
+  return assets;
+}
+
+/**
+ * Get all audio assets for a specific level.
+ */
+export function getLevelAudioAssets(levelId: string): AudioAssetDefinition[] {
+  const manifest = getLevelAudioManifest(levelId);
+  if (!manifest) return [];
+
+  const assets: AudioAssetDefinition[] = [];
+  if (manifest.music) {
+    assets.push(manifest.music);
+  }
+  if (manifest.sfx) {
+    assets.push(...manifest.sfx);
+  }
+  return assets;
+}
