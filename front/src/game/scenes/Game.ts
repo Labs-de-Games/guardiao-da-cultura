@@ -991,6 +991,9 @@ export class Game extends Scene implements GameDataAccessor {
       handler.placeCorrectChunk(this, p, data.itemId, data.slotIndex);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     });
+    EventBus.on("ui:chunk-slot-rejected", () => {
+      this.sound.play("error", { volume: 0.5 });
+    });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
@@ -1009,6 +1012,7 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
       EventBus.off("ui:chunk-slot-placed");
+      EventBus.off("ui:chunk-slot-rejected");
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
@@ -1160,10 +1164,6 @@ export class Game extends Scene implements GameDataAccessor {
 
   public completePhotoFloor() {
     this.completeFloor(this.scoringFloors.photo);
-  }
-
-  public shakePhotoFailure() {
-    this.effects.shakeHorizontal();
   }
 
   public showSpotlightBeam(
