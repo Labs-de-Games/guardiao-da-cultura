@@ -64,6 +64,8 @@ export interface NpcDialogues {
   completed: string[];
   success: string[];
   failure: string[];
+  start_quiz_question?: string[];
+  intermediateQuiz: string[];
 }
 
 export interface NpcData {
@@ -82,6 +84,8 @@ export interface WorksJson {
 export interface QuizzesJson {
   [missionId: string]: QuizQuestion[];
 }
+
+export type IntermediateQuizzesJson = Record<string, QuizQuestion[]>;
 
 export interface NpcsJson {
   npcs: Record<string, NpcData>;
@@ -132,6 +136,7 @@ export interface CollectiblesJson {
 export interface ContentJson {
   works: WorksJson;
   quizzes: QuizzesJson;
+  intermediateQuizzes: IntermediateQuizzesJson;
   npcs: Record<string, NpcData>;
   messages: MessagesJson;
   collectibles: CollectiblesJson;

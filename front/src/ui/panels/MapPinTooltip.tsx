@@ -6,7 +6,7 @@ import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 const TOOLTIP_WIDTH = 280;
-const TOOLTIP_OFFSET_Y = 24;
+const TOOLTIP_OFFSET_Y = 44;
 const ARROW_SIZE = 10;
 const VIEWPORT_PADDING = 16;
 
@@ -104,8 +104,9 @@ export function MapPinTooltip() {
         <Box
           sx={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: 1.5,
+            gap: 1,
             mb: 1.25,
           }}
         >
@@ -116,7 +117,7 @@ export function MapPinTooltip() {
               fontSize: "18px",
               color: LayoutConfig.COLORS.INFO_TITLE,
               lineHeight: 1.2,
-              flex: 1,
+              textAlign: "center",
             }}
           >
             {activeMapMarker.title}
@@ -129,6 +130,7 @@ export function MapPinTooltip() {
             fontSize: "14px",
             color: LayoutConfig.COLORS.INFO_BODY,
             lineHeight: 1.4,
+            textAlign: "center",
           }}
         >
           {instructionText}

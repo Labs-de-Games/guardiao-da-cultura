@@ -1,0 +1,73 @@
+{
+  "sculptures_done": [
+    {
+      "question": "Qual material Edgard de Souza usou nessas esculturas?",
+      "options": ["Argila", "Mármore", "Bronze", "Madeira"],
+      "correctOptionIndex": 2
+    },
+    {
+      "question": "Em que período foram criadas essas três esculturas?",
+      "options": ["Anos 70", "Anos 80", "Anos 90", "Anos 2000"],
+      "correctOptionIndex": 3
+    },
+    {
+      "question": "Quem serviu de modelo para essas esculturas?",
+      "options": [
+        "Atletas paraolímpicos",
+        "Corpos decapitados",
+        "Crianças bailarinas",
+        "O próprio artista"
+      ],
+      "correctOptionIndex": 3
+    }
+  ],
+  "paintings_done": [
+    {
+      "question": "Qual símbolo representa Xangô na pintura 'Xangô Rodrigues Alves'?",
+      "options": ["Pássaro", "Machado", "Coroa", "Estrela"],
+      "correctOptionIndex": 1
+    },
+    {
+      "question": "Em 'Okê Oxóssi', para onde aponta o ofá, o arco e flecha?",
+      "options": [
+        "Para cima",
+        "Para baixo",
+        "Para a esquerda",
+        "Para a direita"
+      ],
+      "correctOptionIndex": 0
+    },
+    {
+      "question": "Qual informação sobre Abdias Nascimento é falsa?",
+      "options": [
+        "Foi indicado ao Nobel da Paz",
+        "Foi exilado e viveu nos EUA",
+        "Foi poeta, professor e deputado",
+        "Foi membro da Academia Brasileira de Letras"
+      ],
+      "correctOptionIndex": 3
+    }
+  ],
+  "photo_done": [
+    {
+      "question": "A fotografia retrata um curumim. O que é curumim?",
+      "options": ["Um peixe", "Uma casa", "Uma criança", "Um pássaro"],
+      "correctOptionIndex": 2
+    },
+    {
+      "question": "Qual povo foi retratado nas fotografias de Claudia Andujar?",
+      "options": ["Guarani", "Xavante", "Yanomami", "Manau"],
+      "correctOptionIndex": 2
+    },
+    {
+      "question": "O que aconteceu com as terras yanomami nos anos 1970?",
+      "options": [
+        "Foram vendidas para uma usina",
+        "Ficaram desertas",
+        "Viraram um estacionamento",
+        "Garimpeiros tentaram invadir"
+      ],
+      "correctOptionIndex": 3
+    }
+  ]
+}

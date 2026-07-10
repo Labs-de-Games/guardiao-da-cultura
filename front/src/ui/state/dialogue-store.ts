@@ -8,11 +8,14 @@ export type DialogueQueueItem =
       mode: "dialogue";
       lines: string[];
       callbackId: string;
+      position?: { x: number; y: number };
     }
   | {
       mode: "confirmation";
       message: string;
+      speakerName: string;
       callbackId: string;
+      position?: { x: number; y: number };
     };
 
 export interface DialogueState {
@@ -21,12 +24,23 @@ export interface DialogueState {
   dialogueLines: string[];
   dialogueCurrentLine: number;
   dialogueConfirmMessage: string;
+  dialogueConfirmSpeaker: string;
   dialogueConfirmSelected: number;
   dialogueCallbackId: string;
   dialogueQueue: DialogueQueueItem[];
+  dialoguePosition: { x: number; y: number } | null;
 
-  showDialogue: (lines: string[], callbackId: string) => void;
-  showConfirmation: (message: string, callbackId: string) => void;
+  showDialogue: (
+    lines: string[],
+    callbackId: string,
+    position?: { x: number; y: number },
+  ) => void;
+  showConfirmation: (
+    message: string,
+    speakerName: string,
+    callbackId: string,
+    position?: { x: number; y: number },
+  ) => void;
   advanceDialogue: () => void;
   setConfirmSelection: (index: number) => void;
   moveConfirmSelection: (dir: number) => void;
@@ -44,7 +58,9 @@ const getActiveState = (item: DialogueQueueItem) => {
       dialogueCurrentLine: 0,
       dialogueCallbackId: item.callbackId,
       dialogueConfirmMessage: item.message,
+      dialogueConfirmSpeaker: item.speakerName,
       dialogueConfirmSelected: 0,
+      dialoguePosition: item.position ?? null,
     };
   }
   return {
@@ -54,7 +70,9 @@ const getActiveState = (item: DialogueQueueItem) => {
     dialogueCurrentLine: 0,
     dialogueCallbackId: item.callbackId,
     dialogueConfirmMessage: "",
+    dialogueConfirmSpeaker: "",
     dialogueConfirmSelected: 0,
+    dialoguePosition: item.position ?? null,
   };
 };
 
@@ -64,13 +82,20 @@ export const useDialogueStore = create<DialogueState>()((set) => ({
   dialogueLines: [],
   dialogueCurrentLine: 0,
   dialogueConfirmMessage: "",
+  dialogueConfirmSpeaker: "",
   dialogueConfirmSelected: 0,
   dialogueCallbackId: "",
   dialogueQueue: [],
+  dialoguePosition: null,
 
-  showDialogue: (lines, callbackId) =>
+  showDialogue: (lines, callbackId, position) =>
     set((s) => {
-      const item: DialogueQueueItem = { mode: "dialogue", lines, callbackId };
+      const item: DialogueQueueItem = {
+        mode: "dialogue",
+        lines,
+        callbackId,
+        position,
+      };
       if (s.dialogueOpen) {
         return {
           dialogueQueue: [...s.dialogueQueue, item],
@@ -79,16 +104,21 @@ export const useDialogueStore = create<DialogueState>()((set) => ({
       return getActiveState(item);
     }),
 
-  showConfirmation: (message, callbackId) =>
+  showConfirmation: (message, speakerName, callbackId, position) =>
     set((s) => {
       const item: DialogueQueueItem = {
         mode: "confirmation",
         message,
+        speakerName,
         callbackId,
+        position,
       };
       if (s.dialogueOpen) {
         return {
-          dialogueQueue: [...s.dialogueQueue, item],
+          dialogueQueue: [
+            ...s.dialogueQueue,
+            { ...item, position: s.dialoguePosition ?? item.position },
+          ],
         };
       }
       return getActiveState(item);
@@ -122,6 +152,7 @@ export const useDialogueStore = create<DialogueState>()((set) => ({
       return {
         dialogueOpen: false,
         dialogueConfirmMessage: "",
+        dialogueConfirmSpeaker: "",
         dialogueConfirmSelected: 0,
         dialogueCallbackId: "",
       };
@@ -135,9 +166,11 @@ export const useDialogueStore = create<DialogueState>()((set) => ({
         dialogueLines: [],
         dialogueCurrentLine: 0,
         dialogueConfirmMessage: "",
+        dialogueConfirmSpeaker: "",
         dialogueConfirmSelected: 0,
         dialogueCallbackId: "",
         dialogueQueue: [],
+        dialoguePosition: null,
       };
     }),
 

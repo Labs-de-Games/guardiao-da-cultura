@@ -11,7 +11,9 @@ import {
 } from "@/lib/badgesApi";
 import { addGuestBadge, getGuestBadgeIds } from "@/lib/badgesStorage";
 import {
+  type IntermediateQuizEventPayload,
   type GameEventPayload as QuizEventPayload,
+  type RegularQuizEventPayload,
   sendQuizOutcomeEvent,
 } from "@/lib/gameEventsApi";
 import { getProgression, saveProgression } from "@/lib/progressionApi";
@@ -252,10 +254,28 @@ function buildAuthPersistence(userId: string): GamePersistence {
     },
 
     async sendQuizOutcome(payload: QuizOutcomePayload) {
-      await sendQuizOutcomeEvent({
-        ...payload,
+      if (payload.type === "quiz.completed" || payload.type === "quiz.failed") {
+        const metadata =
+          payload.metadata as RegularQuizEventPayload["metadata"];
+        const event: RegularQuizEventPayload = {
+          userId,
+          type: payload.type,
+          timestamp: payload.timestamp,
+          metadata,
+        };
+        await sendQuizOutcomeEvent(event);
+        return;
+      }
+
+      const metadata =
+        payload.metadata as IntermediateQuizEventPayload["metadata"];
+      const event: IntermediateQuizEventPayload = {
         userId,
-      });
+        type: payload.type,
+        timestamp: payload.timestamp,
+        metadata,
+      };
+      await sendQuizOutcomeEvent(event);
     },
 
     async sendBadgeEarnedEvent(payload: {

@@ -22,6 +22,18 @@ const quizEventSchema = z.object({
   }),
 });
 
+// Zod schema for intermediate quiz event validation
+const intermediateQuizEventSchema = z.object({
+  userId: z.string().uuid().optional(),
+  type: z.enum(["intermediate-quiz.completed", "intermediate-quiz.failed"]),
+  timestamp: z.coerce.date(),
+  metadata: z.object({
+    infoKey: z.string(),
+    passed: z.boolean(),
+    missionId: z.string(),
+  }),
+});
+
 @Injectable()
 export class GameService {
   constructor(
@@ -52,6 +64,33 @@ export class GameService {
             "Invalid quiz event payload",
           );
           throw new Error(`Invalid quiz event payload: ${messages.join(", ")}`);
+        }
+        throw error;
+      }
+    }
+
+    // Validate intermediate quiz events with Zod
+    if (
+      payload.type === "intermediate-quiz.completed" ||
+      payload.type === "intermediate-quiz.failed"
+    ) {
+      try {
+        intermediateQuizEventSchema.parse({
+          ...payload,
+          userId: finalUserId,
+        });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const messages = error.issues.map(
+            (issue) => `${issue.path.join(".")}: ${issue.message}`,
+          );
+          this.logger.error(
+            { eventType: payload.type, issues: messages },
+            "Invalid intermediate quiz event payload",
+          );
+          throw new Error(
+            `Invalid intermediate quiz event payload: ${messages.join(", ")}`,
+          );
         }
         throw error;
       }

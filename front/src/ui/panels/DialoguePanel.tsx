@@ -1,12 +1,33 @@
 "use client";
 
-import { Box, CardContent, Paper, Typography } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import ArrowRight from "@mui/icons-material/ArrowRight";
+import { Box, Typography } from "@mui/material";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
+function useWindowSize() {
+  const [size, setSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
+    height: typeof window !== "undefined" ? window.innerHeight : 768,
+  });
+  useEffect(() => {
+    const handler = () =>
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return size;
+}
+
 const TYPING_SPEED = 30;
+const BUBBLE_MAX_WIDTH = 900;
+const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
+const VIEWPORT_MARGIN = 24;
+const TRIANGLE_HEIGHT = 32;
+const HEAD_OFFSET = 100;
+const MAX_DIALOGUE_LENGTH = 144;
 
 interface DialoguePanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -26,34 +47,95 @@ function parseLine(text: string): ParsedLine {
   return { speaker: null, content: text };
 }
 
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "…";
+}
+
+function TextToSpeechIcon() {
+  return (
+    <Box
+      component="img"
+      src="/images/etiqueta/icon-text-to-speech.svg"
+      alt=""
+      aria-hidden="true"
+      sx={{
+        position: "absolute",
+        top: 32,
+        right: 40,
+        width: 36,
+        height: 36,
+        pointerEvents: "none",
+        filter: "brightness(0) invert(1)",
+      }}
+    />
+  );
+}
+
 export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const open = useDialogueStore((s) => s.dialogueOpen);
   const mode = useDialogueStore((s) => s.dialogueMode);
   const lines = useDialogueStore((s) => s.dialogueLines);
   const currentLine = useDialogueStore((s) => s.dialogueCurrentLine);
-  const confirmMessage = useDialogueStore((s) => s.dialogueConfirmMessage);
-  const confirmSelected = useDialogueStore((s) => s.dialogueConfirmSelected);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
+  const speakerPos = useDialogueStore((s) => s.dialoguePosition);
 
   const advanceDialogue = useDialogueStore((s) => s.advanceDialogue);
-  const moveConfirmSelection = useDialogueStore((s) => s.moveConfirmSelection);
-  const confirmDialogueSelection = useDialogueStore(
-    (s) => s.confirmDialogueSelection,
-  );
   const closeDialogue = useDialogueStore((s) => s.closeDialogue);
 
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // suppresses spurious input immediately after dialogue opens
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
+  const { width: vw, height: vh } = useWindowSize();
 
-  const rawCurrentText =
-    mode === "dialogue" ? (lines[currentLine] ?? "") : confirmMessage;
+  const rawCurrentText = lines[currentLine] ?? "";
   const parsedLine = parseLine(rawCurrentText);
-  const currentText = mode === "dialogue" ? parsedLine.content : rawCurrentText;
-  const speakerName = mode === "dialogue" ? parsedLine.speaker : null;
-  const isLastLine = mode === "dialogue" && currentLine === lines.length - 1;
+  const currentText = truncateText(parsedLine.content, MAX_DIALOGUE_LENGTH);
+  const speakerName = parsedLine.speaker;
+  const isLastLine = currentLine === lines.length - 1;
+
+  const positioning = useMemo(() => {
+    if (!speakerPos) {
+      return {
+        outerStyle: {
+          position: "absolute" as const,
+          top: 24,
+          left: "50%" as const,
+          transform: "translateX(-50%)",
+        },
+        triangleLeft: null,
+      };
+    }
+
+    const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
+    const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
+    const clampedLeft = Math.max(minLeft, Math.min(speakerPos.x, maxLeft));
+
+    const bottom = Math.min(
+      vh - VIEWPORT_MARGIN,
+      Math.max(
+        VIEWPORT_MARGIN,
+        vh - (speakerPos.y - TRIANGLE_HEIGHT - HEAD_OFFSET),
+      ),
+    );
+
+    const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
+    const ratio = (speakerPos.x - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
+    const triangleLeft = Math.max(15, Math.min(ratio * 100, 85));
+
+    return {
+      outerStyle: {
+        position: "absolute" as const,
+        left: clampedLeft,
+        bottom,
+        transform: "translateX(-50%)",
+      },
+      triangleLeft,
+    };
+  }, [speakerPos, vw, vh]);
 
   useEffect(() => {
     if (!open) return;
@@ -105,6 +187,8 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     }
     if (isLastLine) {
       onComplete(callbackId);
+      advanceDialogue();
+      return;
     }
     advanceDialogue();
   }, [
@@ -116,14 +200,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     onComplete,
   ]);
 
-  const handleConfirm = useCallback(
-    (confirmed: boolean) => {
-      onComplete(callbackId, confirmed);
-      confirmDialogueSelection();
-    },
-    [callbackId, confirmDialogueSelection, onComplete],
-  );
-
   const handleDismiss = useCallback(() => {
     onDismiss(callbackId);
     closeDialogue();
@@ -133,107 +209,73 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     if (!open) return;
 
     const handler = (e: KeyboardEvent) => {
-      if (mode === "dialogue") {
-        if (e.key === " " || e.key === "e" || e.key === "E") {
-          e.preventDefault();
-          e.stopPropagation();
-          handleAdvance();
-        }
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          handleDismiss();
-        }
-      } else {
-        if (
-          e.key === "ArrowLeft" ||
-          e.key === "ArrowRight" ||
-          e.key === "a" ||
-          e.key === "A" ||
-          e.key === "d" ||
-          e.key === "D"
-        ) {
-          e.preventDefault();
-          e.stopPropagation();
-          moveConfirmSelection(
-            e.key === "ArrowRight" || e.key === "d" || e.key === "D" ? 1 : -1,
-          );
-        }
-        if (e.key === "e" || e.key === "E") {
-          e.preventDefault();
-          e.stopPropagation();
-          const currentSelected =
-            useDialogueStore.getState().dialogueConfirmSelected;
-          handleConfirm(currentSelected === 0);
-        }
-        if (e.key === " ") {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          handleDismiss();
-        }
+      if (e.key === " " || e.key === "e" || e.key === "E") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAdvance();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDismiss();
       }
     };
 
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [
-    open,
-    mode,
-    handleAdvance,
-    handleConfirm,
-    handleDismiss,
-    moveConfirmSelection,
-  ]);
+  }, [open, handleAdvance, handleDismiss]);
 
-  if (!open) return null;
+  if (!open || mode !== "dialogue") return null;
 
   return (
     <Box
       sx={{
-        position: "absolute",
-        top: 24,
-        left: "50%",
-        transform: "translateX(-50%)",
+        ...positioning.outerStyle,
         maxWidth: "min(900px, 90vw)",
-        width: "100%",
+        width: "min(900px, 90vw)",
         pointerEvents: "auto",
         zIndex: 30,
       }}
     >
-      <Paper
-        square
+      <Box
         role="dialog"
         aria-live="polite"
         sx={{
-          bgcolor: GAME_UI_TOKENS.colors.bgPrimary,
-          borderRadius: `${GAME_UI_TOKENS.radius.panel}px`,
-          border: "none",
-          overflow: "hidden",
+          position: "relative",
+          bgcolor: GAME_UI_TOKENS.colors.dialogueBg,
+          borderRadius: "12px",
+          px: "40px",
+          py: "32px",
+          maxWidth: "min(862px, 90vw)",
+          width: "100%",
+          overflow: "visible",
         }}
       >
-        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-          {mode === "dialogue" && (
-            <DialogueContent
-              speakerName={speakerName}
-              text={displayedText}
-              isLastLine={isLastLine}
-              onAdvance={handleAdvance}
-            />
-          )}
-          {mode === "confirmation" && (
-            <ConfirmationContent
-              message={displayedText}
-              selectedIndex={confirmSelected}
-              onSelect={moveConfirmSelection}
-              onConfirm={handleConfirm}
-            />
-          )}
-        </CardContent>
-      </Paper>
+        {/* <TextToSpeechIcon /> */}
+        <DialogueContent
+          speakerName={speakerName}
+          text={displayedText}
+          isLastLine={isLastLine}
+          onAdvance={handleAdvance}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: -TRIANGLE_HEIGHT,
+            ...(positioning.triangleLeft !== null
+              ? {
+                  left: `${positioning.triangleLeft}%`,
+                  transform: "translateX(-50%)",
+                }
+              : { right: 40 }),
+            width: 0,
+            height: 0,
+            borderLeft: "24px solid transparent",
+            borderRight: "24px solid transparent",
+            borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+          }}
+        />
+      </Box>
     </Box>
   );
 }
@@ -253,163 +295,47 @@ function DialogueContent({
     <Box sx={{ cursor: "pointer" }} onClick={onAdvance}>
       {speakerName && (
         <Typography
-          variant="subtitle2"
           sx={{
-            color: GAME_UI_TOKENS.colors.accentGold,
-            fontSize: "14px",
-            fontWeight: 600,
-            mb: 0.5,
+            fontFamily: GAME_UI_TOKENS.fonts.display,
+            fontSize: "24px",
+            lineHeight: "1.21em",
+            color: GAME_UI_TOKENS.colors.accentGoldMuted,
+            mb: "16px",
           }}
         >
-          {speakerName}:
+          {speakerName}
         </Typography>
       )}
       <Typography
-        variant="body2"
         sx={{
-          color: GAME_UI_TOKENS.colors.textPrimary,
-          fontSize: "14px",
-          lineHeight: 1.6,
-          mb: 2,
+          fontFamily: GAME_UI_TOKENS.fonts.body,
+          fontSize: "20px",
+          color: GAME_UI_TOKENS.colors.accentGoldMuted,
+          lineHeight: 1.2,
+          mb: "16px",
           minHeight: "2.5em",
         }}
       >
         {text}
       </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Typography
-          variant="subtitle2"
+      <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <ArrowRight
           sx={{
-            color: GAME_UI_TOKENS.colors.accentGold,
-            fontSize: "12px",
-            fontWeight: 600,
-            opacity: 0.8,
-            animation: "pulse 1.5s ease-in-out infinite",
-            "@keyframes pulse": {
-              "0%, 100%": { opacity: 0.8 },
-              "50%": { opacity: 0.4 },
-            },
+            fontSize: 32,
+            color: GAME_UI_TOKENS.colors.dialogueCta,
+            mx: -1.5,
+            my: -1.5,
           }}
-        >
-          ▼
-        </Typography>
+        />
         <Typography
-          variant="subtitle2"
           sx={{
-            color: GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "12px",
-            fontWeight: 600,
-          }}
-        >
-          {isLastLine ? "Aperte E para fechar" : "Aperte E para continuar"}
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
-
-function ConfirmationContent({
-  message,
-  selectedIndex,
-  onSelect,
-  onConfirm,
-}: {
-  message: string;
-  selectedIndex: number;
-  onSelect: (dir: number) => void;
-  onConfirm: (confirmed: boolean) => void;
-}) {
-  return (
-    <Box>
-      <Typography
-        variant="subtitle2"
-        sx={{
-          color: GAME_UI_TOKENS.colors.textPrimary,
-          fontSize: "14px",
-          lineHeight: 1.6,
-          mb: 3,
-        }}
-      >
-        {message}
-      </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 4,
-          mb: 2,
-        }}
-      >
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color:
-              selectedIndex === 0
-                ? GAME_UI_TOKENS.colors.accentGold
-                : GAME_UI_TOKENS.colors.textSecondary,
+            fontFamily: GAME_UI_TOKENS.fonts.body,
+            fontWeight: 500,
             fontSize: "14px",
-            fontWeight: selectedIndex === 0 ? 700 : 600,
-            cursor: "pointer",
-            transition: "all 0.15s",
-            transform: selectedIndex === 0 ? "scale(1.1)" : "scale(1)",
-            "&:hover": { color: GAME_UI_TOKENS.colors.accentGold },
-          }}
-          onClick={() => onConfirm(true)}
-          onMouseEnter={() => onSelect(0)}
-        >
-          Sim
-        </Typography>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color:
-              selectedIndex === 1
-                ? GAME_UI_TOKENS.colors.accentGold
-                : GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "14px",
-            fontWeight: selectedIndex === 1 ? 700 : 600,
-            cursor: "pointer",
-            transition: "all 0.15s",
-            transform: selectedIndex === 1 ? "scale(1.1)" : "scale(1)",
-            "&:hover": { color: GAME_UI_TOKENS.colors.accentGold },
-          }}
-          onClick={() => onConfirm(false)}
-          onMouseEnter={() => onSelect(1)}
-        >
-          Não
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "12px",
-            fontWeight: 600,
+            color: GAME_UI_TOKENS.colors.dialogueCta,
           }}
         >
-          Aperte ESC para cancelar
-        </Typography>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: GAME_UI_TOKENS.colors.textSecondary,
-            fontSize: "12px",
-            fontWeight: 600,
-          }}
-        >
-          Aperte E para confirmar
+          {isLastLine ? "FECHAR" : "CONTINUAR"}
         </Typography>
       </Box>
     </Box>

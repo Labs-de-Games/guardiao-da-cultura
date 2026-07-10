@@ -11,6 +11,9 @@ export interface NpcConfig {
   dialogues: NpcDialogues;
   quiz?: QuizQuestion[];
   name?: string;
+  intermediateQuiz?: string[];
+  spawnX?: number;
+  spawnY?: number;
 }
 
 export class Npc extends Phaser.Physics.Arcade.Sprite {
@@ -53,6 +56,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    this.setDepth(20);
     this.setScale(NPC_PHYSICS.SCALE);
 
     this.play(NPC_ANIMS.IDLE.key);
@@ -66,7 +70,8 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
     this.exclamationIcon = scene.add
       .image(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y, "exclamation")
-      .setScale(4);
+      .setScale(4)
+      .setDepth(21);
 
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     this.once(
@@ -82,6 +87,10 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  public getMissionId(): string {
+    return this.config.missionId;
+  }
+
   public getQuiz() {
     return this.config.quiz;
   }
@@ -92,6 +101,42 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
   public getDialogues() {
     return this.config.dialogues;
+  }
+
+  public getIntermediateQuizDialogues(): string[] {
+    return this.config.intermediateQuiz || [];
+  }
+
+  public getSpawnPosition(): { x: number; y: number } | null {
+    if (this.config.spawnX !== undefined && this.config.spawnY !== undefined) {
+      return { x: this.config.spawnX, y: this.config.spawnY };
+    }
+    return null;
+  }
+
+  public showForQuiz(x: number, y: number) {
+    this.teleportTo(x, y);
+    this.setVisible(true);
+    const body = this.body as Phaser.Physics.Arcade.Body | undefined;
+    if (body) {
+      body.enable = true;
+      body.reset(x, y);
+    }
+    if (this.exclamationIcon) {
+      this.exclamationIcon.setVisible(true);
+      this.exclamationIcon.setPosition(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y);
+    }
+  }
+
+  public hideAfterQuiz() {
+    this.setVisible(false);
+    const body = this.body as Phaser.Physics.Arcade.Body | undefined;
+    if (body) {
+      body.enable = false;
+    }
+    if (this.exclamationIcon) {
+      this.exclamationIcon.setVisible(false);
+    }
   }
 
   setQuestManager(qm: QuestManager) {
@@ -114,6 +159,12 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  private prependName(lines: string[]): string[] {
+    const name = this.config.name;
+    if (!name) return lines;
+    return lines.map((line) => `${name}: ${line}`);
+  }
+
   private handleInteraction() {
     if (!this.questManager) {
       console.warn("[Npc] QuestManager not found!");
@@ -125,23 +176,36 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
 
     const pending = this.questManager.getPendingResult(missionId);
     if (pending) {
-      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, pending, () => {
-        this.questManager?.clearPendingResult(missionId);
-      });
+      this.scene.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        this.prependName(pending),
+        () => {
+          this.questManager?.clearPendingResult(missionId);
+        },
+        { x: this.x, y: this.y },
+      );
       return;
     }
 
     const lines = this.getDialogueLines(status);
     if (!lines || lines.length === 0) {
-      this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
-        "Olá! No momento não tenho nada para dizer.",
-      ]);
+      this.scene.events.emit(
+        GameEvents.SHOW_DIALOGUE_REQUEST,
+        ["Olá! No momento não tenho nada para dizer."],
+        undefined,
+        { x: this.x, y: this.y },
+      );
       return;
     }
 
-    this.scene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, lines, () => {
-      this.onDialogueComplete(status, game);
-    });
+    this.scene.events.emit(
+      GameEvents.SHOW_DIALOGUE_REQUEST,
+      this.prependName(lines),
+      () => {
+        this.onDialogueComplete(status, game);
+      },
+      { x: this.x, y: this.y },
+    );
   }
 
   private getDialogueLines(status: QuestStatus): string[] {

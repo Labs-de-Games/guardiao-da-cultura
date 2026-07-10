@@ -9,7 +9,7 @@ describe("MapPinTooltip", () => {
       activeMapMarker: {
         markerId: "brumadinho",
         title: "Instituto Inhotim",
-        location: "Brumadinho, Minas Gerais",
+        location: "Brumadinho - MG",
         isAvailable: true,
         screenX: 640,
         screenY: 480,
@@ -58,7 +58,7 @@ describe("MapPinTooltip", () => {
       activeMapMarker: {
         markerId: "brumadinho",
         title: "Instituto Inhotim",
-        location: "Brumadinho, Minas Gerais",
+        location: "Brumadinho - MG",
         isAvailable: true,
         screenX: 0,
         screenY: 0,
