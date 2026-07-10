@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import posthog from "posthog-js";
 import { sendGameEvent } from "../../lib/analyticsApi";
+import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -142,6 +143,9 @@ export class InteractionComponent {
           );
         });
 
+        // Play interaction sound (random variation from pool)
+        AudioManager.playSfx("sfx.clue.inspect");
+
         if (this.dialogueLines) {
           if (this.onInteract) this.onInteract();
         } else {
@@ -221,6 +225,9 @@ export class InteractionComponent {
   private showHint() {
     if (!this.hintEnabled) return;
     if (this.hintCompleted) return;
+
+    // Play clue inspect sound (random variation from pool)
+    AudioManager.playSfx("sfx.clue.inspect");
 
     posthog.capture("clue_used", {
       level_id: this.scene.registry.get("currentLevelId"),

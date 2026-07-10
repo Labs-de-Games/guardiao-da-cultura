@@ -31,14 +31,22 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
     ],
     avoidRepeat: true,
   },
-  // Object manipulation - placeholders
-  { key: "sfx.object.drag_start", path: "sound/sfx/placeholder.mp3" },
+  // Object manipulation
   {
     key: "sfx.object.drag_loop",
-    path: "sound/sfx/placeholder.mp3",
+    path: "sound/sfx/object.drag_loop.mp3",
     loop: true,
   },
-  { key: "sfx.object.drop", path: "sound/sfx/placeholder.mp3" },
+  {
+    key: "sfx.object.drop",
+    paths: [
+      "sound/sfx/object.drop_1.mp3",
+      "sound/sfx/object.drop_2.mp3",
+      "sound/sfx/object.drop_3.mp3",
+      "sound/sfx/object.drop_4.mp3",
+    ],
+    avoidRepeat: true,
+  },
   // Player movement
   {
     key: "sfx.player.footstep",

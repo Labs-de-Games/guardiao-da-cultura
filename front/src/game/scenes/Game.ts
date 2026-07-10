@@ -705,6 +705,8 @@ export class Game extends Scene implements GameDataAccessor {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
       }
+      // Play magnifying glass zoom-in sound
+      AudioManager.playSfx("sfx.magnifying.up");
       this.effects.setZoom(1.2, 400);
     });
 
@@ -732,6 +734,8 @@ export class Game extends Scene implements GameDataAccessor {
           }
         });
 
+        // Play magnifying glass zoom-out sound
+        AudioManager.playSfx("sfx.magnifying.down");
         this.effects.setZoom(1.0, 400);
       },
     );

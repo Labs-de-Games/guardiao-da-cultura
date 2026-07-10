@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio";
 import { Actions } from "../constants/KeyBindings";
 import { getKeys } from "../systems/InputManager";
 import type { IPlayerState } from "../types/EntityTypes";
@@ -32,6 +33,7 @@ export class Player
   public isCarrying: boolean = false;
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
+  private dragLoopSound: Phaser.Sound.BaseSound | null = null;
 
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
 
@@ -601,6 +603,12 @@ export class Player
     this.isGrabbing = true;
     this.grabbedItem = closestItem;
 
+    // Start playing drag loop sound
+    this.dragLoopSound = this.scene.sound.add("sfx.object.drag_loop", {
+      loop: true,
+    });
+    this.dragLoopSound.play();
+
     const body = this.body as Phaser.Physics.Arcade.Body;
     const prevBodyX = body?.x;
     const prevBodyY = body?.y;
@@ -709,9 +717,18 @@ export class Player
       body.setVelocity(0, 0);
     }
 
+    // Stop drag loop sound
+    if (this.dragLoopSound) {
+      this.dragLoopSound.stop();
+      this.dragLoopSound.destroy();
+      this.dragLoopSound = null;
+    }
+
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
       this.grabbedItem.setDepth(10);
+      // Play drop sound
+      AudioManager.playSfx("sfx.object.drop");
     }
     this.isGrabbing = false;
     this.grabbedItem = null;

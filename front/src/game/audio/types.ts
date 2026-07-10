@@ -11,7 +11,6 @@ export type SfxKey =
   // Clue interaction
   | "sfx.clue.inspect"
   // Object manipulation
-  | "sfx.object.drag_start"
   | "sfx.object.drag_loop"
   | "sfx.object.drop"
   // Player movement
@@ -130,7 +129,7 @@ export interface AudioSettings {
  * Default audio settings.
  */
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  musicVolume: 0.5,
+  musicVolume: 0.1,
   sfxVolume: 0.7,
   muted: false,
 };

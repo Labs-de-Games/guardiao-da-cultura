@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import {
   FLOOR_COMPLETE_KEYS,
@@ -115,6 +116,11 @@ export class QuizManager {
                 const isSuccess = score >= required;
                 console.log(
                   `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
+                );
+
+                // Play success or failure sound
+                AudioManager.playSfx(
+                  isSuccess ? "sfx.puzzle.success" : "sfx.puzzle.failure",
                 );
 
                 const levelId = this.context.getLevelId();
