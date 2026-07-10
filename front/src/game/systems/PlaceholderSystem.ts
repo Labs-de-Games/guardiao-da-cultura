@@ -167,6 +167,7 @@ export class PlaceholderSystem {
       const isCloseEnough = dist < SNAP_THRESHOLD;
 
       if (isInside || isCloseEnough) {
+        if (p.isFilled) continue;
         if (item.interactiveType !== p.type) continue;
 
         const isMatch = Array.isArray(p.id)
@@ -221,6 +222,7 @@ export class PlaceholderSystem {
 
     let nearbyMismatch = false;
     for (const p of this.placeholders) {
+      if (p.isFilled) continue;
       const checkY = item.y;
 
       const dist = Phaser.Math.Distance.Between(
@@ -256,6 +258,7 @@ export class PlaceholderSystem {
     let minDist = maxDistance;
 
     for (const p of this.placeholders) {
+      if (p.isFilled) continue;
       if (type && p.type !== type) continue;
 
       const dist = Phaser.Math.Distance.Between(
