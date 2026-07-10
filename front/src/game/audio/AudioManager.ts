@@ -198,7 +198,7 @@ export class AudioManager {
   }
 
   private setupInteractionListeners(): void {
-    if (typeof window === "undefined") return;
+    if (!this.scene) return;
 
     const handleInteraction = () => {
       if (this.userHasInteracted) return;
@@ -212,16 +212,13 @@ export class AudioManager {
       }
     };
 
-    // Listen for first user interaction
-    const events = ["pointerdown", "keydown", "touchstart"];
-    events.forEach((event) => {
-      window.addEventListener(event, handleInteraction, {
-        once: true,
-        capture: true,
-      });
-      this.interactionListeners.push(() => {
-        window.removeEventListener(event, handleInteraction, { capture: true });
-      });
+    // Use Phaser's input system (not window) since canvas captures all events
+    this.scene.input.on("pointerdown", handleInteraction);
+    this.scene.input.keyboard?.on("keydown", handleInteraction);
+
+    this.interactionListeners.push(() => {
+      this.scene?.input.off("pointerdown", handleInteraction);
+      this.scene?.input.keyboard?.off("keydown", handleInteraction);
     });
   }
 
@@ -261,8 +258,8 @@ export class AudioManager {
       actualKey = variationKey;
     }
 
-    // Check if sound is loaded
-    if (!this.scene.sound.get(actualKey)) {
+    // Check if sound exists in the audio cache
+    if (!this.scene.game.cache.audio.has(actualKey)) {
       console.warn(
         `[AudioManager] Sound "${actualKey}" not loaded. Make sure to preload it.`,
       );
@@ -337,7 +334,10 @@ export class AudioManager {
     }
 
     const sound = this.playSound(key, "music");
-    if (!sound) return;
+    if (!sound) {
+      console.warn(`[AudioManager] Failed to play music "${key}"`);
+      return;
+    }
 
     this.currentMusic = this.activeSounds.get(key) ?? null;
 

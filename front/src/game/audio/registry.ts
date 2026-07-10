@@ -77,8 +77,8 @@ export const GLOBAL_AUDIO_MANIFEST: GlobalAudioManifest = {
  * Each level can define its own background music.
  */
 export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
-  level_1: {
-    levelId: "level_1",
+  level_01: {
+    levelId: "level_01",
     music: {
       key: "music.level_1.main",
       path: "sound/music/level_1.mp3",
@@ -86,8 +86,8 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
     },
   },
   // Future levels can be added here:
-  // level_2: {
-  //   levelId: "level_2",
+  // level_02: {
+  //   levelId: "level_02",
   //   music: { key: "music.level_2.main", path: "sound/music/level_2.mp3", loop: true },
   // },
 };

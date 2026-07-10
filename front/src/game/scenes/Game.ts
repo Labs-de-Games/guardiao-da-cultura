@@ -261,6 +261,10 @@ export class Game extends Scene implements GameDataAccessor {
     // Initialize audio manager
     AudioManager.init(this);
 
+    // Start level background music
+    // Music will play after first user interaction due to browser autoplay restrictions
+    AudioManager.playMusic("music.level_1.main", 2000); // 2 second fade-in
+
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
       tileWidth: 16,
