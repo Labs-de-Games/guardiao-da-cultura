@@ -1,165 +1,106 @@
-// ============================================================
-//  AUDIO TYPES
-//  Type definitions for the audio system.
-// ============================================================
-
-/**
- * Semantic keys for sound effects.
- * These are global across all levels.
- */
+/** Semantic keys for sound effects.
+ * These are global across all levels. */
 export type SfxKey =
-  // Clue interaction
   | "sfx.clue.inspect"
-  // Object manipulation
   | "sfx.object.drag_loop"
   | "sfx.object.drop"
-  // Player movement
   | "sfx.player.footstep"
-  // Rat sounds
   | "sfx.rat.squeak"
   | "sfx.rat.flee"
-  // Magnifying glass
   | "sfx.magnifying.up"
   | "sfx.magnifying.down"
-  // UI feedback
   | "sfx.ui.click"
   | "sfx.ui.hover"
   | "sfx.ui.modal_open"
   | "sfx.ui.modal_close"
-  // Puzzle/quiz
   | "sfx.puzzle.success"
   | "sfx.puzzle.failure"
-  // Rewards
   | "sfx.badge.unlock"
   | "sfx.level.complete";
 
-/**
- * Semantic keys for music tracks.
- * Level-specific music follows pattern: "music.level_{id}.main"
- */
+/** Semantic keys for music tracks.
+ * Level-specific music follows pattern: "music.level_{id}.main" */
 export type MusicKey = `music.level_${string}.main` | "music.menu";
+export type MusicIntroKey = `music.level_${string}.intro`;
+export type MusicLoopKey = `music.level_${string}.loop`;
 
-/**
- * Combined audio key type.
- */
-export type AudioKey = SfxKey | MusicKey;
+// Combined audio key type.
+export type AudioKey = SfxKey | MusicKey | MusicIntroKey | MusicLoopKey;
 
-/**
- * Configuration for a single audio asset.
- */
 export interface AudioAssetConfig {
-  /** Semantic key for referencing this audio */
   key: AudioKey;
-  /** Path to the audio file (relative to assets/) */
   path: string;
-  /** Whether this audio should loop (default: false for SFX, true for music) */
-  loop?: boolean;
-  /** Default volume for this specific audio (0-1, overrides category volume) */
-  volume?: number;
+  loop?: boolean; // default: false for SFX, true for music
+  volume?: number; // for this specific audio (0-1, overrides category volume)
 }
 
-/**
- * Configuration for a sound pool with multiple variations.
- * When played, a random variation is selected.
- */
+/** Configuration for a sound pool with multiple variations.
+ * When played, a random variation is selected. */
 export interface AudioPoolConfig {
-  /** Semantic key for referencing this pool (used with playSfx) */
   key: SfxKey;
-  /** Array of paths to audio files (relative to assets/) */
   paths: string[];
-  /** Whether sounds in this pool should loop (default: false) */
-  loop?: boolean;
-  /** Default volume for sounds in this pool (0-1) */
+  loop?: boolean; // default: false
   volume?: number;
-  /** Whether to avoid playing the same variation twice in a row */
-  avoidRepeat?: boolean;
+  avoidRepeat?: boolean; // Avoid playing the same variation twice in a row
 }
 
-/**
- * Union type for audio assets (single or pool).
- */
 export type AudioAssetDefinition = AudioAssetConfig | AudioPoolConfig;
 
-/**
- * Type guard to check if an asset definition is a pool config.
- */
+// Type guard to check if an asset definition is a pool config.
 export function isSoundPoolConfig(
   asset: AudioAssetDefinition,
 ): asset is AudioPoolConfig {
   return "paths" in asset;
 }
 
-/**
- * Audio manifest for a level.
- * Defines all audio assets needed for a specific level.
- */
+// Audio manifest for a level. Defines all audio assets needed for that level.
 export interface LevelAudioManifest {
-  /** Level ID this manifest belongs to */
   levelId: string;
-  /** Background music for this level */
-  music?: AudioAssetConfig;
-  /** Sound effects specific to this level (extends global SFX) */
-  sfx?: AudioAssetDefinition[];
+  music?: AudioAssetConfig; // Background music for this level
+  /** Intro + loop music for seamless transition */
+  musicIntroLoop?: {
+    intro: AudioAssetConfig; // Intro track played once
+    loop: AudioAssetConfig; // Loop track played after intro, repeats forever
+  };
+  sfx?: AudioAssetDefinition[]; // Level-specific SFX (extends global SFX)
 }
 
-/**
- * Global audio manifest.
- * Contains SFX used across all levels.
- */
+// Global audio manifest
 export interface GlobalAudioManifest {
-  /** Global sound effects (single or pools) */
   sfx: AudioAssetDefinition[];
-  /** Menu music (played outside gameplay) */
   menuMusic?: AudioAssetConfig;
 }
 
-/**
- * Audio settings persisted to localStorage.
- */
+// Audio settings persisted to localStorage.
 export interface AudioSettings {
-  /** Master music volume (0-1) */
-  musicVolume: number;
-  /** Master SFX volume (0-1) */
-  sfxVolume: number;
-  /** Whether all audio is muted */
+  musicVolume: number; // Master music volume (0-1)
+  sfxVolume: number; // Master SFX volume (0-1)
   muted: boolean;
 }
 
-/**
- * Default audio settings.
- */
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   musicVolume: 0.1,
   sfxVolume: 0.7,
   muted: false,
 };
 
-/**
- * LocalStorage key for audio settings.
- */
+// LocalStorage key for audio settings.
 export const AUDIO_SETTINGS_KEY = "gameplate_audio_settings";
 
-/**
- * Audio category for volume control.
- */
+// Audio category for volume control.
 export type AudioCategory = "music" | "sfx";
 
-/**
- * Type alias for Phaser sound with volume/mute control.
- */
+// Type alias for Phaser sound with volume/mute control.
 export type Sound =
   | Phaser.Sound.WebAudioSound
   | Phaser.Sound.HTML5AudioSound
   | Phaser.Sound.NoAudioSound;
 
-/**
- * Sound instance wrapper for tracking playback.
- */
+// Sound instance wrapper for tracking playback.
 export interface SoundInstance {
-  /** Phaser sound object */
   sound: Sound;
-  /** Audio key this sound was created from (may be a variation key for pools) */
   key: string;
-  /** Category of this sound */
   category: AudioCategory;
+  /** For intro+loop music: the loop key to play after intro completes */
+  loopKey?: string;
 }

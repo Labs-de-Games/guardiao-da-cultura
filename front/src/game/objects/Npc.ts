@@ -66,6 +66,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       onInteract: () => this.handleInteraction(),
       gapX: 0,
       gapY: NPC_PHYSICS.INTERACTION_GAP_Y,
+      playInteractSound: false, // NPCs don't play "hmm" sound
     });
 
     this.exclamationIcon = scene.add

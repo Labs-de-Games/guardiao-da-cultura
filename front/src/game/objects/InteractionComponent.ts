@@ -25,6 +25,7 @@ export interface InteractionOptions {
   hintOffsetX?: number;
   hintOffsetY?: number;
   hintScale?: number;
+  playInteractSound?: boolean; // Sound feedback, default: true
 }
 
 export class InteractionComponent {
@@ -55,6 +56,7 @@ export class InteractionComponent {
   private hintCompleted: boolean = false;
   private hintSprite: Phaser.GameObjects.Sprite | null = null;
   private hintTimer: Phaser.Time.TimerEvent | null = null;
+  private playInteractSound: boolean;
 
   constructor(
     scene: Phaser.Scene,
@@ -75,6 +77,7 @@ export class InteractionComponent {
     this.hintOffsetX = options?.hintOffsetX ?? 0;
     this.hintOffsetY = options?.hintOffsetY ?? -90;
     this.hintScale = options?.hintScale ?? 3;
+    this.playInteractSound = options?.playInteractSound ?? true;
 
     this.armHint();
 
@@ -143,8 +146,10 @@ export class InteractionComponent {
           );
         });
 
-        // Play interaction sound (random variation from pool)
-        AudioManager.playSfx("sfx.clue.inspect");
+        // Play interaction sound (random variation from pool) if enabled
+        if (this.playInteractSound) {
+          AudioManager.playSfx("sfx.clue.inspect");
+        }
 
         if (this.dialogueLines) {
           if (this.onInteract) this.onInteract();

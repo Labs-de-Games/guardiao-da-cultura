@@ -1,8 +1,3 @@
-// ============================================================
-//  AUDIO MANAGER
-//  Central manager for all game audio playback.
-// ============================================================
-
 import { getPoolVariations, isSoundPoolKey } from "./loader";
 import type {
   AudioCategory,
@@ -52,16 +47,14 @@ export class AudioManager {
   private settings: AudioSettings;
   private currentMusic: SoundInstance | null = null;
   private activeSounds: Map<string, SoundInstance> = new Map();
-  /** Tracks last played variation index for each pool (for avoidRepeat) */
+  // Tracks last played variation index for each pool (for avoidRepeat)
   private lastPoolVariation: Map<string, number> = new Map();
 
   private constructor() {
     this.settings = this.loadSettings();
   }
 
-  /**
-   * Get the singleton instance of AudioManager.
-   */
+  // Get the singleton instance of AudioManager.
   public static getInstance(): AudioManager {
     if (!AudioManager.instance) {
       AudioManager.instance = new AudioManager();
@@ -73,8 +66,7 @@ export class AudioManager {
    * Initialize the AudioManager with a Phaser scene.
    * Must be called before playing any audio.
    * If music was already playing on a previous scene, it will be resumed
-   * on the new scene to handle scene transitions seamlessly.
-   */
+   * on the new scene to handle scene transitions seamlessly. */
   public static init(scene: Phaser.Scene): void {
     const instance = AudioManager.getInstance();
     const previousMusicKey = instance.currentMusic?.key ?? null;
@@ -93,10 +85,8 @@ export class AudioManager {
     }
   }
 
-  /**
-   * Destroy the AudioManager instance.
-   * Call this on scene shutdown to prevent memory leaks.
-   */
+  /** Destroy the AudioManager instance.
+   * Call this on scene shutdown to prevent memory leaks. */
   public static destroy(): void {
     const instance = AudioManager.getInstance();
     instance.stopAllInternal();
@@ -104,66 +94,47 @@ export class AudioManager {
     AudioManager.instance = null;
   }
 
-  /**
-   * Play a sound effect.
-   */
+  // Play a sound effect.
   public static playSfx(key: AudioKey, volume?: number): Sound | null {
     return AudioManager.getInstance().playSound(key, "sfx", volume);
   }
 
-  /**
-   * Play background music.
-   * Handles autoplay restrictions by queuing music until user interaction.
-   */
+  // Play background music.
   public static playMusic(key: AudioKey, fadeInMs?: number): void {
     AudioManager.getInstance().playMusicInternal(key, fadeInMs);
   }
 
-  /**
-   * Stop the current background music.
-   */
+  // Stop the current background music.
   public static stopMusic(fadeOutMs?: number): void {
     AudioManager.getInstance().stopMusicInternal(fadeOutMs);
   }
 
-  /**
-   * Fade out the current music over the specified duration.
-   */
+  // Fade out the current music over the specified duration.
   public static fadeOutMusic(durationMs: number): void {
     AudioManager.getInstance().stopMusicInternal(durationMs);
   }
 
-  /**
-   * Set the music volume (0-1).
-   */
+  // Set the music volume (0-1).
   public static setMusicVolume(volume: number): void {
     AudioManager.getInstance().setVolume("music", volume);
   }
 
-  /**
-   * Set the SFX volume (0-1).
-   */
+  // Set the SFX volume (0-1).
   public static setSfxVolume(volume: number): void {
     AudioManager.getInstance().setVolume("sfx", volume);
   }
 
-  /**
-   * Mute all audio.
-   */
+  // Mute all audio.
   public static mute(): void {
     AudioManager.getInstance().setMuted(true);
   }
 
-  /**
-   * Unmute all audio.
-   */
+  // Unmute all audio.
   public static unmute(): void {
     AudioManager.getInstance().setMuted(false);
   }
 
-  /**
-   * Toggle mute state.
-   */
+  // Toggle mute state.
   public static toggleMute(): boolean {
     const instance = AudioManager.getInstance();
     const newMuted = !instance.settings.muted;
@@ -171,37 +142,25 @@ export class AudioManager {
     return newMuted;
   }
 
-  /**
-   * Check if audio is muted.
-   */
+  // Check if audio is muted.
   public static isMuted(): boolean {
     return AudioManager.getInstance().settings.muted;
   }
 
-  /**
-   * Get current audio settings.
-   */
+  // Get current audio settings.
   public static getSettings(): AudioSettings {
     return { ...AudioManager.getInstance().settings };
   }
 
-  /**
-   * Stop all currently playing sounds.
-   */
+  // Stop all sounds that are currently playing.
   public static stopAll(): void {
     AudioManager.getInstance().stopAllInternal();
   }
 
-  /**
-   * Check if a sound with the given key is currently playing.
-   */
+  // Check if a sound with the given key is currently playing.
   public static isPlaying(key: AudioKey): boolean {
     return AudioManager.getInstance().activeSounds.has(key);
   }
-
-  // ============================================================
-  // PRIVATE METHODS
-  // ============================================================
 
   private setScene(scene: Phaser.Scene): void {
     this.scene = scene;
@@ -250,9 +209,13 @@ export class AudioManager {
         : this.settings.sfxVolume;
     const volume = volumeOverride ?? categoryVolume;
 
+    // Intro tracks should NOT loop - they transition to the loop track
+    const isIntro = key.includes(".intro");
+    const shouldLoop = category === "music" && !isIntro;
+
     const sound = this.scene.sound.add(actualKey, {
       volume,
-      loop: category === "music",
+      loop: shouldLoop,
     }) as Sound;
 
     sound.play();
@@ -270,10 +233,8 @@ export class AudioManager {
     return sound;
   }
 
-  /**
-   * Select a random variation from a sound pool.
-   * Uses avoidRepeat to prevent playing the same variation twice in a row.
-   */
+  /** Select a random variation from a sound pool.
+   Uses avoidRepeat to prevent playing the same variation twice in a row. */
   private selectPoolVariation(poolKey: string): string | null {
     const variations = getPoolVariations(poolKey);
     if (!variations || variations.length === 0) {
@@ -294,7 +255,6 @@ export class AudioManager {
       newIndex = Math.floor(Math.random() * variations.length);
     } while (newIndex === lastIndex);
 
-    // Store and return
     this.lastPoolVariation.set(poolKey, newIndex);
     return variations[newIndex];
   }
@@ -311,7 +271,24 @@ export class AudioManager {
       return;
     }
 
-    this.currentMusic = this.activeSounds.get(key) ?? null;
+    const soundInstance = this.activeSounds.get(key) ?? null;
+    this.currentMusic = soundInstance;
+
+    // Check if this is an intro track (has .intro in the key)
+    const isIntro = key.includes(".intro");
+    if (isIntro && soundInstance) {
+      // Store the loop key for seamless transition
+      const loopKey = key.replace(".intro", ".loop");
+      soundInstance.loopKey = loopKey;
+
+      // Listen for intro completion to start loop
+      sound.once(Phaser.Sound.Events.COMPLETE, () => {
+        if (this.currentMusic === soundInstance && soundInstance.loopKey) {
+          // Start the loop track
+          this.playMusicLoop(soundInstance.loopKey);
+        }
+      });
+    }
 
     // Fade in if requested
     if (fadeInMs && fadeInMs > 0 && this.scene) {
@@ -322,6 +299,43 @@ export class AudioManager {
         duration: fadeInMs,
       });
     }
+  }
+
+  /** Play the loop portion of intro+loop music.
+   * Called automatically when the intro track completes. */
+  private playMusicLoop(loopKey: string): void {
+    if (!this.scene) return;
+
+    // Check if loop sound exists
+    if (!this.scene.game.cache.audio.has(loopKey)) {
+      console.warn(`[AudioManager] Loop track "${loopKey}" not loaded.`);
+      return;
+    }
+
+    // Clean up intro track
+    if (this.currentMusic) {
+      this.activeSounds.delete(this.currentMusic.key);
+    }
+
+    // Play the loop
+    const sound = this.scene.sound.add(loopKey, {
+      volume: this.settings.musicVolume,
+      loop: true,
+    }) as Sound;
+
+    if (this.settings.muted) {
+      sound.mute = true;
+    }
+
+    sound.play();
+
+    // Track as current music
+    this.currentMusic = {
+      sound,
+      key: loopKey,
+      category: "music",
+    };
+    this.activeSounds.set(loopKey, this.currentMusic);
   }
 
   private stopMusicInternal(fadeOutMs?: number): void {

@@ -64,7 +64,8 @@ export class LevelCinematic extends Scene {
     // Listen for mask reveal start from React to begin playing music
     EventBus.once("intro:music-start", (data: { levelId: string }) => {
       if (data.levelId === this.levelId) {
-        AudioManager.playMusic("music.level_1.main", 2000);
+        // Play intro track, which will seamlessly transition to loop
+        AudioManager.playMusic("music.level_1.intro", 2000);
       }
     });
 

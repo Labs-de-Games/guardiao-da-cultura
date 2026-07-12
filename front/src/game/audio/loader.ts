@@ -54,9 +54,19 @@ export function loadLevelAudio(scene: Phaser.Scene, levelId: string): void {
   }
 
   const assets: AudioAssetDefinition[] = [];
+
+  // Handle simple music loop
   if (manifest.music) {
     assets.push(manifest.music);
   }
+
+  // Handle intro + loop music
+  if (manifest.musicIntroLoop) {
+    assets.push(manifest.musicIntroLoop.intro);
+    assets.push(manifest.musicIntroLoop.loop);
+  }
+
+  // Handle level-specific SFX
   if (manifest.sfx) {
     assets.push(...manifest.sfx);
   }

@@ -1,5 +1,6 @@
 import type * as Phaser from "phaser";
 import { EventBus } from "../../../shared/events/event-bus";
+import { AudioManager } from "../../audio";
 import { GameEvents } from "../../constants/GameEvents";
 import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
 import { MissionRegistry } from "../../data/MissionRegistry";

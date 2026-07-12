@@ -1,8 +1,3 @@
-// ============================================================
-//  AUDIO REGISTRY
-//  Central registry for all audio assets.
-// ============================================================
-
 import type {
   AudioAssetDefinition,
   GlobalAudioManifest,
@@ -17,7 +12,7 @@ import type {
  * Pools play a random variation each time, useful for avoiding repetition.
  */
 export const GLOBAL_SFX: AudioAssetDefinition[] = [
-  // Clue interaction - pool of "hmm" variations
+  // Clue interaction
   {
     key: "sfx.clue.inspect",
     paths: [
@@ -44,6 +39,7 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
       "sound/sfx/object.drop_2.mp3",
       "sound/sfx/object.drop_3.mp3",
       "sound/sfx/object.drop_4.mp3",
+      "sound/sfx/object.drop_5.mp3",
     ],
     avoidRepeat: true,
   },
@@ -53,21 +49,21 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
     path: "sound/sfx/player.footstep.ogg",
     loop: true,
   },
-  // Rat sounds
+  // Rat
   { key: "sfx.rat.squeak", path: "sound/sfx/rat.squeak.mp3" },
   { key: "sfx.rat.flee", path: "sound/sfx/rat.flee.mp3" },
-  // Magnifying glass sounds
+  // Magnifying glass
   { key: "sfx.magnifying.up", path: "sound/sfx/magnifying.up.mp3" },
   { key: "sfx.magnifying.down", path: "sound/sfx/magnifying.down.mp3" },
-  // UI feedback - placeholders
+  // UI feedback
   { key: "sfx.ui.click", path: "sound/sfx/placeholder.mp3" },
   { key: "sfx.ui.hover", path: "sound/sfx/placeholder.mp3" },
   { key: "sfx.ui.modal_open", path: "sound/sfx/placeholder.mp3" },
   { key: "sfx.ui.modal_close", path: "sound/sfx/placeholder.mp3" },
-  // Puzzle/quiz - using existing sounds
+  // Puzzle/quiz
   { key: "sfx.puzzle.success", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.puzzle.failure", path: "sound/sfx/puzzle.error.mp3" },
-  // Rewards - placeholders
+  // Rewards
   { key: "sfx.badge.unlock", path: "sound/sfx/placeholder.mp3" },
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
 ];
@@ -87,10 +83,17 @@ export const GLOBAL_AUDIO_MANIFEST: GlobalAudioManifest = {
 export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
   level_01: {
     levelId: "level_01",
-    music: {
-      key: "music.level_1.main",
-      path: "sound/music/level_1.mp3",
-      loop: true,
+    musicIntroLoop: {
+      intro: {
+        key: "music.level_1.intro",
+        path: "sound/music/level_1.mp3",
+        loop: false,
+      },
+      loop: {
+        key: "music.level_1.loop",
+        path: "sound/music/level_1_loop.mp3",
+        loop: true,
+      },
     },
   },
   // Future levels can be added here:

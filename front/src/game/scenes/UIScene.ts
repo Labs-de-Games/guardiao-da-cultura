@@ -96,7 +96,7 @@ export class UIScene extends Scene {
         _scoreManager: ScoreManager,
         onComplete: (score: number) => void,
       ) => {
-        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED, "quiz");
         const quizState = useGameUIStore.getState().quiz;
         if (quizState.isVisible) return;
         useGameUIStore.getState().startQuiz(questions, onComplete);
@@ -106,7 +106,7 @@ export class UIScene extends Scene {
     gameScene.events.on(
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
       (questions: QuizQuestion[], onComplete: (score: number) => void) => {
-        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED, "quiz");
         const quizState = useGameUIStore.getState().quiz;
         if (quizState.isVisible) return;
         useGameUIStore.getState().startQuiz(questions, onComplete, true);
@@ -249,7 +249,7 @@ export class UIScene extends Scene {
     this.unsubQuizRetry = EventBus.on("quiz:retry", () => {
       const gameScene = this.scene.get(SceneNames.GAME);
       useGameUIStore.getState().closeQuiz();
-      gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+      gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { source: "quiz" });
     });
   }
 
@@ -262,7 +262,7 @@ export class UIScene extends Scene {
         this.dialogueEndHandled = false;
         useDialogueStore.getState().closeDialogue();
         const gameScene = this.scene.get(SceneNames.GAME);
-        gameScene.events.emit(GameEvents.DIALOGUE_ENDED);
+        gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { source: "quiz" });
       }
       wasVisible = isVisible;
     });

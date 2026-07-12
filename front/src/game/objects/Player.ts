@@ -518,7 +518,15 @@ export class Player
       itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
+      // Play drag loop sound only when moving
       if (isMoving) {
+        if (!this.dragLoopSound) {
+          this.dragLoopSound = this.scene.sound.add("sfx.object.drag_loop", {
+            loop: true,
+          });
+          this.dragLoopSound.play();
+        }
+
         const isPushing =
           (body.velocity.x > 0 && this.grabOffset > 0) ||
           (body.velocity.x < 0 && this.grabOffset < 0);
@@ -528,6 +536,12 @@ export class Player
           this.anims.play(PLAYER_ANIMS.PULL.key, true);
         }
       } else {
+        // Stop drag loop when not moving
+        if (this.dragLoopSound) {
+          this.dragLoopSound.stop();
+          this.dragLoopSound.destroy();
+          this.dragLoopSound = null;
+        }
         this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
       }
     }
@@ -727,8 +741,6 @@ export class Player
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
       this.grabbedItem.setDepth(10);
-      // Play drop sound
-      AudioManager.playSfx("sfx.object.drop");
     }
     this.isGrabbing = false;
     this.grabbedItem = null;

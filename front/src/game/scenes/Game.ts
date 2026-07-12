@@ -699,20 +699,22 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   private setupEvents() {
-    this.events.on(GameEvents.DIALOGUE_STARTED, () => {
+    this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
       if (this.player) {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
       }
-      // Play magnifying glass zoom-in sound
-      AudioManager.playSfx("sfx.magnifying.up");
+      // Play magnifying glass zoom-in sound only for quiz/puzzle panels
+      if (source === "quiz" || source === "puzzle") {
+        AudioManager.playSfx("sfx.magnifying.up");
+      }
       this.effects.setZoom(1.2, 400);
     });
 
     this.events.on(
       GameEvents.DIALOGUE_ENDED,
-      (data?: { dismissed?: boolean }) => {
+      (data?: { dismissed?: boolean; source?: string }) => {
         this.isChunkSelectorOpen = false;
         this.isDialogueOpen = false;
 
@@ -734,8 +736,10 @@ export class Game extends Scene implements GameDataAccessor {
           }
         });
 
-        // Play magnifying glass zoom-out sound
-        AudioManager.playSfx("sfx.magnifying.down");
+        // Play magnifying glass zoom-out sound only for quiz/puzzle panels
+        if (data?.source === "quiz" || data?.source === "puzzle") {
+          AudioManager.playSfx("sfx.magnifying.down");
+        }
         this.effects.setZoom(1.0, 400);
       },
     );
@@ -885,6 +889,8 @@ export class Game extends Scene implements GameDataAccessor {
         const work = workId ? findWorkDataById(workId, this.contentData) : null;
 
         if (work) {
+          // Play inspect sound for label interaction
+          AudioManager.playSfx("sfx.clue.inspect");
           const payload = buildLabelInfo(work, (id) =>
             findWorkDataById(id, this.contentData),
           );
@@ -912,7 +918,7 @@ export class Game extends Scene implements GameDataAccessor {
           );
 
         this.isChunkSelectorOpen = true;
-        this.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
         const expectedSlots = Array.isArray(nearby.id)
           ? nearby.id
           : String(nearby.id)
@@ -975,7 +981,7 @@ export class Game extends Scene implements GameDataAccessor {
       placedItems: (string | null)[];
     }) => {
       this.isChunkSelectorOpen = false;
-      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
       );
@@ -1006,7 +1012,7 @@ export class Game extends Scene implements GameDataAccessor {
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
-      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       this.checkDialogState();
     });
 
