@@ -17,23 +17,6 @@ export interface FloorScore {
   completedAt: IsoTimestamp | null;
 }
 
-/**
- * @deprecated Collectibles are no longer part of scoring. Kept for backward compatibility.
- */
-export interface CollectiblesScore {
-  total: number; // expected: 4
-  interactionsCount: number; // 0..total
-  quartersEarned: number; // deprecated: always 0
-  lastInteractionAt: IsoTimestamp | null;
-  interactions: CollectibleInteraction[];
-}
-
-export interface CollectibleInteraction {
-  collectible_id: string;
-  collectible_type: string;
-  interactedAt: IsoTimestamp;
-}
-
 export interface QuizScore {
   totalQuestions: number;
   correctAnswers: number;
@@ -62,7 +45,6 @@ export type ScoringEventRecord =
       quartersEarned: number;
       occurredAt: IsoTimestamp;
     }
-  | { type: "collectible"; occurredAt: IsoTimestamp }
   | {
       type: "quiz-completed";
       totalQuestions: number;
@@ -85,7 +67,6 @@ export interface ScoringPayload {
   startedAt: IsoTimestamp;
 
   floors: [FloorScore, FloorScore, FloorScore];
-  collectibles: CollectiblesScore;
   quiz: QuizScore;
   intermediateQuizzes: IntermediateQuizzesScore;
 
