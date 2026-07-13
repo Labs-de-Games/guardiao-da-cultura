@@ -8,6 +8,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EventBus } from "@/shared/events/event-bus";
+import { useSound } from "@/ui/hooks/useSound";
 import { useGameUIStore } from "../state/game-ui-store";
 
 type ProgressState = "success" | "error" | "current" | "future";
@@ -170,12 +171,17 @@ function AnswerButton({
 }
 
 export default function QuizPanel() {
+  const { playModalOpen, playModalClose, playClick } = useSound();
   const cardRef = useRef<HTMLDivElement>(null);
 
   const quiz = useGameUIStore((s) => s.quiz);
   const selectedOptionIndex = quiz.selectedOptionIndex;
   const moveSelection = useGameUIStore((s) => s.moveSelection);
   const selectOption = useGameUIStore((s) => s.selectOption);
+  const handleSelectAnswer = useCallback(() => {
+    playClick();
+    selectOption();
+  }, [playClick, selectOption]);
 
   const [selectedNavIndex, setSelectedNavIndex] = useState(1);
 
@@ -364,8 +370,16 @@ export default function QuizPanel() {
   useEffect(() => {
     if (quiz.isVisible && cardRef.current) {
       cardRef.current.focus();
+      // Play modal open sound when quiz appears
+      playModalOpen();
     }
-  }, [quiz.isVisible]);
+    // Play modal close sound when quiz closes
+    return () => {
+      if (quiz.isVisible) {
+        playModalClose();
+      }
+    };
+  }, [quiz.isVisible, playModalOpen, playModalClose]);
 
   if (!quiz.isVisible || (!currentQuestion && !isPerformance)) return null;
 
@@ -678,7 +692,7 @@ export default function QuizPanel() {
                       const targetCol = index % 2;
                       store.moveSelection(targetRow - currentRow, 0);
                       store.moveSelection(0, targetCol - currentCol);
-                      store.selectOption();
+                      handleSelectAnswer();
                     }
                   };
 

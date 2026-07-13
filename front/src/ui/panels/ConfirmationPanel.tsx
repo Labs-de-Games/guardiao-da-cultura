@@ -1,5 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef } from "react";
+import { useSound } from "@/ui/hooks/useSound";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
@@ -12,6 +13,7 @@ export function ConfirmationPanel({
   onComplete,
   onDismiss,
 }: ConfirmationPanelProps) {
+  const { playModalOpen, playModalClose, playClick } = useSound();
   const message = useDialogueStore((s) => s.dialogueConfirmMessage);
   const callbackId = useDialogueStore((s) => s.dialogueCallbackId);
   const dialogueConfirmSelected = useDialogueStore(
@@ -33,14 +35,19 @@ export function ConfirmationPanel({
         ? simButtonRef.current
         : naoButtonRef.current;
     target?.focus();
-  }, [dialogueConfirmSelected]);
+    // Play modal open sound when confirmation panel appears
+    playModalOpen();
+    // Play modal close sound when component unmounts
+    return () => playModalClose();
+  }, [dialogueConfirmSelected, playModalOpen, playModalClose]);
 
   const handleConfirm = useCallback(
     (confirmed: boolean) => {
+      playClick();
       onComplete(callbackId, confirmed);
       confirmDialogueSelection();
     },
-    [callbackId, confirmDialogueSelection, onComplete],
+    [callbackId, confirmDialogueSelection, onComplete, playClick],
   );
 
   const handleDismiss = useCallback(() => {

@@ -3,6 +3,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -194,6 +195,39 @@ export class UIScene extends Scene {
       },
     );
 
+    // UI Sound Effects
+    const unsubSoundClick = EventBus.on("ui:sound-click", () => {
+      AudioManager.playSfx("sfx.ui.click");
+    });
+
+    const unsubSoundHover = EventBus.on("ui:sound-hover", () => {
+      AudioManager.playSfx("sfx.ui.hover");
+    });
+
+    const unsubSoundModalOpen = EventBus.on("ui:sound-modal-open", () => {
+      AudioManager.playSfx("sfx.ui.modal_open");
+    });
+
+    const unsubSoundModalClose = EventBus.on("ui:sound-modal-close", () => {
+      AudioManager.playSfx("sfx.ui.modal_close");
+    });
+
+    const unsubSoundBadgeUnlock = EventBus.on("ui:sound-badge-unlock", () => {
+      AudioManager.playSfx("sfx.badge.unlock");
+    });
+
+    const unsubSoundLevelComplete = EventBus.on(
+      "ui:sound-level-complete",
+      () => {
+        AudioManager.playSfx("sfx.level.complete");
+      },
+    );
+
+    // Badge unlock sound (triggered by BadgeSystem)
+    const unsubBadgeUnlocked = EventBus.on("badge:unlocked", () => {
+      AudioManager.playSfx("sfx.badge.unlock");
+    });
+
     this.scale.on("resize", () => this.layout());
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -201,6 +235,13 @@ export class UIScene extends Scene {
       unsubDialogueCompleted();
       unsubDialogueDismissed();
       unsubDialogueDequeueStarted();
+      unsubSoundClick();
+      unsubSoundHover();
+      unsubSoundModalOpen();
+      unsubSoundModalClose();
+      unsubSoundBadgeUnlock();
+      unsubSoundLevelComplete();
+      unsubBadgeUnlocked();
       this.unsubQuizClose?.();
       this.unsubQuizRetry?.();
       this.unsubQuizVisibilityWatcher?.();

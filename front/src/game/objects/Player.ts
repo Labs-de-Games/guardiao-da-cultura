@@ -34,6 +34,7 @@ export class Player
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
   private dragLoopSound: Phaser.Sound.BaseSound | null = null;
+  private footstepSound: Phaser.Sound.BaseSound | null = null;
 
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
 
@@ -242,6 +243,15 @@ export class Player
       Phaser.GameObjects.Events.DESTROY,
       () => {
         this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this);
+        // Clean up sounds
+        if (this.dragLoopSound) {
+          this.dragLoopSound.destroy();
+          this.dragLoopSound = null;
+        }
+        if (this.footstepSound) {
+          this.footstepSound.destroy();
+          this.footstepSound = null;
+        }
       },
       this,
     );
@@ -364,6 +374,8 @@ export class Player
     const isOnStairs = isOnStairsCenter || isOnStairsBottom;
 
     if (this.isInDialogue) {
+      // Stop movement sounds when in dialogue
+      this.stopMovementSounds();
       this.applyMovementRestriction(isOnStairs);
       return;
     }
@@ -506,6 +518,31 @@ export class Player
         const changed = this.anims.currentAnim?.key !== idleAnim;
         this.anims.play(idleAnim, true);
         if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+      }
+    }
+
+    // Footstep sound - play while walking on ground
+    const isWalkingOnGround =
+      body?.blocked.down &&
+      !this.isGrabbing &&
+      !this.isClimbingStairs &&
+      !isJumpPlaying &&
+      (leftDown || rightDown) &&
+      Math.abs(body.velocity.x) > 10;
+
+    if (isWalkingOnGround) {
+      if (!this.footstepSound) {
+        this.footstepSound = this.scene.sound.add("sfx.player.footstep", {
+          loop: true,
+          volume: 0.3,
+        });
+        this.footstepSound.play();
+      }
+    } else {
+      if (this.footstepSound) {
+        this.footstepSound.stop();
+        this.footstepSound.destroy();
+        this.footstepSound = null;
       }
     }
 
@@ -790,6 +827,23 @@ export class Player
       ? PLAYER_ANIMS.CARRY_IDLE.key
       : PLAYER_ANIMS.IDLE.key;
     this.anims.play(idleAnim, true);
+  }
+
+  /**
+   * Stop all movement-related sounds.
+   * Called when entering dialogue or other states that restrict movement.
+   */
+  private stopMovementSounds(): void {
+    if (this.footstepSound) {
+      this.footstepSound.stop();
+      this.footstepSound.destroy();
+      this.footstepSound = null;
+    }
+    if (this.dragLoopSound) {
+      this.dragLoopSound.stop();
+      this.dragLoopSound.destroy();
+      this.dragLoopSound = null;
+    }
   }
 }
 
