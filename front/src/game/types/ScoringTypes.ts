@@ -13,7 +13,7 @@ export type ScoringRatingPTBR =
 export interface FloorScore {
   floorIndex: number; // 0..2
   errors: number;
-  quartersEarned: 1 | 2; // 0 errors = 2 quarters, ≥1 error = 1 quarter
+  quartersEarned: 0 | 1 | 2; // 0 = incomplete, 1 = completed with ≥1 error, 2 = completed with 0 errors
   completedAt: IsoTimestamp | null;
 }
 
