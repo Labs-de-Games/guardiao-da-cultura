@@ -13,14 +13,17 @@ export type ScoringRatingPTBR =
 export interface FloorScore {
   floorIndex: number; // 0..2
   errors: number;
-  quartersEarned: number; // 0..4
+  quartersEarned: 1 | 2; // 0 errors = 2 quarters, ≥1 error = 1 quarter
   completedAt: IsoTimestamp | null;
 }
 
+/**
+ * @deprecated Collectibles are no longer part of scoring. Kept for backward compatibility.
+ */
 export interface CollectiblesScore {
   total: number; // expected: 4
   interactionsCount: number; // 0..total
-  quartersEarned: number; // 0..total
+  quartersEarned: number; // deprecated: always 0
   lastInteractionAt: IsoTimestamp | null;
   interactions: CollectibleInteraction[];
 }
@@ -35,14 +38,14 @@ export interface QuizScore {
   totalQuestions: number;
   correctAnswers: number;
   accuracyPercent: number; // 0..100
-  quartersEarned: number; // 0..4 (1 quarter per 25%)
+  quartersEarned: number; // 0..5 (1 quarter per correct answer)
   completedAt: IsoTimestamp | null;
 }
 
 export interface IntermediateQuizzesScore {
   total: number; // number of intermediate quizzes attempted
   passed: number; // number of intermediate quizzes passed
-  quartersNet: number; // quarters gained (+1 per pass, 0 per fail — no penalty)
+  quartersEarned: number; // quarters earned (0.25 per correct answer, max 3 per quiz)
 }
 
 export type ScoringEventRecord =
@@ -71,7 +74,9 @@ export type ScoringEventRecord =
   | {
       type: "intermediate-quiz-completed";
       infoKey: string;
-      passed: boolean;
+      correctAnswers: number;
+      totalQuestions: number;
+      quartersEarned: number;
       occurredAt: IsoTimestamp;
     };
 
