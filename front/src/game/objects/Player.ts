@@ -110,6 +110,22 @@ export class Player
         frameHeight: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameHeight,
       },
     );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.BACK_SPRITESHEET.key,
+      PLAYER_ASSETS.BACK_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.BACK_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.BACK_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.FRONT_SPRITESHEET.key,
+      PLAYER_ASSETS.FRONT_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.FRONT_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.FRONT_SPRITESHEET.frameHeight,
+      },
+    );
   }
 
   static createAnims(scene: Phaser.Scene) {
@@ -203,6 +219,22 @@ export class Player
       }),
       frameRate: PLAYER_ANIMS.PULL.frameRate,
       repeat: PLAYER_ANIMS.PULL.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.BACK.key,
+      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.BACK.spritesheet, {
+        frames: [...PLAYER_ANIMS.BACK.frames],
+      }),
+      frameRate: PLAYER_ANIMS.BACK.frameRate,
+      repeat: PLAYER_ANIMS.BACK.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.FRONT.key,
+      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.FRONT.spritesheet, {
+        frames: [...PLAYER_ANIMS.FRONT.frames],
+      }),
+      frameRate: PLAYER_ANIMS.FRONT.frameRate,
+      repeat: PLAYER_ANIMS.FRONT.repeat,
     });
   }
 
@@ -742,6 +774,13 @@ export class Player
     if (body) {
       body.setVelocity(0, 0);
       body.setAllowGravity(false);
+    }
+
+    if (
+      this.anims.currentAnim?.key === PLAYER_ANIMS.BACK.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key
+    ) {
+      return;
     }
 
     if (this.isGrabbing) {
