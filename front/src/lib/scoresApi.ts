@@ -20,7 +20,7 @@ export interface SubmitScoreRequest {
   intermediateQuizzes: {
     total: number;
     passed: number;
-    quartersNet: number;
+    quartersEarned: number;
   };
   collectibles: {
     total: number;
