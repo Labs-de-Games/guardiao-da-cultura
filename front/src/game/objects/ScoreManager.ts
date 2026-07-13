@@ -51,7 +51,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.floors = [0, 1, 2].map((i) => ({
       floorIndex: i,
       errors: 0,
-      quartersEarned: 1 as 1 | 2,
+      quartersEarned: 0 as 0 | 1 | 2,
       completedAt: null,
     })) as [FloorScore, FloorScore, FloorScore];
 
