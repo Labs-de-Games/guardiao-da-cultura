@@ -575,10 +575,10 @@ export class Player
       } else {
         // Stop drag loop when not moving
         if (this.dragLoopSound) {
+          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.3);
           this.dragLoopSound.stop();
           this.dragLoopSound.destroy();
           this.dragLoopSound = null;
-          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.3);
         }
         this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
       }
@@ -654,12 +654,6 @@ export class Player
 
     this.isGrabbing = true;
     this.grabbedItem = closestItem;
-
-    // Start playing drag loop sound
-    this.dragLoopSound = this.scene.sound.add("sfx.object.drag_loop", {
-      loop: true,
-    });
-    this.dragLoopSound.play();
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     const prevBodyX = body?.x;

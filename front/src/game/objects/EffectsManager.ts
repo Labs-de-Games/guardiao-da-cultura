@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio";
 
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
@@ -89,7 +90,7 @@ export class EffectsManager {
     const steps = Math.ceil(duration / 16);
     let step = 0;
 
-    this.scene.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+    AudioManager.playSfx("sfx.puzzle.failure");
 
     this.scene.time.addEvent({
       delay: 16,
@@ -131,7 +132,7 @@ export class EffectsManager {
     this.spotlightTargetY = py;
     this.spotlightVisible = true;
     this.revealProgress = 0;
-    this.scene.sound.play("sfx.puzzle.success", { volume: 0.5 });
+    AudioManager.playSfx("sfx.puzzle.success", 0.5);
 
     this.scene.tweens.add({
       targets: this,
