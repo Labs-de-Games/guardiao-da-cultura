@@ -1,3 +1,4 @@
+import posthog from "posthog-js";
 import type { ProgressionManager } from "../objects/ProgressionManager";
 import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
@@ -17,6 +18,7 @@ jest.mock("@/lib/persistence/gamePersistence", () => ({
 
 // Mock posthog
 jest.mock("posthog-js", () => ({
+  __esModule: true,
   default: { capture: jest.fn() },
 }));
 
@@ -113,6 +115,7 @@ describe("PersistenceBridge", () => {
     });
 
     it("handles errors gracefully", async () => {
+      jest.spyOn(console, "warn").mockImplementation();
       mocks.persistence.loadCollectibles.mockRejectedValue(
         new Error("network"),
       );
@@ -148,9 +151,14 @@ describe("PersistenceBridge", () => {
       expect(mocks.persistence.saveScore).toHaveBeenCalledWith(
         expect.objectContaining({ levelId: "level_01" }),
       );
+      expect(posthog.capture).toHaveBeenCalledWith(
+        "score_updated",
+        expect.any(Object),
+      );
     });
 
     it("handles errors gracefully", async () => {
+      jest.spyOn(console, "error").mockImplementation();
       mocks.persistence.saveScore.mockRejectedValue(new Error("fail"));
 
       await expect(bridge.submitScore()).resolves.toBeUndefined();
@@ -168,6 +176,7 @@ describe("PersistenceBridge", () => {
     });
 
     it("handles errors gracefully", async () => {
+      jest.spyOn(console, "error").mockImplementation();
       mocks.persistence.saveProgress.mockRejectedValue(new Error("fail"));
 
       await expect(bridge.saveProgress()).resolves.toBeUndefined();
