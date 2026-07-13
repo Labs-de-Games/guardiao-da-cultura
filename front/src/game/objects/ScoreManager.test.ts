@@ -1,4 +1,3 @@
-import { ScoringEvents } from "../constants/ScoringEvents";
 import { ScoreManager } from "./ScoreManager";
 
 describe("ScoreManager", () => {
@@ -16,7 +15,6 @@ describe("ScoreManager", () => {
       expect(payload.totalStars).toBe(0);
       expect(payload.rating).toBe("mínimo");
       expect(payload.floors).toHaveLength(3);
-      expect(payload.collectibles.quartersEarned).toBe(0);
       expect(payload.quiz.quartersEarned).toBe(0);
       expect(payload.intermediateQuizzes.quartersEarned).toBe(0);
     });
@@ -175,23 +173,6 @@ describe("ScoreManager", () => {
     });
   });
 
-  describe("collectible scoring", () => {
-    it("does not affect score", () => {
-      manager.recordCollectible("collectible-1", "CLUE_VILLAIN");
-      const payload = manager.getPayload();
-      expect(payload.collectibles.quartersEarned).toBe(0);
-      expect(payload.totalQuarters).toBe(0);
-    });
-
-    it("tracks interactions without scoring", () => {
-      manager.recordCollectible("collectible-1", "CLUE_VILLAIN");
-      manager.recordCollectible("collectible-2", "CLUE_VILLAIN");
-      const payload = manager.getPayload();
-      expect(payload.collectibles.interactionsCount).toBe(2);
-      expect(payload.collectibles.quartersEarned).toBe(0);
-    });
-  });
-
   describe("total scoring", () => {
     it("calculates total correctly with all components", () => {
       // Floor 0: 0 errors = 2 quarters
@@ -207,9 +188,6 @@ describe("ScoreManager", () => {
 
       // Intermediate quiz: 2/3 correct = 2 quarters
       manager.recordIntermediateQuizResult("quiz-1", 2, 3);
-
-      // Collectible: should not affect score
-      manager.recordCollectible("c1", "CLUE_VILLAIN");
 
       const payload = manager.getPayload();
       expect(payload.totalQuarters).toBe(2 + 1 + 2 + 3 + 2); // = 10
