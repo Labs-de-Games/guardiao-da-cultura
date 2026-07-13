@@ -1153,7 +1153,15 @@ export class Game extends Scene implements GameDataAccessor {
       this.physics.add.collider(
         this.player,
         platform,
-        undefined,
+        // Collision callback: track when player is standing on platform
+        (player, _platform) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            (player as Player).setStandingPlatform(platform as MovingPlatform);
+          }
+        },
+        // Process callback: determine if collision should occur
         (_player, _platform) => {
           // Allow player to pass through when climbing stairs
           if (this.player.isClimbingStairs) {

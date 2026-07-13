@@ -45,6 +45,12 @@ export class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
   /** Current angle in radians (0 → 2π), drives the cosine wave. */
   private theta: number = 0;
 
+  /** Current velocity in pixels/second (positive = right/down depending on axis). */
+  private currentVelocity: number = 0;
+
+  /** Previous position for velocity calculation. */
+  private prevPos: number = 0;
+
   constructor(scene: Phaser.Scene, config: MovingPlatformConfig) {
     const textureKey = config.texture || "empty_platform";
 
@@ -135,6 +141,9 @@ export class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
     }
     body.setOffset(0, 0);
 
+    // Initialize prevPos to current position
+    this.prevPos = this.axis === "x" ? this.x : this.y;
+
     // ── Hook into scene update ───────────────────────────────────
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.tick, this);
     this.once(
@@ -176,13 +185,34 @@ export class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
     // progress = (distance / 2) × (1 − cos(θ))
     const progress = (this.travelDistance / 2) * (1 - Math.cos(this.theta));
 
+    // Calculate new position
+    const newPos = this.originPos + progress * this.dirSign;
+
+    // Calculate velocity from position change (pixels/second)
+    // Apply direction sign to get signed velocity
+    this.currentVelocity = (newPos - this.prevPos) / dt;
+    this.prevPos = newPos;
+
     // Set position directly. With setDirectControl(true), Phaser's physics
     // preUpdate will automatically read the game-object position, store prev,
     // and compute the delta — which is used for friction/carry of the player.
     if (this.axis === "x") {
-      this.x = this.originPos + progress * this.dirSign;
+      this.x = newPos;
     } else {
-      this.y = this.originPos + progress * this.dirSign;
+      this.y = newPos;
     }
+  }
+
+  /**
+   * Get the platform's current velocity.
+   * For horizontal platforms, returns X velocity (positive = right).
+   * For vertical platforms, returns Y velocity (positive = down).
+   * Returns 0 if the platform is at rest or inactive.
+   */
+  public getVelocity(): { x: number; y: number } {
+    if (this.axis === "x") {
+      return { x: this.currentVelocity, y: 0 };
+    }
+    return { x: 0, y: this.currentVelocity };
   }
 }
