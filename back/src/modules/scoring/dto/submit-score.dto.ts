@@ -69,7 +69,8 @@ class IntermediateQuizScoreDto {
   passed!: number;
 
   @IsInt()
-  quartersNet!: number;
+  @Min(0)
+  quartersEarned!: number;
 }
 
 class CollectibleRecordDto {

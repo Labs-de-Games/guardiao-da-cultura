@@ -72,6 +72,8 @@ export interface QuizCompletedMetadata {
 
 export interface IntermediateQuizCompletedMetadata {
   infoKey: string;
-  passed: boolean;
+  correctAnswers: number;
+  totalQuestions: number;
+  quartersEarned: number;
   missionId: string;
 }
