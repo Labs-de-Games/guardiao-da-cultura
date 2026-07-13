@@ -340,11 +340,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.collectibleSystem = new CollectibleSystem(
-      this,
-      this.scoreManager,
-      this.mapScale,
-    );
+    this.collectibleSystem = new CollectibleSystem(this, this.mapScale);
 
     const actorId = (this.registry.get("userId") as string | undefined) ?? null;
     const isGuest = this.registry.get("isGuest") === true;

@@ -4,7 +4,6 @@ import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractiveButton } from "../objects/InteractiveButton";
-import type { ScoreManager } from "../objects/ScoreManager";
 import type { CollectibleData, ContentJson } from "../types/GameDataTypes";
 import { TiledUtils } from "../utils/TiledUtils";
 
@@ -26,7 +25,6 @@ export interface PersistedCollectible {
 
 export class CollectibleSystem {
   private readonly scene: Phaser.Scene;
-  private readonly scoreManager: ScoreManager;
   private readonly mapScale: number;
   private collectibles: CollectibleInstance[] = [];
   private activeCollectible: CollectibleInstance | null = null;
@@ -38,11 +36,9 @@ export class CollectibleSystem {
 
   constructor(
     scene: Phaser.Scene,
-    scoreManager: ScoreManager,
     mapScale: number = LayoutConfig.GAME.MAP_SCALE,
   ) {
     this.scene = scene;
-    this.scoreManager = scoreManager;
     this.mapScale = mapScale;
 
     this.scene.events.on(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
@@ -177,10 +173,11 @@ export class CollectibleSystem {
     if (!this.activeCollectible) {
       this.activeCollectible = instance;
 
-      this.scoreManager.recordCollectible(
-        instance.collectibleId,
-        instance.collectibleType,
-      );
+      // Collectibles no longer affect scoring - removed ScoreManager call
+      // this.scoreManager.recordCollectible(
+      //   instance.collectibleId,
+      //   instance.collectibleType,
+      // );
 
       if (!instance.isCollected) {
         instance.isCollected = true;
