@@ -1,8 +1,6 @@
 import * as Phaser from "phaser";
 import { ScoringEvents } from "../constants/ScoringEvents";
 import type {
-  CollectibleInteraction,
-  CollectiblesScore,
   FloorScore,
   IntermediateQuizzesScore,
   IsoTimestamp,
@@ -15,20 +13,16 @@ import type {
 export interface ScoreManagerOptions {
   levelId: string;
   floorsTotal?: number;
-  // collectiblesTotal is deprecated - no longer affects scoring
-  collectiblesTotal?: number;
 }
 
 export class ScoreManager extends Phaser.Events.EventEmitter {
   private readonly levelId: string;
   private readonly floorsTotal: number;
-  private readonly collectiblesTotal: number;
 
   private readonly startedAt: IsoTimestamp;
   private updatedAt: IsoTimestamp;
 
   private floors: [FloorScore, FloorScore, FloorScore];
-  private collectibles: CollectiblesScore;
   private quiz: QuizScore;
   private intermediateQuizzes: IntermediateQuizzesScore;
   private events: ScoringEventRecord[];
@@ -37,7 +31,6 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     super();
     this.levelId = options.levelId;
     this.floorsTotal = options.floorsTotal ?? 3;
-    this.collectiblesTotal = options.collectiblesTotal ?? 4;
 
     if (this.floorsTotal !== 3) {
       throw new Error(
@@ -54,14 +47,6 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       quartersEarned: 0 as 0 | 1 | 2,
       completedAt: null,
     })) as [FloorScore, FloorScore, FloorScore];
-
-    this.collectibles = {
-      total: this.collectiblesTotal,
-      interactionsCount: 0,
-      quartersEarned: 0,
-      lastInteractionAt: null,
-      interactions: [],
-    };
 
     this.quiz = {
       totalQuestions: 0,
@@ -123,65 +108,6 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
       payload,
     });
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
-  }
-
-  recordCollectible(collectibleId: string, collectibleType: string) {
-    if (this.collectibles.interactionsCount >= this.collectibles.total) {
-      return;
-    }
-
-    const isNewInteraction = this.addCollectibleInteraction(
-      collectibleId,
-      collectibleType,
-    );
-    if (!isNewInteraction) {
-      return;
-    }
-
-    this.collectibles.interactionsCount += 1;
-    // Collectibles no longer affect scoring - quartersEarned stays 0
-    this.collectibles.quartersEarned = 0;
-    this.collectibles.lastInteractionAt = this.touch();
-
-    this.events.push({
-      type: "collectible",
-      occurredAt: this.collectibles.lastInteractionAt,
-    });
-
-    const payload = this.getPayload();
-    this.emit(ScoringEvents.COLLECTIBLE_USED, {
-      interactionsCount: this.collectibles.interactionsCount,
-      payload,
-    });
-    this.emit(ScoringEvents.SCORE_UPDATED, payload);
-  }
-
-  private addCollectibleInteraction(
-    collectibleId: string,
-    collectibleType: string,
-  ): boolean {
-    if (!collectibleId) {
-      return false;
-    }
-
-    const alreadyTracked = this.collectibles.interactions.some(
-      (interaction) =>
-        interaction.collectible_id === collectibleId &&
-        interaction.collectible_type === collectibleType,
-    );
-
-    if (alreadyTracked) {
-      return false;
-    }
-
-    const interaction: CollectibleInteraction = {
-      collectible_id: collectibleId,
-      collectible_type: collectibleType,
-      interactedAt: this.nowIso(),
-    };
-
-    this.collectibles.interactions.push(interaction);
-    return true;
   }
 
   recordQuizResult(correctAnswers: number, totalQuestions: number) {
@@ -280,7 +206,6 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
         FloorScore,
         FloorScore,
       ],
-      collectibles: { ...this.collectibles },
       quiz: { ...this.quiz },
       intermediateQuizzes: { ...this.intermediateQuizzes },
       totalQuarters,
