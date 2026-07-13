@@ -15,6 +15,7 @@ import type {
 export interface ScoreManagerOptions {
   levelId: string;
   floorsTotal?: number;
+  // collectiblesTotal is deprecated - no longer affects scoring
   collectiblesTotal?: number;
 }
 
@@ -50,7 +51,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.floors = [0, 1, 2].map((i) => ({
       floorIndex: i,
       errors: 0,
-      quartersEarned: 0,
+      quartersEarned: 1 as 1 | 2,
       completedAt: null,
     })) as [FloorScore, FloorScore, FloorScore];
 
@@ -73,7 +74,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.intermediateQuizzes = {
       total: 0,
       passed: 0,
-      quartersNet: 0,
+      quartersEarned: 0,
     };
 
     this.events = [{ type: "level-started", occurredAt: this.startedAt }];
@@ -138,7 +139,8 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     }
 
     this.collectibles.interactionsCount += 1;
-    this.collectibles.quartersEarned = this.collectibles.interactionsCount;
+    // Collectibles no longer affect scoring - quartersEarned stays 0
+    this.collectibles.quartersEarned = 0;
     this.collectibles.lastInteractionAt = this.touch();
 
     this.events.push({
@@ -187,7 +189,8 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     const correct = Math.min(Math.max(0, Math.floor(correctAnswers)), total);
 
     const accuracyPercent = total > 0 ? Math.floor((correct / total) * 100) : 0;
-    const quartersEarned = Math.min(4, Math.floor(accuracyPercent / 25));
+    // New: 1 quarter per correct answer, max 5
+    const quartersEarned = Math.min(5, correct);
 
     this.quiz.totalQuestions = total;
     this.quiz.correctAnswers = correct;
@@ -215,26 +218,40 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
   }
 
-  recordIntermediateQuizResult(infoKey: string, passed: boolean) {
+  recordIntermediateQuizResult(
+    infoKey: string,
+    correctAnswers: number,
+    totalQuestions: number,
+  ) {
     const occurredAt = this.touch();
     this.intermediateQuizzes.total += 1;
 
-    if (passed) {
+    const correct = Math.min(
+      Math.max(0, Math.floor(correctAnswers)),
+      totalQuestions,
+    );
+    const quartersEarned = Math.min(3, correct);
+    this.intermediateQuizzes.quartersEarned += quartersEarned;
+
+    if (correct >= Math.ceil(totalQuestions / 2)) {
       this.intermediateQuizzes.passed += 1;
-      this.intermediateQuizzes.quartersNet += 2;
     }
 
     this.events.push({
       type: "intermediate-quiz-completed",
       infoKey,
-      passed,
+      correctAnswers: correct,
+      totalQuestions,
+      quartersEarned,
       occurredAt,
     });
 
     const payload = this.getPayload();
     this.emit(ScoringEvents.INTERMEDIATE_QUIZ_COMPLETED, {
       infoKey,
-      passed,
+      correctAnswers: correct,
+      totalQuestions,
+      quartersEarned,
       payload,
     });
     this.emit(ScoringEvents.SCORE_UPDATED, payload);
@@ -245,9 +262,11 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
   }
 
   getMaxStars(): number {
-    const quizMaxQuarters = 4;
+    // New: floors (2 each) + quiz (5) + intermediate quizzes (3 per quiz, assume 3) = 6 + 5 + 9 = 20
+    const quizMaxQuarters = 5;
+    const intermediateQuizMaxQuarters = 9; // 3 quizzes x 3 quarters each
     const maxQuarters =
-      this.floorsTotal * 4 + quizMaxQuarters + this.collectiblesTotal;
+      this.floorsTotal * 2 + quizMaxQuarters + intermediateQuizMaxQuarters;
     return maxQuarters / 4;
   }
 
@@ -280,15 +299,14 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     return Math.max(
       0,
       floorsQuarters +
-        this.collectibles.quartersEarned +
         this.quiz.quartersEarned +
-        this.intermediateQuizzes.quartersNet,
+        this.intermediateQuizzes.quartersEarned,
     );
   }
 
-  private computeFloorQuarters(errors: number): number {
-    // 0 errors: 4/4; 1: 3/4; 2: 2/4; >=3: 1/4
-    return Math.max(1, Math.min(4, 4 - Math.max(0, Math.floor(errors))));
+  private computeFloorQuarters(errors: number): 1 | 2 {
+    // New: 0 errors = 2 quarters, ≥1 error = 1 quarter
+    return errors === 0 ? 2 : 1;
   }
 
   private computeRating(totalQuarters: number): ScoringRatingPTBR {

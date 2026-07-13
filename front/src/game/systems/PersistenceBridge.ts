@@ -79,7 +79,7 @@ export class PersistenceBridge {
         intermediateQuizzes: {
           total: payload.intermediateQuizzes.total,
           passed: payload.intermediateQuizzes.passed,
-          quartersNet: payload.intermediateQuizzes.quartersNet,
+          quartersEarned: payload.intermediateQuizzes.quartersEarned,
         },
         collectibles: {
           total: payload.collectibles.total,
