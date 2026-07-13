@@ -37,7 +37,6 @@ export class ScoringService {
       floorScores: dto.floors,
       quizScore: dto.quiz,
       intermediateQuizScore: dto.intermediateQuizzes,
-      collectibleScore: dto.collectibles,
     });
 
     const saved = await this.userScoreRepository.save(userScore);
