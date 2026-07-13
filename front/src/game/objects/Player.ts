@@ -33,6 +33,11 @@ export class Player
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
 
+  // Coyote Time Variables
+  private coyoteTime = 200;
+  private lastOnGroundTime = 0;
+  private hasJumped = false;
+
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
 
   /** Reference to the moving platform the player is standing on. */
@@ -361,6 +366,12 @@ export class Player
     if (!body?.blocked.down) {
       this.standingPlatform = null;
     }
+
+    if (body.blocked.down) {
+      this.lastOnGroundTime = _ts;
+      this.hasJumped = false;
+    }
+
     const isJumpPlaying =
       this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
       this.anims.isPlaying;
@@ -572,14 +583,19 @@ export class Player
 
     const jumpDown = Phaser.Input.Keyboard.JustDown(this.keys.space);
 
+    const canJump =
+      !this.hasJumped &&
+      (body.blocked.down || _ts - this.lastOnGroundTime < this.coyoteTime);
+
     if (
       this.body &&
       jumpDown &&
-      this.body.blocked.down &&
+      canJump &&
       !this.isGrabbing &&
       !this.isClimbingStairs
     ) {
       // Apply jump velocity
+      this.hasJumped = true;
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
 
       // Add platform inertia: inherit horizontal velocity from moving platform
