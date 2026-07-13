@@ -109,6 +109,15 @@ export class CollectibleSystem {
     return this.collectibles;
   }
 
+  public getCollectedCollectibles(): PersistedCollectible[] {
+    return this.collectibles
+      .filter((c) => c.isCollected)
+      .map((c) => ({
+        collectibleId: c.collectibleId,
+        collectibleType: c.collectibleType,
+      }));
+  }
+
   public destroy() {
     this.scene.events.off(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
     this.hideInspectCard();
