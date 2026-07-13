@@ -43,12 +43,6 @@ function createMocks() {
         quartersEarned: 2,
       },
       intermediateQuizzes: { total: 0, passed: 0, quartersNet: 0 },
-      collectibles: {
-        total: 4,
-        interactionsCount: 2,
-        quartersEarned: 1,
-        interactions: [],
-      },
     }),
   } as unknown as ScoreManager;
 
@@ -60,6 +54,7 @@ function createMocks() {
 
   const collectibleSystem = {
     applyCollectedCollectibles: jest.fn(),
+    getCollectedCollectibles: jest.fn().mockReturnValue([]),
   } as unknown as CollectibleSystem;
 
   const questManager = {
