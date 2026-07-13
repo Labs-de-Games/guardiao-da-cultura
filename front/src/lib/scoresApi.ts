@@ -22,11 +22,6 @@ export interface SubmitScoreRequest {
     passed: number;
     quartersEarned: number;
   };
-  collectibles: {
-    total: number;
-    interactionsCount: number;
-    quartersEarned: number;
-  };
   collectedCollectibles: Array<{
     collectibleId: string;
     collectibleType: "CLUE_VILLAIN";

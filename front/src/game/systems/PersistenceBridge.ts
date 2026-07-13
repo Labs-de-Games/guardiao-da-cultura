@@ -81,18 +81,13 @@ export class PersistenceBridge {
           passed: payload.intermediateQuizzes.passed,
           quartersEarned: payload.intermediateQuizzes.quartersEarned,
         },
-        collectibles: {
-          total: payload.collectibles.total,
-          interactionsCount: payload.collectibles.interactionsCount,
-          quartersEarned: payload.collectibles.quartersEarned,
-        },
-        collectedCollectibles: payload.collectibles.interactions.map(
-          (interaction) => ({
-            collectibleId: interaction.collectible_id,
-            collectibleType: interaction.collectible_type as "CLUE_VILLAIN",
+        collectedCollectibles: this.collectibleSystem
+          .getCollectedCollectibles()
+          .map((c) => ({
+            collectibleId: c.collectibleId,
+            collectibleType: c.collectibleType,
             levelId: payload.levelId,
-          }),
-        ),
+          })),
       };
 
       await this.persistence.saveScore(persistencePayload);
@@ -108,11 +103,6 @@ export class PersistenceBridge {
           correct_answers: payload.quiz.correctAnswers,
           accuracy_percent: payload.quiz.accuracyPercent,
           quarters_earned: payload.quiz.quartersEarned,
-        },
-        collectible_score: {
-          total: payload.collectibles.total,
-          interactions_count: payload.collectibles.interactionsCount,
-          quarters_earned: payload.collectibles.quartersEarned,
         },
       });
     } catch (err) {
