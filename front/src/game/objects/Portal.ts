@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { InteractionComponent } from "./InteractionComponent";
 import type { Player } from "./Player";
+import { PLAYER_ANIMS } from "./PlayerConfig";
 
 export class Portal extends Phaser.GameObjects.Zone {
   interaction: InteractionComponent;
@@ -49,6 +50,7 @@ export class Portal extends Phaser.GameObjects.Zone {
 
       p.isInDialogue = true;
       p.setVelocity(0, 0);
+      p.anims.play(PLAYER_ANIMS.BACK.key, true);
 
       const body = p.body as Phaser.Physics.Arcade.Body | null;
       if (body) {
@@ -57,13 +59,12 @@ export class Portal extends Phaser.GameObjects.Zone {
 
       const originalScaleX = p.scaleX;
       const originalScaleY = p.scaleY;
-      const spinDirection = p.flipX ? -1 : 1;
 
       this.scene.tweens.add({
         targets: p,
-        scaleX: 0,
-        scaleY: 0,
-        angle: 720 * spinDirection,
+        scaleX: 4,
+        scaleY: 4,
+        alpha: 0,
         duration: 500,
         ease: "Cubic.in",
         onComplete: () => {
@@ -78,18 +79,18 @@ export class Portal extends Phaser.GameObjects.Zone {
           cam.pan(target.x, target.y, 1000, "Sine.easeInOut");
 
           this.scene.time.delayedCall(1000, () => {
+            p.anims.play(PLAYER_ANIMS.FRONT.key, true);
             this.scene.tweens.add({
               targets: p,
               scaleX: originalScaleX,
               scaleY: originalScaleY,
-              angle: 1440 * spinDirection,
+              alpha: 1,
               duration: 500,
               ease: "Cubic.out",
               onComplete: () => {
                 if (body) {
                   body.enable = true;
                 }
-                p.angle = 0;
                 cam.startFollow(p, true, 0.05, 0.05, -40, 0);
                 p.isInDialogue = false;
               },
