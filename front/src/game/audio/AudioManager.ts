@@ -99,6 +99,25 @@ export class AudioManager {
     return AudioManager.getInstance().playSound(key, "sfx", volume);
   }
 
+  /**
+   * Play a specific variation from a sound pool.
+   * Use this when you want a deterministic sound instead of random selection.
+   * @param poolKey - The sound pool key (e.g., "sfx.object.drop")
+   * @param variationIndex - The index of the variation to play (0-based)
+   * @param volume - Optional volume override (0-1)
+   */
+  public static playSfxVariation(
+    poolKey: string,
+    variationIndex: number,
+    volume?: number,
+  ): Sound | null {
+    return AudioManager.getInstance().playPoolVariation(
+      poolKey,
+      variationIndex,
+      volume,
+    );
+  }
+
   // Play background music.
   public static playMusic(key: AudioKey, fadeInMs?: number): void {
     AudioManager.getInstance().playMusicInternal(key, fadeInMs);
@@ -257,6 +276,69 @@ export class AudioManager {
 
     this.lastPoolVariation.set(poolKey, newIndex);
     return variations[newIndex];
+  }
+
+  /**
+   * Play a specific variation from a sound pool.
+   * Use this for deterministic sounds (e.g., painting drop vs sculpture drop).
+   */
+  private playPoolVariation(
+    poolKey: string,
+    variationIndex: number,
+    volumeOverride?: number,
+  ): Sound | null {
+    if (!this.scene) {
+      console.warn(
+        `[AudioManager] Cannot play "${poolKey}": no scene set. Call AudioManager.init(scene) first.`,
+      );
+      return null;
+    }
+
+    if (this.settings.muted) {
+      return null;
+    }
+
+    const variations = getPoolVariations(poolKey);
+    if (!variations || variations.length === 0) {
+      console.warn(`[AudioManager] Sound pool "${poolKey}" has no variations.`);
+      return null;
+    }
+
+    if (variationIndex < 0 || variationIndex >= variations.length) {
+      console.warn(
+        `[AudioManager] Invalid variation index ${variationIndex} for pool "${poolKey}" with ${variations.length} variations.`,
+      );
+      return null;
+    }
+
+    const actualKey = variations[variationIndex];
+
+    // Check if sound exists in the audio cache
+    if (!this.scene.game.cache.audio.has(actualKey)) {
+      console.warn(
+        `[AudioManager] Sound "${actualKey}" not loaded. Make sure to preload it.`,
+      );
+      return null;
+    }
+
+    const volume = volumeOverride ?? this.settings.sfxVolume;
+
+    const sound = this.scene.sound.add(actualKey, {
+      volume,
+      loop: false,
+    }) as Sound;
+
+    sound.play();
+
+    // Track active sound (use pool key for tracking)
+    this.activeSounds.set(poolKey, { sound, key: actualKey, category: "sfx" });
+
+    // Auto-cleanup when sound completes
+    sound.once(Phaser.Sound.Events.COMPLETE, () => {
+      this.activeSounds.delete(poolKey);
+    });
+
+    return sound;
   }
 
   private playMusicInternal(key: AudioKey, fadeInMs?: number): void {

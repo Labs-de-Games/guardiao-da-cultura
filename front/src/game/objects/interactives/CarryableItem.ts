@@ -29,7 +29,7 @@ export class CarryableItem extends InteractiveItem {
 
     const isFalling = body.velocity.y > 50; // Falling threshold
 
-    // Track when we start falling
+    // Track when it starts falling
     if (isFalling && !this.wasFalling) {
       this.wasFalling = true;
     }
@@ -38,9 +38,7 @@ export class CarryableItem extends InteractiveItem {
     if (this.wasFalling && body.blocked.down) {
       this.wasFalling = false;
       this.checkLanding = false;
-
-      // Play drop sound on landing
-      AudioManager.playSfx("sfx.object.drop");
+      AudioManager.playSfxVariation("sfx.object.drop", 4, 0.3);
     }
   }
 

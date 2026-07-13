@@ -79,7 +79,7 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
     placeholder?: PlaceholderInstance | null,
   ): void {
     g.shakeHorizontal(400, 0.05);
-    AudioManager.playSfx("sfx.object.drop");
+    AudioManager.playSfx("sfx.puzzle.failure");
     g.recordFloorError(this.scoringFloor);
 
     const workId = placeholder

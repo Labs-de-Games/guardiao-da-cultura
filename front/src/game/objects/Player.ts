@@ -578,6 +578,7 @@ export class Player
           this.dragLoopSound.stop();
           this.dragLoopSound.destroy();
           this.dragLoopSound = null;
+          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.3);
         }
         this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
       }

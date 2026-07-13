@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio";
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   moveEvent: Phaser.Time.TimerEvent;
@@ -82,8 +83,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.direction = -1;
     this.moveSpeed = 1234;
 
-    this.scene.sound.play("sfx.rat.squeak", { volume: 0.6 });
-    this.scene.sound.play("sfx.rat.flee", { volume: 0.5 });
+    AudioManager.playSfx("sfx.rat.squeak", 0.6);
+    AudioManager.playSfx("sfx.rat.flee", 0.5);
 
     if (this.moveEvent) this.moveEvent.destroy();
 
