@@ -35,6 +35,7 @@ export class Player
   private grabOffsetY: number = 0;
   private dragLoopSound: Phaser.Sound.BaseSound | null = null;
   private footstepSound: Phaser.Sound.BaseSound | null = null;
+  private climbLoopSound: Phaser.Sound.BaseSound | null = null;
 
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
 
@@ -252,6 +253,10 @@ export class Player
           this.footstepSound.destroy();
           this.footstepSound = null;
         }
+        if (this.climbLoopSound) {
+          this.climbLoopSound.destroy();
+          this.climbLoopSound = null;
+        }
       },
       this,
     );
@@ -401,6 +406,14 @@ export class Player
       ) {
         if (!this.isClimbingStairs) {
           this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
+          // Start climb loop sound
+          if (!this.climbLoopSound) {
+            this.climbLoopSound = this.scene.sound.add("sfx.player.climb", {
+              loop: true,
+              volume: 0.3,
+            });
+            this.climbLoopSound.play();
+          }
         }
         this.isClimbingStairs = true;
       }
@@ -408,6 +421,12 @@ export class Player
       // Exit climbing state if player is touching the ground and not actively climbing
       if (body?.blocked.down && !upDown && !downDown) {
         this.isClimbingStairs = false;
+        // Stop climb loop sound
+        if (this.climbLoopSound) {
+          this.climbLoopSound.stop();
+          this.climbLoopSound.destroy();
+          this.climbLoopSound = null;
+        }
       }
     }
 
@@ -580,7 +599,7 @@ export class Player
       } else {
         // Stop drag loop when not moving
         if (this.dragLoopSound) {
-          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.3);
+          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.2);
           this.dragLoopSound.stop();
           this.dragLoopSound.destroy();
           this.dragLoopSound = null;
@@ -599,6 +618,7 @@ export class Player
       !this.isClimbingStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
+      AudioManager.playSfx("sfx.player.jump", 0.3);
       if (!this.isCarrying) {
         this.anims.play(PLAYER_ANIMS.JUMP.key, true);
         this.setPhysicsBodyForVisualScale(this.scaleX);
@@ -834,6 +854,11 @@ export class Player
    * Called when entering dialogue or other states that restrict movement.
    */
   private stopMovementSounds(): void {
+    if (this.climbLoopSound) {
+      this.climbLoopSound.stop();
+      this.climbLoopSound.destroy();
+      this.climbLoopSound = null;
+    }
     if (this.footstepSound) {
       this.footstepSound.stop();
       this.footstepSound.destroy();

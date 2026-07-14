@@ -49,6 +49,13 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
     path: "sound/sfx/player.footstep.ogg",
     loop: true,
   },
+  {
+    key: "sfx.player.climb",
+    path: "sound/sfx/player.climb_2.mp3",
+    loop: true,
+  },
+  { key: "sfx.player.jump", path: "sound/sfx/player.jump.wav" },
+  { key: "sfx.player.land", path: "sound/sfx/player.land.wav" },
   // Rat
   { key: "sfx.rat.squeak", path: "sound/sfx/rat.squeak.mp3" },
   { key: "sfx.rat.flee", path: "sound/sfx/rat.flee.mp3" },
@@ -64,7 +71,7 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   { key: "sfx.puzzle.success", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.puzzle.failure", path: "sound/sfx/puzzle.error.mp3" },
   // Rewards
-  { key: "sfx.badge.unlock", path: "sound/sfx/placeholder.mp3" },
+  { key: "sfx.badge.unlock", path: "sound/sfx/badge.unlock.mp3" },
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
 ];
 
