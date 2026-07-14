@@ -532,9 +532,11 @@ export class Player
 
     if (isWalkingOnGround) {
       if (!this.footstepSound) {
+        const settings = AudioManager.getSettings();
         this.footstepSound = this.scene.sound.add("sfx.player.footstep", {
           loop: true,
-          volume: 0.3,
+          volume: 0.2 * settings.sfxVolume,
+          mute: settings.muted,
         });
         this.footstepSound.play();
       }
@@ -558,8 +560,11 @@ export class Player
       // Play drag loop sound only when moving
       if (isMoving) {
         if (!this.dragLoopSound) {
+          const settings = AudioManager.getSettings();
           this.dragLoopSound = this.scene.sound.add("sfx.object.drag_loop", {
             loop: true,
+            volume: settings.sfxVolume,
+            mute: settings.muted,
           });
           this.dragLoopSound.play();
         }

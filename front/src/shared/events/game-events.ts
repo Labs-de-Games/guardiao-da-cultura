@@ -200,4 +200,5 @@ export interface GameEventMap {
   "intro:start": { levelId: string; config: IntroConfig };
   "intro:complete": { levelId: string };
   "intro:music-start": { levelId: string };
+  "intro:rollout-start": { levelId: string };
 }

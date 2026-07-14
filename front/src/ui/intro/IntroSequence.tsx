@@ -297,7 +297,10 @@ export function IntroSequence({
   }, [navigatingPanel, manuallyAdvanced]);
 
   const handleComplete = useCallback(() => {
-    window.setTimeout(() => setRollOut(true), ROLL_DELAY_MS);
+    window.setTimeout(() => {
+      EventBus.emit("intro:rollout-start", { levelId });
+      setRollOut(true);
+    }, ROLL_DELAY_MS);
   }, []);
 
   const handleRolledOut = useCallback(() => {
@@ -306,8 +309,8 @@ export function IntroSequence({
 
   // When mask animation starts, emit events to start game loading and music
   const handleMaskAnimationStart = useCallback(() => {
-    EventBus.emit("intro:complete", { levelId });
     EventBus.emit("intro:music-start", { levelId });
+    EventBus.emit("intro:complete", { levelId });
   }, [levelId]);
 
   const handleMaskDone = useCallback(() => {

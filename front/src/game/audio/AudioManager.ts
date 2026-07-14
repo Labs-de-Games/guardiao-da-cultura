@@ -69,20 +69,7 @@ export class AudioManager {
    * on the new scene to handle scene transitions seamlessly. */
   public static init(scene: Phaser.Scene): void {
     const instance = AudioManager.getInstance();
-    const previousMusicKey = instance.currentMusic?.key ?? null;
-
-    // Clean up sounds from the previous scene
-    if (instance.scene && previousMusicKey) {
-      instance.stopAllInternal();
-      instance.currentMusic = null;
-    }
-
     instance.setScene(scene);
-
-    // Resume music on the new scene if it was playing before
-    if (previousMusicKey) {
-      instance.playMusicInternal(previousMusicKey as AudioKey);
-    }
   }
 
   /** Destroy the AudioManager instance.

@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import type { IntroConfig } from "../../ui/intro/types";
 import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
+import { getLevelAudioManifest } from "../audio/registry";
 import { SceneNames } from "../constants/SceneNames";
 
 /**
@@ -65,7 +66,18 @@ export class LevelCinematic extends Scene {
     EventBus.once("intro:music-start", (data: { levelId: string }) => {
       if (data.levelId === this.levelId) {
         // Play intro track, which will seamlessly transition to loop
-        AudioManager.playMusic("music.level_1.intro", 2000);
+        const manifest = getLevelAudioManifest(this.levelId);
+        const introKey = manifest?.musicIntroLoop?.intro.key;
+        if (introKey) {
+          AudioManager.playMusic(introKey);
+        }
+      }
+    });
+
+    // Fade menu music out when the comic cards begin their roll-out fade
+    EventBus.once("intro:rollout-start", (data: { levelId: string }) => {
+      if (data.levelId === this.levelId) {
+        AudioManager.fadeOutMusic(1400);
       }
     });
 
@@ -97,5 +109,8 @@ export class LevelCinematic extends Scene {
     // Clean up event listeners if scene is shut down before intro completes
     EventBus.off("intro:complete");
     EventBus.off("intro:music-start");
+    // Note: Don't call AudioManager.destroy() here - music should continue
+    // into the Game scene. AudioManager.init() in Game scene will handle
+    // the transition and resume any playing music and destroy it there.
   }
 }

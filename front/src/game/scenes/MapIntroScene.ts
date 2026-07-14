@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import {
   AUTO_START_DELAY_MS,
   AUTO_START_REGISTRY_KEY,
@@ -35,6 +36,7 @@ export class MapIntroScene extends Scene {
   private autoStartEvent?: Phaser.Time.TimerEvent;
   private autoStartStartMs = 0;
   private completedLevels: Record<string, CompletedLevelRecord> = {};
+  private isTransitioningToLevel = false;
 
   private readonly handleResize = () => {
     this.layout();
@@ -48,11 +50,14 @@ export class MapIntroScene extends Scene {
     this.load.setPath("assets/");
     this.load.image(this.mapKey, "misc/map.png");
     this.load.image(this.markerKey, "misc/marker.png");
+    loadGlobalAudio(this);
   }
 
   create() {
     this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);
+    AudioManager.init(this);
+    AudioManager.playMusic("music.menu", 2000);
 
     this.mapImage = this.add
       .image(0, 0, this.mapKey)
@@ -126,10 +131,24 @@ export class MapIntroScene extends Scene {
   }
 
   private beginGame() {
+    if (this.isTransitioningToLevel) {
+      return;
+    }
+
     this.cancelAutoStart("started");
     const marker = MARKERS[this.activeMarkerIndex];
     if (marker.levelId === "level_01") {
-      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
+      this.isTransitioningToLevel = true;
+      const camera = this.cameras?.main;
+      if (!camera) {
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
+        return;
+      }
+
+      camera.once("camerafadeoutcomplete", () => {
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
+      });
+      camera.fadeOut(350, 0, 0, 0);
     }
   }
 
