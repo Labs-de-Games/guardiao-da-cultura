@@ -17,7 +17,6 @@
     "@mui/icons-material": "^9.0.0",
     "@mui/material": "^9.0.0",
     "@mui/material-nextjs": "^9.0.0",
-    "@responsivevoice/core": "^2.0.1",
     "axios": "^1.16.0",
     "js-cookie": "^3.0.5",
     "next": "latest",

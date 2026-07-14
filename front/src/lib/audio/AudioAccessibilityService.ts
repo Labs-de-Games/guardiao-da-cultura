@@ -1,12 +1,8 @@
 import type * as Phaser from "phaser";
+import { apiClient } from "@/lib/api/client";
 
-const DEFAULT_VOICE = "Brazilian Portuguese Female";
 const DUCK_VOLUME = 0.3;
-
-const rvKey =
-  typeof process !== "undefined"
-    ? (process.env.NEXT_PUBLIC_RESPONSIVE_VOICE_KEY ?? "")
-    : "";
+const DEFAULT_VOICE = "pt-BR";
 
 interface SpeakOptions {
   voice?: string;
@@ -15,30 +11,12 @@ interface SpeakOptions {
   volume?: number;
 }
 
-interface ResponsiveVoiceInstance {
-  speak: (
-    text: string,
-    voice: string,
-    options?: {
-      rate?: number;
-      pitch?: number;
-      volume?: number;
-      onstart?: () => void;
-      onend?: () => void;
-    },
-  ) => void;
-  cancel: () => void;
-  isPlaying: () => boolean;
-  getVoices?: () => Array<{ name: string }>;
-}
-
 class AudioAccessibilityServiceImpl {
   private static instance: AudioAccessibilityServiceImpl;
   private soundManager: Phaser.Sound.BaseSoundManager | null = null;
   private originalVolume = 1;
   private isDucked = false;
-  private rv: ResponsiveVoiceInstance | null = null;
-  private initPromise: Promise<void> | null = null;
+  private currentAudio: HTMLAudioElement | null = null;
 
   private constructor() {}
 
@@ -55,27 +33,7 @@ class AudioAccessibilityServiceImpl {
   }
 
   init(): void {
-    if (this.initPromise) return;
-    if (typeof window === "undefined") return;
-    this.initPromise = this.doInit();
-  }
-
-  private async doInit(): Promise<void> {
-    try {
-      const { getResponsiveVoice } = await import("@responsivevoice/core");
-      this.rv = await getResponsiveVoice({
-        apiKey: rvKey || undefined,
-        defaultVoice: DEFAULT_VOICE,
-      });
-      console.log("[AudioAccessibility] ResponsiveVoice ready (npm)");
-      return;
-    } catch (err) {
-      console.warn("[AudioAccessibility] npm import/init failed:", err);
-    }
-
-    console.warn(
-      "[AudioAccessibility] ResponsiveVoice unavailable. TTS disabled.",
-    );
+    // No-op — backend proxy handles TTS
   }
 
   private duckVolume(): void {
@@ -91,49 +49,85 @@ class AudioAccessibilityServiceImpl {
     this.isDucked = false;
   }
 
+  private primeAudioContext(): void {
+    if (typeof window === "undefined") return;
+    try {
+      const silent = new Audio(
+        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=",
+      );
+      void silent.play();
+    } catch {
+      // Best effort — unlock audio context for the page.
+    }
+  }
+
+  private speakNative(text: string): void {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "pt-BR";
+    utterance.onstart = () => this.duckVolume();
+    utterance.onend = () => this.restoreVolume();
+    window.speechSynthesis.speak(utterance);
+  }
+
   async speak(text: string, options?: SpeakOptions): Promise<void> {
     if (!text) return;
-    await this.initPromise;
+    this.stop();
+    this.primeAudioContext();
 
-    if (!this.rv) {
-      console.warn("[AudioAccessibility] RV not ready, cannot speak");
-      return;
+    try {
+      const response = await apiClient.post(
+        "/tts/synthesize",
+        {
+          text,
+          voice: options?.voice ?? DEFAULT_VOICE,
+          rate: options?.rate,
+          pitch: options?.pitch,
+        },
+        { responseType: "blob" },
+      );
+
+      const blob = new Blob([response.data], { type: "audio/mpeg" });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      this.currentAudio = audio;
+
+      audio.onplay = () => this.duckVolume();
+      audio.onended = () => {
+        this.restoreVolume();
+        URL.revokeObjectURL(url);
+        this.currentAudio = null;
+      };
+      audio.onerror = () => {
+        this.restoreVolume();
+        URL.revokeObjectURL(url);
+        this.currentAudio = null;
+        this.speakNative(text);
+      };
+
+      await audio.play();
+    } catch {
+      this.speakNative(text);
     }
-
-    if (this.rv.isPlaying()) {
-      this.rv.cancel();
-    }
-
-    const voice = options?.voice ?? DEFAULT_VOICE;
-    const rvOptions: Record<string, unknown> = {};
-    if (options?.rate !== undefined) rvOptions.rate = options.rate;
-    if (options?.pitch !== undefined) rvOptions.pitch = options.pitch;
-    rvOptions.volume = options?.volume ?? 1.0;
-    rvOptions.onstart = () => {
-      console.log("[AudioAccessibility] Speech started");
-      this.duckVolume();
-    };
-    rvOptions.onend = () => {
-      console.log("[AudioAccessibility] Speech ended");
-      this.restoreVolume();
-    };
-
-    console.log("[AudioAccessibility] speak:", {
-      text: text.slice(0, 50),
-      voice,
-    });
-    this.rv.speak(text, voice, rvOptions);
   }
 
   stop(): void {
-    if (this.rv?.isPlaying()) {
-      this.rv.cancel();
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
     }
     this.restoreVolume();
   }
 
   isPlaying(): boolean {
-    if (this.rv) return this.rv.isPlaying();
+    if (this.currentAudio && !this.currentAudio.paused) return true;
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      return window.speechSynthesis.speaking;
+    }
     return false;
   }
 }

@@ -107,8 +107,8 @@ export default function PhaserGame() {
         const game = StartGame("game-container", playerId, isGuest, entryFlow);
         gameRef.current = game;
 
-        // Init ResponsiveVoice singleton once at startup
-        void AudioAccessibilityService.init();
+        // Pass Phaser's sound manager for TTS volume ducking
+        AudioAccessibilityService.setSoundManager(game.sound);
 
         // Resume AudioContext after first user gesture (Chrome autoplay policy)
         const resumeAudio = () => {
