@@ -36,6 +36,7 @@ import { MapManager } from "../objects/MapManager";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
+import type { Portal } from "../objects/Portal";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
@@ -73,6 +74,7 @@ export class Game extends Scene implements GameDataAccessor {
   rat!: Enemy;
   private hasInteractedWithRat: boolean = false;
   npcs: Npc[] = [];
+  portals: Portal[] = [];
   questManager!: QuestManager;
   private scoreManager!: ScoreManager;
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
@@ -268,6 +270,7 @@ export class Game extends Scene implements GameDataAccessor {
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
+      this.portals = MapManager.createPortals(this, mapData);
     }
 
     this.questManager = new QuestManager(MissionRequirements);
@@ -538,6 +541,24 @@ export class Game extends Scene implements GameDataAccessor {
             },
             interactionDistance: 130,
           })),
+        ...this.portals.map((portal) => ({
+          get x() {
+            return portal.x;
+          },
+          get y() {
+            return portal.y;
+          },
+          get interactionY() {
+            return portal.y;
+          },
+          get displayHeight() {
+            return portal.height;
+          },
+          get active() {
+            return portal.active;
+          },
+          interactionDistance: 130,
+        })),
       ]);
 
       this.analyticsSystem.trackLevelEvent(
@@ -796,6 +817,10 @@ export class Game extends Scene implements GameDataAccessor {
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
+    }
+
+    for (const portal of this.portals) {
+      portal.setPlayerTracking(this.player);
     }
 
     // Teleport curator NPC when either sculptures or paintings are marked done

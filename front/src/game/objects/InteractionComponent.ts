@@ -24,6 +24,8 @@ export interface InteractionOptions {
   hintOffsetX?: number;
   hintOffsetY?: number;
   hintScale?: number;
+
+  actionKey?: string | string[];
 }
 
 export class InteractionComponent {
@@ -45,6 +47,7 @@ export class InteractionComponent {
   private handleInteract: () => void;
   private lastInteractionTime: number = 0;
   private readonly INTERACTION_COOLDOWN: number = 250;
+  private actionKeys: string[];
 
   private hintEnabled: boolean;
   private hintDelayMs: number;
@@ -74,6 +77,11 @@ export class InteractionComponent {
     this.hintOffsetX = options?.hintOffsetX ?? 0;
     this.hintOffsetY = options?.hintOffsetY ?? -90;
     this.hintScale = options?.hintScale ?? 3;
+
+    const providedKeys = options?.actionKey ?? Actions.INTERACT;
+    this.actionKeys = Array.isArray(providedKeys)
+      ? providedKeys
+      : [providedKeys];
 
     this.armHint();
 
@@ -153,7 +161,10 @@ export class InteractionComponent {
         }
       }
     };
-    onKeyDown(scene, Actions.INTERACT, this.handleInteract);
+
+    for (const key of this.actionKeys) {
+      onKeyDown(scene, key, this.handleInteract);
+    }
 
     parent.once(Phaser.GameObjects.Events.DESTROY, () => {
       this.destroy();
@@ -275,7 +286,10 @@ export class InteractionComponent {
     if (this.isPromptVisible) {
       this.scene.events.emit(GameEvents.INTERACTION_PROMPT_HIDDEN, this.parent);
     }
-    offKeyDown(this.scene, Actions.INTERACT, this.handleInteract);
+
+    for (const key of this.actionKeys) {
+      offKeyDown(this.scene, key, this.handleInteract);
+    }
     this.promptContainer.destroy();
 
     this.disarmHint();
