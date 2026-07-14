@@ -68,9 +68,13 @@ export class MapIntroScene extends Scene {
 
       marker.setInteractive({ useHandCursor: true });
       marker.on("pointerdown", () => {
-        this.cancelAutoStart("cycled");
-        this.activeMarkerIndex = index;
-        this.emitMarkerChanged();
+        if (this.activeMarkerIndex === index) {
+          this.beginGame();
+        } else {
+          this.cancelAutoStart("cycled");
+          this.activeMarkerIndex = index;
+          this.emitMarkerChanged();
+        }
       });
 
       this.markerViews.set(markerData.id, { marker });
