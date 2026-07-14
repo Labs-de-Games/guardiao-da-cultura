@@ -33,6 +33,7 @@ import { CarryableItem } from "../objects/interactives/CarryableItem";
 import { DraggableItem } from "../objects/interactives/DraggableItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
+import type { MovingPlatform } from "../objects/MovingPlatform";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
@@ -105,6 +106,7 @@ export class Game extends Scene implements GameDataAccessor {
   private quizManager!: QuizManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
+  private movingPlatforms: MovingPlatform[] = [];
   private itemsInteracted: Set<string> = new Set();
 
   private levelId: string = "level_01";
@@ -791,6 +793,12 @@ export class Game extends Scene implements GameDataAccessor {
       this.mapScale,
     );
 
+    this.movingPlatforms = MapManager.createMovingPlatforms(
+      this,
+      mapData,
+      this.mapScale,
+    );
+
     this.rat = new Enemy(this, 2000, 315, 1);
 
     let spawnX = PLAYER_SPAWN.X;
@@ -1139,6 +1147,50 @@ export class Game extends Scene implements GameDataAccessor {
         }
       }
     });
+
+    // Moving platforms — one-way collision (player can jump through from below)
+    for (const platform of this.movingPlatforms) {
+      this.physics.add.collider(
+        this.player,
+        platform,
+        // Collision callback: track when player is standing on platform
+        (player, _platform) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            (player as Player).setStandingPlatform(platform as MovingPlatform);
+          }
+        },
+        // Process callback: determine if collision should occur
+        (_player, _platform) => {
+          // Allow player to pass through when climbing stairs
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+
+          const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+          const platformBody = platform.body as Phaser.Physics.Arcade.Body;
+
+          // With setDirectControl(true), velocity is not set explicitly.
+          // Use position delta to determine the platform's actual movement.
+          const platformDeltaY = platformBody.position.y - platformBody.prev.y;
+
+          // Player must be moving downwards relative to the platform
+          const relativeVelocityY =
+            playerBody.velocity.y -
+            platformDeltaY / (this.game.loop.delta / 1000 || 1 / 60);
+          if (relativeVelocityY < -0.01) {
+            return false;
+          }
+
+          // Player's feet must have been above or at the platform's top in the previous frame
+          return (
+            playerBody.prev.y + playerBody.height <= platformBody.prev.y + 10
+          );
+        },
+        this,
+      );
+    }
   }
 
   private setupCameras() {
