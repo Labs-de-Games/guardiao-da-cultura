@@ -28,6 +28,7 @@ This document outlines the architectural decisions, structural boundaries, and t
   - [Badges Module](#badges-module)
   - [Analytics Module](#analytics-module)
   - [PostHog Module](#posthog-module)
+  - [TTS Module](#tts-module)
   - [Planned Modules](#planned-modules)
   - [Technical Notes](#technical-notes)
 
@@ -70,6 +71,11 @@ flowchart TB
         Analytics["Analytics & Telemetry"]
         PostHogBE["PostHog Integration"]
         Admin["Admin"]
+        TTS["TTS Proxy"]
+    end
+
+    subgraph External["External Services"]
+        ExternalRV["ResponsiveVoice API"]
     end
 
     subgraph Data["Data Layer"]
@@ -78,12 +84,14 @@ flowchart TB
 
     UI --> Auth
     Game --> GameBE
+    UI --> TTS
     GameBE --> Progression
     GameBE --> Scoring
     GameBE --> Badges
     GameBE --> Analytics
     Auth --> Users
     Admin --> Users
+    TTS --> ExternalRV
     Progression --> DB
     Scoring --> DB
     Badges --> DB
@@ -95,6 +103,7 @@ flowchart TB
     style Frontend fill:#e1f5fe
     style Backend fill:#e8f5e9
     style Data fill:#f3e5f5
+    style External fill:#fff3e0
 ```
 
 ### Domain Modules
@@ -108,6 +117,7 @@ flowchart TB
 7. **Analytics:** Stores raw game event logs (append-only) for funnel metrics and dashboards.
 8. **PostHog Integration:** Server-side event forwarding to PostHog for product analytics and error tracking.
 9. **Admin:** Admin-only endpoints for user management (list, role updates, status toggle).
+10. **TTS:** Server-side proxy for ResponsiveVoice text-to-speech. Hides the API key from the client bundle. Accepts text and returns audio (`audio/mpeg`). Accessible to both authenticated users and guests via `@GuestPlay()`.
 
 ## 3. Technology Stack
 
@@ -178,6 +188,7 @@ gameplate/
     │   │   ├── posthog/      # PostHog server-side integration
     │   │   ├── progression/  # Player progression tracking
     │   │   ├── scoring/      # Score & leaderboard management
+    │   │   ├── tts/          # Text-to-speech proxy
     │   │   └── users/        # User profiles & roles
     │   │
     │   ├── app.module.ts
@@ -203,6 +214,7 @@ The gameplay itself will operate mostly as a client-side application (Next.js + 
 - **Observability & Analytics:** PostHog is integrated on both frontend (`posthog-js`) and backend (`posthog-node`) for product analytics, session replay, and error tracking. See `docs/posthog-implementation-plan.md`.
 - **Chunk Selector UI Migration (Phase 7):** The photo restoration ChunkSelector panel is implemented in React overlay, wired through the shared EventBus, and preserves keyboard interaction parity (Arrow keys + WASD for navigation, Enter/Space for confirm, Esc for close). The panel layout was refined to better balance inventory/frame space and includes automatic inventory scroll-on-navigation to keep keyboard-selected items visible.
 - **MapInfoBox & Map Progression (PR #517):** The `MapInfoBox` React panel exposes three UI states (available, completed, locked) driven by the `map:marker-changed` EventBus event. `MapIntroScene` dynamically computes marker availability from `progression.completedLevels`, so Phase N unlocks only after Phase N−1 is complete. The event payload (`MapMarkerChangedData`) includes `isCompleted?: boolean`, removing `MapInfoBox`'s need for a separate Zustand `progression` selector. To handle Turbopack module isolation and React mount-timing races (React overlay mounts after `StartGame()` returns), `MapIntroScene.emitMarkerChanged()` writes directly to the Zustand store via `useGameUIStore.getState().setActiveMapMarker()` in addition to emitting the EventBus event. A dev debug shortcut (`localStorage.setItem("gameplate:debug:completedLevels", ...)`) allows pre-seeding completion state without playing through levels.
+- **Server-Side TTS Proxy:** The ResponsiveVoice API key was moved from `NEXT_PUBLIC_` (exposed in client JS bundle) to a server-only env var (`RESPONSIVEVOICE_API_KEY`). The backend proxies TTS requests via ResponsiveVoice v1 REST API, returning `StreamableFile` audio. Frontend calls `POST /tts/synthesize` and receives binary `audio/mpeg`. Guest users access via `@GuestPlay()` decorator (JWT optional). This eliminates domain whitelist concerns since Node.js `fetch()` sends no `Origin`/`Referer` headers.
 
 ### Pending
 
@@ -287,6 +299,14 @@ Admin-only endpoints guarded by `RolesGuard`.
 |--------|------|------|-------------|
 | `GET` | `/posthog/bootstrap` | JWT | Get PostHog feature flags and distinct ID for bootstrapping. |
 
+### TTS Module (`/tts`)
+
+Server-side proxy for ResponsiveVoice text-to-speech. The API key is stored server-only (`RESPONSIVEVOICE_API_KEY`). The backend calls ResponsiveVoice v1 REST API and streams audio back as `StreamableFile`. Guest access is allowed via `@GuestPlay()`.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/tts/synthesize` | GuestPlay | Convert text to speech. Body: `{ text: string, voice?: string, rate?: number, pitch?: number }`. Returns binary `audio/mpeg`. |
+
 ### Planned Modules
 
 | Module | Status | Description |
@@ -301,3 +321,4 @@ Admin-only endpoints guarded by `RolesGuard`.
 - **Security:** Refresh tokens are opaque random strings (64 bytes) SHA-256 hashed in the database. Access tokens are JWTs with a `jti` claim and 15-minute expiry. An in-memory blocklist rejects revoked tokens immediately.
 - **Rate Limiting:** Auth endpoints have per-email throttling (3/hr register, 5/hr login, 3/hr resend verification). Refresh is throttled at 30/min per IP.
 - **Cookies:** `refresh_token` (httpOnly, Secure, SameSite=Strict), `auth_status` (non-httpOnly, SameSite=Lax), `login_attempt` (httpOnly, 15min expiry).
+- **TTS API Key:** The `RESPONSIVEVOICE_API_KEY` is stored as a server-only environment variable (no `NEXT_PUBLIC_` prefix). The backend calls ResponsiveVoice v1 REST API (`text:synthesize` endpoint) with the key in query parameters. Audio is streamed back as `StreamableFile` to avoid NestJS `Buffer`-to-JSON serialization. The frontend falls back to native Web Speech API (`window.speechSynthesis`) on error.
