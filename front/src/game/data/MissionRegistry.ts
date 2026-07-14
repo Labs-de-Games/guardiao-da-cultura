@@ -30,13 +30,13 @@ export const MissionRegistry: Record<string, MissionDef> = {
         categoryType: InteractiveType.PAINTING,
       },
       {
+        infoKey: MissionKeys.PHOTO_COLLECTED,
+        text: "Encontrar os pedaços da fotografia",
+      },
+      {
         infoKey: MissionKeys.PHOTO_DONE,
         text: "Remontar a fotografia",
         categoryType: InteractiveType.PHOTO,
-      },
-      {
-        infoKey: MissionKeys.PHOTO_COLLECTED,
-        text: "Encontrar os pedaços da fotografia",
       },
     ],
   },
