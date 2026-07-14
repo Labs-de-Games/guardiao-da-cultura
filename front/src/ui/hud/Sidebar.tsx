@@ -11,7 +11,9 @@ import {
   useGameUIStore,
 } from "@/ui/state/game-ui-store";
 
+import { AudioSubpanel } from "./AudioSubpanel";
 import { CollectibleGrid } from "./CollectibleGrid";
+import { ControlsSubpanel } from "./ControlsSubpanel";
 import { HintCard } from "./HintCard";
 import { ObjectiveList } from "./ObjectiveList";
 import { PhaseInfoCard } from "./PhaseInfoCard";
@@ -116,6 +118,8 @@ export function Sidebar() {
             />
           </Box>
           <ObjectiveList />
+          <ControlsSubpanel />
+          <AudioSubpanel />
           <PhaseInfoCard sx={{ mt: "auto" }} />
         </Box>
       </Paper>

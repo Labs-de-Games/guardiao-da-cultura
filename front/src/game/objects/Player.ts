@@ -618,7 +618,7 @@ export class Player
       !this.isClimbingStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
-      AudioManager.playSfx("sfx.player.jump", 0.3);
+      AudioManager.playSfx("sfx.player.jump", 0.5);
       if (!this.isCarrying) {
         this.anims.play(PLAYER_ANIMS.JUMP.key, true);
         this.setPhysicsBodyForVisualScale(this.scaleX);

@@ -132,7 +132,7 @@ export class EffectsManager {
     this.spotlightTargetY = py;
     this.spotlightVisible = true;
     this.revealProgress = 0;
-    AudioManager.playSfx("sfx.puzzle.success", 0.5);
+    AudioManager.playSfx("sfx.puzzle.success", 0.7);
 
     this.scene.tweens.add({
       targets: this,
