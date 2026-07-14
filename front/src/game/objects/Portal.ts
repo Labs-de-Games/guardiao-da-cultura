@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { Actions } from "../constants/KeyBindings";
 import { InteractionComponent } from "./InteractionComponent";
 import type { Player } from "./Player";
 import { PLAYER_ANIMS } from "./PlayerConfig";
@@ -28,6 +29,7 @@ export class Portal extends Phaser.GameObjects.Zone {
       dialogueLines: [],
       onInteract: () => this.handleInteract(),
       interactionDistance: 130,
+      actionKey: [Actions.MOVE_UP, Actions.INTERACT],
     });
 
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
