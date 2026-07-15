@@ -93,7 +93,7 @@ export interface GameUIState {
     phase: "questioning" | "performance";
     questions: QuizQuestion[];
     currentQuestionIndex: number;
-    selectedOptionIndex: number;
+    selectedOptionIndex: number | null;
     answers: ("correct" | "wrong" | null)[];
     score: number;
     isProcessingAnswer: boolean;
@@ -360,7 +360,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         phase: "questioning",
         questions,
         currentQuestionIndex: 0,
-        selectedOptionIndex: 0,
+        selectedOptionIndex: null,
         answers: new Array(questions.length).fill(null),
         score: 0,
         isProcessingAnswer: false,
@@ -375,7 +375,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     if (
       !quiz.isVisible ||
       quiz.isProcessingAnswer ||
-      quiz.questions.length === 0
+      quiz.questions.length === 0 ||
+      quiz.selectedOptionIndex === null
     )
       return;
 
@@ -405,7 +406,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
           quiz: {
             ...s.quiz,
             currentQuestionIndex: nextIndex,
-            selectedOptionIndex: 0,
+            selectedOptionIndex: null,
             isProcessingAnswer: false,
           },
         }));
@@ -452,8 +453,9 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     )
       return;
 
-    const col = quiz.selectedOptionIndex % 2;
-    const row = quiz.selectedOptionIndex >= 2 ? 1 : 0;
+    const currentIndex = quiz.selectedOptionIndex ?? 0;
+    const col = currentIndex % 2;
+    const row = currentIndex >= 2 ? 1 : 0;
 
     const nextCol = (col + dCol + 2) % 2;
     const nextRow = (row + dRow + 2) % 2;
@@ -479,7 +481,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         quiz: {
           ...s.quiz,
           currentQuestionIndex: nextIndex,
-          selectedOptionIndex: 0,
+          selectedOptionIndex: null,
         },
       }));
     }
@@ -492,7 +494,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         ...quiz,
         phase: "questioning",
         currentQuestionIndex: 0,
-        selectedOptionIndex: 0,
+        selectedOptionIndex: null,
         answers: new Array(quiz.questions.length).fill(null),
         score: 0,
         isProcessingAnswer: false,
@@ -518,7 +520,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         phase: "questioning",
         questions: [],
         currentQuestionIndex: 0,
-        selectedOptionIndex: 0,
+        selectedOptionIndex: null,
         answers: [],
         score: 0,
         isProcessingAnswer: false,
