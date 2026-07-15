@@ -105,6 +105,7 @@ export class CollectibleSystem {
         )
       ) {
         collectible.isCollected = true;
+        collectible.sprite.setVisible(false);
       }
     }
   }
@@ -184,6 +185,7 @@ export class CollectibleSystem {
 
       if (!instance.isCollected) {
         instance.isCollected = true;
+        instance.sprite.setVisible(false);
 
         const totalCollected = this.collectibles.filter(
           (c) => c.isCollected,
