@@ -182,12 +182,6 @@ export class CollectibleSystem {
     if (!this.activeCollectible) {
       this.activeCollectible = instance;
 
-      // Collectibles no longer affect scoring - removed ScoreManager call
-      // this.scoreManager.recordCollectible(
-      //   instance.collectibleId,
-      //   instance.collectibleType,
-      // );
-
       if (!instance.isCollected) {
         instance.isCollected = true;
 
