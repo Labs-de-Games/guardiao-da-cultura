@@ -161,7 +161,9 @@ export default function PhaserGame() {
         ) : (
           <LoadingScreen />
         ))}
-      {overlayMounted && <GameOverlay entryFlow={entryFlow} />}
+      {overlayMounted && (
+        <GameOverlay entryFlow={entryFlow} isEntryFlowLoading={isFlowLoading} />
+      )}
     </div>
   );
 }
