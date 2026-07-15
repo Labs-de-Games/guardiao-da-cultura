@@ -37,7 +37,6 @@ export class ScoringService {
       floorScores: dto.floors,
       quizScore: dto.quiz,
       intermediateQuizScore: dto.intermediateQuizzes,
-      collectibleScore: dto.collectibles,
     });
 
     const saved = await this.userScoreRepository.save(userScore);
@@ -55,7 +54,7 @@ export class ScoringService {
         quiz_accuracy: dto.quiz.accuracyPercent,
         intermediate_quiz_total: dto.intermediateQuizzes.total,
         intermediate_quiz_passed: dto.intermediateQuizzes.passed,
-        intermediate_quiz_net: dto.intermediateQuizzes.quartersNet,
+        intermediate_quiz_net: dto.intermediateQuizzes.quartersEarned,
       },
     });
 
