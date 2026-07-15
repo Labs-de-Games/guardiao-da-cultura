@@ -44,7 +44,7 @@ export class UserScore {
   intermediateQuizScore!: {
     total: number;
     passed: number;
-    quartersNet: number;
+    quartersEarned: number;
   };
 
   @CreateDateColumn()
