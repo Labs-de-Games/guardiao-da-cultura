@@ -17,7 +17,6 @@ import { GameModule } from "./modules/game/game.module";
 import { PostHogModule } from "./modules/posthog/posthog.module";
 import { ProgressionModule } from "./modules/progression/progression.module";
 import { ScoringModule } from "./modules/scoring/scoring.module";
-import { TtsModule } from "./modules/tts/tts.module";
 import { UserInterestedModule } from "./modules/user-interested/user-interested.module";
 import { UsersModule } from "./modules/users/users.module";
 
@@ -35,7 +34,6 @@ import { UsersModule } from "./modules/users/users.module";
     ProgressionModule,
     BadgesModule,
     ScoringModule,
-    TtsModule,
     AnalyticsModule,
     UserInterestedModule,
     DashboardModule,
