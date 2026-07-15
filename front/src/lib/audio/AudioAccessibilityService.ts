@@ -1,5 +1,4 @@
 import type * as Phaser from "phaser";
-import { apiClient } from "@/lib/api/client";
 
 const DUCK_VOLUME = 0.3;
 const DEFAULT_VOICE = "pt-BR";
@@ -77,18 +76,22 @@ class AudioAccessibilityServiceImpl {
     this.primeAudioContext();
 
     try {
-      const response = await apiClient.post(
-        "/tts/synthesize",
-        {
+      const response = await fetch("/api/tts/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           text,
           voice: options?.voice ?? DEFAULT_VOICE,
           rate: options?.rate,
           pitch: options?.pitch,
-        },
-        { responseType: "blob" },
-      );
+        }),
+      });
 
-      const blob = new Blob([response.data], { type: "audio/mpeg" });
+      if (!response.ok) {
+        throw new Error(`TTS synthesis failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       this.currentAudio = audio;
