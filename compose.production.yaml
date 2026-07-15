@@ -96,6 +96,7 @@ services:
       - NEXT_PUBLIC_API_URL=${FRONTEND_API_URL}
       - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
       - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}
+      - RESPONSIVEVOICE_API_KEY=${RESPONSIVEVOICE_API_KEY:-}
     healthcheck:
       test:
         [
@@ -144,7 +145,6 @@ services:
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
       - POSTHOG_API_KEY=${POSTHOG_API_KEY}
       - POSTHOG_HOST=${POSTHOG_HOST:-https://us.i.posthog.com}
-      - RESPONSIVEVOICE_API_KEY=${RESPONSIVEVOICE_API_KEY:-}
     healthcheck:
       test:
         [
