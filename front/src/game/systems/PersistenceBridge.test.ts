@@ -44,7 +44,7 @@ function createMocks() {
         accuracyPercent: 80,
         quartersEarned: 2,
       },
-      intermediateQuizzes: { total: 0, passed: 0, quartersNet: 0 },
+      intermediateQuizzes: { total: 0, passed: 0, quartersEarned: 0 },
     }),
   } as unknown as ScoreManager;
 
