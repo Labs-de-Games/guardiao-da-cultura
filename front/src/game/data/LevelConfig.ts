@@ -184,7 +184,12 @@ export const LEVEL_ASSETS = {
       },
     ],
     CHUNKS: [],
-    OTHERS: [],
+    OTHERS: [
+      {
+        key: "p1",
+        path: "moving-platforms/p1.png",
+      },
+    ],
     COLLECTIBLES: [],
     CONTENT: {
       key: "content",
