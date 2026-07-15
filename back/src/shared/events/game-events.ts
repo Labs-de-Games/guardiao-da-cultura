@@ -57,23 +57,3 @@ export interface BadgeEarnedMetadata {
   badgeId: string;
   badgeName?: string;
 }
-
-export interface QuizCompletedMetadata {
-  missionId: string;
-  score: number;
-  totalQuestions: number;
-  accuracyPercent: number;
-  quartersEarned: number;
-  passed: boolean;
-  timeSpentMs?: number;
-  attempts?: number;
-  payload?: Record<string, unknown>;
-}
-
-export interface IntermediateQuizCompletedMetadata {
-  infoKey: string;
-  correctAnswers: number;
-  totalQuestions: number;
-  quartersEarned: number;
-  missionId: string;
-}
