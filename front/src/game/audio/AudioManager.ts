@@ -213,7 +213,10 @@ export class AudioManager {
       category === "music"
         ? this.settings.musicVolume
         : this.settings.sfxVolume;
-    const volume = volumeOverride ?? categoryVolume;
+    const volume =
+      volumeOverride !== undefined
+        ? volumeOverride * categoryVolume
+        : categoryVolume;
 
     // Intro tracks should NOT loop - they transition to the loop track
     const isIntro = key.includes(".intro");
@@ -308,7 +311,10 @@ export class AudioManager {
       return null;
     }
 
-    const volume = volumeOverride ?? this.settings.sfxVolume;
+    const volume =
+      volumeOverride !== undefined
+        ? volumeOverride * this.settings.sfxVolume
+        : this.settings.sfxVolume;
 
     const sound = this.scene.sound.add(actualKey, {
       volume,

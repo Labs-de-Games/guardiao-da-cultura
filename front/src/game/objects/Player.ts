@@ -408,9 +408,11 @@ export class Player
           this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
           // Start climb loop sound
           if (!this.climbLoopSound) {
+            const settings = AudioManager.getSettings();
             this.climbLoopSound = this.scene.sound.add("sfx.player.climb", {
               loop: true,
-              volume: 0.3,
+              volume: 0.3 * settings.sfxVolume,
+              mute: settings.muted,
             });
             this.climbLoopSound.play();
           }

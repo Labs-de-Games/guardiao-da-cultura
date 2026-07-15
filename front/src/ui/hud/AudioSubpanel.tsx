@@ -1,8 +1,9 @@
 "use client";
 
 import { Box, Collapse, Paper, Slider, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { AudioManager } from "@/game/audio/AudioManager";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 
 const TITLE_BG = "#AF7E2F";
@@ -152,10 +153,11 @@ function VolumeControl({ icon, value, onChange }: VolumeControlProps) {
           sx={{
             position: "absolute",
             top: -6,
-            left: 6,
-            right: 6,
+            left: "10%",
+            // right: "10%",
             height: 40,
             padding: 0,
+            // paddingRight: "-10px",
             "& .MuiSlider-rail": {
               display: "none",
             },
@@ -168,12 +170,6 @@ function VolumeControl({ icon, value, onChange }: VolumeControlProps) {
               bgcolor: SLIDER_COLOR,
               borderRadius: "2px",
               boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
-              "&:hover": {
-                boxShadow: "0 3px 6px rgba(0,0,0,0.5)",
-              },
-              "&.Mui-focusVisible": {
-                boxShadow: "0 0 0 2px rgba(175, 126, 47, 0.4)",
-              },
             },
           }}
         />
@@ -188,14 +184,36 @@ export function AudioSubpanel() {
   const [effectsVolume, setEffectsVolume] = useState(80);
   const [voiceVolume, setVoiceVolume] = useState(60);
 
+  // Initialize from AudioManager settings
+  useEffect(() => {
+    const settings = AudioManager.getSettings();
+    setMusicVolume(Math.round(settings.musicVolume * 100));
+    setEffectsVolume(Math.round(settings.sfxVolume * 100));
+  }, []);
+
   const handleToggle = () => {
     setExpanded((prev) => !prev);
+  };
+
+  const handleMusicChange = (value: number) => {
+    setMusicVolume(value);
+    AudioManager.setMusicVolume(value / 100);
+  };
+
+  const handleEffectsChange = (value: number) => {
+    setEffectsVolume(value);
+    AudioManager.setSfxVolume(value / 100);
+  };
+
+  const handleVoiceChange = (value: number) => {
+    setVoiceVolume(value);
+    // Voice uses SFX volume for now
+    AudioManager.setSfxVolume(value / 100);
   };
 
   return (
     <Box sx={{ width: "100%" }}>
       <Paper
-        onClick={handleToggle}
         elevation={2}
         sx={{
           bgcolor: TITLE_BG,
@@ -210,12 +228,13 @@ export function AudioSubpanel() {
         }}
       >
         <Box
+          onClick={handleToggle}
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             px: 1.5,
-            py: 1,
+            py: 0.4,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -225,7 +244,7 @@ export function AudioSubpanel() {
             sx={{
               fontFamily: LayoutConfig.FONTS.BODY,
               fontWeight: 700,
-              fontSize: "14px",
+              fontSize: "12px",
               color: TEXT_COLOR,
               flex: 1,
               textAlign: "center",
@@ -237,40 +256,38 @@ export function AudioSubpanel() {
             {expanded ? <CollapseIcon /> : <ExpandIcon />}
           </Box>
         </Box>
-      </Paper>
 
-      <Collapse in={expanded} timeout={200} unmountOnExit>
-        <Box
-          sx={{
-            mt: 1,
-            bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
-            borderRadius: "12px",
-            p: 1.5,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
-          }}
-        >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <VolumeControl
-              icon={<MusicIcon />}
-              label="Música"
-              value={musicVolume}
-              onChange={setMusicVolume}
-            />
-            <VolumeControl
-              icon={<EffectsIcon />}
-              label="Efeitos"
-              value={effectsVolume}
-              onChange={setEffectsVolume}
-            />
-            <VolumeControl
-              icon={<VoiceIcon />}
-              label="Narração"
-              value={voiceVolume}
-              onChange={setVoiceVolume}
-            />
+        <Collapse in={expanded} timeout={200} unmountOnExit>
+          <Box
+            sx={{
+              bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
+              p: 1.5,
+              borderRadius: "0 0 12px 12px",
+            }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <VolumeControl
+                icon={<MusicIcon />}
+                label="Música"
+                value={musicVolume}
+                onChange={handleMusicChange}
+              />
+              <VolumeControl
+                icon={<EffectsIcon />}
+                label="Efeitos"
+                value={effectsVolume}
+                onChange={handleEffectsChange}
+              />
+              <VolumeControl
+                icon={<VoiceIcon />}
+                label="Narração"
+                value={voiceVolume}
+                onChange={handleVoiceChange}
+              />
+            </Box>
           </Box>
-        </Box>
-      </Collapse>
+        </Collapse>
+      </Paper>
     </Box>
   );
 }

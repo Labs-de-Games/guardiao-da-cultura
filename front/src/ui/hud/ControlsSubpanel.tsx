@@ -6,7 +6,7 @@ import { useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 
 const CONTROLS = [
-  { key: "WASD\nSetas", action: "Andar, subir e descer" },
+  { key: "W A S D\nou setas", action: "Andar, subir, descer" },
   { key: "ESPAÇO", action: "Pular" },
   { key: "E", action: "Interagir" },
   { key: "TAB", action: "Painel" },
@@ -14,7 +14,7 @@ const CONTROLS = [
   { key: "ESC", action: "Fechar" },
 ];
 
-const TITLE_BG = "#216831";
+const TITLE_BG = "#3B8C45";
 const TEXT_COLOR = "#252726";
 const CONTENT_TEXT_COLOR = "#F5F5F5";
 
@@ -73,7 +73,6 @@ export function ControlsSubpanel() {
   return (
     <Box sx={{ width: "100%" }}>
       <Paper
-        onClick={handleToggle}
         elevation={2}
         sx={{
           bgcolor: TITLE_BG,
@@ -88,12 +87,13 @@ export function ControlsSubpanel() {
         }}
       >
         <Box
+          onClick={handleToggle}
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             px: 1.5,
-            py: 1,
+            py: 0.27,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -103,7 +103,7 @@ export function ControlsSubpanel() {
             sx={{
               fontFamily: LayoutConfig.FONTS.BODY,
               fontWeight: 700,
-              fontSize: "14px",
+              fontSize: "12px",
               color: TEXT_COLOR,
               flex: 1,
               textAlign: "center",
@@ -115,65 +115,65 @@ export function ControlsSubpanel() {
             {expanded ? <CollapseIcon /> : <ExpandIcon />}
           </Box>
         </Box>
-      </Paper>
 
-      <Collapse in={expanded} timeout={200} unmountOnExit>
-        <Box
-          sx={{
-            mt: 1,
-            bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
-            borderRadius: "12px",
-            p: 1.5,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
-          }}
-        >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {CONTROLS.map(({ key, action }) => (
-              <Box
-                key={key}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                }}
-              >
-                <Paper
-                  elevation={0}
+        <Collapse in={expanded} timeout={200} unmountOnExit>
+          <Box
+            sx={{
+              bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
+              p: 1.5,
+              borderRadius: "0 0 12px 12px",
+            }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {CONTROLS.map(({ key, action }) => (
+                <Box
+                  key={key}
                   sx={{
-                    px: 1,
-                    py: 0.25,
-                    minWidth: 70,
-                    textAlign: "center",
-                    bgcolor: "rgba(255,255,255,0.1)",
-                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
                   }}
                 >
-                  <Typography
+                  <Paper
+                    elevation={0}
                     sx={{
-                      fontFamily: "monospace",
-                      fontWeight: 600,
-                      fontSize: "11px",
-                      color: CONTENT_TEXT_COLOR,
+                      px: 1,
+                      py: 0.25,
+                      minWidth: 70,
+                      textAlign: "center",
+                      bgcolor: "rgba(255,255,255,0.1)",
+                      borderRadius: "6px",
                     }}
                   >
-                    {key}
+                    <Typography
+                      sx={{
+                        fontFamily: "monospace",
+                        fontWeight: 600,
+                        fontSize: "11px",
+                        color: CONTENT_TEXT_COLOR,
+                        whiteSpace: "pre-line",
+                        // lineHeight: 1.3,
+                      }}
+                    >
+                      {key}
+                    </Typography>
+                  </Paper>
+                  <Typography
+                    sx={{
+                      fontFamily: LayoutConfig.FONTS.BODY,
+                      fontSize: "12px",
+                      color: CONTENT_TEXT_COLOR,
+                      flex: 1,
+                    }}
+                  >
+                    {action}
                   </Typography>
-                </Paper>
-                <Typography
-                  sx={{
-                    fontFamily: LayoutConfig.FONTS.BODY,
-                    fontSize: "12px",
-                    color: CONTENT_TEXT_COLOR,
-                    flex: 1,
-                  }}
-                >
-                  {action}
-                </Typography>
-              </Box>
-            ))}
+                </Box>
+              ))}
+            </Box>
           </Box>
-        </Box>
-      </Collapse>
+        </Collapse>
+      </Paper>
     </Box>
   );
 }
