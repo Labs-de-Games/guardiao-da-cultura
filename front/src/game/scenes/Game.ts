@@ -169,9 +169,17 @@ export class Game extends Scene implements GameDataAccessor {
   preload() {
     window.dispatchEvent(
       new CustomEvent("phaser-loading-start", {
-        detail: { type: "level_assets" },
+        detail: { type: "level_assets", levelId: this.levelId },
       }),
     );
+
+    this.load.on("progress", (value: number) => {
+      window.dispatchEvent(
+        new CustomEvent("phaser-loading-progress", {
+          detail: { progress: Math.round(value * 100) },
+        }),
+      );
+    });
 
     this.load.setPath("assets/");
     Player.preload(this);
