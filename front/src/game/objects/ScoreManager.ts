@@ -13,11 +13,13 @@ import type {
 export interface ScoreManagerOptions {
   levelId: string;
   floorsTotal?: number;
+  intermediateQuizzesTotal?: number;
 }
 
 export class ScoreManager extends Phaser.Events.EventEmitter {
   private readonly levelId: string;
   private readonly floorsTotal: number;
+  private readonly intermediateQuizzesTotal: number;
 
   private readonly startedAt: IsoTimestamp;
   private updatedAt: IsoTimestamp;
@@ -31,6 +33,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     super();
     this.levelId = options.levelId;
     this.floorsTotal = options.floorsTotal ?? 3;
+    this.intermediateQuizzesTotal = options.intermediateQuizzesTotal ?? 3;
 
     if (this.floorsTotal !== 3) {
       throw new Error(
@@ -188,9 +191,9 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
   }
 
   getMaxStars(): number {
-    // New: floors (2 each) + quiz (5) + intermediate quizzes (3 per quiz, assume 3) = 6 + 5 + 9 = 20
+    // floors (2 each) + quiz (5) + intermediate quizzes (3 quarters each)
     const quizMaxQuarters = 5;
-    const intermediateQuizMaxQuarters = 9; // 3 quizzes x 3 quarters each
+    const intermediateQuizMaxQuarters = this.intermediateQuizzesTotal * 3;
     const maxQuarters =
       this.floorsTotal * 2 + quizMaxQuarters + intermediateQuizMaxQuarters;
     return maxQuarters / 4;
