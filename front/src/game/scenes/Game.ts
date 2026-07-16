@@ -33,9 +33,11 @@ import { CarryableItem } from "../objects/interactives/CarryableItem";
 import { DraggableItem } from "../objects/interactives/DraggableItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
+import type { MovingPlatform } from "../objects/MovingPlatform";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
+import type { Portal } from "../objects/Portal";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
@@ -73,6 +75,7 @@ export class Game extends Scene implements GameDataAccessor {
   rat!: Enemy;
   private hasInteractedWithRat: boolean = false;
   npcs: Npc[] = [];
+  portals: Portal[] = [];
   questManager!: QuestManager;
   private scoreManager!: ScoreManager;
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
@@ -103,6 +106,7 @@ export class Game extends Scene implements GameDataAccessor {
   private quizManager!: QuizManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
+  private movingPlatforms: MovingPlatform[] = [];
   private itemsInteracted: Set<string> = new Set();
 
   private levelId: string = "level_01";
@@ -165,9 +169,17 @@ export class Game extends Scene implements GameDataAccessor {
   preload() {
     window.dispatchEvent(
       new CustomEvent("phaser-loading-start", {
-        detail: { type: "level_assets" },
+        detail: { type: "level_assets", levelId: this.levelId },
       }),
     );
+
+    this.load.on("progress", (value: number) => {
+      window.dispatchEvent(
+        new CustomEvent("phaser-loading-progress", {
+          detail: { progress: Math.round(value * 100) },
+        }),
+      );
+    });
 
     this.load.setPath("assets/");
     Player.preload(this);
@@ -268,6 +280,7 @@ export class Game extends Scene implements GameDataAccessor {
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
+      this.portals = MapManager.createPortals(this, mapData);
     }
 
     this.questManager = new QuestManager(MissionRequirements);
@@ -340,11 +353,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.collectibleSystem = new CollectibleSystem(
-      this,
-      this.scoreManager,
-      this.mapScale,
-    );
+    this.collectibleSystem = new CollectibleSystem(this, this.mapScale);
 
     const actorId = (this.registry.get("userId") as string | undefined) ?? null;
     const isGuest = this.registry.get("isGuest") === true;
@@ -538,6 +547,24 @@ export class Game extends Scene implements GameDataAccessor {
             },
             interactionDistance: 130,
           })),
+        ...this.portals.map((portal) => ({
+          get x() {
+            return portal.x;
+          },
+          get y() {
+            return portal.y;
+          },
+          get interactionY() {
+            return portal.y;
+          },
+          get displayHeight() {
+            return portal.height;
+          },
+          get active() {
+            return portal.active;
+          },
+          interactionDistance: 130,
+        })),
       ]);
 
       this.analyticsSystem.trackLevelEvent(
@@ -770,6 +797,12 @@ export class Game extends Scene implements GameDataAccessor {
       this.mapScale,
     );
 
+    this.movingPlatforms = MapManager.createMovingPlatforms(
+      this,
+      mapData,
+      this.mapScale,
+    );
+
     this.rat = new Enemy(this, 2000, 315, 1);
 
     let spawnX = PLAYER_SPAWN.X;
@@ -796,6 +829,10 @@ export class Game extends Scene implements GameDataAccessor {
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
+    }
+
+    for (const portal of this.portals) {
+      portal.setPlayerTracking(this.player);
     }
 
     // Teleport curator NPC when either sculptures or paintings are marked done
@@ -1114,6 +1151,50 @@ export class Game extends Scene implements GameDataAccessor {
         }
       }
     });
+
+    // Moving platforms — one-way collision (player can jump through from below)
+    for (const platform of this.movingPlatforms) {
+      this.physics.add.collider(
+        this.player,
+        platform,
+        // Collision callback: track when player is standing on platform
+        (player, _platform) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            (player as Player).setStandingPlatform(platform as MovingPlatform);
+          }
+        },
+        // Process callback: determine if collision should occur
+        (_player, _platform) => {
+          // Allow player to pass through when climbing stairs
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+
+          const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+          const platformBody = platform.body as Phaser.Physics.Arcade.Body;
+
+          // With setDirectControl(true), velocity is not set explicitly.
+          // Use position delta to determine the platform's actual movement.
+          const platformDeltaY = platformBody.position.y - platformBody.prev.y;
+
+          // Player must be moving downwards relative to the platform
+          const relativeVelocityY =
+            playerBody.velocity.y -
+            platformDeltaY / (this.game.loop.delta / 1000 || 1 / 60);
+          if (relativeVelocityY < -0.01) {
+            return false;
+          }
+
+          // Player's feet must have been above or at the platform's top in the previous frame
+          return (
+            playerBody.prev.y + playerBody.height <= platformBody.prev.y + 10
+          );
+        },
+        this,
+      );
+    }
   }
 
   private setupCameras() {

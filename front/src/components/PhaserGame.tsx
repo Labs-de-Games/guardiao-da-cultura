@@ -8,12 +8,17 @@ import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
 import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import LoadingGameScreen from "./LoadingGameScreen";
+import LoadingScreen from "./LoadingScreen";
 
 const GameOverlay = dynamic(
   () =>
     import("@/ui/overlay/GameOverlay").then((m) => ({ default: m.default })),
   { ssr: false },
 );
+
+// Keeps LoadingGameScreen visible for at least this long so it doesn't
+// flash by unread when assets load from cache.
+const MIN_LEVEL_LOADING_MS = 5000;
 
 export default function PhaserGame() {
   const { user } = useAuth();
@@ -23,21 +28,54 @@ export default function PhaserGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [_loadingType, setLoadingType] = useState<string>("initial");
+  const [loadingLevelId, setLoadingLevelId] = useState<string | undefined>();
+  const [loadingProgress, setLoadingProgress] = useState<number | undefined>();
   const [overlayMounted, setOverlayMounted] = useState(false);
+  const loadingStartedAtRef = useRef<number | null>(null);
+  const minLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     const handleLoadingStart = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      setLoadingType(customEvent.detail?.type || "default");
+      const customEvent = event as CustomEvent<{
+        type?: string;
+        levelId?: string;
+      }>;
+      if (minLoadingTimeoutRef.current) {
+        clearTimeout(minLoadingTimeoutRef.current);
+        minLoadingTimeoutRef.current = null;
+      }
+      loadingStartedAtRef.current = Date.now();
+      setLoadingLevelId(customEvent.detail?.levelId);
+      setLoadingProgress(undefined);
       setIsLoading(true);
     };
 
+    const handleLoadingProgress = (event: Event) => {
+      const customEvent = event as CustomEvent<{ progress: number }>;
+      setLoadingProgress(customEvent.detail?.progress);
+    };
+
     const handleLoadingComplete = () => {
-      setIsLoading(false);
+      const elapsed = loadingStartedAtRef.current
+        ? Date.now() - loadingStartedAtRef.current
+        : MIN_LEVEL_LOADING_MS;
+      const remaining = Math.max(0, MIN_LEVEL_LOADING_MS - elapsed);
+
+      if (remaining === 0) {
+        setIsLoading(false);
+        return;
+      }
+
+      minLoadingTimeoutRef.current = setTimeout(() => {
+        minLoadingTimeoutRef.current = null;
+        setIsLoading(false);
+      }, remaining);
     };
 
     window.addEventListener("phaser-loading-start", handleLoadingStart);
+    window.addEventListener("phaser-loading-progress", handleLoadingProgress);
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
 
     if (typeof window === "undefined" || !containerRef.current) return;
@@ -84,9 +122,17 @@ export default function PhaserGame() {
     return () => {
       window.removeEventListener("phaser-loading-start", handleLoadingStart);
       window.removeEventListener(
+        "phaser-loading-progress",
+        handleLoadingProgress,
+      );
+      window.removeEventListener(
         "phaser-loading-complete",
         handleLoadingComplete,
       );
+      if (minLoadingTimeoutRef.current) {
+        clearTimeout(minLoadingTimeoutRef.current);
+        minLoadingTimeoutRef.current = null;
+      }
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
@@ -106,8 +152,18 @@ export default function PhaserGame() {
         overflow: "hidden",
       }}
     >
-      {isLoading && <LoadingGameScreen />}
-      {overlayMounted && <GameOverlay entryFlow={entryFlow} />}
+      {isLoading &&
+        (loadingLevelId ? (
+          <LoadingGameScreen
+            levelId={loadingLevelId}
+            progress={loadingProgress}
+          />
+        ) : (
+          <LoadingScreen />
+        ))}
+      {overlayMounted && (
+        <GameOverlay entryFlow={entryFlow} isEntryFlowLoading={isFlowLoading} />
+      )}
     </div>
   );
 }

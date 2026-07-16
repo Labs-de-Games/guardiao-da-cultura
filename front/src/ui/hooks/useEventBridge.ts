@@ -9,8 +9,10 @@ import { useGameUIStore } from "@/ui/state/game-ui-store";
 
 export function useEventBridge({
   entryFlow = "map",
+  isEntryFlowLoading = false,
 }: {
   entryFlow?: EntryFlow;
+  isEntryFlowLoading?: boolean;
 } = {}) {
   const startGame = useGameUIStore((s) => s.startGame);
   const endGame = useGameUIStore((s) => s.endGame);
@@ -24,7 +26,7 @@ export function useEventBridge({
 
   useEffect(() => {
     const currentStatus = useGameUIStore.getState().gameStarted;
-    if (!currentStatus && entryFlow === "direct") {
+    if (!currentStatus && !isEntryFlowLoading && entryFlow === "direct") {
       startGame();
     }
 
@@ -104,6 +106,7 @@ export function useEventBridge({
     };
   }, [
     entryFlow,
+    isEntryFlowLoading,
     startGame,
     endGame,
     setSidebarOpen,
