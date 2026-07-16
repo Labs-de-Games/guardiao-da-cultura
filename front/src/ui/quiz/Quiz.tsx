@@ -671,10 +671,10 @@ export default function QuizPanel() {
                   const selectAnswer = () => {
                     if (!quiz.isProcessingAnswer) {
                       const store = useGameUIStore.getState();
-                      const currentRow =
-                        store.quiz.selectedOptionIndex >= 2 ? 1 : 0;
+                      const currentIndex = store.quiz.selectedOptionIndex ?? 0;
+                      const currentRow = currentIndex >= 2 ? 1 : 0;
                       const targetRow = index >= 2 ? 1 : 0;
-                      const currentCol = store.quiz.selectedOptionIndex % 2;
+                      const currentCol = currentIndex % 2;
                       const targetCol = index % 2;
                       store.moveSelection(targetRow - currentRow, 0);
                       store.moveSelection(0, targetCol - currentCol);
@@ -685,10 +685,10 @@ export default function QuizPanel() {
                   const hoverHighlight = () => {
                     if (!quiz.isProcessingAnswer) {
                       const store = useGameUIStore.getState();
-                      const currentRow =
-                        store.quiz.selectedOptionIndex >= 2 ? 1 : 0;
+                      const currentIndex = store.quiz.selectedOptionIndex ?? 0;
+                      const currentRow = currentIndex >= 2 ? 1 : 0;
                       const targetRow = index >= 2 ? 1 : 0;
-                      const currentCol = store.quiz.selectedOptionIndex % 2;
+                      const currentCol = currentIndex % 2;
                       const targetCol = index % 2;
                       store.moveSelection(targetRow - currentRow, 0);
                       store.moveSelection(0, targetCol - currentCol);
@@ -698,8 +698,12 @@ export default function QuizPanel() {
                     <Grid key={index} size={{ xs: 12, md: 6 }}>
                       <AnswerButton
                         label={option}
-                        selected={selectedOptionIndex === index}
+                        selected={
+                          selectedOptionIndex !== null &&
+                          selectedOptionIndex === index
+                        }
                         feedback={
+                          selectedOptionIndex !== null &&
                           selectedOptionIndex === index
                             ? currentAnswer
                             : undefined

@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.5.0] - 2026-07-16
+
+### Added
+
+- Moving platforms with inertia effect on jump (level 2)
+- Portal teleportation mechanic with rotation and fade-out animations
+- Per-level loading screens with custom backgrounds
+- Map pin tooltip for selected location
+- Coyote time to improve jump responsiveness
+- Level 2 assets, map, and configuration
+- ScoreManager unit tests
+
+### Changed
+
+- Scoring refactor: collectible scoring removed, quarter-based system adopted
+- Loading screen redesigned as level-agnostic with per-level backgrounds
+- Map phase entered on second click of selected pin
+
+### Fixed
+
+- Chunk selector inventory visibility and scrollability
+- Quiz answer appearing pre-selected
+- Blue flash before loading screen
+- Collectible sprite hidden after collection
+- Sidebar objectives reordered to match stage progression
+- Quiz selection persistence
+
+### Removed
+
+- `collectibleScore` column dropped from `user_score` table (migration)
+- Collectible scoring types and aggregate from frontend and backend
+- Unused quiz metadata types from backend events
+
+### Database
+
+- `DropCollectibleScoreColumn` — removes `collectibleScore` jsonb column from `user_score`
+
 ## [1.4.1] - 2026-07-13
 
 ### Fixed

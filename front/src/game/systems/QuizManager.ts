@@ -393,7 +393,12 @@ export class QuizManager {
   ) {
     return (score: number) => {
       const passed = score > 0;
-      this.scoreManager.recordIntermediateQuizResult(infoKey, passed);
+      // New scoring: pass correct answers and total questions
+      this.scoreManager.recordIntermediateQuizResult(
+        infoKey,
+        score,
+        questions.length,
+      );
       this.questManager.markIntermediateQuizDone(infoKey);
 
       this.progressionManager.recordIntermediateQuizResult(infoKey, {
