@@ -19,12 +19,8 @@ export function InventoryDropZone({ children }: { children: ReactNode }) {
         flexDirection: "column",
         gap: 1,
         height: "100%",
-        minHeight: 0,
+        minHeight: 360,
         overflowY: "auto",
-        scrollbarWidth: "none",
-        "&::-webkit-scrollbar": {
-          display: "none",
-        },
         outline: isOver
           ? `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`
           : "2px solid transparent",
