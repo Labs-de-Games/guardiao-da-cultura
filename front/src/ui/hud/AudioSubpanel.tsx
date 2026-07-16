@@ -26,7 +26,7 @@ const SpeakerIcon = () => (
     xmlns="http://www.w3.org/2000/svg"
     width="18"
     height="18"
-    viewBox="0 0 50 50"
+    viewBox="0 0 60 50"
     fill={TEXT_COLOR}
     role="img"
   >
@@ -125,7 +125,14 @@ const VolumeRamp = () => (
   </svg>
 );
 
-function VolumeControl({ icon, value, muted, onChange, onIconClick }: VolumeControlProps) {
+function VolumeControl({
+  icon,
+  label,
+  value,
+  muted,
+  onChange,
+  onIconClick,
+}: VolumeControlProps) {
   const handleChange = (_: Event, newValue: number | number[]) => {
     onChange(newValue as number);
   };
@@ -162,6 +169,7 @@ function VolumeControl({ icon, value, muted, onChange, onIconClick }: VolumeCont
           onChange={handleChange}
           min={0}
           max={100}
+          aria-label={label}
           sx={{
             position: "absolute",
             top: -6,
@@ -170,7 +178,6 @@ function VolumeControl({ icon, value, muted, onChange, onIconClick }: VolumeCont
             width: "auto",
             height: 40,
             padding: 0,
-            // paddingRight: "-10px",
             "& .MuiSlider-rail": {
               display: "none",
             },
@@ -353,7 +360,7 @@ export function AudioSubpanel() {
                 muted={voiceMuted}
                 onChange={handleVoiceChange}
                 onIconClick={handleVoiceIconClick}
-               />
+              />
             </Box>
           </Box>
         </Collapse>
