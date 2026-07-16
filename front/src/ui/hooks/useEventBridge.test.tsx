@@ -68,6 +68,14 @@ describe("useEventBridge", () => {
     expect(useGameUIStore.getState().gameStarted).toBe(false);
   });
 
+  it("should not initialize gameStarted while entry flow is still loading", async () => {
+    renderHook(() =>
+      useEventBridge({ entryFlow: "direct", isEntryFlowLoading: true }),
+    );
+    await flushEffects();
+    expect(useGameUIStore.getState().gameStarted).toBe(false);
+  });
+
   it("should set gameStarted to true when game:started event is emitted", async () => {
     renderHook(() => useEventBridge({ entryFlow: "map" }));
     await flushEffects();
