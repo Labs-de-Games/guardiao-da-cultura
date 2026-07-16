@@ -389,6 +389,12 @@ export class Player
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
 
     if (!isOnStairs) {
+      // Stop climb loop sound when leaving stairs
+      if (this.isClimbingStairs && this.climbLoopSound) {
+        this.climbLoopSound.stop();
+        this.climbLoopSound.destroy();
+        this.climbLoopSound = null;
+      }
       this.isClimbingStairs = false;
     } else {
       const isJumpAnimActive =
@@ -406,16 +412,6 @@ export class Player
       ) {
         if (!this.isClimbingStairs) {
           this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
-          // Start climb loop sound
-          if (!this.climbLoopSound) {
-            const settings = AudioManager.getSettings();
-            this.climbLoopSound = this.scene.sound.add("sfx.player.climb", {
-              loop: true,
-              volume: 0.3 * settings.sfxVolume,
-              mute: settings.muted,
-            });
-            this.climbLoopSound.play();
-          }
         }
         this.isClimbingStairs = true;
       }
@@ -423,12 +419,6 @@ export class Player
       // Exit climbing state if player is touching the ground and not actively climbing
       if (body?.blocked.down && !upDown && !downDown) {
         this.isClimbingStairs = false;
-        // Stop climb loop sound
-        if (this.climbLoopSound) {
-          this.climbLoopSound.stop();
-          this.climbLoopSound.destroy();
-          this.climbLoopSound = null;
-        }
       }
     }
 
@@ -438,6 +428,26 @@ export class Player
       (upDown || downDown) &&
       !this.isGrabbing &&
       !this.isCarrying;
+
+    // Start/stop climb loop sound based on whether player is actively moving on stairs
+    if (isClimbing) {
+      if (!this.climbLoopSound) {
+        const settings = AudioManager.getSettings();
+        this.climbLoopSound = this.scene.sound.add("sfx.player.climb", {
+          loop: true,
+          volume: 0.3 * settings.sfxVolume,
+          mute: settings.muted,
+        });
+        this.climbLoopSound.play();
+      }
+    } else {
+      // Stop climb loop sound when not actively climbing
+      if (this.climbLoopSound) {
+        this.climbLoopSound.stop();
+        this.climbLoopSound.destroy();
+        this.climbLoopSound = null;
+      }
+    }
 
     if (isOnStairs && this.isClimbingStairs && !this.isGrabbing) {
       // Prevent climbing while carrying paintings
@@ -551,7 +561,7 @@ export class Player
       (leftDown || rightDown) &&
       Math.abs(body.velocity.x) > 10;
 
-    if (isWalkingOnGround) {
+    if (isWalkingOnGround && !this.isInDialogue) {
       if (!this.footstepSound) {
         const settings = AudioManager.getSettings();
         this.footstepSound = this.scene.sound.add("sfx.player.footstep", {
@@ -620,7 +630,7 @@ export class Player
       !this.isClimbingStairs
     ) {
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
-      AudioManager.playSfx("sfx.player.jump", 0.5);
+      AudioManager.playSfx("sfx.player.jump", 0.4);
       if (!this.isCarrying) {
         this.anims.play(PLAYER_ANIMS.JUMP.key, true);
         this.setPhysicsBodyForVisualScale(this.scaleX);

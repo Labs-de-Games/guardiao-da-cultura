@@ -26,9 +26,7 @@ const JoystickIcon = () => (
     viewBox="0 0 24 24"
     fill={TEXT_COLOR}
     role="img"
-    aria-label="Joystick"
   >
-    <title>Joystick</title>
     <path d="M21,5H3l-2,9v5h22v-5L21,5z M11,13H9v2H7v-2H5v-2h2V9h2v2h2V13z M16,11c-0.552,0-1-0.448-1-1c0-0.552,0.448-1,1-1 s1,0.448,1,1C17,10.552,16.552,11,16,11z M18,15c-0.552,0-1-0.448-1-1c0-0.552,0.448-1,1-1s1,0.448,1,1C19,14.552,18.552,15,18,15 z" />
   </svg>
 );
@@ -152,7 +150,6 @@ export function ControlsSubpanel() {
                         fontSize: "11px",
                         color: CONTENT_TEXT_COLOR,
                         whiteSpace: "pre-line",
-                        // lineHeight: 1.3,
                       }}
                     >
                       {key}

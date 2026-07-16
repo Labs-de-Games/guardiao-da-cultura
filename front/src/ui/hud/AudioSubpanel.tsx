@@ -16,7 +16,9 @@ interface VolumeControlProps {
   icon: React.ReactNode;
   label: string;
   value: number;
+  muted: boolean;
   onChange: (value: number) => void;
+  onIconClick: () => void;
 }
 
 const SpeakerIcon = () => (
@@ -123,7 +125,7 @@ const VolumeRamp = () => (
   </svg>
 );
 
-function VolumeControl({ icon, value, onChange }: VolumeControlProps) {
+function VolumeControl({ icon, value, muted, onChange, onIconClick }: VolumeControlProps) {
   const handleChange = (_: Event, newValue: number | number[]) => {
     onChange(newValue as number);
   };
@@ -132,7 +134,17 @@ function VolumeControl({ icon, value, onChange }: VolumeControlProps) {
     <Box
       sx={{ display: "flex", alignItems: "center", gap: 1.5, width: "100%" }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexShrink: 0,
+          cursor: "pointer",
+          opacity: muted ? 0.5 : 1,
+          transition: "opacity 0.15s ease-in-out",
+        }}
+        onClick={onIconClick}
+      >
         {icon}
       </Box>
       <Box sx={{ flex: 1, position: "relative", height: 28 }}>
@@ -154,7 +166,8 @@ function VolumeControl({ icon, value, onChange }: VolumeControlProps) {
             position: "absolute",
             top: -6,
             left: "10%",
-            // right: "10%",
+            right: "5%",
+            width: "auto",
             height: 40,
             padding: 0,
             // paddingRight: "-10px",
@@ -183,12 +196,19 @@ export function AudioSubpanel() {
   const [musicVolume, setMusicVolume] = useState(70);
   const [effectsVolume, setEffectsVolume] = useState(80);
   const [voiceVolume, setVoiceVolume] = useState(60);
+  const [musicMuted, setMusicMuted] = useState(false);
+  const [effectsMuted, setEffectsMuted] = useState(false);
+  const [voiceMuted, setVoiceMuted] = useState(false);
+  const [musicPrevVolume, setMusicPrevVolume] = useState(70);
+  const [effectsPrevVolume, setEffectsPrevVolume] = useState(80);
+  const [voicePrevVolume, setVoicePrevVolume] = useState(60);
 
   // Initialize from AudioManager settings
   useEffect(() => {
     const settings = AudioManager.getSettings();
     setMusicVolume(Math.round(settings.musicVolume * 100));
     setEffectsVolume(Math.round(settings.sfxVolume * 100));
+    setVoiceVolume(Math.round(settings.sfxVolume * 100));
   }, []);
 
   const handleToggle = () => {
@@ -197,18 +217,62 @@ export function AudioSubpanel() {
 
   const handleMusicChange = (value: number) => {
     setMusicVolume(value);
+    setMusicMuted(false);
     AudioManager.setMusicVolume(value / 100);
   };
 
   const handleEffectsChange = (value: number) => {
     setEffectsVolume(value);
+    setEffectsMuted(false);
     AudioManager.setSfxVolume(value / 100);
   };
 
   const handleVoiceChange = (value: number) => {
     setVoiceVolume(value);
+    setVoiceMuted(false);
     // Voice uses SFX volume for now
     AudioManager.setSfxVolume(value / 100);
+  };
+
+  const handleMusicIconClick = () => {
+    if (musicMuted) {
+      // Unmute: restore previous volume
+      const restoredVolume = musicPrevVolume > 0 ? musicPrevVolume : 50;
+      setMusicVolume(restoredVolume);
+      setMusicMuted(false);
+      AudioManager.setMusicVolume(restoredVolume / 100);
+    } else {
+      // Mute: save current volume and set to 0
+      setMusicPrevVolume(musicVolume);
+      setMusicMuted(true);
+      AudioManager.setMusicVolume(0);
+    }
+  };
+
+  const handleEffectsIconClick = () => {
+    if (effectsMuted) {
+      const restoredVolume = effectsPrevVolume > 0 ? effectsPrevVolume : 50;
+      setEffectsVolume(restoredVolume);
+      setEffectsMuted(false);
+      AudioManager.setSfxVolume(restoredVolume / 100);
+    } else {
+      setEffectsPrevVolume(effectsVolume);
+      setEffectsMuted(true);
+      AudioManager.setSfxVolume(0);
+    }
+  };
+
+  const handleVoiceIconClick = () => {
+    if (voiceMuted) {
+      const restoredVolume = voicePrevVolume > 0 ? voicePrevVolume : 50;
+      setVoiceVolume(restoredVolume);
+      setVoiceMuted(false);
+      AudioManager.setSfxVolume(restoredVolume / 100);
+    } else {
+      setVoicePrevVolume(voiceVolume);
+      setVoiceMuted(true);
+      AudioManager.setSfxVolume(0);
+    }
   };
 
   return (
@@ -269,21 +333,27 @@ export function AudioSubpanel() {
               <VolumeControl
                 icon={<MusicIcon />}
                 label="Música"
-                value={musicVolume}
+                value={musicMuted ? 0 : musicVolume}
+                muted={musicMuted}
                 onChange={handleMusicChange}
+                onIconClick={handleMusicIconClick}
               />
               <VolumeControl
                 icon={<EffectsIcon />}
                 label="Efeitos"
-                value={effectsVolume}
+                value={effectsMuted ? 0 : effectsVolume}
+                muted={effectsMuted}
                 onChange={handleEffectsChange}
+                onIconClick={handleEffectsIconClick}
               />
               <VolumeControl
                 icon={<VoiceIcon />}
                 label="Narração"
-                value={voiceVolume}
+                value={voiceMuted ? 0 : voiceVolume}
+                muted={voiceMuted}
                 onChange={handleVoiceChange}
-              />
+                onIconClick={handleVoiceIconClick}
+               />
             </Box>
           </Box>
         </Collapse>
