@@ -33,7 +33,15 @@ export class Player
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
 
+  // Coyote Time Variables
+  private coyoteTime = 200;
+  private lastOnGroundTime = 0;
+  private hasJumped = false;
+
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
+
+  /** Reference to the moving platform the player is standing on. */
+  private standingPlatform: Phaser.Physics.Arcade.Sprite | null = null;
 
   private setPhysicsBodyForVisualScale(scale: number) {
     const isDragging = scale === PLAYER_PHYSICS.DRAGGING_SCALE;
@@ -108,6 +116,22 @@ export class Player
       {
         frameWidth: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameWidth,
         frameHeight: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.BACK_SPRITESHEET.key,
+      PLAYER_ASSETS.BACK_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.BACK_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.BACK_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.FRONT_SPRITESHEET.key,
+      PLAYER_ASSETS.FRONT_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.FRONT_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.FRONT_SPRITESHEET.frameHeight,
       },
     );
   }
@@ -203,6 +227,22 @@ export class Player
       }),
       frameRate: PLAYER_ANIMS.PULL.frameRate,
       repeat: PLAYER_ANIMS.PULL.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.BACK.key,
+      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.BACK.spritesheet, {
+        frames: [...PLAYER_ANIMS.BACK.frames],
+      }),
+      frameRate: PLAYER_ANIMS.BACK.frameRate,
+      repeat: PLAYER_ANIMS.BACK.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.FRONT.key,
+      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.FRONT.spritesheet, {
+        frames: [...PLAYER_ANIMS.FRONT.frames],
+      }),
+      frameRate: PLAYER_ANIMS.FRONT.frameRate,
+      repeat: PLAYER_ANIMS.FRONT.repeat,
     });
   }
 
@@ -321,6 +361,17 @@ export class Player
     if (this.isHit) return;
 
     const body = this.body as Phaser.Physics.Arcade.Body;
+
+    // Clear standing platform if player is no longer on ground
+    if (!body?.blocked.down) {
+      this.standingPlatform = null;
+    }
+
+    if (body.blocked.down) {
+      this.lastOnGroundTime = _ts;
+      this.hasJumped = false;
+    }
+
     const isJumpPlaying =
       this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
       this.anims.isPlaying;
@@ -532,14 +583,34 @@ export class Player
 
     const jumpDown = Phaser.Input.Keyboard.JustDown(this.keys.space);
 
+    const canJump =
+      !this.hasJumped &&
+      (body.blocked.down || _ts - this.lastOnGroundTime < this.coyoteTime);
+
     if (
       this.body &&
       jumpDown &&
-      this.body.blocked.down &&
+      canJump &&
       !this.isGrabbing &&
       !this.isClimbingStairs
     ) {
+      // Apply jump velocity
+      this.hasJumped = true;
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
+
+      // Add platform inertia: inherit horizontal velocity from moving platform
+      if (this.standingPlatform) {
+        const platform = this
+          .standingPlatform as import("./MovingPlatform").MovingPlatform;
+        if (typeof platform.getVelocity === "function") {
+          const platformVel = platform.getVelocity();
+          // Only inherit horizontal velocity to preserve jump height
+          // Vertical inheritance would affect jump physics when platform moves up/down
+          const INERTIA_FACTOR = 2.5;
+          this.body.velocity.x += platformVel.x * INERTIA_FACTOR;
+        }
+      }
+
       if (!this.isCarrying) {
         this.anims.play(PLAYER_ANIMS.JUMP.key, true);
         this.setPhysicsBodyForVisualScale(this.scaleX);
@@ -699,6 +770,16 @@ export class Player
     this.inventory = this.inventory.filter((item) => item.itemId !== itemId);
   }
 
+  /**
+   * Set the platform the player is currently standing on.
+   * Called from collision callbacks when player lands on a moving platform.
+   */
+  public setStandingPlatform(
+    platform: Phaser.Physics.Arcade.Sprite | null,
+  ): void {
+    this.standingPlatform = platform;
+  }
+
   private releaseGrab() {
     const body = this.body as Phaser.Physics.Arcade.Body;
 
@@ -742,6 +823,13 @@ export class Player
     if (body) {
       body.setVelocity(0, 0);
       body.setAllowGravity(false);
+    }
+
+    if (
+      this.anims.currentAnim?.key === PLAYER_ANIMS.BACK.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key
+    ) {
+      return;
     }
 
     if (this.isGrabbing) {

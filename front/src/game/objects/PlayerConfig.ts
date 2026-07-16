@@ -45,6 +45,18 @@ export const PLAYER_ASSETS = {
     frameWidth: 48,
     frameHeight: 37,
   },
+  BACK_SPRITESHEET: {
+    key: "player_back",
+    path: "player/animations/back.png",
+    frameWidth: 48,
+    frameHeight: 37,
+  },
+  FRONT_SPRITESHEET: {
+    key: "player_front",
+    path: "player/animations/front.png",
+    frameWidth: 48,
+    frameHeight: 37,
+  },
   SOUNDS: {},
 } as const;
 
@@ -203,6 +215,20 @@ export const PLAYER_ANIMS = {
     key: "climb_down",
     spritesheet: "player_climb",
     frames: [4, 3, 2, 1, 0],
+    frameRate: 5,
+    repeat: -1,
+  },
+  BACK: {
+    key: "back",
+    spritesheet: "player_back",
+    frames: [0],
+    frameRate: 5,
+    repeat: -1,
+  },
+  FRONT: {
+    key: "front",
+    spritesheet: "player_front",
+    frames: [0],
     frameRate: 5,
     repeat: -1,
   },
