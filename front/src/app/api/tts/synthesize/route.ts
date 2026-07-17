@@ -1,89 +1,44 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { serverEnv } from "@/lib/env-server";
 
-const API_URL = "https://texttospeech.responsivevoice.org/v1/text:synthesize";
-
-interface SynthesizeBody {
-  text?: string;
-  voice?: string;
-  rate?: number;
-  pitch?: number;
-}
-
-interface ValidatedBody {
-  text: string;
-  voice?: string;
-  rate?: number;
-  pitch?: number;
-}
-
-function validate(body: SynthesizeBody): ValidatedBody | string {
-  if (
-    !body.text ||
-    typeof body.text !== "string" ||
-    body.text.trim().length === 0
-  ) {
-    return "text is required and must be a non-empty string";
-  }
-  if (body.text.length > 5000) {
-    return "text must be 5000 characters or fewer";
-  }
-  if (
-    body.rate !== undefined &&
-    (typeof body.rate !== "number" || body.rate < 0.1 || body.rate > 3)
-  ) {
-    return "rate must be a number between 0.1 and 3";
-  }
-  if (
-    body.pitch !== undefined &&
-    (typeof body.pitch !== "number" || body.pitch < 0 || body.pitch > 2)
-  ) {
-    return "pitch must be a number between 0 and 2";
-  }
-  return {
-    text: body.text,
-    voice: body.voice,
-    rate: body.rate,
-    pitch: body.pitch,
-  };
-}
+const synthesizeSchema = z.object({
+  text: z
+    .string()
+    .min(1, "text is required")
+    .max(5000, "text must be 5000 characters or fewer"),
+  voice: z.string().optional(),
+  rate: z.number().min(0.1).max(3).optional(),
+  pitch: z.number().min(0).max(2).optional(),
+});
 
 export async function POST(request: NextRequest): Promise<Response> {
-  const apiKey = process.env["RESPONSIVEVOICE_API_KEY"];
-  if (!apiKey) {
+  const parseResult = synthesizeSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parseResult.success) {
     return NextResponse.json(
-      { error: "TTS service not configured" },
-      { status: 503 },
+      { error: parseResult.error.issues[0].message },
+      { status: 400 },
     );
   }
-
-  let body: SynthesizeBody;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const result = validate(body);
-  if (typeof result === "string") {
-    return NextResponse.json({ error: result }, { status: 400 });
-  }
+  const body = parseResult.data;
 
   const params = new URLSearchParams({
-    text: result.text,
-    tl: result.voice ?? "pt-BR",
-    key: apiKey,
+    text: body.text,
+    tl: body.voice ?? "pt-BR",
+    key: serverEnv.server.responsivevoiceApiKey,
   });
 
-  if (result.rate !== undefined) params.set("rate", String(result.rate));
-  if (result.pitch !== undefined) params.set("pitch", String(result.pitch));
+  if (body.rate !== undefined) params.set("rate", String(body.rate));
+  if (body.pitch !== undefined) params.set("pitch", String(body.pitch));
 
-  const url = `${API_URL}?${params.toString()}`;
+  const url = `${serverEnv.server.responsivevoiceApiUrl}?${params.toString()}`;
 
   const upstream = await fetch(url);
 
   if (!upstream.ok) {
-    const text = await upstream.text();
-    console.error(`ResponsiveVoice API error: ${upstream.status} — ${text}`);
+    console.error(`[TTS] ResponsiveVoice returned ${upstream.status}`);
     return NextResponse.json(
       { error: `TTS synthesis failed: ${upstream.status}` },
       { status: 502 },
