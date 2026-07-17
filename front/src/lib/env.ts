@@ -1,23 +1,22 @@
 import { z } from "zod";
 
-const schema = z.object({
-  NEXT_PUBLIC_API_URL: z.string().optional(),
-  NEXT_PUBLIC_AUTH_STATUS_COOKIE_NAME: z.string().min(1),
-  NEXT_PUBLIC_ENV: z
-    .enum(["development", "staging", "production"])
-    .default("production"),
-  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
-  NEXT_PUBLIC_POSTHOG_HOST: z
-    .string()
-    .url()
-    .default("https://us.i.posthog.com"),
+const clientSchema = z.object({
+  apiUrl: z.string().optional(),
+  authStatusCookieName: z.string().min(1),
+  env: z.enum(["development", "staging", "production"]).default("production"),
+  posthogKey: z.string().optional(),
+  posthogHost: z.string().url().default("https://us.i.posthog.com"),
 });
 
-export const env = schema.parse({
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_AUTH_STATUS_COOKIE_NAME:
+const clientEnv = clientSchema.parse({
+  apiUrl: process.env.NEXT_PUBLIC_API_URL,
+  authStatusCookieName:
     process.env.NEXT_PUBLIC_AUTH_STATUS_COOKIE_NAME ?? "auth_status",
-  NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
-  NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
-  NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  env: process.env.NEXT_PUBLIC_ENV,
+  posthogKey: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+  posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
 });
+
+export const env = {
+  client: clientEnv,
+};
