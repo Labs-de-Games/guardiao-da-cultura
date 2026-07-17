@@ -10,13 +10,7 @@ export function useAudioAccessibility() {
     setIsSpeaking(true);
     try {
       await AudioAccessibilityService.speak(text);
-      const check = setInterval(() => {
-        if (!AudioAccessibilityService.isPlaying()) {
-          setIsSpeaking(false);
-          clearInterval(check);
-        }
-      }, 200);
-    } catch {
+    } finally {
       setIsSpeaking(false);
     }
   }, []);
