@@ -111,4 +111,12 @@ export const LayoutConfig = {
   GAME: {
     MAP_SCALE: 6,
   },
+
+  // Placeholder hint configs
+  COSTUME: {
+    TEXTURES: ["dummy_head", "dummy_torso", "dummy_feet"] as const,
+    CELL_W: 122,
+    CELL_H: 80,
+    PART_DEFAULTS: { originX: 0.5, originY: 0.65, yOffset: 0 } as const,
+  },
 } as const;
