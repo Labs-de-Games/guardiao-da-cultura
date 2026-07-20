@@ -26,6 +26,7 @@ import {
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
 import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
+import { PosterMechanicHandler } from "../mechanics/handlers/PosterMechanicHandler";
 import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
@@ -85,6 +86,7 @@ export class Game extends Scene implements GameDataAccessor {
     sculptures: 0,
     paintings: 1,
     photo: 2,
+    posters: 3,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -114,7 +116,7 @@ export class Game extends Scene implements GameDataAccessor {
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
   public contentData: ContentJson = {
-    works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
+    works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
     quizzes: {},
     intermediateQuizzes: {},
     npcs: {},
@@ -159,7 +161,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
-      works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
+      works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
       quizzes: {},
       intermediateQuizzes: {},
       npcs: {},
@@ -344,10 +346,14 @@ export class Game extends Scene implements GameDataAccessor {
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
 
-    const missionDefsWithProgress: Record<string, MissionDef> = {
-      [MissionIds.CURATOR]: {
-        ...MissionRegistry[MissionIds.CURATOR],
-        steps: MissionRegistry[MissionIds.CURATOR].steps.map((step) => {
+    const missionDefsWithProgress: Record<string, MissionDef> = {};
+    for (const missionId of this.levelDef.activeMissions || []) {
+      const baseDef = MissionRegistry[missionId];
+      if (!baseDef) continue;
+
+      missionDefsWithProgress[missionId] = {
+        ...baseDef,
+        steps: baseDef.steps.map((step) => {
           if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
             return {
               ...step,
@@ -359,8 +365,8 @@ export class Game extends Scene implements GameDataAccessor {
           }
           return step;
         }),
-      },
-    };
+      };
+    }
 
     this.scene.launch(SceneNames.UI, {
       questManager: this.questManager,
@@ -468,6 +474,9 @@ export class Game extends Scene implements GameDataAccessor {
     );
     this.mechanicsManager.registerHandler(
       new SculptureMechanicHandler(this.scoringFloors.sculptures),
+    );
+    this.mechanicsManager.registerHandler(
+      new PosterMechanicHandler(this.scoringFloors.posters),
     );
 
     if (mapData) {
@@ -649,16 +658,18 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     this.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () => {
-      const missionId = MissionIds.CURATOR;
-      const reqs = this.questManager.getRequiredInfos(missionId);
-      EventBus.emit("quest:progress-changed", {
-        missionId,
-        missionTitle: MissionRegistry[missionId]?.title || "",
-        collectedInfos: this.questManager.getCollectedInfos(missionId),
-        totalSteps: reqs.length,
-        steps: MissionRegistry[missionId]?.steps,
-        stepProgress: this.getMissionStepProgress(missionId),
-      });
+      for (const missionId of this.levelDef.activeMissions || []) {
+        if (!MissionRegistry[missionId]) continue;
+        const reqs = this.questManager.getRequiredInfos(missionId);
+        EventBus.emit("quest:progress-changed", {
+          missionId,
+          missionTitle: MissionRegistry[missionId]?.title || "",
+          collectedInfos: this.questManager.getCollectedInfos(missionId),
+          totalSteps: reqs.length,
+          steps: MissionRegistry[missionId]?.steps,
+          stepProgress: this.getMissionStepProgress(missionId),
+        });
+      }
     });
 
     this.questManager.on(
@@ -726,7 +737,7 @@ export class Game extends Scene implements GameDataAccessor {
     EventBus.emit("sidebar:toggled", { open: true });
     EventBus.emit("ui:controls-overlay", { open: true });
 
-    Object.entries(MissionRegistry).forEach(([missionId]) => {
+    (this.levelDef.activeMissions || []).forEach((missionId) => {
       EventBus.emit("quest:progress-changed", {
         missionId,
         missionTitle: MissionRegistry[missionId]?.title || "",
@@ -1367,7 +1378,10 @@ export class Game extends Scene implements GameDataAccessor {
         typeof handler.handleDropResult === "function"
       ) {
         (
-          handler as PaintingMechanicHandler | SculptureMechanicHandler
+          handler as
+            | PaintingMechanicHandler
+            | SculptureMechanicHandler
+            | PosterMechanicHandler
         ).handleDropResult(this, result);
       }
 
