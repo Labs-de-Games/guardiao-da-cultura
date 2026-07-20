@@ -111,16 +111,16 @@ export class PlaceholderSystem {
       container.setDepth(10);
       instance.hintSprite = container;
     } else if (config.type === InteractiveType.COSTUME) {
-      const cellW = 122;
-      const cellH = 80;
-      const textures = ["dummy_head", "dummy_torso", "dummy_feet"];
+      const { TEXTURES, CELL_W, CELL_H, PART_DEFAULTS } = LayoutConfig.COSTUME;
       const container = this.scene.add.container(rect.centerX, rect.centerY);
 
-      for (let i = 0; i < 3; i++) {
-        const cell = this.scene.add.image(0, 0, textures[i]);
-        cell.setDisplaySize(cellW, cellH);
-        cell.setAlpha(0.45);
-        cell.setPosition(0, (i - 1) * cellH);
+      const scale = config.scale ?? 1;
+
+      for (let i = 0; i < TEXTURES.length; i++) {
+        const cell = this.scene.add.image(0, 0, TEXTURES[i]);
+        cell.setDisplaySize(CELL_W * 1.8, CELL_H * 2 * scale);
+        cell.setOrigin(PART_DEFAULTS.originX, PART_DEFAULTS.originY);
+        cell.setPosition(0, PART_DEFAULTS.yOffset * scale);
         container.add(cell);
       }
       container.setDepth(10);
