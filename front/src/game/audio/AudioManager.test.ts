@@ -332,12 +332,7 @@ describe("AudioManager", () => {
 
   describe("Sound Pools", () => {
     beforeEach(() => {
-      AudioManager.init(mockScene);
-    });
-
-    it("should play a specific variation from a sound pool", () => {
-      // Mock the pool variations
-      jest.mock("./loader", () => ({
+      jest.doMock("./loader", () => ({
         isSoundPoolKey: jest.fn().mockReturnValue(true),
         getPoolVariations: jest
           .fn()
@@ -347,7 +342,15 @@ describe("AudioManager", () => {
             "sfx.object.drop_2",
           ]),
       }));
+      AudioManager.init(mockScene);
+    });
 
+    afterEach(() => {
+      jest.dontMock("./loader");
+      jest.clearAllMocks();
+    });
+
+    it("should play a specific variation from a sound pool", () => {
       const result = AudioManager.playSfxVariation("sfx.object.drop", 1, 0.5);
 
       // Note: Due to module mocking complexity, this test verifies the API contract
@@ -355,7 +358,7 @@ describe("AudioManager", () => {
     });
 
     it("should warn when variation index is out of bounds", () => {
-      jest.mock("./loader", () => ({
+      jest.doMock("./loader", () => ({
         isSoundPoolKey: jest.fn().mockReturnValue(false),
         getPoolVariations: jest.fn().mockReturnValue([]),
       }));
