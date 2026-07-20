@@ -13,6 +13,8 @@ export interface PlaceholderInstance {
   state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.GameObject;
   isFilled?: boolean;
+  filledTexture?: string;
+  filledScale?: number;
 }
 
 export interface PlaceholderConfig {
@@ -25,6 +27,10 @@ export interface PlaceholderConfig {
   id: string | string[];
   state?: Record<string, unknown>;
   scale?: number;
+  texture?: string;
+  alpha?: number;
+  filledTexture?: string;
+  filledScale?: number;
 }
 
 export class PlaceholderSystem {
@@ -48,6 +54,10 @@ export class PlaceholderSystem {
       const typeStr = TiledUtils.getProperty(obj, "type");
       const rawProp = TiledUtils.getProperty(obj, "id");
       const rawScale = TiledUtils.getProperty(obj, "scale");
+      const customTexture = TiledUtils.getProperty(obj, "texture");
+      const rawAlpha = TiledUtils.getProperty(obj, "alpha");
+      const filledTexture = TiledUtils.getProperty(obj, "filledTexture");
+      const rawFilledScale = TiledUtils.getProperty(obj, "filledScale");
       const targetId = TiledUtils.parseTargetIds(rawProp);
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
@@ -64,6 +74,11 @@ export class PlaceholderSystem {
             ? { filledSlots: [null, null, null, null] }
             : {},
         scale: rawScale !== undefined ? Number(rawScale) : undefined,
+        texture: customTexture as string | undefined,
+        alpha: rawAlpha !== undefined ? Number(rawAlpha) : undefined,
+        filledTexture: filledTexture as string | undefined,
+        filledScale:
+          rawFilledScale !== undefined ? Number(rawFilledScale) : undefined,
       });
     });
   }
@@ -87,6 +102,8 @@ export class PlaceholderSystem {
       id: config.id,
       state: config.state || {},
       isFilled: false,
+      filledTexture: config.filledTexture,
+      filledScale: config.filledScale,
     };
 
     const primaryId = Array.isArray(config.id) ? config.id[0] : config.id;
@@ -99,7 +116,7 @@ export class PlaceholderSystem {
       for (let i = 0; i < 4; i++) {
         const cell = this.scene.add.image(0, 0, "rec");
         cell.setDisplaySize(cellW, cellH);
-        cell.setAlpha(0.45);
+        cell.setAlpha(config.alpha !== undefined ? config.alpha : 0.45);
         const col = i % 2;
         const row = Math.floor(i / 2);
         cell.setPosition(
@@ -116,6 +133,8 @@ export class PlaceholderSystem {
         textureKey = "standard_painting_placeholder";
       } else if (config.type === InteractiveType.SCULPTURE) {
         textureKey = "standard_sculpture_placeholder";
+      } else if (config.type === InteractiveType.POSTER && config.texture) {
+        textureKey = config.texture;
       } else if (primaryId) {
         textureKey = `${primaryId}_ph`;
       }
@@ -131,7 +150,7 @@ export class PlaceholderSystem {
         scale = config.scale;
       }
       placeholder.setScale(scale);
-      placeholder.setAlpha(0.45);
+      placeholder.setAlpha(config.alpha !== undefined ? config.alpha : 0.45);
       placeholder.setDepth(10);
 
       if (config.type === InteractiveType.PAINTING) {
@@ -203,12 +222,39 @@ export class PlaceholderSystem {
 
       item.disableInteractive();
 
-      if (placeholder.hintSprite) {
-        if (placeholder.hintSprite instanceof Phaser.GameObjects.Sprite) {
-          placeholder.hintSprite.stop();
+      if (placeholder.type === InteractiveType.POSTER) {
+        // For posters: destroy the placeholder hint sprite and replace it
+        // with the combined (frame + poster) filled texture image.
+        if (placeholder.hintSprite) {
+          if (placeholder.hintSprite instanceof Phaser.GameObjects.Sprite) {
+            placeholder.hintSprite.stop();
+          }
+          placeholder.hintSprite.destroy();
+          placeholder.hintSprite = undefined;
         }
-        placeholder.hintSprite.destroy();
-        placeholder.hintSprite = undefined;
+
+        const filledKey = placeholder.filledTexture ?? `${item.itemId}_placed`;
+        const filledSprite = this.scene.add.image(
+          placeholder.area.centerX,
+          placeholder.area.centerY,
+          filledKey,
+        );
+        if (placeholder.filledScale !== undefined) {
+          filledSprite.setScale(placeholder.filledScale);
+        }
+        filledSprite.setDepth(10);
+        placeholder.hintSprite = filledSprite;
+
+        // Hide the carried item — the filled sprite replaces it visually
+        item.setVisible(false);
+      } else {
+        if (placeholder.hintSprite) {
+          if (placeholder.hintSprite instanceof Phaser.GameObjects.Sprite) {
+            placeholder.hintSprite.stop();
+          }
+          placeholder.hintSprite.destroy();
+          placeholder.hintSprite = undefined;
+        }
       }
 
       const body = item.body as Phaser.Physics.Arcade.Body;
