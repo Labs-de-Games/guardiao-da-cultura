@@ -432,13 +432,7 @@ export class Player
     // Start/stop climb loop sound based on whether player is actively moving on stairs
     if (isClimbing) {
       if (!this.climbLoopSound) {
-        const settings = AudioManager.getSettings();
-        this.climbLoopSound = this.scene.sound.add("sfx.player.climb", {
-          loop: true,
-          volume: 0.3 * settings.sfxVolume,
-          mute: settings.muted,
-        });
-        this.climbLoopSound.play();
+        this.climbLoopSound = this.addLoopingSound("sfx.player.climb", 0.3);
       }
     } else {
       // Stop climb loop sound when not actively climbing
@@ -563,13 +557,7 @@ export class Player
 
     if (isWalkingOnGround && !this.isInDialogue) {
       if (!this.footstepSound) {
-        const settings = AudioManager.getSettings();
-        this.footstepSound = this.scene.sound.add("sfx.player.footstep", {
-          loop: true,
-          volume: 0.2 * settings.sfxVolume,
-          mute: settings.muted,
-        });
-        this.footstepSound.play();
+        this.footstepSound = this.addLoopingSound("sfx.player.footstep", 0.2);
       }
     } else {
       if (this.footstepSound) {
@@ -591,13 +579,7 @@ export class Player
       // Play drag loop sound only when moving
       if (isMoving) {
         if (!this.dragLoopSound) {
-          const settings = AudioManager.getSettings();
-          this.dragLoopSound = this.scene.sound.add("sfx.object.drag_loop", {
-            loop: true,
-            volume: settings.sfxVolume,
-            mute: settings.muted,
-          });
-          this.dragLoopSound.play();
+          this.dragLoopSound = this.addLoopingSound("sfx.object.drag_loop", 1);
         }
 
         const isPushing =
@@ -859,6 +841,26 @@ export class Player
       ? PLAYER_ANIMS.CARRY_IDLE.key
       : PLAYER_ANIMS.IDLE.key;
     this.anims.play(idleAnim, true);
+  }
+
+  /**
+   * Safely add a looping sound only if its asset is loaded in the audio cache.
+   * Returns null when the sound key is missing so the game keeps running
+   * even before all audio assets have been preloaded.
+   */
+  private addLoopingSound(
+    key: string,
+    baseVolume: number,
+  ): Phaser.Sound.BaseSound | null {
+    if (!this.scene.game.cache.audio.has(key)) return null;
+    const settings = AudioManager.getSettings();
+    const sound = this.scene.sound.add(key, {
+      loop: true,
+      volume: baseVolume * settings.sfxVolume,
+      mute: settings.muted,
+    });
+    sound.play();
+    return sound;
   }
 
   /**
