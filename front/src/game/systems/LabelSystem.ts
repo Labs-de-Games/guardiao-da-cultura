@@ -15,6 +15,8 @@ export interface LabelConfig {
   y: number;
   instanceId: string;
   placeholderId: string;
+  texture?: string;
+  scale?: number;
 }
 
 export class LabelSystem {
@@ -44,6 +46,9 @@ export class LabelSystem {
         "placeholder_id",
       ) as string;
 
+      const texture = TiledUtils.getProperty(obj, "texture");
+      const rawScale = TiledUtils.getProperty(obj, "scale");
+
       if (!placeholderId) {
         console.warn(
           `[LabelSystem] Label "${obj.name}" has no placeholder_id property`,
@@ -58,14 +63,17 @@ export class LabelSystem {
         y: scaled.y,
         instanceId: obj.name || Phaser.Math.RND.uuid(),
         placeholderId,
+        texture: texture as string | undefined,
+        scale: rawScale !== undefined ? Number(rawScale) : undefined,
       });
     });
   }
 
   // Registers a single label at the specified position.
   public registerLabel(config: LabelConfig): LabelInstance {
-    const sprite = this.scene.add.sprite(config.x, config.y, "label");
-    sprite.setScale(4);
+    const textureKey = config.texture || "label";
+    const sprite = this.scene.add.sprite(config.x, config.y, textureKey);
+    sprite.setScale(config.scale !== undefined ? config.scale : 4);
     sprite.setDepth(9);
 
     const instance: LabelInstance = {
