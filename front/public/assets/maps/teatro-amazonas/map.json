@@ -1369,8 +1369,120 @@
           "type": "",
           "visible": true,
           "width": 0,
-          "x": 1117.55099430017,
-          "y": 208.692895366456
+          "x": 904.282574012421,
+          "y": 567.289029649264
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 31,
+      "name": "Poster",
+      "objects": [
+        {
+          "height": 0,
+          "id": 87,
+          "name": "P1",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "contentId",
+              "type": "string",
+              "value": "zona-franca"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 934.08395494682,
+          "y": 571.863832624635
+        },
+        {
+          "height": 0,
+          "id": 100,
+          "name": "P4",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "contentId",
+              "type": "string",
+              "value": "anel-do-nibelungo"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 944.729047559126,
+          "y": 577.541215351198
+        },
+        {
+          "height": 0,
+          "id": 98,
+          "name": "P2",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "contentId",
+              "type": "string",
+              "value": "ajuricaba"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 922.084238815956,
+          "y": 553.412338763305
+        },
+        {
+          "height": 0,
+          "id": 99,
+          "name": "P3",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "contentId",
+              "type": "string",
+              "value": "opera-do-malandro"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 932.084238815956,
+          "y": 553.412338763305
         }
       ],
       "opacity": 1,
@@ -1716,15 +1828,20 @@
     {
       "draworder": "topdown",
       "id": 26,
-      "name": "Placeholders",
+      "name": "PlaceHolder",
       "objects": [
         {
           "height": 0,
           "id": 77,
-          "name": "PH1",
+          "name": "PH_1",
           "opacity": 1,
           "point": true,
           "properties": [
+            {
+              "name": "alpha",
+              "type": "float",
+              "value": 1
+            },
             {
               "name": "id",
               "type": "string",
@@ -1733,7 +1850,12 @@
             {
               "name": "scale",
               "type": "float",
-              "value": 1
+              "value": 2
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "TBD"
             },
             {
               "name": "type",
@@ -1747,6 +1869,326 @@
           "width": 0,
           "x": 539,
           "y": 409
+        },
+        {
+          "height": 0,
+          "id": 88,
+          "name": "PH_2",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "alpha",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "filledScale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "filledTexture",
+              "type": "string",
+              "value": "zona-franca-framed"
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "value": "zona-franca"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "frame"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "poster"
+            }
+          ],
+          "rotation": 0,
+          "type": "PlaceholderInstance",
+          "visible": true,
+          "width": 0,
+          "x": 684.123237901468,
+          "y": 549.051446010754
+        },
+        {
+          "height": 0,
+          "id": 93,
+          "name": "PH_3",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "alpha",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "filledScale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "filledTexture",
+              "type": "string",
+              "value": "ajuricaba-framed"
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "value": "ajuricaba"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "frame"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "poster"
+            }
+          ],
+          "rotation": 0,
+          "type": "PlaceholderInstance",
+          "visible": true,
+          "width": 0,
+          "x": 732.123237901468,
+          "y": 549.051446010754
+        },
+        {
+          "height": 0,
+          "id": 95,
+          "name": "PH_4",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "alpha",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "filledScale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "filledTexture",
+              "type": "string",
+              "value": "anel-do-nibelungo-framed"
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "value": "anel-do-nibelungo"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "frame"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "poster"
+            }
+          ],
+          "rotation": 0,
+          "type": "PlaceholderInstance",
+          "visible": true,
+          "width": 0,
+          "x": 780.123237901468,
+          "y": 549.051446010754
+        },
+        {
+          "height": 0,
+          "id": 97,
+          "name": "PH_5",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "alpha",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "filledScale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "filledTexture",
+              "type": "string",
+              "value": "opera-do-malandro-framed"
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "value": "opera-do-malandro"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 1.8
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "frame"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "value": "poster"
+            }
+          ],
+          "rotation": 0,
+          "type": "PlaceholderInstance",
+          "visible": true,
+          "width": 0,
+          "x": 828.123237901468,
+          "y": 549.051446010754
+        },
+        {
+          "height": 0,
+          "id": 89,
+          "name": "L_2",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "placeholder_id",
+              "type": "string",
+              "value": "PH_2"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2.2
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "poster-label"
+            }
+          ],
+          "rotation": 0,
+          "type": "Label",
+          "visible": true,
+          "width": 0,
+          "x": 684.123237901468,
+          "y": 572.497747420433
+        },
+        {
+          "height": 0,
+          "id": 92,
+          "name": "L_3",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "placeholder_id",
+              "type": "string",
+              "value": "PH_3"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2.2
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "poster-label"
+            }
+          ],
+          "rotation": 0,
+          "type": "Label",
+          "visible": true,
+          "width": 0,
+          "x": 732.123237901468,
+          "y": 572.497747420433
+        },
+        {
+          "height": 0,
+          "id": 94,
+          "name": "L_4",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "placeholder_id",
+              "type": "string",
+              "value": "PH_4"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2.2
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "poster-label"
+            }
+          ],
+          "rotation": 0,
+          "type": "Label",
+          "visible": true,
+          "width": 0,
+          "x": 780.123237901468,
+          "y": 572.497747420433
+        },
+        {
+          "height": 0,
+          "id": 96,
+          "name": "L_5",
+          "opacity": 1,
+          "point": true,
+          "properties": [
+            {
+              "name": "placeholder_id",
+              "type": "string",
+              "value": "PH_5"
+            },
+            {
+              "name": "scale",
+              "type": "float",
+              "value": 2.2
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "poster-label"
+            }
+          ],
+          "rotation": 0,
+          "type": "Label",
+          "visible": true,
+          "width": 0,
+          "x": 828.123237901468,
+          "y": 572.497747420433
         }
       ],
       "opacity": 1,
@@ -1953,8 +2395,8 @@
       "y": 0
     }
   ],
-  "nextlayerid": 31,
-  "nextobjectid": 87,
+  "nextlayerid": 32,
+  "nextobjectid": 101,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",
