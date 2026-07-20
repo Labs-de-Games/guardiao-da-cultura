@@ -332,6 +332,11 @@ export class QuizManager {
 
       this.quizMode = "intermediate";
 
+      // Resolve the active mission for this level so callbacks are not
+      // hardcoded to level-1's mission id.
+      const activeMissionId =
+        this.context.getLevelDef().activeMissions[0] ?? MissionIds.CURATOR;
+
       const spawnPos = npc.getSpawnPosition();
       const playerX = this.context.getPlayer().x;
       const npcX = playerX + 150;
@@ -344,6 +349,7 @@ export class QuizManager {
         questions,
         npc,
         spawnPos,
+        activeMissionId,
       );
 
       const explanationLines = npc.getIntermediateQuizDialogues();
@@ -407,6 +413,7 @@ export class QuizManager {
     questions: QuizQuestion[],
     npc: NpcLike,
     spawnPos: { x: number; y: number } | null,
+    missionId: string,
   ) {
     return (score: number) => {
       const passed = score > 0;
@@ -423,7 +430,7 @@ export class QuizManager {
         passed,
         score,
         totalQuestions: questions.length,
-        missionId: MissionIds.CURATOR,
+        missionId,
       });
 
       void this.persistenceBridge.saveProgress();
@@ -461,35 +468,30 @@ export class QuizManager {
           passed,
           score,
           totalQuestions: questions.length,
-          missionId: MissionIds.CURATOR,
+          missionId,
         },
         timestamp: new Date().toISOString(),
       });
 
       if (
-        this.questManager.hasCollectedAll(MissionIds.CURATOR) &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.READY_FOR_QUIZ &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.QUIZ_ACTIVE &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.COMPLETED
+        this.questManager.hasCollectedAll(missionId) &&
+        this.questManager.getStatus(missionId) !== QuestStatus.READY_FOR_QUIZ &&
+        this.questManager.getStatus(missionId) !== QuestStatus.QUIZ_ACTIVE &&
+        this.questManager.getStatus(missionId) !== QuestStatus.COMPLETED
       ) {
-        this.questManager.setStatus(
-          MissionIds.CURATOR,
-          QuestStatus.READY_FOR_QUIZ,
-        );
+        this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
       }
     };
   }
 
   private findCuratorNpc(): NpcLike | undefined {
+    const activeMissions = this.context.getLevelDef().activeMissions ?? [];
     return this.context
       .getNpcs()
       .find(
         (n) =>
           typeof (n as unknown as NpcLike).getMissionId === "function" &&
-          (n as unknown as NpcLike).getMissionId() === MissionIds.CURATOR,
+          activeMissions.includes((n as unknown as NpcLike).getMissionId()),
       ) as NpcLike | undefined;
   }
 
