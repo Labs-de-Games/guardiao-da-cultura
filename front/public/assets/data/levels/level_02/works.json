@@ -41,10 +41,11 @@
       }
     }
   },
-  "PAINTINGS": {
+  "PAINTINGS": {},
+  "POSTERS": {
     "ajuricaba": {
       "id": "ajuricaba",
-      "type": "Painting",
+      "type": "Poster",
       "metadata": {
         "title": "Ajuricaba",
         "author": "",
@@ -64,7 +65,7 @@
     },
     "anel-do-nibelungo": {
       "id": "anel-do-nibelungo",
-      "type": "Painting",
+      "type": "Poster",
       "metadata": {
         "title": "Anel do Nibelungo",
         "author": "",
@@ -84,7 +85,7 @@
     },
     "opera-do-malandro": {
       "id": "opera-do-malandro",
-      "type": "Painting",
+      "type": "Poster",
       "metadata": {
         "title": "Ópera do Malandro",
         "author": "",
@@ -104,7 +105,7 @@
     },
     "zona-franca": {
       "id": "zona-franca",
-      "type": "Painting",
+      "type": "Poster",
       "metadata": {
         "title": "Zona Franca",
         "author": "",
