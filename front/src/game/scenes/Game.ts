@@ -23,6 +23,7 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { CostumeMechanicHandler } from "../mechanics/handlers/CostumeMechanicHandler";
 import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
@@ -90,6 +91,7 @@ export class Game extends Scene implements GameDataAccessor {
   private levelManager!: LevelManager;
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
+  private isCostumeSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
@@ -152,6 +154,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.hasInteractedWithRat = false;
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
+    this.isCostumeSelectorOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -887,7 +890,12 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.player.on("interact-placeholder", () => {
-      if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
+      if (
+        this.isDialogueOpen ||
+        this.isChunkSelectorOpen ||
+        this.isCostumeSelectorOpen
+      )
+        return;
 
       if (this.tryInteractWithRat()) {
         return;
@@ -952,6 +960,31 @@ export class Game extends Scene implements GameDataAccessor {
           })),
           filledSlots: filled,
           expectedSlots,
+        });
+      }
+
+      const nearbyCostume = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        120,
+        InteractiveType.COSTUME,
+      );
+
+      if (nearbyCostume) {
+        const ids = Array.isArray(nearbyCostume.id)
+          ? (nearbyCostume.id as string[])
+          : String(nearbyCostume.id)
+              .split(",")
+              .map((s) => s.trim());
+        const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
+
+        this.isCostumeSelectorOpen = true;
+        this.events.emit(GameEvents.DIALOGUE_STARTED);
+        EventBus.emit("ui:costume-selector-open", {
+          instanceId: nearbyCostume.instanceId,
+          correctCostume,
+          equippedParts: { head: null, torso: null, feet: null },
+          lockedParts: { head: false, torso: false, feet: false },
         });
       }
     });
@@ -1037,6 +1070,12 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
       this.checkDialogState();
     });
+    EventBus.on("ui:costume-selector-close", () => {
+      if (!this.isCostumeSelectorOpen) return;
+      this.isCostumeSelectorOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.checkDialogState();
+    });
 
     this.events.on("item-dropped", this.handleItemDropped, this);
 
@@ -1051,6 +1090,7 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:chunk-slot-placed");
       EventBus.off("ui:chunk-slot-rejected");
       EventBus.off("ui:chunk-selector-close");
+      EventBus.off("ui:costume-selector-close");
       EventBus.off("ui:label-hide");
     });
 
@@ -1096,6 +1136,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
+      !this.isCostumeSelectorOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -1216,6 +1257,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isDialogueOpen ||
         this.isControlsOpen ||
         this.isChunkSelectorOpen ||
+        this.isCostumeSelectorOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
