@@ -68,13 +68,12 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       tilesetName: "teatro",
     },
     data: {
-      // using level 1 data temporarily
       works: ["data/levels/level_02/works.json"],
-      quizzes: ["data/levels/level_01/quizzes.json"],
-      intermediateQuizzes: ["data/levels/level_01/intermediate-quizzes.json"],
-      npcs: ["data/levels/level_01/npcs.json"],
+      quizzes: ["data/levels/level_01/quizzes.json"], // mock from level_01
+      intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
+      npcs: ["data/levels/level_02/npcs.json"],
       messages: ["data/global/messages.json"],
-      collectibles: ["data/levels/level_01/collectibles.json"],
+      collectibles: ["data/levels/level_01/collectibles.json"], // mock from level_01
     },
   },
 };
