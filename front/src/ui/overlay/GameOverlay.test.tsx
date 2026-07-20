@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { EventBus } from "@/shared/events/event-bus";
@@ -64,7 +64,7 @@ jest.mock("@/ui/panels/MapPinTooltip", () => ({
 }));
 
 jest.mock("@/ui/panels/ToastNotification", () => ({
-  ToastNotification: () => null,
+  ToastNotification: () => <div data-testid="toast-notification" />,
 }));
 
 jest.mock("@/ui/quiz/Quiz", () => ({
@@ -206,5 +206,21 @@ describe("GameOverlay", () => {
     });
 
     expect(useGameUIStore.getState().labelData).toBeNull();
+  });
+
+  it("does not render ToastNotification when gameStarted is false", () => {
+    useGameUIStore.setState({ gameStarted: false });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    expect(screen.queryByTestId("toast-notification")).toBeNull();
+  });
+
+  it("renders ToastNotification when gameStarted is true", () => {
+    useGameUIStore.setState({ gameStarted: true });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    expect(screen.queryByTestId("toast-notification")).toBeDefined();
   });
 });
