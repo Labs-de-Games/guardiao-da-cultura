@@ -271,7 +271,6 @@ function OverlayContent({
             }}
           />
         </div>
-        <ToastNotification />
       </>
     );
   }
@@ -279,7 +278,6 @@ function OverlayContent({
   if (!gameStarted) {
     return (
       <>
-        <ToastNotification />
         <MapPinTooltip />
         <MapInfoBox />
       </>
