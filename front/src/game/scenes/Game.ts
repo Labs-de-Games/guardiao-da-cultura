@@ -422,6 +422,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("has_failed_quiz", 0);
     this.registry.set("quiz_solved_after_failure", 0);
+    this.registry.set("secret_clues_collected", 0);
 
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
