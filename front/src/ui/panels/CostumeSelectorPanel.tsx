@@ -294,10 +294,26 @@ export function CostumeSelectorPanel() {
   };
 
   // Handle close
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     closeCostumeSelector();
     EventBus.emit("ui:costume-selector-close", undefined);
-  };
+  }, [closeCostumeSelector]);
+
+  // Handle ESC key
+  useEffect(() => {
+    if (!costumeSelectorOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [costumeSelectorOpen, handleClose]);
 
   // Render carousel for a part type
   const renderCarousel = (
