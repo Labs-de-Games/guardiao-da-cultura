@@ -166,6 +166,16 @@
               "value": "professor_curador"
             },
             {
+              "name": "finalPositionX",
+              "type": "int",
+              "value": 280
+            },
+            {
+              "name": "finalPositionY",
+              "type": "int",
+              "value": 67
+            },
+            {
               "name": "flipX",
               "type": "bool",
               "value": false
@@ -1306,7 +1316,7 @@
     }
   ],
   "nextlayerid": 17,
-  "nextobjectid": 57,
+  "nextobjectid": 60,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.2",

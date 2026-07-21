@@ -1801,6 +1801,16 @@
               "value": "professor_curador"
             },
             {
+              "name": "finalPositionX",
+              "type": "int",
+              "value": 358
+            },
+            {
+              "name": "finalPositionY",
+              "type": "int",
+              "value": 225
+            },
+            {
               "name": "flipX",
               "type": "bool",
               "value": false
@@ -1815,8 +1825,8 @@
           "type": "Npc",
           "visible": true,
           "width": 0,
-          "x": 349.755881047492,
-          "y": 226.140257434532
+          "x": 1090.46047751475,
+          "y": 580.390281831917
         }
       ],
       "opacity": 1,
@@ -2396,7 +2406,7 @@
     }
   ],
   "nextlayerid": 32,
-  "nextobjectid": 101,
+  "nextobjectid": 102,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",

@@ -892,10 +892,11 @@ export class Game extends Scene implements GameDataAccessor {
         const key = payload.infoKey;
         if (FLOOR_COMPLETE_KEYS.has(key)) {
           const curator = this.npcs.find(
-            (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
+            (n) => n instanceof Npc && n.getMissionId() === payload.missionId,
           ) as Npc | undefined;
           if (curator) {
-            curator.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+            const finalPos = curator.getFinalPosition() ?? NPC_FLOOR_3_POSITION;
+            curator.teleportTo(finalPos.x, finalPos.y);
           }
         }
       },
