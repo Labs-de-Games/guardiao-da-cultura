@@ -112,7 +112,11 @@ export class PlaceholderSystem {
       instance.hintSprite = container;
     } else {
       let textureKey = "placeholder";
-      if (primaryId) {
+      if (config.type === InteractiveType.PAINTING) {
+        textureKey = "standard_painting_placeholder";
+      } else if (config.type === InteractiveType.SCULPTURE) {
+        textureKey = "standard_sculpture_placeholder";
+      } else if (primaryId) {
         textureKey = `${primaryId}_ph`;
       }
 
