@@ -363,7 +363,7 @@ export function CostumeSelectorPanel() {
     partType: "head" | "torso" | "feet",
     emblaRef: (instance: HTMLElement | null) => void,
     emblaApi: ReturnType<typeof useEmblaCarousel>[1],
-    label: string,
+    // label: string,
   ) => {
     const state = carouselStates[partType];
 
@@ -374,7 +374,7 @@ export function CostumeSelectorPanel() {
         : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
     return (
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1 }}>
         <Typography
           variant="subtitle1"
           sx={{
@@ -384,7 +384,7 @@ export function CostumeSelectorPanel() {
             textTransform: "capitalize",
           }}
         >
-          {label}
+          {/* {label} */}
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {/* Prev Button */}
@@ -509,7 +509,7 @@ export function CostumeSelectorPanel() {
         elevation={4}
         sx={{
           width: "100%",
-          maxWidth: 400,
+          maxWidth: 600,
           maxHeight: "90vh",
           overflow: "auto",
           position: "relative",
@@ -555,21 +555,9 @@ export function CostumeSelectorPanel() {
         </Typography>
 
         {/* Carousels */}
-        {renderCarousel("head", headEmblaRef, headEmblaApi, "Cabeça")}
-        <Divider
-          sx={{
-            my: 2,
-            borderColor: LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS,
-          }}
-        />
-        {renderCarousel("torso", torsoEmblaRef, torsoEmblaApi, "Tronco")}
-        <Divider
-          sx={{
-            my: 2,
-            borderColor: LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS,
-          }}
-        />
-        {renderCarousel("feet", feetEmblaRef, feetEmblaApi, "Pés")}
+        {renderCarousel("head", headEmblaRef, headEmblaApi)}
+        {renderCarousel("torso", torsoEmblaRef, torsoEmblaApi)}
+        {renderCarousel("feet", feetEmblaRef, feetEmblaApi)}
 
         {/* Confirm button */}
         <Button
