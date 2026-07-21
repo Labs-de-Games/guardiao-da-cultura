@@ -8,7 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { paginateText } from "@/lib/paginateText";
 import { EventBus } from "@/shared/events/event-bus";
-import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 const CARD_BG = "#FFFFFF";
 const HEADER_BG = "#F4EEDE";
@@ -264,7 +265,7 @@ export function LabelPanel() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: UI_Z_INDEX.PANEL,
+        zIndex: UI_LAYERS.IN_WORLD,
         pointerEvents: "auto",
       }}
     >
