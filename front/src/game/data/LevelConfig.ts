@@ -54,7 +54,8 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_02: {
     id: "level_02",
     levelNumber: 2,
-    title: MAP_MARKERS[1].title,
+    // index 2, Teatro Amazonas, not 1 — matches the map/tileset below
+    title: MAP_MARKERS[2].title,
     maxStars: 2,
     initialGrayscale: 0.82,
     map: {
@@ -183,7 +184,12 @@ export const LEVEL_ASSETS = {
       },
     ],
     CHUNKS: [],
-    OTHERS: [],
+    OTHERS: [
+      {
+        key: "p1",
+        path: "moving-platforms/p1.png",
+      },
+    ],
     COLLECTIBLES: [],
     CONTENT: {
       key: "content",
