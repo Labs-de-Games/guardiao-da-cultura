@@ -74,11 +74,6 @@ describe("createGamePersistence", () => {
         accuracyPercent: 100,
         quartersEarned: 1,
       },
-      collectibles: {
-        total: 0,
-        interactionsCount: 0,
-        quartersEarned: 0,
-      },
       collectedCollectibles: [
         {
           collectibleId: "clue_1",
@@ -137,11 +132,6 @@ describe("createGamePersistence", () => {
         correctAnswers: 2,
         accuracyPercent: 100,
         quartersEarned: 2,
-      },
-      collectibles: {
-        total: 1,
-        interactionsCount: 1,
-        quartersEarned: 1,
       },
       collectedCollectibles: [
         {

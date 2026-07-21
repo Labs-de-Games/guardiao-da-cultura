@@ -41,17 +41,10 @@ export class UserScore {
   };
 
   @Column({ type: "jsonb", nullable: true })
-  collectibleScore!: {
-    total: number;
-    interactionsCount: number;
-    quartersEarned: number;
-  };
-
-  @Column({ type: "jsonb", nullable: true })
   intermediateQuizScore!: {
     total: number;
     passed: number;
-    quartersNet: number;
+    quartersEarned: number;
   };
 
   @CreateDateColumn()
