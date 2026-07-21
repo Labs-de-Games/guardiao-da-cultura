@@ -5,7 +5,14 @@ import CheckIcon from "@mui/icons-material/Check";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
-import { Box, Button, IconButton, Paper, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Paper,
+  Typography,
+} from "@mui/material";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
@@ -92,10 +99,22 @@ export function CostumeSelectorPanel() {
     feet: CarouselState;
   }>(initialStates);
 
-  // Embla carousel refs
-  const [headEmblaRef, headEmblaApi] = useEmblaCarousel({ loop: true });
-  const [torsoEmblaRef, torsoEmblaApi] = useEmblaCarousel({ loop: true });
-  const [feetEmblaRef, feetEmblaApi] = useEmblaCarousel({ loop: true });
+  // Embla carousel refs - configured for 3 visible items
+  const [headEmblaRef, headEmblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "start",
+    slidesToScroll: 1,
+  });
+  const [torsoEmblaRef, torsoEmblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "start",
+    slidesToScroll: 1,
+  });
+  const [feetEmblaRef, feetEmblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "start",
+    slidesToScroll: 1,
+  });
 
   // Pause game when panel opens
   useEffect(() => {
@@ -402,7 +421,7 @@ export function CostumeSelectorPanel() {
                   <Box
                     key={item.id}
                     sx={{
-                      flex: "0 0 100%",
+                      flex: "0 0 33.333%",
                       minWidth: 0,
                       height: 120,
                       display: "flex",
@@ -537,7 +556,19 @@ export function CostumeSelectorPanel() {
 
         {/* Carousels */}
         {renderCarousel("head", headEmblaRef, headEmblaApi, "Cabeça")}
+        <Divider
+          sx={{
+            my: 2,
+            borderColor: LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS,
+          }}
+        />
         {renderCarousel("torso", torsoEmblaRef, torsoEmblaApi, "Tronco")}
+        <Divider
+          sx={{
+            my: 2,
+            borderColor: LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS,
+          }}
+        />
         {renderCarousel("feet", feetEmblaRef, feetEmblaApi, "Pés")}
 
         {/* Confirm button */}
