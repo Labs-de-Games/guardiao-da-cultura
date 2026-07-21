@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -175,6 +176,9 @@ export class Game extends Scene implements GameDataAccessor {
     Enemy.preload(this);
     EffectsManager.preload(this);
 
+    // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
+    loadGlobalAudio(this);
+
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
@@ -252,6 +256,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.processModularData();
     this.effects = new EffectsManager(this);
     this.createAnimations();
+
+    // Initialize AudioManager with this scene so Player and other
+    // objects can play sounds via AudioManager.playSfx()
+    AudioManager.init(this);
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
