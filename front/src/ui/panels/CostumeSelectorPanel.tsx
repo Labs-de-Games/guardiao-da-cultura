@@ -38,6 +38,35 @@ const GENERIC_CAROUSEL_ITEMS = Array.from({ length: 5 }, (_, i) => ({
   label: `Item ${i + 1}`,
 }));
 
+// Head carousel items with costume assets
+const HEAD_CAROUSEL_ITEMS = [
+  {
+    id: "dummy_head",
+    src: "/assets/artworks/costumes/dummy_head.png",
+    label: "Dummy",
+  },
+  {
+    id: "indian_head",
+    src: "/assets/artworks/costumes/indian_head.png",
+    label: "Indian",
+  },
+  {
+    id: "warrior_head",
+    src: "/assets/artworks/costumes/warrior_head.png",
+    label: "Warrior",
+  },
+  {
+    id: "soldier_head",
+    src: "/assets/artworks/costumes/soldier_head.png",
+    label: "Soldier",
+  },
+  {
+    id: "malandro_head",
+    src: "/assets/artworks/costumes/malandro_head.png",
+    label: "Malandro",
+  },
+];
+
 interface CarouselState {
   selectedIndex: number;
   isRejecting: boolean;
@@ -373,6 +402,10 @@ export function CostumeSelectorPanel() {
         ? LayoutConfig.COLORS.AVAILABLE_GREEN
         : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
+    // Select items array based on part type
+    const carouselItems =
+      partType === "head" ? HEAD_CAROUSEL_ITEMS : GENERIC_CAROUSEL_ITEMS;
+
     return (
       <Box sx={{ mb: 1 }}>
         <Typography
@@ -416,8 +449,8 @@ export function CostumeSelectorPanel() {
           >
             <Box ref={emblaRef} sx={{ overflow: "hidden" }}>
               <Box sx={{ display: "flex" }}>
-                {/* Generic items */}
-                {GENERIC_CAROUSEL_ITEMS.map((item) => (
+                {/* Carousel items */}
+                {carouselItems.map((item) => (
                   <Box
                     key={item.id}
                     sx={{
@@ -509,7 +542,7 @@ export function CostumeSelectorPanel() {
         elevation={4}
         sx={{
           width: "100%",
-          maxWidth: 600,
+          maxWidth: 700,
           maxHeight: "90vh",
           overflow: "auto",
           position: "relative",
