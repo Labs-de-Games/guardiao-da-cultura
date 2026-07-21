@@ -535,6 +535,7 @@ export function CostumeSelectorPanel() {
         justifyContent: "center",
         bgcolor: "rgba(0, 0, 0, 0.7)",
         zIndex: LayoutConfig.UI.DEPTHS.INVENTORY,
+        pointerEvents: "auto",
         p: 2,
       }}
     >
