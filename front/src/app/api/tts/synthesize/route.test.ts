@@ -207,5 +207,31 @@ describe("POST /api/tts/synthesize", () => {
       const calledUrl = mockFetch.mock.calls[0][0] as string;
       expect(calledUrl).toContain("tl=pt-BR");
     });
+
+    it("maps voice name to language code", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8)),
+      });
+
+      await POST(
+        makeRequest({ text: "hello", voice: "Brazilian Portuguese Female" }),
+      );
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("tl=pt-BR");
+    });
+
+    it("passes raw BCP-47 codes through unchanged", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8)),
+      });
+
+      await POST(makeRequest({ text: "hello", voice: "fr-FR" }));
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("tl=fr-FR");
+    });
   });
 });

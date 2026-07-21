@@ -12,6 +12,13 @@ const synthesizeSchema = z.object({
   pitch: z.number().min(0).max(2).optional(),
 });
 
+const VOICE_TO_LANGUAGE: Record<string, string> = {
+  "Brazilian Portuguese Female": "pt-BR",
+  "Brazilian Portuguese Male": "pt-BR",
+  "US English Female": "en-US",
+  "French Female": "fr-FR",
+};
+
 export async function POST(request: NextRequest): Promise<Response> {
   const parseResult = synthesizeSchema.safeParse(
     await request.json().catch(() => null),
@@ -24,9 +31,12 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
   const body = parseResult.data;
 
+  const languageCode =
+    VOICE_TO_LANGUAGE[body.voice ?? ""] ?? body.voice ?? "pt-BR";
+
   const params = new URLSearchParams({
     text: body.text,
-    tl: body.voice ?? "pt-BR",
+    tl: languageCode,
     key: serverEnv.server.responsivevoiceApiKey,
   });
 
