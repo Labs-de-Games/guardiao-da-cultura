@@ -1890,12 +1890,12 @@
             {
               "name": "filledTexture",
               "type": "string",
-              "value": "zona-franca-framed"
+              "value": "anel-do-nibelungo-framed"
             },
             {
               "name": "id",
               "type": "string",
-              "value": "zona-franca"
+              "value": "anel-do-nibelungo"
             },
             {
               "name": "scale",
@@ -1940,12 +1940,12 @@
             {
               "name": "filledTexture",
               "type": "string",
-              "value": "ajuricaba-framed"
+              "value": "opera-do-malandro-framed"
             },
             {
               "name": "id",
               "type": "string",
-              "value": "ajuricaba"
+              "value": "opera-do-malandro"
             },
             {
               "name": "scale",
@@ -1990,12 +1990,12 @@
             {
               "name": "filledTexture",
               "type": "string",
-              "value": "anel-do-nibelungo-framed"
+              "value": "ajuricaba-framed"
             },
             {
               "name": "id",
               "type": "string",
-              "value": "anel-do-nibelungo"
+              "value": "ajuricaba"
             },
             {
               "name": "scale",
@@ -2040,12 +2040,12 @@
             {
               "name": "filledTexture",
               "type": "string",
-              "value": "opera-do-malandro-framed"
+              "value": "zona-franca-framed"
             },
             {
               "name": "id",
               "type": "string",
-              "value": "opera-do-malandro"
+              "value": "zona-franca"
             },
             {
               "name": "scale",
