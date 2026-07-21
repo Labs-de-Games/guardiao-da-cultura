@@ -24,6 +24,13 @@ const shake = keyframes`
   80%       { transform: translateX(4px); }
 `;
 
+// Generic carousel items for testing
+const GENERIC_CAROUSEL_ITEMS = Array.from({ length: 5 }, (_, i) => ({
+  id: `generic_${i + 1}`,
+  src: "/assets/misc/rec.png",
+  label: `Item ${i + 1}`,
+}));
+
 interface CarouselState {
   selectedIndex: number;
   isRejecting: boolean;
@@ -339,7 +346,6 @@ export function CostumeSelectorPanel() {
     emblaApi: ReturnType<typeof useEmblaCarousel>[1],
     label: string,
   ) => {
-    const parts = COSTUME_PARTS[partType];
     const state = carouselStates[partType];
 
     const borderColor = state.isRejecting
@@ -391,28 +397,10 @@ export function CostumeSelectorPanel() {
           >
             <Box ref={emblaRef} sx={{ overflow: "hidden" }}>
               <Box sx={{ display: "flex" }}>
-                {/* Empty slot */}
-                <Box
-                  sx={{
-                    flex: "0 0 100%",
-                    minWidth: 0,
-                    height: 120,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    position: "relative",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Vazio
-                  </Typography>
-                </Box>
-
-                {/* Costume parts */}
-                {parts.map((part) => (
+                {/* Generic items */}
+                {GENERIC_CAROUSEL_ITEMS.map((item) => (
                   <Box
-                    key={part.id}
+                    key={item.id}
                     sx={{
                       flex: "0 0 100%",
                       minWidth: 0,
@@ -427,8 +415,8 @@ export function CostumeSelectorPanel() {
                   >
                     <Box
                       component="img"
-                      src={`/assets/artworks/costumes/${part.textureKey}.png`}
-                      alt={part.name}
+                      src={item.src}
+                      alt={item.label}
                       sx={{
                         width: 60,
                         height: 60,
@@ -437,7 +425,7 @@ export function CostumeSelectorPanel() {
                       }}
                     />
                     <Typography variant="caption" align="center">
-                      {part.name}
+                      {item.label}
                     </Typography>
                   </Box>
                 ))}
