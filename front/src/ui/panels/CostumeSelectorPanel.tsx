@@ -2,6 +2,8 @@
 
 import { keyframes } from "@emotion/react";
 import CheckIcon from "@mui/icons-material/Check";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
 import { Box, Button, IconButton, Paper, Typography } from "@mui/material";
 import useEmblaCarousel from "embla-carousel-react";
@@ -315,10 +317,26 @@ export function CostumeSelectorPanel() {
     };
   }, [costumeSelectorOpen, handleClose]);
 
+  // Navigation handlers
+  const handlePrev = useCallback(
+    (emblaApi: ReturnType<typeof useEmblaCarousel>[1]) => {
+      if (emblaApi) emblaApi.scrollPrev();
+    },
+    [],
+  );
+
+  const handleNext = useCallback(
+    (emblaApi: ReturnType<typeof useEmblaCarousel>[1]) => {
+      if (emblaApi) emblaApi.scrollNext();
+    },
+    [],
+  );
+
   // Render carousel for a part type
   const renderCarousel = (
     partType: "head" | "torso" | "feet",
     emblaRef: (instance: HTMLElement | null) => void,
+    emblaApi: ReturnType<typeof useEmblaCarousel>[1],
     label: string,
   ) => {
     const parts = COSTUME_PARTS[partType];
@@ -343,87 +361,121 @@ export function CostumeSelectorPanel() {
         >
           {label}
         </Typography>
-        <Paper
-          elevation={2}
-          sx={{
-            overflow: "hidden",
-            border: `3px solid ${borderColor}`,
-            borderRadius: 2,
-            animation: state.isRejecting ? `${shake} 0.4s ease` : "none",
-            opacity: state.isLocked ? 0.8 : 1,
-          }}
-        >
-          <Box ref={emblaRef} sx={{ overflow: "hidden" }}>
-            <Box sx={{ display: "flex" }}>
-              {/* Empty slot */}
-              <Box
-                sx={{
-                  flex: "0 0 100%",
-                  minWidth: 0,
-                  height: 120,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: "rgba(0, 0, 0, 0.05)",
-                  position: "relative",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Vazio
-                </Typography>
-              </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Prev Button */}
+          <IconButton
+            onClick={() => handlePrev(emblaApi)}
+            disabled={!emblaApi}
+            sx={{
+              flexShrink: 0,
+              color: LayoutConfig.COLORS.INFO_BODY,
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
+            <ChevronLeftIcon />
+          </IconButton>
 
-              {/* Costume parts */}
-              {parts.map((part) => (
+          <Paper
+            elevation={2}
+            sx={{
+              flex: 1,
+              overflow: "hidden",
+              border: `3px solid ${borderColor}`,
+              borderRadius: 2,
+              animation: state.isRejecting ? `${shake} 0.4s ease` : "none",
+              opacity: state.isLocked ? 0.8 : 1,
+              position: "relative",
+            }}
+          >
+            <Box ref={emblaRef} sx={{ overflow: "hidden" }}>
+              <Box sx={{ display: "flex" }}>
+                {/* Empty slot */}
                 <Box
-                  key={part.id}
                   sx={{
                     flex: "0 0 100%",
                     minWidth: 0,
                     height: 120,
                     display: "flex",
-                    flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    bgcolor: "background.paper",
+                    bgcolor: "rgba(0, 0, 0, 0.05)",
                     position: "relative",
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={`/assets/artworks/costumes/${part.textureKey}.png`}
-                    alt={part.name}
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      objectFit: "contain",
-                      mb: 1,
-                    }}
-                  />
-                  <Typography variant="caption" align="center">
-                    {part.name}
+                  <Typography variant="body2" color="text.secondary">
+                    Vazio
                   </Typography>
                 </Box>
-              ))}
-            </Box>
-          </Box>
 
-          {/* Lock indicator */}
-          {state.isLocked && (
-            <Box
-              sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                bgcolor: LayoutConfig.COLORS.AVAILABLE_GREEN,
-                borderRadius: "50%",
-                p: 0.5,
-              }}
-            >
-              <CheckIcon sx={{ fontSize: 16, color: "white" }} />
+                {/* Costume parts */}
+                {parts.map((part) => (
+                  <Box
+                    key={part.id}
+                    sx={{
+                      flex: "0 0 100%",
+                      minWidth: 0,
+                      height: 120,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: "background.paper",
+                      position: "relative",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={`/assets/artworks/costumes/${part.textureKey}.png`}
+                      alt={part.name}
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        objectFit: "contain",
+                        mb: 1,
+                      }}
+                    />
+                    <Typography variant="caption" align="center">
+                      {part.name}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             </Box>
-          )}
-        </Paper>
+
+            {/* Lock indicator */}
+            {state.isLocked && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  bgcolor: LayoutConfig.COLORS.AVAILABLE_GREEN,
+                  borderRadius: "50%",
+                  p: 0.5,
+                }}
+              >
+                <CheckIcon sx={{ fontSize: 16, color: "white" }} />
+              </Box>
+            )}
+          </Paper>
+
+          {/* Next Button */}
+          <IconButton
+            onClick={() => handleNext(emblaApi)}
+            disabled={!emblaApi}
+            sx={{
+              flexShrink: 0,
+              color: LayoutConfig.COLORS.INFO_BODY,
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
+            <ChevronRightIcon />
+          </IconButton>
+        </Box>
       </Box>
     );
   };
@@ -496,9 +548,9 @@ export function CostumeSelectorPanel() {
         </Typography>
 
         {/* Carousels */}
-        {renderCarousel("head", headEmblaRef, "Cabeça")}
-        {renderCarousel("torso", torsoEmblaRef, "Tronco")}
-        {renderCarousel("feet", feetEmblaRef, "Pés")}
+        {renderCarousel("head", headEmblaRef, headEmblaApi, "Cabeça")}
+        {renderCarousel("torso", torsoEmblaRef, torsoEmblaApi, "Tronco")}
+        {renderCarousel("feet", feetEmblaRef, feetEmblaApi, "Pés")}
 
         {/* Confirm button */}
         <Button
