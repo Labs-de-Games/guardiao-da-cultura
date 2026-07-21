@@ -42,6 +42,13 @@ export namespace MapManager {
           if (contentId && contentJson?.npcs?.[contentId]) {
             const npcData = contentJson.npcs[contentId];
             if (npcData.dialogues) {
+              const finalPosX = properties?.find(
+                (p) => p.name === "finalPositionX",
+              )?.value as number | undefined;
+              const finalPosY = properties?.find(
+                (p) => p.name === "finalPositionY",
+              )?.value as number | undefined;
+
               config = {
                 name: npcData.name,
                 missionId: npcData.missionId || finalMissionId || "unknown",
@@ -50,6 +57,10 @@ export namespace MapManager {
                 intermediateQuiz: npcData.dialogues.intermediateQuiz,
                 spawnX: obj.x * scale,
                 spawnY: obj.y * scale,
+                finalPosition:
+                  finalPosX !== undefined && finalPosY !== undefined
+                    ? { x: finalPosX * scale, y: finalPosY * scale }
+                    : undefined,
               };
             }
           }

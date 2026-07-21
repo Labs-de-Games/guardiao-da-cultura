@@ -37,6 +37,7 @@ interface NpcLike {
   getDialogues(): Record<string, string[]>;
   getIntermediateQuizDialogues(): string[];
   getSpawnPosition(): { x: number; y: number } | null;
+  getFinalPosition(): { x: number; y: number } | null;
   showForQuiz(x: number, y: number): void;
   hideAfterQuiz(): void;
   teleportTo(x: number, y: number): void;
@@ -438,7 +439,8 @@ export class QuizManager {
       const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
 
       if (floorCompleted) {
-        npc.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+        const finalPos = npc.getFinalPosition() ?? NPC_FLOOR_3_POSITION;
+        npc.teleportTo(finalPos.x, finalPos.y);
       } else {
         npc.hideAfterQuiz();
         if (spawnPos) {
