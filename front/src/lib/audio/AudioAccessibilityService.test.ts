@@ -129,7 +129,7 @@ describe("AudioAccessibilityServiceImpl", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: "hello world",
-          voice: "pt-BR",
+          voice: "Brazilian Portuguese Female",
           rate: undefined,
           pitch: undefined,
         }),
@@ -305,6 +305,50 @@ describe("AudioAccessibilityServiceImpl", () => {
       mockOnplay?.();
 
       expect(mockPlay).toHaveBeenCalled();
+    });
+  });
+
+  describe("voice selection", () => {
+    it("defaults to Brazilian Portuguese Female", () => {
+      expect(service.getVoice()).toBe("Brazilian Portuguese Female");
+    });
+
+    it("setVoice changes the voice used in subsequent speak() calls", async () => {
+      service.setVoice("US English Female");
+
+      service.speak("english test");
+      await flushPromises();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/tts/synthesize",
+        expect.objectContaining({
+          body: JSON.stringify({
+            text: "english test",
+            voice: "US English Female",
+            rate: undefined,
+            pitch: undefined,
+          }),
+        }),
+      );
+    });
+
+    it("per-call voice option overrides setVoice", async () => {
+      service.setVoice("US English Female");
+
+      service.speak("french test", { voice: "French Female" });
+      await flushPromises();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/tts/synthesize",
+        expect.objectContaining({
+          body: JSON.stringify({
+            text: "french test",
+            voice: "French Female",
+            rate: undefined,
+            pitch: undefined,
+          }),
+        }),
+      );
     });
   });
 });
