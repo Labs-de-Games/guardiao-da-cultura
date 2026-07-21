@@ -712,7 +712,7 @@ export class Player
       const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
-      this.carriedItem.setDepth(this.depth + 1);
+      this.carriedItem.setDepth(this.depth + 2);
     }
   }
 
