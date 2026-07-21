@@ -69,7 +69,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     },
     data: {
       works: ["data/levels/level_02/works.json"],
-      quizzes: ["data/levels/level_01/quizzes.json"], // mock from level_01
+      quizzes: ["data/levels/level_02/quizzes.json"],
       intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
       npcs: ["data/levels/level_02/npcs.json"],
       messages: ["data/global/messages.json"],
