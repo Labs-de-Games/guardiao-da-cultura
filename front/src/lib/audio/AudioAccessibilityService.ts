@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
 
 const DUCK_VOLUME = 0.3;
-const DEFAULT_VOICE = "pt-BR";
+const DEFAULT_VOICE = "Brazilian Portuguese Female";
 
 interface SpeakOptions {
   voice?: string;
@@ -17,6 +17,7 @@ class AudioAccessibilityServiceImpl {
   private isDucked = false;
   private currentAudio: HTMLAudioElement | null = null;
   private speakRequestId = 0;
+  private voice: string = DEFAULT_VOICE;
 
   private constructor() {}
 
@@ -30,6 +31,14 @@ class AudioAccessibilityServiceImpl {
 
   setSoundManager(manager: Phaser.Sound.BaseSoundManager): void {
     this.soundManager = manager;
+  }
+
+  setVoice(voice: string): void {
+    this.voice = voice;
+  }
+
+  getVoice(): string {
+    return this.voice;
   }
 
   init(): void {
@@ -97,7 +106,7 @@ class AudioAccessibilityServiceImpl {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text,
-        voice: options?.voice ?? DEFAULT_VOICE,
+        voice: options?.voice ?? this.voice,
         rate: options?.rate,
         pitch: options?.pitch,
       }),

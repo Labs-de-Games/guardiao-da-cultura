@@ -20,6 +20,10 @@ export function useAudioAccessibility() {
     setIsSpeaking(false);
   }, []);
 
+  const setVoice = useCallback((voice: string) => {
+    AudioAccessibilityService.setVoice(voice);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (AudioAccessibilityService.isPlaying()) {
@@ -28,5 +32,5 @@ export function useAudioAccessibility() {
     };
   }, []);
 
-  return { speak, stop, isSpeaking };
+  return { speak, stop, isSpeaking, setVoice };
 }
