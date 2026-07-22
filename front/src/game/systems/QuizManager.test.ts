@@ -360,6 +360,7 @@ describe("QuizManager", () => {
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
       [{ q: "Pergunta?" }],
       expect.any(Function),
+      { quizNumber: null, attemptNumber: 1 },
     );
   });
 
@@ -392,6 +393,7 @@ describe("QuizManager", () => {
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
       [{ q: "Pergunta?" }],
       expect.any(Function),
+      { quizNumber: null, attemptNumber: 1 },
     );
   });
 
