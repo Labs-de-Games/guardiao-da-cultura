@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import posthog from "posthog-js";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import {
@@ -37,6 +38,7 @@ export class MapIntroScene extends Scene {
   private readonly selectedUnavailableTint = 0x6b6767;
   private autoStartEvent?: Phaser.Time.TimerEvent;
   private autoStartStartMs = 0;
+  private homeEnteredAtMs = 0;
   private completedLevels: Record<string, CompletedLevelRecord> = {};
 
   private readonly handleResize = () => {
@@ -54,6 +56,9 @@ export class MapIntroScene extends Scene {
   }
 
   create() {
+    posthog.capture("game_home_viewed");
+    this.homeEnteredAtMs = Date.now();
+
     this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);
 
@@ -69,8 +74,13 @@ export class MapIntroScene extends Scene {
       marker.setInteractive({ useHandCursor: true });
       marker.on("pointerdown", () => {
         if (this.activeMarkerIndex === index) {
-          this.beginGame();
+          this.beginGame("marker_click");
         } else {
+          posthog.capture("map_pin_clicked", {
+            marker_id: markerData.id,
+            level_id: markerData.levelId,
+            is_available: this.isMarkerAvailable(index),
+          });
           this.cancelAutoStart("cycled");
           this.activeMarkerIndex = index;
           this.emitMarkerChanged();
@@ -80,8 +90,8 @@ export class MapIntroScene extends Scene {
       this.markerViews.set(markerData.id, { marker });
     });
 
-    onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame());
-    onKeyDown(this, Actions.CONFIRM, () => this.beginGame());
+    onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame("spacebar"));
+    onKeyDown(this, Actions.CONFIRM, () => this.beginGame("confirm"));
     onKeyDown(this, Actions.CYCLE_FORWARD, this.cycleMarkerForward);
     onKeyDown(this, Actions.CYCLE_BACKWARD, this.cycleMarkerBackward);
 
@@ -119,6 +129,9 @@ export class MapIntroScene extends Scene {
       this.scale.off("resize", this.handleResize);
       this.cancelAutoStart("shutdown");
       EventBus.off("progression:updated", onProgression, this);
+      posthog.capture("game_home_dwell_time", {
+        dwell_ms: Date.now() - this.homeEnteredAtMs,
+      });
     });
 
     this.layout();
@@ -127,11 +140,20 @@ export class MapIntroScene extends Scene {
     this.maybeStartAutoStart();
   }
 
-  private beginGame() {
+  private beginGame(
+    source: "spacebar" | "confirm" | "marker_click" | "auto_start",
+  ) {
     this.cancelAutoStart("started");
     const marker = MARKERS[this.activeMarkerIndex];
     if (!this.isMarkerAvailable(this.activeMarkerIndex) || !marker.levelId) {
       return;
+    }
+
+    if (source === "spacebar") {
+      posthog.capture("game_started_with_spacebar", {
+        marker_id: marker.id,
+        level_id: marker.levelId,
+      });
     }
 
     if (marker.levelId === "level_01") {
@@ -164,7 +186,7 @@ export class MapIntroScene extends Scene {
           this.autoStartEvent = undefined;
           event?.remove();
           EventBus.emit("map:auto-start-completed", undefined);
-          this.beginGame();
+          this.beginGame("auto_start");
         }
       },
     });
