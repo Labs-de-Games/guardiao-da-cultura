@@ -17,5 +17,11 @@ export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
   MissionKeys.PHOTO_DONE,
 ]);
 
+export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
+  [MissionKeys.PAINTINGS_DONE]: 1,
+  [MissionKeys.SCULPTURES_DONE]: 2,
+  [MissionKeys.PHOTO_DONE]: 3,
+};
+
 export type MissionId = (typeof MissionIds)[keyof typeof MissionIds];
 export type MissionKey = (typeof MissionKeys)[keyof typeof MissionKeys];

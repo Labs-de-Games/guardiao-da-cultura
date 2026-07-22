@@ -2,6 +2,7 @@ import posthog from "posthog-js";
 import { GameEvents } from "../constants/GameEvents";
 import {
   FLOOR_COMPLETE_KEYS,
+  INTERMEDIATE_QUIZ_NUMBERS,
   MissionIds,
   NPC_FLOOR_3_POSITION,
 } from "../constants/MissionConstants";
@@ -321,6 +322,12 @@ export class QuizManager {
         return;
       }
 
+      posthog.capture("intermediate_quiz_started", {
+        quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
+        level_id: this.context.getLevelId(),
+        info_key: infoKey,
+      });
+
       this.quizMode = "intermediate";
 
       const spawnPos = npc.getSpawnPosition();
@@ -428,6 +435,7 @@ export class QuizManager {
 
       posthog.capture("intermediate_quiz_completed", {
         level_id: levelId,
+        quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
         info_key: infoKey,
         score,
         total_questions: questions.length,
