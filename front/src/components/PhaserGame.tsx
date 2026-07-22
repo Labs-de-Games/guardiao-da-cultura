@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
 import { setGuestId } from "../lib/api/client";
 import { useAuth } from "../lib/auth/useAuth";
@@ -32,6 +33,7 @@ export default function PhaserGame() {
   const [loadingProgress, setLoadingProgress] = useState<number | undefined>();
   const [overlayMounted, setOverlayMounted] = useState(false);
   const loadingStartedAtRef = useRef<number | null>(null);
+  const currentLevelIdRef = useRef<string | undefined>(undefined);
   const minLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -47,6 +49,7 @@ export default function PhaserGame() {
         minLoadingTimeoutRef.current = null;
       }
       loadingStartedAtRef.current = Date.now();
+      currentLevelIdRef.current = customEvent.detail?.levelId;
       setLoadingLevelId(customEvent.detail?.levelId);
       setLoadingProgress(undefined);
       setIsLoading(true);
@@ -61,6 +64,12 @@ export default function PhaserGame() {
       const elapsed = loadingStartedAtRef.current
         ? Date.now() - loadingStartedAtRef.current
         : MIN_LEVEL_LOADING_MS;
+
+      posthog.capture("game_load_success", {
+        level_id: currentLevelIdRef.current,
+        loading_time_ms: elapsed,
+      });
+
       const remaining = Math.max(0, MIN_LEVEL_LOADING_MS - elapsed);
 
       if (remaining === 0) {
@@ -74,9 +83,19 @@ export default function PhaserGame() {
       }, remaining);
     };
 
+    const handleLoadingError = (event: Event) => {
+      const customEvent = event as CustomEvent<{ stage: string; key: string }>;
+      posthog.capture("game_load_failed", {
+        error_message: `Asset failed: ${customEvent.detail?.key}`,
+        error_type: "asset_load_error",
+        loading_stage: customEvent.detail?.stage ?? "asset_load",
+      });
+    };
+
     window.addEventListener("phaser-loading-start", handleLoadingStart);
     window.addEventListener("phaser-loading-progress", handleLoadingProgress);
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
+    window.addEventListener("phaser-loading-error", handleLoadingError);
 
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
@@ -85,6 +104,8 @@ export default function PhaserGame() {
     isInitializingRef.current = true;
 
     const initGame = async () => {
+      let stage: "player_id_resolution" | "module_import" | "phaser_init" =
+        "player_id_resolution";
       try {
         const activeUserId = user?.id ?? null;
         const isGuest = !activeUserId;
@@ -101,7 +122,10 @@ export default function PhaserGame() {
           setGuestId(guestSessionId);
         }
 
+        stage = "module_import";
         const { default: StartGame } = await import("../game/main");
+
+        stage = "phaser_init";
         gameRef.current = StartGame(
           "game-container",
           playerId,
@@ -111,6 +135,11 @@ export default function PhaserGame() {
         setIsLoading(false);
         setOverlayMounted(true);
       } catch (err) {
+        posthog.capture("game_load_failed", {
+          error_message: err instanceof Error ? err.message : String(err),
+          error_type: err instanceof Error ? err.name : "unknown",
+          loading_stage: stage,
+        });
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
         setIsLoading(false);
@@ -129,6 +158,7 @@ export default function PhaserGame() {
         "phaser-loading-complete",
         handleLoadingComplete,
       );
+      window.removeEventListener("phaser-loading-error", handleLoadingError);
       if (minLoadingTimeoutRef.current) {
         clearTimeout(minLoadingTimeoutRef.current);
         minLoadingTimeoutRef.current = null;

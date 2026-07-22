@@ -182,6 +182,14 @@ export class Game extends Scene implements GameDataAccessor {
       );
     });
 
+    this.load.on("loaderror", (file: Phaser.Loader.File) => {
+      window.dispatchEvent(
+        new CustomEvent("phaser-loading-error", {
+          detail: { stage: "asset_load", key: file.key },
+        }),
+      );
+    });
+
     this.load.setPath("assets/");
     Player.preload(this);
     Npc.preload(this);
