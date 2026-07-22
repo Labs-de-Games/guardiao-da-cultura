@@ -3,12 +3,26 @@
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
+import { useEffect, useRef } from "react";
 
 export default function PlayLanding() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const enteredAtRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    posthog.capture("landing_page_viewed");
+    const enteredAt = enteredAtRef.current;
+    return () => {
+      posthog.capture("landing_page_dwell_time", {
+        dwell_ms: Date.now() - enteredAt,
+      });
+    };
+  }, []);
 
   const handlePlay = () => {
+    posthog.capture("landing_page_play_clicked");
     const query = searchParams.toString();
     router.push(query ? `/game?${query}` : "/game");
   };
