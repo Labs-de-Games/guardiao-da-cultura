@@ -8,6 +8,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EventBus } from "@/shared/events/event-bus";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 import { useGameUIStore } from "../state/game-ui-store";
 
 type ProgressState = "success" | "error" | "current" | "future";
@@ -399,7 +400,7 @@ export default function QuizPanel() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: UI_LAYERS.FULLSCREEN,
         bgcolor: "rgba(0,0,0,0.6)",
         pointerEvents: "auto",
       }}
