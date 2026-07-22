@@ -35,6 +35,7 @@ export class PosterFactory implements IObjectFactory {
 
     const item = new CarryableItem(scene, config);
     item.setOrigin(0.5, 1);
+    item.setDepth(10);
     item.setScale(finalScale);
 
     return item;
