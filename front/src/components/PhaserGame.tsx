@@ -134,7 +134,7 @@ export default function PhaserGame() {
         minLoadingTimeoutRef.current = null;
       }
       if (gameRef.current) {
-        gameRef.current.destroy(true);
+        gameRef.current.destroy(false);
         gameRef.current = null;
         isInitializingRef.current = false;
       }
