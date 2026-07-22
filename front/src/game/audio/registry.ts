@@ -51,7 +51,7 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   },
   {
     key: "sfx.player.climb",
-    path: "sound/sfx/player.climb_2.mp3",
+    path: "sound/sfx/player.climb.mp3",
     loop: true,
   },
   { key: "sfx.player.jump", path: "sound/sfx/player.jump.wav" },
