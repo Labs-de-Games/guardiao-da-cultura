@@ -7,6 +7,7 @@ import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import type { ChunkArrowDir } from "@/game/objects/ui/chunkSelectorNavigation";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 import {
   buildInitialState,
@@ -305,7 +306,7 @@ export function ChunkSelectorPanel() {
         sx={{
           position: "absolute",
           inset: 0,
-          zIndex: 40,
+          zIndex: UI_LAYERS.FULLSCREEN,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
