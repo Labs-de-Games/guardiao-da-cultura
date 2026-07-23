@@ -128,12 +128,6 @@ export default function PhaserGame() {
         const { default: StartGame } = await import("../game/main");
 
         stage = "phaser_init";
-        gameRef.current = StartGame(
-          "game-container",
-          playerId,
-          isGuest,
-          entryFlow,
-        );
         const game = StartGame("game-container", playerId, isGuest, entryFlow);
         gameRef.current = game;
 
