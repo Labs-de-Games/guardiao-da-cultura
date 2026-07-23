@@ -20,6 +20,7 @@ import { getProgression, saveProgression } from "@/lib/progressionApi";
 import {
   getUserCollectibles,
   type SubmitScoreRequest,
+  saveUserCollectibles,
   submitScore,
 } from "@/lib/scoresApi";
 import { sendGameEvent } from "../analyticsApi";
@@ -42,6 +43,10 @@ export interface GamePersistence {
   getUnlockedBadgeIds(): Promise<string[]>;
   unlockBadge(badgeId: string): Promise<void>;
   loadCollectibles(levelId: string): Promise<PersistedCollectible[]>;
+  saveCollectibles(
+    levelId: string,
+    collectibles: PersistedCollectible[],
+  ): Promise<void>;
   saveScore(payload: ScorePersistencePayload): Promise<void>;
   sendQuizOutcome(payload: QuizOutcomePayload): Promise<void>;
   sendBadgeEarnedEvent(payload: {
@@ -145,6 +150,19 @@ function buildGuestPersistence(guestId: string): GamePersistence {
       return snapshot.collectiblesByLevel[levelId] ?? [];
     },
 
+    async saveCollectibles(
+      levelId: string,
+      collectibles: PersistedCollectible[],
+    ) {
+      const store = readGuestStore();
+      const snapshot = getOrCreateGuestSnapshot(store, guestId);
+      snapshot.collectiblesByLevel[levelId] = collectibles.map((c) => ({
+        collectibleId: c.collectibleId,
+        collectibleType: c.collectibleType,
+      }));
+      writeGuestStore(store);
+    },
+
     async saveScore(payload: ScorePersistencePayload) {
       const store = readGuestStore();
       const snapshot = getOrCreateGuestSnapshot(store, guestId);
@@ -244,6 +262,20 @@ function buildAuthPersistence(userId: string): GamePersistence {
         collectibleId: record.collectibleId,
         collectibleType: record.collectibleType,
       }));
+    },
+
+    async saveCollectibles(
+      levelId: string,
+      collectibles: PersistedCollectible[],
+    ) {
+      await saveUserCollectibles(
+        userId,
+        collectibles.map((c) => ({
+          collectibleId: c.collectibleId,
+          collectibleType: c.collectibleType,
+          levelId,
+        })),
+      );
     },
 
     async saveScore(payload: ScorePersistencePayload) {

@@ -74,3 +74,14 @@ export async function getUserCollectibles(
   const res = await apiClient.get<UserCollectibleRecord[]>(url);
   return res.data;
 }
+
+export async function saveUserCollectibles(
+  userId: string,
+  collectibles: Array<{
+    collectibleId: string;
+    collectibleType: "CLUE_VILLAIN";
+    levelId: string;
+  }>,
+): Promise<void> {
+  await apiClient.post(`/scores/${userId}/collectibles`, { collectibles });
+}
