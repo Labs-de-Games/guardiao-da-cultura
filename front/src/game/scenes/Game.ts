@@ -441,7 +441,6 @@ export class Game extends Scene implements GameDataAccessor {
       this.progressionManager?.removeAllListeners(
         ProgressionEvents.PROGRESSION_UPDATED,
       );
-      EventBus.off("progression:updated");
     });
 
     posthog.capture("game_started", {
