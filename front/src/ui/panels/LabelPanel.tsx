@@ -6,6 +6,7 @@ import Pagination from "@mui/material/Pagination";
 import PaginationItem from "@mui/material/PaginationItem";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useAudioAccessibility } from "@/lib/audio";
 import { paginateText } from "@/lib/paginateText";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
@@ -141,6 +142,7 @@ export function LabelPanel() {
     }, CLOSE_HINT_FADE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [labelData]);
+  const { speak } = useAudioAccessibility();
 
   const pages = useMemo(
     () => paginateText(labelData?.description || ""),
@@ -413,18 +415,26 @@ export function LabelPanel() {
               gap: "32px",
             }}
           >
-            {/*<Box
+            <Box
               component="img"
               src="/images/etiqueta/icon-text-to-speech.svg"
               alt="Ouvir descrição"
+              onClick={() => {
+                const text = pages[currentPage];
+                if (text) speak(text);
+              }}
               sx={{
                 width: TTS_ICON_SIZE,
                 height: TTS_ICON_SIZE,
                 flexShrink: 0,
                 mt: "4px",
                 color: TTS_ICON_COLOR,
+                cursor: "pointer",
+                "&:hover": {
+                  opacity: 0.7,
+                },
               }}
-            />*/}
+            />
 
             <Typography
               sx={{

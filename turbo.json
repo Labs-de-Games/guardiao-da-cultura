@@ -21,7 +21,8 @@
     },
     "dev": {
       "persistent": true,
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["RESPONSIVEVOICE_API_KEY"]
     }
   }
 }
