@@ -82,8 +82,8 @@ export class Game extends Scene implements GameDataAccessor {
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
 
   public readonly scoringFloors = {
-    paintings: 0,
-    sculptures: 1,
+    sculptures: 0,
+    paintings: 1,
     photo: 2,
   } as const;
   private startedFloors: Set<number> = new Set();

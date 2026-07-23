@@ -160,9 +160,9 @@ minigames, quizzes e carregamento do jogo.
 | `game_home_dwell_time` | `dwell_ms` | `MapIntroScene.ts` |
 | `map_pin_clicked` | `marker_id`, `level_id`, `is_available` | `MapIntroScene.ts` |
 | `game_started_with_spacebar` | `marker_id`, `level_id` | `MapIntroScene.ts` |
-| `minigame_started` | `minigame_number` (1=paintings, 2=sculptures, 3=photo), `level_id` | `PaintingMechanicHandler.ts`, `SculptureMechanicHandler.ts`, `Game.ts` (photo) |
+| `minigame_started` | `minigame_number` (1=sculptures, 2=paintings, 3=photo), `level_id` | `PaintingMechanicHandler.ts`, `SculptureMechanicHandler.ts`, `Game.ts` (photo) |
 | `minigame_completed` | `minigame_number`, `level_id`, `errors`, `quarters_earned` | `Game.ts` (`completeFloor`) |
-| `intermediate_quiz_started` | `quiz_number` (1=paintings, 2=sculptures, 3=photo), `level_id`, `info_key` | `QuizManager.ts` |
+| `intermediate_quiz_started` | `quiz_number` (1=sculptures, 2=paintings, 3=photo), `level_id`, `info_key` | `QuizManager.ts` |
 | `intermediate_quiz_completed` | `quiz_number`, `level_id`, `info_key`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
 | `quiz_answer_submitted` | `quiz_number` (null for regular end-of-level quizzes), `question_id`, `selected_answer`, `is_correct`, `attempt_number` | `game-ui-store.ts` (`selectOption`) |
