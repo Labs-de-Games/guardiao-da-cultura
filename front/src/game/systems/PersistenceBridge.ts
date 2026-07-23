@@ -45,6 +45,15 @@ export class PersistenceBridge {
     }
   }
 
+  async saveCollectibles(): Promise<void> {
+    try {
+      const collectibles = this.collectibleSystem.getCollectedCollectibles();
+      await this.persistence.saveCollectibles(this.levelId, collectibles);
+    } catch (err) {
+      console.warn("[PersistenceBridge] Failed to save collectibles:", err);
+    }
+  }
+
   async initializeProgression(): Promise<void> {
     try {
       const snapshot = await this.persistence.loadProgress();

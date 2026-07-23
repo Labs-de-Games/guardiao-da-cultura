@@ -405,7 +405,28 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     void this.persistenceBridge.initializeProgression();
-    void this.persistenceBridge.initializeCollectibles();
+    void this.persistenceBridge.initializeCollectibles().then(() => {
+      const collectedIds = new Set(
+        this.collectibleSystem
+          .getCollectedCollectibles()
+          .map((c) => c.collectibleId),
+      );
+      const allCollectibles = Object.entries(
+        this.contentData.collectibles,
+      ).flatMap(([category, items]) =>
+        Object.entries(items as Record<string, CollectibleData>).map(
+          ([id, data]) => ({
+            id,
+            name: data.metadata.title || id,
+            category,
+            collected: collectedIds.has(id),
+          }),
+        ),
+      );
+      EventBus.emit("collectible:collectibles-sync", {
+        entries: allCollectibles,
+      });
+    });
 
     this.registry.set("currentLevelId", this.levelId);
     this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
@@ -606,6 +627,7 @@ export class Game extends Scene implements GameDataAccessor {
           if (clueId && this.progressionManager) {
             this.progressionManager.recordClueUnlocked(clueId, this.levelId);
           }
+          void this.persistenceBridge.saveCollectibles();
         }
 
         if (
