@@ -4,8 +4,9 @@ import ArrowRight from "@mui/icons-material/ArrowRight";
 import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useAudioAccessibility } from "@/lib/audio";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
-import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 function useWindowSize() {
   const [size, setSize] = useState({
@@ -52,21 +53,26 @@ function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + "…";
 }
 
-function TextToSpeechIcon() {
+function TextToSpeechIcon({ onClick }: { onClick?: () => void }) {
   return (
     <Box
       component="img"
       src="/images/etiqueta/icon-text-to-speech.svg"
       alt=""
       aria-hidden="true"
+      onClick={onClick}
       sx={{
         position: "absolute",
         top: 32,
         right: 40,
         width: 36,
         height: 36,
-        pointerEvents: "none",
+        pointerEvents: onClick ? "auto" : "none",
+        cursor: onClick ? "pointer" : "default",
         filter: "brightness(0) invert(1)",
+        "&:hover": {
+          opacity: 0.7,
+        },
       }}
     />
   );
@@ -82,6 +88,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
 
   const advanceDialogue = useDialogueStore((s) => s.advanceDialogue);
   const closeDialogue = useDialogueStore((s) => s.closeDialogue);
+  const { speak } = useAudioAccessibility();
 
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -234,7 +241,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         maxWidth: "min(900px, 90vw)",
         width: "min(900px, 90vw)",
         pointerEvents: "auto",
-        zIndex: 30,
+        zIndex: UI_LAYERS.IN_WORLD,
       }}
     >
       <Box
@@ -251,7 +258,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           overflow: "visible",
         }}
       >
-        {/* <TextToSpeechIcon /> */}
+        <TextToSpeechIcon onClick={() => currentText && speak(currentText)} />
         <DialogueContent
           speakerName={speakerName}
           text={displayedText}

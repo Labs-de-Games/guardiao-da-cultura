@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio";
 import { Actions } from "../constants/KeyBindings";
 import { getKeys } from "../systems/InputManager";
 import type { IPlayerState } from "../types/EntityTypes";
@@ -32,6 +33,9 @@ export class Player
   public isCarrying: boolean = false;
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
+  private dragLoopSound: Phaser.Sound.BaseSound | null = null;
+  private footstepSound: Phaser.Sound.BaseSound | null = null;
+  private climbLoopSound: Phaser.Sound.BaseSound | null = null;
 
   // Coyote Time Variables
   private coyoteTime = 200;
@@ -280,6 +284,19 @@ export class Player
       Phaser.GameObjects.Events.DESTROY,
       () => {
         this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this);
+        // Clean up sounds
+        if (this.dragLoopSound) {
+          this.dragLoopSound.destroy();
+          this.dragLoopSound = null;
+        }
+        if (this.footstepSound) {
+          this.footstepSound.destroy();
+          this.footstepSound = null;
+        }
+        if (this.climbLoopSound) {
+          this.climbLoopSound.destroy();
+          this.climbLoopSound = null;
+        }
       },
       this,
     );
@@ -413,6 +430,8 @@ export class Player
     const isOnStairs = isOnStairsCenter || isOnStairsBottom;
 
     if (this.isInDialogue) {
+      // Stop movement sounds when in dialogue
+      this.stopMovementSounds();
       this.applyMovementRestriction(isOnStairs);
       return;
     }
@@ -421,6 +440,12 @@ export class Player
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
 
     if (!isOnStairs) {
+      // Stop climb loop sound when leaving stairs
+      if (this.isClimbingStairs && this.climbLoopSound) {
+        this.climbLoopSound.stop();
+        this.climbLoopSound.destroy();
+        this.climbLoopSound = null;
+      }
       this.isClimbingStairs = false;
     } else {
       const isJumpAnimActive =
@@ -454,6 +479,20 @@ export class Player
       (upDown || downDown) &&
       !this.isGrabbing &&
       !this.isCarrying;
+
+    // Start/stop climb loop sound based on whether player is actively moving on stairs
+    if (isClimbing) {
+      if (!this.climbLoopSound) {
+        this.climbLoopSound = this.addLoopingSound("sfx.player.climb", 0.3);
+      }
+    } else {
+      // Stop climb loop sound when not actively climbing
+      if (this.climbLoopSound) {
+        this.climbLoopSound.stop();
+        this.climbLoopSound.destroy();
+        this.climbLoopSound = null;
+      }
+    }
 
     if (isOnStairs && this.isClimbingStairs && !this.isGrabbing) {
       // Prevent climbing while carrying paintings
@@ -558,6 +597,27 @@ export class Player
       }
     }
 
+    // Footstep sound - play while walking on ground
+    const isWalkingOnGround =
+      body?.blocked.down &&
+      !this.isGrabbing &&
+      !this.isClimbingStairs &&
+      !isJumpPlaying &&
+      (leftDown || rightDown) &&
+      Math.abs(body.velocity.x) > 10;
+
+    if (isWalkingOnGround && !this.isInDialogue) {
+      if (!this.footstepSound) {
+        this.footstepSound = this.addLoopingSound("sfx.player.footstep", 0.2);
+      }
+    } else {
+      if (this.footstepSound) {
+        this.footstepSound.stop();
+        this.footstepSound.destroy();
+        this.footstepSound = null;
+      }
+    }
+
     if (this.isGrabbing && this.grabbedItem) {
       this.grabbedItem.x = this.x + this.grabOffset;
       this.grabbedItem.y = this.y + this.grabOffsetY;
@@ -567,7 +627,12 @@ export class Player
       itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
+      // Play drag loop sound only when moving
       if (isMoving) {
+        if (!this.dragLoopSound) {
+          this.dragLoopSound = this.addLoopingSound("sfx.object.drag_loop", 1);
+        }
+
         const isPushing =
           (body.velocity.x > 0 && this.grabOffset > 0) ||
           (body.velocity.x < 0 && this.grabOffset < 0);
@@ -577,6 +642,13 @@ export class Player
           this.anims.play(PLAYER_ANIMS.PULL.key, true);
         }
       } else {
+        // Stop drag loop when not moving
+        if (this.dragLoopSound) {
+          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.2);
+          this.dragLoopSound.stop();
+          this.dragLoopSound.destroy();
+          this.dragLoopSound = null;
+        }
         this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
       }
     }
@@ -597,6 +669,7 @@ export class Player
       // Apply jump velocity
       this.hasJumped = true;
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
+      AudioManager.playSfx("sfx.player.jump", 0.4);
 
       // Add platform inertia: inherit horizontal velocity from moving platform
       if (this.standingPlatform) {
@@ -790,6 +863,13 @@ export class Player
       body.setVelocity(0, 0);
     }
 
+    // Stop drag loop sound
+    if (this.dragLoopSound) {
+      this.dragLoopSound.stop();
+      this.dragLoopSound.destroy();
+      this.dragLoopSound = null;
+    }
+
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
       this.grabbedItem.setDepth(10);
@@ -849,6 +929,48 @@ export class Player
       ? PLAYER_ANIMS.CARRY_IDLE.key
       : PLAYER_ANIMS.IDLE.key;
     this.anims.play(idleAnim, true);
+  }
+
+  /**
+   * Safely add a looping sound only if its asset is loaded in the audio cache.
+   * Returns null when the sound key is missing so the game keeps running
+   * even before all audio assets have been preloaded.
+   */
+  private addLoopingSound(
+    key: string,
+    baseVolume: number,
+  ): Phaser.Sound.BaseSound | null {
+    if (!this.scene.game.cache.audio.has(key)) return null;
+    const settings = AudioManager.getSettings();
+    const sound = this.scene.sound.add(key, {
+      loop: true,
+      volume: baseVolume * settings.sfxVolume,
+      mute: settings.muted,
+    });
+    sound.play();
+    return sound;
+  }
+
+  /**
+   * Stop all movement-related sounds.
+   * Called when entering dialogue or other states that restrict movement.
+   */
+  private stopMovementSounds(): void {
+    if (this.climbLoopSound) {
+      this.climbLoopSound.stop();
+      this.climbLoopSound.destroy();
+      this.climbLoopSound = null;
+    }
+    if (this.footstepSound) {
+      this.footstepSound.stop();
+      this.footstepSound.destroy();
+      this.footstepSound = null;
+    }
+    if (this.dragLoopSound) {
+      this.dragLoopSound.stop();
+      this.dragLoopSound.destroy();
+      this.dragLoopSound = null;
+    }
   }
 }
 

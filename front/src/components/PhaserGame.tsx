@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
 import { setGuestId } from "../lib/api/client";
+import { AudioAccessibilityService } from "../lib/audio";
 import { useAuth } from "../lib/auth/useAuth";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
@@ -28,6 +29,7 @@ export default function PhaserGame() {
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
+  const resumeAudioRef = useRef<(() => void) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLevelId, setLoadingLevelId] = useState<string | undefined>();
   const [loadingProgress, setLoadingProgress] = useState<number | undefined>();
@@ -132,6 +134,25 @@ export default function PhaserGame() {
           isGuest,
           entryFlow,
         );
+        const game = StartGame("game-container", playerId, isGuest, entryFlow);
+        gameRef.current = game;
+
+        // Pass Phaser's sound manager for TTS volume ducking
+        AudioAccessibilityService.setSoundManager(game.sound);
+
+        // Resume AudioContext after first user gesture (Chrome autoplay policy)
+        const resumeAudio = () => {
+          const soundManager = game.sound as Phaser.Sound.WebAudioSoundManager;
+          if (soundManager?.context?.state === "suspended") {
+            soundManager.context.resume();
+          }
+          document.removeEventListener("click", resumeAudio);
+          document.removeEventListener("keydown", resumeAudio);
+        };
+        document.addEventListener("click", resumeAudio);
+        document.addEventListener("keydown", resumeAudio);
+        resumeAudioRef.current = resumeAudio;
+
         setIsLoading(false);
         setOverlayMounted(true);
       } catch (err) {
@@ -149,6 +170,11 @@ export default function PhaserGame() {
     void initGame();
 
     return () => {
+      if (resumeAudioRef.current) {
+        document.removeEventListener("click", resumeAudioRef.current);
+        document.removeEventListener("keydown", resumeAudioRef.current);
+        resumeAudioRef.current = null;
+      }
       window.removeEventListener("phaser-loading-start", handleLoadingStart);
       window.removeEventListener(
         "phaser-loading-progress",
@@ -164,7 +190,7 @@ export default function PhaserGame() {
         minLoadingTimeoutRef.current = null;
       }
       if (gameRef.current) {
-        gameRef.current.destroy(true);
+        gameRef.current.destroy(false);
         gameRef.current = null;
         isInitializingRef.current = false;
       }

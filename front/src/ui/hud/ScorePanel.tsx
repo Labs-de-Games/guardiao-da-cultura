@@ -1,8 +1,8 @@
 "use client";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
-import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
-import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 const NODE_SPACING_PX = 44;
 const MIN_BAR_WIDTH_PX = 120;
@@ -34,7 +34,7 @@ export function ScorePanel() {
         position: "absolute",
         top: 16,
         left: 16,
-        zIndex: UI_Z_INDEX.PANEL,
+        zIndex: UI_LAYERS.HUD,
         display: "flex",
         alignItems: "center",
         background: LayoutConfig.COLORS.MAP_BG_CSS,

@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -196,6 +197,9 @@ export class Game extends Scene implements GameDataAccessor {
     Enemy.preload(this);
     EffectsManager.preload(this);
 
+    // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
+    loadGlobalAudio(this);
+
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
@@ -273,6 +277,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.processModularData();
     this.effects = new EffectsManager(this);
     this.createAnimations();
+
+    // Initialize AudioManager with this scene so Player and other
+    // objects can play sounds via AudioManager.playSfx()
+    AudioManager.init(this);
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
@@ -406,7 +414,28 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     void this.persistenceBridge.initializeProgression();
-    void this.persistenceBridge.initializeCollectibles();
+    void this.persistenceBridge.initializeCollectibles().then(() => {
+      const collectedIds = new Set(
+        this.collectibleSystem
+          .getCollectedCollectibles()
+          .map((c) => c.collectibleId),
+      );
+      const allCollectibles = Object.entries(
+        this.contentData.collectibles,
+      ).flatMap(([category, items]) =>
+        Object.entries(items as Record<string, CollectibleData>).map(
+          ([id, data]) => ({
+            id,
+            name: data.metadata.title || id,
+            category,
+            collected: collectedIds.has(id),
+          }),
+        ),
+      );
+      EventBus.emit("collectible:collectibles-sync", {
+        entries: allCollectibles,
+      });
+    });
 
     this.registry.set("currentLevelId", this.levelId);
     this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
@@ -607,6 +636,7 @@ export class Game extends Scene implements GameDataAccessor {
           if (clueId && this.progressionManager) {
             this.progressionManager.recordClueUnlocked(clueId, this.levelId);
           }
+          void this.persistenceBridge.saveCollectibles();
         }
 
         if (

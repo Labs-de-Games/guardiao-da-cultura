@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, IconButton, Paper, Tooltip, Typography } from "@mui/material";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { useGameUIStore } from "../state/game-ui-store";
 
@@ -23,7 +24,7 @@ export default function BadgeGalleryPanel() {
         alignItems: "center",
         justifyContent: "center",
         pointerEvents: "auto",
-        zIndex: 20,
+        zIndex: UI_LAYERS.PANEL,
       }}
     >
       <Paper
