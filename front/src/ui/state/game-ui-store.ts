@@ -30,8 +30,6 @@ import type { IntroConfig } from "@/ui/intro/types";
 
 export const UI_Z_INDEX = {
   OVERLAY: 10,
-  SIDEBAR: 20,
-  PANEL: 30,
 } as const;
 
 export interface QuestStep {
