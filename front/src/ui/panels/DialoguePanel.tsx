@@ -5,7 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDialogueStore } from "@/ui/state/dialogue-store";
-import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 function useWindowSize() {
   const [size, setSize] = useState({
@@ -234,7 +234,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         maxWidth: "min(900px, 90vw)",
         width: "min(900px, 90vw)",
         pointerEvents: "auto",
-        zIndex: 30,
+        zIndex: UI_LAYERS.IN_WORLD,
       }}
     >
       <Box

@@ -16,7 +16,7 @@ import { registerInterest } from "@/lib/api/user-interested";
 import { interestSchema } from "@/lib/validation/interest";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
-import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 export function InterestDialog() {
   const isOpen = useGameUIStore((s) => s.isInterestDialogOpen);
@@ -103,7 +103,7 @@ export function InterestDialog() {
       sx={{
         position: "fixed",
         inset: 0,
-        zIndex: 2000,
+        zIndex: UI_LAYERS.FULLSCREEN,
         bgcolor: "rgba(0,0,0,0.6)",
         display: "flex",
         alignItems: "center",

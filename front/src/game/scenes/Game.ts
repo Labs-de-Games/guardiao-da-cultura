@@ -4,7 +4,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
-import { AudioManager } from "../audio";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -34,9 +34,11 @@ import { CarryableItem } from "../objects/interactives/CarryableItem";
 import { DraggableItem } from "../objects/interactives/DraggableItem";
 import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
+import type { MovingPlatform } from "../objects/MovingPlatform";
 import { Npc } from "../objects/Npc";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
+import type { Portal } from "../objects/Portal";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
@@ -74,6 +76,7 @@ export class Game extends Scene implements GameDataAccessor {
   rat!: Enemy;
   private hasInteractedWithRat: boolean = false;
   npcs: Npc[] = [];
+  portals: Portal[] = [];
   questManager!: QuestManager;
   private scoreManager!: ScoreManager;
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
@@ -104,6 +107,7 @@ export class Game extends Scene implements GameDataAccessor {
   private quizManager!: QuizManager;
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
+  private movingPlatforms: MovingPlatform[] = [];
   private itemsInteracted: Set<string> = new Set();
 
   private levelId: string = "level_01";
@@ -166,15 +170,26 @@ export class Game extends Scene implements GameDataAccessor {
   preload() {
     window.dispatchEvent(
       new CustomEvent("phaser-loading-start", {
-        detail: { type: "level_assets" },
+        detail: { type: "level_assets", levelId: this.levelId },
       }),
     );
+
+    this.load.on("progress", (value: number) => {
+      window.dispatchEvent(
+        new CustomEvent("phaser-loading-progress", {
+          detail: { progress: Math.round(value * 100) },
+        }),
+      );
+    });
 
     this.load.setPath("assets/");
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
     EffectsManager.preload(this);
+
+    // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
+    loadGlobalAudio(this);
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
@@ -276,6 +291,7 @@ export class Game extends Scene implements GameDataAccessor {
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
+      this.portals = MapManager.createPortals(this, mapData);
     }
 
     this.questManager = new QuestManager(MissionRequirements);
@@ -348,11 +364,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.collectibleSystem = new CollectibleSystem(
-      this,
-      this.scoreManager,
-      this.mapScale,
-    );
+    this.collectibleSystem = new CollectibleSystem(this, this.mapScale);
 
     const actorId = (this.registry.get("userId") as string | undefined) ?? null;
     const isGuest = this.registry.get("isGuest") === true;
@@ -421,6 +433,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("has_failed_quiz", 0);
     this.registry.set("quiz_solved_after_failure", 0);
+    this.registry.set("secret_clues_collected", 0);
 
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
@@ -546,6 +559,24 @@ export class Game extends Scene implements GameDataAccessor {
             },
             interactionDistance: 130,
           })),
+        ...this.portals.map((portal) => ({
+          get x() {
+            return portal.x;
+          },
+          get y() {
+            return portal.y;
+          },
+          get interactionY() {
+            return portal.y;
+          },
+          get displayHeight() {
+            return portal.height;
+          },
+          get active() {
+            return portal.active;
+          },
+          interactionDistance: 130,
+        })),
       ]);
 
       this.analyticsSystem.trackLevelEvent(
@@ -786,6 +817,12 @@ export class Game extends Scene implements GameDataAccessor {
       this.mapScale,
     );
 
+    this.movingPlatforms = MapManager.createMovingPlatforms(
+      this,
+      mapData,
+      this.mapScale,
+    );
+
     this.rat = new Enemy(this, 2000, 315, 1);
 
     let spawnX = PLAYER_SPAWN.X;
@@ -812,6 +849,10 @@ export class Game extends Scene implements GameDataAccessor {
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
+    }
+
+    for (const portal of this.portals) {
+      portal.setPlayerTracking(this.player);
     }
 
     // Teleport curator NPC when either sculptures or paintings are marked done
@@ -1009,6 +1050,9 @@ export class Game extends Scene implements GameDataAccessor {
       handler.placeCorrectChunk(this, p, data.itemId, data.slotIndex);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     });
+    EventBus.on("ui:chunk-slot-rejected", () => {
+      this.sound.play("error", { volume: 0.5 });
+    });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
@@ -1028,6 +1072,7 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
       EventBus.off("ui:chunk-slot-placed");
+      EventBus.off("ui:chunk-slot-rejected");
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
@@ -1129,6 +1174,50 @@ export class Game extends Scene implements GameDataAccessor {
         }
       }
     });
+
+    // Moving platforms — one-way collision (player can jump through from below)
+    for (const platform of this.movingPlatforms) {
+      this.physics.add.collider(
+        this.player,
+        platform,
+        // Collision callback: track when player is standing on platform
+        (player, _platform) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            (player as Player).setStandingPlatform(platform as MovingPlatform);
+          }
+        },
+        // Process callback: determine if collision should occur
+        (_player, _platform) => {
+          // Allow player to pass through when climbing stairs
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+
+          const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+          const platformBody = platform.body as Phaser.Physics.Arcade.Body;
+
+          // With setDirectControl(true), velocity is not set explicitly.
+          // Use position delta to determine the platform's actual movement.
+          const platformDeltaY = platformBody.position.y - platformBody.prev.y;
+
+          // Player must be moving downwards relative to the platform
+          const relativeVelocityY =
+            playerBody.velocity.y -
+            platformDeltaY / (this.game.loop.delta / 1000 || 1 / 60);
+          if (relativeVelocityY < -0.01) {
+            return false;
+          }
+
+          // Player's feet must have been above or at the platform's top in the previous frame
+          return (
+            playerBody.prev.y + playerBody.height <= platformBody.prev.y + 10
+          );
+        },
+        this,
+      );
+    }
   }
 
   private setupCameras() {
@@ -1179,10 +1268,6 @@ export class Game extends Scene implements GameDataAccessor {
 
   public completePhotoFloor() {
     this.completeFloor(this.scoringFloors.photo);
-  }
-
-  public shakePhotoFailure() {
-    this.effects.shakeHorizontal();
   }
 
   public showSpotlightBeam(

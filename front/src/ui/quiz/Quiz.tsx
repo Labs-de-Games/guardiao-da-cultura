@@ -9,6 +9,7 @@ import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EventBus } from "@/shared/events/event-bus";
 import { useSound } from "@/ui/hooks/useSound";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 import { useGameUIStore } from "../state/game-ui-store";
 
 type ProgressState = "success" | "error" | "current" | "future";
@@ -413,7 +414,7 @@ export default function QuizPanel() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: UI_LAYERS.FULLSCREEN,
         bgcolor: "rgba(0,0,0,0.6)",
         pointerEvents: "auto",
       }}
@@ -685,10 +686,10 @@ export default function QuizPanel() {
                   const selectAnswer = () => {
                     if (!quiz.isProcessingAnswer) {
                       const store = useGameUIStore.getState();
-                      const currentRow =
-                        store.quiz.selectedOptionIndex >= 2 ? 1 : 0;
+                      const currentIndex = store.quiz.selectedOptionIndex ?? 0;
+                      const currentRow = currentIndex >= 2 ? 1 : 0;
                       const targetRow = index >= 2 ? 1 : 0;
-                      const currentCol = store.quiz.selectedOptionIndex % 2;
+                      const currentCol = currentIndex % 2;
                       const targetCol = index % 2;
                       store.moveSelection(targetRow - currentRow, 0);
                       store.moveSelection(0, targetCol - currentCol);
@@ -699,10 +700,10 @@ export default function QuizPanel() {
                   const hoverHighlight = () => {
                     if (!quiz.isProcessingAnswer) {
                       const store = useGameUIStore.getState();
-                      const currentRow =
-                        store.quiz.selectedOptionIndex >= 2 ? 1 : 0;
+                      const currentIndex = store.quiz.selectedOptionIndex ?? 0;
+                      const currentRow = currentIndex >= 2 ? 1 : 0;
                       const targetRow = index >= 2 ? 1 : 0;
-                      const currentCol = store.quiz.selectedOptionIndex % 2;
+                      const currentCol = currentIndex % 2;
                       const targetCol = index % 2;
                       store.moveSelection(targetRow - currentRow, 0);
                       store.moveSelection(0, targetCol - currentCol);
@@ -712,8 +713,12 @@ export default function QuizPanel() {
                     <Grid key={index} size={{ xs: 12, md: 6 }}>
                       <AnswerButton
                         label={option}
-                        selected={selectedOptionIndex === index}
+                        selected={
+                          selectedOptionIndex !== null &&
+                          selectedOptionIndex === index
+                        }
                         feedback={
+                          selectedOptionIndex !== null &&
                           selectedOptionIndex === index
                             ? currentAnswer
                             : undefined

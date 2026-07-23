@@ -7,9 +7,9 @@ import { useShallow } from "zustand/react/shallow";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import {
   selectHintCollectibles,
-  UI_Z_INDEX,
   useGameUIStore,
 } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 import { AudioSubpanel } from "./AudioSubpanel";
 import { CollectibleGrid } from "./CollectibleGrid";
@@ -58,7 +58,7 @@ export function Sidebar() {
         top: 0,
         right: 0,
         height: "100%",
-        zIndex: UI_Z_INDEX.SIDEBAR,
+        zIndex: UI_LAYERS.SIDE_PANEL,
         display: "flex",
         flexDirection: "row",
         alignItems: "flex-start",

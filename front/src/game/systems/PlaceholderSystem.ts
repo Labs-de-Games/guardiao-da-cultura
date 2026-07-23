@@ -112,7 +112,11 @@ export class PlaceholderSystem {
       instance.hintSprite = container;
     } else {
       let textureKey = "placeholder";
-      if (primaryId) {
+      if (config.type === InteractiveType.PAINTING) {
+        textureKey = "standard_painting_placeholder";
+      } else if (config.type === InteractiveType.SCULPTURE) {
+        textureKey = "standard_sculpture_placeholder";
+      } else if (primaryId) {
         textureKey = `${primaryId}_ph`;
       }
 
@@ -167,6 +171,7 @@ export class PlaceholderSystem {
       const isCloseEnough = dist < SNAP_THRESHOLD;
 
       if (isInside || isCloseEnough) {
+        if (p.isFilled) continue;
         if (item.interactiveType !== p.type) continue;
 
         const isMatch = Array.isArray(p.id)
@@ -221,6 +226,7 @@ export class PlaceholderSystem {
 
     let nearbyMismatch = false;
     for (const p of this.placeholders) {
+      if (p.isFilled) continue;
       const checkY = item.y;
 
       const dist = Phaser.Math.Distance.Between(
@@ -256,6 +262,7 @@ export class PlaceholderSystem {
     let minDist = maxDistance;
 
     for (const p of this.placeholders) {
+      if (p.isFilled) continue;
       if (type && p.type !== type) continue;
 
       const dist = Phaser.Math.Distance.Between(

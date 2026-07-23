@@ -54,7 +54,8 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_02: {
     id: "level_02",
     levelNumber: 2,
-    title: MAP_MARKERS[1].title,
+    // index 2, Teatro Amazonas, not 1 — matches the map/tileset below
+    title: MAP_MARKERS[2].title,
     maxStars: 2,
     initialGrayscale: 0.82,
     map: {
@@ -85,24 +86,16 @@ export const LEVEL_ASSETS = {
         path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
       },
       {
-        key: "edgards_sem_titulo_i_fundidos_ph",
-        path: "artworks/sculptures/edgards_sem_titulo_i_fundidos_ph.png",
-      },
-      {
         key: "edgards_sem_titulo_ii_flexao",
         path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
-      },
-      {
-        key: "edgards_sem_titulo_ii_flexao_ph",
-        path: "artworks/sculptures/edgards_sem_titulo_ii_flexao_ph.png",
       },
       {
         key: "edgards_sem_titulo_iii_em_pe",
         path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
       },
       {
-        key: "edgards_sem_titulo_iii_em_pe_ph",
-        path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe_ph.png",
+        key: "standard_sculpture_placeholder",
+        path: "artworks/sculptures/standard_sculpture_placeholder.png",
       },
     ],
     PAINTINGS: [
@@ -111,32 +104,20 @@ export const LEVEL_ASSETS = {
         path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi.png",
       },
       {
-        key: "abdiasn_invocacao_noturna_oxossi_ph",
-        path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi_ph.png",
-      },
-      {
         key: "abdiasn_oke_oxossi",
         path: "artworks/paintings/abdiasn_oke_oxossi.png",
-      },
-      {
-        key: "abdiasn_oke_oxossi_ph",
-        path: "artworks/paintings/abdiasn_oke_oxossi_ph.png",
       },
       {
         key: "abdiasn_oxum_em_extase",
         path: "artworks/paintings/abdiasn_oxum_em_extase.png",
       },
       {
-        key: "abdiasn_oxum_em_extase_ph",
-        path: "artworks/paintings/abdiasn_oxum_em_extase_ph.png",
-      },
-      {
         key: "abdiasn_xango_rodrigues_alves",
         path: "artworks/paintings/abdiasn_xango_rodrigues_alves.png",
       },
       {
-        key: "abdiasn_xango_rodrigues_alves_ph",
-        path: "artworks/paintings/abdiasn_xango_rodrigues_alves_ph.png",
+        key: "standard_painting_placeholder",
+        path: "artworks/paintings/standard_painting_placeholder.png",
       },
     ],
     CHUNKS: [
@@ -183,7 +164,12 @@ export const LEVEL_ASSETS = {
       },
     ],
     CHUNKS: [],
-    OTHERS: [],
+    OTHERS: [
+      {
+        key: "p1",
+        path: "moving-platforms/p1.png",
+      },
+    ],
     COLLECTIBLES: [],
     CONTENT: {
       key: "content",

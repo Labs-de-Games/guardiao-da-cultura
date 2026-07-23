@@ -2,7 +2,7 @@ import { Box, Button, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef } from "react";
 import { useSound } from "@/ui/hooks/useSound";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
-import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 interface ConfirmationPanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -99,7 +99,7 @@ export function ConfirmationPanel({
       sx={{
         position: "absolute",
         inset: 0,
-        zIndex: 30,
+        zIndex: UI_LAYERS.PANEL,
         pointerEvents: "auto",
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         display: "flex",

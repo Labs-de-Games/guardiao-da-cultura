@@ -13,9 +13,6 @@ import {
   CAPTION_FADE_MS,
   CAPTION_HEIGHT,
   CAPTION_SHOW_DELAY_FRAC,
-  MASK_DURATION_MS,
-  MASK_END_SCALE,
-  MASK_START_SCALE,
   PANEL_FULL_WIDTH,
   PANEL_GAP,
   PANEL_HEIGHT,
@@ -23,7 +20,6 @@ import {
   ROLL_OUT_MS,
   ROLL_STAGGER_MS,
 } from "./constants";
-import { MaskReveal } from "./MaskReveal";
 import type { IntroConfig, PanelConfig } from "./types";
 
 export type IntroSequenceProps = {
@@ -48,7 +44,7 @@ export function IntroSequence({
 }: IntroSequenceProps) {
   const [skip, setSkip] = useState(false);
   const [rollOut, setRollOut] = useState(false);
-  const [maskReveal, setMaskReveal] = useState(false);
+  const [finished, setFinished] = useState(false);
   const [captionPanel, setCaptionPanel] = useState<number>(-1);
   const [captionVisible, setCaptionVisible] = useState(false);
   // Panel navigation state
@@ -68,8 +64,6 @@ export function IntroSequence({
   }, [config.panels, levelId]);
 
   // Asset paths
-  const maskSrc = `/assets/data/levels/${levelId}/intro/${config.revealIconMask}`;
-  const sceneSrc = `/assets/data/levels/${levelId}/intro/${config.loadingImage}`;
   const captionImage = config.captionImage
     ? `/assets/data/levels/${levelId}/intro/${config.captionImage}`
     : undefined;
@@ -153,26 +147,24 @@ export function IntroSequence({
     };
   }, [computeScale]);
 
-  // Preload mask reveal assets
-  useEffect(() => {
-    [maskSrc, sceneSrc].forEach((src) => {
-      const img = new Image();
-      img.src = src;
-      if (img.decode) img.decode().catch(() => {});
-    });
-  }, [maskSrc, sceneSrc]);
+  // Emits the game-loading trigger and hands off to LoadingGameScreen
+  const handleFinish = useCallback(() => {
+    setFinished(true);
+    EventBus.emit("intro:complete", { levelId });
+    onComplete();
+  }, [levelId, onComplete]);
 
   // Skip handler - skips entire animation
   const handleSkip = useCallback(() => {
     if (!config.skipEnabled) return;
     setSkip(true);
     setRollOut(false);
-    setMaskReveal(true);
-  }, [config.skipEnabled]);
+    handleFinish();
+  }, [config.skipEnabled, handleFinish]);
 
   // Navigate to next panel
   const handleNextPanel = useCallback(() => {
-    if (skip || rollOut || maskReveal) return;
+    if (skip || rollOut || finished) return;
 
     // Debounce: prevent rapid key presses
     if (isNavigatingRef.current) return;
@@ -206,7 +198,7 @@ export function IntroSequence({
   }, [
     skip,
     rollOut,
-    maskReveal,
+    finished,
     navigatingPanel,
     captionPanel,
     panels.length,
@@ -341,7 +333,7 @@ export function IntroSequence({
       tabIndex={0}
       aria-label="Aperte ESC para pular a introdução"
     >
-      {!maskReveal && (
+      {!finished && (
         <div
           ref={fitRefCallback}
           style={{
@@ -420,7 +412,7 @@ export function IntroSequence({
                 rollOut={rollOut}
                 navigateToPanel={navigatingPanel}
                 onComplete={handleComplete}
-                onRolledOut={handleRolledOut}
+                onRolledOut={handleFinish}
                 onPanelStart={handlePanelStart}
                 onPanelShrink={handlePanelShrink}
               />
@@ -445,18 +437,6 @@ export function IntroSequence({
             </div>
           </div>
         </div>
-      )}
-
-      {maskReveal && (
-        <MaskReveal
-          sceneSrc={sceneSrc}
-          maskSrc={maskSrc}
-          startScale={MASK_START_SCALE}
-          endScale={MASK_END_SCALE}
-          durationMs={MASK_DURATION_MS}
-          onAnimationStart={handleMaskAnimationStart}
-          onDone={handleMaskDone}
-        />
       )}
     </div>
   );

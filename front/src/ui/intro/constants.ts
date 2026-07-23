@@ -27,15 +27,6 @@ export const ROLL_OUT_MS = 1400; // duration of each panel's upward roll + disso
 export const ROLL_STAGGER_MS = 600; // delay between successive panels starting to roll up
 
 // ────────────────────────────────────────────────────────────────────
-// MASK REVEAL (post-comic transition into the scene).
-// The mask grows from `MASK_START_SCALE` × viewport-longest-side
-// up to `MASK_END_SCALE` × viewport-longest-side over `MASK_DURATION_MS`.
-// ────────────────────────────────────────────────────────────────────
-export const MASK_START_SCALE = 0.06;
-export const MASK_END_SCALE = 6;
-export const MASK_DURATION_MS = 1800;
-
-// ────────────────────────────────────────────────────────────────────
 // CAPTION TIMING
 // ────────────────────────────────────────────────────────────────────
 export const CAPTION_SHOW_DELAY_FRAC = 0.6; // fraction of the panel's revealMs to wait before showing caption

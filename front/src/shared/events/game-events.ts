@@ -135,9 +135,12 @@ export interface QuizCompleteData {
 }
 
 export interface MapMarkerChangedData {
+  markerId: string;
   title: string;
   location: string;
   isAvailable: boolean;
+  screenX: number;
+  screenY: number;
   isCompleted?: boolean;
   image?: string;
   levelId?: string;

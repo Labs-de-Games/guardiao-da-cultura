@@ -7,7 +7,9 @@ import PaginationItem from "@mui/material/PaginationItem";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { paginateText } from "@/lib/paginateText";
-import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
+import { EventBus } from "@/shared/events/event-bus";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 const CARD_BG = "#FFFFFF";
 const HEADER_BG = "#F4EEDE";
@@ -24,6 +26,22 @@ const DOT_ACTIVE_BG = "#252726";
 const DOT_INACTIVE_BG = "#1F1F1F";
 const FONT_TITLE = '"Jockey One", sans-serif';
 const FONT_BODY = "Inter, sans-serif";
+const CLOSE_HINT_FONT = "Inter, sans-serif";
+const CLOSE_HINT_SIZE = { xs: "0.8rem", md: "0.9rem" };
+const CLOSE_X_SIZE = { xs: 20, md: 24 };
+const CLOSE_HINT_FADE_DELAY_MS = 4000;
+const CLOSE_HINT_FADE_DURATION_MS = 1500;
+
+const closeHintFadeKeyframe = {
+  "0%": {
+    clipPath: "inset(0 0 0 0)",
+    opacity: 1,
+  },
+  "100%": {
+    clipPath: "inset(0 0 0 100%)",
+    opacity: 0,
+  },
+};
 
 function ArrowLeft() {
   return (
@@ -59,6 +77,25 @@ function ArrowRight() {
   );
 }
 
+const X_ICON_PATH =
+  "M 9.15625 6.3125 L 6.3125 9.15625 L 22.15625 25 L 6.21875 40.96875 L 9.03125 43.78125 L 25 27.84375 L 40.9375 43.78125 L 43.78125 40.9375 L 27.84375 25 L 43.6875 9.15625 L 40.84375 6.3125 L 25 22.15625 Z";
+
+function CloseXIcon() {
+  return (
+    <svg
+      width="100%"
+      height="100%"
+      viewBox="0 0 50 50"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ display: "block" }}
+    >
+      <path d={X_ICON_PATH} fill="currentColor" />
+    </svg>
+  );
+}
+
 const DOT_SX = {
   minWidth: 16,
   width: 16,
@@ -85,8 +122,25 @@ const DOT_SX = {
 
 export function LabelPanel() {
   const labelData = useGameUIStore((s) => s.labelData);
+  const setLabelData = useGameUIStore((s) => s.setLabelData);
   const panelRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [hintVisible, setHintVisible] = useState(true);
+
+  const handleClose = useCallback(() => {
+    setLabelData(null);
+    EventBus.emit("ui:label-hide", undefined);
+  }, [setLabelData]);
+
+  // Reset hint visibility when label opens, then fade out after delay
+  useEffect(() => {
+    if (!labelData) return;
+    setHintVisible(true);
+    const timer = setTimeout(() => {
+      setHintVisible(false);
+    }, CLOSE_HINT_FADE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [labelData]);
 
   const pages = useMemo(
     () => paginateText(labelData?.description || ""),
@@ -211,7 +265,7 @@ export function LabelPanel() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: UI_Z_INDEX.PANEL,
+        zIndex: UI_LAYERS.IN_WORLD,
         pointerEvents: "auto",
       }}
     >
@@ -231,10 +285,6 @@ export function LabelPanel() {
           flexDirection: "column",
           overflow: "hidden",
           outline: "none",
-          "&:focus-visible": {
-            outline: "2px solid #3088B9",
-            outlineOffset: 2,
-          },
         }}
       >
         {/* Header */}
@@ -249,12 +299,74 @@ export function LabelPanel() {
             flexDirection: "column",
             justifyContent: "center",
             gap: 1,
+            position: "relative",
           }}
         >
+          {/* Close affordance — top-right */}
+          <Box
+            component="button"
+            type="button"
+            aria-label="Fechar"
+            onClick={handleClose}
+            sx={{
+              position: "absolute",
+              top: 12,
+              right: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              background: "none",
+              border: "none",
+              p: 0,
+              cursor: "pointer",
+              color: TEXT_COLOR,
+              "&:hover": { opacity: 0.7 },
+              "&:focus-visible": {
+                outline: "2px solid #3088B9",
+                outlineOffset: 2,
+                borderRadius: 1,
+              },
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: CLOSE_HINT_FONT,
+                fontSize: CLOSE_HINT_SIZE,
+                fontWeight: 400,
+                color: TEXT_COLOR,
+                lineHeight: 1,
+                userSelect: "none",
+                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                animation: hintVisible
+                  ? "none"
+                  : `${CLOSE_HINT_FADE_DURATION_MS}ms ease forwards closeHintFade`,
+                "@keyframes closeHintFade": closeHintFadeKeyframe,
+              }}
+            >
+              Aperte ESC para fechar
+            </Typography>
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 0.25,
+                lineHeight: 0,
+                width: { xs: CLOSE_X_SIZE.xs, md: CLOSE_X_SIZE.md },
+                height: { xs: CLOSE_X_SIZE.xs, md: CLOSE_X_SIZE.md },
+                flexShrink: 0,
+              }}
+            >
+              <CloseXIcon />
+            </Box>
+          </Box>
+
           <Typography
             sx={{
               fontFamily: FONT_TITLE,
-              fontSize: { xs: "2rem", md: "3rem" },
+              fontSize: { xs: "2rem", md: "2.4rem" },
               fontWeight: 400,
               color: TEXT_COLOR,
               lineHeight: 1.2,
@@ -268,7 +380,7 @@ export function LabelPanel() {
             <Typography
               sx={{
                 fontFamily: FONT_BODY,
-                fontSize: { xs: "1.25rem", md: "2rem" },
+                fontSize: { xs: "1.2rem", md: "1.7rem" },
                 fontWeight: 400,
                 color: TEXT_COLOR,
                 lineHeight: 1.3,
