@@ -164,6 +164,7 @@ minigames, quizzes e carregamento do jogo.
 | `minigame_completed` | `minigame_number`, `level_id`, `errors`, `quarters_earned` | `Game.ts` (`completeFloor`) |
 | `intermediate_quiz_started` | `quiz_number` (1=paintings, 2=sculptures, 3=photo), `level_id`, `info_key` | `QuizManager.ts` |
 | `intermediate_quiz_completed` | `quiz_number`, `level_id`, `info_key`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
+| `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
 | `quiz_answer_submitted` | `quiz_number` (null for regular end-of-level quizzes), `question_id`, `selected_answer`, `is_correct`, `attempt_number` | `game-ui-store.ts` (`selectOption`) |
 | `game_load_success` | `level_id`, `loading_time_ms` | `PhaserGame.tsx` |
 | `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`/`asset_load`) | `PhaserGame.tsx`, `Game.ts` (asset `loaderror`) |

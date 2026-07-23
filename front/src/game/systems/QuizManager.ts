@@ -103,6 +103,14 @@ export class QuizManager {
           this.isQuizActive = true;
           this.quizStartedAt = Date.now();
           this.quizAttemptsForMission += 1;
+
+          posthog.capture("quiz_started", {
+            level_id: this.context.getLevelId(),
+            mission_id: missionId,
+            total_questions: questions.length,
+            attempt_number: this.quizAttemptsForMission,
+          });
+
           this.quizMode = "regular";
           this.context.getEvents().emit(
             GameEvents.SHOW_QUIZ_REQUEST,
