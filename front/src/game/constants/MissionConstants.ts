@@ -18,8 +18,8 @@ export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
 ]);
 
 export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
-  [MissionKeys.PAINTINGS_DONE]: 1,
-  [MissionKeys.SCULPTURES_DONE]: 2,
+  [MissionKeys.SCULPTURES_DONE]: 1,
+  [MissionKeys.PAINTINGS_DONE]: 2,
   [MissionKeys.PHOTO_DONE]: 3,
 };
 
