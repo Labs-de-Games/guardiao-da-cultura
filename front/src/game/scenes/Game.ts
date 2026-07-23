@@ -953,12 +953,6 @@ export class Game extends Scene implements GameDataAccessor {
           : String(nearby.id)
               .split(",")
               .map((s) => s.trim());
-        if (this.markFloorStarted(this.scoringFloors.photo)) {
-          posthog.capture("minigame_started", {
-            minigame_number: this.scoringFloors.photo + 1,
-            level_id: this.levelId,
-          });
-        }
         EventBus.emit("ui:chunk-selector-open", {
           instanceId: nearby.instanceId,
           availableItems: availableChunks.map((item) => ({
@@ -973,6 +967,19 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
+      const floorForType: Partial<Record<InteractiveType, number>> = {
+        [InteractiveType.SCULPTURE]: this.scoringFloors.sculptures,
+        [InteractiveType.PAINTING]: this.scoringFloors.paintings,
+        [InteractiveType.PHOTO_CHUNK]: this.scoringFloors.photo,
+      };
+      const floorIndex = floorForType[item.interactiveType];
+      if (floorIndex !== undefined && this.markFloorStarted(floorIndex)) {
+        posthog.capture("minigame_started", {
+          minigame_number: floorIndex + 1,
+          level_id: this.levelId,
+        });
+      }
+
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
 

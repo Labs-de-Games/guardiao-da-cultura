@@ -1,5 +1,4 @@
 import type * as Phaser from "phaser";
-import posthog from "posthog-js";
 import { EventBus } from "../../../shared/events/event-bus";
 import { GameEvents } from "../../constants/GameEvents";
 import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
@@ -39,13 +38,6 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
 
   public handleDropResult(scene: Phaser.Scene, result: DropResult): void {
     const g = scene as Game;
-
-    if (g.markFloorStarted(this.scoringFloor)) {
-      posthog.capture("minigame_started", {
-        minigame_number: this.scoringFloor + 1,
-        level_id: g.getLevelId(),
-      });
-    }
 
     if (result.snapped) {
       this.handleSnapped(g);
