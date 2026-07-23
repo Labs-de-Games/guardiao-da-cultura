@@ -13,7 +13,6 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       frameWidth: 32,
       frameHeight: 32,
     });
-    // Rat sounds are now loaded via AudioManager/registry
   }
 
   static createAnims(scene: Phaser.Scene) {
