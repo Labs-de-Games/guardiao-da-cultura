@@ -1,3 +1,4 @@
+import posthog from "posthog-js";
 import { GameEvents } from "../constants/GameEvents";
 import { MissionIds } from "../constants/MissionConstants";
 import type { ProgressionManager } from "../objects/ProgressionManager";
@@ -238,6 +239,34 @@ describe("QuizManager", () => {
     expect(quizManager.getIsQuizActive()).toBe(true);
   });
 
+  it("should capture quiz_started posthog event when confirmation accepted", () => {
+    const quizManager = new QuizManager(
+      context,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startQuiz("sculptor");
+
+    const confirmCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_CONFIRMATION_REQUEST,
+    );
+    const onAccept = confirmCall[3];
+    onAccept();
+
+    expect(posthog.capture).toHaveBeenCalledWith("quiz_started", {
+      level_id: "level-1",
+      mission_id: "sculptor",
+      total_questions: 1,
+      attempt_number: 1,
+    });
+  });
+
   it("should reset quiz state on rejection", () => {
     const quizManager = new QuizManager(
       context,
@@ -360,6 +389,7 @@ describe("QuizManager", () => {
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
       [{ q: "Pergunta?" }],
       expect.any(Function),
+      { quizNumber: null, attemptNumber: 1 },
     );
   });
 
@@ -392,6 +422,7 @@ describe("QuizManager", () => {
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
       [{ q: "Pergunta?" }],
       expect.any(Function),
+      { quizNumber: null, attemptNumber: 1 },
     );
   });
 

@@ -8,7 +8,6 @@ jest.mock("@/ui/state/game-ui-store", () => ({
   useGameUIStore: (
     selector: (state: { stars: number; totalStars: number }) => unknown,
   ) => selector({ stars: mockStars, totalStars: mockTotalStars }),
-  UI_Z_INDEX: { PANEL: 30 },
 }));
 
 jest.mock("@/game/constants/LayoutConfig", () => ({
@@ -22,6 +21,7 @@ jest.mock("@/ui/theme/tokens", () => ({
     colors: { accentGold: "#d9ad56", textSecondary: "#a0a0a0" },
     radius: { small: 8 },
   },
+  UI_LAYERS: { HUD: 100 },
 }));
 
 beforeEach(() => {

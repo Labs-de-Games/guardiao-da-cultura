@@ -100,8 +100,15 @@ export class CollectibleSystem {
           `${collectible.collectibleType}:${collectible.collectibleId}`,
         )
       ) {
-        collectible.isCollected = true;
-        collectible.sprite.setVisible(false);
+        this.collectAndDestroy(collectible);
+
+        EventBus.emit("collectible:item-collected", {
+          itemId: collectible.collectibleId,
+          itemName:
+            collectible.collectibleData.metadata.title ||
+            collectible.collectibleId,
+          category: collectible.collectibleType,
+        });
       }
     }
   }
@@ -184,8 +191,7 @@ export class CollectibleSystem {
       this.activeCollectible = instance;
 
       if (!instance.isCollected) {
-        instance.isCollected = true;
-        instance.sprite.setVisible(false);
+        this.collectAndDestroy(instance);
 
         const totalCollected = this.collectibles.filter(
           (c) => c.isCollected,
@@ -218,6 +224,12 @@ export class CollectibleSystem {
       this.closeInteraction();
       return;
     }
+  }
+
+  private collectAndDestroy(instance: CollectibleInstance): void {
+    instance.isCollected = true;
+    instance.sprite.destroy();
+    instance.button.destroy();
   }
 
   private showInspectCard(

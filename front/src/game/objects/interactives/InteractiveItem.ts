@@ -32,19 +32,9 @@ export abstract class InteractiveItem extends Phaser.Physics.Arcade.Sprite {
       body.setGravity(0, 4000);
     }
 
-    this.setInteractive({ useHandCursor: true });
+    this.setInteractive({ useHandCursor: false });
 
-    this.on("pointerover", this.onPointerOver, this);
-    this.on("pointerout", this.onPointerOut, this);
     this.on("pointerdown", this.onPointerDown, this);
-  }
-
-  protected onPointerOver() {
-    this.setTint(0xdddddd);
-  }
-
-  protected onPointerOut() {
-    this.clearTint();
   }
 
   protected abstract onPointerDown(pointer: Phaser.Input.Pointer): void;

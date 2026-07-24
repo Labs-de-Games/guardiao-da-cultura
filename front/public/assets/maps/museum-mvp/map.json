@@ -735,7 +735,7 @@
             {
               "name": "scale",
               "type": "float",
-              "value": 2.5
+              "value": 2.6
             },
             {
               "name": "type",
@@ -765,7 +765,7 @@
             {
               "name": "scale",
               "type": "float",
-              "value": 1.4
+              "value": 2.6
             },
             {
               "name": "type",
@@ -795,7 +795,7 @@
             {
               "name": "scale",
               "type": "float",
-              "value": 1.4
+              "value": 2.6
             },
             {
               "name": "type",
@@ -1309,7 +1309,7 @@
   "nextobjectid": 57,
   "orientation": "orthogonal",
   "renderorder": "right-down",
-  "tiledversion": "1.12.1",
+  "tiledversion": "1.12.2",
   "tileheight": 16,
   "tilesets": [
     {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { EntryFlow } from "@/game/main";
 import { getGuestId } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/useAuth";
@@ -32,12 +32,6 @@ export default function GameOverlay({
   entryFlow?: EntryFlow;
   isEntryFlowLoading?: boolean;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div
       id="game-overlay"
@@ -48,12 +42,10 @@ export default function GameOverlay({
         zIndex: UI_Z_INDEX.OVERLAY,
       }}
     >
-      {mounted && (
-        <OverlayContent
-          entryFlow={entryFlow}
-          isEntryFlowLoading={isEntryFlowLoading}
-        />
-      )}
+      <OverlayContent
+        entryFlow={entryFlow}
+        isEntryFlowLoading={isEntryFlowLoading}
+      />
     </div>
   );
 }
@@ -271,7 +263,6 @@ function OverlayContent({
             }}
           />
         </div>
-        <ToastNotification />
       </>
     );
   }
@@ -279,7 +270,6 @@ function OverlayContent({
   if (!gameStarted) {
     return (
       <>
-        <ToastNotification />
         <MapPinTooltip />
         <MapInfoBox />
       </>
