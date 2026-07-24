@@ -113,30 +113,28 @@ export class QuizManager {
           });
 
           this.quizMode = "regular";
-          this.context.getEvents().emit(
-            GameEvents.SHOW_QUIZ_REQUEST,
-            questions,
-            this.scoreManager,
-            (score: number) => {
-              this.scoreManager.recordQuizResult(score, questions.length);
-              const required = Math.ceil(questions.length * 0.7);
-              const isSuccess = score >= required;
-              console.log(
-                `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
-              );
-
-              const levelId = this.context.getLevelId();
-              const levelDef = this.context.getLevelDef();
-              const registry = this.context.getRegistry();
-
-                // Play success or failure sound
-                AudioManager.playSfx(
-                  isSuccess ? "sfx.puzzle.success" : "sfx.puzzle.failure",
+          this.context
+            .getEvents()
+            .emit(
+              GameEvents.SHOW_QUIZ_REQUEST,
+              questions,
+              this.scoreManager,
+              (score: number) => {
+                this.scoreManager.recordQuizResult(score, questions.length);
+                const required = Math.ceil(questions.length * 0.7);
+                const isSuccess = score >= required;
+                console.log(
+                  `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
                 );
 
                 const levelId = this.context.getLevelId();
                 const levelDef = this.context.getLevelDef();
                 const registry = this.context.getRegistry();
+
+                // Play success or failure sound
+                AudioManager.playSfx(
+                  isSuccess ? "sfx.puzzle.success" : "sfx.puzzle.failure",
+                );
 
                 if (isSuccess) {
                   if (score === questions.length) {
@@ -164,153 +162,143 @@ export class QuizManager {
                       missionId: missionId,
                     },
                   );
-                }
 
-                const payload = this.scoreManager.getPayload();
-                this.analyticsSystem.trackLevelEvent(
-                  GameEventType.LEVEL_COMPLETED,
-                  levelId,
-                  {
-                    levelNumber: levelDef.levelNumber,
+                  posthog.capture("level_completed", {
+                    level_id: levelId,
+                    level_number: levelDef.levelNumber,
                     score: payload.totalQuarters,
                     stars: payload.totalStars,
                     rating: payload.rating,
-                    missionId: missionId,
-                  },
-                );
+                    mission_id: missionId,
+                    time_spent_ms:
+                      Date.now() - new Date(payload.startedAt).getTime(),
+                    attempts: registry.get("has_failed_quiz") || 0,
+                  });
 
-                posthog.capture("level_completed", {
-                  level_id: levelId,
-                  level_number: levelDef.levelNumber,
-                  score: payload.totalQuarters,
-                  stars: payload.totalStars,
-                  rating: payload.rating,
-                  mission_id: missionId,
-                  time_spent_ms:
-                    Date.now() - new Date(payload.startedAt).getTime(),
-                  attempts: registry.get("has_failed_quiz") || 0,
-                });
+                  void this.persistenceBridge.submitScore();
+                } else {
+                  registry.set("has_failed_quiz", 1);
+                  posthog.capture("level_failed", {
+                    level_id: levelId,
+                    level_number: levelDef.levelNumber,
+                    mission_id: missionId,
+                    score,
+                    total_questions: questions.length,
+                  });
+                  void this.persistenceBridge.submitScore();
+                }
 
-                void this.persistenceBridge.submitScore();
-              } else {
-                registry.set("has_failed_quiz", 1);
-                posthog.capture("level_failed", {
+                const scoringPayload = this.scoreManager.getPayload();
+                posthog.capture("quiz_completed", {
                   level_id: levelId,
-                  level_number: levelDef.levelNumber,
                   mission_id: missionId,
                   score,
+                  correct_answers: scoringPayload.quiz.correctAnswers,
                   total_questions: questions.length,
+                  accuracy_percent: scoringPayload.quiz.accuracyPercent,
+                  passed: isSuccess,
                 });
-                void this.persistenceBridge.submitScore();
-              }
 
-              const scoringPayload = this.scoreManager.getPayload();
-              posthog.capture("quiz_completed", {
-                level_id: levelId,
-                mission_id: missionId,
-                score,
-                correct_answers: scoringPayload.quiz.correctAnswers,
-                total_questions: questions.length,
-                accuracy_percent: scoringPayload.quiz.accuracyPercent,
-                passed: isSuccess,
-              });
+                void this.persistenceBridge.sendQuizOutcome({
+                  type: isSuccess ? "quiz.completed" : "quiz.failed",
+                  metadata: {
+                    missionId,
+                    score,
+                    totalQuestions: questions.length,
+                    accuracyPercent: scoringPayload.quiz.accuracyPercent,
+                    quartersEarned: scoringPayload.quiz.quartersEarned,
+                    passed: isSuccess,
+                    payload: scoringPayload as unknown as Record<
+                      string,
+                      unknown
+                    >,
+                  },
+                  timestamp: new Date().toISOString(),
+                });
 
-              void this.persistenceBridge.sendQuizOutcome({
-                type: isSuccess ? "quiz.completed" : "quiz.failed",
-                metadata: {
-                  missionId,
+                const quizResultRecord: QuizResultRecord = {
+                  completedAt: new Date().toISOString(),
+                  passed: isSuccess,
                   score,
                   totalQuestions: questions.length,
                   accuracyPercent: scoringPayload.quiz.accuracyPercent,
                   quartersEarned: scoringPayload.quiz.quartersEarned,
-                  passed: isSuccess,
-                  payload: scoringPayload as unknown as Record<string, unknown>,
-                },
-                timestamp: new Date().toISOString(),
-              });
+                  timeSpentMs:
+                    this.quizStartedAt !== null
+                      ? Date.now() - this.quizStartedAt
+                      : null,
+                  attempts: this.quizAttemptsForMission,
+                  payload: null,
+                };
 
-              const quizResultRecord: QuizResultRecord = {
-                completedAt: new Date().toISOString(),
-                passed: isSuccess,
-                score,
-                totalQuestions: questions.length,
-                accuracyPercent: scoringPayload.quiz.accuracyPercent,
-                quartersEarned: scoringPayload.quiz.quartersEarned,
-                timeSpentMs:
-                  this.quizStartedAt !== null
-                    ? Date.now() - this.quizStartedAt
-                    : null,
-                attempts: this.quizAttemptsForMission,
-                payload: null,
-              };
-
-              this.progressionManager.recordQuizResult(
-                missionId,
-                quizResultRecord,
-              );
-
-              if (isSuccess) {
-                this.progressionManager.recordLevelCompleted(
-                  levelId,
-                  levelDef.levelNumber,
-                  scoringPayload.totalStars,
-                  scoringPayload.totalQuarters,
-                  new Date().toISOString(),
-                );
-              }
-
-              void this.persistenceBridge.saveProgress();
-
-              const progressState = this.progressionManager.getState();
-              posthog.capture("progress_updated", {
-                level_id: levelId,
-                level_number: levelDef.levelNumber,
-                current_level: progressState.currentLevel,
-                total_stars: progressState.totalStars,
-                completed_levels_count: Object.keys(
-                  progressState.completedLevels,
-                ).length,
-                mission_id: missionId,
-                passed: isSuccess,
-                score,
-                total_questions: questions.length,
-              });
-
-              const quizNpc = this.findNpcByMission(missionId);
-
-              if (!quizNpc) {
-                console.error(
-                  `[QuizManager] NPC não encontrado para a missão: ${missionId}`,
-                );
-                return;
-              }
-
-              const quizDialogues = quizNpc.getDialogues();
-              const lines = isSuccess
-                ? quizDialogues.success
-                : quizDialogues.failure;
-
-              if (isSuccess) {
-                this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-              } else {
-                this.questManager.setStatus(
+                this.progressionManager.recordQuizResult(
                   missionId,
-                  QuestStatus.READY_FOR_QUIZ,
+                  quizResultRecord,
                 );
-              }
 
-              this.context.getEvents().emit(GameEvents.MISSION_STATUS_CHANGED);
-              this.questManager.setPendingResult(missionId, lines);
+                if (isSuccess) {
+                  this.progressionManager.recordLevelCompleted(
+                    levelId,
+                    levelDef.levelNumber,
+                    scoringPayload.totalStars,
+                    scoringPayload.totalQuarters,
+                    new Date().toISOString(),
+                  );
+                }
 
-              if (isSuccess) {
-                this.levelManager.updateProgress();
-              }
+                void this.persistenceBridge.saveProgress();
 
-              this.quizMode = "none";
-              this.isQuizActive = false;
-            },
-            { quizNumber: null, attemptNumber: this.quizAttemptsForMission },
-          );
+                const progressState = this.progressionManager.getState();
+                posthog.capture("progress_updated", {
+                  level_id: levelId,
+                  level_number: levelDef.levelNumber,
+                  current_level: progressState.currentLevel,
+                  total_stars: progressState.totalStars,
+                  completed_levels_count: Object.keys(
+                    progressState.completedLevels,
+                  ).length,
+                  mission_id: missionId,
+                  passed: isSuccess,
+                  score,
+                  total_questions: questions.length,
+                });
+
+                const quizNpc = this.findNpcByMission(missionId);
+
+                if (!quizNpc) {
+                  console.error(
+                    `[QuizManager] NPC não encontrado para a missão: ${missionId}`,
+                  );
+                  return;
+                }
+
+                const quizDialogues = quizNpc.getDialogues();
+                const lines = isSuccess
+                  ? quizDialogues.success
+                  : quizDialogues.failure;
+
+                if (isSuccess) {
+                  this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
+                } else {
+                  this.questManager.setStatus(
+                    missionId,
+                    QuestStatus.READY_FOR_QUIZ,
+                  );
+                }
+
+                this.context
+                  .getEvents()
+                  .emit(GameEvents.MISSION_STATUS_CHANGED);
+                this.questManager.setPendingResult(missionId, lines);
+
+                if (isSuccess) {
+                  this.levelManager.updateProgress();
+                }
+
+                this.quizMode = "none";
+                this.isQuizActive = false;
+              },
+            );
         },
         () => {
           this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
@@ -348,12 +336,6 @@ export class QuizManager {
         return;
       }
 
-      posthog.capture("intermediate_quiz_started", {
-        quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
-        level_id: this.context.getLevelId(),
-        info_key: infoKey,
-      });
-
       this.quizMode = "intermediate";
 
       const spawnPos = npc.getSpawnPosition();
@@ -385,10 +367,6 @@ export class QuizManager {
                 GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
                 questions,
                 onComplete,
-                {
-                  quizNumber: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
-                  attemptNumber: 1,
-                },
               );
           });
       } else {
@@ -398,10 +376,6 @@ export class QuizManager {
             GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
             questions,
             onComplete,
-            {
-              quizNumber: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
-              attemptNumber: 1,
-            },
           );
       }
     } catch (error) {
@@ -469,7 +443,6 @@ export class QuizManager {
 
       posthog.capture("intermediate_quiz_completed", {
         level_id: levelId,
-        quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
         info_key: infoKey,
         score,
         total_questions: questions.length,

@@ -115,14 +115,12 @@ export class UIScene extends Scene {
 
     gameScene.events.on(
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-      (questions: QuizQuestion[], onComplete: (score: number) => void) => {
-        gameScene.events.emit(GameEvents.DIALOGUE_STARTED, "quiz");
       (
         questions: QuizQuestion[],
         onComplete: (score: number) => void,
         quizMeta?: { quizNumber: number | null; attemptNumber: number },
       ) => {
-        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED, "quiz");
         const quizState = useGameUIStore.getState().quiz;
         if (quizState.isVisible) return;
         useGameUIStore
