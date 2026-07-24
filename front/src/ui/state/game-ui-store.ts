@@ -1,3 +1,4 @@
+import posthog from "posthog-js";
 import { create } from "zustand";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
@@ -96,6 +97,8 @@ export interface GameUIState {
     score: number;
     isProcessingAnswer: boolean;
     isIntermediate: boolean;
+    quizNumber: number | null;
+    attemptNumber: number;
     onComplete: ((score: number) => void) | null;
   };
 
@@ -145,6 +148,8 @@ export interface GameUIState {
     questions: QuizQuestion[],
     onComplete: (score: number) => void,
     isIntermediate?: boolean,
+    quizNumber?: number | null,
+    attemptNumber?: number,
   ) => void;
   selectOption: () => void;
   moveSelection: (dRow: number, dCol: number) => void;
@@ -189,6 +194,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     score: 0,
     isProcessingAnswer: false,
     isIntermediate: false,
+    quizNumber: null,
+    attemptNumber: 1,
     onComplete: null,
   },
 
@@ -351,7 +358,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   setProgression: (state) => set({ progression: state }),
   setIntroData: (data) => set({ introData: data }),
 
-  startQuiz: (questions, onComplete, isIntermediate = false) => {
+  startQuiz: (
+    questions,
+    onComplete,
+    isIntermediate = false,
+    quizNumber = null,
+    attemptNumber = 1,
+  ) => {
     set((_s) => ({
       quiz: {
         isVisible: true,
@@ -363,6 +376,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         score: 0,
         isProcessingAnswer: false,
         isIntermediate,
+        quizNumber,
+        attemptNumber,
         onComplete,
       },
     }));
@@ -384,6 +399,14 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     const isCorrect = quiz.selectedOptionIndex === question.correctOptionIndex;
     const newAnswers = [...quiz.answers];
     newAnswers[quiz.currentQuestionIndex] = isCorrect ? "correct" : "wrong";
+
+    posthog.capture("quiz_answer_submitted", {
+      quiz_number: quiz.quizNumber,
+      question_id: `${quiz.quizNumber ?? "regular"}-${quiz.currentQuestionIndex}`,
+      selected_answer: quiz.selectedOptionIndex,
+      is_correct: isCorrect,
+      attempt_number: quiz.attemptNumber,
+    });
 
     set((s) => ({
       quiz: {
@@ -523,6 +546,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         score: 0,
         isProcessingAnswer: false,
         isIntermediate: false,
+        quizNumber: null,
+        attemptNumber: 1,
         onComplete: null,
       },
     }));

@@ -82,6 +82,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         api_host: host || "https://us.i.posthog.com",
         autocapture: false,
         capture_pageview: false,
+        capture_web_vitals: true,
+        capture_dead_clicks: true,
         record_sessions_percent: recordSessionsPercent,
         record_canvas: environment === "production",
         opt_in_site_apps: environment === "production",
