@@ -145,11 +145,13 @@ export class MapIntroScene extends Scene {
     this.maybeStartAutoStart();
   }
 
-  private beginGame(source: "spacebar" | "confirm" | "marker_click" | "auto_start") {
+  private beginGame(
+    source: "spacebar" | "confirm" | "marker_click" | "auto_start",
+  ) {
     if (this.isTransitioningToLevel) {
       return;
     }
-    
+
     this.cancelAutoStart("started");
     const marker = MARKERS[this.activeMarkerIndex];
     if (!this.isMarkerAvailable(this.activeMarkerIndex) || !marker.levelId) {

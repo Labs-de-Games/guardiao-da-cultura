@@ -78,7 +78,8 @@ describe("AudioSubpanel", () => {
     ).not.toBeInTheDocument();
 
     // Click to expand
-    fireEvent.click(titleElement!);
+    if (!titleElement) throw new Error("Title element not found");
+    fireEvent.click(titleElement);
 
     // Now volume sliders should be in the document
     expect(screen.getByRole("slider", { name: /música/i })).toBeInTheDocument();
@@ -100,11 +101,12 @@ describe("AudioSubpanel", () => {
     );
 
     // Expand first
-    fireEvent.click(titleElement!);
+    if (!titleElement) throw new Error("Title element not found");
+    fireEvent.click(titleElement);
     expect(screen.getByRole("slider", { name: /música/i })).toBeInTheDocument();
 
     // Collapse
-    fireEvent.click(titleElement!);
+    fireEvent.click(titleElement);
 
     // Wait for collapse animation
     await waitFor(() => {
@@ -126,7 +128,8 @@ describe("AudioSubpanel", () => {
     const titleElement = somElements.find(
       (el) => el.tagName.toLowerCase() === "p",
     );
-    fireEvent.click(titleElement!);
+    if (!titleElement) throw new Error("Title element not found");
+    fireEvent.click(titleElement);
 
     // Verify the sliders are rendered with correct aria-labels
     const musicSlider = screen.getByRole("slider", { name: /música/i });
@@ -143,7 +146,8 @@ describe("AudioSubpanel", () => {
     const titleElement = somElements.find(
       (el) => el.tagName.toLowerCase() === "p",
     );
-    fireEvent.click(titleElement!);
+    if (!titleElement) throw new Error("Title element not found");
+    fireEvent.click(titleElement);
 
     // Find the slider by role and aria-label
     const musicSlider = screen.getByRole("slider", { name: /música/i });
@@ -158,7 +162,9 @@ describe("AudioSubpanel", () => {
     const titleElement = somElements.find(
       (el) => el.tagName.toLowerCase() === "p",
     );
-    fireEvent.click(titleElement!);
+    if (!titleElement) throw new Error("Title element not found");
+    fireEvent.click(titleElement);
+    fireEvent.click(titleElement);
 
     const effectsSlider = screen.getByRole("slider", { name: /efeitos/i });
     fireEvent.change(effectsSlider, { target: { value: "40" } });
@@ -172,7 +178,8 @@ describe("AudioSubpanel", () => {
     const titleElement = somElements.find(
       (el) => el.tagName.toLowerCase() === "p",
     );
-    fireEvent.click(titleElement!);
+    if (!titleElement) throw new Error("Title element not found");
+    fireEvent.click(titleElement);
 
     const voiceSlider = screen.getByRole("slider", { name: /narração/i });
     fireEvent.change(voiceSlider, { target: { value: "60" } });
@@ -192,7 +199,9 @@ describe("AudioSubpanel", () => {
 
     it("mutes music when music icon is clicked", () => {
       render(<AudioSubpanel />);
-      fireEvent.click(getTitleElement()!);
+      const title = getTitleElement();
+      if (!title) throw new Error("Title element not found");
+      fireEvent.click(title);
 
       const iconBox = findIconBox("Música");
       expect(iconBox).toBeTruthy();
@@ -205,7 +214,9 @@ describe("AudioSubpanel", () => {
 
     it("unmutes music when muted music icon is clicked", () => {
       render(<AudioSubpanel />);
-      fireEvent.click(getTitleElement()!);
+      const title = getTitleElement();
+      if (!title) throw new Error("Title element not found");
+      fireEvent.click(title);
 
       const iconBox = findIconBox("Música");
 
@@ -222,7 +233,9 @@ describe("AudioSubpanel", () => {
 
     it("mutes effects when effects icon is clicked", () => {
       render(<AudioSubpanel />);
-      fireEvent.click(getTitleElement()!);
+      const title = getTitleElement();
+      if (!title) throw new Error("Title element not found");
+      fireEvent.click(title);
 
       const iconBox = findIconBox("Efeitos");
       expect(iconBox).toBeTruthy();

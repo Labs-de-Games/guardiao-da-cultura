@@ -1,4 +1,4 @@
-import { act, render, waitFor } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { PixelDissolveCanvas } from "./PixelDissolveCanvas";
 import { PixelRevealCanvas } from "./PixelRevealCanvas";
 
