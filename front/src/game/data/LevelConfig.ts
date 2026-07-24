@@ -179,16 +179,28 @@ export const LEVEL_ASSETS = {
         key: "anel-do-nibelungo-framed",
         path: "artworks/posters/cartazes/anel-do-nibelungo-framed.png",
       },
+      {
+        key: "frame-date-ajuricaba",
+        path: "artworks/posters/cartazes/frame-date-ajuricaba.png",
+      },
+      {
+        key: "frame-date-malandro",
+        path: "artworks/posters/cartazes/frame-date-malandro.png",
+      },
+      {
+        key: "frame-date-nibelungo",
+        path: "artworks/posters/cartazes/frame-date-nibelungo.png",
+      },
+      {
+        key: "frame-date-zona-franca",
+        path: "artworks/posters/cartazes/frame-date-zona-franca.png",
+      },
     ],
     CHUNKS: [],
     OTHERS: [
       {
         key: "p1",
         path: "moving-platforms/p1.png",
-      },
-      {
-        key: "frame",
-        path: "misc/frame.png",
       },
       {
         key: "poster-label",
