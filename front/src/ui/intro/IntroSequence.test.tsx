@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { IntroSequence } from "./IntroSequence";
 import type { IntroConfig } from "./types";
 
@@ -213,27 +219,15 @@ describe("IntroSequence E2E", () => {
         jest.runAllTimers();
       });
 
-      // Press ESC
+      // Press ESC to skip
       await act(async () => {
         fireEvent.keyDown(window, { key: "Escape" });
       });
 
-      // Wait for mask to appear
-      await act(async () => {
-        jest.advanceTimersByTime(100);
+      // Wait for onComplete to be called (roll-out delay + animation)
+      await waitFor(() => expect(onComplete).toHaveBeenCalled(), {
+        timeout: 10000,
       });
-
-      // Emit game loaded event
-      await act(async () => {
-        window.dispatchEvent(new Event("phaser-loading-complete"));
-      });
-
-      // Wait for mask animation to complete
-      await act(async () => {
-        jest.advanceTimersByTime(2000);
-      });
-
-      expect(onComplete).toHaveBeenCalled();
     });
 
     it("should skip on Enter key", async () => {
@@ -249,19 +243,10 @@ describe("IntroSequence E2E", () => {
         fireEvent.keyDown(window, { key: "Enter" });
       });
 
-      await act(async () => {
-        jest.advanceTimersByTime(100);
+      // Wait for onComplete to be called (roll-out delay + animation)
+      await waitFor(() => expect(onComplete).toHaveBeenCalled(), {
+        timeout: 10000,
       });
-
-      await act(async () => {
-        window.dispatchEvent(new Event("phaser-loading-complete"));
-      });
-
-      await act(async () => {
-        jest.advanceTimersByTime(2000);
-      });
-
-      expect(onComplete).toHaveBeenCalled();
     });
 
     it("should skip on E key", async () => {
@@ -277,22 +262,13 @@ describe("IntroSequence E2E", () => {
         fireEvent.keyDown(window, { key: "e" });
       });
 
-      await act(async () => {
-        jest.advanceTimersByTime(100);
+      // Wait for onComplete to be called (roll-out delay + animation)
+      await waitFor(() => expect(onComplete).toHaveBeenCalled(), {
+        timeout: 10000,
       });
-
-      await act(async () => {
-        window.dispatchEvent(new Event("phaser-loading-complete"));
-      });
-
-      await act(async () => {
-        jest.advanceTimersByTime(2000);
-      });
-
-      expect(onComplete).toHaveBeenCalled();
     });
 
-    it("should skip on click", async () => {
+    it("should advance panel on click", async () => {
       const onComplete = jest.fn();
 
       render(<IntroSequence {...defaultProps} onComplete={onComplete} />);
@@ -301,24 +277,13 @@ describe("IntroSequence E2E", () => {
         jest.runAllTimers();
       });
 
-      // Click anywhere
+      // Click should advance to next panel, not skip
       await act(async () => {
         fireEvent.click(screen.getByRole("button"));
       });
 
-      await act(async () => {
-        jest.advanceTimersByTime(100);
-      });
-
-      await act(async () => {
-        window.dispatchEvent(new Event("phaser-loading-complete"));
-      });
-
-      await act(async () => {
-        jest.advanceTimersByTime(2000);
-      });
-
-      expect(onComplete).toHaveBeenCalled();
+      // onComplete should not be called yet (only advanced one panel)
+      expect(onComplete).not.toHaveBeenCalled();
     });
 
     it("should not skip when skipEnabled is false", async () => {
