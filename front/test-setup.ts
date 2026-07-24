@@ -1,11 +1,5 @@
 import "@testing-library/jest-dom";
 
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
-
 class MockEventEmitter {
   on = jest.fn();
   off = jest.fn();
