@@ -7,6 +7,7 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
 import { useSound } from "@/ui/hooks/useSound";
 import { UI_LAYERS } from "@/ui/theme/tokens";
@@ -183,6 +184,7 @@ export default function QuizPanel() {
     playClick();
     selectOption();
   }, [playClick, selectOption]);
+  const { speak } = useAudioAccessibility();
 
   const [selectedNavIndex, setSelectedNavIndex] = useState(1);
 
@@ -641,8 +643,12 @@ export default function QuizPanel() {
                   spacing={4}
                   sx={{ alignItems: "center" }}
                 >
-                  {/*<Button
+                  <Button
                     disableElevation
+                    onClick={() =>
+                      currentQuestion?.question &&
+                      speak(currentQuestion.question)
+                    }
                     sx={{
                       minWidth: 0,
                       p: 0.5,
@@ -655,7 +661,7 @@ export default function QuizPanel() {
                       src="/assets/ui/tts-icon.png"
                       sx={{ width: 32, height: 32, objectFit: "contain" }}
                     />
-                  </Button>*/}
+                  </Button>
                   <Typography
                     sx={{
                       fontFamily: "'Jockey One', sans-serif",

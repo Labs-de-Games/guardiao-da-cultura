@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 import { env } from "@/lib/env";
 
-const AUTH_STATUS_COOKIE_NAME = env.NEXT_PUBLIC_AUTH_STATUS_COOKIE_NAME;
+const AUTH_STATUS_COOKIE_NAME = env.client.authStatusCookieName;
 
 export function setAuthStatusCookie(): void {
   Cookies.set(AUTH_STATUS_COOKIE_NAME, "authenticated", {
