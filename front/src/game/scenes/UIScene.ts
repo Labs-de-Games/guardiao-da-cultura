@@ -96,11 +96,20 @@ export class UIScene extends Scene {
         questions: QuizQuestion[],
         _scoreManager: ScoreManager,
         onComplete: (score: number) => void,
+        quizMeta?: { quizNumber: number | null; attemptNumber: number },
       ) => {
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED, "quiz");
         const quizState = useGameUIStore.getState().quiz;
         if (quizState.isVisible) return;
-        useGameUIStore.getState().startQuiz(questions, onComplete);
+        useGameUIStore
+          .getState()
+          .startQuiz(
+            questions,
+            onComplete,
+            false,
+            quizMeta?.quizNumber ?? null,
+            quizMeta?.attemptNumber ?? 1,
+          );
       },
     );
 
@@ -108,9 +117,23 @@ export class UIScene extends Scene {
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
       (questions: QuizQuestion[], onComplete: (score: number) => void) => {
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED, "quiz");
+      (
+        questions: QuizQuestion[],
+        onComplete: (score: number) => void,
+        quizMeta?: { quizNumber: number | null; attemptNumber: number },
+      ) => {
+        gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
         const quizState = useGameUIStore.getState().quiz;
         if (quizState.isVisible) return;
-        useGameUIStore.getState().startQuiz(questions, onComplete, true);
+        useGameUIStore
+          .getState()
+          .startQuiz(
+            questions,
+            onComplete,
+            true,
+            quizMeta?.quizNumber ?? null,
+            quizMeta?.attemptNumber ?? 1,
+          );
       },
     );
 

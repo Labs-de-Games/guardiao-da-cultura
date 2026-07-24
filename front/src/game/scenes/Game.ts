@@ -82,10 +82,11 @@ export class Game extends Scene implements GameDataAccessor {
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
 
   public readonly scoringFloors = {
-    paintings: 0,
-    sculptures: 1,
+    sculptures: 0,
+    paintings: 1,
     photo: 2,
   } as const;
+  private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
@@ -178,6 +179,14 @@ export class Game extends Scene implements GameDataAccessor {
       window.dispatchEvent(
         new CustomEvent("phaser-loading-progress", {
           detail: { progress: Math.round(value * 100) },
+        }),
+      );
+    });
+
+    this.load.on("loaderror", (file: Phaser.Loader.File) => {
+      window.dispatchEvent(
+        new CustomEvent("phaser-loading-error", {
+          detail: { stage: "asset_load", key: file.key },
         }),
       );
     });
@@ -444,7 +453,6 @@ export class Game extends Scene implements GameDataAccessor {
       this.progressionManager?.removeAllListeners(
         ProgressionEvents.PROGRESSION_UPDATED,
       );
-      EventBus.off("progression:updated");
     });
 
     posthog.capture("game_started", {
@@ -1001,6 +1009,19 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
+      const floorForType: Partial<Record<InteractiveType, number>> = {
+        [InteractiveType.SCULPTURE]: this.scoringFloors.sculptures,
+        [InteractiveType.PAINTING]: this.scoringFloors.paintings,
+        [InteractiveType.PHOTO_CHUNK]: this.scoringFloors.photo,
+      };
+      const floorIndex = floorForType[item.interactiveType];
+      if (floorIndex !== undefined && this.markFloorStarted(floorIndex)) {
+        posthog.capture("minigame_started", {
+          minigame_number: floorIndex + 1,
+          level_id: this.levelId,
+        });
+      }
+
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
 
@@ -1276,12 +1297,33 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
+  public getLevelId(): string {
+    return this.levelId;
+  }
+
+  public markFloorStarted(floorIndex: number): boolean {
+    if (this.startedFloors.has(floorIndex)) return false;
+    this.startedFloors.add(floorIndex);
+    return true;
+  }
+
   public recordFloorError(floorIndex: number) {
     this.scoreManager.recordFloorError(floorIndex);
   }
 
   public completeFloor(floorIndex: number) {
+    const alreadyCompleted =
+      !!this.scoreManager.getPayload().floors[floorIndex]?.completedAt;
     this.scoreManager.completeFloor(floorIndex);
+    if (!alreadyCompleted) {
+      const floor = this.scoreManager.getPayload().floors[floorIndex];
+      posthog.capture("minigame_completed", {
+        minigame_number: floorIndex + 1,
+        level_id: this.levelId,
+        errors: floor.errors,
+        quarters_earned: floor.quartersEarned,
+      });
+    }
   }
 
   public recordPhotoFloorError() {

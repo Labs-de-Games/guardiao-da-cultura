@@ -146,6 +146,38 @@ Qualquer um dos campos abaixo:
 
 ---
 
+# Eventos PostHog — Gameplay (issue #599)
+
+Eventos PostHog puros (sem consumo pelo backend), cobrindo landing page, home,
+minigames, quizzes e carregamento do jogo.
+
+| Evento | Propriedades | Onde é emitido |
+|---|---|---|
+| `landing_page_viewed` | — | `PlayLanding.tsx` |
+| `landing_page_play_clicked` | — | `PlayLanding.tsx` |
+| `landing_page_dwell_time` | `dwell_ms` | `PlayLanding.tsx` |
+| `game_home_viewed` | — | `MapIntroScene.ts` |
+| `game_home_dwell_time` | `dwell_ms` | `MapIntroScene.ts` |
+| `map_pin_clicked` | `marker_id`, `level_id`, `is_available` | `MapIntroScene.ts` |
+| `game_started_with_spacebar` | `marker_id`, `level_id` | `MapIntroScene.ts` |
+| `minigame_started` | `minigame_number` (1=sculptures, 2=paintings, 3=photo), `level_id` | `PaintingMechanicHandler.ts`, `SculptureMechanicHandler.ts`, `Game.ts` (photo) |
+| `minigame_completed` | `minigame_number`, `level_id`, `errors`, `quarters_earned` | `Game.ts` (`completeFloor`) |
+| `intermediate_quiz_started` | `quiz_number` (1=sculptures, 2=paintings, 3=photo), `level_id`, `info_key` | `QuizManager.ts` |
+| `intermediate_quiz_completed` | `quiz_number`, `level_id`, `info_key`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
+| `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
+| `quiz_answer_submitted` | `quiz_number` (null for regular end-of-level quizzes), `question_id`, `selected_answer`, `is_correct`, `attempt_number` | `game-ui-store.ts` (`selectOption`) |
+| `game_load_success` | `level_id`, `loading_time_ms` | `PhaserGame.tsx` |
+| `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`/`asset_load`) | `PhaserGame.tsx`, `Game.ts` (asset `loaderror`) |
+
+`browser`/`operating_system` are not sent as custom properties — PostHog
+autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`
+(that flag only disables DOM click autocapture).
+
+`capture_web_vitals` and `capture_dead_clicks` are enabled in
+`PostHogProvider.tsx`'s `posthog.init(...)` config.
+
+---
+
 # Observações
 - Após alterações no formato de metadata, **recomenda-se limpar eventos antigos** no banco de desenvolvimento (para evitar taxas > 100%).
 - O backend aceita múltiplas chaves para identificar capítulo/sessão 1, mas `levelNumber` é o caminho mais seguro.
