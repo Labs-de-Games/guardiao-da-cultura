@@ -34,8 +34,7 @@ export type IntroSequenceProps = {
  * Plays the full intro sequence:
  * 1. Comic panels with pixel-reveal, shrink-to-slice, and captions
  * 2. Roll-out animation with pixel-dissolve
- * 3. Mask reveal transition
- * 4. Calls onComplete to transition to game
+ * 3. Calls onComplete to transition to game
  */
 export function IntroSequence({
   config,
@@ -44,7 +43,6 @@ export function IntroSequence({
 }: IntroSequenceProps) {
   const [skip, setSkip] = useState(false);
   const [rollOut, setRollOut] = useState(false);
-  const [finished, setFinished] = useState(false);
   const [captionPanel, setCaptionPanel] = useState<number>(-1);
   const [captionVisible, setCaptionVisible] = useState(false);
   // Panel navigation state
@@ -147,24 +145,16 @@ export function IntroSequence({
     };
   }, [computeScale]);
 
-  // Emits the game-loading trigger and hands off to LoadingGameScreen
-  const handleFinish = useCallback(() => {
-    setFinished(true);
-    EventBus.emit("intro:complete", { levelId });
-    onComplete();
-  }, [levelId, onComplete]);
-
   // Skip handler - skips entire animation
   const handleSkip = useCallback(() => {
     if (!config.skipEnabled) return;
     setSkip(true);
     setRollOut(false);
-    handleFinish();
-  }, [config.skipEnabled, handleFinish]);
+  }, [config.skipEnabled]);
 
   // Navigate to next panel
   const handleNextPanel = useCallback(() => {
-    if (skip || rollOut || finished) return;
+    if (skip || rollOut) return;
 
     // Debounce: prevent rapid key presses
     if (isNavigatingRef.current) return;
@@ -195,15 +185,7 @@ export function IntroSequence({
     setTimeout(() => {
       isNavigatingRef.current = false;
     }, 300);
-  }, [
-    skip,
-    rollOut,
-    finished,
-    navigatingPanel,
-    captionPanel,
-    panels.length,
-    handleSkip,
-  ]);
+  }, [skip, rollOut, navigatingPanel, captionPanel, panels.length, handleSkip]);
 
   // Keyboard and click skip
   useEffect(() => {
@@ -291,21 +273,14 @@ export function IntroSequence({
   const handleComplete = useCallback(() => {
     window.setTimeout(() => {
       EventBus.emit("intro:rollout-start", { levelId });
+      // Emit events to start game loading and music when roll-out begins
+      EventBus.emit("intro:music-start", { levelId });
+      EventBus.emit("intro:complete", { levelId });
       setRollOut(true);
     }, ROLL_DELAY_MS);
-  }, []);
-
-  const handleRolledOut = useCallback(() => {
-    setMaskReveal(true);
-  }, []);
-
-  // When mask animation starts, emit events to start game loading and music
-  const handleMaskAnimationStart = useCallback(() => {
-    EventBus.emit("intro:music-start", { levelId });
-    EventBus.emit("intro:complete", { levelId });
   }, [levelId]);
 
-  const handleMaskDone = useCallback(() => {
+  const handleRolledOut = useCallback(() => {
     onComplete();
   }, [onComplete]);
 
@@ -316,7 +291,7 @@ export function IntroSequence({
     // biome-ignore lint/a11y/useSemanticElements: Full-screen skip overlay needs to be a div for layout
     <div
       className="relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden bg-black"
-      onClick={handleSkip}
+      onClick={handleNextPanel}
       onKeyDown={(e) => {
         if (
           e.key === "Escape" ||
@@ -333,111 +308,109 @@ export function IntroSequence({
       tabIndex={0}
       aria-label="Aperte ESC para pular a introdução"
     >
-      {!finished && (
+      <div
+        ref={fitRefCallback}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          height: "100%",
+          padding: "24px",
+          boxSizing: "border-box",
+          // Critical: constrain to viewport
+          maxWidth: "100vw",
+          maxHeight: "100vh",
+          overflow: "hidden",
+          // Content is behind the click overlay
+          position: "relative",
+          zIndex: 0,
+        }}
+      >
+        {/* Skip hint box - top left corner */}
         <div
-          ref={fitRefCallback}
           style={{
+            position: "absolute",
+            top: "24px",
+            left: "24px",
+            background: CAPTION_BG,
+            border: CAPTION_BORDER,
+            borderRadius: "8px",
+            padding: "12px 16px",
+            fontFamily: CAPTION_BODY_FONT,
+            fontSize: "10px",
+            color: CAPTION_BODY_COLOR,
+            zIndex: 10, // Above all content
+            pointerEvents: "none",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            height: "100%",
-            padding: "24px",
-            boxSizing: "border-box",
-            // Critical: constrain to viewport
-            maxWidth: "100vw",
-            maxHeight: "100vh",
-            overflow: "hidden",
-            // Content is behind the click overlay
-            position: "relative",
-            zIndex: 0,
+            flexDirection: "column",
+            gap: "4px",
           }}
         >
-          {/* Skip hint box - top left corner */}
+          <div>⏭ Aperte ESPAÇO para avançar quadrinhos</div>
+          <div>⏩︎ Aperte ESC para pular a introdução</div>
+        </div>
+        {/* SCALED STAGE: The container is sized to fit the viewport,
+              and the inner content is scaled via transform. */}
+        <div
+          style={{
+            position: "relative",
+            width: stageWidth * scale,
+            height: (PANEL_HEIGHT + CAPTION_HEIGHT) * scale,
+            flex: "none",
+            maxWidth: "100%",
+            maxHeight: "100%",
+          }}
+        >
+          {/* Inner stage at design dimensions, scaled down */}
           <div
             style={{
               position: "absolute",
-              top: "24px",
-              left: "24px",
-              background: CAPTION_BG,
-              border: CAPTION_BORDER,
-              borderRadius: "8px",
-              padding: "12px 16px",
-              fontFamily: CAPTION_BODY_FONT,
-              fontSize: "10px",
-              color: CAPTION_BODY_COLOR,
-              zIndex: 10, // Above all content
-              pointerEvents: "none",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
+              top: 0,
+              left: 0,
+              width: stageWidth,
+              height: PANEL_HEIGHT + CAPTION_HEIGHT,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
             }}
           >
-            <div>⏭ Aperte ESPAÇO para avançar quadrinhos</div>
-            <div>⏩︎ Aperte ESC para pular a introdução</div>
-          </div>
-          {/* SCALED STAGE: The container is sized to fit the viewport,
-              and the inner content is scaled via transform. */}
-          <div
-            style={{
-              position: "relative",
-              width: stageWidth * scale,
-              height: (PANEL_HEIGHT + CAPTION_HEIGHT) * scale,
-              flex: "none",
-              maxWidth: "100%",
-              maxHeight: "100%",
-            }}
-          >
-            {/* Inner stage at design dimensions, scaled down */}
+            <ComicSequence
+              panels={panels}
+              fullWidth={PANEL_FULL_WIDTH}
+              height={PANEL_HEIGHT}
+              blockSize={BLOCK_SIZE}
+              gap={PANEL_GAP}
+              rollOutMs={ROLL_OUT_MS}
+              rollStaggerMs={ROLL_STAGGER_MS}
+              skip={skip}
+              rollOut={rollOut}
+              navigateToPanel={navigatingPanel}
+              onComplete={handleComplete}
+              onRolledOut={handleRolledOut}
+              onPanelStart={handlePanelStart}
+              onPanelShrink={handlePanelShrink}
+            />
+            {/* CAPTION BOX wrapper */}
             <div
               style={{
                 position: "absolute",
-                top: 0,
-                left: 0,
-                width: stageWidth,
-                height: PANEL_HEIGHT + CAPTION_HEIGHT,
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
+                top: PANEL_HEIGHT,
+                left: captionPanelLeft,
+                width: PANEL_FULL_WIDTH,
+                opacity:
+                  captionPanel >= 0 && captionVisible && !rollOut ? 1 : 0,
+                transition: `opacity ${CAPTION_FADE_MS}ms ease-out`,
               }}
             >
-              <ComicSequence
-                panels={panels}
-                fullWidth={PANEL_FULL_WIDTH}
-                height={PANEL_HEIGHT}
-                blockSize={BLOCK_SIZE}
-                gap={PANEL_GAP}
-                rollOutMs={ROLL_OUT_MS}
-                rollStaggerMs={ROLL_STAGGER_MS}
-                skip={skip}
-                rollOut={rollOut}
-                navigateToPanel={navigatingPanel}
-                onComplete={handleComplete}
-                onRolledOut={handleFinish}
-                onPanelStart={handlePanelStart}
-                onPanelShrink={handlePanelShrink}
+              <CaptionBox
+                title={currentPanel?.title}
+                text={currentPanel?.caption ?? ""}
+                image={captionImage}
               />
-              {/* CAPTION BOX wrapper */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: PANEL_HEIGHT,
-                  left: captionPanelLeft,
-                  width: PANEL_FULL_WIDTH,
-                  opacity:
-                    captionPanel >= 0 && captionVisible && !rollOut ? 1 : 0,
-                  transition: `opacity ${CAPTION_FADE_MS}ms ease-out`,
-                }}
-              >
-                <CaptionBox
-                  title={currentPanel?.title}
-                  text={currentPanel?.caption ?? ""}
-                  image={captionImage}
-                />
-              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
