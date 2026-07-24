@@ -39,6 +39,8 @@ export default function PhaserGame() {
   const minLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const gameLoadSuccessSentRef = useRef(false);
+  const gameLoadFailedSentRef = useRef(false);
 
   useEffect(() => {
     const handleLoadingStart = (event: Event) => {
@@ -50,6 +52,7 @@ export default function PhaserGame() {
         clearTimeout(minLoadingTimeoutRef.current);
         minLoadingTimeoutRef.current = null;
       }
+      gameLoadSuccessSentRef.current = false;
       loadingStartedAtRef.current = Date.now();
       currentLevelIdRef.current = customEvent.detail?.levelId;
       setLoadingLevelId(customEvent.detail?.levelId);
@@ -67,10 +70,13 @@ export default function PhaserGame() {
         ? Date.now() - loadingStartedAtRef.current
         : MIN_LEVEL_LOADING_MS;
 
-      posthog.capture("game_load_success", {
-        level_id: currentLevelIdRef.current,
-        loading_time_ms: elapsed,
-      });
+      if (!gameLoadSuccessSentRef.current) {
+        gameLoadSuccessSentRef.current = true;
+        posthog.capture("game_load_success", {
+          level_id: currentLevelIdRef.current,
+          loading_time_ms: elapsed,
+        });
+      }
 
       const remaining = Math.max(0, MIN_LEVEL_LOADING_MS - elapsed);
 
@@ -85,14 +91,7 @@ export default function PhaserGame() {
       }, remaining);
     };
 
-    const handleLoadingError = (event: Event) => {
-      const customEvent = event as CustomEvent<{ stage: string; key: string }>;
-      posthog.capture("game_load_failed", {
-        error_message: `Asset failed: ${customEvent.detail?.key}`,
-        error_type: "asset_load_error",
-        loading_stage: customEvent.detail?.stage ?? "asset_load",
-      });
-    };
+    const handleLoadingError = (_event: Event) => {};
 
     window.addEventListener("phaser-loading-start", handleLoadingStart);
     window.addEventListener("phaser-loading-progress", handleLoadingProgress);
@@ -150,11 +149,14 @@ export default function PhaserGame() {
         setIsLoading(false);
         setOverlayMounted(true);
       } catch (err) {
-        posthog.capture("game_load_failed", {
-          error_message: err instanceof Error ? err.message : String(err),
-          error_type: err instanceof Error ? err.name : "unknown",
-          loading_stage: stage,
-        });
+        if (!gameLoadFailedSentRef.current) {
+          gameLoadFailedSentRef.current = true;
+          posthog.capture("game_load_failed", {
+            error_message: err instanceof Error ? err.message : String(err),
+            error_type: err instanceof Error ? err.name : "unknown",
+            loading_stage: stage,
+          });
+        }
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
         setIsLoading(false);
@@ -187,6 +189,7 @@ export default function PhaserGame() {
         gameRef.current.destroy(false);
         gameRef.current = null;
         isInitializingRef.current = false;
+        gameLoadFailedSentRef.current = false;
       }
     };
   }, [entryFlow, isFlowLoading, user?.id, posthogDistinctId]);
