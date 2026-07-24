@@ -25,8 +25,6 @@ export class BadgeSystem {
   constructor(scene: Scene, persistence: GamePersistence) {
     this.scene = scene;
     this.persistence = persistence;
-
-    this.scene.registry.events.on("changedata", this.onRegistryChange, this);
   }
 
   public async initialize() {
@@ -48,6 +46,8 @@ export class BadgeSystem {
           this.checkRequirements(badge.stat_required, currentValue);
         }
       });
+
+      this.scene.registry.events.on("changedata", this.onRegistryChange, this);
     } catch (e) {
       console.error("[BadgeSystem] Error initializing badges", e);
     }

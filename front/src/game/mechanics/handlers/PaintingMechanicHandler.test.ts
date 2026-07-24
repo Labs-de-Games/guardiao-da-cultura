@@ -35,6 +35,8 @@ function createMockGame(overrides: Record<string, unknown> = {}): Game {
       .mockReturnValue([{ filled: 1, total: 3 }]),
     completeFloor: jest.fn(),
     recordFloorError: jest.fn(),
+    markFloorStarted: jest.fn().mockReturnValue(true),
+    getLevelId: jest.fn().mockReturnValue("level_01"),
     shakeHorizontal: jest.fn(),
     time: {
       delayedCall: jest.fn((_ms: number, cb: () => void) => cb()),

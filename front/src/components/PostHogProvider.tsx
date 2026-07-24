@@ -25,7 +25,7 @@ function setDistinctIdCookie(distinctId: string): void {
 
 async function fetchBootstrap(): Promise<PostHogBootstrapData | null> {
   try {
-    const apiUrl = env.NEXT_PUBLIC_API_URL || "";
+    const apiUrl = env.client.apiUrl || "";
     const url = apiUrl
       ? `${apiUrl}/api/v1/posthog/bootstrap`
       : "/api/v1/posthog/bootstrap";
@@ -49,9 +49,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     useState<PostHogBootstrapData | null>(null);
 
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
-    const environment = env.NEXT_PUBLIC_ENV;
+    const key = env.client.posthogKey;
+    const host = env.client.posthogHost;
+    const environment = env.client.env;
 
     if (!key) {
       console.warn(
@@ -82,6 +82,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         api_host: host || "https://us.i.posthog.com",
         autocapture: false,
         capture_pageview: false,
+        capture_web_vitals: true,
+        capture_dead_clicks: true,
         record_sessions_percent: recordSessionsPercent,
         record_canvas: environment === "production",
         opt_in_site_apps: environment === "production",

@@ -5,6 +5,7 @@ import { Box, IconButton, Paper, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef } from "react";
 
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 const CONTROLS = [
   { key: "Q", action: "Rever controles" },
@@ -88,7 +89,7 @@ export function ControlsPanel() {
         opacity: controlsOpen ? 1 : 0,
         pointerEvents: controlsOpen ? "auto" : "none",
         transition: "opacity 200ms ease-in-out",
-        zIndex: 30,
+        zIndex: UI_LAYERS.PANEL,
       }}
       onClick={close}
     >

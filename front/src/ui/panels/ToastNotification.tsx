@@ -4,8 +4,8 @@ import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useCallback, useEffect, useRef } from "react";
 
-import { UI_DEPTHS } from "@/shared/constants/ui-depths";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 const EXIT_ANIMATION_MS = 250;
 
@@ -143,7 +143,7 @@ export function ToastNotification() {
         gap: 1,
         alignItems: "center",
         pointerEvents: "auto",
-        zIndex: UI_DEPTHS.TOAST,
+        zIndex: UI_LAYERS.NOTIFICATION,
       }}
     >
       {toasts.map((toast) => (
