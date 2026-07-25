@@ -1,7 +1,6 @@
 "use client";
 
 import { keyframes } from "@emotion/react";
-import CheckIcon from "@mui/icons-material/Check";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
@@ -398,9 +397,7 @@ export function CostumeSelectorPanel() {
 
     const borderColor = state.isRejecting
       ? LayoutConfig.COLORS.UNAVAILABLE_RED
-      : state.isLocked
-        ? LayoutConfig.COLORS.AVAILABLE_GREEN
-        : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
+      : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
     // Select items array based on part type
     const carouselItems =
@@ -470,35 +467,17 @@ export function CostumeSelectorPanel() {
                       src={item.src}
                       alt={item.label}
                       sx={{
-                        width: 60,
-                        height: 60,
-                        objectFit: "contain",
-                        mb: 1,
+                        width: 80,
+                        height: 80,
+                        // objectFit: "contain",
+                        // mb: 1,
+                        mt: 8,
                       }}
                     />
-                    <Typography variant="caption" align="center">
-                      {item.label}
-                    </Typography>
                   </Box>
                 ))}
               </Box>
             </Box>
-
-            {/* Lock indicator */}
-            {state.isLocked && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  bgcolor: LayoutConfig.COLORS.AVAILABLE_GREEN,
-                  borderRadius: "50%",
-                  p: 0.5,
-                }}
-              >
-                <CheckIcon sx={{ fontSize: 16, color: "white" }} />
-              </Box>
-            )}
           </Paper>
 
           {/* Next Button */}
