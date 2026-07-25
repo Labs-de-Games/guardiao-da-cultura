@@ -117,10 +117,16 @@ export class PlaceholderSystem {
       const scale = config.scale ?? 1;
 
       for (let i = 0; i < TEXTURES.length; i++) {
+        const partName = TEXTURES[i].replace("dummy_", "") as
+          | "head"
+          | "torso"
+          | "feet";
+        const partConfig = PART_DEFAULTS[partName];
+
         const cell = this.scene.add.image(0, 0, TEXTURES[i]);
-        cell.setDisplaySize(CELL_W * 1.8, CELL_H * 2 * scale);
-        cell.setOrigin(PART_DEFAULTS.originX, PART_DEFAULTS.originY);
-        cell.setPosition(0, PART_DEFAULTS.yOffset * scale);
+        cell.setDisplaySize(cell.width * scale, cell.height * scale);
+        cell.setOrigin(partConfig.originX, partConfig.originY);
+        cell.setPosition(0, partConfig.yOffset * scale);
         container.add(cell);
       }
       container.setDepth(10);
