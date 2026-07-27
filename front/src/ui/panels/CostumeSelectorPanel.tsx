@@ -54,6 +54,78 @@ interface CarouselState {
   isLocked: boolean;
 }
 
+// Fades non-centered slides; steeper factor since only 3 slides are visible at once
+const TWEEN_FACTOR_BASE = 0.65;
+const TWEEN_MIN_OPACITY = 0.35;
+
+const numberWithinRange = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+// Continuously tweens slide opacity based on distance from the carousel center
+function useSlideOpacityEffect(
+  emblaApi: ReturnType<typeof useEmblaCarousel>[1],
+) {
+  const tweenFactor = useRef(0);
+
+  const setTweenFactor = useCallback((api: NonNullable<typeof emblaApi>) => {
+    tweenFactor.current = TWEEN_FACTOR_BASE * api.scrollSnapList().length;
+  }, []);
+
+  const setSlideOpacity = useCallback((api: NonNullable<typeof emblaApi>) => {
+    const engine = api.internalEngine();
+    const scrollProgress = api.scrollProgress();
+    const slidesInView = api.slidesInView();
+
+    api.scrollSnapList().forEach((scrollSnap, snapIndex) => {
+      let diffToTarget = scrollSnap - scrollProgress;
+      const slidesInSnap = engine.slideRegistry[snapIndex];
+
+      slidesInSnap.forEach((slideIndex) => {
+        if (!slidesInView.includes(slideIndex)) return;
+
+        if (engine.options.loop) {
+          engine.slideLooper.loopPoints.forEach((loopItem) => {
+            const target = loopItem.target();
+            if (slideIndex === loopItem.index && target !== 0) {
+              const sign = Math.sign(target);
+              if (sign === -1) diffToTarget = scrollSnap - (1 + scrollProgress);
+              if (sign === 1) diffToTarget = scrollSnap + (1 - scrollProgress);
+            }
+          });
+        }
+
+        const tweenValue = 1 - Math.abs(diffToTarget * tweenFactor.current);
+        const opacity = numberWithinRange(tweenValue, TWEEN_MIN_OPACITY, 1);
+        const node = api.slideNodes()[slideIndex];
+        if (node) node.style.opacity = opacity.toString();
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    setTweenFactor(emblaApi);
+    setSlideOpacity(emblaApi);
+
+    emblaApi
+      .on("reInit", setTweenFactor)
+      .on("reInit", setSlideOpacity)
+      .on("scroll", setSlideOpacity)
+      .on("slideFocus", setSlideOpacity)
+      .on("slidesInView", setSlideOpacity);
+
+    return () => {
+      emblaApi
+        .off("reInit", setTweenFactor)
+        .off("reInit", setSlideOpacity)
+        .off("scroll", setSlideOpacity)
+        .off("slideFocus", setSlideOpacity)
+        .off("slidesInView", setSlideOpacity);
+    };
+  }, [emblaApi, setTweenFactor, setSlideOpacity]);
+}
+
 export function CostumeSelectorPanel() {
   const { costumeSelectorOpen, costumeSelectorData, closeCostumeSelector } =
     useGameUIStore();
@@ -132,6 +204,10 @@ export function CostumeSelectorPanel() {
     align: "center",
     slidesToScroll: 1,
   });
+
+  useSlideOpacityEffect(headEmblaApi);
+  useSlideOpacityEffect(torsoEmblaApi);
+  useSlideOpacityEffect(feetEmblaApi);
 
   // Pause game when panel opens
   useEffect(() => {
@@ -586,6 +662,7 @@ export function CostumeSelectorPanel() {
                       justifyContent: "center",
                       bgcolor: "background.paper",
                       position: "relative",
+                      transition: "opacity 0.15s ease-out",
                     }}
                   >
                     <Box
