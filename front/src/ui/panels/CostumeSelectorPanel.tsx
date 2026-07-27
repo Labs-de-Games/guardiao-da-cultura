@@ -318,6 +318,9 @@ export function CostumeSelectorPanel() {
       const index = headEmblaApi.selectedScrollSnap();
       if (index !== carouselStates.head.selectedIndex) {
         handleSelect("head", index);
+        setFocusedPart("head");
+        setConfirmFocused(false);
+        confirmButtonRef.current?.blur();
       }
     };
 
@@ -325,7 +328,14 @@ export function CostumeSelectorPanel() {
     return () => {
       headEmblaApi.off("select", onSelect);
     };
-  }, [headEmblaApi, carouselStates.head.selectedIndex, handleSelect]);
+  }, [
+    headEmblaApi,
+    carouselStates.head.selectedIndex,
+    handleSelect,
+    setFocusedPart,
+    setConfirmFocused,
+    confirmButtonRef,
+  ]);
 
   useEffect(() => {
     if (!torsoEmblaApi) return;
@@ -334,6 +344,9 @@ export function CostumeSelectorPanel() {
       const index = torsoEmblaApi.selectedScrollSnap();
       if (index !== carouselStates.torso.selectedIndex) {
         handleSelect("torso", index);
+        setFocusedPart("torso");
+        setConfirmFocused(false);
+        confirmButtonRef.current?.blur();
       }
     };
 
@@ -341,7 +354,14 @@ export function CostumeSelectorPanel() {
     return () => {
       torsoEmblaApi.off("select", onSelect);
     };
-  }, [torsoEmblaApi, carouselStates.torso.selectedIndex, handleSelect]);
+  }, [
+    torsoEmblaApi,
+    carouselStates.torso.selectedIndex,
+    handleSelect,
+    setFocusedPart,
+    setConfirmFocused,
+    confirmButtonRef,
+  ]);
 
   useEffect(() => {
     if (!feetEmblaApi) return;
@@ -350,6 +370,9 @@ export function CostumeSelectorPanel() {
       const index = feetEmblaApi.selectedScrollSnap();
       if (index !== carouselStates.feet.selectedIndex) {
         handleSelect("feet", index);
+        setFocusedPart("feet");
+        setConfirmFocused(false);
+        confirmButtonRef.current?.blur();
       }
     };
 
@@ -357,7 +380,14 @@ export function CostumeSelectorPanel() {
     return () => {
       feetEmblaApi.off("select", onSelect);
     };
-  }, [feetEmblaApi, carouselStates.feet.selectedIndex, handleSelect]);
+  }, [
+    feetEmblaApi,
+    carouselStates.feet.selectedIndex,
+    handleSelect,
+    setFocusedPart,
+    setConfirmFocused,
+    confirmButtonRef,
+  ]);
 
   // Handle confirm button
   const handleConfirm = () => {
