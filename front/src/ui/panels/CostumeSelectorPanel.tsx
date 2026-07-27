@@ -494,13 +494,16 @@ export function CostumeSelectorPanel() {
     partType: "head" | "torso" | "feet",
     emblaRef: (instance: HTMLElement | null) => void,
     emblaApi: ReturnType<typeof useEmblaCarousel>[1],
+    isFocused: boolean,
     // label: string,
   ) => {
     const state = carouselStates[partType];
 
     const borderColor = state.isRejecting
       ? LayoutConfig.COLORS.UNAVAILABLE_RED
-      : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
+      : isFocused
+        ? LayoutConfig.COLORS.SUCCESS_GREEN
+        : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
     // Select items array based on part type
     const carouselItems =
@@ -681,9 +684,24 @@ export function CostumeSelectorPanel() {
         </Typography>
 
         {/* Carousels */}
-        {renderCarousel("head", headEmblaRef, headEmblaApi)}
-        {renderCarousel("torso", torsoEmblaRef, torsoEmblaApi)}
-        {renderCarousel("feet", feetEmblaRef, feetEmblaApi)}
+        {renderCarousel(
+          "head",
+          headEmblaRef,
+          headEmblaApi,
+          focusedPart === "head",
+        )}
+        {renderCarousel(
+          "torso",
+          torsoEmblaRef,
+          torsoEmblaApi,
+          focusedPart === "torso",
+        )}
+        {renderCarousel(
+          "feet",
+          feetEmblaRef,
+          feetEmblaApi,
+          focusedPart === "feet",
+        )}
 
         {/* Confirm button */}
         <Button
