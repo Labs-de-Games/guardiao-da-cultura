@@ -444,6 +444,15 @@ export function CostumeSelectorPanel() {
       ];
       const currentIndex = partOrder.indexOf(focusedPart);
 
+      // Enter/Space to activate confirm button
+      if (key === "enter" || key === " ") {
+        if (confirmFocused) {
+          handleConfirm();
+          e.preventDefault();
+        }
+        return;
+      }
+
       // Up/Down navigation
       if (key === "arrowup" || key === "w") {
         if (confirmFocused) {
