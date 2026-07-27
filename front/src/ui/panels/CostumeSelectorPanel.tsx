@@ -530,11 +530,10 @@ export function CostumeSelectorPanel() {
             : GENERIC_CAROUSEL_ITEMS;
 
     return (
-      <Box sx={{ mb: 1 }}>
+      <Box sx={{ mb: 0.2 }}>
         <Typography
           variant="subtitle1"
           sx={{
-            mb: 1,
             color: LayoutConfig.COLORS.INFO_BODY,
             fontWeight: 600,
             textTransform: "capitalize",
@@ -564,7 +563,7 @@ export function CostumeSelectorPanel() {
               flex: 1,
               overflow: "hidden",
               borderRadius: 2,
-              outline: `3px solid ${borderColor}`,
+              outline: `1.1px solid ${borderColor}`,
               outlineOffset: 0,
               animation: state.isRejecting ? `${shake} 0.4s ease` : "none",
               opacity: state.isLocked ? 0.8 : 1,
@@ -596,11 +595,8 @@ export function CostumeSelectorPanel() {
                       sx={{
                         width: PART_SIZES[partType].width,
                         height: PART_SIZES[partType].height,
-                        //height: 80,
                         objectFit: "contain",
                         imageRendering: "pixelated",
-                        // objectFit: "contain",
-                        // mb: 1,
                         mt: PART_SIZES[partType].mt,
                         mb: PART_SIZES[partType].mb,
                       }}
