@@ -194,17 +194,17 @@ export function CostumeSelectorPanel() {
   // Embla carousel refs - configured for 3 visible items
   const [headEmblaRef, headEmblaApi] = useEmblaCarousel({
     loop: true,
-    align: "start",
+    align: "center",
     slidesToScroll: 1,
   });
   const [torsoEmblaRef, torsoEmblaApi] = useEmblaCarousel({
     loop: true,
-    align: "start",
+    align: "center",
     slidesToScroll: 1,
   });
   const [feetEmblaRef, feetEmblaApi] = useEmblaCarousel({
     loop: true,
-    align: "start",
+    align: "center",
     slidesToScroll: 1,
   });
 
