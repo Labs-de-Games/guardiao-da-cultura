@@ -448,6 +448,7 @@ export function CostumeSelectorPanel() {
       if (key === "arrowup" || key === "w") {
         if (confirmFocused) {
           setConfirmFocused(false);
+          confirmButtonRef.current?.blur();
           e.preventDefault();
         } else if (currentIndex > 0) {
           setFocusedPart(partOrder[currentIndex - 1]);
