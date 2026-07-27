@@ -6,7 +6,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
 import { Box, Button, IconButton, Paper, Typography } from "@mui/material";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import {
   COSTUME_PARTS,
@@ -187,6 +187,9 @@ export function CostumeSelectorPanel() {
   const [focusedPart, setFocusedPart] = useState<"head" | "torso" | "feet">(
     "head",
   );
+
+  const [confirmFocused, setConfirmFocused] = useState(false);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   // Embla carousel refs - configured for 3 visible items
   const [headEmblaRef, headEmblaApi] = useEmblaCarousel({
@@ -443,21 +446,36 @@ export function CostumeSelectorPanel() {
 
       // Up/Down navigation
       if (key === "arrowup" || key === "w") {
-        const newIndex = Math.max(0, currentIndex - 1);
-        setFocusedPart(partOrder[newIndex]);
-        e.preventDefault();
+        if (confirmFocused) {
+          setConfirmFocused(false);
+          e.preventDefault();
+        } else if (currentIndex > 0) {
+          setFocusedPart(partOrder[currentIndex - 1]);
+          e.preventDefault();
+        }
       } else if (key === "arrowdown" || key === "s") {
-        const newIndex = Math.min(partOrder.length - 1, currentIndex + 1);
-        setFocusedPart(partOrder[newIndex]);
-        e.preventDefault();
+        if (confirmFocused) {
+          e.preventDefault();
+        } else if (focusedPart === "feet") {
+          setConfirmFocused(true);
+          confirmButtonRef.current?.focus();
+          e.preventDefault();
+        } else {
+          setFocusedPart(partOrder[currentIndex + 1]);
+          e.preventDefault();
+        }
       }
       // Left/Right carousel navigation
       else if (key === "arrowleft" || key === "a") {
-        apiMap[focusedPart]?.scrollPrev();
-        e.preventDefault();
+        if (!confirmFocused) {
+          apiMap[focusedPart]?.scrollPrev();
+          e.preventDefault();
+        }
       } else if (key === "arrowright" || key === "d") {
-        apiMap[focusedPart]?.scrollNext();
-        e.preventDefault();
+        if (!confirmFocused) {
+          apiMap[focusedPart]?.scrollNext();
+          e.preventDefault();
+        }
       }
     };
 
@@ -469,6 +487,8 @@ export function CostumeSelectorPanel() {
     costumeSelectorOpen,
     handleClose,
     focusedPart,
+    confirmFocused,
+    confirmButtonRef,
     headEmblaApi,
     torsoEmblaApi,
     feetEmblaApi,
@@ -689,23 +709,24 @@ export function CostumeSelectorPanel() {
           "head",
           headEmblaRef,
           headEmblaApi,
-          focusedPart === "head",
+          focusedPart === "head" && !confirmFocused,
         )}
         {renderCarousel(
           "torso",
           torsoEmblaRef,
           torsoEmblaApi,
-          focusedPart === "torso",
+          focusedPart === "torso" && !confirmFocused,
         )}
         {renderCarousel(
           "feet",
           feetEmblaRef,
           feetEmblaApi,
-          focusedPart === "feet",
+          focusedPart === "feet" && !confirmFocused,
         )}
 
         {/* Confirm button */}
         <Button
+          ref={confirmButtonRef}
           variant="contained"
           fullWidth
           size="large"
