@@ -8,10 +8,7 @@ import { Box, Button, IconButton, Paper, Typography } from "@mui/material";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
-import {
-  COSTUME_PARTS,
-  CostumeMechanicHandler,
-} from "@/game/mechanics/handlers/CostumeMechanicHandler";
+import { CostumeMechanicHandler } from "@/game/mechanics/handlers/CostumeMechanicHandler";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
@@ -30,92 +27,20 @@ const GENERIC_CAROUSEL_ITEMS = Array.from({ length: 5 }, (_, i) => ({
   label: `Item ${i + 1}`,
 }));
 
-// Head carousel items with costume assets
-const HEAD_CAROUSEL_ITEMS = [
-  {
-    id: "dummy_head",
-    src: "/assets/artworks/costumes/dummy_head.png",
-    label: "Dummy",
-  },
-  {
-    id: "indian_head",
-    src: "/assets/artworks/costumes/indian_head.png",
-    label: "Indian",
-  },
-  {
-    id: "warrior_head",
-    src: "/assets/artworks/costumes/warrior_head.png",
-    label: "Warrior",
-  },
-  {
-    id: "soldier_head",
-    src: "/assets/artworks/costumes/soldier_head.png",
-    label: "Soldier",
-  },
-  {
-    id: "malandro_head",
-    src: "/assets/artworks/costumes/malandro_head.png",
-    label: "Malandro",
-  },
-];
+// Build carousel items from shuffled costume parts (computed once at module load)
+function buildCarouselItems(
+  partType: "head" | "torso" | "feet",
+): Array<{ id: string; src: string; label: string }> {
+  return CostumeMechanicHandler.getShuffledCostumeParts(partType).map((p) => ({
+    id: p.id,
+    src: `/assets/artworks/costumes/${p.textureKey}.png`,
+    label: p.name.charAt(0).toUpperCase() + p.name.slice(1),
+  }));
+}
 
-// Torso carousel items with costume assets
-const TORSO_CAROUSEL_ITEMS = [
-  {
-    id: "dummy_torso",
-    src: "/assets/artworks/costumes/dummy_torso.png",
-    label: "Dummy",
-  },
-  {
-    id: "indian_torso",
-    src: "/assets/artworks/costumes/indian_torso.png",
-    label: "Indian",
-  },
-  {
-    id: "warrior_torso",
-    src: "/assets/artworks/costumes/warrior_torso.png",
-    label: "Warrior",
-  },
-  {
-    id: "soldier_torso",
-    src: "/assets/artworks/costumes/soldier_torso.png",
-    label: "Soldier",
-  },
-  {
-    id: "malandro_torso",
-    src: "/assets/artworks/costumes/malandro_torso.png",
-    label: "Malandro",
-  },
-];
-
-// Feet carousel items with costume assets
-const FEET_CAROUSEL_ITEMS = [
-  {
-    id: "dummy_feet",
-    src: "/assets/artworks/costumes/dummy_feet.png",
-    label: "Dummy",
-  },
-  {
-    id: "indian_feet",
-    src: "/assets/artworks/costumes/indian_feet.png",
-    label: "Indian",
-  },
-  {
-    id: "warrior_feet",
-    src: "/assets/artworks/costumes/warrior_feet.png",
-    label: "Warrior",
-  },
-  {
-    id: "soldier_feet",
-    src: "/assets/artworks/costumes/soldier_feet.png",
-    label: "Soldier",
-  },
-  {
-    id: "malandro_feet",
-    src: "/assets/artworks/costumes/malandro_feet.png",
-    label: "Malandro",
-  },
-];
+const HEAD_CAROUSEL_ITEMS = buildCarouselItems("head");
+const TORSO_CAROUSEL_ITEMS = buildCarouselItems("torso");
+const FEET_CAROUSEL_ITEMS = buildCarouselItems("feet");
 
 const PART_SIZES = {
   head: { width: "35%", height: "auto", mt: 8, mb: 0 },
@@ -154,7 +79,7 @@ export function CostumeSelectorPanel() {
       partId: string | null,
     ) => {
       if (!partId) return 0; // Empty slot
-      const parts = COSTUME_PARTS[partType];
+      const parts = CostumeMechanicHandler.getShuffledCostumeParts(partType);
       const index = parts.findIndex((p) => p.id === partId);
       return index >= 0 ? index + 1 : 0;
     };
@@ -246,9 +171,10 @@ export function CostumeSelectorPanel() {
       // If already locked, don't allow changes
       if (currentState.isLocked) return;
 
-      // Get selected part
-      const parts = COSTUME_PARTS[partType];
-      const selectedPart = index === 0 ? null : parts[index - 1];
+      // Get selected part from the shuffled array (matches carousel order)
+      const shuffledParts =
+        CostumeMechanicHandler.getShuffledCostumeParts(partType);
+      const selectedPart = index === 0 ? null : shuffledParts[index - 1];
 
       // Validate selection
       const isEmpty = selectedPart === null;
@@ -419,18 +345,21 @@ export function CostumeSelectorPanel() {
       head:
         carouselStates.head.selectedIndex === 0
           ? null
-          : (COSTUME_PARTS.head[carouselStates.head.selectedIndex - 1]?.id ??
-            null),
+          : (CostumeMechanicHandler.getShuffledCostumeParts("head")[
+              carouselStates.head.selectedIndex - 1
+            ]?.id ?? null),
       torso:
         carouselStates.torso.selectedIndex === 0
           ? null
-          : (COSTUME_PARTS.torso[carouselStates.torso.selectedIndex - 1]?.id ??
-            null),
+          : (CostumeMechanicHandler.getShuffledCostumeParts("torso")[
+              carouselStates.torso.selectedIndex - 1
+            ]?.id ?? null),
       feet:
         carouselStates.feet.selectedIndex === 0
           ? null
-          : (COSTUME_PARTS.feet[carouselStates.feet.selectedIndex - 1]?.id ??
-            null),
+          : (CostumeMechanicHandler.getShuffledCostumeParts("feet")[
+              carouselStates.feet.selectedIndex - 1
+            ]?.id ?? null),
     };
 
     // Check if all parts are correct
