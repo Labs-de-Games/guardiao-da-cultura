@@ -55,8 +55,8 @@ interface CarouselState {
 }
 
 // Fades non-centered slides; steeper factor since only 3 slides are visible at once
-const TWEEN_FACTOR_BASE = 0.65;
-const TWEEN_MIN_OPACITY = 0.35;
+const TWEEN_FACTOR_BASE = 0.85;
+const TWEEN_MIN_OPACITY = 0.15;
 
 const numberWithinRange = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
