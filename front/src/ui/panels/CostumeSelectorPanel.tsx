@@ -7,7 +7,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
   Button,
-  Divider,
   IconButton,
   Paper,
   Typography,
@@ -123,6 +122,12 @@ const FEET_CAROUSEL_ITEMS = [
     label: "Malandro",
   },
 ];
+
+const PART_SIZES = {
+  head: { width: "35%", height: "auto", mt: 8, mb: 0 },
+  torso: { width: "60%", height: "auto", mt: 0, mb: 0 },
+  feet: { width: "40%", height: "auto", mt: 0, mb: 4 },
+}
 
 interface CarouselState {
   selectedIndex: number;
@@ -531,13 +536,15 @@ export function CostumeSelectorPanel() {
                       src={item.src}
                       alt={item.label}
                       sx={{
-                        width: 80,
-                        height: 80,
+						width: PART_SIZES[partType].width,
+						height: PART_SIZES[partType].height,
+                        //height: 80,
                         objectFit: "contain",
                         imageRendering: "auto",
                         // objectFit: "contain",
                         // mb: 1,
-                        // mt: 8,
+                        mt: PART_SIZES[partType].mt,
+						mb: PART_SIZES[partType].mb
                       }}
                     />
                   </Box>
