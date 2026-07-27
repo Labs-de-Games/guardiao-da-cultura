@@ -28,6 +28,40 @@ export const COSTUME_PARTS: Record<"head" | "torso" | "feet", CostumePart[]> = {
   ],
 };
 
+// Session seed — generated once at module load, stable for the entire page session
+const SESSION_SEED = Date.now() + Math.floor(Math.random() * 1000000);
+
+// Mulberry32 seeded PRNG
+function mulberry32(seed: number): () => number {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Seeded Fisher-Yates shuffle (returns new array)
+function seededShuffle<T>(arr: T[], rng: () => number): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Cached shuffled orders per part type
+const shuffledCache: Record<"head" | "torso" | "feet", CostumePart[] | null> = {
+  head: null,
+  torso: null,
+  feet: null,
+};
+
+// Shared RNG instance for this session
+const rng = mulberry32(SESSION_SEED);
+
 export class CostumeMechanicHandler {
   public static isCorrectPart(
     partId: string,
@@ -42,5 +76,25 @@ export class CostumeMechanicHandler {
     if (ids.length === 0) return "";
     const first = ids[0] as string;
     return first.replace(/_head|_torso|_feet$/, "");
+  }
+
+  /**
+   * Returns a session-stable shuffled copy of COSTUME_PARTS[partType].
+   * Dummy always stays at index 0. Other items are shuffled
+   * using a seed generated once at module load time.
+   */
+  public static getShuffledCostumeParts(
+    partType: "head" | "torso" | "feet",
+  ): CostumePart[] {
+    if (shuffledCache[partType]) return shuffledCache[partType]!;
+
+    const original = COSTUME_PARTS[partType];
+    const dummy = original[0];
+    const rest = original.slice(1);
+    const shuffledRest = seededShuffle(rest, rng);
+    const result = [dummy, ...shuffledRest];
+
+    shuffledCache[partType] = result;
+    return result;
   }
 }
