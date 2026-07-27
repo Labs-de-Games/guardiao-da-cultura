@@ -45,7 +45,7 @@ const FEET_CAROUSEL_ITEMS = buildCarouselItems("feet");
 const PART_SIZES = {
   head: { width: "35%", height: "auto", mt: 8, mb: 0 },
   torso: { width: "60%", height: "auto", mt: 0, mb: 0 },
-  feet: { width: "40%", height: "auto", mt: 0, mb: 4 },
+  feet: { width: "42%", height: "auto", mt: 0, mb: 4 },
 };
 
 interface CarouselState {
