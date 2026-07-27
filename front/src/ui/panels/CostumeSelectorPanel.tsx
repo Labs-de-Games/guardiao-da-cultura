@@ -324,9 +324,17 @@ export function CostumeSelectorPanel() {
       }
     };
 
+    const onPointerDown = () => {
+      setFocusedPart("head");
+      setConfirmFocused(false);
+      confirmButtonRef.current?.blur();
+    };
+
     headEmblaApi.on("select", onSelect);
+    headEmblaApi.on("pointerDown", onPointerDown);
     return () => {
       headEmblaApi.off("select", onSelect);
+      headEmblaApi.off("pointerDown", onPointerDown);
     };
   }, [
     headEmblaApi,
@@ -350,9 +358,17 @@ export function CostumeSelectorPanel() {
       }
     };
 
+    const onPointerDown = () => {
+      setFocusedPart("torso");
+      setConfirmFocused(false);
+      confirmButtonRef.current?.blur();
+    };
+
     torsoEmblaApi.on("select", onSelect);
+    torsoEmblaApi.on("pointerDown", onPointerDown);
     return () => {
       torsoEmblaApi.off("select", onSelect);
+      torsoEmblaApi.off("pointerDown", onPointerDown);
     };
   }, [
     torsoEmblaApi,
@@ -376,9 +392,17 @@ export function CostumeSelectorPanel() {
       }
     };
 
+    const onPointerDown = () => {
+      setFocusedPart("feet");
+      setConfirmFocused(false);
+      confirmButtonRef.current?.blur();
+    };
+
     feetEmblaApi.on("select", onSelect);
+    feetEmblaApi.on("pointerDown", onPointerDown);
     return () => {
       feetEmblaApi.off("select", onSelect);
+      feetEmblaApi.off("pointerDown", onPointerDown);
     };
   }, [
     feetEmblaApi,
