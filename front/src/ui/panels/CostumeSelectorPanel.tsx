@@ -598,7 +598,7 @@ export function CostumeSelectorPanel() {
                         height: PART_SIZES[partType].height,
                         //height: 80,
                         objectFit: "contain",
-                        imageRendering: "auto",
+                        imageRendering: "pixelated",
                         // objectFit: "contain",
                         // mb: 1,
                         mt: PART_SIZES[partType].mt,
