@@ -1,0 +1,29 @@
+{
+  "npcs": {
+    "professor_curador": {
+      "name": "Inspetora Cremilda Jarbas",
+      "missionId": "missao_curador_l2",
+      "dialogues": {
+        "intro": [
+          "[Mock] Bem-vindo à Galeria de Cartazes! Os cartazes foram tirados dos seus lugares. Vamos reorganizá-los!",
+          "Coloque cada cartaz no lugar correto."
+        ],
+        "ready": [
+          "[Mock] Excelente trabalho! Todos os cartazes estão no lugar.",
+          "Agora vamos testar o que você aprendeu sobre eles."
+        ],
+        "completed": ["[Mock] Parabéns! Você completou a galeria de cartazes."],
+        "success": [
+          "[Mock] Muito bem! Você sabe bastante sobre os cartazes desta galeria."
+        ],
+        "failure": [
+          "[Mock] Hmm… Veja os cartazes novamente e tente outra vez."
+        ],
+        "start_quiz_question": ["Podemos iniciar o teste?"],
+        "intermediateQuiz": [
+          "[Mock] Antes de continuar, vamos ver o que você aprendeu sobre os cartazes."
+        ]
+      }
+    }
+  }
+}

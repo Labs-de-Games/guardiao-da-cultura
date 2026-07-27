@@ -1,5 +1,6 @@
 export const MissionIds = {
   CURATOR: "missao_curador",
+  CURATOR_L2: "missao_curador_l2",
 } as const;
 
 export const MissionKeys = {
@@ -7,6 +8,7 @@ export const MissionKeys = {
   SCULPTURES_DONE: "sculptures_done",
   PHOTO_COLLECTED: "photo_collected",
   PHOTO_DONE: "photo_done",
+  POSTERS_DONE: "posters_done",
 } as const;
 
 export const NPC_FLOOR_3_POSITION = { x: 2100, y: 400 } as const;
@@ -15,6 +17,7 @@ export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
   MissionKeys.SCULPTURES_DONE,
   MissionKeys.PAINTINGS_DONE,
   MissionKeys.PHOTO_DONE,
+  MissionKeys.POSTERS_DONE,
 ]);
 
 export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
