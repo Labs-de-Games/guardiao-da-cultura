@@ -549,8 +549,9 @@ export function CostumeSelectorPanel() {
             sx={{
               flex: 1,
               overflow: "hidden",
-              border: `3px solid ${borderColor}`,
               borderRadius: 2,
+              outline: `3px solid ${borderColor}`,
+              outlineOffset: 0,
               animation: state.isRejecting ? `${shake} 0.4s ease` : "none",
               opacity: state.isLocked ? 0.8 : 1,
               position: "relative",
