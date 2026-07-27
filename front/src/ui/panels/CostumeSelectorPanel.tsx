@@ -188,6 +188,7 @@ export function CostumeSelectorPanel() {
           ...prev,
           [partType]: {
             ...prev[partType],
+            selectedIndex: index,
             isRejecting: true,
           },
         }));
@@ -629,8 +630,6 @@ export function CostumeSelectorPanel() {
     );
   };
 
-  if (!costumeSelectorOpen) return null;
-
   return (
     <Box
       sx={{
@@ -639,12 +638,12 @@ export function CostumeSelectorPanel() {
         left: 0,
         right: 0,
         bottom: 0,
-        display: "flex",
+        display: costumeSelectorOpen ? "flex" : "none",
         alignItems: "center",
         justifyContent: "center",
         bgcolor: "rgba(0, 0, 0, 0.7)",
         zIndex: LayoutConfig.UI.DEPTHS.INVENTORY,
-        pointerEvents: "auto",
+        pointerEvents: costumeSelectorOpen ? "auto" : "none",
         p: 2,
       }}
     >
