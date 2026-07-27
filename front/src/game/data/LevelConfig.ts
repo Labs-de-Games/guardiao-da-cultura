@@ -11,6 +11,7 @@ export interface LevelDefinition {
   title: string;
   maxStars: number;
   initialGrayscale: number;
+  activeMissions: string[];
   map: {
     key: string;
     json: string;
@@ -35,6 +36,7 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     title: MAP_MARKERS[0].title,
     maxStars: 2,
     initialGrayscale: 0.82,
+    activeMissions: ["missao_curador"],
     map: {
       key: "map",
       json: "maps/museum-mvp/map.json",
@@ -54,10 +56,10 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_02: {
     id: "level_02",
     levelNumber: 2,
-    // index 2, Teatro Amazonas, not 1 — matches the map/tileset below
-    title: MAP_MARKERS[2].title,
+    title: MAP_MARKERS[1].title,
     maxStars: 2,
     initialGrayscale: 0.82,
+    activeMissions: ["missao_curador_l2"],
     map: {
       key: "map",
       json: "maps/teatro-amazonas/map.json",
@@ -66,13 +68,12 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       tilesetName: "teatro",
     },
     data: {
-      // using level 1 data temporarily
       works: ["data/levels/level_02/works.json"],
-      quizzes: ["data/levels/level_01/quizzes.json"],
-      intermediateQuizzes: ["data/levels/level_01/intermediate-quizzes.json"],
-      npcs: ["data/levels/level_01/npcs.json"],
+      quizzes: ["data/levels/level_02/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
+      npcs: ["data/levels/level_02/npcs.json"],
       messages: ["data/global/messages.json"],
-      collectibles: ["data/levels/level_01/collectibles.json"],
+      collectibles: ["data/levels/level_01/collectibles.json"], // mock from level_01
     },
   },
 };
@@ -148,19 +149,51 @@ export const LEVEL_ASSETS = {
     PAINTINGS: [
       {
         key: "ajuricaba",
-        path: "artworks/paintings/ajuricaba.png",
+        path: "artworks/posters/cartazes/ajuricaba.png",
       },
       {
         key: "anel-do-nibelungo",
-        path: "artworks/paintings/anel-do-nibelungo.png",
+        path: "artworks/posters/cartazes/anel-do-nibelungo.png",
       },
       {
         key: "opera-do-malandro",
-        path: "artworks/paintings/opera-do-malandro.png",
+        path: "artworks/posters/cartazes/opera-do-malandro.png",
       },
       {
         key: "zona-franca",
-        path: "artworks/paintings/zona-franca.png",
+        path: "artworks/posters/cartazes/zona-franca.png",
+      },
+      {
+        key: "zona-franca-framed",
+        path: "artworks/posters/cartazes/zona-franca-framed.png",
+      },
+      {
+        key: "opera-do-malandro-framed",
+        path: "artworks/posters/cartazes/opera-do-malandro-framed.png",
+      },
+      {
+        key: "ajuricaba-framed",
+        path: "artworks/posters/cartazes/ajuricaba-framed.png",
+      },
+      {
+        key: "anel-do-nibelungo-framed",
+        path: "artworks/posters/cartazes/anel-do-nibelungo-framed.png",
+      },
+      {
+        key: "frame-date-ajuricaba",
+        path: "artworks/posters/cartazes/frame-date-ajuricaba.png",
+      },
+      {
+        key: "frame-date-malandro",
+        path: "artworks/posters/cartazes/frame-date-malandro.png",
+      },
+      {
+        key: "frame-date-nibelungo",
+        path: "artworks/posters/cartazes/frame-date-nibelungo.png",
+      },
+      {
+        key: "frame-date-zona-franca",
+        path: "artworks/posters/cartazes/frame-date-zona-franca.png",
       },
     ],
     CHUNKS: [],
@@ -168,6 +201,10 @@ export const LEVEL_ASSETS = {
       {
         key: "p1",
         path: "moving-platforms/p1.png",
+      },
+      {
+        key: "poster-label",
+        path: "misc/poster-label.png",
       },
     ],
     COLLECTIBLES: [],
