@@ -416,13 +416,48 @@ export function CostumeSelectorPanel() {
     EventBus.emit("ui:costume-selector-close", undefined);
   }, [closeCostumeSelector]);
 
-  // Handle ESC key
+  // Handle keyboard navigation (ESC, WASD, Arrows)
   useEffect(() => {
     if (!costumeSelectorOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      const key = e.key.toLowerCase();
+
+      if (key === "escape") {
         handleClose();
+        return;
+      }
+
+      const apiMap = {
+        head: headEmblaApi,
+        torso: torsoEmblaApi,
+        feet: feetEmblaApi,
+      };
+
+      const partOrder: ("head" | "torso" | "feet")[] = [
+        "head",
+        "torso",
+        "feet",
+      ];
+      const currentIndex = partOrder.indexOf(focusedPart);
+
+      // Up/Down navigation
+      if (key === "arrowup" || key === "w") {
+        const newIndex = Math.max(0, currentIndex - 1);
+        setFocusedPart(partOrder[newIndex]);
+        e.preventDefault();
+      } else if (key === "arrowdown" || key === "s") {
+        const newIndex = Math.min(partOrder.length - 1, currentIndex + 1);
+        setFocusedPart(partOrder[newIndex]);
+        e.preventDefault();
+      }
+      // Left/Right carousel navigation
+      else if (key === "arrowleft" || key === "a") {
+        apiMap[focusedPart]?.scrollPrev();
+        e.preventDefault();
+      } else if (key === "arrowright" || key === "d") {
+        apiMap[focusedPart]?.scrollNext();
+        e.preventDefault();
       }
     };
 
@@ -430,7 +465,14 @@ export function CostumeSelectorPanel() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [costumeSelectorOpen, handleClose]);
+  }, [
+    costumeSelectorOpen,
+    handleClose,
+    focusedPart,
+    headEmblaApi,
+    torsoEmblaApi,
+    feetEmblaApi,
+  ]);
 
   // Navigation handlers
   const handlePrev = useCallback(
