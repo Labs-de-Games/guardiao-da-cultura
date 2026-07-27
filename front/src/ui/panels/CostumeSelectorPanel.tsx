@@ -66,6 +66,64 @@ const HEAD_CAROUSEL_ITEMS = [
   },
 ];
 
+// Torso carousel items with costume assets
+const TORSO_CAROUSEL_ITEMS = [
+  {
+    id: "dummy_torso",
+    src: "/assets/artworks/costumes/dummy_torso.png",
+    label: "Dummy",
+  },
+  {
+    id: "indian_torso",
+    src: "/assets/artworks/costumes/indian_torso.png",
+    label: "Indian",
+  },
+  {
+    id: "warrior_torso",
+    src: "/assets/artworks/costumes/warrior_torso.png",
+    label: "Warrior",
+  },
+  {
+    id: "soldier_torso",
+    src: "/assets/artworks/costumes/soldier_torso.png",
+    label: "Soldier",
+  },
+  {
+    id: "malandro_torso",
+    src: "/assets/artworks/costumes/malandro_torso.png",
+    label: "Malandro",
+  },
+];
+
+// Feet carousel items with costume assets
+const FEET_CAROUSEL_ITEMS = [
+  {
+    id: "dummy_feet",
+    src: "/assets/artworks/costumes/dummy_feet.png",
+    label: "Dummy",
+  },
+  {
+    id: "indian_feet",
+    src: "/assets/artworks/costumes/indian_feet.png",
+    label: "Indian",
+  },
+  {
+    id: "warrior_feet",
+    src: "/assets/artworks/costumes/warrior_feet.png",
+    label: "Warrior",
+  },
+  {
+    id: "soldier_feet",
+    src: "/assets/artworks/costumes/soldier_feet.png",
+    label: "Soldier",
+  },
+  {
+    id: "malandro_feet",
+    src: "/assets/artworks/costumes/malandro_feet.png",
+    label: "Malandro",
+  },
+];
+
 interface CarouselState {
   selectedIndex: number;
   isRejecting: boolean;
@@ -401,7 +459,13 @@ export function CostumeSelectorPanel() {
 
     // Select items array based on part type
     const carouselItems =
-      partType === "head" ? HEAD_CAROUSEL_ITEMS : GENERIC_CAROUSEL_ITEMS;
+      partType === "head"
+        ? HEAD_CAROUSEL_ITEMS
+        : partType === "torso"
+          ? TORSO_CAROUSEL_ITEMS
+          : partType === "feet"
+            ? FEET_CAROUSEL_ITEMS
+            : GENERIC_CAROUSEL_ITEMS;
 
     return (
       <Box sx={{ mb: 1 }}>
@@ -469,9 +533,11 @@ export function CostumeSelectorPanel() {
                       sx={{
                         width: 80,
                         height: 80,
+                        objectFit: "contain",
+                        imageRendering: "auto",
                         // objectFit: "contain",
                         // mb: 1,
-                        mt: 8,
+                        // mt: 8,
                       }}
                     />
                   </Box>
