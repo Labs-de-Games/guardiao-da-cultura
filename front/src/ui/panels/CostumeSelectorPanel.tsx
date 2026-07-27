@@ -4,13 +4,7 @@ import { keyframes } from "@emotion/react";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
-import {
-  Box,
-  Button,
-  IconButton,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { Box, Button, IconButton, Paper, Typography } from "@mui/material";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
@@ -127,7 +121,7 @@ const PART_SIZES = {
   head: { width: "35%", height: "auto", mt: 8, mb: 0 },
   torso: { width: "60%", height: "auto", mt: 0, mb: 0 },
   feet: { width: "40%", height: "auto", mt: 0, mb: 4 },
-}
+};
 
 interface CarouselState {
   selectedIndex: number;
@@ -189,6 +183,10 @@ export function CostumeSelectorPanel() {
     torso: CarouselState;
     feet: CarouselState;
   }>(initialStates);
+
+  const [focusedPart, setFocusedPart] = useState<"head" | "torso" | "feet">(
+    "head",
+  );
 
   // Embla carousel refs - configured for 3 visible items
   const [headEmblaRef, headEmblaApi] = useEmblaCarousel({
@@ -536,15 +534,15 @@ export function CostumeSelectorPanel() {
                       src={item.src}
                       alt={item.label}
                       sx={{
-						width: PART_SIZES[partType].width,
-						height: PART_SIZES[partType].height,
+                        width: PART_SIZES[partType].width,
+                        height: PART_SIZES[partType].height,
                         //height: 80,
                         objectFit: "contain",
                         imageRendering: "auto",
                         // objectFit: "contain",
                         // mb: 1,
                         mt: PART_SIZES[partType].mt,
-						mb: PART_SIZES[partType].mb
+                        mb: PART_SIZES[partType].mb,
                       }}
                     />
                   </Box>
