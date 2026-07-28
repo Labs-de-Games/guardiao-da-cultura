@@ -38,9 +38,9 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     initialGrayscale: 0.82,
     activeMissions: ["missao_curador"],
     map: {
-      key: "map",
+      key: "map_level_01",
       json: "maps/museum-mvp/map.json",
-      tileset: "tiles",
+      tileset: "tiles_level_01",
       tilesetImg: "maps/museum-mvp/spritesheet.png",
       tilesetName: "museum",
     },
@@ -61,9 +61,9 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     initialGrayscale: 0.82,
     activeMissions: ["missao_curador_l2"],
     map: {
-      key: "map",
+      key: "map_level_02",
       json: "maps/teatro-amazonas/map.json",
-      tileset: "tiles",
+      tileset: "tiles_level_02",
       tilesetImg: "maps/teatro-amazonas/spritesheet.png",
       tilesetName: "teatro",
     },
