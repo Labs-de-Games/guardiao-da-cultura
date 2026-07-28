@@ -244,6 +244,15 @@ function OverlayContent({
     }
   }, [dialogueOpen, dequeueDialogue]);
 
+  // Safeguard: Clear stale intro data when game starts
+  // This prevents intro panels from appearing in the game scene
+  // if there's a race condition or timing issue with event cleanup
+  useEffect(() => {
+    if (gameStarted && introData) {
+      setIntroData(null);
+    }
+  }, [gameStarted, introData, setIntroData]);
+
   if (introData) {
     return (
       <>

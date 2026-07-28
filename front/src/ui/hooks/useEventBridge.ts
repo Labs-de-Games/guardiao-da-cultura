@@ -23,6 +23,7 @@ export function useEventBridge({
   const setCollectibles = useGameUIStore((s) => s.setCollectibles);
   const collectItem = useGameUIStore((s) => s.collectItem);
   const setProgression = useGameUIStore((s) => s.setProgression);
+  const setIntroData = useGameUIStore((s) => s.setIntroData);
 
   useEffect(() => {
     const currentStatus = useGameUIStore.getState().gameStarted;
@@ -47,6 +48,8 @@ export function useEventBridge({
 
     const unsubStarted = safeSubscribe("game:started", () => {
       startGame();
+      // Clear any stale intro data to prevent panels from appearing in game scene
+      setIntroData(null);
     });
 
     const unsubEnded = safeSubscribe("game:ended", () => {
