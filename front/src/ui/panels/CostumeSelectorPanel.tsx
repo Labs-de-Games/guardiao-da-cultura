@@ -793,11 +793,12 @@ export function CostumeSelectorPanel() {
         <Button
           ref={confirmButtonRef}
           variant="contained"
-          fullWidth
           size="large"
           onClick={handleConfirm}
           sx={{
             mt: 2,
+            mx: "auto",
+            display: "block",
             bgcolor: LayoutConfig.COLORS.INFO_TITLE,
             "&:hover": {
               bgcolor: LayoutConfig.COLORS.INFO_TITLE,
