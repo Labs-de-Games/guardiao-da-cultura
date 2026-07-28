@@ -192,6 +192,7 @@ export const LEVEL_ASSETS = {
       { key: "dummy_head", path: "artworks/costumes/dummy_head.png" },
       { key: "dummy_torso", path: "artworks/costumes/dummy_torso.png" },
       { key: "dummy_feet", path: "artworks/costumes/dummy_feet.png" },
+      { key: "pedestal", path: "artworks/costumes/pedestal.png" },
     ],
     COLLECTIBLES: [],
     CONTENT: {

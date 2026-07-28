@@ -116,6 +116,16 @@ export class PlaceholderSystem {
 
       const scale = config.scale ?? 1;
 
+      const pedestalConfig = LayoutConfig.COSTUME.PEDESTAL_DEFAULT;
+      const pedestal = this.scene.add.image(0, 0, "pedestal");
+      pedestal.setDisplaySize(
+        pedestal.width * pedestalConfig.scale,
+        pedestal.height * pedestalConfig.scale,
+      );
+      pedestal.setOrigin(pedestalConfig.originX, pedestalConfig.originY);
+      pedestal.setPosition(0, pedestalConfig.yOffset * scale);
+      container.add(pedestal);
+
       for (let i = 0; i < TEXTURES.length; i++) {
         const partName = TEXTURES[i].replace("dummy_", "") as
           | "head"
