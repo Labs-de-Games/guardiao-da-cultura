@@ -88,7 +88,25 @@ describe("useEventBridge", () => {
   });
 
   it("should set gameStarted and sidebarOpen to false when game:ended event is emitted", async () => {
-    useGameUIStore.setState({ gameStarted: true, sidebarOpen: true });
+    useGameUIStore.setState({
+      gameStarted: true,
+      sidebarOpen: true,
+      missions: [
+        {
+          missionId: "m1",
+          title: "Mission 1",
+          steps: [{ text: "Step 1", done: true }],
+        },
+      ],
+      collectibles: [
+        {
+          id: "c1",
+          name: "Collectible 1",
+          collected: true,
+          category: "test",
+        },
+      ],
+    });
     renderHook(() => useEventBridge({ entryFlow: "map" }));
     await flushEffects();
 
@@ -97,6 +115,8 @@ describe("useEventBridge", () => {
     });
     expect(useGameUIStore.getState().gameStarted).toBe(false);
     expect(useGameUIStore.getState().sidebarOpen).toBe(false);
+    expect(useGameUIStore.getState().missions).toEqual([]);
+    expect(useGameUIStore.getState().collectibles).toEqual([]);
   });
 
   it("should update sidebarOpen when sidebar:toggled event is emitted", async () => {
