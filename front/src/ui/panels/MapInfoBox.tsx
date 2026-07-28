@@ -47,10 +47,10 @@ export function MapInfoBox() {
     : 0;
 
   const phaseNumber = activeMapMarker.levelId
-    ? activeMapMarker.levelId.replace("level_", "").padStart(2, "0")
+    ? activeMapMarker.levelId.replace("level_0", "")
     : null;
   const prereqNumber = phaseNumber
-    ? String(Math.max(1, parseInt(phaseNumber, 10) - 1)).padStart(2, "0")
+    ? String(Math.max(1, parseInt(phaseNumber, 10) - 1))
     : null;
 
   let headerLabel: string | null = null;
@@ -66,13 +66,13 @@ export function MapInfoBox() {
   } else if (isAvailable) {
     headerLabel = "Você está aqui:";
     ctaColor = "#3B8C45";
-    ctaText = 'Pressione "ESPAÇO" para jogar';
+    ctaText = "Aperte ESPAÇO para jogar";
     ctaIcon = "▶";
   } else {
     headerLabel = phaseNumber ? `Fase ${phaseNumber}:` : null;
     ctaColor = "#6B7280";
     ctaText = prereqNumber
-      ? `Finalize a Fase ${prereqNumber} para jogar`
+      ? `Passe da fase ${prereqNumber} para jogar`
       : "Em breve";
     ctaIcon = "▶";
   }

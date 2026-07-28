@@ -61,6 +61,7 @@ export class MapIntroScene extends Scene {
   create() {
     posthog.capture("game_home_viewed");
     this.homeEnteredAtMs = Date.now();
+    this.isTransitioningToLevel = false;
 
     this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);

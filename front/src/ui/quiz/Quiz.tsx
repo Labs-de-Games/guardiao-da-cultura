@@ -222,7 +222,7 @@ export default function QuizPanel() {
           scorePercentage >= 70
             ? "Parabéns!"
             : scorePercentage < 25
-              ? "Essa não"
+              ? "Essa não!"
               : "Por pouco!",
         performanceSubTitle:
           scorePercentage >= 70
@@ -235,11 +235,11 @@ export default function QuizPanel() {
             ? scorePercentage === 100
               ? "Gabaritou!"
               : "Muito bom!"
-            : "Revise as placas das obras",
+            : "Releia as placas das obras.",
         performanceHint:
           scorePercentage >= 70
             ? ""
-            : "Leia com atenção as informações antes de continuar.",
+            : "Leia as informações com atenção antes de continuar.",
       };
     }
     return {
@@ -253,7 +253,7 @@ export default function QuizPanel() {
           : "Pontuação baixa",
       performanceTitle:
         scorePercentage < 25
-          ? "Essa não"
+          ? "Essa não!"
           : scorePercentage < 70
             ? "Por pouco!"
             : "Parabéns!",
@@ -274,7 +274,7 @@ export default function QuizPanel() {
       performanceHint:
         scorePercentage >= 70
           ? "Você já pode encarar o próximo nível!"
-          : "Sua pontuação não foi o suficiente. Mas não desista!",
+          : "Sua pontuação não foi suficiente. Mas não desista!",
     };
   }, [scorePercentage, isIntermediate]);
 

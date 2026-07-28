@@ -3,13 +3,6 @@ import type * as Phaser from "phaser";
 const DUCK_VOLUME = 0.3;
 const DEFAULT_VOICE = "Brazilian Portuguese Female";
 
-interface SpeakOptions {
-  voice?: string;
-  rate?: number;
-  pitch?: number;
-  volume?: number;
-}
-
 class AudioAccessibilityServiceImpl {
   private static instance: AudioAccessibilityServiceImpl;
   private soundManager: Phaser.Sound.BaseSoundManager | null = null;
@@ -18,6 +11,7 @@ class AudioAccessibilityServiceImpl {
   private currentAudio: HTMLAudioElement | null = null;
   private speakRequestId = 0;
   private voice: string = DEFAULT_VOICE;
+  private volume: number = 1;
 
   private constructor() {}
 
@@ -39,6 +33,14 @@ class AudioAccessibilityServiceImpl {
 
   getVoice(): string {
     return this.voice;
+  }
+
+  setVolume(volume: number): void {
+    this.volume = Math.max(0, Math.min(1, volume));
+  }
+
+  getVolume(): number {
+    return this.volume;
   }
 
   init(): void {
@@ -92,7 +94,7 @@ class AudioAccessibilityServiceImpl {
     });
   }
 
-  speak(text: string, options?: SpeakOptions): Promise<void> {
+  speak(text: string): Promise<void> {
     if (!text) return Promise.resolve();
     this.stop();
     this.primeAudioContext();
@@ -106,9 +108,7 @@ class AudioAccessibilityServiceImpl {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text,
-        voice: options?.voice ?? this.voice,
-        rate: options?.rate,
-        pitch: options?.pitch,
+        voice: this.voice,
       }),
     })
       .then((response) => {
@@ -126,6 +126,7 @@ class AudioAccessibilityServiceImpl {
         return new Promise<void>((resolve) => {
           const url = URL.createObjectURL(blob);
           const audio = new Audio(url);
+          audio.volume = this.volume;
           this.currentAudio = audio;
 
           audio.onplay = () => this.duckVolume();

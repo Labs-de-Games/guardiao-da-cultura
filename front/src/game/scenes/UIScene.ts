@@ -85,7 +85,11 @@ export class UIScene extends Scene {
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:show", { lines, callbackId, screenPosition });
+        EventBus.emit("dialogue:show", {
+          lines,
+          callbackId,
+          screenPosition,
+        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );

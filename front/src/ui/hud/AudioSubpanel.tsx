@@ -237,7 +237,7 @@ export function AudioSubpanel() {
   const handleVoiceChange = (value: number) => {
     setVoiceVolume(value);
     setVoiceMuted(false);
-    // Voice uses SFX volume for now
+    // Voice uses SFX volume via AudioManager
     AudioManager.setSfxVolume(value / 100);
   };
 
