@@ -9,6 +9,7 @@ class AudioAccessibilityServiceImpl {
   private originalVolume = 1;
   private isDucked = false;
   private currentAudio: HTMLAudioElement | null = null;
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private speakRequestId = 0;
   private voice: string = DEFAULT_VOICE;
   private volume: number = 1;
@@ -37,6 +38,16 @@ class AudioAccessibilityServiceImpl {
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
+    // Update currently playing audio volume in real-time
+    if (this.currentAudio) {
+      this.currentAudio.volume = this.volume;
+    }
+    // For native speech synthesis, update the utterance volume
+    // Note: This only affects the utterance object, not the active speech
+    // To change volume during native speech, we would need to cancel and restart
+    if (this.currentUtterance) {
+      this.currentUtterance.volume = this.volume;
+    }
   }
 
   getVolume(): number {
@@ -81,13 +92,17 @@ class AudioAccessibilityServiceImpl {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "pt-BR";
+      utterance.volume = this.volume;
+      this.currentUtterance = utterance;
       utterance.onstart = () => this.duckVolume();
       utterance.onend = () => {
         this.restoreVolume();
+        this.currentUtterance = null;
         resolve();
       };
       utterance.onerror = () => {
         this.restoreVolume();
+        this.currentUtterance = null;
         resolve();
       };
       window.speechSynthesis.speak(utterance);
@@ -158,6 +173,7 @@ class AudioAccessibilityServiceImpl {
       this.currentAudio.pause();
       this.currentAudio = null;
     }
+    this.currentUtterance = null;
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }

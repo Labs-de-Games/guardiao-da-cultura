@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { AudioManager } from "@/game/audio/AudioManager";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
+import { AudioAccessibilityService } from "@/lib/audio/AudioAccessibilityService";
 
 const TITLE_BG = "#AF7E2F";
 const TEXT_COLOR = "#252726";
@@ -210,12 +211,12 @@ export function AudioSubpanel() {
   const [effectsPrevVolume, setEffectsPrevVolume] = useState(80);
   const [voicePrevVolume, setVoicePrevVolume] = useState(60);
 
-  // Initialize from AudioManager settings
+  // Initialize from AudioManager settings and TTS service
   useEffect(() => {
     const settings = AudioManager.getSettings();
     setMusicVolume(Math.round(settings.musicVolume * 100));
     setEffectsVolume(Math.round(settings.sfxVolume * 100));
-    setVoiceVolume(Math.round(settings.sfxVolume * 100));
+    setVoiceVolume(Math.round(AudioAccessibilityService.getVolume() * 100));
   }, []);
 
   const handleToggle = () => {
@@ -237,8 +238,8 @@ export function AudioSubpanel() {
   const handleVoiceChange = (value: number) => {
     setVoiceVolume(value);
     setVoiceMuted(false);
-    // Voice uses SFX volume via AudioManager
-    AudioManager.setSfxVolume(value / 100);
+    // Voice uses TTS volume via AudioAccessibilityService
+    AudioAccessibilityService.setVolume(value / 100);
   };
 
   const handleMusicIconClick = () => {
@@ -274,11 +275,11 @@ export function AudioSubpanel() {
       const restoredVolume = voicePrevVolume > 0 ? voicePrevVolume : 50;
       setVoiceVolume(restoredVolume);
       setVoiceMuted(false);
-      AudioManager.setSfxVolume(restoredVolume / 100);
+      AudioAccessibilityService.setVolume(restoredVolume / 100);
     } else {
       setVoicePrevVolume(voiceVolume);
       setVoiceMuted(true);
-      AudioManager.setSfxVolume(0);
+      AudioAccessibilityService.setVolume(0);
     }
   };
 

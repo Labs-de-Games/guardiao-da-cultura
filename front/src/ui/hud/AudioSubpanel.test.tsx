@@ -1,23 +1,25 @@
-"use client";
-
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+
 import { AudioSubpanel } from "./AudioSubpanel";
 
 // Mock AudioManager
-const mockSetMusicVolume = jest.fn();
-const mockSetSfxVolume = jest.fn();
-const mockGetSettings = jest.fn();
-
 jest.mock("@/game/audio/AudioManager", () => ({
   AudioManager: {
-    getSettings: () =>
-      mockGetSettings() ?? {
-        musicVolume: 0.7,
-        sfxVolume: 0.8,
-        muted: false,
-      },
-    setMusicVolume: (v: number) => mockSetMusicVolume(v),
-    setSfxVolume: (v: number) => mockSetSfxVolume(v),
+    getSettings: jest.fn(() => ({
+      musicVolume: 0.7,
+      sfxVolume: 0.8,
+      muted: false,
+    })),
+    setMusicVolume: jest.fn(),
+    setSfxVolume: jest.fn(),
+  },
+}));
+
+// Mock AudioAccessibilityService
+jest.mock("@/lib/audio/AudioAccessibilityService", () => ({
+  AudioAccessibilityService: {
+    getVolume: jest.fn(() => 0.6),
+    setVolume: jest.fn(),
   },
 }));
 
@@ -29,6 +31,10 @@ jest.mock("@/game/constants/LayoutConfig", () => ({
   },
 }));
 
+// Import mocked modules after mocks are defined
+import { AudioManager } from "@/game/audio/AudioManager";
+import { AudioAccessibilityService } from "@/lib/audio/AudioAccessibilityService";
+
 // Helper to get the title element
 const getTitleElement = () => {
   const somElements = screen.getAllByText("Som");
@@ -38,11 +44,13 @@ const getTitleElement = () => {
 describe("AudioSubpanel", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetSettings.mockReturnValue({
+    // Reset mock return values to defaults
+    (AudioManager.getSettings as jest.Mock).mockReturnValue({
       musicVolume: 0.7,
       sfxVolume: 0.8,
       muted: false,
     });
+    (AudioAccessibilityService.getVolume as jest.Mock).mockReturnValue(0.6);
   });
 
   it("renders the audio panel with title", () => {
@@ -117,7 +125,7 @@ describe("AudioSubpanel", () => {
   });
 
   it("initializes volume sliders from AudioManager settings", () => {
-    mockGetSettings.mockReturnValue({
+    (AudioManager.getSettings as jest.Mock).mockReturnValue({
       musicVolume: 0.5,
       sfxVolume: 0.6,
       muted: false,
@@ -153,7 +161,7 @@ describe("AudioSubpanel", () => {
     const musicSlider = screen.getByRole("slider", { name: /música/i });
     fireEvent.change(musicSlider, { target: { value: "30" } });
 
-    expect(mockSetMusicVolume).toHaveBeenCalledWith(0.3);
+    expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(0.3);
   });
 
   it("updates SFX volume when effects slider changes", () => {
@@ -169,10 +177,10 @@ describe("AudioSubpanel", () => {
     const effectsSlider = screen.getByRole("slider", { name: /efeitos/i });
     fireEvent.change(effectsSlider, { target: { value: "40" } });
 
-    expect(mockSetSfxVolume).toHaveBeenCalledWith(0.4);
+    expect(AudioManager.setSfxVolume).toHaveBeenCalledWith(0.4);
   });
 
-  it("updates SFX volume when voice slider changes", () => {
+  it("updates TTS volume when voice slider changes", () => {
     render(<AudioSubpanel />);
     const somElements = screen.getAllByText("Som");
     const titleElement = somElements.find(
@@ -182,9 +190,11 @@ describe("AudioSubpanel", () => {
     fireEvent.click(titleElement);
 
     const voiceSlider = screen.getByRole("slider", { name: /narração/i });
-    fireEvent.change(voiceSlider, { target: { value: "60" } });
 
-    expect(mockSetSfxVolume).toHaveBeenCalledWith(0.6);
+    // Change to a different value to trigger onChange
+    fireEvent.change(voiceSlider, { target: { value: "75" } });
+
+    expect(AudioAccessibilityService.setVolume).toHaveBeenCalledWith(0.75);
   });
 
   describe("Mute/Unmute via Icon Click", () => {
@@ -209,7 +219,7 @@ describe("AudioSubpanel", () => {
       fireEvent.click(iconBox);
 
       // Music should be muted (volume set to 0)
-      expect(mockSetMusicVolume).toHaveBeenCalledWith(0);
+      expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(0);
     });
 
     it("unmutes music when muted music icon is clicked", () => {
@@ -228,7 +238,7 @@ describe("AudioSubpanel", () => {
       fireEvent.click(iconBox);
 
       // Should restore to previous volume (70% default)
-      expect(mockSetMusicVolume).toHaveBeenCalledWith(0.7);
+      expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(0.7);
     });
 
     it("mutes effects when effects icon is clicked", () => {
@@ -242,7 +252,7 @@ describe("AudioSubpanel", () => {
 
       fireEvent.click(iconBox);
 
-      expect(mockSetSfxVolume).toHaveBeenCalledWith(0);
+      expect(AudioManager.setSfxVolume).toHaveBeenCalledWith(0);
     });
 
     it("unmutes effects when muted effects icon is clicked", () => {
@@ -259,7 +269,7 @@ describe("AudioSubpanel", () => {
       fireEvent.click(iconBox);
 
       // Should restore to previous volume (80% default)
-      expect(mockSetSfxVolume).toHaveBeenCalledWith(0.8);
+      expect(AudioManager.setSfxVolume).toHaveBeenCalledWith(0.8);
     });
 
     it("mutes voice when voice icon is clicked", () => {
@@ -271,7 +281,7 @@ describe("AudioSubpanel", () => {
 
       fireEvent.click(iconBox);
 
-      expect(mockSetSfxVolume).toHaveBeenCalledWith(0);
+      expect(AudioAccessibilityService.setVolume).toHaveBeenCalledWith(0);
     });
 
     it("unmutes voice when muted voice icon is clicked", () => {
@@ -287,8 +297,8 @@ describe("AudioSubpanel", () => {
       // Second click to unmute
       fireEvent.click(iconBox);
 
-      // Should restore to previous volume (voice uses sfxVolume from settings, 80% default)
-      expect(mockSetSfxVolume).toHaveBeenCalledWith(0.8);
+      // Should restore to previous volume (60% default from AudioAccessibilityService)
+      expect(AudioAccessibilityService.setVolume).toHaveBeenCalledWith(0.6);
     });
 
     it("restores to 50% when unmuting and previous volume was 0", () => {
@@ -309,7 +319,7 @@ describe("AudioSubpanel", () => {
       // Now unmute - should restore to 50% since previous was 0
       fireEvent.click(iconBox);
 
-      expect(mockSetMusicVolume).toHaveBeenCalledWith(0.5);
+      expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(0.5);
     });
 
     it("shows reduced opacity when muted", () => {
@@ -343,7 +353,7 @@ describe("AudioSubpanel", () => {
       fireEvent.change(musicSlider, { target: { value: "45" } });
 
       // Should unmute with new volume
-      expect(mockSetMusicVolume).toHaveBeenCalledWith(0.45);
+      expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(0.45);
     });
   });
 
