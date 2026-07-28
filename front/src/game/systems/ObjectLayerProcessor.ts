@@ -3,6 +3,7 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import type { IObjectFactory } from "../factories/IObjectFactory";
 import { PaintingFactory } from "../factories/PaintingFactory";
 import { PhotoFactory } from "../factories/PhotoFactory";
+import { PosterFactory } from "../factories/PosterFactory";
 import { SculptureFactory } from "../factories/SculptureFactory";
 import type { InteractiveItem } from "../objects/interactives/InteractiveItem";
 import type { ContentJson, WorkData } from "../types/GameDataTypes";
@@ -14,6 +15,7 @@ enum WORKS {
   PAINTINGS = "PAINTINGS",
   SCULPTURES = "SCULPTURES",
   PHOTOS = "PHOTOS",
+  POSTERS = "POSTERS",
 }
 
 export class ObjectLayerProcessor {
@@ -22,6 +24,7 @@ export class ObjectLayerProcessor {
   constructor() {
     this.factories.set("sculpture", new SculptureFactory());
     this.factories.set("painting", new PaintingFactory());
+    this.factories.set("poster", new PosterFactory());
     this.factories.set("photo", new PhotoFactory());
     this.factories.set("photos", new PhotoFactory());
     this.factories.set("photo", new PhotoFactory());
@@ -72,7 +75,8 @@ export class ObjectLayerProcessor {
               (works?.[category] as Record<string, WorkData>)?.[contentID] ||
               works?.[WORKS.PAINTINGS]?.[contentID] ||
               works?.[WORKS.SCULPTURES]?.[contentID] ||
-              works?.[WORKS.PHOTOS]?.[contentID];
+              works?.[WORKS.PHOTOS]?.[contentID] ||
+              works?.[WORKS.POSTERS]?.[contentID];
 
             const item = factory.create(scene, obj, scale, data);
             if (item) {
