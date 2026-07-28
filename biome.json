@@ -11,7 +11,8 @@
       "!**/.next",
       "!**/dist",
       "!**/.turbo",
-      "!**/.agents"
+      "!**/.agents",
+      "!**/front/public/assets/maps"
     ]
   },
   "overrides": [
