@@ -12,6 +12,11 @@ jest.mock("@/shared/events/event-bus", () => ({
   },
 }));
 
+jest.mock("js-cookie", () => ({
+  get: jest.fn(),
+  set: jest.fn(),
+}));
+
 describe("MapIntroScene", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,6 +31,11 @@ describe("MapIntroScene", () => {
       value: 0,
       writable: true,
     });
+    // Seed maxUnlockedLevel so level_01 (index 0) is available (1 > 0)
+    Object.defineProperty(scene, "maxUnlockedLevel", {
+      value: 1,
+      writable: true,
+    });
     Object.defineProperty(scene, "cancelAutoStart", {
       value: cancelAutoStart,
     });
@@ -33,7 +43,7 @@ describe("MapIntroScene", () => {
       value: { start: sceneStart },
     });
 
-    scene.beginGame();
+    (scene as any).beginGame("spacebar");
 
     expect(cancelAutoStart).toHaveBeenCalledWith("started");
     expect(EventBus.emit).not.toHaveBeenCalledWith("map:marker-changed", null);
