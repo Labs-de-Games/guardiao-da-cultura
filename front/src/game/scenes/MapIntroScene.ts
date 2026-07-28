@@ -168,6 +168,9 @@ export class MapIntroScene extends Scene {
 
     if (marker.levelId === "level_01") {
       this.isTransitioningToLevel = true;
+      // Clear map UI state immediately when transitioning
+      // This ensures MapInfoBox and MapPinTooltip disappear with the map
+      useGameUIStore.getState().setActiveMapMarker(null);
       const camera = this.cameras?.main;
       if (!camera) {
         this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
