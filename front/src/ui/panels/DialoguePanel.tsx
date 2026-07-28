@@ -321,6 +321,7 @@ function DialogueContent({
           lineHeight: 1.2,
           mb: "16px",
           minHeight: "2.5em",
+          pr: "56px",
         }}
       >
         {text}

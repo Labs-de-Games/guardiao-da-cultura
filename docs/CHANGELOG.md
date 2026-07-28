@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.8.0] - 2026-07-28
+
+### Added
+
+- Poster mechanics, factories, and level-specific missions
+- New player animations with posters on portals
+- Level 02 mock data, NPCs, quiz, and configuration
+- `finalPosition` property for NPC teleportation after mission completion
+- Custom textures and scaling in `LabelSystem`
+- Frame assets and label system
+
+### Changed
+
+- `QuizManager` refactored from hardcoded mission IDs to dynamic level-based resolution
+- Player and poster spawn positions adjusted
+
+### Fixed
+
+- Dialogue audio button overlapping text
+- Carried item depth above guardrail
+- ScoreManager floors array expanded to 4 slots
+- NPC Y position after final quiz
+- Poster spawn depth set to 10
+
+### Chore
+
+- Guardrail end treatment improved
+- Posters organized by release date
+- "paintings" replaced with "posters" in work data
+
 ## [1.7.0] - 2026-07-24
 
 ### Added

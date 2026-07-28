@@ -37,6 +37,7 @@ interface NpcLike {
   getDialogues(): Record<string, string[]>;
   getIntermediateQuizDialogues(): string[];
   getSpawnPosition(): { x: number; y: number } | null;
+  getFinalPosition(): { x: number; y: number } | null;
   showForQuiz(x: number, y: number): void;
   hideAfterQuiz(): void;
   teleportTo(x: number, y: number): void;
@@ -332,6 +333,11 @@ export class QuizManager {
 
       this.quizMode = "intermediate";
 
+      // Resolve the active mission for this level so callbacks are not
+      // hardcoded to level-1's mission id.
+      const activeMissionId =
+        this.context.getLevelDef().activeMissions[0] ?? MissionIds.CURATOR;
+
       const spawnPos = npc.getSpawnPosition();
       const playerX = this.context.getPlayer().x;
       const npcX = playerX + 150;
@@ -344,6 +350,7 @@ export class QuizManager {
         questions,
         npc,
         spawnPos,
+        activeMissionId,
       );
 
       const explanationLines = npc.getIntermediateQuizDialogues();
@@ -407,6 +414,7 @@ export class QuizManager {
     questions: QuizQuestion[],
     npc: NpcLike,
     spawnPos: { x: number; y: number } | null,
+    missionId: string,
   ) {
     return (score: number) => {
       const passed = score > 0;
@@ -423,7 +431,7 @@ export class QuizManager {
         passed,
         score,
         totalQuestions: questions.length,
-        missionId: MissionIds.CURATOR,
+        missionId,
       });
 
       void this.persistenceBridge.saveProgress();
@@ -431,7 +439,8 @@ export class QuizManager {
       const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
 
       if (floorCompleted) {
-        npc.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+        const finalPos = npc.getFinalPosition() ?? NPC_FLOOR_3_POSITION;
+        npc.teleportTo(finalPos.x, finalPos.y);
       } else {
         npc.hideAfterQuiz();
         if (spawnPos) {
@@ -461,35 +470,30 @@ export class QuizManager {
           passed,
           score,
           totalQuestions: questions.length,
-          missionId: MissionIds.CURATOR,
+          missionId,
         },
         timestamp: new Date().toISOString(),
       });
 
       if (
-        this.questManager.hasCollectedAll(MissionIds.CURATOR) &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.READY_FOR_QUIZ &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.QUIZ_ACTIVE &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.COMPLETED
+        this.questManager.hasCollectedAll(missionId) &&
+        this.questManager.getStatus(missionId) !== QuestStatus.READY_FOR_QUIZ &&
+        this.questManager.getStatus(missionId) !== QuestStatus.QUIZ_ACTIVE &&
+        this.questManager.getStatus(missionId) !== QuestStatus.COMPLETED
       ) {
-        this.questManager.setStatus(
-          MissionIds.CURATOR,
-          QuestStatus.READY_FOR_QUIZ,
-        );
+        this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
       }
     };
   }
 
   private findCuratorNpc(): NpcLike | undefined {
+    const activeMissions = this.context.getLevelDef().activeMissions ?? [];
     return this.context
       .getNpcs()
       .find(
         (n) =>
           typeof (n as unknown as NpcLike).getMissionId === "function" &&
-          (n as unknown as NpcLike).getMissionId() === MissionIds.CURATOR,
+          activeMissions.includes((n as unknown as NpcLike).getMissionId()),
       ) as NpcLike | undefined;
   }
 
