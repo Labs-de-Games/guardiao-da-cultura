@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
 import { Scene } from "phaser";
 import posthog from "posthog-js";
+import { createGamePersistence } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import {
@@ -102,9 +103,24 @@ export class MapIntroScene extends Scene {
 
     this.scale.on("resize", this.handleResize);
 
-    const storedProgression = useGameUIStore.getState().progression;
+    const store = useGameUIStore.getState();
+    const storedProgression = store.progression;
     if (storedProgression?.completedLevels) {
       this.completedLevels = storedProgression.completedLevels;
+    } else {
+      const userId = this.game.registry.get("userId") as string | null;
+      const isGuest = this.game.registry.get("isGuest") as boolean;
+      const mode = isGuest || !userId ? "guest" : "auth";
+      const actorId = userId ?? "";
+      const persistence = createGamePersistence({ mode, actorId });
+      void persistence.loadProgress().then((snapshot) => {
+        if (snapshot?.completedLevels) {
+          useGameUIStore.getState().setProgression(snapshot);
+          this.completedLevels = snapshot.completedLevels;
+          this.layout();
+          this.emitMarkerChanged();
+        }
+      });
     }
     if (storedProgression?.currentLevel) {
       this.maxUnlockedLevel = storedProgression.currentLevel;
