@@ -20,6 +20,8 @@ import { SceneNames } from "../constants/SceneNames";
 export class LevelCinematic extends Scene {
   private levelId: string = "level_01";
   private introConfig: IntroConfig | null = null;
+  private introConfigCacheKey: string = "";
+  private unsubIntroComplete?: () => void;
 
   constructor() {
     super(SceneNames.LEVEL_CINEMATIC);
@@ -30,15 +32,19 @@ export class LevelCinematic extends Scene {
       this.levelId = data.levelId;
     }
     this.introConfig = null;
+    this.introConfigCacheKey = `intro_config:${this.levelId}`;
   }
 
   preload() {
-    this.load.setPath("assets/");
+    // Ensure we never reuse stale config from another level.
+    if (this.cache.json.exists(this.introConfigCacheKey)) {
+      this.cache.json.remove(this.introConfigCacheKey);
+    }
 
-    // Load the intro configuration JSON (relative to assets/)
+    // Load the intro configuration JSON
     this.load.json(
-      "intro_config",
-      `data/levels/${this.levelId}/intro/intro_config.json`,
+      this.introConfigCacheKey,
+      `/assets/data/levels/${this.levelId}/intro/intro_config.json`,
     );
 
     // Preload all audio assets during the cinematic intro
@@ -49,7 +55,9 @@ export class LevelCinematic extends Scene {
 
   create() {
     // Get the loaded config
-    const configData = this.cache.json.get("intro_config") as IntroConfig;
+    const configData = this.cache.json.get(
+      this.introConfigCacheKey,
+    ) as IntroConfig | null;
 
     if (!configData) {
       this.transitionToGame();
@@ -82,10 +90,9 @@ export class LevelCinematic extends Scene {
     });
 
     // Listen for intro completion from React
-    EventBus.once("intro:complete", (data: { levelId: string }) => {
-      if (data.levelId === this.levelId) {
-        this.transitionToGame();
-      }
+    this.unsubIntroComplete = EventBus.on("intro:complete", (data) => {
+      if (data.levelId !== this.levelId) return;
+      this.transitionToGame();
     });
 
     // Listen for scene shutdown to clean up event listeners
@@ -112,5 +119,16 @@ export class LevelCinematic extends Scene {
     // Note: Don't call AudioManager.destroy() here - music should continue
     // into the Game scene. AudioManager.init() in Game scene will handle
     // the transition and resume any playing music and destroy it there.
+    // Clean up event listener if scene is shut down before intro completes
+    this.unsubIntroComplete?.();
+    this.unsubIntroComplete = undefined;
+
+    // Keep cache tidy across retries/hot reloads
+    if (
+      this.introConfigCacheKey &&
+      this.cache.json.exists(this.introConfigCacheKey)
+    ) {
+      this.cache.json.remove(this.introConfigCacheKey);
+    }
   }
 }

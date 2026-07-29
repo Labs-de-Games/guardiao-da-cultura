@@ -7,6 +7,7 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LEVEL_02_ENABLED } from "@/game/constants/FeatureFlags";
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
 import { useSound } from "@/ui/hooks/useSound";
@@ -283,6 +284,10 @@ export default function QuizPanel() {
       EventBus.emit("quiz:close", undefined);
     } else if (isRetryMode) {
       EventBus.emit("quiz:retry", undefined);
+    } else if (LEVEL_02_ENABLED) {
+      // Level 02 is available: close the quiz and go back to the map
+      // where the next level is already unlocked.
+      EventBus.emit("quiz:close", undefined);
     } else {
       useGameUIStore.getState().openInterestDialog();
     }

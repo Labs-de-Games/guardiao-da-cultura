@@ -14,6 +14,8 @@ export interface NpcConfig {
   intermediateQuiz?: string[];
   spawnX?: number;
   spawnY?: number;
+  /** World-space position the NPC teleports to after a floor/mission is completed. */
+  finalPosition?: { x: number; y: number };
 }
 
 export class Npc extends Phaser.Physics.Arcade.Sprite {
@@ -113,6 +115,11 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       return { x: this.config.spawnX, y: this.config.spawnY };
     }
     return null;
+  }
+
+  /** Position to teleport to after a floor/mission is completed (from Tiled property). */
+  public getFinalPosition(): { x: number; y: number } | null {
+    return this.config.finalPosition ?? null;
   }
 
   public showForQuiz(x: number, y: number) {

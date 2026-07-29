@@ -28,9 +28,10 @@ export class Player
   private carryableRegistry: CarryableItem[] = [];
   private inventory: CarryableItem[] = [];
   private grabbedItem: DraggableItem | null = null;
-  private carriedItem: CarryableItem | null = null;
+  public carriedItem: CarryableItem | null = null;
   public isGrabbing: boolean = false;
   public isCarrying: boolean = false;
+  private portalExitIdleAnim: string | null = null;
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
   private dragLoopSound: Phaser.Sound.BaseSound | null = null;
@@ -131,11 +132,27 @@ export class Player
       },
     );
     scene.load.spritesheet(
+      PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.key,
+      PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
       PLAYER_ASSETS.FRONT_SPRITESHEET.key,
       PLAYER_ASSETS.FRONT_SPRITESHEET.path,
       {
         frameWidth: PLAYER_ASSETS.FRONT_SPRITESHEET.frameWidth,
         frameHeight: PLAYER_ASSETS.FRONT_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.key,
+      PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameHeight,
       },
     );
   }
@@ -241,12 +258,34 @@ export class Player
       repeat: PLAYER_ANIMS.BACK.repeat,
     });
     scene.anims.create({
+      key: PLAYER_ANIMS.BACK_CARRYING.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.BACK_CARRYING.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.BACK_CARRYING.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.BACK_CARRYING.frameRate,
+      repeat: PLAYER_ANIMS.BACK_CARRYING.repeat,
+    });
+    scene.anims.create({
       key: PLAYER_ANIMS.FRONT.key,
       frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.FRONT.spritesheet, {
         frames: [...PLAYER_ANIMS.FRONT.frames],
       }),
       frameRate: PLAYER_ANIMS.FRONT.frameRate,
       repeat: PLAYER_ANIMS.FRONT.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.FRONT_CARRYING.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.FRONT_CARRYING.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.FRONT_CARRYING.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.FRONT_CARRYING.frameRate,
+      repeat: PLAYER_ANIMS.FRONT_CARRYING.repeat,
     });
   }
 
@@ -309,6 +348,42 @@ export class Player
 
   setCarryableRegistry(items: CarryableItem[]) {
     this.carryableRegistry = items;
+  }
+
+  public setPortalExitIdleAnim(animKey: string) {
+    this.portalExitIdleAnim = animKey;
+  }
+
+  private clearPortalExitIdleAnim() {
+    this.portalExitIdleAnim = null;
+  }
+
+  public getNearbyCarryableItem(): CarryableItem | null {
+    const GRAB_DIST = 150; // Matches carry toggle pickup range
+    let closestItem: CarryableItem | null = null;
+    let minDist: number = GRAB_DIST;
+
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
+
+    for (const item of this.carryableRegistry) {
+      if (!item.input?.enabled || item.isCarried) continue;
+
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
+
+      if (dist < minDist) {
+        minDist = dist;
+        closestItem = item;
+      }
+    }
+
+    return closestItem;
   }
 
   setCollisionLayers(layers: Phaser.Tilemaps.TilemapLayer[]) {
@@ -522,6 +597,10 @@ export class Player
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
 
+    if (this.portalExitIdleAnim && (leftDown || rightDown)) {
+      this.clearPortalExitIdleAnim();
+    }
+
     // Determines if the climbing animation should be paused on the current frame.
     // This keeps the player suspended on the stairs in a paused climbing stance.
     const shouldPlayClimbPause =
@@ -594,6 +673,14 @@ export class Player
           if (!this.isGrabbing) this.setFlipX(false);
         }
       } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
+        if (this.portalExitIdleAnim) {
+          const changed =
+            this.anims.currentAnim?.key !== this.portalExitIdleAnim;
+          this.anims.play(this.portalExitIdleAnim, true);
+          if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+          return;
+        }
+
         const idleAnim = this.isCarrying
           ? PLAYER_ANIMS.CARRY_IDLE.key
           : PLAYER_ANIMS.IDLE.key;
@@ -730,7 +817,7 @@ export class Player
       const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
-      this.carriedItem.setDepth(this.depth + 1);
+      this.carriedItem.setDepth(this.depth + 2);
     }
   }
 
@@ -800,6 +887,16 @@ export class Player
 
   private tryToggleCarry(): boolean {
     if (this.isCarrying && this.carriedItem) {
+      const body = this.body as Phaser.Physics.Arcade.Body | null;
+      const carriedType = this.carriedItem.interactiveType;
+      const requiresGroundToDrop =
+        carriedType === InteractiveType.POSTER ||
+        carriedType === InteractiveType.PAINTING;
+
+      if (requiresGroundToDrop && !body?.blocked.down) {
+        return false;
+      }
+
       this.carriedItem.setCarried(false);
       this.scene.events.emit("item-dropped", this.carriedItem);
       this.carriedItem = null;
@@ -809,28 +906,7 @@ export class Player
     }
 
     if (this.isGrabbing || !this.body?.blocked.down) return false;
-
-    const GRAB_DIST = 150; // More lenient for air-pickup
-    let closestItem: CarryableItem | null = null;
-    let minDist: number = GRAB_DIST;
-
-    const playerFootY = this.body
-      ? this.body.bottom
-      : this.y + this.displayHeight / 2;
-    for (const item of this.carryableRegistry) {
-      if (!item.input?.enabled || item.isCarried) continue;
-
-      const dist = Phaser.Math.Distance.Between(
-        this.x,
-        playerFootY,
-        item.x,
-        item.y,
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        closestItem = item;
-      }
-    }
+    const closestItem = this.getNearbyCarryableItem();
 
     if (closestItem) {
       if (closestItem.interactiveType === InteractiveType.PHOTO_CHUNK) {
@@ -925,7 +1001,9 @@ export class Player
 
     if (
       this.anims.currentAnim?.key === PLAYER_ANIMS.BACK.key ||
-      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key
+      this.anims.currentAnim?.key === PLAYER_ANIMS.BACK_CARRYING.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT_CARRYING.key
     ) {
       return;
     }

@@ -135,6 +135,7 @@ describe("QuizManager", () => {
           levelNumber: 1,
           scene: "Game",
           missions: [],
+          activeMissions: [MissionIds.CURATOR],
           npcConfigs: [],
           floorMapItems: [],
           requiredStars: 0,

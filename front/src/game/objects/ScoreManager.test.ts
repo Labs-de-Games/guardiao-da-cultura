@@ -14,7 +14,7 @@ describe("ScoreManager", () => {
       expect(payload.totalQuarters).toBe(0);
       expect(payload.totalStars).toBe(0);
       expect(payload.rating).toBe("mínimo");
-      expect(payload.floors).toHaveLength(3);
+      expect(payload.floors).toHaveLength(4);
       expect(payload.quiz.quartersEarned).toBe(0);
       expect(payload.intermediateQuizzes.quartersEarned).toBe(0);
     });
