@@ -53,6 +53,11 @@ export function MapInfoBox() {
     ? String(Math.max(1, parseInt(phaseNumber, 10) - 1)).padStart(2, "0")
     : null;
 
+  const prereqLevelId = prereqNumber ? `level_${prereqNumber}` : null;
+  const prereqCompleted = prereqLevelId
+    ? !!progression?.completedLevels[prereqLevelId]
+    : false;
+
   let headerLabel: string | null = null;
   let ctaColor: string;
   let ctaText: string;
@@ -71,9 +76,12 @@ export function MapInfoBox() {
   } else {
     headerLabel = phaseNumber ? `Fase ${phaseNumber}:` : null;
     ctaColor = "#6B7280";
-    ctaText = prereqNumber
-      ? `Finalize a Fase ${prereqNumber} para jogar`
-      : "Em breve";
+    // If prerequisites are already done but the stage is still unavailable,
+    // treat it as "coming soon" (e.g. feature-gated level).
+    ctaText =
+      prereqNumber && !prereqCompleted
+        ? `Finalize a Fase ${prereqNumber} para jogar`
+        : "Em breve";
     ctaIcon = "▶";
   }
 

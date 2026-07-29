@@ -281,4 +281,31 @@ describe("MapInfoBox", () => {
       expect(star.src).toContain(GRAY_STAR);
     });
   });
+
+  it("shows 'Em breve' when prereq is completed but stage is unavailable", () => {
+    useGameUIStore.setState({
+      activeMapMarker: {
+        markerId: "curitiba",
+        title: "Teatro Guaíra",
+        location: "Curitiba - PR",
+        isAvailable: false,
+        screenX: 500,
+        screenY: 400,
+        levelId: "level_02",
+      },
+      progression: {
+        currentLevel: 2,
+        totalStars: 5,
+        completedLevels: {
+          level_01: { completedAt: "2026-01-01", score: 20, stars: 5 },
+        },
+        clues: {},
+        quizResults: {},
+        intermediateQuizResults: {},
+      },
+    });
+
+    render(<MapInfoBox />);
+    expect(screen.getByText("Em breve")).toBeInTheDocument();
+  });
 });
