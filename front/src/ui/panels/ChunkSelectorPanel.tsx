@@ -526,7 +526,6 @@ export function ChunkSelectorPanel() {
               </Box>
             </Paper>
           </Box>
-
         </Paper>
       </Box>
       <DragOverlay dropAnimation={null}>
