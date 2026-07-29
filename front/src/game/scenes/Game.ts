@@ -765,15 +765,6 @@ export class Game extends Scene implements GameDataAccessor {
       "info-collected",
       (data: { missionId: string; infoKey: string }) => {
         this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-        const reqs = this.questManager.getRequiredInfos(data.missionId);
-        EventBus.emit("quest:progress-changed", {
-          missionId: data.missionId,
-          missionTitle: MissionRegistry[data.missionId]?.title || "",
-          collectedInfos: this.questManager.getCollectedInfos(data.missionId),
-          totalSteps: reqs.length,
-          steps: MissionRegistry[data.missionId]?.steps,
-          stepProgress: this.getMissionStepProgress(data.missionId),
-        });
       },
     );
 
@@ -781,15 +772,18 @@ export class Game extends Scene implements GameDataAccessor {
       "status-changed",
       (data: { missionId: string; status: QuestStatus }) => {
         this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-        EventBus.emit("quest:mission-status-changed", {
-          missionId: data.missionId,
-          status:
-            data.status === QuestStatus.COMPLETED
-              ? "completed"
-              : data.status === QuestStatus.READY_FOR_QUIZ
-                ? "accepted"
-                : "accepted",
-        });
+
+        if (this.levelDef.activeMissions?.includes(data.missionId)) {
+          EventBus.emit("quest:mission-status-changed", {
+            missionId: data.missionId,
+            status:
+              data.status === QuestStatus.COMPLETED
+                ? "completed"
+                : data.status === QuestStatus.READY_FOR_QUIZ
+                  ? "accepted"
+                  : "accepted",
+          });
+        }
       },
     );
 
@@ -1205,16 +1199,6 @@ export class Game extends Scene implements GameDataAccessor {
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
           this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-          EventBus.emit("quest:progress-changed", {
-            missionId: MissionIds.CURATOR,
-            missionTitle: MissionRegistry[MissionIds.CURATOR]?.title || "",
-            collectedInfos: this.questManager.getCollectedInfos(
-              MissionIds.CURATOR,
-            ),
-            totalSteps: MissionRegistry[MissionIds.CURATOR]?.steps.length ?? 0,
-            steps: MissionRegistry[MissionIds.CURATOR]?.steps,
-            stepProgress: this.getMissionStepProgress(MissionIds.CURATOR),
-          });
           if (
             this.totalPhotoChunks > 0 &&
             this.photoChunksCollected >= this.totalPhotoChunks
