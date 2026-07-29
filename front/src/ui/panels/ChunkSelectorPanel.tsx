@@ -363,6 +363,10 @@ export function ChunkSelectorPanel() {
                   {feedbackMessage}
                 </Typography>
               )}
+              <Typography sx={{ color: "#a8a8a8", fontSize: "13px", mt: 1 }}>
+                Aperte WASD ou setas para navegar | ENTER para selecionar e
+                confirmar
+              </Typography>
             </Box>
             <Button
               variant="text"
@@ -523,10 +527,6 @@ export function ChunkSelectorPanel() {
             </Paper>
           </Box>
 
-          <Typography sx={{ color: "#a8a8a8", fontSize: "13px" }}>
-            Aperte WASD ou setas para navegar | ENTER para selecionar e
-            confirmar
-          </Typography>
         </Paper>
       </Box>
       <DragOverlay dropAnimation={null}>
