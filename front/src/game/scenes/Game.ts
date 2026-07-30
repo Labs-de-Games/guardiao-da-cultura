@@ -622,7 +622,7 @@ export class Game extends Scene implements GameDataAccessor {
         },
       );
     }
-    this.setupCameras();
+    this.setupCameras(map);
 
     this.events.on(
       GameEvents.INFO_COLLECTED,
@@ -1261,8 +1261,16 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
-  private setupCameras() {
+  private setupCameras(map?: Phaser.Tilemaps.Tilemap) {
     this.cameras.main.setZoom(1.0);
+    if (map) {
+      this.cameras.main.setBounds(
+        0,
+        0,
+        map.widthInPixels * this.mapScale,
+        map.heightInPixels * this.mapScale,
+      );
+    }
     this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
