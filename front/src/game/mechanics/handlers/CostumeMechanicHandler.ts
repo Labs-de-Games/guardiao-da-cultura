@@ -63,13 +63,8 @@ const shuffledCache: Record<"head" | "torso" | "feet", CostumePart[] | null> = {
 const rng = mulberry32(SESSION_SEED);
 
 export class CostumeMechanicHandler {
-  public static isCorrectPart(
-    partId: string,
-    partType: "head" | "torso" | "feet",
-  ): boolean {
-    const parts = COSTUME_PARTS[partType];
-    const correctPrefix = parts[0]?.id.replace(/_head|_torso|_feet$/, "");
-    return partId.startsWith(correctPrefix);
+  public static isCorrectPart(partId: string, correctCostume: string): boolean {
+    return partId.startsWith(`${correctCostume}_`);
   }
 
   public static deriveCorrectCostume(ids: string[]): string {
