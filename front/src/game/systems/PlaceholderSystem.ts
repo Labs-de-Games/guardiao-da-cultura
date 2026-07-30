@@ -115,6 +115,7 @@ export class PlaceholderSystem {
       const container = this.scene.add.container(rect.centerX, rect.centerY);
 
       const scale = config.scale ?? 1;
+      instance.state = { ...(instance.state || {}), costumeScale: scale };
 
       const pedestalConfig = LayoutConfig.COSTUME.PEDESTAL_DEFAULT;
       const pedestal = this.scene.add.image(0, 0, "pedestal");
@@ -329,10 +330,38 @@ export class PlaceholderSystem {
     }
   }
 
+  public updateCostumePart(
+    instanceId: string,
+    partType: "head" | "torso" | "feet",
+    textureKey: string,
+  ) {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (!p) return;
+    const hint = p.hintSprite;
+    if (!(hint instanceof Phaser.GameObjects.Container)) return;
+
+    const slotIndex =
+      LayoutConfig.COSTUME.TEXTURES.findIndex((t) =>
+        t.endsWith(`_${partType}`),
+      ) + 1;
+    if (slotIndex <= 0) return;
+
+    const cell = hint.getAt(slotIndex);
+    if (!(cell instanceof Phaser.GameObjects.Image)) return;
+
+    const scale = (p.state?.costumeScale as number | undefined) ?? 1;
+    cell.setTexture(textureKey);
+    cell.setDisplaySize(cell.width * scale, cell.height * scale);
+  }
+
   public lockPlaceholder(instanceId: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
-      if (p.type !== InteractiveType.PHOTO && p.hintSprite) {
+      if (
+        p.type !== InteractiveType.PHOTO &&
+        p.type !== InteractiveType.COSTUME &&
+        p.hintSprite
+      ) {
         if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
           p.hintSprite.stop();
         }
