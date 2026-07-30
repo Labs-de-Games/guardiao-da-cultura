@@ -473,6 +473,17 @@ export function CostumeSelectorPanel() {
       ];
       const currentIndex = partOrder.indexOf(focusedPart);
 
+      // Finds the nearest non-locked part starting at startIndex, walking in
+      // the given direction; returns -1 if every remaining part is locked.
+      const findUnlockedFrom = (startIndex: number, direction: 1 | -1) => {
+        let idx = startIndex;
+        while (idx >= 0 && idx < partOrder.length) {
+          if (!carouselStates[partOrder[idx]].isLocked) return idx;
+          idx += direction;
+        }
+        return -1;
+      };
+
       // Enter/Space to activate confirm button
       if (key === "enter" || key === " ") {
         if (confirmFocused) {
@@ -482,25 +493,34 @@ export function CostumeSelectorPanel() {
         return;
       }
 
-      // Up/Down navigation
+      // Up/Down navigation — skips over already-locked (correct) parts
       if (key === "arrowup" || key === "w") {
         if (confirmFocused) {
-          setConfirmFocused(false);
-          confirmButtonRef.current?.blur();
+          const idx = findUnlockedFrom(partOrder.length - 1, -1);
+          if (idx >= 0) {
+            setConfirmFocused(false);
+            confirmButtonRef.current?.blur();
+            setFocusedPart(partOrder[idx]);
+          }
           e.preventDefault();
-        } else if (currentIndex > 0) {
-          setFocusedPart(partOrder[currentIndex - 1]);
-          e.preventDefault();
+        } else {
+          const idx = findUnlockedFrom(currentIndex - 1, -1);
+          if (idx >= 0) {
+            setFocusedPart(partOrder[idx]);
+            e.preventDefault();
+          }
         }
       } else if (key === "arrowdown" || key === "s") {
         if (confirmFocused) {
           e.preventDefault();
-        } else if (focusedPart === "feet") {
-          setConfirmFocused(true);
-          confirmButtonRef.current?.focus();
-          e.preventDefault();
         } else {
-          setFocusedPart(partOrder[currentIndex + 1]);
+          const idx = findUnlockedFrom(currentIndex + 1, 1);
+          if (idx >= 0) {
+            setFocusedPart(partOrder[idx]);
+          } else {
+            setConfirmFocused(true);
+            confirmButtonRef.current?.focus();
+          }
           e.preventDefault();
         }
       }
