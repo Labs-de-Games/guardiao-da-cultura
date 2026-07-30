@@ -150,10 +150,10 @@ export function CostumeSelectorPanel() {
       partType: "head" | "torso" | "feet",
       partId: string | null,
     ) => {
-      if (!partId) return 0; // Empty slot
+      if (!partId) return 0; // Defaults to the dummy slide
       const parts = CostumeMechanicHandler.getShuffledCostumeParts(partType);
       const index = parts.findIndex((p) => p.id === partId);
-      return index >= 0 ? index + 1 : 0;
+      return index >= 0 ? index : 0;
     };
 
     return {
@@ -239,78 +239,18 @@ export function CostumeSelectorPanel() {
     }
   }, [feetEmblaApi, carouselStates.feet.selectedIndex]);
 
-  // Handle carousel selection change
+  // Handle carousel selection change — just tracks scroll position while
+  // unlocked; correctness is only evaluated on Confirmar (see handleConfirm)
   const handleSelect = useCallback(
     (partType: "head" | "torso" | "feet", index: number) => {
-      const currentState = carouselStates[partType];
+      if (carouselStates[partType].isLocked) return;
 
-      // If already locked, don't allow changes
-      if (currentState.isLocked) return;
-
-      // Get selected part from the shuffled array (matches carousel order)
-      const shuffledParts =
-        CostumeMechanicHandler.getShuffledCostumeParts(partType);
-      const selectedPart = index === 0 ? null : shuffledParts[index - 1];
-
-      // Validate selection
-      const isEmpty = selectedPart === null;
-      const isCorrect = selectedPart
-        ? CostumeMechanicHandler.isCorrectPart(selectedPart.id, partType)
-        : false;
-
-      if (isEmpty || !isCorrect) {
-        // Error: empty slot or wrong costume part
-        setCarouselStates((prev) => ({
-          ...prev,
-          [partType]: {
-            ...prev[partType],
-            selectedIndex: index,
-            isRejecting: true,
-          },
-        }));
-
-        // Emit rejection event
-        EventBus.emit("ui:costume-part-rejected", {
-          instanceId,
-          partType,
-          partId: selectedPart?.id ?? null,
-          reason: isEmpty ? "empty" : "wrong_costume",
-        });
-
-        // Clear rejection state after animation
-        setTimeout(() => {
-          setCarouselStates((prev) => ({
-            ...prev,
-            [partType]: {
-              ...prev[partType],
-              isRejecting: false,
-            },
-          }));
-        }, 400);
-
-        return;
-      }
-
-      // Correct selection: update state and lock
       setCarouselStates((prev) => ({
         ...prev,
-        [partType]: {
-          selectedIndex: index,
-          isRejecting: false,
-          isLocked: true,
-        },
+        [partType]: { ...prev[partType], selectedIndex: index },
       }));
-
-      // Emit selection event
-      EventBus.emit("ui:costume-part-selected", {
-        instanceId,
-        partType,
-        partId: selectedPart.id,
-        isCorrect: true,
-        isLocked: true,
-      });
     },
-    [carouselStates, instanceId],
+    [carouselStates],
   );
 
   // Setup carousel event listeners
@@ -416,60 +356,89 @@ export function CostumeSelectorPanel() {
     confirmButtonRef,
   ]);
 
-  // Handle confirm button
+  // Handle confirm button — evaluates each not-yet-locked carousel
+  // independently; correct ones lock in place, wrong ones shake and stay
+  // editable for another attempt. Closes/confirms once all 3 are locked.
   const handleConfirm = () => {
-    const equippedParts = {
-      head:
-        carouselStates.head.selectedIndex === 0
-          ? null
-          : (CostumeMechanicHandler.getShuffledCostumeParts("head")[
-              carouselStates.head.selectedIndex - 1
-            ]?.id ?? null),
-      torso:
-        carouselStates.torso.selectedIndex === 0
-          ? null
-          : (CostumeMechanicHandler.getShuffledCostumeParts("torso")[
-              carouselStates.torso.selectedIndex - 1
-            ]?.id ?? null),
-      feet:
-        carouselStates.feet.selectedIndex === 0
-          ? null
-          : (CostumeMechanicHandler.getShuffledCostumeParts("feet")[
-              carouselStates.feet.selectedIndex - 1
-            ]?.id ?? null),
-    };
+    const partTypes: ("head" | "torso" | "feet")[] = ["head", "torso", "feet"];
+    const nextStates = { ...carouselStates };
+    let allLocked = true;
 
-    // Check if all parts are correct
-    const isAllCorrect =
-      equippedParts.head?.startsWith(`${correctCostume}_`) &&
-      equippedParts.torso?.startsWith(`${correctCostume}_`) &&
-      equippedParts.feet?.startsWith(`${correctCostume}_`);
+    for (const partType of partTypes) {
+      const current = carouselStates[partType];
+      if (current.isLocked) continue;
 
-    if (isAllCorrect) {
-      // Emit confirm event
+      const shuffledParts =
+        CostumeMechanicHandler.getShuffledCostumeParts(partType);
+      const selectedPart = shuffledParts[current.selectedIndex] ?? null;
+      const isCorrect = selectedPart
+        ? CostumeMechanicHandler.isCorrectPart(selectedPart.id, correctCostume)
+        : false;
+
+      if (isCorrect && selectedPart) {
+        nextStates[partType] = {
+          ...current,
+          isLocked: true,
+          isRejecting: false,
+        };
+
+        EventBus.emit("ui:costume-part-selected", {
+          instanceId,
+          partType,
+          partId: selectedPart.id,
+          isCorrect: true,
+          isLocked: true,
+        });
+      } else {
+        allLocked = false;
+        nextStates[partType] = { ...current, isRejecting: true };
+
+        EventBus.emit("ui:costume-part-rejected", {
+          instanceId,
+          partType,
+          partId: selectedPart?.id ?? null,
+          reason: selectedPart ? "wrong_costume" : "empty",
+        });
+      }
+    }
+
+    setCarouselStates(nextStates);
+
+    // Clear rejection shake only on carousels that were just rejected
+    setTimeout(() => {
+      setCarouselStates((prev) => {
+        const cleared = { ...prev };
+        for (const partType of partTypes) {
+          if (!nextStates[partType].isLocked) {
+            cleared[partType] = { ...cleared[partType], isRejecting: false };
+          }
+        }
+        return cleared;
+      });
+    }, 400);
+
+    if (allLocked) {
+      const equippedParts = {
+        head:
+          CostumeMechanicHandler.getShuffledCostumeParts("head")[
+            nextStates.head.selectedIndex
+          ]?.id ?? null,
+        torso:
+          CostumeMechanicHandler.getShuffledCostumeParts("torso")[
+            nextStates.torso.selectedIndex
+          ]?.id ?? null,
+        feet:
+          CostumeMechanicHandler.getShuffledCostumeParts("feet")[
+            nextStates.feet.selectedIndex
+          ]?.id ?? null,
+      };
+
       EventBus.emit("ui:costume-confirm", {
         instanceId,
         equippedParts,
       });
 
-      // Close panel
-      closeCostumeSelector();
-    } else {
-      // Error feedback on all carousels
-      setCarouselStates((prev) => ({
-        head: { ...prev.head, isRejecting: true },
-        torso: { ...prev.torso, isRejecting: true },
-        feet: { ...prev.feet, isRejecting: true },
-      }));
-
-      // Clear rejection state after animation
-      setTimeout(() => {
-        setCarouselStates((prev) => ({
-          head: { ...prev.head, isRejecting: false },
-          torso: { ...prev.torso, isRejecting: false },
-          feet: { ...prev.feet, isRejecting: false },
-        }));
-      }, 400);
+      handleClose();
     }
   };
 
@@ -537,12 +506,12 @@ export function CostumeSelectorPanel() {
       }
       // Left/Right carousel navigation
       else if (key === "arrowleft" || key === "a") {
-        if (!confirmFocused) {
+        if (!confirmFocused && !carouselStates[focusedPart].isLocked) {
           apiMap[focusedPart]?.scrollPrev();
           e.preventDefault();
         }
       } else if (key === "arrowright" || key === "d") {
-        if (!confirmFocused) {
+        if (!confirmFocused && !carouselStates[focusedPart].isLocked) {
           apiMap[focusedPart]?.scrollNext();
           e.preventDefault();
         }
@@ -562,6 +531,7 @@ export function CostumeSelectorPanel() {
     headEmblaApi,
     torsoEmblaApi,
     feetEmblaApi,
+    carouselStates,
   ]);
 
   // Navigation handlers
@@ -621,7 +591,7 @@ export function CostumeSelectorPanel() {
           {/* Prev Button */}
           <IconButton
             onClick={() => handlePrev(emblaApi)}
-            disabled={!emblaApi}
+            disabled={!emblaApi || state.isLocked}
             sx={{
               flexShrink: 0,
               color: LayoutConfig.COLORS.INFO_BODY,
@@ -646,7 +616,13 @@ export function CostumeSelectorPanel() {
               position: "relative",
             }}
           >
-            <Box ref={emblaRef} sx={{ overflow: "hidden" }}>
+            <Box
+              ref={emblaRef}
+              sx={{
+                overflow: "hidden",
+                pointerEvents: state.isLocked ? "none" : undefined,
+              }}
+            >
               <Box sx={{ display: "flex" }}>
                 {/* Carousel items */}
                 {carouselItems.map((item) => (
@@ -687,7 +663,7 @@ export function CostumeSelectorPanel() {
           {/* Next Button */}
           <IconButton
             onClick={() => handleNext(emblaApi)}
-            disabled={!emblaApi}
+            disabled={!emblaApi || state.isLocked}
             sx={{
               flexShrink: 0,
               color: LayoutConfig.COLORS.INFO_BODY,
