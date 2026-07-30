@@ -561,9 +561,11 @@ export function CostumeSelectorPanel() {
 
     const borderColor = state.isRejecting
       ? LayoutConfig.COLORS.UNAVAILABLE_RED
-      : isFocused
-        ? LayoutConfig.COLORS.INFO_TITLE
-        : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
+      : state.isLocked
+        ? LayoutConfig.COLORS.SUCCESS_GREEN
+        : isFocused
+          ? LayoutConfig.COLORS.INFO_TITLE
+          : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
     // Select items array based on part type
     const carouselItems =
