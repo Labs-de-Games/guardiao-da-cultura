@@ -225,6 +225,10 @@ export const LEVEL_ASSETS = {
         key: "poster-label",
         path: "misc/poster-label.png",
       },
+      {
+        key: "stage-ph",
+        path: "misc/stage-placeholder.png",
+      },
     ],
     COLLECTIBLES: [],
     CONTENT: {
