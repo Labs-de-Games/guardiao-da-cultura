@@ -978,13 +978,29 @@ export class Game extends Scene implements GameDataAccessor {
               .map((s) => s.trim());
         const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
 
+        const costumeState = nearbyCostume.state ?? {};
+        const equippedParts = (costumeState.equippedParts as
+          | {
+              head: string | null;
+              torso: string | null;
+              feet: string | null;
+            }
+          | undefined) ?? { head: null, torso: null, feet: null };
+        const lockedParts = (costumeState.lockedParts as
+          | {
+              head: boolean;
+              torso: boolean;
+              feet: boolean;
+            }
+          | undefined) ?? { head: false, torso: false, feet: false };
+
         this.isCostumeSelectorOpen = true;
         this.events.emit(GameEvents.DIALOGUE_STARTED);
         EventBus.emit("ui:costume-selector-open", {
           instanceId: nearbyCostume.instanceId,
           correctCostume,
-          equippedParts: { head: null, torso: null, feet: null },
-          lockedParts: { head: false, torso: false, feet: false },
+          equippedParts,
+          lockedParts,
         });
       }
     });
@@ -1076,6 +1092,46 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
       this.checkDialogState();
     });
+    EventBus.on("ui:costume-part-selected", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      const equipped = (p.state?.equippedParts as Record<
+        string,
+        string | null
+      >) ?? { head: null, torso: null, feet: null };
+      const locked = (p.state?.lockedParts as Record<string, boolean>) ?? {
+        head: false,
+        torso: false,
+        feet: false,
+      };
+      equipped[data.partType] = data.partId;
+      locked[data.partType] = true;
+      p.state = { ...p.state, equippedParts: equipped, lockedParts: locked };
+
+      this.placeholderSystem.updateCostumePart(
+        data.instanceId,
+        data.partType as "head" | "torso" | "feet",
+        data.partId,
+      );
+    });
+    EventBus.on("ui:costume-part-rejected", () => {
+      this.sound.play("error", { volume: 0.5 });
+    });
+    EventBus.on("ui:costume-confirm", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
+      this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
+        "O manequim está completamente vestido!",
+      ]);
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+    });
 
     this.events.on("item-dropped", this.handleItemDropped, this);
 
@@ -1091,6 +1147,9 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:chunk-slot-rejected");
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:costume-selector-close");
+      EventBus.off("ui:costume-part-selected");
+      EventBus.off("ui:costume-part-rejected");
+      EventBus.off("ui:costume-confirm");
       EventBus.off("ui:label-hide");
     });
 
