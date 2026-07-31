@@ -212,7 +212,19 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   endGame: () => {
     const { gameStarted } = get();
     if (gameStarted) {
-      set({ gameStarted: false, sidebarOpen: false, score: 0 });
+      // When leaving a level, ensure no level-scoped UI leaks
+      // into the next level load (missions, collectibles, panels).
+      set({
+        gameStarted: false,
+        sidebarOpen: false,
+        controlsOpen: false,
+        score: 0,
+        missions: [],
+        collectibles: [],
+        chunkSelectorOpen: false,
+        chunkSelectorData: null,
+        labelData: null,
+      });
     }
   },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
