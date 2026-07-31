@@ -2,6 +2,7 @@ import posthog from "posthog-js";
 import { GameEvents } from "../constants/GameEvents";
 import {
   FLOOR_COMPLETE_KEYS,
+  INTERMEDIATE_QUIZ_NUMBERS,
   MissionIds,
   NPC_FLOOR_3_POSITION,
 } from "../constants/MissionConstants";
@@ -36,6 +37,7 @@ interface NpcLike {
   getDialogues(): Record<string, string[]>;
   getIntermediateQuizDialogues(): string[];
   getSpawnPosition(): { x: number; y: number } | null;
+  getFinalPosition(): { x: number; y: number } | null;
   showForQuiz(x: number, y: number): void;
   hideAfterQuiz(): void;
   teleportTo(x: number, y: number): void;
@@ -102,188 +104,190 @@ export class QuizManager {
           this.isQuizActive = true;
           this.quizStartedAt = Date.now();
           this.quizAttemptsForMission += 1;
+
+          posthog.capture("quiz_started", {
+            level_id: this.context.getLevelId(),
+            mission_id: missionId,
+            total_questions: questions.length,
+            attempt_number: this.quizAttemptsForMission,
+          });
+
           this.quizMode = "regular";
-          this.context
-            .getEvents()
-            .emit(
-              GameEvents.SHOW_QUIZ_REQUEST,
-              questions,
-              this.scoreManager,
-              (score: number) => {
-                this.scoreManager.recordQuizResult(score, questions.length);
-                const required = Math.ceil(questions.length * 0.7);
-                const isSuccess = score >= required;
-                console.log(
-                  `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
-                );
+          this.context.getEvents().emit(
+            GameEvents.SHOW_QUIZ_REQUEST,
+            questions,
+            this.scoreManager,
+            (score: number) => {
+              this.scoreManager.recordQuizResult(score, questions.length);
+              const required = Math.ceil(questions.length * 0.7);
+              const isSuccess = score >= required;
+              console.log(
+                `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
+              );
 
-                const levelId = this.context.getLevelId();
-                const levelDef = this.context.getLevelDef();
-                const registry = this.context.getRegistry();
+              const levelId = this.context.getLevelId();
+              const levelDef = this.context.getLevelDef();
+              const registry = this.context.getRegistry();
 
-                if (isSuccess) {
-                  if (score === questions.length) {
-                    registry.set("quiz_perfect_score", 1);
-                    this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
-                  }
+              if (isSuccess) {
+                if (score === questions.length) {
+                  registry.set("quiz_perfect_score", 1);
+                  this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
+                }
 
-                  if (registry.get("has_failed_quiz") === 1) {
-                    registry.set("quiz_solved_after_failure", 1);
-                    this.badgeSystem.checkRequirements(
-                      "quiz_solved_after_failure",
-                      1,
-                    );
-                  }
-
-                  const payload = this.scoreManager.getPayload();
-                  this.analyticsSystem.trackLevelEvent(
-                    GameEventType.LEVEL_COMPLETED,
-                    levelId,
-                    {
-                      levelNumber: levelDef.levelNumber,
-                      score: payload.totalQuarters,
-                      stars: payload.totalStars,
-                      rating: payload.rating,
-                      missionId: missionId,
-                    },
+                if (registry.get("has_failed_quiz") === 1) {
+                  registry.set("quiz_solved_after_failure", 1);
+                  this.badgeSystem.checkRequirements(
+                    "quiz_solved_after_failure",
+                    1,
                   );
+                }
 
-                  posthog.capture("level_completed", {
-                    level_id: levelId,
-                    level_number: levelDef.levelNumber,
+                const payload = this.scoreManager.getPayload();
+                this.analyticsSystem.trackLevelEvent(
+                  GameEventType.LEVEL_COMPLETED,
+                  levelId,
+                  {
+                    levelNumber: levelDef.levelNumber,
                     score: payload.totalQuarters,
                     stars: payload.totalStars,
                     rating: payload.rating,
-                    mission_id: missionId,
-                    time_spent_ms:
-                      Date.now() - new Date(payload.startedAt).getTime(),
-                    attempts: registry.get("has_failed_quiz") || 0,
-                  });
+                    missionId: missionId,
+                  },
+                );
 
-                  void this.persistenceBridge.submitScore();
-                } else {
-                  registry.set("has_failed_quiz", 1);
-                  posthog.capture("level_failed", {
-                    level_id: levelId,
-                    level_number: levelDef.levelNumber,
-                    mission_id: missionId,
-                    score,
-                    total_questions: questions.length,
-                  });
-                  void this.persistenceBridge.submitScore();
-                }
-
-                const scoringPayload = this.scoreManager.getPayload();
-                posthog.capture("quiz_completed", {
+                posthog.capture("level_completed", {
                   level_id: levelId,
+                  level_number: levelDef.levelNumber,
+                  score: payload.totalQuarters,
+                  stars: payload.totalStars,
+                  rating: payload.rating,
+                  mission_id: missionId,
+                  time_spent_ms:
+                    Date.now() - new Date(payload.startedAt).getTime(),
+                  attempts: registry.get("has_failed_quiz") || 0,
+                });
+
+                void this.persistenceBridge.submitScore();
+              } else {
+                registry.set("has_failed_quiz", 1);
+                posthog.capture("level_failed", {
+                  level_id: levelId,
+                  level_number: levelDef.levelNumber,
                   mission_id: missionId,
                   score,
-                  correct_answers: scoringPayload.quiz.correctAnswers,
                   total_questions: questions.length,
-                  accuracy_percent: scoringPayload.quiz.accuracyPercent,
-                  passed: isSuccess,
                 });
+                void this.persistenceBridge.submitScore();
+              }
 
-                void this.persistenceBridge.sendQuizOutcome({
-                  type: isSuccess ? "quiz.completed" : "quiz.failed",
-                  metadata: {
-                    missionId,
-                    score,
-                    totalQuestions: questions.length,
-                    accuracyPercent: scoringPayload.quiz.accuracyPercent,
-                    quartersEarned: scoringPayload.quiz.quartersEarned,
-                    passed: isSuccess,
-                    payload: scoringPayload as unknown as Record<
-                      string,
-                      unknown
-                    >,
-                  },
-                  timestamp: new Date().toISOString(),
-                });
+              const scoringPayload = this.scoreManager.getPayload();
+              posthog.capture("quiz_completed", {
+                level_id: levelId,
+                mission_id: missionId,
+                score,
+                correct_answers: scoringPayload.quiz.correctAnswers,
+                total_questions: questions.length,
+                accuracy_percent: scoringPayload.quiz.accuracyPercent,
+                passed: isSuccess,
+              });
 
-                const quizResultRecord: QuizResultRecord = {
-                  completedAt: new Date().toISOString(),
-                  passed: isSuccess,
+              void this.persistenceBridge.sendQuizOutcome({
+                type: isSuccess ? "quiz.completed" : "quiz.failed",
+                metadata: {
+                  missionId,
                   score,
                   totalQuestions: questions.length,
                   accuracyPercent: scoringPayload.quiz.accuracyPercent,
                   quartersEarned: scoringPayload.quiz.quartersEarned,
-                  timeSpentMs:
-                    this.quizStartedAt !== null
-                      ? Date.now() - this.quizStartedAt
-                      : null,
-                  attempts: this.quizAttemptsForMission,
-                  payload: null,
-                };
-
-                this.progressionManager.recordQuizResult(
-                  missionId,
-                  quizResultRecord,
-                );
-
-                if (isSuccess) {
-                  this.progressionManager.recordLevelCompleted(
-                    levelId,
-                    levelDef.levelNumber,
-                    scoringPayload.totalStars,
-                    scoringPayload.totalQuarters,
-                    new Date().toISOString(),
-                  );
-                }
-
-                void this.persistenceBridge.saveProgress();
-
-                const progressState = this.progressionManager.getState();
-                posthog.capture("progress_updated", {
-                  level_id: levelId,
-                  level_number: levelDef.levelNumber,
-                  current_level: progressState.currentLevel,
-                  total_stars: progressState.totalStars,
-                  completed_levels_count: Object.keys(
-                    progressState.completedLevels,
-                  ).length,
-                  mission_id: missionId,
                   passed: isSuccess,
-                  score,
-                  total_questions: questions.length,
-                });
+                  payload: scoringPayload as unknown as Record<string, unknown>,
+                },
+                timestamp: new Date().toISOString(),
+              });
 
-                const quizNpc = this.findNpcByMission(missionId);
+              const quizResultRecord: QuizResultRecord = {
+                completedAt: new Date().toISOString(),
+                passed: isSuccess,
+                score,
+                totalQuestions: questions.length,
+                accuracyPercent: scoringPayload.quiz.accuracyPercent,
+                quartersEarned: scoringPayload.quiz.quartersEarned,
+                timeSpentMs:
+                  this.quizStartedAt !== null
+                    ? Date.now() - this.quizStartedAt
+                    : null,
+                attempts: this.quizAttemptsForMission,
+                payload: null,
+              };
 
-                if (!quizNpc) {
-                  console.error(
-                    `[QuizManager] NPC não encontrado para a missão: ${missionId}`,
-                  );
-                  return;
-                }
+              this.progressionManager.recordQuizResult(
+                missionId,
+                quizResultRecord,
+              );
 
-                const quizDialogues = quizNpc.getDialogues();
-                const lines = isSuccess
-                  ? quizDialogues.success
-                  : quizDialogues.failure;
+              if (isSuccess) {
+                this.progressionManager.recordLevelCompleted(
+                  levelId,
+                  levelDef.levelNumber,
+                  scoringPayload.totalStars,
+                  scoringPayload.totalQuarters,
+                  new Date().toISOString(),
+                );
+              }
 
-                if (isSuccess) {
-                  this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
-                } else {
-                  this.questManager.setStatus(
-                    missionId,
-                    QuestStatus.READY_FOR_QUIZ,
-                  );
-                }
+              void this.persistenceBridge.saveProgress();
 
-                this.context
-                  .getEvents()
-                  .emit(GameEvents.MISSION_STATUS_CHANGED);
-                this.questManager.setPendingResult(missionId, lines);
+              const progressState = this.progressionManager.getState();
+              posthog.capture("progress_updated", {
+                level_id: levelId,
+                level_number: levelDef.levelNumber,
+                current_level: progressState.currentLevel,
+                total_stars: progressState.totalStars,
+                completed_levels_count: Object.keys(
+                  progressState.completedLevels,
+                ).length,
+                mission_id: missionId,
+                passed: isSuccess,
+                score,
+                total_questions: questions.length,
+              });
 
-                if (isSuccess) {
-                  this.levelManager.updateProgress();
-                }
+              const quizNpc = this.findNpcByMission(missionId);
 
-                this.quizMode = "none";
-                this.isQuizActive = false;
-              },
-            );
+              if (!quizNpc) {
+                console.error(
+                  `[QuizManager] NPC não encontrado para a missão: ${missionId}`,
+                );
+                return;
+              }
+
+              const quizDialogues = quizNpc.getDialogues();
+              const lines = isSuccess
+                ? quizDialogues.success
+                : quizDialogues.failure;
+
+              if (isSuccess) {
+                this.questManager.setStatus(missionId, QuestStatus.COMPLETED);
+              } else {
+                this.questManager.setStatus(
+                  missionId,
+                  QuestStatus.READY_FOR_QUIZ,
+                );
+              }
+
+              this.context.getEvents().emit(GameEvents.MISSION_STATUS_CHANGED);
+              this.questManager.setPendingResult(missionId, lines);
+
+              if (isSuccess) {
+                this.levelManager.updateProgress();
+              }
+
+              this.quizMode = "none";
+              this.isQuizActive = false;
+            },
+            { quizNumber: null, attemptNumber: this.quizAttemptsForMission },
+          );
         },
         () => {
           this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
@@ -321,7 +325,18 @@ export class QuizManager {
         return;
       }
 
+      posthog.capture("intermediate_quiz_started", {
+        quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
+        level_id: this.context.getLevelId(),
+        info_key: infoKey,
+      });
+
       this.quizMode = "intermediate";
+
+      // Resolve the active mission for this level so callbacks are not
+      // hardcoded to level-1's mission id.
+      const activeMissionId =
+        this.context.getLevelDef().activeMissions[0] ?? MissionIds.CURATOR;
 
       const spawnPos = npc.getSpawnPosition();
       const playerX = this.context.getPlayer().x;
@@ -335,6 +350,7 @@ export class QuizManager {
         questions,
         npc,
         spawnPos,
+        activeMissionId,
       );
 
       const explanationLines = npc.getIntermediateQuizDialogues();
@@ -352,6 +368,10 @@ export class QuizManager {
                 GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
                 questions,
                 onComplete,
+                {
+                  quizNumber: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
+                  attemptNumber: 1,
+                },
               );
           });
       } else {
@@ -361,6 +381,10 @@ export class QuizManager {
             GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
             questions,
             onComplete,
+            {
+              quizNumber: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
+              attemptNumber: 1,
+            },
           );
       }
     } catch (error) {
@@ -390,6 +414,7 @@ export class QuizManager {
     questions: QuizQuestion[],
     npc: NpcLike,
     spawnPos: { x: number; y: number } | null,
+    missionId: string,
   ) {
     return (score: number) => {
       const passed = score > 0;
@@ -406,7 +431,7 @@ export class QuizManager {
         passed,
         score,
         totalQuestions: questions.length,
-        missionId: MissionIds.CURATOR,
+        missionId,
       });
 
       void this.persistenceBridge.saveProgress();
@@ -414,7 +439,8 @@ export class QuizManager {
       const floorCompleted = FLOOR_COMPLETE_KEYS.has(infoKey);
 
       if (floorCompleted) {
-        npc.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+        const finalPos = npc.getFinalPosition() ?? NPC_FLOOR_3_POSITION;
+        npc.teleportTo(finalPos.x, finalPos.y);
       } else {
         npc.hideAfterQuiz();
         if (spawnPos) {
@@ -428,6 +454,7 @@ export class QuizManager {
 
       posthog.capture("intermediate_quiz_completed", {
         level_id: levelId,
+        quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
         info_key: infoKey,
         score,
         total_questions: questions.length,
@@ -443,35 +470,30 @@ export class QuizManager {
           passed,
           score,
           totalQuestions: questions.length,
-          missionId: MissionIds.CURATOR,
+          missionId,
         },
         timestamp: new Date().toISOString(),
       });
 
       if (
-        this.questManager.hasCollectedAll(MissionIds.CURATOR) &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.READY_FOR_QUIZ &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.QUIZ_ACTIVE &&
-        this.questManager.getStatus(MissionIds.CURATOR) !==
-          QuestStatus.COMPLETED
+        this.questManager.hasCollectedAll(missionId) &&
+        this.questManager.getStatus(missionId) !== QuestStatus.READY_FOR_QUIZ &&
+        this.questManager.getStatus(missionId) !== QuestStatus.QUIZ_ACTIVE &&
+        this.questManager.getStatus(missionId) !== QuestStatus.COMPLETED
       ) {
-        this.questManager.setStatus(
-          MissionIds.CURATOR,
-          QuestStatus.READY_FOR_QUIZ,
-        );
+        this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
       }
     };
   }
 
   private findCuratorNpc(): NpcLike | undefined {
+    const activeMissions = this.context.getLevelDef().activeMissions ?? [];
     return this.context
       .getNpcs()
       .find(
         (n) =>
           typeof (n as unknown as NpcLike).getMissionId === "function" &&
-          (n as unknown as NpcLike).getMissionId() === MissionIds.CURATOR,
+          activeMissions.includes((n as unknown as NpcLike).getMissionId()),
       ) as NpcLike | undefined;
   }
 

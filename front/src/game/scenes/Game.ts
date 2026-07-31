@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -30,6 +31,7 @@ import {
 } from "../mechanics/handlers/CostumeMechanicHandler";
 import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
+import { PosterMechanicHandler } from "../mechanics/handlers/PosterMechanicHandler";
 import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
@@ -86,10 +88,12 @@ export class Game extends Scene implements GameDataAccessor {
   private readonly mapScale = LayoutConfig.GAME.MAP_SCALE;
 
   public readonly scoringFloors = {
-    paintings: 0,
-    sculptures: 1,
+    sculptures: 0,
+    paintings: 1,
     photo: 2,
+    posters: 3,
   } as const;
+  private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
@@ -118,7 +122,7 @@ export class Game extends Scene implements GameDataAccessor {
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
   public contentData: ContentJson = {
-    works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
+    works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
     quizzes: {},
     intermediateQuizzes: {},
     npcs: {},
@@ -164,7 +168,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
     this.contentData = {
-      works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {} },
+      works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
       quizzes: {},
       intermediateQuizzes: {},
       npcs: {},
@@ -188,11 +192,22 @@ export class Game extends Scene implements GameDataAccessor {
       );
     });
 
+    this.load.on("loaderror", (file: Phaser.Loader.File) => {
+      window.dispatchEvent(
+        new CustomEvent("phaser-loading-error", {
+          detail: { stage: "asset_load", key: file.key },
+        }),
+      );
+    });
+
     this.load.setPath("assets/");
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
     EffectsManager.preload(this);
+
+    // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
+    loadGlobalAudio(this);
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
@@ -233,22 +248,22 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.levelDef.data.works.forEach((path, index) => {
-      this.load.json(`works_${index}`, path);
+      this.load.json(`${this.levelId}__works_${index}`, path);
     });
     this.levelDef.data.quizzes.forEach((path, index) => {
-      this.load.json(`quizzes_${index}`, path);
+      this.load.json(`${this.levelId}__quizzes_${index}`, path);
     });
     this.levelDef.data.intermediateQuizzes.forEach((path, index) => {
-      this.load.json(`intermediateQuizzes_${index}`, path);
+      this.load.json(`${this.levelId}__intermediateQuizzes_${index}`, path);
     });
     this.levelDef.data.npcs.forEach((path, index) => {
-      this.load.json(`npcs_${index}`, path);
+      this.load.json(`${this.levelId}__npcs_${index}`, path);
     });
     this.levelDef.data.messages.forEach((path, index) => {
-      this.load.json(`messages_${index}`, path);
+      this.load.json(`${this.levelId}__messages_${index}`, path);
     });
     this.levelDef.data.collectibles.forEach((path, index) => {
-      this.load.json(`collectibles_${index}`, path);
+      this.load.json(`${this.levelId}__collectibles_${index}`, path);
     });
 
     this.load.spritesheet("placeholder", "misc/questionmark-spritesheet.png", {
@@ -261,7 +276,7 @@ export class Game extends Scene implements GameDataAccessor {
 
   private processModularData() {
     processModularData(this.levelDef, this.contentData, (key) =>
-      this.cache.json.get(key),
+      this.cache.json.get(`${this.levelId}__${key}`),
     );
   }
 
@@ -271,6 +286,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.processModularData();
     this.effects = new EffectsManager(this);
     this.createAnimations();
+
+    // Initialize AudioManager with this scene so Player and other
+    // objects can play sounds via AudioManager.playSfx()
+    AudioManager.init(this);
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
@@ -334,10 +353,14 @@ export class Game extends Scene implements GameDataAccessor {
     this.objectLayerProcessor = new ObjectLayerProcessor();
     this.placeholderSystem = new PlaceholderSystem(this);
 
-    const missionDefsWithProgress: Record<string, MissionDef> = {
-      [MissionIds.CURATOR]: {
-        ...MissionRegistry[MissionIds.CURATOR],
-        steps: MissionRegistry[MissionIds.CURATOR].steps.map((step) => {
+    const missionDefsWithProgress: Record<string, MissionDef> = {};
+    for (const missionId of this.levelDef.activeMissions || []) {
+      const baseDef = MissionRegistry[missionId];
+      if (!baseDef) continue;
+
+      missionDefsWithProgress[missionId] = {
+        ...baseDef,
+        steps: baseDef.steps.map((step) => {
           if (step.infoKey === MissionKeys.PHOTO_COLLECTED) {
             return {
               ...step,
@@ -349,8 +372,8 @@ export class Game extends Scene implements GameDataAccessor {
           }
           return step;
         }),
-      },
-    };
+      };
+    }
 
     this.scene.launch(SceneNames.UI, {
       questManager: this.questManager,
@@ -404,7 +427,28 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     void this.persistenceBridge.initializeProgression();
-    void this.persistenceBridge.initializeCollectibles();
+    void this.persistenceBridge.initializeCollectibles().then(() => {
+      const collectedIds = new Set(
+        this.collectibleSystem
+          .getCollectedCollectibles()
+          .map((c) => c.collectibleId),
+      );
+      const allCollectibles = Object.entries(
+        this.contentData.collectibles,
+      ).flatMap(([category, items]) =>
+        Object.entries(items as Record<string, CollectibleData>).map(
+          ([id, data]) => ({
+            id,
+            name: data.metadata.title || id,
+            category,
+            collected: collectedIds.has(id),
+          }),
+        ),
+      );
+      EventBus.emit("collectible:collectibles-sync", {
+        entries: allCollectibles,
+      });
+    });
 
     this.registry.set("currentLevelId", this.levelId);
     this.registry.set("currentLevelNumber", this.levelDef.levelNumber);
@@ -419,7 +463,6 @@ export class Game extends Scene implements GameDataAccessor {
       this.progressionManager?.removeAllListeners(
         ProgressionEvents.PROGRESSION_UPDATED,
       );
-      EventBus.off("progression:updated");
     });
 
     posthog.capture("game_started", {
@@ -429,6 +472,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("has_failed_quiz", 0);
     this.registry.set("quiz_solved_after_failure", 0);
+    this.registry.set("secret_clues_collected", 0);
 
     this.mechanicsManager = new MechanicsManager();
     this.mechanicsManager.registerHandler(new PhotoMechanicHandler());
@@ -437,6 +481,9 @@ export class Game extends Scene implements GameDataAccessor {
     );
     this.mechanicsManager.registerHandler(
       new SculptureMechanicHandler(this.scoringFloors.sculptures),
+    );
+    this.mechanicsManager.registerHandler(
+      new PosterMechanicHandler(this.scoringFloors.posters),
     );
 
     if (mapData) {
@@ -604,6 +651,7 @@ export class Game extends Scene implements GameDataAccessor {
           if (clueId && this.progressionManager) {
             this.progressionManager.recordClueUnlocked(clueId, this.levelId);
           }
+          void this.persistenceBridge.saveCollectibles();
         }
 
         if (
@@ -617,16 +665,18 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     this.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () => {
-      const missionId = MissionIds.CURATOR;
-      const reqs = this.questManager.getRequiredInfos(missionId);
-      EventBus.emit("quest:progress-changed", {
-        missionId,
-        missionTitle: MissionRegistry[missionId]?.title || "",
-        collectedInfos: this.questManager.getCollectedInfos(missionId),
-        totalSteps: reqs.length,
-        steps: MissionRegistry[missionId]?.steps,
-        stepProgress: this.getMissionStepProgress(missionId),
-      });
+      for (const missionId of this.levelDef.activeMissions || []) {
+        if (!MissionRegistry[missionId]) continue;
+        const reqs = this.questManager.getRequiredInfos(missionId);
+        EventBus.emit("quest:progress-changed", {
+          missionId,
+          missionTitle: MissionRegistry[missionId]?.title || "",
+          collectedInfos: this.questManager.getCollectedInfos(missionId),
+          totalSteps: reqs.length,
+          steps: MissionRegistry[missionId]?.steps,
+          stepProgress: this.getMissionStepProgress(missionId),
+        });
+      }
     });
 
     this.questManager.on(
@@ -694,7 +744,7 @@ export class Game extends Scene implements GameDataAccessor {
     EventBus.emit("sidebar:toggled", { open: true });
     EventBus.emit("ui:controls-overlay", { open: true });
 
-    Object.entries(MissionRegistry).forEach(([missionId]) => {
+    (this.levelDef.activeMissions || []).forEach((missionId) => {
       EventBus.emit("quest:progress-changed", {
         missionId,
         missionTitle: MissionRegistry[missionId]?.title || "",
@@ -849,10 +899,11 @@ export class Game extends Scene implements GameDataAccessor {
         const key = payload.infoKey;
         if (FLOOR_COMPLETE_KEYS.has(key)) {
           const curator = this.npcs.find(
-            (n) => n instanceof Npc && n.getMissionId() === MissionIds.CURATOR,
+            (n) => n instanceof Npc && n.getMissionId() === payload.missionId,
           ) as Npc | undefined;
           if (curator) {
-            curator.teleportTo(NPC_FLOOR_3_POSITION.x, NPC_FLOOR_3_POSITION.y);
+            const finalPos = curator.getFinalPosition() ?? NPC_FLOOR_3_POSITION;
+            curator.teleportTo(finalPos.x, finalPos.y);
           }
         }
       },
@@ -1007,6 +1058,19 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
+      const floorForType: Partial<Record<InteractiveType, number>> = {
+        [InteractiveType.SCULPTURE]: this.scoringFloors.sculptures,
+        [InteractiveType.PAINTING]: this.scoringFloors.paintings,
+        [InteractiveType.PHOTO_CHUNK]: this.scoringFloors.photo,
+      };
+      const floorIndex = floorForType[item.interactiveType];
+      if (floorIndex !== undefined && this.markFloorStarted(floorIndex)) {
+        posthog.capture("minigame_started", {
+          minigame_number: floorIndex + 1,
+          level_id: this.levelId,
+        });
+      }
+
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
 
@@ -1334,12 +1398,33 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
+  public getLevelId(): string {
+    return this.levelId;
+  }
+
+  public markFloorStarted(floorIndex: number): boolean {
+    if (this.startedFloors.has(floorIndex)) return false;
+    this.startedFloors.add(floorIndex);
+    return true;
+  }
+
   public recordFloorError(floorIndex: number) {
     this.scoreManager.recordFloorError(floorIndex);
   }
 
   public completeFloor(floorIndex: number) {
+    const alreadyCompleted =
+      !!this.scoreManager.getPayload().floors[floorIndex]?.completedAt;
     this.scoreManager.completeFloor(floorIndex);
+    if (!alreadyCompleted) {
+      const floor = this.scoreManager.getPayload().floors[floorIndex];
+      posthog.capture("minigame_completed", {
+        minigame_number: floorIndex + 1,
+        level_id: this.levelId,
+        errors: floor.errors,
+        quarters_earned: floor.quartersEarned,
+      });
+    }
   }
 
   public recordPhotoFloorError() {
@@ -1397,7 +1482,10 @@ export class Game extends Scene implements GameDataAccessor {
         typeof handler.handleDropResult === "function"
       ) {
         (
-          handler as PaintingMechanicHandler | SculptureMechanicHandler
+          handler as
+            | PaintingMechanicHandler
+            | SculptureMechanicHandler
+            | PosterMechanicHandler
         ).handleDropResult(this, result);
       }
 

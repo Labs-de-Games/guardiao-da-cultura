@@ -6,6 +6,112 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.8.1] - 2026-07-31
+
+### Fixed
+
+- Chunk selector instructions moved to top of panel
+- Progression persistence hydrated from storage on map load
+- Cinematic intro config cache bleed between sessions
+- Cached level data namespaced by levelId to prevent cross-level pollution
+- Level 02 locked behind `LEVEL_02_ENABLED` feature flag (disabled in production)
+- CurrentLevel cookie persisted on progression save
+- Level UI state cleared on game end to prevent stale data
+
+## [1.8.0] - 2026-07-28
+
+### Added
+
+- Poster mechanics, factories, and level-specific missions
+- New player animations with posters on portals
+- Level 02 mock data, NPCs, quiz, and configuration
+- `finalPosition` property for NPC teleportation after mission completion
+- Custom textures and scaling in `LabelSystem`
+- Frame assets and label system
+
+### Changed
+
+- `QuizManager` refactored from hardcoded mission IDs to dynamic level-based resolution
+- Player and poster spawn positions adjusted
+
+### Fixed
+
+- Dialogue audio button overlapping text
+- Carried item depth above guardrail
+- ScoreManager floors array expanded to 4 slots
+- NPC Y position after final quiz
+- Poster spawn depth set to 10
+
+### Chore
+
+- Guardrail end treatment improved
+- Posters organized by release date
+- "paintings" replaced with "posters" in work data
+
+## [1.7.0] - 2026-07-24
+
+### Added
+
+- Audio system: `AudioManager` with movement sounds, jump, land, climb, and drop SFX
+- Voice selection to `AudioAccessibilityService` with language code mapping
+- PostHog gameplay analytics: landing page, game home, map pin, spacebar start, minigame started/completed, quiz answer submitted, intermediate quiz started, quiz started, game load success/failed
+- PostHog web vitals and dead clicks capture
+- `UI_LAYERS` design token constant for z-index hierarchy
+- Star display on `MapInfoBox`
+- Standard painting and sculpture placeholder textures
+- Collectibles persistence: `saveCollectibles` API, `POST /scores/:userId/collectibles` backend endpoint
+- Player movement sound effects
+- Gameplay analytics events documentation
+
+### Changed
+
+- Migrated all UI panels to `UI_LAYERS` tokens (ScorePanel, Sidebar, DialoguePanel, LabelPanel, ControlsPanel, ConfirmationPanel, BadgeGalleryPanel, ChunkSelectorPanel, Quiz, InterestDialog, ToastNotification)
+- Removed deprecated `UI_DEPTHS` and unused `UI_Z_INDEX` entries
+- Removed redundant double-mount in `GameOverlay`
+
+### Fixed
+
+- Misleading cursor and tint on sculpture/painting hover
+- Misleading `game_load_failed` events on normal startup
+- Duplicate `StartGame` call causing intro to replay mid-game
+- `EventBus.off` killing `useEventBridge` listener
+- Floor/quiz numbering order corrected to sculptures, paintings, photo
+- `minigame_started` triggered on first item interaction instead of drop/pickup
+- Phaser `destroy` DOM removal conflict by passing `false`
+- Collected clues destroyed and Pistas panel synced on reload
+- Collectibles saved on collection via `PersistenceBridge`
+- Voice names mapped to language codes in TTS route
+- Painting placeholder scales normalized in museum-mvp map
+- `secret_clues_collected` reset on scene create
+- Badge `changedata` listener registered after initialize completes
+- Badge toast removed from intro and map screens
+- Player sounds guarded against missing audio assets
+
+### Removed
+
+- Old per-artwork placeholder textures
+- Obsolete `UI_DEPTHS` and unused `UI_Z_INDEX` entries
+
+### Tests
+
+- AudioManager, Player sound, AudioAccessibilityService, useAudioAccessibility, MapInfoBox star display, QuizManager, TTS synthesize route, ToastNotification, ScorePanel
+
+### Chore
+
+- Added `RESPONSIVEVOICE_API_KEY` to Docker and compose files
+
+## [1.6.1] - 2026-07-24
+
+### Fixed
+
+- Chunk selector inventory visibility and scrollability (#571) — re-applied as a hotfix after a merge-base collision between `master` and `develop` silently dropped it during the v1.5.0 release
+
+## [1.6.0] - 2026-07-20
+
+### Added
+
+- Google Ads conversion measurement tag (gtag.js) on the root layout
+
 ## [1.5.0] - 2026-07-16
 
 ### Added

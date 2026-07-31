@@ -8,6 +8,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { GuestPlay } from "../auth/decorators/guest-play.decorator";
+import { SaveCollectiblesDto } from "./dto/save-collectibles.dto";
 import { SubmitScoreDto } from "./dto/submit-score.dto";
 import { UserCollectibleQueryDto } from "./dto/user-collectible-query.dto";
 import { ScoringService } from "./scoring.service";
@@ -42,6 +43,27 @@ export class ScoringController {
     @Query() query: UserCollectibleQueryDto,
   ): Promise<UserCollectible[]> {
     return this.userCollectibleService.findByUser(userId, query);
+  }
+
+  @GuestPlay()
+  @Post(":userId/collectibles")
+  async saveCollectibles(
+    @Param("userId") userId: string,
+    @Body() dto: SaveCollectiblesDto,
+    @Headers("x-guest-id") guestId: string | undefined,
+  ): Promise<{ success: true }> {
+    if (guestId) {
+      return { success: true };
+    }
+    await this.userCollectibleService.recordCollectibles(
+      dto.collectibles.map((c) => ({
+        userId,
+        collectibleId: c.collectibleId,
+        collectibleType: c.collectibleType,
+        levelId: c.levelId,
+      })),
+    );
+    return { success: true };
   }
 
   @GuestPlay()

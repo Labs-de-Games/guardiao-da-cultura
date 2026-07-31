@@ -9,6 +9,7 @@ export class Portal extends Phaser.GameObjects.Zone {
   public pairID: string | number;
   public targetPortal: Portal | null = null;
   private playerRef: Player | null = null;
+  private POSTER_OFFSET = { x: 40, y: 74 };
 
   constructor(
     scene: Phaser.Scene,
@@ -48,19 +49,39 @@ export class Portal extends Phaser.GameObjects.Zone {
     const p = this.playerRef;
 
     if (target && p) {
+      const body = p.body as Phaser.Physics.Arcade.Body | null;
+
+      if (!body || !body.blocked.down) return;
+      if (!p.isCarrying && p.getNearbyCarryableItem()) return;
       if (p.isInDialogue) return;
 
       p.isInDialogue = true;
       p.setVelocity(0, 0);
-      p.anims.play(PLAYER_ANIMS.BACK.key, true);
 
-      const body = p.body as Phaser.Physics.Arcade.Body | null;
+      const backAnim = p.isCarrying
+        ? PLAYER_ANIMS.BACK_CARRYING.key
+        : PLAYER_ANIMS.BACK.key;
+      p.anims.play(backAnim, true);
+
       if (body) {
         body.enable = false;
       }
 
       const originalScaleX = p.scaleX;
       const originalScaleY = p.scaleY;
+      const originalItemScaleX = p.carriedItem?.scaleX ?? 1;
+      const originalItemScaleY = p.carriedItem?.scaleY ?? 1;
+
+      if (p.isCarrying && p.carriedItem) {
+        this.scene.tweens.add({
+          targets: p.carriedItem,
+          scaleX: originalItemScaleX * (4 / originalScaleX),
+          scaleY: originalItemScaleY * (4 / originalScaleY),
+          alpha: 0,
+          duration: 500,
+          ease: "Cubic.in",
+        });
+      }
 
       this.scene.tweens.add({
         targets: p,
@@ -81,7 +102,34 @@ export class Portal extends Phaser.GameObjects.Zone {
           cam.pan(target.x, target.y, 1000, "Sine.easeInOut");
 
           this.scene.time.delayedCall(1000, () => {
-            p.anims.play(PLAYER_ANIMS.FRONT.key, true);
+            const frontAnim = p.isCarrying
+              ? PLAYER_ANIMS.FRONT_CARRYING.key
+              : PLAYER_ANIMS.FRONT.key;
+            p.anims.play(frontAnim, true);
+            p.setPortalExitIdleAnim(frontAnim);
+
+            if (p.isCarrying && p.carriedItem) {
+              const carriedItem = p.carriedItem;
+              const carriedItemBody = carriedItem.body as
+                | Phaser.Physics.Arcade.Body
+                | undefined;
+
+              carriedItem.setPosition(
+                target.x - this.POSTER_OFFSET.x,
+                target.y - this.POSTER_OFFSET.y,
+              );
+              carriedItemBody?.updateFromGameObject();
+
+              this.scene.tweens.add({
+                targets: carriedItem,
+                scaleX: originalItemScaleX,
+                scaleY: originalItemScaleY,
+                alpha: 1,
+                duration: 500,
+                ease: "Cubic.out",
+              });
+            }
+
             this.scene.tweens.add({
               targets: p,
               scaleX: originalScaleX,

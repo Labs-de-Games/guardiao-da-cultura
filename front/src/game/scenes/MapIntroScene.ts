@@ -1,4 +1,7 @@
+import Cookies from "js-cookie";
 import { Scene } from "phaser";
+import posthog from "posthog-js";
+import { createGamePersistence } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import {
@@ -6,6 +9,7 @@ import {
   AUTO_START_REGISTRY_KEY,
   AUTO_START_TICK_INTERVAL_MS,
 } from "../constants/AutoStart";
+import { LEVEL_02_ENABLED } from "../constants/FeatureFlags";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
@@ -37,7 +41,9 @@ export class MapIntroScene extends Scene {
   private readonly selectedUnavailableTint = 0x6b6767;
   private autoStartEvent?: Phaser.Time.TimerEvent;
   private autoStartStartMs = 0;
+  private homeEnteredAtMs = 0;
   private completedLevels: Record<string, CompletedLevelRecord> = {};
+  private maxUnlockedLevel: number = 1; // from cookie or progression:updated
 
   private readonly handleResize = () => {
     this.layout();
@@ -54,6 +60,9 @@ export class MapIntroScene extends Scene {
   }
 
   create() {
+    posthog.capture("game_home_viewed");
+    this.homeEnteredAtMs = Date.now();
+
     this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);
 
@@ -69,8 +78,13 @@ export class MapIntroScene extends Scene {
       marker.setInteractive({ useHandCursor: true });
       marker.on("pointerdown", () => {
         if (this.activeMarkerIndex === index) {
-          this.beginGame();
+          this.beginGame("marker_click");
         } else {
+          posthog.capture("map_pin_clicked", {
+            marker_id: markerData.id,
+            level_id: markerData.levelId,
+            is_available: this.isMarkerAvailable(index),
+          });
           this.cancelAutoStart("cycled");
           this.activeMarkerIndex = index;
           this.emitMarkerChanged();
@@ -80,8 +94,8 @@ export class MapIntroScene extends Scene {
       this.markerViews.set(markerData.id, { marker });
     });
 
-    onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame());
-    onKeyDown(this, Actions.CONFIRM, () => this.beginGame());
+    onKeyDown(this, Actions.BEGIN_GAME, () => this.beginGame("spacebar"));
+    onKeyDown(this, Actions.CONFIRM, () => this.beginGame("confirm"));
     onKeyDown(this, Actions.CYCLE_FORWARD, this.cycleMarkerForward);
     onKeyDown(this, Actions.CYCLE_BACKWARD, this.cycleMarkerBackward);
 
@@ -89,9 +103,35 @@ export class MapIntroScene extends Scene {
 
     this.scale.on("resize", this.handleResize);
 
-    const storedProgression = useGameUIStore.getState().progression;
+    const store = useGameUIStore.getState();
+    const storedProgression = store.progression;
     if (storedProgression?.completedLevels) {
       this.completedLevels = storedProgression.completedLevels;
+    } else {
+      const userId = this.game.registry.get("userId") as string | null;
+      const isGuest = this.game.registry.get("isGuest") as boolean;
+      const mode = isGuest || !userId ? "guest" : "auth";
+      const actorId = userId ?? "";
+      const persistence = createGamePersistence({ mode, actorId });
+      void persistence.loadProgress().then((snapshot) => {
+        if (snapshot?.completedLevels) {
+          useGameUIStore.getState().setProgression(snapshot);
+          this.completedLevels = snapshot.completedLevels;
+          this.layout();
+          this.emitMarkerChanged();
+        }
+      });
+    }
+    if (storedProgression?.currentLevel) {
+      this.maxUnlockedLevel = storedProgression.currentLevel;
+    }
+
+    // Seed from cookie (last persisted value, available before API responds)
+    const levelCookie = Cookies.get("currentLevel");
+    if (levelCookie) {
+      const parsed = parseInt(levelCookie, 10);
+      if (!isNaN(parsed))
+        this.maxUnlockedLevel = Math.max(this.maxUnlockedLevel, parsed);
     }
 
     if (process.env.NODE_ENV === "development") {
@@ -110,6 +150,12 @@ export class MapIntroScene extends Scene {
 
     const onProgression = (data: UserProgressState) => {
       this.completedLevels = data.completedLevels;
+      if (data.currentLevel) {
+        this.maxUnlockedLevel = Math.max(
+          this.maxUnlockedLevel,
+          data.currentLevel,
+        );
+      }
       this.layout();
       this.emitMarkerChanged();
     };
@@ -119,6 +165,9 @@ export class MapIntroScene extends Scene {
       this.scale.off("resize", this.handleResize);
       this.cancelAutoStart("shutdown");
       EventBus.off("progression:updated", onProgression, this);
+      posthog.capture("game_home_dwell_time", {
+        dwell_ms: Date.now() - this.homeEnteredAtMs,
+      });
     });
 
     this.layout();
@@ -127,15 +176,24 @@ export class MapIntroScene extends Scene {
     this.maybeStartAutoStart();
   }
 
-  private beginGame() {
+  private beginGame(
+    source: "spacebar" | "confirm" | "marker_click" | "auto_start",
+  ) {
     this.cancelAutoStart("started");
     const marker = MARKERS[this.activeMarkerIndex];
     if (!this.isMarkerAvailable(this.activeMarkerIndex) || !marker.levelId) {
       return;
     }
 
-    if (marker.levelId === "level_01") {
-      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: "level_01" });
+    if (source === "spacebar") {
+      posthog.capture("game_started_with_spacebar", {
+        marker_id: marker.id,
+        level_id: marker.levelId,
+      });
+    }
+
+    if (marker.levelId) {
+      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: marker.levelId });
     }
   }
 
@@ -164,7 +222,7 @@ export class MapIntroScene extends Scene {
           this.autoStartEvent = undefined;
           event?.remove();
           EventBus.emit("map:auto-start-completed", undefined);
-          this.beginGame();
+          this.beginGame("auto_start");
         }
       },
     });
@@ -182,9 +240,17 @@ export class MapIntroScene extends Scene {
   }
 
   private isMarkerAvailable(index: number): boolean {
-    if (index === 0) return true;
-    const prev = MARKERS[index - 1];
-    return !!(prev.levelId && this.completedLevels[prev.levelId]);
+    const marker = MARKERS[index];
+    // Feature-gate level 02 so it doesn't appear unlocked on the map
+    // before it's ready to ship.
+    if (marker?.levelId === "level_02" && !LEVEL_02_ENABLED) {
+      return false;
+    }
+
+    // index is 0-based; maxUnlockedLevel is 1-based (level number)
+    // e.g. maxUnlockedLevel=1 → only index 0 (level_01) is available
+    //      maxUnlockedLevel=2 → index 0 and 1 are available
+    return index < this.maxUnlockedLevel;
   }
 
   private emitMarkerChanged() {

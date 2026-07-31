@@ -4,6 +4,7 @@
 export enum InteractiveType {
   SCULPTURE = "sculpture",
   PAINTING = "painting",
+  POSTER = "poster",
   PHOTO_CHUNK = "photo_chunk",
   PHOTO = "photo",
   COSTUME = "costume",

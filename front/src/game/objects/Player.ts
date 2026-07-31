@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio";
 import { Actions } from "../constants/KeyBindings";
 import { getKeys } from "../systems/InputManager";
 import type { IPlayerState } from "../types/EntityTypes";
@@ -27,11 +28,15 @@ export class Player
   private carryableRegistry: CarryableItem[] = [];
   private inventory: CarryableItem[] = [];
   private grabbedItem: DraggableItem | null = null;
-  private carriedItem: CarryableItem | null = null;
+  public carriedItem: CarryableItem | null = null;
   public isGrabbing: boolean = false;
   public isCarrying: boolean = false;
+  private portalExitIdleAnim: string | null = null;
   private grabOffset: number = 0;
   private grabOffsetY: number = 0;
+  private dragLoopSound: Phaser.Sound.BaseSound | null = null;
+  private footstepSound: Phaser.Sound.BaseSound | null = null;
+  private climbLoopSound: Phaser.Sound.BaseSound | null = null;
 
   // Coyote Time Variables
   private coyoteTime = 200;
@@ -127,11 +132,27 @@ export class Player
       },
     );
     scene.load.spritesheet(
+      PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.key,
+      PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
       PLAYER_ASSETS.FRONT_SPRITESHEET.key,
       PLAYER_ASSETS.FRONT_SPRITESHEET.path,
       {
         frameWidth: PLAYER_ASSETS.FRONT_SPRITESHEET.frameWidth,
         frameHeight: PLAYER_ASSETS.FRONT_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.key,
+      PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameHeight,
       },
     );
   }
@@ -237,12 +258,34 @@ export class Player
       repeat: PLAYER_ANIMS.BACK.repeat,
     });
     scene.anims.create({
+      key: PLAYER_ANIMS.BACK_CARRYING.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.BACK_CARRYING.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.BACK_CARRYING.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.BACK_CARRYING.frameRate,
+      repeat: PLAYER_ANIMS.BACK_CARRYING.repeat,
+    });
+    scene.anims.create({
       key: PLAYER_ANIMS.FRONT.key,
       frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.FRONT.spritesheet, {
         frames: [...PLAYER_ANIMS.FRONT.frames],
       }),
       frameRate: PLAYER_ANIMS.FRONT.frameRate,
       repeat: PLAYER_ANIMS.FRONT.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.FRONT_CARRYING.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.FRONT_CARRYING.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.FRONT_CARRYING.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.FRONT_CARRYING.frameRate,
+      repeat: PLAYER_ANIMS.FRONT_CARRYING.repeat,
     });
   }
 
@@ -280,6 +323,19 @@ export class Player
       Phaser.GameObjects.Events.DESTROY,
       () => {
         this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this);
+        // Clean up sounds
+        if (this.dragLoopSound) {
+          this.dragLoopSound.destroy();
+          this.dragLoopSound = null;
+        }
+        if (this.footstepSound) {
+          this.footstepSound.destroy();
+          this.footstepSound = null;
+        }
+        if (this.climbLoopSound) {
+          this.climbLoopSound.destroy();
+          this.climbLoopSound = null;
+        }
       },
       this,
     );
@@ -292,6 +348,42 @@ export class Player
 
   setCarryableRegistry(items: CarryableItem[]) {
     this.carryableRegistry = items;
+  }
+
+  public setPortalExitIdleAnim(animKey: string) {
+    this.portalExitIdleAnim = animKey;
+  }
+
+  private clearPortalExitIdleAnim() {
+    this.portalExitIdleAnim = null;
+  }
+
+  public getNearbyCarryableItem(): CarryableItem | null {
+    const GRAB_DIST = 150; // Matches carry toggle pickup range
+    let closestItem: CarryableItem | null = null;
+    let minDist: number = GRAB_DIST;
+
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
+
+    for (const item of this.carryableRegistry) {
+      if (!item.input?.enabled || item.isCarried) continue;
+
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
+
+      if (dist < minDist) {
+        minDist = dist;
+        closestItem = item;
+      }
+    }
+
+    return closestItem;
   }
 
   setCollisionLayers(layers: Phaser.Tilemaps.TilemapLayer[]) {
@@ -413,6 +505,8 @@ export class Player
     const isOnStairs = isOnStairsCenter || isOnStairsBottom;
 
     if (this.isInDialogue) {
+      // Stop movement sounds when in dialogue
+      this.stopMovementSounds();
       this.applyMovementRestriction(isOnStairs);
       return;
     }
@@ -421,6 +515,12 @@ export class Player
     const downDown = this.keys.down.isDown || this.keys.s.isDown;
 
     if (!isOnStairs) {
+      // Stop climb loop sound when leaving stairs
+      if (this.isClimbingStairs && this.climbLoopSound) {
+        this.climbLoopSound.stop();
+        this.climbLoopSound.destroy();
+        this.climbLoopSound = null;
+      }
       this.isClimbingStairs = false;
     } else {
       const isJumpAnimActive =
@@ -455,6 +555,20 @@ export class Player
       !this.isGrabbing &&
       !this.isCarrying;
 
+    // Start/stop climb loop sound based on whether player is actively moving on stairs
+    if (isClimbing) {
+      if (!this.climbLoopSound) {
+        this.climbLoopSound = this.addLoopingSound("sfx.player.climb", 0.3);
+      }
+    } else {
+      // Stop climb loop sound when not actively climbing
+      if (this.climbLoopSound) {
+        this.climbLoopSound.stop();
+        this.climbLoopSound.destroy();
+        this.climbLoopSound = null;
+      }
+    }
+
     if (isOnStairs && this.isClimbingStairs && !this.isGrabbing) {
       // Prevent climbing while carrying paintings
       if (this.isCarrying) {
@@ -476,6 +590,10 @@ export class Player
 
     const leftDown = this.keys.left.isDown || this.keys.a.isDown;
     const rightDown = this.keys.right.isDown || this.keys.d.isDown;
+
+    if (this.portalExitIdleAnim && (leftDown || rightDown)) {
+      this.clearPortalExitIdleAnim();
+    }
 
     // Determines if the climbing animation should be paused on the current frame.
     // This keeps the player suspended on the stairs in a paused climbing stance.
@@ -549,12 +667,41 @@ export class Player
           if (!this.isGrabbing) this.setFlipX(false);
         }
       } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
+        if (this.portalExitIdleAnim) {
+          const changed =
+            this.anims.currentAnim?.key !== this.portalExitIdleAnim;
+          this.anims.play(this.portalExitIdleAnim, true);
+          if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+          return;
+        }
+
         const idleAnim = this.isCarrying
           ? PLAYER_ANIMS.CARRY_IDLE.key
           : PLAYER_ANIMS.IDLE.key;
         const changed = this.anims.currentAnim?.key !== idleAnim;
         this.anims.play(idleAnim, true);
         if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+      }
+    }
+
+    // Footstep sound - play while walking on ground
+    const isWalkingOnGround =
+      body?.blocked.down &&
+      !this.isGrabbing &&
+      !this.isClimbingStairs &&
+      !isJumpPlaying &&
+      (leftDown || rightDown) &&
+      Math.abs(body.velocity.x) > 10;
+
+    if (isWalkingOnGround && !this.isInDialogue) {
+      if (!this.footstepSound) {
+        this.footstepSound = this.addLoopingSound("sfx.player.footstep", 0.2);
+      }
+    } else {
+      if (this.footstepSound) {
+        this.footstepSound.stop();
+        this.footstepSound.destroy();
+        this.footstepSound = null;
       }
     }
 
@@ -567,7 +714,12 @@ export class Player
       itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
+      // Play drag loop sound only when moving
       if (isMoving) {
+        if (!this.dragLoopSound) {
+          this.dragLoopSound = this.addLoopingSound("sfx.object.drag_loop", 1);
+        }
+
         const isPushing =
           (body.velocity.x > 0 && this.grabOffset > 0) ||
           (body.velocity.x < 0 && this.grabOffset < 0);
@@ -577,6 +729,13 @@ export class Player
           this.anims.play(PLAYER_ANIMS.PULL.key, true);
         }
       } else {
+        // Stop drag loop when not moving
+        if (this.dragLoopSound) {
+          AudioManager.playSfxVariation("sfx.object.drop", 2, 0.2);
+          this.dragLoopSound.stop();
+          this.dragLoopSound.destroy();
+          this.dragLoopSound = null;
+        }
         this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
       }
     }
@@ -597,6 +756,7 @@ export class Player
       // Apply jump velocity
       this.hasJumped = true;
       this.setVelocityY(PLAYER_MOVEMENT.JUMP_VELOCITY_Y);
+      AudioManager.playSfx("sfx.player.jump", 0.4);
 
       // Add platform inertia: inherit horizontal velocity from moving platform
       if (this.standingPlatform) {
@@ -639,7 +799,7 @@ export class Player
       const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
-      this.carriedItem.setDepth(this.depth + 1);
+      this.carriedItem.setDepth(this.depth + 2);
     }
   }
 
@@ -709,6 +869,16 @@ export class Player
 
   private tryToggleCarry(): boolean {
     if (this.isCarrying && this.carriedItem) {
+      const body = this.body as Phaser.Physics.Arcade.Body | null;
+      const carriedType = this.carriedItem.interactiveType;
+      const requiresGroundToDrop =
+        carriedType === InteractiveType.POSTER ||
+        carriedType === InteractiveType.PAINTING;
+
+      if (requiresGroundToDrop && !body?.blocked.down) {
+        return false;
+      }
+
       this.carriedItem.setCarried(false);
       this.scene.events.emit("item-dropped", this.carriedItem);
       this.carriedItem = null;
@@ -718,28 +888,7 @@ export class Player
     }
 
     if (this.isGrabbing || !this.body?.blocked.down) return false;
-
-    const GRAB_DIST = 150; // More lenient for air-pickup
-    let closestItem: CarryableItem | null = null;
-    let minDist: number = GRAB_DIST;
-
-    const playerFootY = this.body
-      ? this.body.bottom
-      : this.y + this.displayHeight / 2;
-    for (const item of this.carryableRegistry) {
-      if (!item.input?.enabled || item.isCarried) continue;
-
-      const dist = Phaser.Math.Distance.Between(
-        this.x,
-        playerFootY,
-        item.x,
-        item.y,
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        closestItem = item;
-      }
-    }
+    const closestItem = this.getNearbyCarryableItem();
 
     if (closestItem) {
       if (closestItem.interactiveType === InteractiveType.PHOTO_CHUNK) {
@@ -790,6 +939,13 @@ export class Player
       body.setVelocity(0, 0);
     }
 
+    // Stop drag loop sound
+    if (this.dragLoopSound) {
+      this.dragLoopSound.stop();
+      this.dragLoopSound.destroy();
+      this.dragLoopSound = null;
+    }
+
     if (this.grabbedItem) {
       this.grabbedItem.setGrabbed(false);
       this.grabbedItem.setDepth(10);
@@ -827,7 +983,9 @@ export class Player
 
     if (
       this.anims.currentAnim?.key === PLAYER_ANIMS.BACK.key ||
-      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key
+      this.anims.currentAnim?.key === PLAYER_ANIMS.BACK_CARRYING.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT_CARRYING.key
     ) {
       return;
     }
@@ -849,6 +1007,48 @@ export class Player
       ? PLAYER_ANIMS.CARRY_IDLE.key
       : PLAYER_ANIMS.IDLE.key;
     this.anims.play(idleAnim, true);
+  }
+
+  /**
+   * Safely add a looping sound only if its asset is loaded in the audio cache.
+   * Returns null when the sound key is missing so the game keeps running
+   * even before all audio assets have been preloaded.
+   */
+  private addLoopingSound(
+    key: string,
+    baseVolume: number,
+  ): Phaser.Sound.BaseSound | null {
+    if (!this.scene.game.cache.audio.has(key)) return null;
+    const settings = AudioManager.getSettings();
+    const sound = this.scene.sound.add(key, {
+      loop: true,
+      volume: baseVolume * settings.sfxVolume,
+      mute: settings.muted,
+    });
+    sound.play();
+    return sound;
+  }
+
+  /**
+   * Stop all movement-related sounds.
+   * Called when entering dialogue or other states that restrict movement.
+   */
+  private stopMovementSounds(): void {
+    if (this.climbLoopSound) {
+      this.climbLoopSound.stop();
+      this.climbLoopSound.destroy();
+      this.climbLoopSound = null;
+    }
+    if (this.footstepSound) {
+      this.footstepSound.stop();
+      this.footstepSound.destroy();
+      this.footstepSound = null;
+    }
+    if (this.dragLoopSound) {
+      this.dragLoopSound.stop();
+      this.dragLoopSound.destroy();
+      this.dragLoopSound = null;
+    }
   }
 }
 

@@ -11,6 +11,7 @@ export interface LevelDefinition {
   title: string;
   maxStars: number;
   initialGrayscale: number;
+  activeMissions: string[];
   map: {
     key: string;
     json: string;
@@ -35,10 +36,11 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     title: MAP_MARKERS[0].title,
     maxStars: 2,
     initialGrayscale: 0.82,
+    activeMissions: ["missao_curador"],
     map: {
-      key: "map",
+      key: "map_level_01",
       json: "maps/museum-mvp/map.json",
-      tileset: "tiles",
+      tileset: "tiles_level_01",
       tilesetImg: "maps/museum-mvp/spritesheet.png",
       tilesetName: "museum",
     },
@@ -54,25 +56,24 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   level_02: {
     id: "level_02",
     levelNumber: 2,
-    // index 2, Teatro Amazonas, not 1 — matches the map/tileset below
-    title: MAP_MARKERS[2].title,
+    title: MAP_MARKERS[1].title,
     maxStars: 2,
     initialGrayscale: 0.82,
+    activeMissions: ["missao_curador_l2"],
     map: {
-      key: "map",
+      key: "map_level_02",
       json: "maps/teatro-amazonas/map.json",
-      tileset: "tiles",
+      tileset: "tiles_level_02",
       tilesetImg: "maps/teatro-amazonas/spritesheet.png",
       tilesetName: "teatro",
     },
     data: {
-      // using level 1 data temporarily
       works: ["data/levels/level_02/works.json"],
-      quizzes: ["data/levels/level_01/quizzes.json"],
-      intermediateQuizzes: ["data/levels/level_01/intermediate-quizzes.json"],
-      npcs: ["data/levels/level_01/npcs.json"],
+      quizzes: ["data/levels/level_02/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
+      npcs: ["data/levels/level_02/npcs.json"],
       messages: ["data/global/messages.json"],
-      collectibles: ["data/levels/level_01/collectibles.json"],
+      collectibles: ["data/levels/level_01/collectibles.json"], // mock from level_01
     },
   },
 };
@@ -86,24 +87,16 @@ export const LEVEL_ASSETS = {
         path: "artworks/sculptures/edgards_sem_titulo_i_fundidos.png",
       },
       {
-        key: "edgards_sem_titulo_i_fundidos_ph",
-        path: "artworks/sculptures/edgards_sem_titulo_i_fundidos_ph.png",
-      },
-      {
         key: "edgards_sem_titulo_ii_flexao",
         path: "artworks/sculptures/edgards_sem_titulo_ii_flexao.png",
-      },
-      {
-        key: "edgards_sem_titulo_ii_flexao_ph",
-        path: "artworks/sculptures/edgards_sem_titulo_ii_flexao_ph.png",
       },
       {
         key: "edgards_sem_titulo_iii_em_pe",
         path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe.png",
       },
       {
-        key: "edgards_sem_titulo_iii_em_pe_ph",
-        path: "artworks/sculptures/edgards_sem_titulo_iii_em_pe_ph.png",
+        key: "standard_sculpture_placeholder",
+        path: "artworks/sculptures/standard_sculpture_placeholder.png",
       },
     ],
     PAINTINGS: [
@@ -112,32 +105,20 @@ export const LEVEL_ASSETS = {
         path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi.png",
       },
       {
-        key: "abdiasn_invocacao_noturna_oxossi_ph",
-        path: "artworks/paintings/abdiasn_invocacao_noturna_oxossi_ph.png",
-      },
-      {
         key: "abdiasn_oke_oxossi",
         path: "artworks/paintings/abdiasn_oke_oxossi.png",
-      },
-      {
-        key: "abdiasn_oke_oxossi_ph",
-        path: "artworks/paintings/abdiasn_oke_oxossi_ph.png",
       },
       {
         key: "abdiasn_oxum_em_extase",
         path: "artworks/paintings/abdiasn_oxum_em_extase.png",
       },
       {
-        key: "abdiasn_oxum_em_extase_ph",
-        path: "artworks/paintings/abdiasn_oxum_em_extase_ph.png",
-      },
-      {
         key: "abdiasn_xango_rodrigues_alves",
         path: "artworks/paintings/abdiasn_xango_rodrigues_alves.png",
       },
       {
-        key: "abdiasn_xango_rodrigues_alves_ph",
-        path: "artworks/paintings/abdiasn_xango_rodrigues_alves_ph.png",
+        key: "standard_painting_placeholder",
+        path: "artworks/paintings/standard_painting_placeholder.png",
       },
     ],
     CHUNKS: [
@@ -168,19 +149,51 @@ export const LEVEL_ASSETS = {
     PAINTINGS: [
       {
         key: "ajuricaba",
-        path: "artworks/paintings/ajuricaba.png",
+        path: "artworks/posters/cartazes/ajuricaba.png",
       },
       {
         key: "anel-do-nibelungo",
-        path: "artworks/paintings/anel-do-nibelungo.png",
+        path: "artworks/posters/cartazes/anel-do-nibelungo.png",
       },
       {
         key: "opera-do-malandro",
-        path: "artworks/paintings/opera-do-malandro.png",
+        path: "artworks/posters/cartazes/opera-do-malandro.png",
       },
       {
         key: "zona-franca",
-        path: "artworks/paintings/zona-franca.png",
+        path: "artworks/posters/cartazes/zona-franca.png",
+      },
+      {
+        key: "zona-franca-framed",
+        path: "artworks/posters/cartazes/zona-franca-framed.png",
+      },
+      {
+        key: "opera-do-malandro-framed",
+        path: "artworks/posters/cartazes/opera-do-malandro-framed.png",
+      },
+      {
+        key: "ajuricaba-framed",
+        path: "artworks/posters/cartazes/ajuricaba-framed.png",
+      },
+      {
+        key: "anel-do-nibelungo-framed",
+        path: "artworks/posters/cartazes/anel-do-nibelungo-framed.png",
+      },
+      {
+        key: "frame-date-ajuricaba",
+        path: "artworks/posters/cartazes/frame-date-ajuricaba.png",
+      },
+      {
+        key: "frame-date-malandro",
+        path: "artworks/posters/cartazes/frame-date-malandro.png",
+      },
+      {
+        key: "frame-date-nibelungo",
+        path: "artworks/posters/cartazes/frame-date-nibelungo.png",
+      },
+      {
+        key: "frame-date-zona-franca",
+        path: "artworks/posters/cartazes/frame-date-zona-franca.png",
       },
     ],
     CHUNKS: [],
@@ -205,6 +218,10 @@ export const LEVEL_ASSETS = {
       { key: "malandro_torso", path: "artworks/costumes/malandro_torso.png" },
       { key: "malandro_feet", path: "artworks/costumes/malandro_feet.png" },
       { key: "pedestal", path: "artworks/costumes/pedestal.png" },
+      {
+        key: "poster-label",
+        path: "misc/poster-label.png",
+      },
     ],
     COLLECTIBLES: [],
     CONTENT: {
