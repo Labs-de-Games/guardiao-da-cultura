@@ -1,3 +1,4 @@
+import Cookies from "js-cookie";
 import posthog from "posthog-js";
 import {
   createGamePersistence,
@@ -42,6 +43,15 @@ export class PersistenceBridge {
       }
     } catch (err) {
       console.warn("[PersistenceBridge] Failed to load collectibles:", err);
+    }
+  }
+
+  async saveCollectibles(): Promise<void> {
+    try {
+      const collectibles = this.collectibleSystem.getCollectedCollectibles();
+      await this.persistence.saveCollectibles(this.levelId, collectibles);
+    } catch (err) {
+      console.warn("[PersistenceBridge] Failed to save collectibles:", err);
     }
   }
 
@@ -117,6 +127,8 @@ export class PersistenceBridge {
     try {
       const state = this.progressionManager.getState();
       await this.persistence.saveProgress(state);
+      // Keep the cookie in sync so MapIntroScene can read it on the next visit
+      Cookies.set("currentLevel", String(state.currentLevel), { expires: 365 });
     } catch (err) {
       console.error(
         "[PersistenceBridge] Failed to save progression in persistence layer:",

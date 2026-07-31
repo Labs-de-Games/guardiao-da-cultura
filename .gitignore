@@ -16,3 +16,4 @@ back/.env
 
 # misc
 .DS_Store
+.serena/

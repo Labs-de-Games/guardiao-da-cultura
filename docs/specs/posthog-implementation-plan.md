@@ -765,6 +765,24 @@ public showResults(
 - **Player refreshes before ResultPanel:** The `pendingFirstStarSurvey` flag is in Phaser's scene registry, so it survives scene restarts but not full page refreshes. If the player refreshes mid-level, they will re-earn the star, and the flag will be set again. This is acceptable — the survey will trigger on the next level completion.
 - **PostHog not loaded:** If PostHog fails to initialize, the `posthog.capture()` call is a no-op (or throws a safe error if not guarded). The game continues unaffected.
 
+### NPS Survey — "Guardião da Cultura" (Issue #584)
+
+**Goal:** Show the NPS survey exactly once, only after the player finishes the intermediate quiz that follows the paintings challenge on level 1 ("segundo andar"). It must not appear before, during, or after any other minigame/quiz, nor on other levels.
+
+**Blocked by:** [#602](https://github.com/Labs-de-Games/gameplate/pull/602) (`feat(front): add gameplay analytics events`).
+
+`intermediate_quiz_completed` already fires today for every minigame quiz (`level_id`, `info_key`, `score`, `total_questions`, `passed`), but `info_key` is a raw content-authoring string from each level's `intermediate-quizzes.json` — not a documented, stable identifier. #602 adds `quiz_number` to this same event specifically to give analytics a stable, level-agnostic way to identify which minigame quiz just completed, and documents it in `EVENTS.md` for the first time.
+
+Per review feedback on #602, the corrected numbering is `sculptures=1, paintings=2, photo=3` (gameplay order), not the alphabetical order originally proposed.
+
+**PostHog Survey trigger, once #602 merges:**
+- Trigger: "When an event is captured" → `intermediate_quiz_completed`
+- Property filter 1: `level_id = level_01`
+- Property filter 2: `quiz_number = 2` (paintings)
+- Frequency: "Once ever" (already the current survey setting)
+
+Do not configure this trigger using `info_key` (e.g. `paintings_done`) as a stand-in until #602 lands — that value is a content key, not part of the event's documented contract, and isn't guaranteed to stay the same across levels.
+
 ---
 
 ## Error Tracking

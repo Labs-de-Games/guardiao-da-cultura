@@ -7,6 +7,7 @@ import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import type { ChunkArrowDir } from "@/game/objects/ui/chunkSelectorNavigation";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 
 import {
   buildInitialState,
@@ -300,12 +301,16 @@ export function ChunkSelectorPanel() {
   if (!chunkSelectorOpen || !chunkSelectorData) return null;
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      autoScroll={{ threshold: { x: 0, y: 0.5 }, acceleration: 20 }}
+    >
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          zIndex: 40,
+          zIndex: UI_LAYERS.FULLSCREEN,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -318,7 +323,7 @@ export function ChunkSelectorPanel() {
           sx={{
             width: "min(1000px, 96vw)",
             maxHeight: "92vh",
-            overflow: "hidden",
+            overflow: "auto",
             bgcolor: LayoutConfig.COLORS.PANEL_BG_CSS,
             borderRadius: "16px",
             border: `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
@@ -358,6 +363,10 @@ export function ChunkSelectorPanel() {
                   {feedbackMessage}
                 </Typography>
               )}
+              <Typography sx={{ color: "#a8a8a8", fontSize: "13px", mt: 1 }}>
+                Aperte WASD ou setas para navegar | ENTER para selecionar e
+                confirmar
+              </Typography>
             </Box>
             <Button
               variant="text"
@@ -517,11 +526,6 @@ export function ChunkSelectorPanel() {
               </Box>
             </Paper>
           </Box>
-
-          <Typography sx={{ color: "#a8a8a8", fontSize: "13px" }}>
-            Aperte WASD ou setas para navegar | ENTER para selecionar e
-            confirmar
-          </Typography>
         </Paper>
       </Box>
       <DragOverlay dropAnimation={null}>

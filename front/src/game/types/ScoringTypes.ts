@@ -66,7 +66,7 @@ export interface ScoringPayload {
   levelId: string;
   startedAt: IsoTimestamp;
 
-  floors: [FloorScore, FloorScore, FloorScore];
+  floors: FloorScore[];
   quiz: QuizScore;
   intermediateQuizzes: IntermediateQuizzesScore;
 

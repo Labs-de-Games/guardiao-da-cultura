@@ -24,7 +24,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
   private readonly startedAt: IsoTimestamp;
   private updatedAt: IsoTimestamp;
 
-  private floors: [FloorScore, FloorScore, FloorScore];
+  private floors: FloorScore[];
   private quiz: QuizScore;
   private intermediateQuizzes: IntermediateQuizzesScore;
   private events: ScoringEventRecord[];
@@ -35,21 +35,15 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     this.floorsTotal = options.floorsTotal ?? 3;
     this.intermediateQuizzesTotal = options.intermediateQuizzesTotal ?? 3;
 
-    if (this.floorsTotal !== 3) {
-      throw new Error(
-        `[ScoreManager] MVP expects floorsTotal=3, got ${this.floorsTotal}`,
-      );
-    }
-
     this.startedAt = this.nowIso();
     this.updatedAt = this.startedAt;
 
-    this.floors = [0, 1, 2].map((i) => ({
+    this.floors = Array.from({ length: 4 }).map((_, i) => ({
       floorIndex: i,
       errors: 0,
       quartersEarned: 0 as 0 | 1 | 2,
       completedAt: null,
-    })) as [FloorScore, FloorScore, FloorScore];
+    }));
 
     this.quiz = {
       totalQuestions: 0,
@@ -204,11 +198,7 @@ export class ScoreManager extends Phaser.Events.EventEmitter {
     return {
       levelId: this.levelId,
       startedAt: this.startedAt,
-      floors: this.floors.map((floor) => ({ ...floor })) as [
-        FloorScore,
-        FloorScore,
-        FloorScore,
-      ],
+      floors: this.floors.map((floor) => ({ ...floor })),
       quiz: { ...this.quiz },
       intermediateQuizzes: { ...this.intermediateQuizzes },
       totalQuarters,

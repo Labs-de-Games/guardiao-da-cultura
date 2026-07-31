@@ -23,3 +23,12 @@ export const GAME_UI_TOKENS = {
     small: 8,
   },
 } as const;
+
+export const UI_LAYERS = {
+  HUD: 100,
+  SIDE_PANEL: 200,
+  IN_WORLD: 300,
+  PANEL: 400,
+  FULLSCREEN: 500,
+  NOTIFICATION: 600,
+} as const;

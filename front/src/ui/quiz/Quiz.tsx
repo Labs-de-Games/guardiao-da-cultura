@@ -7,7 +7,10 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LEVEL_02_ENABLED } from "@/game/constants/FeatureFlags";
+import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
+import { UI_LAYERS } from "@/ui/theme/tokens";
 import { useGameUIStore } from "../state/game-ui-store";
 
 type ProgressState = "success" | "error" | "current" | "future";
@@ -176,6 +179,7 @@ export default function QuizPanel() {
   const selectedOptionIndex = quiz.selectedOptionIndex;
   const moveSelection = useGameUIStore((s) => s.moveSelection);
   const selectOption = useGameUIStore((s) => s.selectOption);
+  const { speak } = useAudioAccessibility();
 
   const [selectedNavIndex, setSelectedNavIndex] = useState(1);
 
@@ -274,6 +278,10 @@ export default function QuizPanel() {
       EventBus.emit("quiz:close", undefined);
     } else if (isRetryMode) {
       EventBus.emit("quiz:retry", undefined);
+    } else if (LEVEL_02_ENABLED) {
+      // Level 02 is available: close the quiz and go back to the map
+      // where the next level is already unlocked.
+      EventBus.emit("quiz:close", undefined);
     } else {
       useGameUIStore.getState().openInterestDialog();
     }
@@ -399,7 +407,7 @@ export default function QuizPanel() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: UI_LAYERS.FULLSCREEN,
         bgcolor: "rgba(0,0,0,0.6)",
         pointerEvents: "auto",
       }}
@@ -626,8 +634,12 @@ export default function QuizPanel() {
                   spacing={4}
                   sx={{ alignItems: "center" }}
                 >
-                  {/*<Button
+                  <Button
                     disableElevation
+                    onClick={() =>
+                      currentQuestion?.question &&
+                      speak(currentQuestion.question)
+                    }
                     sx={{
                       minWidth: 0,
                       p: 0.5,
@@ -640,7 +652,7 @@ export default function QuizPanel() {
                       src="/assets/ui/tts-icon.png"
                       sx={{ width: 32, height: 32, objectFit: "contain" }}
                     />
-                  </Button>*/}
+                  </Button>
                   <Typography
                     sx={{
                       fontFamily: "'Jockey One', sans-serif",
