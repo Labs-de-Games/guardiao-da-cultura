@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import { CostumeMechanicHandler } from "../mechanics/handlers/CostumeMechanicHandler";
 import type { CarryableItem } from "../objects/interactives/CarryableItem";
 import type { DraggableItem } from "../objects/interactives/DraggableItem";
 import { InteractiveType } from "../types/InteractiveTypes";
@@ -62,7 +63,9 @@ export class PlaceholderSystem {
         state:
           typeStr === InteractiveType.PHOTO
             ? { filledSlots: [null, null, null, null] }
-            : {},
+            : typeStr === InteractiveType.COSTUME
+              ? { ...CostumeMechanicHandler.createInitialState() }
+              : {},
         scale: rawScale !== undefined ? Number(rawScale) : undefined,
       });
     });
@@ -111,7 +114,7 @@ export class PlaceholderSystem {
       container.setDepth(10);
       instance.hintSprite = container;
     } else if (config.type === InteractiveType.COSTUME) {
-      const { TEXTURES, CELL_W, CELL_H, PART_DEFAULTS } = LayoutConfig.COSTUME;
+      const { TEXTURES, PART_DEFAULTS } = LayoutConfig.COSTUME;
       const container = this.scene.add.container(rect.centerX, rect.centerY);
 
       const scale = config.scale ?? 1;
