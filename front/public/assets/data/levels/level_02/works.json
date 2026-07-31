@@ -4,16 +4,16 @@
       "id": "sam",
       "type": "Sculpture",
       "metadata": {
-        "title": "Sam",
-        "author": "",
-        "year": "",
+        "title": "Estrangeiro",
+        "author": "Márcio Souza",
+        "year": "1968",
         "place": ""
       },
       "educational": {
-        "description": "",
+        "description": "Uma pessoa que não entende nada da cultura, do ambiente nem do povo do Amazonas, mas que manda no lugar e é tratada como um rei.\n\nNa peça “Zona Franca, meu amor”, ele pega as sementes de seringueira para plantar na Ásia e ganhar dinheiro com borracha, acabando com o domínio dos barões.",
         "medium": "",
-        "opinion": "",
-        "feedbackError": "",
+        "opinion": "Um homem com roupas nas cores azul, vermelho e branco. Ele é diferente das pessoas que vi por aqui no Amazonas.",
+        "feedbackError": "Aqui deve ter um homem na posição de comando.",
         "hint": ""
       },
       "assets": {
@@ -24,16 +24,16 @@
       "id": "soldado-caixa",
       "type": "Sculpture",
       "metadata": {
-        "title": "Soldado Caixa",
-        "author": "",
-        "year": "",
+        "title": "Militares empatados",
+        "author": "Márcio Souza",
+        "year": "1968",
         "place": ""
       },
       "educational": {
-        "description": "",
+        "description": "Representam o braço do regime autoritário. Durões, com opinião forte sobre ordem e progresso, mas são manipuláveis e deslumbrados por conforto.\n\nNa peça Zona Franca, meu amor, eles servem ao Estrangeiro e, no fim, tentam plantar aparelhos eletrônicos achando que vão dar em árvore.",
         "medium": "",
-        "opinion": "",
-        "feedbackError": "",
+        "opinion": "Um soldado carregando uma caixa cheia de eletrônicos.",
+        "feedbackError": "Aqui deve ter um homem obedecendo ordens.",
         "hint": ""
       },
       "assets": {
@@ -47,16 +47,16 @@
       "id": "ajuricaba",
       "type": "Poster",
       "metadata": {
-        "title": "Ajuricaba",
-        "author": "",
-        "year": "",
-        "place": ""
+        "title": "A paixão de Ajuricaba",
+        "author": "Márcio Souza",
+        "year": "1974",
+        "place": "Manaus, AM"
       },
       "educational": {
-        "description": "",
+        "description": "Mistura história e ficção para contar a trágica e heróica vida de Ajuricaba, cacique dos manaus. Fala da resistência contra a escravização.\n\nApós ser capturado pelos portugueses para ser vendido como escravo, Ajuricaba preferiu a morte à submissão e se jogou nas águas do rio Amazonas.",
         "medium": "",
-        "opinion": "",
-        "feedbackError": "",
+        "opinion": "Um cartaz alaranjado que mostra um índio em queda e um barco com pessoas. Está escrito “A paixão de Ajuricaba” e o ano de 1974.",
+        "feedbackError": "Aqui deve ter um espetáculo do ano 1974.",
         "hint": ""
       },
       "assets": {
@@ -67,16 +67,16 @@
       "id": "anel-do-nibelungo",
       "type": "Poster",
       "metadata": {
-        "title": "Anel do Nibelungo",
-        "author": "",
-        "year": "",
-        "place": ""
+        "title": "O anel do nibelungo",
+        "author": "Richard Wagner",
+        "year": "1848-1874",
+        "place": "Zurique (Suíça), Dresden e Bayreuth (Alemanha)"
       },
       "educational": {
-        "description": "",
+        "description": "Ciclo de quatro óperas baseado em mitos nórdicos e germânicos. Um anão rouba ouro e faz um anel, que é roubado de volta e carrega uma maldição.\n\nExibido na íntegra (16 horas) no Festival Amazonas de Ópera 2005, consolidou o Teatro Amazonas como principal casa de ópera da América Latina.",
         "medium": "",
-        "opinion": "",
-        "feedbackError": "",
+        "opinion": "Um cartaz colorido que mostra figuras ao redor de um anel, e um castelo no centro. Está escrito “O anel do nibelungo” e o ano de 1874.",
+        "feedbackError": "Aqui deve ter um espetáculo do ano 1874.",
         "hint": ""
       },
       "assets": {
@@ -87,16 +87,16 @@
       "id": "opera-do-malandro",
       "type": "Poster",
       "metadata": {
-        "title": "Ópera do Malandro",
-        "author": "",
-        "year": "",
-        "place": ""
+        "title": "Ópera do malandro",
+        "author": "Chico Buarque",
+        "year": "1978",
+        "place": "Rio de Janeiro, RJ"
       },
       "educational": {
-        "description": "",
+        "description": "Peça que se passa no Rio de Janeiro e satiriza a corrupção e a hipocrisia da sociedade da época. Canções do espetáculo são famosas até hoje.\n\nFoi encenada no Teatro Amazonas por um elenco e produção totalmente formados por artistas locais.\n\nMax é um golpista que se casa com Teresinha. O pai dela é contra e pede que o sócio, um delegado, mate Max. Porém, ele é padrinho do casamento.",
         "medium": "",
-        "opinion": "",
-        "feedbackError": "",
+        "opinion": "Um cartaz que mostra dois rostos de homens separados pela metade. Está escrito “Ópera do malandro” e o ano de 1978.",
+        "feedbackError": "Aqui deve ter um espetáculo do ano 1978.",
         "hint": ""
       },
       "assets": {
@@ -107,16 +107,16 @@
       "id": "zona-franca",
       "type": "Poster",
       "metadata": {
-        "title": "Zona Franca",
-        "author": "",
-        "year": "",
-        "place": ""
+        "title": "Zona Franca, meu amor",
+        "author": "Márcio Souza",
+        "year": "1968",
+        "place": "Manaus, AM"
       },
       "educational": {
-        "description": "",
+        "description": "Escrita pelo amazonense Márcio Souza, conta de forma divertida a sabotagem ao ciclo da borracha e a criação da Zona Franca de Manaus.\n\nFoi vetada na ditadura e só pôde estrear dez anos depois pelo Teatro Experimental do Sesc com o nome “Tem piranha no pirarucu”.",
         "medium": "",
-        "opinion": "",
-        "feedbackError": "",
+        "opinion": "Um cartaz branco que mostra um coração e máquinas pesadas. Está escrito “Zona Franca, meu amor” e o ano de 1968.",
+        "feedbackError": "Aqui deve ter um espetáculo do ano 1968.",
         "hint": ""
       },
       "assets": {
