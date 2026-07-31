@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.8.1] - 2026-07-31
+
+### Fixed
+
+- Chunk selector instructions moved to top of panel
+- Progression persistence hydrated from storage on map load
+- Cinematic intro config cache bleed between sessions
+- Cached level data namespaced by levelId to prevent cross-level pollution
+- Level 02 locked behind `LEVEL_02_ENABLED` feature flag (disabled in production)
+- CurrentLevel cookie persisted on progression save
+- Level UI state cleared on game end to prevent stale data
+
 ## [1.8.0] - 2026-07-28
 
 ### Added
