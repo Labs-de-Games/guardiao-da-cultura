@@ -188,6 +188,12 @@ export function CostumeSelectorPanel() {
   const [confirmFocused, setConfirmFocused] = useState(false);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
+  useEffect(() => {
+    setCarouselStates(initialStates);
+    setFocusedPart("head");
+    setConfirmFocused(false);
+  }, [initialStates]);
+
   // Embla carousel refs - configured for 3 visible items
   const [headEmblaRef, headEmblaApi] = useEmblaCarousel({
     loop: true,

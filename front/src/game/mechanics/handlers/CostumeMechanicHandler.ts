@@ -4,6 +4,13 @@ export interface CostumePart {
   textureKey: string;
 }
 
+export type CostumePartType = "head" | "torso" | "feet";
+
+export interface CostumeState extends Record<string, unknown> {
+  equippedParts: Record<CostumePartType, string | null>;
+  lockedParts: Record<CostumePartType, boolean>;
+}
+
 export const COSTUME_PARTS: Record<"head" | "torso" | "feet", CostumePart[]> = {
   head: [
     { id: "dummy_head", name: "dummy", textureKey: "dummy_head" },
@@ -63,6 +70,13 @@ const shuffledCache: Record<"head" | "torso" | "feet", CostumePart[] | null> = {
 const rng = mulberry32(SESSION_SEED);
 
 export class CostumeMechanicHandler {
+  public static createInitialState(): CostumeState {
+    return {
+      equippedParts: { head: null, torso: null, feet: null },
+      lockedParts: { head: false, torso: false, feet: false },
+    };
+  }
+
   public static isCorrectPart(partId: string, correctCostume: string): boolean {
     return partId.startsWith(`${correctCostume}_`);
   }

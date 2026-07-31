@@ -23,7 +23,11 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
-import { CostumeMechanicHandler } from "../mechanics/handlers/CostumeMechanicHandler";
+import {
+  CostumeMechanicHandler,
+  type CostumePartType,
+  type CostumeState,
+} from "../mechanics/handlers/CostumeMechanicHandler";
 import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
@@ -978,21 +982,18 @@ export class Game extends Scene implements GameDataAccessor {
               .map((s) => s.trim());
         const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
 
-        const costumeState = nearbyCostume.state ?? {};
-        const equippedParts = (costumeState.equippedParts as
-          | {
-              head: string | null;
-              torso: string | null;
-              feet: string | null;
-            }
-          | undefined) ?? { head: null, torso: null, feet: null };
-        const lockedParts = (costumeState.lockedParts as
-          | {
-              head: boolean;
-              torso: boolean;
-              feet: boolean;
-            }
-          | undefined) ?? { head: false, torso: false, feet: false };
+        const initialCostumeState = CostumeMechanicHandler.createInitialState();
+        const costumeState = nearbyCostume.state as
+          | Partial<CostumeState>
+          | undefined;
+        const equippedParts = {
+          ...initialCostumeState.equippedParts,
+          ...costumeState?.equippedParts,
+        };
+        const lockedParts = {
+          ...initialCostumeState.lockedParts,
+          ...costumeState?.lockedParts,
+        };
 
         this.isCostumeSelectorOpen = true;
         this.events.emit(GameEvents.DIALOGUE_STARTED);
@@ -1098,17 +1099,18 @@ export class Game extends Scene implements GameDataAccessor {
       );
       if (!p) return;
 
-      const equipped = (p.state?.equippedParts as Record<
-        string,
-        string | null
-      >) ?? { head: null, torso: null, feet: null };
-      const locked = (p.state?.lockedParts as Record<string, boolean>) ?? {
-        head: false,
-        torso: false,
-        feet: false,
+      const initialCostumeState = CostumeMechanicHandler.createInitialState();
+      const equipped = {
+        ...initialCostumeState.equippedParts,
+        ...(p.state?.equippedParts as CostumeState["equippedParts"]),
       };
-      equipped[data.partType] = data.partId;
-      locked[data.partType] = true;
+      const locked = {
+        ...initialCostumeState.lockedParts,
+        ...(p.state?.lockedParts as CostumeState["lockedParts"]),
+      };
+      const partType = data.partType as CostumePartType;
+      equipped[partType] = data.partId;
+      locked[partType] = true;
       p.state = { ...p.state, equippedParts: equipped, lockedParts: locked };
 
       this.placeholderSystem.updateCostumePart(
