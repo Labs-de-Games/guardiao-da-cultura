@@ -21,15 +21,29 @@ describe("CostumeMechanicHandler", () => {
     });
   });
 
+  it("creates independent state for each costume placeholder", () => {
+    const first = CostumeMechanicHandler.createInitialState();
+    const second = CostumeMechanicHandler.createInitialState();
+
+    first.equippedParts.head = "indian_head";
+    first.lockedParts.head = true;
+
+    expect(second).toEqual({
+      equippedParts: { head: null, torso: null, feet: null },
+      lockedParts: { head: false, torso: false, feet: false },
+    });
+  });
+
   describe("deriveCorrectCostume", () => {
-    it("derives the costume name from the placeholder's id list", () => {
-      expect(
-        CostumeMechanicHandler.deriveCorrectCostume([
-          "indian_head",
-          "indian_torso",
-          "indian_feet",
-        ]),
-      ).toBe("indian");
+    it.each([
+      ["PH2", ["indian_head", "indian_torso", "indian_feet"], "indian"],
+      ["PH3", ["malandro_head", "malandro_torso", "malandro_feet"], "malandro"],
+      ["PH4", ["warrior_head", "warrior_torso", "warrior_feet"], "warrior"],
+      ["PH5", ["soldier_head", "soldier_torso", "soldier_feet"], "soldier"],
+    ])("derives the correct costume for %s", (_placeholder, ids, expected) => {
+      expect(CostumeMechanicHandler.deriveCorrectCostume(ids as string[])).toBe(
+        expected,
+      );
     });
   });
 });
