@@ -241,22 +241,22 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.levelDef.data.works.forEach((path, index) => {
-      this.load.json(`works_${index}`, path);
+      this.load.json(`${this.levelId}__works_${index}`, path);
     });
     this.levelDef.data.quizzes.forEach((path, index) => {
-      this.load.json(`quizzes_${index}`, path);
+      this.load.json(`${this.levelId}__quizzes_${index}`, path);
     });
     this.levelDef.data.intermediateQuizzes.forEach((path, index) => {
-      this.load.json(`intermediateQuizzes_${index}`, path);
+      this.load.json(`${this.levelId}__intermediateQuizzes_${index}`, path);
     });
     this.levelDef.data.npcs.forEach((path, index) => {
-      this.load.json(`npcs_${index}`, path);
+      this.load.json(`${this.levelId}__npcs_${index}`, path);
     });
     this.levelDef.data.messages.forEach((path, index) => {
-      this.load.json(`messages_${index}`, path);
+      this.load.json(`${this.levelId}__messages_${index}`, path);
     });
     this.levelDef.data.collectibles.forEach((path, index) => {
-      this.load.json(`collectibles_${index}`, path);
+      this.load.json(`${this.levelId}__collectibles_${index}`, path);
     });
 
     this.load.spritesheet("placeholder", "misc/questionmark-spritesheet.png", {
@@ -269,7 +269,7 @@ export class Game extends Scene implements GameDataAccessor {
 
   private processModularData() {
     processModularData(this.levelDef, this.contentData, (key) =>
-      this.cache.json.get(key),
+      this.cache.json.get(`${this.levelId}__${key}`),
     );
   }
 
