@@ -2,7 +2,6 @@ import { Scene } from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import type { IntroConfig } from "../../ui/intro/types";
 import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
-import { getLevelAudioManifest } from "../audio/registry";
 import { SceneNames } from "../constants/SceneNames";
 
 /**
@@ -36,15 +35,18 @@ export class LevelCinematic extends Scene {
   }
 
   preload() {
+    // Set base path for all assets loaded in this scene
+    this.load.setPath("assets/");
+
     // Ensure we never reuse stale config from another level.
     if (this.cache.json.exists(this.introConfigCacheKey)) {
       this.cache.json.remove(this.introConfigCacheKey);
     }
 
-    // Load the intro configuration JSON
+    // Load the intro configuration JSON (relative to assets/)
     this.load.json(
       this.introConfigCacheKey,
-      `/assets/data/levels/${this.levelId}/intro/intro_config.json`,
+      `data/levels/${this.levelId}/intro/intro_config.json`,
     );
 
     // Preload all audio assets during the cinematic intro
@@ -70,25 +72,6 @@ export class LevelCinematic extends Scene {
     // during the mask reveal transition
     AudioManager.init(this);
 
-    // Listen for mask reveal start from React to begin playing music
-    EventBus.once("intro:music-start", (data: { levelId: string }) => {
-      if (data.levelId === this.levelId) {
-        // Play intro track, which will seamlessly transition to loop
-        const manifest = getLevelAudioManifest(this.levelId);
-        const introKey = manifest?.musicIntroLoop?.intro.key;
-        if (introKey) {
-          AudioManager.playMusic(introKey);
-        }
-      }
-    });
-
-    // Fade menu music out when the comic cards begin their roll-out fade
-    EventBus.once("intro:rollout-start", (data: { levelId: string }) => {
-      if (data.levelId === this.levelId) {
-        AudioManager.fadeOutMusic(1400);
-      }
-    });
-
     // Listen for intro completion from React
     this.unsubIntroComplete = EventBus.on("intro:complete", (data) => {
       if (data.levelId !== this.levelId) return;
@@ -113,13 +96,9 @@ export class LevelCinematic extends Scene {
   }
 
   shutdown() {
-    // Clean up event listeners if scene is shut down before intro completes
-    EventBus.off("intro:complete");
-    EventBus.off("intro:music-start");
     // Note: Don't call AudioManager.destroy() here - music should continue
     // into the Game scene. AudioManager.init() in Game scene will handle
     // the transition and resume any playing music and destroy it there.
-    // Clean up event listener if scene is shut down before intro completes
     this.unsubIntroComplete?.();
     this.unsubIntroComplete = undefined;
 

@@ -179,7 +179,8 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       return;
     }
     const missionId = this.config.missionId;
-    const status = this.questManager.getStatus(missionId);
+    const status = QuestStatus.READY_FOR_QUIZ;
+    // const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;
 
     const pending = this.questManager.getPendingResult(missionId);

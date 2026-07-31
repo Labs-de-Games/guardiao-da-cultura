@@ -22,12 +22,6 @@ jest.mock("posthog-js", () => ({
   default: { capture: jest.fn() },
 }));
 
-// Mock js-cookie (used by PersistenceBridge to sync currentLevel)
-jest.mock("js-cookie", () => ({
-  get: jest.fn(),
-  set: jest.fn(),
-}));
-
 function createMocks() {
   const persistence = {
     loadCollectibles: jest.fn().mockResolvedValue([]),

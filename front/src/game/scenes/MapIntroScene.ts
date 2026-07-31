@@ -15,6 +15,7 @@ import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
 import { SceneNames } from "../constants/SceneNames";
+import { LEVEL_REGISTRY } from "../data/LevelConfig";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type {
   CompletedLevelRecord,
@@ -66,6 +67,12 @@ export class MapIntroScene extends Scene {
     posthog.capture("game_home_viewed");
     this.homeEnteredAtMs = Date.now();
     this.isTransitioningToLevel = false;
+
+    // Clear music started registry keys so levels can restart music on replay
+    const levelIds = Object.keys(LEVEL_REGISTRY);
+    for (const levelId of levelIds) {
+      this.registry.remove(`music_started:${levelId}`);
+    }
 
     this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);
@@ -209,14 +216,19 @@ export class MapIntroScene extends Scene {
       useGameUIStore.getState().setActiveMapMarker(null);
       const camera = this.cameras?.main;
       if (!camera) {
-        this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: marker.levelId });
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, {
+          levelId: marker.levelId,
+        });
         return;
       }
 
       camera.once("camerafadeoutcomplete", () => {
-        this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: marker.levelId });
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, {
+          levelId: marker.levelId,
+        });
       });
       camera.fadeOut(350, 0, 0, 0);
+    }
   }
 
   private maybeStartAutoStart() {

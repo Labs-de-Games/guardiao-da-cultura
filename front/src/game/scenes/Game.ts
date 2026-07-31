@@ -5,6 +5,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio } from "../audio";
+import { getLevelAudioManifest } from "../audio/registry";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -284,8 +285,19 @@ export class Game extends Scene implements GameDataAccessor {
     this.createAnimations();
 
     // Initialize audio manager with this scene
-    // Music was already started by LevelCinematic during the mask reveal
     AudioManager.init(this);
+
+    // Start level music if not already playing
+    // Check registry to avoid restarting music on scene transitions within the same level
+    const musicStartedKey = `music_started:${this.levelId}`;
+    if (!this.registry.get(musicStartedKey)) {
+      const manifest = getLevelAudioManifest(this.levelId);
+      const introKey = manifest?.musicIntroLoop?.intro.key;
+      if (introKey) {
+        AudioManager.playMusic(introKey);
+        this.registry.set(musicStartedKey, true);
+      }
+    }
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
