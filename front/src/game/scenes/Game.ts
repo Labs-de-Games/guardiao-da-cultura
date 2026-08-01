@@ -90,6 +90,7 @@ export class Game extends Scene implements GameDataAccessor {
   public readonly scoringFloors = {
     sculptures: 0,
     paintings: 1,
+    costumes: 1,
     photo: 2,
     posters: 3,
   } as const;
@@ -1026,6 +1027,13 @@ export class Game extends Scene implements GameDataAccessor {
       );
 
       if (nearbyCostume) {
+        if (this.markFloorStarted(this.scoringFloors.costumes)) {
+          posthog.capture("minigame_started", {
+            minigame_number: this.scoringFloors.costumes + 1,
+            level_id: this.levelId,
+          });
+        }
+
         const ids = Array.isArray(nearbyCostume.id)
           ? (nearbyCostume.id as string[])
           : String(nearbyCostume.id)
@@ -1185,6 +1193,7 @@ export class Game extends Scene implements GameDataAccessor {
     });
     EventBus.on("ui:costume-part-rejected", () => {
       this.sound.play("error", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.costumes);
     });
     EventBus.on("ui:costume-confirm", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
@@ -1197,6 +1206,12 @@ export class Game extends Scene implements GameDataAccessor {
         "O manequim está completamente vestido!",
       ]);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
+
+      if (
+        this.placeholderSystem.checkCategoryCompletion(InteractiveType.COSTUME)
+      ) {
+        this.completeFloor(this.scoringFloors.costumes);
+      }
     });
 
     this.events.on("item-dropped", this.handleItemDropped, this);
