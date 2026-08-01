@@ -43,6 +43,13 @@ const HEAD_CAROUSEL_ITEMS = buildCarouselItems("head");
 const TORSO_CAROUSEL_ITEMS = buildCarouselItems("torso");
 const FEET_CAROUSEL_ITEMS = buildCarouselItems("feet");
 
+const COSTUME_TITLES: Record<string, string> = {
+  indian: "Vista o traje indígena",
+  malandro: "Vista o malandro",
+  warrior: "Prepare o guerreiro",
+  soldier: "Equipe o soldado",
+};
+
 const PART_SIZES = {
   head: { width: "35%", height: "auto", mt: 8, mb: 0 },
   torso: { width: "60%", height: "auto", mt: 0, mb: 0 },
@@ -133,6 +140,7 @@ export function CostumeSelectorPanel() {
 
   const instanceId = costumeSelectorData?.instanceId ?? "";
   const correctCostume = costumeSelectorData?.correctCostume ?? "malandro";
+  const costumeTitle = COSTUME_TITLES[correctCostume] ?? "Vista o Manequim";
 
   // Initialize carousel states from data
   const initialStates = useMemo(() => {
@@ -761,13 +769,13 @@ export function CostumeSelectorPanel() {
           variant="h5"
           sx={{
             mb: 3,
-            textAlign: "center",
+            textAlign: "left",
             fontFamily: GAME_UI_TOKENS.fonts.display,
             fontWeight: 700,
             color: GAME_UI_TOKENS.colors.accentGold,
           }}
         >
-          Vista o Manequim
+          {costumeTitle}
         </Typography>
 
         {/* Instructions */}
@@ -775,7 +783,7 @@ export function CostumeSelectorPanel() {
           variant="body2"
           sx={{
             mb: 3,
-            textAlign: "center",
+            textAlign: "left",
             fontFamily: GAME_UI_TOKENS.fonts.body,
             color: GAME_UI_TOKENS.colors.textSecondary,
           }}
