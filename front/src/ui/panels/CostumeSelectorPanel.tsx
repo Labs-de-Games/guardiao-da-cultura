@@ -11,6 +11,7 @@ import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { CostumeMechanicHandler } from "@/game/mechanics/handlers/CostumeMechanicHandler";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 const shake = keyframes`
   0%, 100% { transform: translateX(0); }
@@ -622,7 +623,7 @@ export function CostumeSelectorPanel() {
             disabled={!emblaApi || state.isLocked}
             sx={{
               flexShrink: 0,
-              color: LayoutConfig.COLORS.INFO_BODY,
+              color: GAME_UI_TOKENS.colors.textPrimary,
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
@@ -636,7 +637,8 @@ export function CostumeSelectorPanel() {
             sx={{
               flex: 1,
               overflow: "hidden",
-              borderRadius: 2,
+              bgcolor: GAME_UI_TOKENS.colors.bgPrimary,
+              borderRadius: GAME_UI_TOKENS.radius.small,
               outline: `1.1px solid ${borderColor}`,
               outlineOffset: 0,
               animation: state.isRejecting ? `${shake} 0.4s ease` : "none",
@@ -664,7 +666,7 @@ export function CostumeSelectorPanel() {
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      bgcolor: "background.paper",
+                      bgcolor: GAME_UI_TOKENS.colors.bgTertiary,
                       position: "relative",
                       transition: "opacity 0.15s ease-out",
                     }}
@@ -694,7 +696,7 @@ export function CostumeSelectorPanel() {
             disabled={!emblaApi || state.isLocked}
             sx={{
               flexShrink: 0,
-              color: LayoutConfig.COLORS.INFO_BODY,
+              color: GAME_UI_TOKENS.colors.textPrimary,
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
@@ -718,8 +720,8 @@ export function CostumeSelectorPanel() {
         display: costumeSelectorOpen ? "flex" : "none",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "rgba(0, 0, 0, 0.7)",
-        zIndex: LayoutConfig.UI.DEPTHS.INVENTORY,
+        bgcolor: "rgba(0, 0, 0, 0.62)",
+        zIndex: UI_LAYERS.FULLSCREEN,
         pointerEvents: costumeSelectorOpen ? "auto" : "none",
         p: 2,
       }}
@@ -732,16 +734,23 @@ export function CostumeSelectorPanel() {
           maxHeight: "90vh",
           overflow: "auto",
           position: "relative",
+          bgcolor: GAME_UI_TOKENS.colors.bgSecondary,
+          border: `2px solid ${GAME_UI_TOKENS.colors.accentGold}`,
+          borderRadius: `${GAME_UI_TOKENS.radius.panel}px`,
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.6)",
           p: 3,
         }}
       >
         {/* Close button */}
         <IconButton
+          aria-label="Fechar"
           onClick={handleClose}
           sx={{
             position: "absolute",
             top: 8,
             right: 8,
+            color: GAME_UI_TOKENS.colors.textSecondary,
+            "&:hover": { color: GAME_UI_TOKENS.colors.white },
           }}
         >
           <CloseIcon />
@@ -753,8 +762,9 @@ export function CostumeSelectorPanel() {
           sx={{
             mb: 3,
             textAlign: "center",
-            fontWeight: 600,
-            color: LayoutConfig.COLORS.INFO_TITLE,
+            fontFamily: GAME_UI_TOKENS.fonts.display,
+            fontWeight: 700,
+            color: GAME_UI_TOKENS.colors.accentGold,
           }}
         >
           Vista o Manequim
@@ -766,7 +776,8 @@ export function CostumeSelectorPanel() {
           sx={{
             mb: 3,
             textAlign: "center",
-            color: "text.secondary",
+            fontFamily: GAME_UI_TOKENS.fonts.body,
+            color: GAME_UI_TOKENS.colors.textSecondary,
           }}
         >
           Escolha as peças corretas para vestir o manequim. Combine todas as
@@ -803,10 +814,13 @@ export function CostumeSelectorPanel() {
             mt: 2,
             mx: "auto",
             display: "block",
-            bgcolor: LayoutConfig.COLORS.INFO_TITLE,
+            bgcolor: GAME_UI_TOKENS.colors.accentGold,
+            color: GAME_UI_TOKENS.colors.bgPrimary,
+            fontFamily: GAME_UI_TOKENS.fonts.body,
+            fontWeight: 700,
+            borderRadius: `${GAME_UI_TOKENS.radius.small}px`,
             "&:hover": {
-              bgcolor: LayoutConfig.COLORS.INFO_TITLE,
-              opacity: 0.9,
+              bgcolor: GAME_UI_TOKENS.colors.accentGoldHover,
             },
           }}
         >
