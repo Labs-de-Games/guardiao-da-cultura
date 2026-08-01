@@ -22,7 +22,7 @@
     {
       "id": "q2",
       "category": "Teatro",
-      "question": "Qual espetáculo consolidou o Teatro Amazonas como principal casa de ópera da América Latina?",
+      "question": "Qual espetáculo ajudou a tornar o Teatro Amazonas uma das principais casas de ópera da América?",
       "options": [
         "Ópera do malandro com elenco amazonense",
         "Quatro ciclos d'O anel do nibelungo",
@@ -30,10 +30,10 @@
         "A paixão de Ajuricaba na língua ticuna"
       ],
       "correctOptionIndex": 1,
-      "explanation": "A apresentação na íntegra, totalizando 16 horas, fez o teatro ficar em evidência mundial.",
-      "hint": [
+      "explanation": "A apresentação completa, totalizando 16 horas, fez o teatro ganhar destaque mundial.",
+      "hints": [
         "Totalizou 16 horas de espetáculo.",
-        "É um espetáculo doutro país."
+        "Uma obra épica escrita por um compositor alemão."
       ],
       "tags": ["teatro", "rwagner"],
       "difficulty": "hard"
@@ -50,7 +50,7 @@
       ],
       "correctOptionIndex": 3,
       "explanation": "Após ser censurada, a peça só estreou anos depois, com o nome alterado para “Tem piranha no pirarucu”.",
-      "hint": [
+      "hints": [
         "Menciona pelo menos um animal.",
         "O nome da peça é uma expressão popular que significa que há algo errado ou suspeito."
       ],
@@ -68,7 +68,7 @@
         "Costeiro de plumas e tanga"
       ],
       "correctOptionIndex": 0,
-      "explanation": "O tecido de linho claro e impecável mostrava que mantinha dignidade sem precisar de trabalho formal.",
+      "explanation": "O tecido de linho claro e bem cuidado mostrava que mantinha dignidade sem precisar de trabalho formal.",
       "hints": ["Tem o estilo dos anos 40.", "Passa um ar de respeito."],
       "tags": ["rio", "vestuario"],
       "difficulty": "medium"
@@ -76,7 +76,7 @@
     {
       "id": "q5",
       "category": "Teatro",
-      "question": "Qual desses conceitos menos se adequa à luz de palco vermelha?",
+      "question": "Qual dessas ideias combina menos com a luz vermelha no palco?",
       "options": [
         "Cansaço pelo calor",
         "Sonata ao luar",
@@ -87,7 +87,7 @@
       "explanation": "A cor vermelha remete a sentimentos de raiva, paixão e conflito, mas não a serenidade.",
       "hints": [
         "O vermelho evoca sentimentos de intensidade.",
-        "A resposta opõe-se ao sol."
+        "A resposta está ligada ao sereno da noite."
       ],
       "tags": ["cores", "teatro"],
       "difficulty": "easy"
