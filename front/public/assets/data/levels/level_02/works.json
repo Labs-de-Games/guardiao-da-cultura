@@ -10,7 +10,7 @@
         "place": ""
       },
       "educational": {
-        "description": "Uma pessoa que não entende nada da cultura, do ambiente nem do povo do Amazonas, mas que manda no lugar e é tratada como um rei.\n\nNa peça “Zona Franca, meu amor”, ele pega as sementes de seringueira para plantar na Ásia e ganhar dinheiro com borracha, acabando com o domínio dos barões.",
+        "description": "Uma pessoa que não entende nada da cultura, do ambiente nem do povo do Amazonas, mas que manda no lugar e é tratada como um rei.\n\nNa peça, ele pega as sementes de seringueira para plantar na Ásia e ganhar dinheiro com a borracha, tirando a exclusividade do Brasil.",
         "medium": "",
         "opinion": "Um homem com roupas nas cores azul, vermelho e branco. Ele é diferente das pessoas que vi por aqui no Amazonas.",
         "feedbackError": "Aqui deve ter um homem na posição de comando.",
@@ -30,7 +30,7 @@
         "place": ""
       },
       "educational": {
-        "description": "Representam o braço do regime autoritário. Durões, com opinião forte sobre ordem e progresso, mas são manipuláveis e deslumbrados por conforto.\n\nNa peça Zona Franca, meu amor, eles servem ao Estrangeiro e, no fim, tentam plantar aparelhos eletrônicos achando que vão dar em árvore.",
+        "description": "Representam o braço do regime autoritário. Durões, com opinião forte sobre ordem e progresso, mas são manipuláveis e deslumbrados por conforto.\n\nEles servem aos interesses do Estrangeiro. No fim, tentam plantar aparelhos eletrônicos achando que vão dar em árvore na Zona Franca de Manaus.",
         "medium": "",
         "opinion": "Um soldado carregando uma caixa cheia de eletrônicos.",
         "feedbackError": "Aqui deve ter um homem obedecendo ordens.",
@@ -93,7 +93,7 @@
         "place": "Rio de Janeiro, RJ"
       },
       "educational": {
-        "description": "Peça que se passa no Rio de Janeiro e satiriza a corrupção e a hipocrisia da sociedade da época. Canções do espetáculo são famosas até hoje.\n\nFoi encenada no Teatro Amazonas por um elenco e produção totalmente formados por artistas locais.\n\nMax é um golpista que se casa com Teresinha. O pai dela é contra e pede que o sócio, um delegado, mate Max. Porém, ele é padrinho do casamento.",
+        "description": "Peça que se passa no Rio de Janeiro e brinca com a corrupção e a hipocrisia da sociedade da época. Canções do espetáculo são famosas até hoje.\n\nFoi encenada no Teatro Amazonas por um elenco e produção totalmente formados por artistas locais.\n\nMax é um golpista que se casa com Teresinha. O pai dela é contra e pede que o sócio, um delegado, mate Max. Porém, ele é padrinho do casamento.",
         "medium": "",
         "opinion": "Um cartaz que mostra dois rostos de homens separados pela metade. Está escrito “Ópera do malandro” e o ano de 1978.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1978.",
