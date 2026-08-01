@@ -26,7 +26,7 @@
         "Quatro contos d'As mil e uma noites",
         "Mitos nórdicos e germânicos",
         "Lendas yanomamis",
-        "Literatura tolkieniana"
+        "Personagens de Tolkien"
       ],
       "correctOptionIndex": 1
     }
@@ -37,7 +37,7 @@
       "options": [
         "Zona Franca, meu amor",
         "O anel do nibelungo",
-        "Ópera do Malandro",
+        "Ópera do malandro",
         "A paixão de Ajuricaba"
       ],
       "correctOptionIndex": 0
@@ -60,12 +60,12 @@
       "correctOptionIndex": 1
     },
     {
-      "question": "Qual informação sobre a iluminação numa cena de teatro é falsa?",
+      "question": "Qual dessas opções não é função da iluminação numa cena de teatro?",
       "options": [
-        "Faz os atores enxergarem a plateia",
-        "Inspira emoções e ambientes",
-        "Guia o olhar do público",
-        "Realça a expressão dos atores"
+        "Fazer os artistas enxergarem a plateia",
+        "Inspirar emoções e ambientes",
+        "Guiar o olhar do público",
+        "Realçar a expressão dos atores"
       ],
       "correctOptionIndex": 0
     },
