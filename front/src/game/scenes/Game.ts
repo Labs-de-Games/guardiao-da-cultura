@@ -1211,6 +1211,13 @@ export class Game extends Scene implements GameDataAccessor {
         this.placeholderSystem.checkCategoryCompletion(InteractiveType.COSTUME)
       ) {
         this.completeFloor(this.scoringFloors.costumes);
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L2,
+            infoKey: MissionKeys.COSTUMES_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        });
       }
     });
 
