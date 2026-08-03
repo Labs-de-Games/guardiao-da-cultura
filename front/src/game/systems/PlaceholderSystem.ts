@@ -147,17 +147,30 @@ export class PlaceholderSystem {
       pedestal.setPosition(0, pedestalConfig.yOffset * scale);
       container.add(pedestal);
 
-      for (let i = 0; i < TEXTURES.length; i++) {
-        const partName = TEXTURES[i].replace("dummy_", "") as
+      const cells = TEXTURES.map((textureKey) => {
+        const partName = textureKey.replace("dummy_", "") as
           | "head"
           | "torso"
           | "feet";
-        const partConfig = PART_DEFAULTS[partName];
+        return { partName, cell: this.scene.add.image(0, 0, textureKey) };
+      });
 
-        const cell = this.scene.add.image(0, 0, TEXTURES[i]);
+      let nextBottomY = Math.round(pedestalConfig.yOffset * scale);
+      for (const partName of ["feet", "torso", "head"] as const) {
+        const entry = cells.find((c) => c.partName === partName);
+        if (!entry) continue;
+        const { cell } = entry;
+        const partConfig = PART_DEFAULTS[partName];
+        const gap = partConfig.gap ?? 0;
+
+        nextBottomY -= gap * scale;
         cell.setDisplaySize(cell.width * scale, cell.height * scale);
-        cell.setOrigin(partConfig.originX, partConfig.originY);
-        cell.setPosition(0, partConfig.yOffset * scale);
+        cell.setOrigin(partConfig.originX, 1);
+        cell.setPosition(0, Math.round(nextBottomY));
+        nextBottomY -= cell.displayHeight;
+      }
+
+      for (const { cell } of cells) {
         container.add(cell);
       }
       container.setDepth(10);
