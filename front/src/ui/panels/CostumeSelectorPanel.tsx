@@ -22,13 +22,6 @@ const shake = keyframes`
   80%       { transform: translateX(4px); }
 `;
 
-// Generic carousel items for testing
-const GENERIC_CAROUSEL_ITEMS = Array.from({ length: 5 }, (_, i) => ({
-  id: `generic_${i + 1}`,
-  src: "/assets/misc/rec.png",
-  label: `Item ${i + 1}`,
-}));
-
 // Build carousel items from shuffled costume parts (computed once at module load)
 function buildCarouselItems(
   partType: "head" | "torso" | "feet",
@@ -602,7 +595,6 @@ export function CostumeSelectorPanel() {
     emblaRef: (instance: HTMLElement | null) => void,
     emblaApi: ReturnType<typeof useEmblaCarousel>[1],
     isFocused: boolean,
-    // label: string,
   ) => {
     const state = carouselStates[partType];
 
@@ -612,28 +604,15 @@ export function CostumeSelectorPanel() {
         ? LayoutConfig.COLORS.INFO_TITLE
         : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
-    // Select items array based on part type
     const carouselItems =
       partType === "head"
         ? HEAD_CAROUSEL_ITEMS
         : partType === "torso"
           ? TORSO_CAROUSEL_ITEMS
-          : partType === "feet"
-            ? FEET_CAROUSEL_ITEMS
-            : GENERIC_CAROUSEL_ITEMS;
+          : FEET_CAROUSEL_ITEMS;
 
     return (
       <Box sx={{ mb: 0.2 }}>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            color: LayoutConfig.COLORS.INFO_BODY,
-            fontWeight: 600,
-            textTransform: "capitalize",
-          }}
-        >
-          {/* {label} */}
-        </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {/* Prev Button */}
           <IconButton
