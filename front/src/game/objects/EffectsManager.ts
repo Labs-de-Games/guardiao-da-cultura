@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio/AudioManager";
 
 const ERROR_AUDIO_KEY = "error";
 
@@ -17,6 +18,9 @@ export class EffectsManager {
   private revealProgress = 1;
   private spotlightTargetX = 0;
   private spotlightTargetY = 0;
+  private scoreFeedbackStar: Phaser.GameObjects.Sprite | null = null;
+  private scoreFeedbackActive = false;
+  public scoreFeedbackFloatY = 0;
 
   static preload(scene: Phaser.Scene) {
     if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
@@ -201,5 +205,56 @@ export class EffectsManager {
   public updateSpotlight(_px: number, _py: number) {
     if (!this.spotlightVisible) return;
     this.drawSpotlightBeam(this.spotlightTargetX, this.spotlightTargetY);
+  }
+
+  public playScoreFeedback(x: number, y: number) {
+    if (this.scoreFeedbackActive && this.scoreFeedbackStar) {
+      this.scoreFeedbackStar.destroy();
+    }
+
+    this.scoreFeedbackActive = true;
+    this.scoreFeedbackFloatY = 0;
+
+    AudioManager.playSfx("sfx.star.earned");
+
+    this.scoreFeedbackStar = this.scene.add.sprite(x, y - 400, "star");
+    this.scoreFeedbackStar.setDepth(50);
+    this.scoreFeedbackStar.setScale(4);
+    this.scoreFeedbackStar.play("star_anim");
+
+    this.scene.tweens.add({
+      targets: this,
+      scoreFeedbackFloatY: -10,
+      duration: 3240,
+      ease: "Sine.easeOut",
+      onComplete: () => {
+        if (this.scoreFeedbackStar) {
+          this.scoreFeedbackStar.destroy();
+          this.scoreFeedbackStar = null;
+        }
+        this.scoreFeedbackActive = false;
+      },
+    });
+
+    this.scene.tweens.add({
+      targets: this.scoreFeedbackStar,
+      scaleX: 3,
+      scaleY: 3,
+      yoyo: true,
+      duration: 450,
+      repeat: -1,
+    });
+  }
+
+  public updateScoreFeedback(
+    playerX: number,
+    playerY: number,
+    playerHeight: number = 32,
+  ) {
+    if (this.scoreFeedbackActive && this.scoreFeedbackStar) {
+      this.scoreFeedbackStar.x = playerX;
+      this.scoreFeedbackStar.y =
+        playerY - playerHeight / 2 - 65 + this.scoreFeedbackFloatY;
+    }
   }
 }
