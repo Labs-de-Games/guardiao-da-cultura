@@ -118,9 +118,9 @@ export const LayoutConfig = {
     CELL_W: 122,
     CELL_H: 80,
     PART_DEFAULTS: {
-      head: { originX: 0.5, originY: 0.3, yOffset: -56.5 },
-      torso: { originX: 0.5, originY: 0.3, yOffset: -32 },
-      feet: { originX: 0.5, originY: 0.3, yOffset: 0 },
+      head: { originX: 0.5, gap: 0 },
+      torso: { originX: 0.5, gap: 0 },
+      feet: { originX: 0.5, gap: 0 },
     } as const,
     PEDESTAL_DEFAULT: { originX: 0.5, originY: 0.1, yOffset: 20, scale: 4 },
   },
