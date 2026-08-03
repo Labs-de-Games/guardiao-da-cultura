@@ -73,6 +73,7 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   // Rewards
   { key: "sfx.badge.unlock", path: "sound/sfx/badge.unlock.mp3" },
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
+  { key: "sfx.star.earned", path: "sound/sfx/star_sound.mp3" },
 ];
 
 /**
