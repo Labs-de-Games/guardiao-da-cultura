@@ -22,9 +22,13 @@ const shake = keyframes`
   80%       { transform: translateX(4px); }
 `;
 
+type PartType = "head" | "torso" | "feet";
+
+const PART_ORDER: PartType[] = ["head", "torso", "feet"];
+
 // Build carousel items from shuffled costume parts (computed once at module load)
 function buildCarouselItems(
-  partType: "head" | "torso" | "feet",
+  partType: PartType,
 ): Array<{ id: string; src: string; label: string }> {
   return CostumeMechanicHandler.getShuffledCostumeParts(partType).map((p) => ({
     id: p.id,
@@ -36,6 +40,17 @@ function buildCarouselItems(
 const HEAD_CAROUSEL_ITEMS = buildCarouselItems("head");
 const TORSO_CAROUSEL_ITEMS = buildCarouselItems("torso");
 const FEET_CAROUSEL_ITEMS = buildCarouselItems("feet");
+
+// Single source of truth for each part's items — index/id lookups elsewhere
+// resolve against this instead of re-invoking getShuffledCostumeParts
+const CAROUSEL_ITEMS_BY_PART: Record<
+  PartType,
+  Array<{ id: string; src: string; label: string }>
+> = {
+  head: HEAD_CAROUSEL_ITEMS,
+  torso: TORSO_CAROUSEL_ITEMS,
+  feet: FEET_CAROUSEL_ITEMS,
+};
 
 const COSTUME_TITLES: Record<string, string> = {
   indian: "Vista o traje indígena",
@@ -149,13 +164,11 @@ export function CostumeSelectorPanel() {
       feet: false,
     };
 
-    const getIndexForPart = (
-      partType: "head" | "torso" | "feet",
-      partId: string | null,
-    ) => {
+    const getIndexForPart = (partType: PartType, partId: string | null) => {
       if (!partId) return 0; // Defaults to the dummy slide
-      const parts = CostumeMechanicHandler.getShuffledCostumeParts(partType);
-      const index = parts.findIndex((p) => p.id === partId);
+      const index = CAROUSEL_ITEMS_BY_PART[partType].findIndex(
+        (p) => p.id === partId,
+      );
       return index >= 0 ? index : 0;
     };
 
@@ -184,9 +197,7 @@ export function CostumeSelectorPanel() {
     feet: CarouselState;
   }>(initialStates);
 
-  const [focusedPart, setFocusedPart] = useState<"head" | "torso" | "feet">(
-    "head",
-  );
+  const [focusedPart, setFocusedPart] = useState<PartType>("head");
 
   const [confirmFocused, setConfirmFocused] = useState(false);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
@@ -194,8 +205,7 @@ export function CostumeSelectorPanel() {
   useEffect(() => {
     setCarouselStates(initialStates);
 
-    const partOrder: ("head" | "torso" | "feet")[] = ["head", "torso", "feet"];
-    const firstUnlockedPart = partOrder.find(
+    const firstUnlockedPart = PART_ORDER.find(
       (part) => !initialStates[part].isLocked,
     );
 
@@ -262,7 +272,7 @@ export function CostumeSelectorPanel() {
   // Handle carousel selection change — just tracks scroll position while
   // unlocked; correctness is only evaluated on Confirmar (see handleConfirm)
   const handleSelect = useCallback(
-    (partType: "head" | "torso" | "feet", index: number) => {
+    (partType: PartType, index: number) => {
       if (carouselStates[partType].isLocked) return;
 
       setCarouselStates((prev) => ({
@@ -380,17 +390,15 @@ export function CostumeSelectorPanel() {
   // independently; correct ones lock in place, wrong ones shake and stay
   // editable for another attempt. Closes/confirms once all 3 are locked.
   const handleConfirm = () => {
-    const partTypes: ("head" | "torso" | "feet")[] = ["head", "torso", "feet"];
     const nextStates = { ...carouselStates };
     let allLocked = true;
 
-    for (const partType of partTypes) {
+    for (const partType of PART_ORDER) {
       const current = carouselStates[partType];
       if (current.isLocked) continue;
 
-      const shuffledParts =
-        CostumeMechanicHandler.getShuffledCostumeParts(partType);
-      const selectedPart = shuffledParts[current.selectedIndex] ?? null;
+      const selectedPart =
+        CAROUSEL_ITEMS_BY_PART[partType][current.selectedIndex] ?? null;
       const isCorrect = selectedPart
         ? CostumeMechanicHandler.isCorrectPart(selectedPart.id, correctCostume)
         : false;
@@ -428,7 +436,7 @@ export function CostumeSelectorPanel() {
     setTimeout(() => {
       setCarouselStates((prev) => {
         const cleared = { ...prev };
-        for (const partType of partTypes) {
+        for (const partType of PART_ORDER) {
           if (!nextStates[partType].isLocked) {
             cleared[partType] = { ...cleared[partType], isRejecting: false };
           }
@@ -440,17 +448,14 @@ export function CostumeSelectorPanel() {
     if (allLocked) {
       const equippedParts = {
         head:
-          CostumeMechanicHandler.getShuffledCostumeParts("head")[
-            nextStates.head.selectedIndex
-          ]?.id ?? null,
+          CAROUSEL_ITEMS_BY_PART.head[nextStates.head.selectedIndex]?.id ??
+          null,
         torso:
-          CostumeMechanicHandler.getShuffledCostumeParts("torso")[
-            nextStates.torso.selectedIndex
-          ]?.id ?? null,
+          CAROUSEL_ITEMS_BY_PART.torso[nextStates.torso.selectedIndex]?.id ??
+          null,
         feet:
-          CostumeMechanicHandler.getShuffledCostumeParts("feet")[
-            nextStates.feet.selectedIndex
-          ]?.id ?? null,
+          CAROUSEL_ITEMS_BY_PART.feet[nextStates.feet.selectedIndex]?.id ??
+          null,
       };
 
       EventBus.emit("ui:costume-confirm", {
@@ -486,19 +491,14 @@ export function CostumeSelectorPanel() {
         feet: feetEmblaApi,
       };
 
-      const partOrder: ("head" | "torso" | "feet")[] = [
-        "head",
-        "torso",
-        "feet",
-      ];
-      const currentIndex = partOrder.indexOf(focusedPart);
+      const currentIndex = PART_ORDER.indexOf(focusedPart);
 
       // Finds the nearest non-locked part starting at startIndex, walking in
       // the given direction; returns -1 if every remaining part is locked.
       const findUnlockedFrom = (startIndex: number, direction: 1 | -1) => {
         let idx = startIndex;
-        while (idx >= 0 && idx < partOrder.length) {
-          if (!carouselStates[partOrder[idx]].isLocked) return idx;
+        while (idx >= 0 && idx < PART_ORDER.length) {
+          if (!carouselStates[PART_ORDER[idx]].isLocked) return idx;
           idx += direction;
         }
         return -1;
@@ -516,17 +516,17 @@ export function CostumeSelectorPanel() {
       // Up/Down navigation — skips over already-locked (correct) parts
       if (key === "arrowup" || key === "w") {
         if (confirmFocused) {
-          const idx = findUnlockedFrom(partOrder.length - 1, -1);
+          const idx = findUnlockedFrom(PART_ORDER.length - 1, -1);
           if (idx >= 0) {
             setConfirmFocused(false);
             confirmButtonRef.current?.blur();
-            setFocusedPart(partOrder[idx]);
+            setFocusedPart(PART_ORDER[idx]);
           }
           e.preventDefault();
         } else {
           const idx = findUnlockedFrom(currentIndex - 1, -1);
           if (idx >= 0) {
-            setFocusedPart(partOrder[idx]);
+            setFocusedPart(PART_ORDER[idx]);
             e.preventDefault();
           }
         }
@@ -536,7 +536,7 @@ export function CostumeSelectorPanel() {
         } else {
           const idx = findUnlockedFrom(currentIndex + 1, 1);
           if (idx >= 0) {
-            setFocusedPart(partOrder[idx]);
+            setFocusedPart(PART_ORDER[idx]);
           } else {
             setConfirmFocused(true);
             confirmButtonRef.current?.focus();
@@ -591,7 +591,7 @@ export function CostumeSelectorPanel() {
 
   // Render carousel for a part type
   const renderCarousel = (
-    partType: "head" | "torso" | "feet",
+    partType: PartType,
     emblaRef: (instance: HTMLElement | null) => void,
     emblaApi: ReturnType<typeof useEmblaCarousel>[1],
     isFocused: boolean,
