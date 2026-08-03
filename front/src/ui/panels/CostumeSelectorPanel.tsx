@@ -143,6 +143,51 @@ function useSlideOpacityEffect(
   }, [emblaApi, setTweenFactor, setSlideOpacity]);
 }
 
+// Bundles the Embla instance for a single costume part: opacity tweening,
+// keeping the carousel scrolled to `selectedIndex`, and reporting user-driven
+// selection/interaction back to the panel.
+function useCostumePartCarousel(
+  partType: PartType,
+  selectedIndex: number,
+  onIndexChange: (partType: PartType, index: number) => void,
+  onInteract: (partType: PartType) => void,
+) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "center",
+    slidesToScroll: 1,
+  });
+
+  useSlideOpacityEffect(emblaApi);
+
+  useEffect(() => {
+    if (emblaApi) emblaApi.scrollTo(selectedIndex);
+  }, [emblaApi, selectedIndex]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      const index = emblaApi.selectedScrollSnap();
+      if (index !== selectedIndex) {
+        onIndexChange(partType, index);
+        onInteract(partType);
+      }
+    };
+
+    const onPointerDown = () => onInteract(partType);
+
+    emblaApi.on("select", onSelect);
+    emblaApi.on("pointerDown", onPointerDown);
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("pointerDown", onPointerDown);
+    };
+  }, [emblaApi, partType, selectedIndex, onIndexChange, onInteract]);
+
+  return [emblaRef, emblaApi] as const;
+}
+
 export function CostumeSelectorPanel() {
   const { costumeSelectorOpen, costumeSelectorData, closeCostumeSelector } =
     useGameUIStore();
@@ -218,27 +263,6 @@ export function CostumeSelectorPanel() {
     }
   }, [initialStates]);
 
-  // Embla carousel refs - configured for 3 visible items
-  const [headEmblaRef, headEmblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    slidesToScroll: 1,
-  });
-  const [torsoEmblaRef, torsoEmblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    slidesToScroll: 1,
-  });
-  const [feetEmblaRef, feetEmblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    slidesToScroll: 1,
-  });
-
-  useSlideOpacityEffect(headEmblaApi);
-  useSlideOpacityEffect(torsoEmblaApi);
-  useSlideOpacityEffect(feetEmblaApi);
-
   // Pause game when panel opens
   useEffect(() => {
     if (!costumeSelectorOpen) return;
@@ -250,141 +274,42 @@ export function CostumeSelectorPanel() {
     };
   }, [costumeSelectorOpen]);
 
-  // Sync carousel APIs with state
-  useEffect(() => {
-    if (headEmblaApi) {
-      headEmblaApi.scrollTo(carouselStates.head.selectedIndex);
-    }
-  }, [headEmblaApi, carouselStates.head.selectedIndex]);
-
-  useEffect(() => {
-    if (torsoEmblaApi) {
-      torsoEmblaApi.scrollTo(carouselStates.torso.selectedIndex);
-    }
-  }, [torsoEmblaApi, carouselStates.torso.selectedIndex]);
-
-  useEffect(() => {
-    if (feetEmblaApi) {
-      feetEmblaApi.scrollTo(carouselStates.feet.selectedIndex);
-    }
-  }, [feetEmblaApi, carouselStates.feet.selectedIndex]);
-
   // Handle carousel selection change — just tracks scroll position while
   // unlocked; correctness is only evaluated on Confirmar (see handleConfirm)
-  const handleSelect = useCallback(
-    (partType: PartType, index: number) => {
-      if (carouselStates[partType].isLocked) return;
-
-      setCarouselStates((prev) => ({
+  const handleSelect = useCallback((partType: PartType, index: number) => {
+    setCarouselStates((prev) => {
+      if (prev[partType].isLocked) return prev;
+      return {
         ...prev,
         [partType]: { ...prev[partType], selectedIndex: index },
-      }));
-    },
-    [carouselStates],
-  );
+      };
+    });
+  }, []);
 
-  // Setup carousel event listeners
-  useEffect(() => {
-    if (!headEmblaApi) return;
+  const handleInteract = useCallback((partType: PartType) => {
+    setFocusedPart(partType);
+    setConfirmFocused(false);
+    confirmButtonRef.current?.blur();
+  }, []);
 
-    const onSelect = () => {
-      const index = headEmblaApi.selectedScrollSnap();
-      if (index !== carouselStates.head.selectedIndex) {
-        handleSelect("head", index);
-        setFocusedPart("head");
-        setConfirmFocused(false);
-        confirmButtonRef.current?.blur();
-      }
-    };
-
-    const onPointerDown = () => {
-      setFocusedPart("head");
-      setConfirmFocused(false);
-      confirmButtonRef.current?.blur();
-    };
-
-    headEmblaApi.on("select", onSelect);
-    headEmblaApi.on("pointerDown", onPointerDown);
-    return () => {
-      headEmblaApi.off("select", onSelect);
-      headEmblaApi.off("pointerDown", onPointerDown);
-    };
-  }, [
-    headEmblaApi,
+  const [headEmblaRef, headEmblaApi] = useCostumePartCarousel(
+    "head",
     carouselStates.head.selectedIndex,
     handleSelect,
-    setFocusedPart,
-    setConfirmFocused,
-    confirmButtonRef,
-  ]);
-
-  useEffect(() => {
-    if (!torsoEmblaApi) return;
-
-    const onSelect = () => {
-      const index = torsoEmblaApi.selectedScrollSnap();
-      if (index !== carouselStates.torso.selectedIndex) {
-        handleSelect("torso", index);
-        setFocusedPart("torso");
-        setConfirmFocused(false);
-        confirmButtonRef.current?.blur();
-      }
-    };
-
-    const onPointerDown = () => {
-      setFocusedPart("torso");
-      setConfirmFocused(false);
-      confirmButtonRef.current?.blur();
-    };
-
-    torsoEmblaApi.on("select", onSelect);
-    torsoEmblaApi.on("pointerDown", onPointerDown);
-    return () => {
-      torsoEmblaApi.off("select", onSelect);
-      torsoEmblaApi.off("pointerDown", onPointerDown);
-    };
-  }, [
-    torsoEmblaApi,
+    handleInteract,
+  );
+  const [torsoEmblaRef, torsoEmblaApi] = useCostumePartCarousel(
+    "torso",
     carouselStates.torso.selectedIndex,
     handleSelect,
-    setFocusedPart,
-    setConfirmFocused,
-    confirmButtonRef,
-  ]);
-
-  useEffect(() => {
-    if (!feetEmblaApi) return;
-
-    const onSelect = () => {
-      const index = feetEmblaApi.selectedScrollSnap();
-      if (index !== carouselStates.feet.selectedIndex) {
-        handleSelect("feet", index);
-        setFocusedPart("feet");
-        setConfirmFocused(false);
-        confirmButtonRef.current?.blur();
-      }
-    };
-
-    const onPointerDown = () => {
-      setFocusedPart("feet");
-      setConfirmFocused(false);
-      confirmButtonRef.current?.blur();
-    };
-
-    feetEmblaApi.on("select", onSelect);
-    feetEmblaApi.on("pointerDown", onPointerDown);
-    return () => {
-      feetEmblaApi.off("select", onSelect);
-      feetEmblaApi.off("pointerDown", onPointerDown);
-    };
-  }, [
-    feetEmblaApi,
+    handleInteract,
+  );
+  const [feetEmblaRef, feetEmblaApi] = useCostumePartCarousel(
+    "feet",
     carouselStates.feet.selectedIndex,
     handleSelect,
-    setFocusedPart,
-    setConfirmFocused,
-    confirmButtonRef,
-  ]);
+    handleInteract,
+  );
 
   // Handle confirm button — evaluates each not-yet-locked carousel
   // independently; correct ones lock in place, wrong ones shake and stay
