@@ -646,7 +646,6 @@ export function CostumeSelectorPanel() {
               flex: 1,
               overflow: "hidden",
               bgcolor: GAME_UI_TOKENS.colors.bgPrimary,
-              borderRadius: GAME_UI_TOKENS.radius.small,
               outline: `1.1px solid ${borderColor}`,
               outlineOffset: 0,
               animation: state.isRejecting ? `${shake} 0.4s ease` : "none",
