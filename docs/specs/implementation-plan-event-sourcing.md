@@ -30,6 +30,7 @@ Implement a deterministic game recording and replay system with unified telemetr
 - **PostHog at Scale:** Single pipeline routing lightweight events to PostHog for mass aggregation across thousands of players
 - **Deterministic Replay:** Self-hosted JSON replay with drift detection for precise bug reproduction
 - **Cleanup:** Remove 25+ scattered `posthog.capture()` calls and the `AnalyticsSystem` class
+- **Internal Tooling:** Replays are silent background recording for Engineering/QA debugging. No user-facing export UI.
 
 ---
 
@@ -49,6 +50,8 @@ Implement a deterministic game recording and replay system with unified telemetr
 | FR-10 | Provide UI for loading and controlling replays | P1 |
 | FR-11 | Support URL-based deep linking to specific replay frames | P2 |
 | FR-12 | Support batch event ingestion on backend | P1 |
+| FR-13 | Replay recording and upload happen silently on session end (no user interaction) | P0 |
+| FR-14 | Replays are internal tooling — no user-facing replay UI in game canvas | P0 |
 
 ---
 
@@ -71,7 +74,7 @@ Implement a deterministic game recording and replay system with unified telemetr
 
 ## 4. Impacted Components
 
-### 4.1 Files to Create (13 new files)
+### 4.1 Files to Create (14 new files)
 
 | File | Module | Purpose |
 |------|--------|---------|
@@ -81,19 +84,20 @@ Implement a deterministic game recording and replay system with unified telemetr
 | `front/src/game/systems/InputCapture.ts` | P6 | Input transition recorder |
 | `front/src/game/systems/DomainEventEmitter.ts` | P7 | Centralized event emitter |
 | `front/src/game/systems/TelemetryRouter.ts` | P8 | PostHog + backend dispatcher |
+| `front/src/lib/api/replays.ts` | P8+ | API client for save/get replay |
 | `front/src/game/replay/ReplayEngine.ts` | P10 | Offline replay driver |
 | `front/src/game/replay/StateComparator.ts` | P10 | Drift detection |
 | `front/src/game/replay/ReplayReducer.ts` | P10 | State reconstruction |
-| `front/src/game/replay/ReplayLoaderUI.ts` | P11 | Replay controls UI |
+| `front/src/game/replay/ReplayLoaderUI.ts` | P11 | Replay controls UI (internal tooling) |
 | `front/src/game/replay/ReplayURLHandler.ts` | P11 | URL parsing |
-| `front/src/app/replay/[replayId]/page.tsx` | P11 | Next.js route |
+| `front/src/app/replay/[replayId]/page.tsx` | P11 | Next.js route (internal tooling) |
 | `back/src/modules/replay/game-replay.entity.ts` | P1 | Replay storage entity |
 
 ### 4.2 Files to Modify (20+ files)
 
 | File | Change | Risk |
 |------|--------|------|
-| `Game.ts` | Instantiate DeterministicClock, EventStore, InputCapture, DomainEventEmitter; update `update()` loop | High |
+| `Game.ts` | Instantiate DeterministicClock, EventStore, InputCapture, DomainEventEmitter; update `update()` loop; call `telemetryRouter.exportAndUploadReplay()` at SHUTDOWN/beforeunload | High |
 | `Player.ts` | Use `clock.fixedDt` instead of `dt` param; use `inputCapture.isActionDown()` | High |
 | `QuestManager.ts` | Inject DomainEventEmitter, replace `this.emit()` calls | Medium |
 | `ScoreManager.ts` | Inject DomainEventEmitter, replace `this.emit()` calls | Medium |
@@ -110,8 +114,10 @@ Implement a deterministic game recording and replay system with unified telemetr
 | `Enemy.ts` | Replace `time.addEvent()` with `clock.delay()` | Low |
 | `Portal.ts` | Replace `time.delayedCall()` with `clock.delay()` | Low |
 | `MapIntroScene.ts` | Replace `time.addEvent()` with `clock.delay()` | Low |
-| `PhaserGame.tsx` | Conditional ReplayEngine vs normal Game | Medium |
+| `PhaserGame.tsx` | No changes — replay uses separate `PhaserReplay.tsx` | N/A |
 | `Makefile` | Add `replay` target | Low |
+| `TelemetryRouter.ts` | Add `exportAndUploadReplay()` method for session export+upload | Medium |
+| `replay/[replayId]/page.tsx` | Use `apiClient` instead of raw `fetch` for auth headers | Low |
 
 ### 4.3 Files to Delete (1 file)
 
@@ -242,10 +248,26 @@ Implement a deterministic game recording and replay system with unified telemetr
 - Implement batch buffering for PostHog (5 events or 5s) and backend (10 events or 10s)
 - Implement `route(event)` extracting lightweight PostHog payload and heavy backend payload
 - Implement `flush()` for scene change and session end
+- Implement `exportAndUploadReplay(exitReason)` — exports EventStore, POSTs to backend, returns replayId
+- Import `saveReplay` from `lib/api/replays.ts`
 - Make `posthog-js` import only in this file for game events
 - Update `lib/analyticsApi.ts` to keep only non-game React analytics
 
-**Validation:** Unit tests pass, events dispatched to both destinations
+**Validation:** Unit tests pass, events dispatched to both destinations, exportAndUploadReplay returns replayId
+
+---
+
+### Step 8.5: Replay API Client (No dependencies, parallel with Step 8)
+
+**Files:** `front/src/lib/api/replays.ts` (create)
+
+**Actions:**
+- Create `saveReplay(session: SessionJSON): Promise<{ replayId: string }>` — POSTs to `/api/v1/replays`
+- Create `getReplay(replayId: string): Promise<GameReplay>` — GETs `/api/v1/replays/:id`
+- Use `apiClient` from `lib/api/client.ts` for auth header injection
+- Handle 401 gracefully (guest users — silent skip)
+
+**Validation:** Unit tests pass, correct DTO shape sent to backend
 
 ---
 
@@ -279,16 +301,17 @@ Implement a deterministic game recording and replay system with unified telemetr
 
 ### Step 11: ReplayLoaderUI & URL Handler (Depends on Step 10)
 
-**Files:** `ReplayLoaderUI.ts`, `ReplayURLHandler.ts`, `page.tsx` (create), `PhaserGame.tsx`, `Makefile` (modify)
+**Files:** `ReplayLoaderUI.ts`, `ReplayURLHandler.ts`, `page.tsx` (create), `PhaserReplay.tsx`, `Makefile` (modify)
 
 **Actions:**
 - Implement replay controls: play/pause, speed selector, frame scrubber
 - Implement URL parsing: `/replay/:replayId?frame=:frame&speed=:speed`
-- Implement export dialog: copy replay_id, download JSON, upload to backend
-- Update `PhaserGame.tsx` to conditionally create ReplayEngine vs normal Game
+- Create `PhaserReplay.tsx` dedicated component (separate from `PhaserGame.tsx`)
+- Use `apiClient` in `replay/[replayId]/page.tsx` for auth headers
 - Add `make replay REPLAY_ID=xxx` target to Makefile
+- Note: No export dialog — recording/upload is automatic and silent
 
-**Validation:** Manual test: load replay via URL, controls work, export works
+**Validation:** Manual test: `make replay REPLAY_ID=xxx`, controls work, replay loads from backend
 
 ---
 
@@ -436,14 +459,6 @@ develop
 | Modify | 6 mechanic handlers (Poster, Painting, Photo, Sculpture, Collectible, Interaction) |
 | Tests | Unit tests for DeterministicClock, SeededRandom |
 
-**Commits:**
-```
-feat(front): add DeterministicClock with fixed timestep accumulator
-feat(front): add SeededRandom utility for deterministic PRNG
-refactor(front): replace Math.random with seeded PRNG in AudioManager and EffectsManager
-refactor(front): replace time.delayedCall and time.addEvent with clock.delay
-```
-
 **Acceptance:**
 - [ ] Fixed 16.67ms timestep; no variable `delta` in game logic
 - [ ] All `Math.random()` in game code replaced with seeded PRNG
@@ -463,14 +478,6 @@ refactor(front): replace time.delayedCall and time.addEvent with clock.delay
 | Create | `EventStore.ts`, `InputCapture.ts`, `DomainEventEmitter.ts`, `TelemetryRouter.ts` |
 | Modify | `Game.ts` (instantiate new modules), `Player.ts` (use InputCapture) |
 | Tests | Unit tests for all 4 new modules |
-
-**Commits:**
-```
-feat(front): add EventStore ring buffer for event recording
-feat(front): add InputCapture for frame-level input state transitions
-feat(front): add DomainEventEmitter centralized event emitter
-feat(front): add TelemetryRouter for PostHog and backend API dispatch
-```
 
 **Acceptance:**
 - [ ] `EventStore` records events and exports valid SessionJSON
@@ -495,14 +502,6 @@ feat(front): add TelemetryRouter for PostHog and backend API dispatch
 | Modify (BE) | `game.controller.ts`, `game.service.ts`, `app.module.ts` |
 | Migration | `GameReplay` entity with JSONB |
 
-**Commits:**
-```
-refactor(front): remove AnalyticsSystem, wire managers to DomainEventEmitter
-refactor(front): remove posthog-js imports from game files
-feat(back): add GameReplay entity and replay storage endpoints
-feat(back): add batch events endpoint for telemetry
-```
-
 **Acceptance:**
 - [ ] `AnalyticsSystem.ts` deleted
 - [ ] `posthog-js` imported in exactly 1 game file: `TelemetryRouter.ts`
@@ -523,15 +522,6 @@ feat(back): add batch events endpoint for telemetry
 |--------|---------|
 | Create | `ReplayEngine.ts`, `StateComparator.ts`, `ReplayReducer.ts`, `ReplayLoaderUI.ts`, `ReplayURLHandler.ts`, `page.tsx` |
 | Modify | `PhaserGame.tsx`, `Makefile` |
-
-**Commits:**
-```
-feat(front): add ReplayEngine for offline deterministic replay
-feat(front): add StateComparator for drift detection
-feat(front): add ReplayReducer for state reconstruction
-feat(front): add ReplayLoaderUI and URL handler
-chore: add make replay target to Makefile
-```
 
 **Acceptance:**
 - [ ] `ReplayEngine` loads SessionJSON and runs frame-by-frame
@@ -574,3 +564,4 @@ chore: add make replay target to Makefile
 | 6 | Ring buffer (3600 frames) over unbounded | Bounded memory; 1 minute is sufficient for level replays | Long sessions require periodic export |
 | 7 | 300-frame snapshot interval | 5s granularity balances drift detection precision vs storage cost | Drift may propagate up to 5s before detection |
 | 8 | Separate replay path over inline | Replay is opt-in; normal gameplay unaffected by replay infrastructure | Code duplication for physics step (mitigated by shared DeterministicClock) |
+| 9 | Silent background recording | Replays are internal tooling. No user-facing export UI. Recording/upload happens automatically on session end | No manual download option for debugging (use `make replay` or direct API) |

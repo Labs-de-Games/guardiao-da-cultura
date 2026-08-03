@@ -56,6 +56,14 @@ Three interconnected pillars:
 | `replay_id` as the bridge | PostHog carries `replay_id` string; backend stores full session JSON keyed by same ID |
 | All events derived from existing managers | No invented placeholder events — every PostHog event maps to a real state transition in existing managers |
 
+### Scope — Internal Tooling Only
+
+Replays are strictly an internal tool for Engineering, QA, and Product teams. They serve two purposes: **bug reproduction** (pixel-perfect frame-by-frame replay) and **gameplay analytics** (aggregated via PostHog with `replay_id` metadata).
+
+- Replay recording and upload happen silently in the background on session end — no user interaction required
+- The `/replay/[replayId]` route and Replay Engine UI are internal developer/QA tooling, accessed via `make replay` or direct URL
+- No end-user facing replay export UI, modals, or controls are ever displayed inside the game canvas
+
 ---
 
 ## 2. Architecture Overview
@@ -77,10 +85,10 @@ Three interconnected pillars:
 │                    └───────┬────────┘                               │
 │              ┌─────────────┼─────────────┐                         │
 │              ▼             ▼             ▼                          │
-│         ┌────────┐  ┌──────────┐  ┌──────────┐                    │
-│         │PostHog │  │Backend   │  │Export    │                     │
-│         │Buffer  │  │API Buffer│  │(JSON)    │                     │
-│         └────────┘  └──────────┘  └──────────┘                    │
+│         ┌────────┐  ┌──────────┐  ┌──────────────┐                │
+│         │PostHog │  │Backend   │  │Replay Upload │                 │
+│         │Buffer  │  │API Buffer│  │(silent, auto)│                 │
+│         └────────┘  └──────────┘  └──────────────┘                │
 │                                                                      │
 │  ┌──────────────────────────────────────────────┐                   │
 │  │         DeterministicClock (fixed step)       │                   │
@@ -113,6 +121,7 @@ Three interconnected pillars:
 5. DomainEventEmitter → TelemetryRouter.route()
 6. TelemetryRouter → PostHog buffer (flush batch of 5 or every 5s)
 7. TelemetryRouter → Backend /api/v1/events (flush batch of 10 or every 10s)
+8. On session end (SHUTDOWN/beforeunload), TelemetryRouter.exportAndUploadReplay() exports EventStore → POSTs SessionJSON to /api/v1/replays
 ```
 
 ### Data Flow — Replay Mode
@@ -750,6 +759,14 @@ class TelemetryRouter:
   setSessionContext(userId: string, replayId: string): void
     // Sets context for all subsequent events
 
+  // Replay export (called on session end)
+  async exportAndUploadReplay(exitReason: string): Promise<string | null>
+    // 1. Builds SessionMetadata from level context + registry values
+    // 2. Calls eventStore.exportSession(metadata) → SessionJSON
+    // 3. POSTs SessionJSON to /api/v1/replays via apiClient
+    // 4. Returns replayId on success, null on failure (guest 401, network error)
+    // 5. Silently swallows errors (replay save is best-effort)
+
   // Cleanup
   destroy(): void
     // Flushes remaining, clears intervals
@@ -764,6 +781,7 @@ interface TelemetryRouterConfig {
   backendBatchSize: number        // Default: 10
   backendFlushIntervalMs: number  // Default: 10000
   backendApiUrl: string           // From env: "/api/v1/events"
+  replayApiUrl: string            // From env: "/api/v1/replays"
   enabled: boolean                // Default: true (false in replay mode)
 }
 ```
@@ -841,7 +859,8 @@ setInterval(() => flush(), max(posthogFlushIntervalMs, backendFlushIntervalMs))
 | `PostHogProvider.tsx` | No change — PostHog client init stays here. TelemetryRouter uses the initialized client |
 | Backend `GameController` | `POST /api/v1/events` now receives batched events: `{ events: GameEventPayload[] }` instead of single event |
 | Backend `GameService` | Needs minor update to handle batch array: `processEvent()` called in loop |
-| Backend `/api/v1/replays` | **New endpoint** — receives `SessionJSON` from `EventStore.exportSession()` |
+| Backend `/api/v1/replays` | **New endpoint** — receives `SessionJSON` from `TelemetryRouter.exportAndUploadReplay()` |
+| `Game.ts` — SHUTDOWN/beforeunload | Calls `telemetryRouter.exportAndUploadReplay()` on session end |
 
 ---
 
@@ -1032,7 +1051,7 @@ function onFrame():
 
 ### 4.7 ReplayLoaderUI / URLHandler
 
-**Purpose:** Provides UI for loading replays and URL-based deep linking to specific replay frames.
+**Purpose:** Internal developer/QA tool for replay playback. Provides controls for loading, playing, pausing, seeking, and inspecting replay sessions.
 
 #### Public API Contract
 
@@ -1051,12 +1070,8 @@ class ReplayLoaderUI:
   setEngine(engine: ReplayEngine): void
     // Connects UI to engine for control and progress updates
 
-  // Export (for normal mode recording)
-  showExportDialog(sessionJSON: SessionJSON): void
-    // Shows modal with:
-    // - "Copy replay_id" button
-    // - "Download JSON" button
-    // - "Upload to backend" button
+  // Note: No export dialog. Recording/upload is automatic and silent.
+  // This UI is strictly internal tooling for replay playback.
 ```
 
 #### URL Handler
@@ -1081,9 +1096,8 @@ class ReplayURLHandler {
 
 | Existing File | Connection |
 |---------------|------------|
-| `app/` (Next.js routes) | New route: `/replay/[replayId]` — loads replay page |
-| `PhaserGame.tsx` | In replay mode, creates ReplayEngine instead of normal Game |
-| `Game.ts` — SHUTDOWN | After export, shows ReplayLoaderUI export dialog |
+| `app/replay/[replayId]/page.tsx` | Next.js route — loads session JSON and mounts PhaserReplay |
+| `PhaserReplay.tsx` | Dedicated component for replay mode (separate from `PhaserGame.tsx`) |
 | Backend `/api/v1/replays` | `GET /api/v1/replays/:id` — fetches session JSON |
 
 ---
@@ -1180,40 +1194,55 @@ class ReplayURLHandler {
 
 **Entity schema:**
 ```typescript
-@Entity()
+@Entity("game_replays")
 export class GameReplay {
   @PrimaryGeneratedColumn("uuid")
-  id!: string;                    // replayId
+  id!: string;
 
-  @Column({ type: "varchar", nullable: true })
-  userId?: string;
+  @Column({ type: "uuid" })
+  playerId!: string;
 
-  @Column({ type: "varchar" })
+  @Column({ type: "varchar", length: 255 })
   levelId!: string;
 
-  @Column({ type: "int" })
+  @Column({ type: "int", default: 1 })
   levelNumber!: number;
 
   @Column({ type: "jsonb" })
-  sessionData!: SessionJSON;      // Full event store dump
+  metadata!: Record<string, unknown>;
 
-  @Column({ type: "int" })
+  @Column({ type: "jsonb" })
+  events!: Record<string, unknown>[];
+
+  @Column({ type: "jsonb", default: () => "'[]'" })
+  snapshotFrames!: number[];
+
+  @Column({ type: "varchar", length: 255, unique: true })
+  replayId!: string;
+
+  @Column({ type: "varchar", length: 50, default: "unknown" })
+  exitReason!: string;
+
+  @Column({ type: "int", default: 0 })
   totalFrames!: number;
 
-  @Column({ type: "int" })
+  @Column({ type: "int", default: 0 })
   durationMs!: number;
-
-  @Column({ type: "varchar", nullable: true })
-  exitReason?: string;
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }
 ```
 
+> **Design note:** The original spec proposed a single `sessionData: SessionJSON` JSONB column. The implementation uses decomposed columns (`events`, `metadata`, `snapshotFrames`, etc.) for better queryability — enables filtering by `exitReason`, `replayId`, and `playerId` without parsing JSONB. The full `SessionJSON` is reconstructed at read time by the service layer.
+
 **API endpoints:**
-- `POST /api/v1/replays` — Store session JSON (called by frontend on session end)
-- `GET /api/v1/replays/:id` — Retrieve session JSON (called by ReplayEngine)
+- `POST /api/v1/replays` — Store session (called by TelemetryRouter on session end)
+- `GET /api/v1/replays/:id` — Retrieve session by replayId (called by replay page)
+- `GET /api/v1/replays` — List replays for authenticated player (optional, for QA dashboards)
 
 ---
 
@@ -1706,9 +1735,10 @@ export class GameReplay {
 | 5 | Hybrid input recording | Input transitions + domain events + snapshots |
 | 6 | Pixel-perfect replay | Exact state reconstruction for bug reproduction |
 | 7 | `replay_id` bridge | PostHog carries metadata, backend stores full JSON |
-| 8 | Single TelemetryRouter | One import point for `posthog-js` in game code |
+| 8 | Single TelemetryRouter | One import point for `posthog-js` AND one outbound pipeline for replay export. Game.ts calls `TelemetryRouter.exportAndUploadReplay()` — no direct EventStore → API calls from Game.ts |
 | 9 | Batch flush (5/10 events) | Reduce network requests, better throughput |
 | 10 | Self-hosted replay JSON | Deterministic replay, not PostHog video recording |
+| 11 | Internal tooling only | Replays are for Engineering/QA/Product debugging, not player-facing features. No export UI in game canvas. Recording is silent and automatic |
 
 ---
 
