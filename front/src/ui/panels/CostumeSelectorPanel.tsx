@@ -1,6 +1,7 @@
 "use client";
 
 import { keyframes } from "@emotion/react";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
@@ -596,11 +597,9 @@ export function CostumeSelectorPanel() {
 
     const borderColor = state.isRejecting
       ? LayoutConfig.COLORS.UNAVAILABLE_RED
-      : state.isLocked
-        ? LayoutConfig.COLORS.SUCCESS_GREEN
-        : isFocused
-          ? LayoutConfig.COLORS.INFO_TITLE
-          : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
+      : isFocused
+        ? LayoutConfig.COLORS.INFO_TITLE
+        : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
 
     // Select items array based on part type
     const carouselItems =
@@ -662,7 +661,7 @@ export function CostumeSelectorPanel() {
             >
               <Box sx={{ display: "flex" }}>
                 {/* Carousel items */}
-                {carouselItems.map((item) => (
+                {carouselItems.map((item, index) => (
                   <Box
                     key={item.id}
                     sx={{
@@ -691,6 +690,20 @@ export function CostumeSelectorPanel() {
                         mb: PART_SIZES[partType].mb,
                       }}
                     />
+
+                    {state.isLocked && index === state.selectedIndex && (
+                      <CheckCircleIcon
+                        sx={{
+                          position: "absolute",
+                          top: "8%",
+                          right: "8%",
+                          color: LayoutConfig.COLORS.SUCCESS_GREEN,
+                          bgcolor: GAME_UI_TOKENS.colors.bgPrimary,
+                          borderRadius: "50%",
+                          fontSize: "clamp(16px, 18%, 28px)",
+                        }}
+                      />
+                    )}
                   </Box>
                 ))}
               </Box>
