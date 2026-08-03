@@ -3,37 +3,6 @@ import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { CostumeSelectorPanel } from "./CostumeSelectorPanel";
 
-// embla-carousel relies on ResizeObserver / IntersectionObserver / matchMedia,
-// none of which jsdom implements — stub them so mounting doesn't throw.
-class MockResizeObserver {
-  observe = jest.fn();
-  unobserve = jest.fn();
-  disconnect = jest.fn();
-}
-global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
-
-class MockIntersectionObserver {
-  observe = jest.fn();
-  unobserve = jest.fn();
-  disconnect = jest.fn();
-}
-global.IntersectionObserver =
-  MockIntersectionObserver as unknown as typeof IntersectionObserver;
-
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: jest.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
-
 function resetStore() {
   useGameUIStore.setState({
     costumeSelectorOpen: false,
