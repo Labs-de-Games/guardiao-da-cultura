@@ -217,7 +217,7 @@ export const LEVEL_ASSETS = {
 
 export const GLOBAL_ASSETS = [
   { key: "exclamation", path: "misc/exclamation.png" },
-  { key: "star", path: "misc/star.png" },
+  { key: "star", path: "misc/star.png", frameWidth: 32, frameHeight: 32 },
   { key: "interactive_hint_key", path: "misc/interactive_hint_key.png" },
 ] as const;
 
