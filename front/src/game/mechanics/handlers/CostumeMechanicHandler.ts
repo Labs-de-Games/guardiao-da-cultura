@@ -84,7 +84,7 @@ export class CostumeMechanicHandler {
   public static deriveCorrectCostume(ids: string[]): string {
     if (ids.length === 0) return "";
     const first = ids[0] as string;
-    return first.replace(/_head|_torso|_feet$/, "");
+    return first.replace(/_(head|torso|feet)$/, "");
   }
 
   /**
