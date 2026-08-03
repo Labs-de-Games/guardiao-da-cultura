@@ -1,6 +1,7 @@
 "use client";
 
 import { keyframes } from "@emotion/react";
+import { Check } from "@mui/icons-material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -744,13 +745,17 @@ export function CostumeSelectorPanel() {
           ref={confirmButtonRef}
           variant="contained"
           size="large"
+          startIcon={<Check />}
           onClick={handleConfirm}
           sx={{
             mt: 2,
             mx: "auto",
-            display: "block",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.75,
             bgcolor: GAME_UI_TOKENS.colors.accentGold,
-            color: GAME_UI_TOKENS.colors.bgPrimary,
+            color: GAME_UI_TOKENS.colors.white,
             fontFamily: GAME_UI_TOKENS.fonts.body,
             fontWeight: 700,
             borderRadius: `${GAME_UI_TOKENS.radius.small}px`,
