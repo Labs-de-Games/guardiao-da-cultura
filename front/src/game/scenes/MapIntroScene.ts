@@ -303,6 +303,7 @@ export class MapIntroScene extends Scene {
     const data = {
       markerId: marker.id,
       title: marker.title,
+      shortlocation: marker.shortlocation,
       location: marker.location,
       isAvailable,
       isCompleted,
