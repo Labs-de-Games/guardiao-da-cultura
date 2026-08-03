@@ -200,8 +200,19 @@ export function CostumeSelectorPanel() {
 
   useEffect(() => {
     setCarouselStates(initialStates);
-    setFocusedPart("head");
-    setConfirmFocused(false);
+
+    const partOrder: ("head" | "torso" | "feet")[] = ["head", "torso", "feet"];
+    const firstUnlockedPart = partOrder.find(
+      (part) => !initialStates[part].isLocked,
+    );
+
+    if (firstUnlockedPart) {
+      setFocusedPart(firstUnlockedPart);
+      setConfirmFocused(false);
+    } else {
+      setConfirmFocused(true);
+      confirmButtonRef.current?.focus();
+    }
   }, [initialStates]);
 
   // Embla carousel refs - configured for 3 visible items
