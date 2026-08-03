@@ -11,7 +11,7 @@ export interface CostumeState extends Record<string, unknown> {
   lockedParts: Record<CostumePartType, boolean>;
 }
 
-export const COSTUME_PARTS: Record<"head" | "torso" | "feet", CostumePart[]> = {
+export const COSTUME_PARTS: Record<CostumePartType, CostumePart[]> = {
   head: [
     { id: "dummy_head", name: "dummy", textureKey: "dummy_head" },
     { id: "indian_head", name: "indian", textureKey: "indian_head" },
@@ -60,7 +60,7 @@ function seededShuffle<T>(arr: T[], rng: () => number): T[] {
 }
 
 // Cached shuffled orders per part type
-const shuffledCache: Record<"head" | "torso" | "feet", CostumePart[] | null> = {
+const shuffledCache: Record<CostumePartType, CostumePart[] | null> = {
   head: null,
   torso: null,
   feet: null,
@@ -93,7 +93,7 @@ export class CostumeMechanicHandler {
    * using a seed generated once at module load time.
    */
   public static getShuffledCostumeParts(
-    partType: "head" | "torso" | "feet",
+    partType: CostumePartType,
   ): CostumePart[] {
     if (shuffledCache[partType]) return shuffledCache[partType]!;
 
