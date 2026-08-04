@@ -1281,6 +1281,15 @@ export class Game extends Scene implements GameDataAccessor {
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
 
+    if (this.isDialogueOpen) {
+      const cam = this.cameras.main;
+      EventBus.emit("dialogue:camera-sync", {
+        worldViewX: cam.worldView.x,
+        worldViewY: cam.worldView.y,
+        zoom: cam.zoom,
+      });
+    }
+
     this.effects.updateSpotlight(this.player.x, this.player.y);
 
     if (this.player && this.hintKeySystem) {

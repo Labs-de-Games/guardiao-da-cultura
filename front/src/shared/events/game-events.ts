@@ -107,6 +107,12 @@ export interface DialogueCompletedData {
   confirmed?: boolean;
 }
 
+export interface DialogueCameraSyncData {
+  worldViewX: number;
+  worldViewY: number;
+  zoom: number;
+}
+
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import type { IntroConfig } from "@/ui/intro/types";
@@ -179,6 +185,7 @@ export interface GameEventMap {
   "dialogue:completed": DialogueCompletedData;
   "dialogue:dequeue-started": undefined;
   "dialogue:queue-cleared": undefined;
+  "dialogue:camera-sync": DialogueCameraSyncData;
   "ui:label-show": LabelInfoData;
   "ui:label-hide": undefined;
   "ui:badge-gallery-toggle": BadgeGalleryToggleData;
