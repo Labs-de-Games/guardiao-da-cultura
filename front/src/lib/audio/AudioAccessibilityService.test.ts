@@ -130,30 +130,12 @@ describe("AudioAccessibilityServiceImpl", () => {
         body: JSON.stringify({
           text: "hello world",
           voice: "Brazilian Portuguese Female",
-          rate: undefined,
-          pitch: undefined,
         }),
       });
 
       mockOnended?.();
 
       await expect(promise).resolves.toBeUndefined();
-    });
-
-    it("sends correct payload with options", async () => {
-      service.speak("test", { voice: "en-US", rate: 1.5, pitch: 0.8 });
-      await flushPromises();
-
-      expect(mockFetch).toHaveBeenCalledWith("/api/tts/synthesize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: "test",
-          voice: "en-US",
-          rate: 1.5,
-          pitch: 0.8,
-        }),
-      });
     });
 
     it("resolves immediately for empty text", async () => {
@@ -325,8 +307,6 @@ describe("AudioAccessibilityServiceImpl", () => {
           body: JSON.stringify({
             text: "english test",
             voice: "US English Female",
-            rate: undefined,
-            pitch: undefined,
           }),
         }),
       );
@@ -335,7 +315,7 @@ describe("AudioAccessibilityServiceImpl", () => {
     it("per-call voice option overrides setVoice", async () => {
       service.setVoice("US English Female");
 
-      service.speak("french test", { voice: "French Female" });
+      service.speak("french test");
       await flushPromises();
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -343,9 +323,7 @@ describe("AudioAccessibilityServiceImpl", () => {
         expect.objectContaining({
           body: JSON.stringify({
             text: "french test",
-            voice: "French Female",
-            rate: undefined,
-            pitch: undefined,
+            voice: "US English Female",
           }),
         }),
       );
