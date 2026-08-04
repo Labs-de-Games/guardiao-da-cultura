@@ -36,6 +36,7 @@ const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
 const VIEWPORT_MARGIN = 24;
 const TRIANGLE_HEIGHT = 32;
 const HEAD_OFFSET = 100;
+const HORIZONTAL_OFFSET = 60;
 const MAX_DIALOGUE_LENGTH = 144;
 
 interface DialoguePanelProps {
@@ -136,7 +137,10 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
 
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
-    const clampedLeft = Math.max(minLeft, Math.min(screenX, maxLeft));
+    const clampedLeft = Math.max(
+      minLeft,
+      Math.min(screenX + HORIZONTAL_OFFSET, maxLeft),
+    );
 
     const bottom = Math.min(
       vh - VIEWPORT_MARGIN,
