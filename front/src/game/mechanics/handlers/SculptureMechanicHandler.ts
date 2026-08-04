@@ -75,6 +75,7 @@ export class SculptureMechanicHandler implements BaseMechanicHandler {
     placeholder?: PlaceholderInstance | null,
   ): void {
     g.shakeHorizontal(400, 0.05);
+    // AudioManager.playSfxVariation("sfx.object.drop", 2, 0.3);
     g.recordFloorError(this.scoringFloor);
 
     const workId = placeholder
