@@ -351,6 +351,7 @@ export default function QuizPanel() {
         case " ":
         case "Enter":
           e.preventDefault();
+          playClick();
           selectOption();
           break;
       }
