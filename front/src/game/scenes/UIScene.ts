@@ -79,12 +79,17 @@ export class UIScene extends Scene {
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:show", {
-          lines,
-          callbackId,
-          worldPosition: pos,
-        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.time.delayedCall(
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+          () => {
+            EventBus.emit("dialogue:show", {
+              lines,
+              callbackId,
+              worldPosition: pos,
+            });
+          },
+        );
       },
     );
 
@@ -152,13 +157,18 @@ export class UIScene extends Scene {
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:confirm", {
-          message,
-          speakerName,
-          callbackId,
-          worldPosition: pos,
-        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.time.delayedCall(
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+          () => {
+            EventBus.emit("dialogue:confirm", {
+              message,
+              speakerName,
+              callbackId,
+              worldPosition: pos,
+            });
+          },
+        );
       },
     );
 
