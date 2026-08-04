@@ -2,7 +2,14 @@
 
 import ArrowRight from "@mui/icons-material/ArrowRight";
 import { Box, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
@@ -154,11 +161,14 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     };
   }, [speakerPos, cameraTransform, vw, vh]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
       setCameraTransform(null);
       return;
     }
+    // EventBus replays the last camera-sync payload synchronously here,
+    // so the bubble's first paint already has the settled camera state
+    // instead of flashing at the fallback position for a frame.
     return EventBus.on("dialogue:camera-sync", (data) => {
       setCameraTransform(data);
     });
