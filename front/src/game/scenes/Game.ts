@@ -1117,8 +1117,6 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:chunk-selector-close");
       EventBus.off("ui:label-hide");
     });
-
-    this.setupCameras();
   }
 
   private tryInteractWithRat(): boolean {
