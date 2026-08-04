@@ -34,6 +34,7 @@ function createMockNpc(
     getName: () => "NPC",
     getIntermediateQuizDialogues: () =>
       overrides.intermediateQuizDialogues ?? [],
+    prependName: (lines: string[]) => lines.map((line) => `NPC: ${line}`),
     getSpawnPosition: () => overrides.spawnPosition ?? null,
     getSpawnPoint: () => overrides.spawnPosition ?? { x: 0, y: 0 },
     showForQuiz: jest.fn(),
@@ -350,8 +351,9 @@ describe("QuizManager", () => {
 
     expect(events.emit).toHaveBeenCalledWith(
       GameEvents.SHOW_DIALOGUE_REQUEST,
-      ["Linha 1", "Linha 2"],
+      ["NPC: Linha 1", "NPC: Linha 2"],
       expect.any(Function),
+      expect.any(Object),
     );
   });
 
