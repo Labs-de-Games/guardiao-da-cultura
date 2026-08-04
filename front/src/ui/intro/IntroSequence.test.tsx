@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import * as EventBus from "../../shared/events/event-bus";
 import { IntroSequence } from "./IntroSequence";
 import type { IntroConfig } from "./types";
 
