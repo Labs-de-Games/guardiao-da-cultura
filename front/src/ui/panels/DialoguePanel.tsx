@@ -31,13 +31,11 @@ function useWindowSize() {
 }
 
 const TYPING_SPEED = 30;
-const BUBBLE_MAX_WIDTH = 760;
-const BUBBLE_INNER_INSET = 38;
+const BUBBLE_MAX_WIDTH = 900;
 const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
-const VIEWPORT_MARGIN = 12;
-const TRIANGLE_HEIGHT = 32;
+const VIEWPORT_MARGIN = 24;
+const TRIANGLE_HEIGHT = 28;
 const HEAD_OFFSET = 100;
-const HORIZONTAL_OFFSET = 512;
 const MAX_DIALOGUE_LENGTH = 144;
 
 interface DialoguePanelProps {
@@ -138,10 +136,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
 
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
-    const clampedLeft = Math.max(
-      minLeft,
-      Math.min(screenX + HORIZONTAL_OFFSET, maxLeft),
-    );
+    const clampedLeft = Math.max(minLeft, Math.min(screenX, maxLeft));
 
     const bottom = Math.min(
       vh - VIEWPORT_MARGIN,
@@ -153,13 +148,13 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
 
     const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
     const ratio = (screenX - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
-    const triangleLeft = Math.max(15, Math.min(ratio * 100, 85));
+    const triangleLeft = Math.round(Math.max(15, Math.min(ratio * 100, 85)));
 
     return {
       outerStyle: {
         position: "absolute" as const,
-        left: clampedLeft,
-        bottom,
+        left: Math.round(clampedLeft),
+        bottom: Math.round(bottom),
         transform: "translateX(-50%)",
       },
       triangleLeft,
@@ -273,8 +268,8 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     <Box
       sx={{
         ...positioning.outerStyle,
-        maxWidth: `min(${BUBBLE_MAX_WIDTH}px, 90vw)`,
-        width: `min(${BUBBLE_MAX_WIDTH}px, 90vw)`,
+        maxWidth: "min(900px, 90vw)",
+        width: "min(900px, 90vw)",
         pointerEvents: "auto",
         zIndex: UI_LAYERS.IN_WORLD,
       }}
@@ -288,7 +283,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           borderRadius: "12px",
           px: "40px",
           py: "32px",
-          maxWidth: `min(${BUBBLE_MAX_WIDTH - BUBBLE_INNER_INSET}px, 90vw)`,
+          maxWidth: "min(862px, 90vw)",
           width: "100%",
           overflow: "visible",
         }}
@@ -303,11 +298,14 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         <Box
           sx={{
             position: "absolute",
-            bottom: -TRIANGLE_HEIGHT,
+            // Overlaps the box's bottom edge by a couple px so sub-pixel
+            // rounding of the (zoom-scaled) position never leaves a hairline
+            // gap between the box border and the triangle's point.
+            bottom: -(TRIANGLE_HEIGHT - 2),
             ...(positioning.triangleLeft !== null
               ? {
                   left: `${positioning.triangleLeft}%`,
-                  transform: "translateX(-50%)",
+                  transform: "translateX(-20%)",
                 }
               : { right: 40 }),
             width: 0,
