@@ -5,6 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAudioAccessibility } from "@/lib/audio";
+import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -97,6 +98,11 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
   const { width: vw, height: vh } = useWindowSize();
+  const [cameraTransform, setCameraTransform] = useState<{
+    worldViewX: number;
+    worldViewY: number;
+    zoom: number;
+  } | null>(null);
 
   const rawCurrentText = lines[currentLine] ?? "";
   const parsedLine = parseLine(rawCurrentText);
@@ -105,7 +111,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const isLastLine = currentLine === lines.length - 1;
 
   const positioning = useMemo(() => {
-    if (!speakerPos) {
+    if (!speakerPos || !cameraTransform) {
       return {
         outerStyle: {
           position: "absolute" as const,
@@ -117,20 +123,24 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
       };
     }
 
+    const { worldViewX, worldViewY, zoom } = cameraTransform;
+    const screenX = (speakerPos.x - worldViewX) * zoom;
+    const screenY = (speakerPos.y - worldViewY) * zoom;
+
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
-    const clampedLeft = Math.max(minLeft, Math.min(speakerPos.x, maxLeft));
+    const clampedLeft = Math.max(minLeft, Math.min(screenX, maxLeft));
 
     const bottom = Math.min(
       vh - VIEWPORT_MARGIN,
       Math.max(
         VIEWPORT_MARGIN,
-        vh - (speakerPos.y - TRIANGLE_HEIGHT - HEAD_OFFSET),
+        vh - (screenY - TRIANGLE_HEIGHT - HEAD_OFFSET * zoom),
       ),
     );
 
     const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
-    const ratio = (speakerPos.x - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
+    const ratio = (screenX - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
     const triangleLeft = Math.max(15, Math.min(ratio * 100, 85));
 
     return {
@@ -142,7 +152,17 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
       },
       triangleLeft,
     };
-  }, [speakerPos, vw, vh]);
+  }, [speakerPos, cameraTransform, vw, vh]);
+
+  useEffect(() => {
+    if (!open) {
+      setCameraTransform(null);
+      return;
+    }
+    return EventBus.on("dialogue:camera-sync", (data) => {
+      setCameraTransform(data);
+    });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

@@ -92,14 +92,14 @@ export interface ToastShowData {
 export interface DialogueShowData {
   lines: string[];
   callbackId: string;
-  screenPosition?: { x: number; y: number };
+  worldPosition?: { x: number; y: number };
 }
 
 export interface DialogueConfirmData {
   message: string;
   speakerName: string;
   callbackId: string;
-  screenPosition?: { x: number; y: number };
+  worldPosition?: { x: number; y: number };
 }
 
 export interface DialogueCompletedData {
