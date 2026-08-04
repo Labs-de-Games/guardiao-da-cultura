@@ -67,6 +67,7 @@ export interface GameUIState {
   controlsOpen: boolean;
   gameStarted: boolean;
   activeMapMarker: MapMarkerChangedData | null;
+  levelInfo: { title: string; location: string } | null;
   autoStartProgress: number | null;
   stars: number;
   totalStars: number;
@@ -109,6 +110,7 @@ export interface GameUIState {
   startGame: () => void;
   endGame: () => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
+  setLevelInfo: (info: { title: string; location: string } | null) => void;
   setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
   setScore: (score: number) => void;
@@ -164,6 +166,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   controlsOpen: false,
   gameStarted: false,
   activeMapMarker: DEFAULT_MAP_MARKER,
+  levelInfo: null,
   autoStartProgress: null,
   stars: 0,
   totalStars: 0,
@@ -224,10 +227,12 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         chunkSelectorOpen: false,
         chunkSelectorData: null,
         labelData: null,
+        levelInfo: null,
       });
     }
   },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
+  setLevelInfo: (info) => set({ levelInfo: info }),
   setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setScore: (score) => set({ score }),
