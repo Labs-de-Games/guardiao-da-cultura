@@ -19,10 +19,6 @@
         "Ops! A descrição da placa não bate com essa pintura.",
         "Melhor continuar investigando."
       ]
-    },
-    "COSTUME": {
-      "SUCCESS": ["O manequim está completamente vestido!"],
-      "ERROR": []
     }
   }
 }

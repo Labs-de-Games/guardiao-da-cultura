@@ -14,7 +14,7 @@ export const MissionRequirements = [
   },
   {
     id: MissionIds.CURATOR_L2,
-    requiredInfos: [MissionKeys.COSTUMES_DONE, MissionKeys.POSTERS_DONE],
+    requiredInfos: [MissionKeys.POSTERS_DONE],
   },
 ];
 
@@ -48,11 +48,6 @@ export const MissionRegistry: Record<string, MissionDef> = {
     id: MissionIds.CURATOR_L2,
     title: "Galeria de cartazes",
     steps: [
-      {
-        infoKey: MissionKeys.COSTUMES_DONE,
-        text: "Vestir todos os figurinos",
-        categoryType: InteractiveType.COSTUME,
-      },
       {
         infoKey: MissionKeys.POSTERS_DONE,
         text: "Pendurar todos os cartazes",
