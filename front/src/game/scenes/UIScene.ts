@@ -76,15 +76,14 @@ export class UIScene extends Scene {
           x: gameScene.player.x,
           y: gameScene.player.y,
         };
-        const camera = gameScene.cameras.main;
-        const screenPosition = {
-          x: pos.x - camera.worldView.x,
-          y: pos.y - camera.worldView.y,
-        };
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:show", { lines, callbackId, screenPosition });
+        EventBus.emit("dialogue:show", {
+          lines,
+          callbackId,
+          worldPosition: pos,
+        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
     );
@@ -150,11 +149,6 @@ export class UIScene extends Scene {
           x: gameScene.player.x,
           y: gameScene.player.y,
         };
-        const camera = gameScene.cameras.main;
-        const screenPosition = {
-          x: pos.x - camera.worldView.x,
-          y: pos.y - camera.worldView.y,
-        };
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
@@ -162,7 +156,7 @@ export class UIScene extends Scene {
           message,
           speakerName,
           callbackId,
-          screenPosition,
+          worldPosition: pos,
         });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
       },
