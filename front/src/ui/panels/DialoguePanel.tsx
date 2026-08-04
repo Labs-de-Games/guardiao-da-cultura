@@ -31,12 +31,13 @@ function useWindowSize() {
 }
 
 const TYPING_SPEED = 30;
-const BUBBLE_MAX_WIDTH = 900;
+const BUBBLE_MAX_WIDTH = 760;
+const BUBBLE_INNER_INSET = 38;
 const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
-const VIEWPORT_MARGIN = 24;
+const VIEWPORT_MARGIN = 12;
 const TRIANGLE_HEIGHT = 32;
 const HEAD_OFFSET = 100;
-const HORIZONTAL_OFFSET = 60;
+const HORIZONTAL_OFFSET = 512;
 const MAX_DIALOGUE_LENGTH = 144;
 
 interface DialoguePanelProps {
@@ -272,8 +273,8 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     <Box
       sx={{
         ...positioning.outerStyle,
-        maxWidth: "min(900px, 90vw)",
-        width: "min(900px, 90vw)",
+        maxWidth: `min(${BUBBLE_MAX_WIDTH}px, 90vw)`,
+        width: `min(${BUBBLE_MAX_WIDTH}px, 90vw)`,
         pointerEvents: "auto",
         zIndex: UI_LAYERS.IN_WORLD,
       }}
@@ -287,7 +288,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           borderRadius: "12px",
           px: "40px",
           py: "32px",
-          maxWidth: "min(862px, 90vw)",
+          maxWidth: `min(${BUBBLE_MAX_WIDTH - BUBBLE_INNER_INSET}px, 90vw)`,
           width: "100%",
           overflow: "visible",
         }}
