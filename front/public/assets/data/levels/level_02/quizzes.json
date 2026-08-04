@@ -2,80 +2,95 @@
   "missao_curador_l2": [
     {
       "id": "q1",
-      "category": "Escultura",
-      "question": "[Mock] Qual desses temas está mais presente nas obras de Edgard de Souza?",
-      "options": ["Hiperrealismo", "Transformação", "Miniaturas", "Gigantismo"],
-      "correctOptionIndex": 1,
-      "explanation": "XXXXX",
-      "hints": [
-        "Representa coisas incomuns no mundo real.",
-        "Mostra algo que é conhecido de um jeito, mas se apresenta de outro."
+      "category": "Teatro",
+      "question": "Por que Ajuricaba se jogou no rio Amazonas?",
+      "options": [
+        "Para roubar o ouro das ninfas",
+        "Foi seduzido pelo canto da Iara",
+        "Para não ser escravizado",
+        "Porque tinha paixão por aventura"
       ],
-      "tags": ["edgards", "escultura"],
+      "correctOptionIndex": 2,
+      "explanation": "Capturado pelos portugueses, Ajuricaba preferiu a morte à escravização.",
+      "hints": [
+        "Ele foi acorrentado pelos portugueses.",
+        "O cacique não se renderia à submissão."
+      ],
+      "tags": ["historia", "brasil", "amazonas", "ajuricaba", "indigenas"],
       "difficulty": "medium"
     },
     {
       "id": "q2",
-      "category": "Pintura",
-      "question": "[Mock] As pinturas de Abdias Nascimento têm forte influência de qual religião?",
-      "options": ["Umbanda", "Protestantismo", "Islamismo", "Budismo"],
-      "correctOptionIndex": 0,
-      "explanation": "XXXXX",
-      "hint": [
-        "As divindades dessa religião são chamadas orixás.",
-        "Uma religião de origem africana criada no Brasil."
+      "category": "Teatro",
+      "question": "Qual espetáculo ajudou a tornar o Teatro Amazonas uma das principais casas de ópera da América?",
+      "options": [
+        "Ópera do malandro com elenco amazonense",
+        "Quatro ciclos d'O anel do nibelungo",
+        "Carmina Burana com Amazonas Filarmônica",
+        "A paixão de Ajuricaba na língua ticuna"
       ],
-      "tags": ["pintura", "religiao", "abdiasn"],
-      "difficulty": "easy"
+      "correctOptionIndex": 1,
+      "explanation": "A apresentação completa, totalizando 16 horas, fez o teatro ganhar destaque mundial.",
+      "hints": [
+        "Totalizou 16 horas de espetáculo.",
+        "Uma obra épica escrita por um compositor alemão."
+      ],
+      "tags": ["teatro", "rwagner"],
+      "difficulty": "hard"
     },
     {
       "id": "q3",
-      "category": "Pintura",
-      "question": "[Mock] Na obra Okê Oxóssi de Abdias Nascimento, a saudação “okê” substitui qual lema brasileiro?",
+      "category": "Teatro",
+      "question": "A peça “Zona Franca, meu amor” estreou dez anos depois sob qual outro nome?",
       "options": [
-        "Ordem e progresso",
-        "Florão da América",
-        "Independência ou morte",
-        "Diga ao povo que fico"
+        "Tem pato no tucupi",
+        "Tem caroço nesse angu",
+        "Tem ratos nessas fases",
+        "Tem piranha no pirarucu"
       ],
-      "correctOptionIndex": 0,
-      "explanation": "XXXXX",
-      "hint": [
-        "Um lema presente na bandeira nacional.",
-        "No desfile da Mangueira no ano de 2019, esse mesmo lema foi substituído por “Índios, negros e pobres”."
+      "correctOptionIndex": 3,
+      "explanation": "Após ser censurada, a peça só estreou anos depois, com o nome alterado para “Tem piranha no pirarucu”.",
+      "hints": [
+        "Menciona pelo menos um animal.",
+        "O nome da peça é uma expressão popular que significa que há algo errado ou suspeito."
       ],
-      "tags": ["pintura", "religiao", "brasil", "abdiasn"],
-      "difficulty": "easy"
+      "tags": ["teatro", "amazonas", "animal", "msouza"],
+      "difficulty": "hard"
     },
     {
       "id": "q4",
-      "category": "Fotografia",
-      "question": "[Mock] Qual fotógrafa foi ativa na luta pela demarcação das terras yanomamis?",
+      "category": "Teatro",
+      "question": "Como é a roupa tradicional que compõe o figurino do malandro carioca?",
       "options": [
-        "Luisa Dörr",
-        "Nair Benedicto",
-        "Bárbara Wagner",
-        "Claudia Andujar"
+        "Chapéu de aba e terno de linho branco",
+        "De chinelo, cordão de ouro e sem camisa",
+        "Uniforme verde-musgo e botas de couro",
+        "Costeiro de plumas e tanga"
       ],
-      "correctOptionIndex": 3,
-      "explanation": "XXXXX",
-      "hints": [
-        "Ela teve boa parte da família morta no holocausto judeu e imigrou para o Brasil ainda criança.",
-        "Nasceu na cidade de Neuchâtel, na Suíça."
-      ],
-      "tags": ["biografia", "candujar"],
+      "correctOptionIndex": 0,
+      "explanation": "O tecido de linho claro e bem cuidado mostrava que mantinha dignidade sem precisar de trabalho formal.",
+      "hints": ["Tem o estilo dos anos 40.", "Passa um ar de respeito."],
+      "tags": ["rio", "vestuario"],
       "difficulty": "medium"
     },
     {
       "id": "q5",
-      "category": "Pintura",
-      "question": "[Mock] Abdias Nascimento pintou itens dos orixás, como o oxé e o ofá. O que é um ofá?",
-      "options": ["Machado", "Espelho", "Arco e flecha", "Lança"],
-      "correctOptionIndex": 2,
-      "explanation": "XXXXX",
-      "hints": ["É um instrumento de Oxóssi.", "É usado em combate."],
-      "tags": ["abdiasn", "pintura", "cultura", "religiao"],
-      "difficulty": "medium"
+      "category": "Teatro",
+      "question": "Qual dessas ideias combina menos com a luz vermelha no palco?",
+      "options": [
+        "Cansaço pelo calor",
+        "Sonata ao luar",
+        "Beijos ao pôr-do-sol",
+        "Conflito de interesses"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "A cor vermelha remete a sentimentos de raiva, paixão e conflito, mas não a serenidade.",
+      "hints": [
+        "O vermelho evoca sentimentos de intensidade.",
+        "A resposta está ligada ao sereno da noite."
+      ],
+      "tags": ["cores", "teatro"],
+      "difficulty": "easy"
     }
   ]
 }
