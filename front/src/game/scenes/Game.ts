@@ -774,7 +774,10 @@ export class Game extends Scene implements GameDataAccessor {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
       }
-      this.effects.setZoom(1.2, 400);
+      this.effects.setZoom(
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM,
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+      );
     });
 
     this.events.on(
@@ -801,7 +804,10 @@ export class Game extends Scene implements GameDataAccessor {
           }
         });
 
-        this.effects.setZoom(1.0, 400);
+        this.effects.setZoom(
+          1.0,
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+        );
       },
     );
 
