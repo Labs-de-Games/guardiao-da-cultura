@@ -1,12 +1,9 @@
 import * as Phaser from "phaser";
-import { AudioManager } from "../audio/AudioManager";
-
-const ERROR_AUDIO_KEY = "error";
+import { AudioManager } from "../audio";
 
 /**
  * EffectsManager encapsula transformações de câmera, filtros de cor e efeitos ambientais.
  */
-const SUCCEED_AUDIO_KEY = "succeed";
 
 export class EffectsManager {
   private scene: Phaser.Scene;
@@ -22,13 +19,8 @@ export class EffectsManager {
   private scoreFeedbackActive = false;
   public scoreFeedbackFloatY = 0;
 
-  static preload(scene: Phaser.Scene) {
-    if (!scene.cache.audio.exists(ERROR_AUDIO_KEY)) {
-      scene.load.audio(ERROR_AUDIO_KEY, "sound/error.mp3");
-    }
-    if (!scene.cache.audio.exists(SUCCEED_AUDIO_KEY)) {
-      scene.load.audio(SUCCEED_AUDIO_KEY, "sound/succeed.ogg");
-    }
+  static preload(_scene: Phaser.Scene) {
+    // Sounds are now loaded via AudioManager/registry
   }
 
   constructor(scene: Phaser.Scene) {
@@ -102,7 +94,7 @@ export class EffectsManager {
     const steps = Math.ceil(duration / 16);
     let step = 0;
 
-    this.scene.sound.play(ERROR_AUDIO_KEY, { volume: 0.5 });
+    AudioManager.playSfx("sfx.puzzle.failure");
 
     this.scene.time.addEvent({
       delay: 16,
@@ -144,7 +136,7 @@ export class EffectsManager {
     this.spotlightTargetY = py;
     this.spotlightVisible = true;
     this.revealProgress = 0;
-    this.scene.sound.play(SUCCEED_AUDIO_KEY, { volume: 0.5 });
+    AudioManager.playSfx("sfx.puzzle.success", 0.7);
 
     this.scene.tweens.add({
       targets: this,
