@@ -1,7 +1,5 @@
 import * as Phaser from "phaser";
-
-const RAT_SQUEAK_AUDIO_KEY = "rat_squeak";
-const RAT_FLEE_AUDIO_KEY = "rat_flee";
+import { AudioManager } from "../audio";
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   moveEvent: Phaser.Time.TimerEvent;
@@ -15,14 +13,6 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       frameWidth: 32,
       frameHeight: 32,
     });
-
-    if (!scene.cache.audio.exists(RAT_SQUEAK_AUDIO_KEY)) {
-      scene.load.audio(RAT_SQUEAK_AUDIO_KEY, "sound/rat_squeak.mp3");
-    }
-
-    if (!scene.cache.audio.exists(RAT_FLEE_AUDIO_KEY)) {
-      scene.load.audio(RAT_FLEE_AUDIO_KEY, "sound/rat_flee.mp3");
-    }
   }
 
   static createAnims(scene: Phaser.Scene) {
@@ -92,8 +82,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.direction = -1;
     this.moveSpeed = 1234;
 
-    this.scene.sound.play(RAT_SQUEAK_AUDIO_KEY, { volume: 0.6 });
-    this.scene.sound.play(RAT_FLEE_AUDIO_KEY, { volume: 0.5 });
+    AudioManager.playSfx("sfx.rat.squeak", 0.6);
+    AudioManager.playSfx("sfx.rat.flee", 0.5);
 
     if (this.moveEvent) this.moveEvent.destroy();
 
