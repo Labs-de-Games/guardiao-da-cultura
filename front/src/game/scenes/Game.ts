@@ -1210,6 +1210,7 @@ export class Game extends Scene implements GameDataAccessor {
         ],
       );
       this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
       if (
         this.placeholderSystem.checkCategoryCompletion(InteractiveType.COSTUME)
