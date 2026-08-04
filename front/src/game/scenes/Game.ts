@@ -25,11 +25,6 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
-import {
-  CostumeMechanicHandler,
-  type CostumePartType,
-  type CostumeState,
-} from "../mechanics/handlers/CostumeMechanicHandler";
 import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { PosterMechanicHandler } from "../mechanics/handlers/PosterMechanicHandler";
@@ -91,7 +86,6 @@ export class Game extends Scene implements GameDataAccessor {
   public readonly scoringFloors = {
     sculptures: 0,
     paintings: 1,
-    costumes: 1,
     photo: 2,
     posters: 3,
   } as const;
@@ -101,7 +95,6 @@ export class Game extends Scene implements GameDataAccessor {
   private levelManager!: LevelManager;
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
-  private isCostumeSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
@@ -164,7 +157,6 @@ export class Game extends Scene implements GameDataAccessor {
     this.hasInteractedWithRat = false;
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
-    this.isCostumeSelectorOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -969,12 +961,7 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.player.on("interact-placeholder", () => {
-      if (
-        this.isDialogueOpen ||
-        this.isChunkSelectorOpen ||
-        this.isCostumeSelectorOpen
-      )
-        return;
+      if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
 
       if (this.tryInteractWithRat()) {
         return;
@@ -1041,51 +1028,6 @@ export class Game extends Scene implements GameDataAccessor {
           })),
           filledSlots: filled,
           expectedSlots,
-        });
-      }
-
-      const nearbyCostume = this.placeholderSystem.getNearbyPlaceholder(
-        this.player.x,
-        this.player.y,
-        120,
-        InteractiveType.COSTUME,
-      );
-
-      if (nearbyCostume) {
-        if (this.markFloorStarted(this.scoringFloors.costumes)) {
-          posthog.capture("minigame_started", {
-            minigame_number: this.scoringFloors.costumes + 1,
-            level_id: this.levelId,
-          });
-        }
-
-        const ids = Array.isArray(nearbyCostume.id)
-          ? (nearbyCostume.id as string[])
-          : String(nearbyCostume.id)
-              .split(",")
-              .map((s) => s.trim());
-        const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
-
-        const initialCostumeState = CostumeMechanicHandler.createInitialState();
-        const costumeState = nearbyCostume.state as
-          | Partial<CostumeState>
-          | undefined;
-        const equippedParts = {
-          ...initialCostumeState.equippedParts,
-          ...costumeState?.equippedParts,
-        };
-        const lockedParts = {
-          ...initialCostumeState.lockedParts,
-          ...costumeState?.lockedParts,
-        };
-
-        this.isCostumeSelectorOpen = true;
-        this.events.emit(GameEvents.DIALOGUE_STARTED);
-        EventBus.emit("ui:costume-selector-open", {
-          instanceId: nearbyCostume.instanceId,
-          correctCostume,
-          equippedParts,
-          lockedParts,
         });
       }
     });
@@ -1184,72 +1126,6 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       this.checkDialogState();
     });
-    EventBus.on("ui:costume-selector-close", () => {
-      if (!this.isCostumeSelectorOpen) return;
-      this.isCostumeSelectorOpen = false;
-      this.events.emit(GameEvents.DIALOGUE_ENDED);
-      this.checkDialogState();
-    });
-    EventBus.on("ui:costume-part-selected", (data) => {
-      const p = this.placeholderSystem.getPlaceholderByInstanceId(
-        data.instanceId,
-      );
-      if (!p) return;
-
-      const initialCostumeState = CostumeMechanicHandler.createInitialState();
-      const equipped = {
-        ...initialCostumeState.equippedParts,
-        ...(p.state?.equippedParts as CostumeState["equippedParts"]),
-      };
-      const locked = {
-        ...initialCostumeState.lockedParts,
-        ...(p.state?.lockedParts as CostumeState["lockedParts"]),
-      };
-      const partType = data.partType as CostumePartType;
-      equipped[partType] = data.partId;
-      locked[partType] = true;
-      p.state = { ...p.state, equippedParts: equipped, lockedParts: locked };
-
-      this.placeholderSystem.updateCostumePart(
-        data.instanceId,
-        data.partType as "head" | "torso" | "feet",
-        data.partId,
-      );
-    });
-    EventBus.on("ui:costume-part-rejected", () => {
-      this.sound.play("error", { volume: 0.5 });
-      this.recordFloorError(this.scoringFloors.costumes);
-    });
-    EventBus.on("ui:costume-confirm", (data) => {
-      const p = this.placeholderSystem.getPlaceholderByInstanceId(
-        data.instanceId,
-      );
-      if (!p) return;
-
-      this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
-      const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
-      this.events.emit(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        sysDialogs.COSTUME?.SUCCESS || [
-          "O manequim está completamente vestido!",
-        ],
-      );
-      this.placeholderSystem.lockPlaceholder(data.instanceId);
-      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-
-      if (
-        this.placeholderSystem.checkCategoryCompletion(InteractiveType.COSTUME)
-      ) {
-        this.completeFloor(this.scoringFloors.costumes);
-        this.time.delayedCall(500, () => {
-          this.events.emit(GameEvents.INFO_COLLECTED, {
-            missionId: MissionIds.CURATOR_L2,
-            infoKey: MissionKeys.COSTUMES_DONE,
-          });
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-        });
-      }
-    });
 
     this.events.on("item-dropped", this.handleItemDropped, this);
 
@@ -1265,10 +1141,6 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:chunk-slot-placed");
       EventBus.off("ui:chunk-slot-rejected");
       EventBus.off("ui:chunk-selector-close");
-      EventBus.off("ui:costume-selector-close");
-      EventBus.off("ui:costume-part-selected");
-      EventBus.off("ui:costume-part-rejected");
-      EventBus.off("ui:costume-confirm");
       EventBus.off("ui:label-hide");
     });
 
@@ -1314,7 +1186,6 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
-      !this.isCostumeSelectorOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -1435,7 +1306,6 @@ export class Game extends Scene implements GameDataAccessor {
         this.isDialogueOpen ||
         this.isControlsOpen ||
         this.isChunkSelectorOpen ||
-        this.isCostumeSelectorOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 

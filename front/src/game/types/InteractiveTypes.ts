@@ -7,5 +7,4 @@ export enum InteractiveType {
   POSTER = "poster",
   PHOTO_CHUNK = "photo_chunk",
   PHOTO = "photo",
-  COSTUME = "costume",
 }
