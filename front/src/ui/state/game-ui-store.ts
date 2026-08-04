@@ -60,6 +60,17 @@ export interface ChunkSelectorData {
   expectedSlots: string[];
 }
 
+export interface CostumeSelectorData {
+  instanceId: string;
+  correctCostume: string;
+  equippedParts: {
+    head: string | null;
+    torso: string | null;
+    feet: string | null;
+  };
+  lockedParts: { head: boolean; torso: boolean; feet: boolean };
+}
+
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
 
 export interface GameUIState {
@@ -76,6 +87,8 @@ export interface GameUIState {
   collectibles: CollectibleEntry[];
   chunkSelectorOpen: boolean;
   chunkSelectorData: ChunkSelectorData | null;
+  costumeSelectorOpen: boolean;
+  costumeSelectorData: CostumeSelectorData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -132,6 +145,8 @@ export interface GameUIState {
   collectItem: (itemId: string) => void;
   openChunkSelector: (data: ChunkSelectorData) => void;
   closeChunkSelector: () => void;
+  openCostumeSelector: (data: CostumeSelectorData) => void;
+  closeCostumeSelector: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -175,6 +190,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   collectibles: [],
   chunkSelectorOpen: false,
   chunkSelectorData: null,
+  costumeSelectorOpen: false,
+  costumeSelectorData: null,
   toasts: [],
   labelData: null,
   badgeGalleryOpen: false,
@@ -300,6 +317,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     set({
       chunkSelectorOpen: false,
       chunkSelectorData: null,
+    }),
+  openCostumeSelector: (data) =>
+    set({
+      costumeSelectorOpen: true,
+      costumeSelectorData: data,
+    }),
+  closeCostumeSelector: () =>
+    set({
+      costumeSelectorOpen: false,
+      costumeSelectorData: null,
     }),
   addToast: (message, duration, iconSrc) =>
     set((s) => {
