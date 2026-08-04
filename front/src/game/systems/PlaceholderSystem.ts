@@ -373,6 +373,10 @@ export class PlaceholderSystem {
     return closest;
   }
 
+  public getAll(): PlaceholderInstance[] {
+    return this.placeholders;
+  }
+
   public getPlaceholderByInstanceId(
     instanceId: string,
   ): PlaceholderInstance | null {
