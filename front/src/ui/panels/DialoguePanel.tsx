@@ -37,6 +37,10 @@ const VIEWPORT_MARGIN = 24;
 const TRIANGLE_HEIGHT = 28;
 const HEAD_OFFSET = 100;
 const MAX_DIALOGUE_LENGTH = 144;
+// Worst-case bubble height used only to decide whether it still fits above
+// the speaker without being clipped off the top of the viewport.
+const ESTIMATED_BUBBLE_HEIGHT = 260;
+const BELOW_OFFSET = 24;
 
 interface DialoguePanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -127,6 +131,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           transform: "translateX(-50%)",
         },
         triangleLeft: null,
+        direction: "above" as const,
       };
     }
 
@@ -137,6 +142,37 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
     const clampedLeft = Math.max(minLeft, Math.min(screenX, maxLeft));
+    const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
+    const ratio = (screenX - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
+    const triangleLeft = Math.round(Math.max(15, Math.min(ratio * 100, 85)));
+
+    // Not enough room above the speaker's head to fit the bubble without it
+    // being clipped off the top of the viewport (e.g. interactions near the
+    // top of the map) — flip it to appear below the speaker instead.
+    const spaceNeededAbove =
+      HEAD_OFFSET * zoom +
+      TRIANGLE_HEIGHT +
+      ESTIMATED_BUBBLE_HEIGHT +
+      VIEWPORT_MARGIN;
+
+    if (screenY < spaceNeededAbove) {
+      const topRaw = screenY + BELOW_OFFSET * zoom + TRIANGLE_HEIGHT;
+      const top = Math.min(
+        vh - VIEWPORT_MARGIN,
+        Math.max(VIEWPORT_MARGIN, topRaw),
+      );
+
+      return {
+        outerStyle: {
+          position: "absolute" as const,
+          left: Math.round(clampedLeft),
+          top: Math.round(top),
+          transform: "translateX(-50%)",
+        },
+        triangleLeft,
+        direction: "below" as const,
+      };
+    }
 
     const bottom = Math.min(
       vh - VIEWPORT_MARGIN,
@@ -146,10 +182,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
       ),
     );
 
-    const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
-    const ratio = (screenX - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
-    const triangleLeft = Math.round(Math.max(15, Math.min(ratio * 100, 85)));
-
     return {
       outerStyle: {
         position: "absolute" as const,
@@ -158,6 +190,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         transform: "translateX(-50%)",
       },
       triangleLeft,
+      direction: "above" as const,
     };
   }, [speakerPos, cameraTransform, vw, vh]);
 
@@ -298,10 +331,18 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         <Box
           sx={{
             position: "absolute",
-            // Overlaps the box's bottom edge by a couple px so sub-pixel
-            // rounding of the (zoom-scaled) position never leaves a hairline
-            // gap between the box border and the triangle's point.
-            bottom: -(TRIANGLE_HEIGHT - 2),
+            // Overlaps the box's edge by a couple px so sub-pixel rounding
+            // of the (zoom-scaled) position never leaves a hairline gap
+            // between the box border and the triangle's point.
+            ...(positioning.direction === "below"
+              ? {
+                  top: -(TRIANGLE_HEIGHT - 2),
+                  borderBottom: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+                }
+              : {
+                  bottom: -(TRIANGLE_HEIGHT - 2),
+                  borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+                }),
             ...(positioning.triangleLeft !== null
               ? {
                   left: `${positioning.triangleLeft}%`,
@@ -312,7 +353,6 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
             height: 0,
             borderLeft: "24px solid transparent",
             borderRight: "24px solid transparent",
-            borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
           }}
         />
       </Box>
