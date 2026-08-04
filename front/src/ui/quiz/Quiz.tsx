@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LEVEL_02_ENABLED } from "@/game/constants/FeatureFlags";
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
+import { useSound } from "@/ui/hooks/useSound";
 import { UI_LAYERS } from "@/ui/theme/tokens";
 import { useGameUIStore } from "../state/game-ui-store";
 
@@ -180,6 +181,7 @@ export default function QuizPanel() {
   const moveSelection = useGameUIStore((s) => s.moveSelection);
   const selectOption = useGameUIStore((s) => s.selectOption);
   const { speak } = useAudioAccessibility();
+  const { playModalOpen, playModalClose, playClick } = useSound();
 
   const [selectedNavIndex, setSelectedNavIndex] = useState(1);
 
@@ -200,78 +202,72 @@ export default function QuizPanel() {
 
   const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
 
-  const {
-    headerTitle,
-    headerSubTitle,
-    performanceTitle,
-    performanceSubTitle,
-    performanceMessage,
-    performanceHint,
-  } = useMemo(() => {
-    if (isIntermediate) {
+  const { headerTitle, headerSubTitle, performanceTitle, performanceMessage } =
+    useMemo(() => {
+      if (isIntermediate) {
+        return {
+          headerTitle: `Pontos: ${scorePercentage}%`,
+          headerSubTitle:
+            scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
+          performanceTitle:
+            scorePercentage >= 70
+              ? "Parabéns!"
+              : scorePercentage < 25
+                ? "Essa não"
+                : "Por pouco!",
+          performanceSubTitle:
+            scorePercentage >= 70
+              ? scorePercentage === 100
+                ? "Pontuação perfeita!"
+                : "Boa pontuação"
+              : "Pontuação baixa",
+          performanceMessage:
+            scorePercentage >= 70
+              ? scorePercentage === 100
+                ? "Gabaritou!"
+                : "Muito bom!"
+              : "Revise as placas das obras",
+          performanceHint:
+            scorePercentage >= 70
+              ? ""
+              : "Leia com atenção as informações antes de continuar.",
+        };
+      }
       return {
-        headerTitle: `Pontos: ${scorePercentage}%`,
+        headerTitle:
+          scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
         headerSubTitle:
-          scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
-        performanceTitle:
-          scorePercentage >= 70
-            ? "Parabéns!"
-            : scorePercentage < 25
-              ? "Essa não"
-              : "Por pouco!",
-        performanceSubTitle:
           scorePercentage >= 70
             ? scorePercentage === 100
-              ? "Pontuação perfeita!"
-              : "Boa pontuação"
+              ? "Pontuação perfeita"
+              : "Pontuação boa"
             : "Pontuação baixa",
+        performanceTitle:
+          scorePercentage < 25
+            ? "Essa não"
+            : scorePercentage < 70
+              ? "Por pouco!"
+              : "Parabéns!",
+        performanceSubTitle:
+          scorePercentage < 25 || scorePercentage < 70
+            ? "Pontuação baixa"
+            : scorePercentage < 100
+              ? "Boa pontuação"
+              : "Pontuação perfeita!",
         performanceMessage:
-          scorePercentage >= 70
-            ? scorePercentage === 100
-              ? "Gabaritou!"
-              : "Muito bom!"
-            : "Revise as placas das obras",
+          scorePercentage < 25
+            ? "Tente novamente"
+            : scorePercentage < 70
+              ? "Com mais atenção, você consegue!"
+              : scorePercentage < 100
+                ? "Muito bom!"
+                : "Gabaritou!",
         performanceHint:
           scorePercentage >= 70
-            ? ""
-            : "Leia com atenção as informações antes de continuar.",
+            ? "Você já pode encarar o próximo nível!"
+            : "Sua pontuação não foi o suficiente. Mas não desista!",
       };
-    }
-    return {
-      headerTitle:
-        scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
-      headerSubTitle:
-        scorePercentage >= 70
-          ? scorePercentage === 100
-            ? "Pontuação perfeita"
-            : "Pontuação boa"
-          : "Pontuação baixa",
-      performanceTitle:
-        scorePercentage < 25
-          ? "Essa não"
-          : scorePercentage < 70
-            ? "Por pouco!"
-            : "Parabéns!",
-      performanceSubTitle:
-        scorePercentage < 25 || scorePercentage < 70
-          ? "Pontuação baixa"
-          : scorePercentage < 100
-            ? "Boa pontuação"
-            : "Pontuação perfeita!",
-      performanceMessage:
-        scorePercentage < 25
-          ? "Tente novamente"
-          : scorePercentage < 70
-            ? "Com mais atenção, você consegue!"
-            : scorePercentage < 100
-              ? "Muito bom!"
-              : "Gabaritou!",
-      performanceHint:
-        scorePercentage >= 70
-          ? "Você já pode encarar o próximo nível!"
-          : "Sua pontuação não foi o suficiente. Mas não desista!",
-    };
-  }, [scorePercentage, isIntermediate]);
+    }, [scorePercentage, isIntermediate]);
 
   const activateSelectedNav = useCallback(() => {
     if (selectedNavIndex === 0) {
@@ -279,13 +275,15 @@ export default function QuizPanel() {
     } else if (isRetryMode) {
       EventBus.emit("quiz:retry", undefined);
     } else if (LEVEL_02_ENABLED) {
-      // Level 02 is available: close the quiz and go back to the map
-      // where the next level is already unlocked.
       EventBus.emit("quiz:close", undefined);
     } else {
       useGameUIStore.getState().openInterestDialog();
     }
   }, [selectedNavIndex, isRetryMode]);
+
+  const handleSelectAnswer = useCallback(() => {
+    playClick();
+  }, [playClick]);
 
   useEffect(() => {
     if (isPerformance) {
@@ -374,6 +372,14 @@ export default function QuizPanel() {
       cardRef.current.focus();
     }
   }, [quiz.isVisible]);
+
+  useEffect(() => {
+    if (quiz.isVisible) {
+      playModalOpen();
+    } else {
+      playModalClose();
+    }
+  }, [quiz.isVisible, playModalOpen, playModalClose]);
 
   if (!quiz.isVisible || (!currentQuestion && !isPerformance)) return null;
 
@@ -682,6 +688,7 @@ export default function QuizPanel() {
                 {options.map((option, index) => {
                   const selectAnswer = () => {
                     if (!quiz.isProcessingAnswer) {
+                      handleSelectAnswer();
                       const store = useGameUIStore.getState();
                       const currentIndex = store.quiz.selectedOptionIndex ?? 0;
                       const currentRow = currentIndex >= 2 ? 1 : 0;
