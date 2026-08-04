@@ -8,7 +8,6 @@ export const MissionKeys = {
   SCULPTURES_DONE: "sculptures_done",
   PHOTO_COLLECTED: "photo_collected",
   PHOTO_DONE: "photo_done",
-  COSTUMES_DONE: "costumes_done",
   POSTERS_DONE: "posters_done",
 } as const;
 
@@ -18,7 +17,6 @@ export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
   MissionKeys.SCULPTURES_DONE,
   MissionKeys.PAINTINGS_DONE,
   MissionKeys.PHOTO_DONE,
-  MissionKeys.COSTUMES_DONE,
   MissionKeys.POSTERS_DONE,
 ]);
 
@@ -26,7 +24,6 @@ export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
   [MissionKeys.SCULPTURES_DONE]: 1,
   [MissionKeys.PAINTINGS_DONE]: 2,
   [MissionKeys.PHOTO_DONE]: 3,
-  [MissionKeys.COSTUMES_DONE]: 4,
 };
 
 export type MissionId = (typeof MissionIds)[keyof typeof MissionIds];
