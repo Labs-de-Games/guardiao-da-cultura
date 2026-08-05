@@ -15,6 +15,7 @@ import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
+import { CostumeSelectorPanel } from "@/ui/panels/CostumeSelectorPanel";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
@@ -80,6 +81,8 @@ function OverlayContent({
   const setAuthState = useGameUIStore((s) => s.setAuthState);
   const openChunkSelector = useGameUIStore((s) => s.openChunkSelector);
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
+  const openCostumeSelector = useGameUIStore((s) => s.openCostumeSelector);
+  const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
@@ -132,6 +135,19 @@ function OverlayContent({
         });
       },
     );
+
+    const unsubCostumeSelectorOpen = EventBus.on(
+      "ui:costume-selector-open",
+      (data) => {
+        openCostumeSelector({
+          instanceId: data.instanceId,
+          correctCostume: data.correctCostume,
+          equippedParts: data.equippedParts,
+          lockedParts: data.lockedParts,
+        });
+      },
+    );
+
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
       if (data && !data.isAvailable) {
@@ -165,6 +181,7 @@ function OverlayContent({
       unsubBadgeGallery();
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
+      unsubCostumeSelectorOpen();
       unsubMapMarker();
       unsubAutoStartTick();
       unsubAutoStartCanceled();
@@ -178,13 +195,14 @@ function OverlayContent({
     setBadgeGalleryOpen,
     addUnlockedBadge,
     openChunkSelector,
+    openCostumeSelector,
     setActiveMapMarker,
     setAutoStartProgress,
   ]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (chunkSelectorOpen) {
+      if (chunkSelectorOpen || costumeSelectorOpen) {
         return;
       }
 
@@ -235,6 +253,7 @@ function OverlayContent({
     setLabelData,
     setBadgeGalleryOpen,
     chunkSelectorOpen,
+    costumeSelectorOpen,
   ]);
 
   useEffect(() => {
@@ -281,6 +300,7 @@ function OverlayContent({
       <ScorePanel />
       <Sidebar />
       <ChunkSelectorPanel />
+      <CostumeSelectorPanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />
