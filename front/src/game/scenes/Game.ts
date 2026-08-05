@@ -234,7 +234,14 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     GLOBAL_ASSETS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
+      if ("frameWidth" in asset && "frameHeight" in asset) {
+        this.load.spritesheet(asset.key, asset.path, {
+          frameWidth: asset.frameWidth as number,
+          frameHeight: asset.frameHeight as number,
+        });
+      } else {
+        this.load.image(asset.key, asset.path);
+      }
     });
 
     BADGE_ASSETS.forEach((asset) => {
@@ -331,9 +338,19 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("scoreManager", this.scoreManager);
 
+    let lastTotalQuarters = this.scoreManager.getPayload().totalQuarters || 0;
+
     this.scoreManager.on(
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
+        const previousStars = Math.floor(lastTotalQuarters / 4);
+        const currentStars = Math.floor(payload.totalQuarters / 4);
+
+        if (currentStars > previousStars) {
+          this.effects.playScoreFeedback(this.player.x, this.player.y);
+        }
+        lastTotalQuarters = payload.totalQuarters;
+
         const stars = Number.isFinite(payload.totalStars)
           ? Math.max(0, payload.totalStars)
           : 0;
@@ -860,6 +877,18 @@ export class Game extends Scene implements GameDataAccessor {
         repeat: -1,
       });
     }
+
+    if (!this.anims.exists("star_anim")) {
+      this.anims.create({
+        key: "star_anim",
+        frames: this.anims.generateFrameNumbers("star", {
+          start: 0,
+          end: 31,
+        }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
   }
 
   private createEntities(mapData: MapData, contentJson?: ContentJson) {
@@ -1308,6 +1337,11 @@ export class Game extends Scene implements GameDataAccessor {
     this.cameras.main.lerp.set(adjusted, adjusted);
 
     this.effects.updateSpotlight(this.player.x, this.player.y);
+    this.effects.updateScoreFeedback(
+      this.player.x,
+      this.player.y,
+      this.player.displayHeight,
+    );
 
     if (this.player && this.hintKeySystem) {
       const isPanelOpen =
