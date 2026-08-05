@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import { CostumeMechanicHandler } from "../mechanics/handlers/CostumeMechanicHandler";
 import type { CarryableItem } from "../objects/interactives/CarryableItem";
 import type { DraggableItem } from "../objects/interactives/DraggableItem";
 import { InteractiveType } from "../types/InteractiveTypes";
@@ -72,7 +73,9 @@ export class PlaceholderSystem {
         state:
           typeStr === InteractiveType.PHOTO
             ? { filledSlots: [null, null, null, null] }
-            : {},
+            : typeStr === InteractiveType.COSTUME
+              ? { ...CostumeMechanicHandler.createInitialState() }
+              : {},
         scale: rawScale !== undefined ? Number(rawScale) : undefined,
         texture: customTexture as string | undefined,
         alpha: rawAlpha !== undefined ? Number(rawAlpha) : undefined,
@@ -123,6 +126,51 @@ export class PlaceholderSystem {
           col === 0 ? -cellW / 2 : cellW / 2,
           row === 0 ? -cellH / 2 : cellH / 2,
         );
+        container.add(cell);
+      }
+      container.setDepth(10);
+      instance.hintSprite = container;
+    } else if (config.type === InteractiveType.COSTUME) {
+      const { TEXTURES, PART_DEFAULTS } = LayoutConfig.COSTUME;
+      const container = this.scene.add.container(rect.centerX, rect.centerY);
+
+      const scale = config.scale ?? 1;
+      instance.state = { ...(instance.state || {}), costumeScale: scale };
+
+      const pedestalConfig = LayoutConfig.COSTUME.PEDESTAL_DEFAULT;
+      const pedestal = this.scene.add.image(0, 0, "pedestal");
+      pedestal.setDisplaySize(
+        pedestal.width * pedestalConfig.scale,
+        pedestal.height * pedestalConfig.scale,
+      );
+      pedestal.setOrigin(pedestalConfig.originX, pedestalConfig.originY);
+      pedestal.setPosition(0, pedestalConfig.yOffset * scale);
+      container.add(pedestal);
+
+      const cells = TEXTURES.map((textureKey) => {
+        const partName = textureKey.replace("dummy_", "") as
+          | "head"
+          | "torso"
+          | "feet";
+        return { partName, cell: this.scene.add.image(0, 0, textureKey) };
+      });
+
+      let nextBottomY = Math.round(pedestalConfig.yOffset * scale);
+      for (const partName of ["feet", "torso", "head"] as const) {
+        const entry = cells.find((c) => c.partName === partName);
+        if (!entry) continue;
+        const { cell } = entry;
+        const partConfig = PART_DEFAULTS[partName];
+        const gap = partConfig.gap ?? 0;
+
+        nextBottomY -= gap * scale;
+        cell.setDisplaySize(cell.width * scale, cell.height * scale);
+        cell.setOrigin(partConfig.originX, 1);
+        cell.setPosition(0, Math.round(nextBottomY));
+        nextBottomY -= cell.displayHeight;
+      }
+
+      for (const { cell } of cells) {
         container.add(cell);
       }
       container.setDepth(10);
@@ -348,10 +396,38 @@ export class PlaceholderSystem {
     }
   }
 
+  public updateCostumePart(
+    instanceId: string,
+    partType: "head" | "torso" | "feet",
+    textureKey: string,
+  ) {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (!p) return;
+    const hint = p.hintSprite;
+    if (!(hint instanceof Phaser.GameObjects.Container)) return;
+
+    const slotIndex =
+      LayoutConfig.COSTUME.TEXTURES.findIndex((t) =>
+        t.endsWith(`_${partType}`),
+      ) + 1;
+    if (slotIndex <= 0) return;
+
+    const cell = hint.getAt(slotIndex);
+    if (!(cell instanceof Phaser.GameObjects.Image)) return;
+
+    const scale = (p.state?.costumeScale as number | undefined) ?? 1;
+    cell.setTexture(textureKey);
+    cell.setDisplaySize(cell.width * scale, cell.height * scale);
+  }
+
   public lockPlaceholder(instanceId: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
-      if (p.type !== InteractiveType.PHOTO && p.hintSprite) {
+      if (
+        p.type !== InteractiveType.PHOTO &&
+        p.type !== InteractiveType.COSTUME &&
+        p.hintSprite
+      ) {
         if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
           p.hintSprite.stop();
         }

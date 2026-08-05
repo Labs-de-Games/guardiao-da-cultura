@@ -1,4 +1,26 @@
 {
+  "costumes_done": [
+    {
+      "question": "[Mock] O Teatro Amazonas é um símbolo de qual cidade brasileira?",
+      "options": ["Manaus", "Recife", "Salvador", "Porto Alegre"],
+      "correctOptionIndex": 0
+    },
+    {
+      "question": "[Mock] Qual apresentação artística está especialmente ligada à história do Teatro Amazonas?",
+      "options": [
+        "Ópera",
+        "Rodeio",
+        "Cinema ao ar livre",
+        "Batalhas de hip-hop"
+      ],
+      "correctOptionIndex": 0
+    },
+    {
+      "question": "[Mock] Em que região do Brasil está localizado o Teatro Amazonas?",
+      "options": ["Sul", "Nordeste", "Norte", "Centro-Oeste"],
+      "correctOptionIndex": 2
+    }
+  ],
   "posters_done": [
     {
       "question": "Qual desses autores escreveu peças sobre a história e cultura amazonense?",
