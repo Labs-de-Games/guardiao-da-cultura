@@ -299,9 +299,10 @@ export class Game extends Scene implements GameDataAccessor {
     const musicStartedKey = `music_started:${this.levelId}`;
     if (!this.registry.get(musicStartedKey)) {
       const manifest = getLevelAudioManifest(this.levelId);
-      const introKey = manifest?.musicIntroLoop?.intro.key;
-      if (introKey) {
-        AudioManager.playMusic(introKey);
+      const musicKey =
+        manifest?.musicIntroLoop?.intro.key ?? manifest?.music?.key;
+      if (musicKey) {
+        AudioManager.playMusic(musicKey);
         this.registry.set(musicStartedKey, true);
       }
     }
