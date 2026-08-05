@@ -1,0 +1,38 @@
+{
+  "panels": [
+    {
+      "src": "comic_L2P1.png",
+      "sliceWidth": 350,
+      "sliceStart": 155,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "NÃO É CASO ISOLADO",
+      "caption": "A onda de ataques continuou se espalhando por outras zonas culturais Brasil adentro."
+    },
+    {
+      "src": "comic_L2P2.png",
+      "sliceWidth": 350,
+      "sliceStart": 275,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "SOME O PANO DE BOCA",
+      "caption": "Até mesmo o famoso tecido do palco do Teatro Amazonas foi roubado na calada da noite."
+    },
+    {
+      "src": "comic_L2P3.png",
+      "sliceWidth": 350,
+      "sliceStart": 335,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "O PALCO É SEU",
+      "caption": "Procure pistas enquanto prepara o cenário do próximo espetáculo."
+    }
+  ],
+  "revealIconMask": "reveal_icon_mask_L2.png",
+  "loadingImage": "loading_L2.png",
+  "captionImage": "caption_L2.png",
+  "skipEnabled": true
+}

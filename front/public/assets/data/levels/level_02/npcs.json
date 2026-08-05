@@ -5,23 +5,27 @@
       "missionId": "missao_curador_l2",
       "dialogues": {
         "intro": [
-          "[Mock] Bem-vindo à Galeria de Cartazes! Os cartazes foram tirados dos seus lugares. Vamos reorganizá-los!",
-          "Coloque cada cartaz no lugar correto."
+          "Aí está você. Já tô aperreada até o tucupi vendo o Teatro Amazonas nesse estado. Parece até que espocou uma bomba aqui!",
+          "No meio dessa zona deve ter mais alguma pista sobre esses lazarentos. É, eu acho que é mais de uma pessoa. Um só não daria conta.",
+          "Ordene os cartazes pelo ano de estreia das peças. Monte os figurinos das peças. E também prepare o palco para o próximo espetáculo.",
+          "Vou para alguma frisa ficar de bubuia… Quero dizer… vou ficar… analisando… as poltronas… Me procure quando acabar. Não esqueça de ler as placas."
         ],
         "ready": [
-          "[Mock] Excelente trabalho! Todos os cartazes estão no lugar.",
-          "Agora vamos testar o que você aprendeu sobre eles."
+          "Os cartazes já estão ordenados pelo ano de estreia? Legal. Mas o que você entendeu sobre cada espetáculo?",
+          "Vamos descobrir agora se você fez com a atenção que eu pedi ou se e só o agá."
         ],
-        "completed": ["[Mock] Parabéns! Você completou a galeria de cartazes."],
+        "completed": [
+          "Muito bem, até que ficam bonitos os cartazes organizados. Do jeito que eu lembrava."
+        ],
         "success": [
-          "[Mock] Muito bem! Você sabe bastante sobre os cartazes desta galeria."
+          "Muito bem, recruta! Você mostrou que faz um trabalho sério. Sem pavulagem!"
         ],
         "failure": [
-          "[Mock] Hmm… Veja os cartazes novamente e tente outra vez."
+          "Telezé… Se não ler as placas, não vamos entender por que esses galerosos escolheram aqui como alvo do ataque. Releia e tente de novo."
         ],
         "start_quiz_question": ["Podemos iniciar o teste?"],
         "intermediateQuiz": [
-          "[Mock] Antes de continuar, vamos ver o que você aprendeu sobre os cartazes."
+          "Quero testar se você fez com a atenção que eu pedi ou se está fazendo de qualquer jeito."
         ]
       }
     }
