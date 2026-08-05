@@ -1206,7 +1206,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     });
     EventBus.on("ui:chunk-slot-rejected", () => {
-      this.sound.play("error", { volume: 0.5 });
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
     });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
@@ -1247,7 +1247,7 @@ export class Game extends Scene implements GameDataAccessor {
       );
     });
     EventBus.on("ui:costume-part-rejected", () => {
-      this.sound.play("error", { volume: 0.5 });
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
       this.recordFloorError(this.scoringFloors.costumes);
     });
     EventBus.on("ui:costume-confirm", (data) => {
