@@ -45,12 +45,6 @@ export class SculptureMechanicHandler implements BaseMechanicHandler {
     const current = g.registry.get("puzzles_solved_flawlessly") || 0;
     g.registry.set("puzzles_solved_flawlessly", current + 1);
 
-    const sysDialogs = g.contentData.messages.SYSTEM_DIALOGUES;
-    g.events.emit(
-      GameEvents.SHOW_DIALOGUE_REQUEST,
-      sysDialogs.SCULPTURE?.SUCCESS || ["Excelente! Obra posicionada."],
-    );
-
     const missionId = MissionIds.CURATOR;
     g.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     this.emitMissionProgress(g, missionId);
