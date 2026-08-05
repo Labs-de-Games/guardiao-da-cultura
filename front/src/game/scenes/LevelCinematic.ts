@@ -1,16 +1,18 @@
 import { Scene } from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import type { IntroConfig } from "../../ui/intro/types";
+import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
 import { SceneNames } from "../constants/SceneNames";
 
 /**
  * LevelCinematic - Triggers the React-based comic cinematic introduction
  *
  * This scene is a thin wrapper that:
- * 1. Loads the intro configuration JSON
+ * 1. Loads the intro configuration JSON and all level audio assets
  * 2. Emits an event to React to start the IntroSequence
- * 3. Waits for the intro to complete
- * 4. Transitions to the Game scene
+ * 3. Waits for the mask reveal to start playing level music
+ * 4. Waits for the intro to complete
+ * 5. Transitions to the Game scene
  *
  * All the visual rendering is handled by React components in `front/src/ui/intro/`.
  */
@@ -33,16 +35,24 @@ export class LevelCinematic extends Scene {
   }
 
   preload() {
+    // Set base path for all assets loaded in this scene
+    this.load.setPath("assets/");
+
     // Ensure we never reuse stale config from another level.
     if (this.cache.json.exists(this.introConfigCacheKey)) {
       this.cache.json.remove(this.introConfigCacheKey);
     }
 
-    // Load the intro configuration JSON
+    // Load the intro configuration JSON (relative to assets/)
     this.load.json(
       this.introConfigCacheKey,
-      `/assets/data/levels/${this.levelId}/intro/intro_config.json`,
+      `data/levels/${this.levelId}/intro/intro_config.json`,
     );
+
+    // Preload all audio assets during the cinematic intro
+    // so they're ready when the Game scene starts
+    loadGlobalAudio(this);
+    loadLevelAudio(this, this.levelId);
   }
 
   create() {
@@ -57,6 +67,10 @@ export class LevelCinematic extends Scene {
     }
 
     this.introConfig = configData;
+
+    // Initialize AudioManager with this scene so it can play music
+    // during the mask reveal transition
+    AudioManager.init(this);
 
     // Listen for intro completion from React
     this.unsubIntroComplete = EventBus.on("intro:complete", (data) => {
@@ -82,7 +96,9 @@ export class LevelCinematic extends Scene {
   }
 
   shutdown() {
-    // Clean up event listener if scene is shut down before intro completes
+    // Note: Don't call AudioManager.destroy() here - music should continue
+    // into the Game scene. AudioManager.init() in Game scene will handle
+    // the transition and resume any playing music and destroy it there.
     this.unsubIntroComplete?.();
     this.unsubIntroComplete = undefined;
 

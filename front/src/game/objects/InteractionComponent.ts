@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import posthog from "posthog-js";
 import { sendGameEvent } from "../../lib/analyticsApi";
+import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
@@ -24,6 +25,7 @@ export interface InteractionOptions {
   hintOffsetX?: number;
   hintOffsetY?: number;
   hintScale?: number;
+  playInteractSound?: boolean; // Sound feedback, default: true
 
   actionKey?: string | string[];
 }
@@ -57,6 +59,7 @@ export class InteractionComponent {
   private hintCompleted: boolean = false;
   private hintSprite: Phaser.GameObjects.Sprite | null = null;
   private hintTimer: Phaser.Time.TimerEvent | null = null;
+  private playInteractSound: boolean;
 
   constructor(
     scene: Phaser.Scene,
@@ -77,6 +80,7 @@ export class InteractionComponent {
     this.hintOffsetX = options?.hintOffsetX ?? 0;
     this.hintOffsetY = options?.hintOffsetY ?? -90;
     this.hintScale = options?.hintScale ?? 3;
+    this.playInteractSound = options?.playInteractSound ?? true;
 
     const providedKeys = options?.actionKey ?? Actions.INTERACT;
     this.actionKeys = Array.isArray(providedKeys)
@@ -149,6 +153,11 @@ export class InteractionComponent {
             err,
           );
         });
+
+        // Play interaction sound (random variation from pool) if enabled
+        if (this.playInteractSound) {
+          AudioManager.playSfx("sfx.clue.inspect");
+        }
 
         if (this.dialogueLines) {
           if (this.onInteract) this.onInteract();
@@ -232,6 +241,9 @@ export class InteractionComponent {
   private showHint() {
     if (!this.hintEnabled) return;
     if (this.hintCompleted) return;
+
+    // Play clue inspect sound (random variation from pool)
+    AudioManager.playSfx("sfx.clue.inspect");
 
     posthog.capture("clue_used", {
       level_id: this.scene.registry.get("currentLevelId"),
