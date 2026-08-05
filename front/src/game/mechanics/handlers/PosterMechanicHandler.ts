@@ -46,13 +46,6 @@ export class PosterMechanicHandler implements BaseMechanicHandler {
     const current = g.registry.get("puzzles_solved_flawlessly") || 0;
     g.registry.set("puzzles_solved_flawlessly", current + 1);
 
-    const sysDialogs = g.contentData.messages.SYSTEM_DIALOGUES;
-    g.events.emit(
-      GameEvents.SHOW_DIALOGUE_REQUEST,
-      sysDialogs.POSTER?.SUCCESS ||
-        sysDialogs.PAINTING?.SUCCESS || ["Excelente! Cartaz posicionado."],
-    );
-
     const missionId = MissionIds.CURATOR_L2;
     g.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     this.emitMissionProgress(g, missionId);
