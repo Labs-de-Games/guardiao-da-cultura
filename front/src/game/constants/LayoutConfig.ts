@@ -110,6 +110,10 @@ export const LayoutConfig = {
   // Configurações do Jogo
   GAME: {
     MAP_SCALE: 6,
+    CAMERA: {
+      DIALOGUE_ZOOM: 1.2,
+      DIALOGUE_ZOOM_DURATION: 400,
+    },
   },
 
   // Placeholder hint configs

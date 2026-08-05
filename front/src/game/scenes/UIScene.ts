@@ -77,20 +77,20 @@ export class UIScene extends Scene {
           x: gameScene.player.x,
           y: gameScene.player.y,
         };
-        const camera = gameScene.cameras.main;
-        const screenPosition = {
-          x: pos.x - camera.worldView.x,
-          y: pos.y - camera.worldView.y,
-        };
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:show", {
-          lines,
-          callbackId,
-          screenPosition,
-        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.time.delayedCall(
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+          () => {
+            EventBus.emit("dialogue:show", {
+              lines,
+              callbackId,
+              worldPosition: pos,
+            });
+          },
+        );
       },
     );
 
@@ -155,21 +155,21 @@ export class UIScene extends Scene {
           x: gameScene.player.x,
           y: gameScene.player.y,
         };
-        const camera = gameScene.cameras.main;
-        const screenPosition = {
-          x: pos.x - camera.worldView.x,
-          y: pos.y - camera.worldView.y,
-        };
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
-        EventBus.emit("dialogue:confirm", {
-          message,
-          speakerName,
-          callbackId,
-          screenPosition,
-        });
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.time.delayedCall(
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+          () => {
+            EventBus.emit("dialogue:confirm", {
+              message,
+              speakerName,
+              callbackId,
+              worldPosition: pos,
+            });
+          },
+        );
       },
     );
 
