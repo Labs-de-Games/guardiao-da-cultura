@@ -1265,13 +1265,6 @@ export class Game extends Scene implements GameDataAccessor {
       if (!p) return;
 
       this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
-      const sysDialogs = this.contentData.messages.SYSTEM_DIALOGUES;
-      this.events.emit(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        sysDialogs.COSTUME?.SUCCESS || [
-          "O manequim está completamente vestido!",
-        ],
-      );
       this.placeholderSystem.lockPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
