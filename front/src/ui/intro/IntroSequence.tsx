@@ -297,8 +297,9 @@ export function IntroSequence({
   }, [levelId]);
 
   const handleRolledOut = useCallback(() => {
+    EventBus.emit("intro:complete", { levelId });
     onComplete();
-  }, [onComplete]);
+  }, [levelId, onComplete]);
 
   // Current caption content
   const currentPanel = captionPanel >= 0 ? panels[captionPanel] : panels[0];
