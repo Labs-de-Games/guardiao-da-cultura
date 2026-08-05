@@ -10,9 +10,9 @@ interface PhaseInfoCardProps {
 }
 
 export function PhaseInfoCard({ sx }: PhaseInfoCardProps) {
-  const activeMapMarker = useGameUIStore((s) => s.activeMapMarker);
+  const levelInfo = useGameUIStore((s) => s.levelInfo);
 
-  if (!activeMapMarker) return null;
+  if (!levelInfo) return null;
 
   return (
     <Card
@@ -34,7 +34,7 @@ export function PhaseInfoCard({ sx }: PhaseInfoCardProps) {
             mb: 0.5,
           }}
         >
-          {activeMapMarker.title}
+          {levelInfo.title}
         </Typography>
         <Typography
           variant="body2"
@@ -45,7 +45,7 @@ export function PhaseInfoCard({ sx }: PhaseInfoCardProps) {
             lineHeight: 1.4,
           }}
         >
-          {activeMapMarker.location}
+          {levelInfo.location}
         </Typography>
       </CardContent>
     </Card>

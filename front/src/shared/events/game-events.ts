@@ -179,6 +179,12 @@ export interface GameEventMap {
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
+  "ui:sound-click": undefined;
+  "ui:sound-hover": undefined;
+  "ui:sound-modal-open": undefined;
+  "ui:sound-modal-close": undefined;
+  "ui:sound-badge-unlock": undefined;
+  "ui:sound-level-complete": undefined;
   "dialogue:show": DialogueShowData;
   "dialogue:confirm": DialogueConfirmData;
   "dialogue:dismissed": { callbackId: string };
@@ -203,4 +209,6 @@ export interface GameEventMap {
   "progression:updated": UserProgressState;
   "intro:start": { levelId: string; config: IntroConfig };
   "intro:complete": { levelId: string };
+  "intro:music-start": { levelId: string };
+  "intro:rollout-start": { levelId: string };
 }

@@ -5,6 +5,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio } from "../audio";
+import { getLevelAudioManifest } from "../audio/registry";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -233,7 +234,14 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     GLOBAL_ASSETS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
+      if ("frameWidth" in asset && "frameHeight" in asset) {
+        this.load.spritesheet(asset.key, asset.path, {
+          frameWidth: asset.frameWidth as number,
+          frameHeight: asset.frameHeight as number,
+        });
+      } else {
+        this.load.image(asset.key, asset.path);
+      }
     });
 
     BADGE_ASSETS.forEach((asset) => {
@@ -265,6 +273,9 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.load.image("label", "misc/label.png");
+
+    // Audio assets are preloaded by LevelCinematic scene
+    // during the cinematic intro to avoid loading delays
   }
 
   private processModularData() {
@@ -280,9 +291,21 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects = new EffectsManager(this);
     this.createAnimations();
 
-    // Initialize AudioManager with this scene so Player and other
-    // objects can play sounds via AudioManager.playSfx()
+    // Initialize audio manager with this scene
     AudioManager.init(this);
+
+    // Start level music if not already playing
+    // Check registry to avoid restarting music on scene transitions within the same level
+    const musicStartedKey = `music_started:${this.levelId}`;
+    if (!this.registry.get(musicStartedKey)) {
+      const manifest = getLevelAudioManifest(this.levelId);
+      const musicKey =
+        manifest?.musicIntroLoop?.intro.key ?? manifest?.music?.key;
+      if (musicKey) {
+        AudioManager.playMusic(musicKey);
+        this.registry.set(musicStartedKey, true);
+      }
+    }
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
@@ -316,9 +339,19 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("scoreManager", this.scoreManager);
 
+    let lastTotalQuarters = this.scoreManager.getPayload().totalQuarters || 0;
+
     this.scoreManager.on(
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
+        const previousStars = Math.floor(lastTotalQuarters / 4);
+        const currentStars = Math.floor(payload.totalQuarters / 4);
+
+        if (currentStars > previousStars) {
+          this.effects.playScoreFeedback(this.player.x, this.player.y);
+        }
+        lastTotalQuarters = payload.totalQuarters;
+
         const stars = Number.isFinite(payload.totalStars)
           ? Math.max(0, payload.totalStars)
           : 0;
@@ -768,7 +801,7 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   private setupEvents() {
-    this.events.on(GameEvents.DIALOGUE_STARTED, () => {
+    this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
       if (this.player) {
         this.player.isInDialogue = true;
@@ -778,11 +811,16 @@ export class Game extends Scene implements GameDataAccessor {
         LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM,
         LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
       );
+      // Play magnifying glass zoom-in sound only for quiz/puzzle panels
+      if (source === "quiz" || source === "puzzle") {
+        AudioManager.playSfx("sfx.magnifying.up");
+      }
+      this.effects.setZoom(1.2, 400);
     });
 
     this.events.on(
       GameEvents.DIALOGUE_ENDED,
-      (data?: { dismissed?: boolean }) => {
+      (data?: { dismissed?: boolean; source?: string }) => {
         this.isChunkSelectorOpen = false;
         this.isDialogueOpen = false;
 
@@ -808,6 +846,11 @@ export class Game extends Scene implements GameDataAccessor {
           1.0,
           LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
         );
+        // Play magnifying glass zoom-out sound only for quiz/puzzle panels
+        if (data?.source === "quiz" || data?.source === "puzzle") {
+          AudioManager.playSfx("sfx.magnifying.down");
+        }
+        this.effects.setZoom(1.0, 400);
       },
     );
 
@@ -840,6 +883,18 @@ export class Game extends Scene implements GameDataAccessor {
           end: 5,
         }),
         frameRate: 8,
+        repeat: -1,
+      });
+    }
+
+    if (!this.anims.exists("star_anim")) {
+      this.anims.create({
+        key: "star_anim",
+        frames: this.anims.generateFrameNumbers("star", {
+          start: 0,
+          end: 31,
+        }),
+        frameRate: 10,
         repeat: -1,
       });
     }
@@ -967,6 +1022,8 @@ export class Game extends Scene implements GameDataAccessor {
         const work = workId ? findWorkDataById(workId, this.contentData) : null;
 
         if (work) {
+          // Play inspect sound for label interaction
+          AudioManager.playSfx("sfx.clue.inspect");
           const payload = buildLabelInfo(work, (id) =>
             findWorkDataById(id, this.contentData),
           );
@@ -994,7 +1051,7 @@ export class Game extends Scene implements GameDataAccessor {
           );
 
         this.isChunkSelectorOpen = true;
-        this.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
         const expectedSlots = Array.isArray(nearby.id)
           ? nearby.id
           : String(nearby.id)
@@ -1070,7 +1127,7 @@ export class Game extends Scene implements GameDataAccessor {
       placedItems: (string | null)[];
     }) => {
       this.isChunkSelectorOpen = false;
-      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
       );
@@ -1104,7 +1161,7 @@ export class Game extends Scene implements GameDataAccessor {
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
-      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       this.checkDialogState();
     });
 
@@ -1115,6 +1172,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.collectibleSystem?.destroy();
       this.hintKeySystem?.destroy();
       this.badgeSystem.destroy();
+      AudioManager.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
@@ -1295,6 +1353,11 @@ export class Game extends Scene implements GameDataAccessor {
     }
 
     this.effects.updateSpotlight(this.player.x, this.player.y);
+    this.effects.updateScoreFeedback(
+      this.player.x,
+      this.player.y,
+      this.player.displayHeight,
+    );
 
     if (this.player && this.hintKeySystem) {
       const isPanelOpen =

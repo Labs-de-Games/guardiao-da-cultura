@@ -289,8 +289,16 @@ export function IntroSequence({
   }, [navigatingPanel, manuallyAdvanced]);
 
   const handleComplete = useCallback(() => {
-    window.setTimeout(() => setRollOut(true), ROLL_DELAY_MS);
-  }, []);
+    window.setTimeout(() => {
+      EventBus.emit("intro:music-start", { levelId });
+      EventBus.emit("intro:rollout-start", { levelId });
+      setRollOut(true);
+    }, ROLL_DELAY_MS);
+  }, [levelId]);
+
+  const handleRolledOut = useCallback(() => {
+    onComplete();
+  }, [onComplete]);
 
   // Current caption content
   const currentPanel = captionPanel >= 0 ? panels[captionPanel] : panels[0];
@@ -395,7 +403,7 @@ export function IntroSequence({
                 rollOut={rollOut}
                 navigateToPanel={navigatingPanel}
                 onComplete={handleComplete}
-                onRolledOut={handleFinish}
+                onRolledOut={handleRolledOut}
                 onPanelStart={handlePanelStart}
                 onPanelShrink={handlePanelShrink}
               />
