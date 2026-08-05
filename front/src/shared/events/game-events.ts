@@ -103,19 +103,25 @@ export interface ToastShowData {
 export interface DialogueShowData {
   lines: string[];
   callbackId: string;
-  screenPosition?: { x: number; y: number };
+  worldPosition?: { x: number; y: number };
 }
 
 export interface DialogueConfirmData {
   message: string;
   speakerName: string;
   callbackId: string;
-  screenPosition?: { x: number; y: number };
+  worldPosition?: { x: number; y: number };
 }
 
 export interface DialogueCompletedData {
   callbackId: string;
   confirmed?: boolean;
+}
+
+export interface DialogueCameraSyncData {
+  worldViewX: number;
+  worldViewY: number;
+  zoom: number;
 }
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
@@ -219,6 +225,7 @@ export interface GameEventMap {
   "dialogue:completed": DialogueCompletedData;
   "dialogue:dequeue-started": undefined;
   "dialogue:queue-cleared": undefined;
+  "dialogue:camera-sync": DialogueCameraSyncData;
   "ui:label-show": LabelInfoData;
   "ui:label-hide": undefined;
   "ui:badge-gallery-toggle": BadgeGalleryToggleData;

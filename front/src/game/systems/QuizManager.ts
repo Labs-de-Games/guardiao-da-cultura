@@ -37,6 +37,7 @@ interface NpcLike {
   getQuiz(): unknown[] | null;
   getDialogues(): Record<string, string[]>;
   getIntermediateQuizDialogues(): string[];
+  prependName(lines: string[]): string[];
   getSpawnPosition(): { x: number; y: number } | null;
   getFinalPosition(): { x: number; y: number } | null;
   showForQuiz(x: number, y: number): void;
@@ -362,9 +363,10 @@ export class QuizManager {
       if (explanationLines.length > 0) {
         this.pendingIntermediateQuizQuestions = questions;
         this.pendingIntermediateQuizOnComplete = onComplete;
-        this.context
-          .getEvents()
-          .emit(GameEvents.SHOW_DIALOGUE_REQUEST, explanationLines, () => {
+        this.context.getEvents().emit(
+          GameEvents.SHOW_DIALOGUE_REQUEST,
+          npc.prependName(explanationLines),
+          () => {
             this.pendingIntermediateQuizQuestions = null;
             this.pendingIntermediateQuizOnComplete = null;
             this.context
@@ -378,7 +380,9 @@ export class QuizManager {
                   attemptNumber: 1,
                 },
               );
-          });
+          },
+          { x: npcX, y: npcY },
+        );
       } else {
         this.context
           .getEvents()

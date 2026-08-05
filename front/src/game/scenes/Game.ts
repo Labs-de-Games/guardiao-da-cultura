@@ -815,6 +815,10 @@ export class Game extends Scene implements GameDataAccessor {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
       }
+      this.effects.setZoom(
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM,
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+      );
       // Play magnifying glass zoom-in sound only for quiz/puzzle panels
       if (source === "quiz" || source === "puzzle") {
         AudioManager.playSfx("sfx.magnifying.up");
@@ -846,6 +850,10 @@ export class Game extends Scene implements GameDataAccessor {
           }
         });
 
+        this.effects.setZoom(
+          1.0,
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+        );
         // Play magnifying glass zoom-out sound only for quiz/puzzle panels
         if (data?.source === "quiz" || data?.source === "puzzle") {
           AudioManager.playSfx("sfx.magnifying.down");
@@ -1301,8 +1309,6 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:costume-confirm");
       EventBus.off("ui:label-hide");
     });
-
-    this.setupCameras();
   }
 
   private tryInteractWithRat(): boolean {
@@ -1465,6 +1471,15 @@ export class Game extends Scene implements GameDataAccessor {
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    if (this.isDialogueOpen) {
+      const cam = this.cameras.main;
+      EventBus.emit("dialogue:camera-sync", {
+        worldViewX: cam.worldView.x,
+        worldViewY: cam.worldView.y,
+        zoom: cam.zoom,
+      });
+    }
 
     this.effects.updateSpotlight(this.player.x, this.player.y);
     this.effects.updateScoreFeedback(

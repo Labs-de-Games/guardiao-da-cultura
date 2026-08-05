@@ -167,7 +167,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  private prependName(lines: string[]): string[] {
+  public prependName(lines: string[]): string[] {
     const name = this.config.name;
     if (!name) return lines;
     return lines.map((line) => `${name}: ${line}`);
