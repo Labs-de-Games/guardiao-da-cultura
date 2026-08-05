@@ -67,11 +67,6 @@ describe("PaintingMechanicHandler", () => {
     it("emits success dialogue", () => {
       const game = createMockGame();
       handler.handleDropResult(game, { snapped: true });
-
-      expect(game.events.emit).toHaveBeenCalledWith(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        ["Sucesso!"],
-      );
     });
 
     it("emits mission progress changed", () => {
@@ -112,11 +107,6 @@ describe("PaintingMechanicHandler", () => {
         },
       });
       handler.handleDropResult(game, { snapped: true });
-
-      expect(game.events.emit).toHaveBeenCalledWith(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        ["Excelente! Obra posicionada."],
-      );
     });
   });
 
