@@ -653,6 +653,54 @@ export class Game extends Scene implements GameDataAccessor {
           },
           interactionDistance: 130,
         })),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.PHOTO && !p.isFilled)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY + 100;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top;
+            },
+            get active() {
+              return !p.isFilled;
+            },
+            interactionDistance: 150,
+          })),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.COSTUME && !p.isFilled)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top - 115;
+            },
+            get active() {
+              return !p.isFilled;
+            },
+            interactionDistance: 120,
+          })),
       ]);
 
       this.analyticsSystem.trackLevelEvent(
