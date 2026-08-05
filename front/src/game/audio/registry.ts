@@ -104,11 +104,14 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
       },
     },
   },
-  // Future levels can be added here:
-  // level_02: {
-  //   levelId: "level_02",
-  //   music: { key: "music.level_2.main", path: "sound/music/level_2.mp3", loop: true },
-  // },
+  level_02: {
+    levelId: "level_02",
+    music: {
+      key: "music.level_2.main",
+      path: "sound/music/level_2.mp3",
+      loop: true,
+    },
+  },
 };
 
 /**
