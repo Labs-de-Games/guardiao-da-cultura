@@ -72,7 +72,7 @@ export class LadderCinematicSystem {
             // 7. Pan back to player
             this.effects.panTo(
               this.scene.player.x,
-              this.scene.player.y,
+              this.scene.player.y - 140,
               1000,
               "Sine.easeInOut",
             );
