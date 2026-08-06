@@ -1089,6 +1089,10 @@ export class Game extends Scene implements GameDataAccessor {
             findWorkDataById(id, this.contentData),
           );
           EventBus.emit("ui:label-show", payload);
+          posthog.capture("label_interacted", {
+            label_title: payload.title,
+            label_author: payload.author,
+          });
           return;
         }
       }
@@ -1173,10 +1177,28 @@ export class Game extends Scene implements GameDataAccessor {
           equippedParts,
           lockedParts,
         });
+        posthog.capture("costume_interacted", {
+          level_id: this.levelId,
+        });
       }
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
+      const typeEventMap: Partial<Record<InteractiveType, string>> = {
+        [InteractiveType.PAINTING]: "painting_interacted",
+        [InteractiveType.SCULPTURE]: "sculpture_interacted",
+        [InteractiveType.POSTER]: "poster_interacted",
+        [InteractiveType.PHOTO_CHUNK]: "photo_chunk_collected",
+      };
+      const eventName = typeEventMap[item.interactiveType];
+      if (eventName) {
+        posthog.capture(eventName, {
+          item_id: item.itemId,
+          item_name: item.itemName,
+          level_id: this.levelId,
+        });
+      }
+
       const floorForType: Partial<Record<InteractiveType, number>> = {
         [InteractiveType.SCULPTURE]: this.scoringFloors.sculptures,
         [InteractiveType.PAINTING]: this.scoringFloors.paintings,
@@ -1368,6 +1390,10 @@ export class Game extends Scene implements GameDataAccessor {
     if (!isNearRat && !isOverlappingRat) return false;
 
     this.rat.fleeLeftAndDisappear();
+
+    posthog.capture("rat_interacted", {
+      level_id: this.levelId,
+    });
 
     if (!this.hasInteractedWithRat) {
       this.hasInteractedWithRat = true;
