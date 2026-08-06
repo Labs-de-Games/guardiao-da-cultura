@@ -180,6 +180,7 @@ export default function QuizPanel() {
   const selectedOptionIndex = quiz.selectedOptionIndex;
   const moveSelection = useGameUIStore((s) => s.moveSelection);
   const selectOption = useGameUIStore((s) => s.selectOption);
+  const continueAfterReveal = useGameUIStore((s) => s.continueAfterReveal);
   const { speak } = useAudioAccessibility();
   const { playModalOpen, playModalClose, playClick } = useSound();
 
@@ -321,6 +322,18 @@ export default function QuizPanel() {
         return;
       }
 
+      if (quiz.revealedAnswer) {
+        switch (e.key) {
+          case " ":
+          case "Enter":
+            e.preventDefault();
+            playClick();
+            continueAfterReveal();
+            break;
+        }
+        return;
+      }
+
       if (quiz.isProcessingAnswer) return;
 
       switch (e.key) {
@@ -362,9 +375,12 @@ export default function QuizPanel() {
   }, [
     quiz.isVisible,
     quiz.isProcessingAnswer,
+    quiz.revealedAnswer,
     isPerformance,
     moveSelection,
     selectOption,
+    continueAfterReveal,
+    playClick,
     activateSelectedNav,
   ]);
 
@@ -402,9 +418,7 @@ export default function QuizPanel() {
 
   const options = currentQuestion?.options.slice(0, 4) ?? [];
 
-  const currentAnswer = quiz.isProcessingAnswer
-    ? (quiz.answers[quiz.currentQuestionIndex] ?? undefined)
-    : undefined;
+  const currentAnswer = quiz.attemptFeedback ?? undefined;
 
   return (
     <Box
@@ -687,6 +701,9 @@ export default function QuizPanel() {
               {/* ANSWERS */}
               <Grid container rowSpacing={4} columnSpacing={2} sx={{ mb: 4.5 }}>
                 {options.map((option, index) => {
+                  const isCorrectOption =
+                    index === currentQuestion?.correctOptionIndex;
+
                   const selectAnswer = () => {
                     if (!quiz.isProcessingAnswer) {
                       handleSelectAnswer();
@@ -723,10 +740,16 @@ export default function QuizPanel() {
                           selectedOptionIndex === index
                         }
                         feedback={
-                          selectedOptionIndex !== null &&
-                          selectedOptionIndex === index
-                            ? currentAnswer
-                            : undefined
+                          quiz.revealedAnswer
+                            ? isCorrectOption
+                              ? "correct"
+                              : selectedOptionIndex === index
+                                ? "wrong"
+                                : undefined
+                            : selectedOptionIndex !== null &&
+                                selectedOptionIndex === index
+                              ? currentAnswer
+                              : undefined
                         }
                         onClick={selectAnswer}
                         onMouseEnter={hoverHighlight}
@@ -735,6 +758,36 @@ export default function QuizPanel() {
                   );
                 })}
               </Grid>
+
+              {/* RETRY FEEDBACK */}
+              {quiz.feedbackMessage && !quiz.revealedAnswer && (
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', sans-serif",
+                    color: "#E0C16A",
+                    fontStyle: "italic",
+                    fontSize: "1.25rem",
+                    mt: 3,
+                  }}
+                >
+                  {quiz.feedbackMessage}
+                </Typography>
+              )}
+
+              {/* REVEAL: explanation for the correct answer */}
+              {quiz.revealedAnswer && currentQuestion?.explanation && (
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', sans-serif",
+                    color: "#E0C16A",
+                    fontStyle: "italic",
+                    fontSize: "1.25rem",
+                    mt: 3,
+                  }}
+                >
+                  {currentQuestion.explanation}
+                </Typography>
+              )}
             </>
           )}
         </Box>
@@ -762,7 +815,9 @@ export default function QuizPanel() {
                 fontSize: "1.125rem",
               }}
             >
-              Utilize as teclas WASD ou as setas do teclado para selecionar.
+              {quiz.revealedAnswer
+                ? "Pressione ESPAÇO ou ENTER para continuar."
+                : "Utilize as teclas WASD ou as setas do teclado para selecionar."}
             </Typography>
           </Box>
         )}
