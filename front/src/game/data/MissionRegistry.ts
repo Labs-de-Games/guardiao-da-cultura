@@ -17,7 +17,7 @@ export const MissionRequirements = [
     requiredInfos: [
       MissionKeys.COSTUMES_DONE,
       MissionKeys.POSTERS_DONE,
-      MissionKeys.SCULPTURES_DONE
+      MissionKeys.SCULPTURES_DONE,
     ],
   },
 ];

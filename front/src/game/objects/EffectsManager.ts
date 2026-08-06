@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { EventBus } from "../../shared/events/event-bus";
 import { AudioManager } from "../audio";
 
 /**
@@ -84,8 +85,21 @@ export class EffectsManager {
   }
 
   /** Shake de câmera para feedback de erro/dano */
-  public shake(duration: number = 200, intensity: number = 0.005) {
+  public shake(duration: number = 250, intensity: number = 0.01) {
     this.camera.shake(duration, intensity);
+  }
+
+  /**
+   * Padrão de pan suave
+   */
+  public panTo(
+    x: number,
+    y: number,
+    duration: number = 1000,
+    ease: string = "Sine.easeInOut",
+    force: boolean = true,
+  ) {
+    this.camera.pan(x, y, duration, ease, force);
   }
 
   public shakeHorizontal(duration = 150, intensity = 0.015): number {
@@ -225,6 +239,9 @@ export class EffectsManager {
           this.scoreFeedbackStar = null;
         }
         this.scoreFeedbackActive = false;
+
+        // Notify systems that the star animation has finished
+        EventBus.emit("star-animation-complete", undefined);
       },
     });
 
