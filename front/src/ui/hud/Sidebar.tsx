@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Paper } from "@mui/material";
+import posthog from "posthog-js";
 import { useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -44,7 +45,11 @@ export function Sidebar() {
     activePanel === "topCard" ? (hintCardRef.current?.offsetTop ?? 0) : 0;
 
   const handleToggle = () => {
-    setActivePanel((prev) => (prev === "topCard" ? "none" : "topCard"));
+    const next = activePanel === "topCard" ? "none" : "topCard";
+    posthog.capture(
+      next === "topCard" ? "pistas_panel_opened" : "pistas_panel_closed",
+    );
+    setActivePanel(next);
   };
 
   const drawerOpen = activePanel !== "none";
