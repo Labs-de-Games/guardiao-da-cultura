@@ -21,7 +21,7 @@ export class Player
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
-  stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+  stairsLayers: Phaser.Tilemaps.TilemapLayer[] = [];
   isClimbingStairs: boolean = false;
 
   private draggableRegistry: DraggableItem[] = [];
@@ -474,28 +474,35 @@ export class Player
     let hasStairAbove = false;
     let hasStairBelow = false;
 
-    if (this.stairsLayer && body) {
-      const tileHeight = this.stairsLayer.tilemap.tileHeight || 16;
-      const tCenter = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.center.y,
-        true,
-      );
-      const tBottom = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.bottom + 2,
-        true,
-      );
-      const tAbove = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.center.y - tileHeight,
-        true,
-      );
-      const tBelow = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.bottom + tileHeight,
-        true,
-      );
+    let tCenter: Phaser.Tilemaps.Tile | null = null;
+    let tBottom: Phaser.Tilemaps.Tile | null = null;
+    let tAbove: Phaser.Tilemaps.Tile | null = null;
+    let tBelow: Phaser.Tilemaps.Tile | null = null;
+
+    if (this.stairsLayers.length > 0 && body) {
+      for (const layer of this.stairsLayers) {
+        if (!layer || !layer.visible) continue;
+
+        const tileHeight = layer.tilemap.tileHeight || 16;
+        const tc = layer.getTileAtWorldXY(body.center.x, body.center.y, true);
+        const tb = layer.getTileAtWorldXY(body.center.x, body.bottom - 4, true);
+        const ta = layer.getTileAtWorldXY(
+          body.center.x,
+          body.center.y - tileHeight,
+          true,
+        );
+        const tbel = layer.getTileAtWorldXY(
+          body.center.x,
+          body.bottom + tileHeight,
+          true,
+        );
+
+        if (tc && tc.index !== -1) tCenter = tc;
+        if (tb && tb.index !== -1) tBottom = tb;
+        if (ta && ta.index !== -1) tAbove = ta;
+        if (tbel && tbel.index !== -1) tBelow = tbel;
+      }
+
       isOnStairsCenter = !!(tCenter && tCenter.index !== -1);
       isOnStairsBottom = !!(tBottom && tBottom.index !== -1);
       hasStairAbove = !!(tAbove && tAbove.index !== -1);
