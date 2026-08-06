@@ -219,8 +219,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     onComplete: null,
   },
 
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+  setSidebarOpen: (open) => {
+    set({ sidebarOpen: open });
+    posthog.capture(open ? "sidebar_opened" : "sidebar_closed");
+  },
+  toggleSidebar: () => {
+    const { sidebarOpen } = get();
+    const next = !sidebarOpen;
+    posthog.capture(next ? "sidebar_opened" : "sidebar_closed");
+    set({ sidebarOpen: next });
+  },
   setControlsOpen: (open) => set({ controlsOpen: open }),
   setGameStarted: (started) => set({ gameStarted: started }),
   startGame: () => {
@@ -356,6 +364,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   setLabelData: (data) => set({ labelData: data }),
   setBadgeGalleryOpen: (open) => {
     set({ badgeGalleryOpen: open, badgeError: null });
+    posthog.capture(open ? "badge_gallery_opened" : "badge_gallery_closed");
     if (open) {
       const state = useGameUIStore.getState();
       void state.loadBadgeData();
