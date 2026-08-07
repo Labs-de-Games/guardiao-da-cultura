@@ -437,6 +437,12 @@ export default function QuizPanel() {
         ref={cardRef}
         tabIndex={-1}
         elevation={0}
+        onClick={() => {
+          if (quiz.revealedAnswer && !isPerformance) {
+            playClick();
+            continueAfterReveal();
+          }
+        }}
         sx={{
           width: 939,
           height: 715,
