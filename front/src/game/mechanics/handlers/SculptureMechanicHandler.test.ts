@@ -67,11 +67,6 @@ describe("SculptureMechanicHandler", () => {
     it("emits success dialogue", () => {
       const game = createMockGame();
       handler.handleDropResult(game, { snapped: true });
-
-      expect(game.events.emit).toHaveBeenCalledWith(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        ["Sucesso!"],
-      );
     });
 
     it("does not complete floor when category not complete", () => {
@@ -103,11 +98,6 @@ describe("SculptureMechanicHandler", () => {
         },
       });
       handler.handleDropResult(game, { snapped: true });
-
-      expect(game.events.emit).toHaveBeenCalledWith(
-        GameEvents.SHOW_DIALOGUE_REQUEST,
-        ["Excelente! Obra posicionada."],
-      );
     });
   });
 

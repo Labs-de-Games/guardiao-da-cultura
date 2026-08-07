@@ -3,21 +3,16 @@ import type * as Phaser from "phaser";
 const DUCK_VOLUME = 0.3;
 const DEFAULT_VOICE = "Brazilian Portuguese Female";
 
-interface SpeakOptions {
-  voice?: string;
-  rate?: number;
-  pitch?: number;
-  volume?: number;
-}
-
 class AudioAccessibilityServiceImpl {
   private static instance: AudioAccessibilityServiceImpl;
   private soundManager: Phaser.Sound.BaseSoundManager | null = null;
   private originalVolume = 1;
   private isDucked = false;
   private currentAudio: HTMLAudioElement | null = null;
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private speakRequestId = 0;
   private voice: string = DEFAULT_VOICE;
+  private volume: number = 1;
 
   private constructor() {}
 
@@ -39,6 +34,20 @@ class AudioAccessibilityServiceImpl {
 
   getVoice(): string {
     return this.voice;
+  }
+
+  setVolume(volume: number): void {
+    this.volume = Math.max(0, Math.min(1, volume));
+    if (this.currentAudio) {
+      this.currentAudio.volume = this.volume;
+    }
+    if (this.currentUtterance) {
+      this.currentUtterance.volume = this.volume;
+    }
+  }
+
+  getVolume(): number {
+    return this.volume;
   }
 
   init(): void {
@@ -79,20 +88,24 @@ class AudioAccessibilityServiceImpl {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "pt-BR";
+      utterance.volume = this.volume;
+      this.currentUtterance = utterance;
       utterance.onstart = () => this.duckVolume();
       utterance.onend = () => {
         this.restoreVolume();
+        this.currentUtterance = null;
         resolve();
       };
       utterance.onerror = () => {
         this.restoreVolume();
+        this.currentUtterance = null;
         resolve();
       };
       window.speechSynthesis.speak(utterance);
     });
   }
 
-  speak(text: string, options?: SpeakOptions): Promise<void> {
+  speak(text: string): Promise<void> {
     if (!text) return Promise.resolve();
     this.stop();
     this.primeAudioContext();
@@ -106,9 +119,7 @@ class AudioAccessibilityServiceImpl {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text,
-        voice: options?.voice ?? this.voice,
-        rate: options?.rate,
-        pitch: options?.pitch,
+        voice: this.voice,
       }),
     })
       .then((response) => {
@@ -126,6 +137,7 @@ class AudioAccessibilityServiceImpl {
         return new Promise<void>((resolve) => {
           const url = URL.createObjectURL(blob);
           const audio = new Audio(url);
+          audio.volume = this.volume;
           this.currentAudio = audio;
 
           audio.onplay = () => this.duckVolume();
@@ -157,6 +169,7 @@ class AudioAccessibilityServiceImpl {
       this.currentAudio.pause();
       this.currentAudio = null;
     }
+    this.currentUtterance = null;
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }

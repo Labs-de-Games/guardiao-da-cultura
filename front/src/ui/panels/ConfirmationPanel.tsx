@@ -1,5 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef } from "react";
+import { useSound } from "@/ui/hooks/useSound";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -24,8 +25,17 @@ export function ConfirmationPanel({
   );
   const closeDialogue = useDialogueStore((s) => s.closeDialogue);
 
+  const { playModalOpen, playModalClose, playClick } = useSound();
+
   const simButtonRef = useRef<HTMLButtonElement>(null);
   const naoButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    playModalOpen();
+    return () => {
+      playModalClose();
+    };
+  }, [playModalOpen, playModalClose]);
 
   useEffect(() => {
     const target =
@@ -37,10 +47,11 @@ export function ConfirmationPanel({
 
   const handleConfirm = useCallback(
     (confirmed: boolean) => {
+      playClick();
       onComplete(callbackId, confirmed);
       confirmDialogueSelection();
     },
-    [callbackId, confirmDialogueSelection, onComplete],
+    [playClick, callbackId, confirmDialogueSelection, onComplete],
   );
 
   const handleDismiss = useCallback(() => {

@@ -5,6 +5,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio } from "../audio";
+import { getLevelAudioManifest } from "../audio/registry";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
@@ -24,6 +25,11 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import {
+  CostumeMechanicHandler,
+  type CostumePartType,
+  type CostumeState,
+} from "../mechanics/handlers/CostumeMechanicHandler";
 import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicHandler";
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { PosterMechanicHandler } from "../mechanics/handlers/PosterMechanicHandler";
@@ -85,6 +91,7 @@ export class Game extends Scene implements GameDataAccessor {
   public readonly scoringFloors = {
     sculptures: 0,
     paintings: 1,
+    costumes: 1,
     photo: 2,
     posters: 3,
   } as const;
@@ -94,6 +101,7 @@ export class Game extends Scene implements GameDataAccessor {
   private levelManager!: LevelManager;
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
+  private isCostumeSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
@@ -156,6 +164,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.hasInteractedWithRat = false;
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
+    this.isCostumeSelectorOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -233,7 +242,14 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     GLOBAL_ASSETS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
+      if ("frameWidth" in asset && "frameHeight" in asset) {
+        this.load.spritesheet(asset.key, asset.path, {
+          frameWidth: asset.frameWidth as number,
+          frameHeight: asset.frameHeight as number,
+        });
+      } else {
+        this.load.image(asset.key, asset.path);
+      }
     });
 
     BADGE_ASSETS.forEach((asset) => {
@@ -265,6 +281,9 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.load.image("label", "misc/label.png");
+
+    // Audio assets are preloaded by LevelCinematic scene
+    // during the cinematic intro to avoid loading delays
   }
 
   private processModularData() {
@@ -280,9 +299,21 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects = new EffectsManager(this);
     this.createAnimations();
 
-    // Initialize AudioManager with this scene so Player and other
-    // objects can play sounds via AudioManager.playSfx()
+    // Initialize audio manager with this scene
     AudioManager.init(this);
+
+    // Start level music if not already playing
+    // Check registry to avoid restarting music on scene transitions within the same level
+    const musicStartedKey = `music_started:${this.levelId}`;
+    if (!this.registry.get(musicStartedKey)) {
+      const manifest = getLevelAudioManifest(this.levelId);
+      const musicKey =
+        manifest?.musicIntroLoop?.intro.key ?? manifest?.music?.key;
+      if (musicKey) {
+        AudioManager.playMusic(musicKey);
+        this.registry.set(musicStartedKey, true);
+      }
+    }
 
     const map = this.make.tilemap({
       key: this.levelDef.map.key,
@@ -316,9 +347,19 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.registry.set("scoreManager", this.scoreManager);
 
+    let lastTotalQuarters = this.scoreManager.getPayload().totalQuarters || 0;
+
     this.scoreManager.on(
       ScoringEvents.SCORE_UPDATED,
       (payload: ScoringPayload) => {
+        const previousStars = Math.floor(lastTotalQuarters / 4);
+        const currentStars = Math.floor(payload.totalQuarters / 4);
+
+        if (currentStars > previousStars) {
+          this.effects.playScoreFeedback(this.player.x, this.player.y);
+        }
+        lastTotalQuarters = payload.totalQuarters;
+
         const stars = Number.isFinite(payload.totalStars)
           ? Math.max(0, payload.totalStars)
           : 0;
@@ -612,6 +653,54 @@ export class Game extends Scene implements GameDataAccessor {
           },
           interactionDistance: 130,
         })),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.PHOTO && !p.isFilled)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY + 100;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top;
+            },
+            get active() {
+              return !p.isFilled;
+            },
+            interactionDistance: 150,
+          })),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.COSTUME && !p.isFilled)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top - 115;
+            },
+            get active() {
+              return !p.isFilled;
+            },
+            interactionDistance: 120,
+          })),
       ]);
 
       this.analyticsSystem.trackLevelEvent(
@@ -622,7 +711,7 @@ export class Game extends Scene implements GameDataAccessor {
         },
       );
     }
-    this.setupCameras();
+    this.setupCameras(map);
 
     this.events.on(
       GameEvents.INFO_COLLECTED,
@@ -768,18 +857,26 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   private setupEvents() {
-    this.events.on(GameEvents.DIALOGUE_STARTED, () => {
+    this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
       if (this.player) {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
+      }
+      this.effects.setZoom(
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM,
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+      );
+      // Play magnifying glass zoom-in sound only for quiz/puzzle panels
+      if (source === "quiz" || source === "puzzle") {
+        AudioManager.playSfx("sfx.magnifying.up");
       }
       this.effects.setZoom(1.2, 400);
     });
 
     this.events.on(
       GameEvents.DIALOGUE_ENDED,
-      (data?: { dismissed?: boolean }) => {
+      (data?: { dismissed?: boolean; source?: string }) => {
         this.isChunkSelectorOpen = false;
         this.isDialogueOpen = false;
 
@@ -801,6 +898,14 @@ export class Game extends Scene implements GameDataAccessor {
           }
         });
 
+        this.effects.setZoom(
+          1.0,
+          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+        );
+        // Play magnifying glass zoom-out sound only for quiz/puzzle panels
+        if (data?.source === "quiz" || data?.source === "puzzle") {
+          AudioManager.playSfx("sfx.magnifying.down");
+        }
         this.effects.setZoom(1.0, 400);
       },
     );
@@ -834,6 +939,18 @@ export class Game extends Scene implements GameDataAccessor {
           end: 5,
         }),
         frameRate: 8,
+        repeat: -1,
+      });
+    }
+
+    if (!this.anims.exists("star_anim")) {
+      this.anims.create({
+        key: "star_anim",
+        frames: this.anims.generateFrameNumbers("star", {
+          start: 0,
+          end: 31,
+        }),
+        frameRate: 10,
         repeat: -1,
       });
     }
@@ -938,7 +1055,12 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.player.on("interact-placeholder", () => {
-      if (this.isDialogueOpen || this.isChunkSelectorOpen) return;
+      if (
+        this.isDialogueOpen ||
+        this.isChunkSelectorOpen ||
+        this.isCostumeSelectorOpen
+      )
+        return;
 
       if (this.tryInteractWithRat()) {
         return;
@@ -961,6 +1083,8 @@ export class Game extends Scene implements GameDataAccessor {
         const work = workId ? findWorkDataById(workId, this.contentData) : null;
 
         if (work) {
+          // Play inspect sound for label interaction
+          AudioManager.playSfx("sfx.clue.inspect");
           const payload = buildLabelInfo(work, (id) =>
             findWorkDataById(id, this.contentData),
           );
@@ -988,7 +1112,7 @@ export class Game extends Scene implements GameDataAccessor {
           );
 
         this.isChunkSelectorOpen = true;
-        this.events.emit(GameEvents.DIALOGUE_STARTED);
+        this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
         const expectedSlots = Array.isArray(nearby.id)
           ? nearby.id
           : String(nearby.id)
@@ -1003,6 +1127,51 @@ export class Game extends Scene implements GameDataAccessor {
           })),
           filledSlots: filled,
           expectedSlots,
+        });
+      }
+
+      const nearbyCostume = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        120,
+        InteractiveType.COSTUME,
+      );
+
+      if (nearbyCostume) {
+        if (this.markFloorStarted(this.scoringFloors.costumes)) {
+          posthog.capture("minigame_started", {
+            minigame_number: this.scoringFloors.costumes + 1,
+            level_id: this.levelId,
+          });
+        }
+
+        const ids = Array.isArray(nearbyCostume.id)
+          ? (nearbyCostume.id as string[])
+          : String(nearbyCostume.id)
+              .split(",")
+              .map((s) => s.trim());
+        const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
+
+        const initialCostumeState = CostumeMechanicHandler.createInitialState();
+        const costumeState = nearbyCostume.state as
+          | Partial<CostumeState>
+          | undefined;
+        const equippedParts = {
+          ...initialCostumeState.equippedParts,
+          ...costumeState?.equippedParts,
+        };
+        const lockedParts = {
+          ...initialCostumeState.lockedParts,
+          ...costumeState?.lockedParts,
+        };
+
+        this.isCostumeSelectorOpen = true;
+        this.events.emit(GameEvents.DIALOGUE_STARTED);
+        EventBus.emit("ui:costume-selector-open", {
+          instanceId: nearbyCostume.instanceId,
+          correctCostume,
+          equippedParts,
+          lockedParts,
         });
       }
     });
@@ -1064,7 +1233,7 @@ export class Game extends Scene implements GameDataAccessor {
       placedItems: (string | null)[];
     }) => {
       this.isChunkSelectorOpen = false;
-      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
       );
@@ -1093,13 +1262,72 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     });
     EventBus.on("ui:chunk-slot-rejected", () => {
-      this.sound.play("error", { volume: 0.5 });
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
     });
     EventBus.on("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
+      this.checkDialogState();
+    });
+    EventBus.on("ui:costume-selector-close", () => {
+      if (!this.isCostumeSelectorOpen) return;
+      this.isCostumeSelectorOpen = false;
       this.events.emit(GameEvents.DIALOGUE_ENDED);
       this.checkDialogState();
+    });
+    EventBus.on("ui:costume-part-selected", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      const initialCostumeState = CostumeMechanicHandler.createInitialState();
+      const equipped = {
+        ...initialCostumeState.equippedParts,
+        ...(p.state?.equippedParts as CostumeState["equippedParts"]),
+      };
+      const locked = {
+        ...initialCostumeState.lockedParts,
+        ...(p.state?.lockedParts as CostumeState["lockedParts"]),
+      };
+      const partType = data.partType as CostumePartType;
+      equipped[partType] = data.partId;
+      locked[partType] = true;
+      p.state = { ...p.state, equippedParts: equipped, lockedParts: locked };
+
+      this.placeholderSystem.updateCostumePart(
+        data.instanceId,
+        data.partType as "head" | "torso" | "feet",
+        data.partId,
+      );
+    });
+    EventBus.on("ui:costume-part-rejected", () => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.costumes);
+    });
+    EventBus.on("ui:costume-confirm", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
+      if (
+        this.placeholderSystem.checkCategoryCompletion(InteractiveType.COSTUME)
+      ) {
+        this.completeFloor(this.scoringFloors.costumes);
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L2,
+            infoKey: MissionKeys.COSTUMES_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        });
+      }
     });
 
     this.events.on("item-dropped", this.handleItemDropped, this);
@@ -1109,16 +1337,19 @@ export class Game extends Scene implements GameDataAccessor {
       this.collectibleSystem?.destroy();
       this.hintKeySystem?.destroy();
       this.badgeSystem.destroy();
+      AudioManager.destroy();
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
       EventBus.off("ui:chunk-slot-placed");
       EventBus.off("ui:chunk-slot-rejected");
       EventBus.off("ui:chunk-selector-close");
+      EventBus.off("ui:costume-selector-close");
+      EventBus.off("ui:costume-part-selected");
+      EventBus.off("ui:costume-part-rejected");
+      EventBus.off("ui:costume-confirm");
       EventBus.off("ui:label-hide");
     });
-
-    this.setupCameras();
   }
 
   private tryInteractWithRat(): boolean {
@@ -1160,6 +1391,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
+      !this.isCostumeSelectorOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -1261,8 +1493,16 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
-  private setupCameras() {
+  private setupCameras(map?: Phaser.Tilemaps.Tilemap) {
     this.cameras.main.setZoom(1.0);
+    if (map) {
+      this.cameras.main.setBounds(
+        0,
+        0,
+        map.widthInPixels * this.mapScale,
+        map.heightInPixels * this.mapScale,
+      );
+    }
     this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
@@ -1273,13 +1513,28 @@ export class Game extends Scene implements GameDataAccessor {
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
 
+    if (this.isDialogueOpen) {
+      const cam = this.cameras.main;
+      EventBus.emit("dialogue:camera-sync", {
+        worldViewX: cam.worldView.x,
+        worldViewY: cam.worldView.y,
+        zoom: cam.zoom,
+      });
+    }
+
     this.effects.updateSpotlight(this.player.x, this.player.y);
+    this.effects.updateScoreFeedback(
+      this.player.x,
+      this.player.y,
+      this.player.displayHeight,
+    );
 
     if (this.player && this.hintKeySystem) {
       const isPanelOpen =
         this.isDialogueOpen ||
         this.isControlsOpen ||
         this.isChunkSelectorOpen ||
+        this.isCostumeSelectorOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 

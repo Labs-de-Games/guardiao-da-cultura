@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.9.0] - 2026-08-07
+
+### Added
+
+- Level music and menu music with preload in LevelCinematic and MapIntroScene
+- Dialogue source params for contextual audio in Game scene
+- UI sound events (`ui.sound.*`) and `useSound` hook
+- `AudioSubpanel` for volume controls in sidebar
+- `ControlsSubpanel` in sidebar
+- Sound effects for Quiz, ConfirmationPanel, SculptureMechanicHandler, PaintingMechanicHandler
+- Landing and drop sounds for CarryableItem
+- `playInteractSound` option on InteractionComponent
+- Costume Challenge minigame with hint keys on photo and costume placeholders
+- Sound assets for game events
+
+### Fixed
+
+- Dialogue bubble flash at fallback position on open
+- Dialogue bubble clipping at viewport edge — flip below speaker when near bottom
+- Dialogue bubble offset alignment with speaker anchor
+- Dialogue panel spawn delayed until camera zoom-in settles
+- Intermittent gap between dialogue box and its background
+- Intermediate quiz dialogue positioned over NPC with speaker awareness
+- Quiz keyboard submission missing sound
+- Costume challenge: duplicate `costumes_done` quiz key removed
+- Costume challenge: correct `sfx.puzzle.failure` sound key
+- Clue sound removed when entering a portal
+- Intro `intro:complete` emitted on natural cutscene completion
+- Audio: single-track music support in Game scene
+- Audio: level_02 manifest registration
+- Camera bounds updated on map load
+- Favicon moved from root to `public/` folder
+
+### Changed
+
+- Player looping sounds refactored to use AudioManager
+- Enemy refactored to use AudioManager
+- AudioAccessibilityService simplified
+- Intro music events reordered in IntroSequence
+- Camera setup deduplicated in Game.create()
+
+### Reverted
+
+- Costume challenge success dialog temporarily removed
+
 ## [1.8.1] - 2026-07-31
 
 ### Fixed

@@ -31,6 +31,7 @@ export class Portal extends Phaser.GameObjects.Zone {
       onInteract: () => this.handleInteract(),
       interactionDistance: 130,
       actionKey: [Actions.MOVE_UP, Actions.INTERACT],
+      playInteractSound: false,
     });
 
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);

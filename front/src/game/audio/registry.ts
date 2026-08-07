@@ -73,6 +73,7 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   // Rewards
   { key: "sfx.badge.unlock", path: "sound/sfx/badge.unlock.mp3" },
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
+  { key: "sfx.star.earned", path: "sound/sfx/star_sound.mp3" },
 ];
 
 /**
@@ -103,11 +104,14 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
       },
     },
   },
-  // Future levels can be added here:
-  // level_02: {
-  //   levelId: "level_02",
-  //   music: { key: "music.level_2.main", path: "sound/music/level_2.mp3", loop: true },
-  // },
+  level_02: {
+    levelId: "level_02",
+    music: {
+      key: "music.level_2.main",
+      path: "sound/music/level_2.mp3",
+      loop: true,
+    },
+  },
 };
 
 /**

@@ -2,9 +2,17 @@
 
 import ArrowRight from "@mui/icons-material/ArrowRight";
 import { Box, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useAudioAccessibility } from "@/lib/audio";
+import { EventBus } from "@/shared/events/event-bus";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -26,9 +34,13 @@ const TYPING_SPEED = 30;
 const BUBBLE_MAX_WIDTH = 900;
 const BUBBLE_HALF = BUBBLE_MAX_WIDTH / 2;
 const VIEWPORT_MARGIN = 24;
-const TRIANGLE_HEIGHT = 32;
+const TRIANGLE_HEIGHT = 28;
 const HEAD_OFFSET = 100;
 const MAX_DIALOGUE_LENGTH = 144;
+// Worst-case bubble height used only to decide whether it still fits above
+// the speaker without being clipped off the top of the viewport.
+const ESTIMATED_BUBBLE_HEIGHT = 260;
+const BELOW_OFFSET = 24;
 
 interface DialoguePanelProps {
   onComplete: (callbackId: string, confirmed?: boolean) => void;
@@ -97,6 +109,11 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
   const { width: vw, height: vh } = useWindowSize();
+  const [cameraTransform, setCameraTransform] = useState<{
+    worldViewX: number;
+    worldViewY: number;
+    zoom: number;
+  } | null>(null);
 
   const rawCurrentText = lines[currentLine] ?? "";
   const parsedLine = parseLine(rawCurrentText);
@@ -105,7 +122,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   const isLastLine = currentLine === lines.length - 1;
 
   const positioning = useMemo(() => {
-    if (!speakerPos) {
+    if (!speakerPos || !cameraTransform) {
       return {
         outerStyle: {
           position: "absolute" as const,
@@ -114,35 +131,81 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           transform: "translateX(-50%)",
         },
         triangleLeft: null,
+        direction: "above" as const,
       };
     }
 
+    const { worldViewX, worldViewY, zoom } = cameraTransform;
+    const screenX = (speakerPos.x - worldViewX) * zoom;
+    const screenY = (speakerPos.y - worldViewY) * zoom;
+
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
     const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
-    const clampedLeft = Math.max(minLeft, Math.min(speakerPos.x, maxLeft));
+    const clampedLeft = Math.max(minLeft, Math.min(screenX, maxLeft));
+    const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
+    const ratio = (screenX - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
+    const triangleLeft = Math.round(Math.max(15, Math.min(ratio * 100, 85)));
+
+    // Not enough room above the speaker's head to fit the bubble without it
+    // being clipped off the top of the viewport (e.g. interactions near the
+    // top of the map) — flip it to appear below the speaker instead.
+    const spaceNeededAbove =
+      HEAD_OFFSET * zoom +
+      TRIANGLE_HEIGHT +
+      ESTIMATED_BUBBLE_HEIGHT +
+      VIEWPORT_MARGIN;
+
+    if (screenY < spaceNeededAbove) {
+      const topRaw = screenY + BELOW_OFFSET * zoom + TRIANGLE_HEIGHT;
+      const top = Math.min(
+        vh - VIEWPORT_MARGIN,
+        Math.max(VIEWPORT_MARGIN, topRaw),
+      );
+
+      return {
+        outerStyle: {
+          position: "absolute" as const,
+          left: Math.round(clampedLeft),
+          top: Math.round(top),
+          transform: "translateX(-50%)",
+        },
+        triangleLeft,
+        direction: "below" as const,
+      };
+    }
 
     const bottom = Math.min(
       vh - VIEWPORT_MARGIN,
       Math.max(
         VIEWPORT_MARGIN,
-        vh - (speakerPos.y - TRIANGLE_HEIGHT - HEAD_OFFSET),
+        vh - (screenY - TRIANGLE_HEIGHT - HEAD_OFFSET * zoom),
       ),
     );
-
-    const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
-    const ratio = (speakerPos.x - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
-    const triangleLeft = Math.max(15, Math.min(ratio * 100, 85));
 
     return {
       outerStyle: {
         position: "absolute" as const,
-        left: clampedLeft,
-        bottom,
+        left: Math.round(clampedLeft),
+        bottom: Math.round(bottom),
         transform: "translateX(-50%)",
       },
       triangleLeft,
+      direction: "above" as const,
     };
-  }, [speakerPos, vw, vh]);
+  }, [speakerPos, cameraTransform, vw, vh]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setCameraTransform(null);
+      return;
+    }
+    // EventBus replays the last camera-sync payload synchronously here,
+    // so the bubble's first paint already has the settled camera state
+    // instead of flashing at the fallback position for a frame.
+    return EventBus.on("dialogue:camera-sync", (data) => {
+      setCameraTransform(data);
+    });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -268,18 +331,28 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
         <Box
           sx={{
             position: "absolute",
-            bottom: -TRIANGLE_HEIGHT,
+            // Overlaps the box's edge by a couple px so sub-pixel rounding
+            // of the (zoom-scaled) position never leaves a hairline gap
+            // between the box border and the triangle's point.
+            ...(positioning.direction === "below"
+              ? {
+                  top: -(TRIANGLE_HEIGHT - 2),
+                  borderBottom: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+                }
+              : {
+                  bottom: -(TRIANGLE_HEIGHT - 2),
+                  borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+                }),
             ...(positioning.triangleLeft !== null
               ? {
                   left: `${positioning.triangleLeft}%`,
-                  transform: "translateX(-50%)",
+                  transform: "translateX(-20%)",
                 }
               : { right: 40 }),
             width: 0,
             height: 0,
             borderLeft: "24px solid transparent",
             borderRight: "24px solid transparent",
-            borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
           }}
         />
       </Box>

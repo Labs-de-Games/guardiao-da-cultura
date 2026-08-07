@@ -110,5 +110,22 @@ export const LayoutConfig = {
   // Configurações do Jogo
   GAME: {
     MAP_SCALE: 6,
+    CAMERA: {
+      DIALOGUE_ZOOM: 1.2,
+      DIALOGUE_ZOOM_DURATION: 400,
+    },
+  },
+
+  // Placeholder hint configs
+  COSTUME: {
+    TEXTURES: ["dummy_head", "dummy_torso", "dummy_feet"] as const,
+    CELL_W: 122,
+    CELL_H: 80,
+    PART_DEFAULTS: {
+      head: { originX: 0.5, gap: 0 },
+      torso: { originX: 0.5, gap: 0 },
+      feet: { originX: 0.5, gap: 0 },
+    } as const,
+    PEDESTAL_DEFAULT: { originX: 0.5, originY: 0.1, yOffset: 20, scale: 4 },
   },
 } as const;
