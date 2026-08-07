@@ -52,6 +52,10 @@ export class LadderCinematicSystem {
       // 5. Listen for when it hits the ground (tween fallback for timing)
       const dropDuration = 600;
       const dropDistance = 320;
+      this.scene.time.delayedCall(200, () => {
+        AudioManager.playSfx("sfx.ladder.drop");
+        this.effects.shake(250, 0.01);
+      });
       this.scene.tweens.add({
         targets: ladderSprite,
         y: targetY + dropDistance,
@@ -60,9 +64,6 @@ export class LadderCinematicSystem {
         onComplete: () => {
           body.setGravityY(0);
           body.setVelocityY(0);
-
-          AudioManager.playSfx("sfx.object.drop");
-          this.effects.shake(250, 0.01);
 
           this.scene.time.delayedCall(250, () => {
             // 6. Destroy the ladder sprite and reveal the tile layer
