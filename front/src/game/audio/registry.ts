@@ -43,6 +43,10 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
     ],
     avoidRepeat: true,
   },
+  {
+    key: "sfx.ladder.drop",
+    path: "sound/sfx/object.drop_1.mp3",
+  },
   // Player movement
   {
     key: "sfx.player.footstep",

@@ -21,7 +21,7 @@ export type SfxKey =
   | "sfx.badge.unlock"
   | "sfx.level.complete"
   | "sfx.star.earned"
-  | "sfx.object.drop";
+  | "sfx.ladder.drop";
 
 /** Semantic keys for music tracks.
  * Level-specific music follows pattern: "music.level_{id}.main" */
