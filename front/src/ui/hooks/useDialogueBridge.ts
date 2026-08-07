@@ -11,14 +11,14 @@ export function useDialogueBridge() {
 
   useEffect(() => {
     const unsubShow = EventBus.on("dialogue:show", (data) => {
-      showDialogue(data.lines, data.callbackId, data.screenPosition);
+      showDialogue(data.lines, data.callbackId, data.worldPosition);
     });
     const unsubConfirm = EventBus.on("dialogue:confirm", (data) => {
       showConfirmation(
         data.message,
         data.speakerName,
         data.callbackId,
-        data.screenPosition,
+        data.worldPosition,
       );
     });
     return () => {

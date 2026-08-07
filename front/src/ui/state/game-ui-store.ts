@@ -60,6 +60,17 @@ export interface ChunkSelectorData {
   expectedSlots: string[];
 }
 
+export interface CostumeSelectorData {
+  instanceId: string;
+  correctCostume: string;
+  equippedParts: {
+    head: string | null;
+    torso: string | null;
+    feet: string | null;
+  };
+  lockedParts: { head: boolean; torso: boolean; feet: boolean };
+}
+
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
 
 export interface GameUIState {
@@ -67,6 +78,7 @@ export interface GameUIState {
   controlsOpen: boolean;
   gameStarted: boolean;
   activeMapMarker: MapMarkerChangedData | null;
+  levelInfo: { title: string; location: string } | null;
   autoStartProgress: number | null;
   stars: number;
   totalStars: number;
@@ -75,6 +87,8 @@ export interface GameUIState {
   collectibles: CollectibleEntry[];
   chunkSelectorOpen: boolean;
   chunkSelectorData: ChunkSelectorData | null;
+  costumeSelectorOpen: boolean;
+  costumeSelectorData: CostumeSelectorData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -109,6 +123,7 @@ export interface GameUIState {
   startGame: () => void;
   endGame: () => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
+  setLevelInfo: (info: { title: string; location: string } | null) => void;
   setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
   setScore: (score: number) => void;
@@ -130,6 +145,8 @@ export interface GameUIState {
   collectItem: (itemId: string) => void;
   openChunkSelector: (data: ChunkSelectorData) => void;
   closeChunkSelector: () => void;
+  openCostumeSelector: (data: CostumeSelectorData) => void;
+  closeCostumeSelector: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -164,6 +181,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   controlsOpen: false,
   gameStarted: false,
   activeMapMarker: DEFAULT_MAP_MARKER,
+  levelInfo: null,
   autoStartProgress: null,
   stars: 0,
   totalStars: 0,
@@ -172,6 +190,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
   collectibles: [],
   chunkSelectorOpen: false,
   chunkSelectorData: null,
+  costumeSelectorOpen: false,
+  costumeSelectorData: null,
   toasts: [],
   labelData: null,
   badgeGalleryOpen: false,
@@ -224,10 +244,12 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
         chunkSelectorOpen: false,
         chunkSelectorData: null,
         labelData: null,
+        levelInfo: null,
       });
     }
   },
   setActiveMapMarker: (marker) => set({ activeMapMarker: marker }),
+  setLevelInfo: (info) => set({ levelInfo: info }),
   setAutoStartProgress: (progress) => set({ autoStartProgress: progress }),
   setStars: (current, total) => set({ stars: current, totalStars: total }),
   setScore: (score) => set({ score }),
@@ -295,6 +317,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => ({
     set({
       chunkSelectorOpen: false,
       chunkSelectorData: null,
+    }),
+  openCostumeSelector: (data) =>
+    set({
+      costumeSelectorOpen: true,
+      costumeSelectorData: data,
+    }),
+  closeCostumeSelector: () =>
+    set({
+      costumeSelectorOpen: false,
+      costumeSelectorData: null,
     }),
   addToast: (message, duration, iconSrc) =>
     set((s) => {

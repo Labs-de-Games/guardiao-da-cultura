@@ -1,5 +1,6 @@
 import type * as Phaser from "phaser";
 import { EventBus } from "../../../shared/events/event-bus";
+import { AudioManager } from "../../audio";
 import { GameEvents } from "../../constants/GameEvents";
 import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
 import { MissionRegistry } from "../../data/MissionRegistry";
@@ -50,12 +51,6 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
     const current = g.registry.get("puzzles_solved_flawlessly") || 0;
     g.registry.set("puzzles_solved_flawlessly", current + 1);
 
-    const sysDialogs = g.contentData.messages.SYSTEM_DIALOGUES;
-    g.events.emit(
-      GameEvents.SHOW_DIALOGUE_REQUEST,
-      sysDialogs.PAINTING?.SUCCESS || ["Excelente! Obra posicionada."],
-    );
-
     const missionId = MissionIds.CURATOR;
     g.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     this.emitMissionProgress(g, missionId);
@@ -78,6 +73,7 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
     placeholder?: PlaceholderInstance | null,
   ): void {
     g.shakeHorizontal(400, 0.05);
+    AudioManager.playSfx("sfx.puzzle.failure");
     g.recordFloorError(this.scoringFloor);
 
     const workId = placeholder

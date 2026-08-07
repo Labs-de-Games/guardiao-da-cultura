@@ -66,6 +66,17 @@ export interface ChunkSelectorOpenData {
   expectedSlots: string[];
 }
 
+export interface CostumeSelectorOpenData {
+  instanceId: string;
+  correctCostume: string;
+  equippedParts: {
+    head: string | null;
+    torso: string | null;
+    feet: string | null;
+  };
+  lockedParts: { head: boolean; torso: boolean; feet: boolean };
+}
+
 export interface ChunkSelectorSubmitData {
   instanceId: string;
   placedItems: (string | null)[];
@@ -92,19 +103,25 @@ export interface ToastShowData {
 export interface DialogueShowData {
   lines: string[];
   callbackId: string;
-  screenPosition?: { x: number; y: number };
+  worldPosition?: { x: number; y: number };
 }
 
 export interface DialogueConfirmData {
   message: string;
   speakerName: string;
   callbackId: string;
-  screenPosition?: { x: number; y: number };
+  worldPosition?: { x: number; y: number };
 }
 
 export interface DialogueCompletedData {
   callbackId: string;
   confirmed?: boolean;
+}
+
+export interface DialogueCameraSyncData {
+  worldViewX: number;
+  worldViewY: number;
+  zoom: number;
 }
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
@@ -170,15 +187,45 @@ export interface GameEventMap {
   "ui:chunk-selector-open": ChunkSelectorOpenData;
   "ui:chunk-selector-close": undefined;
   "ui:chunk-selector-submit": ChunkSelectorSubmitData;
+  "ui:costume-selector-open": CostumeSelectorOpenData;
+  "ui:costume-selector-close": undefined;
+  "ui:costume-part-rejected": {
+    instanceId: string;
+    partType: string;
+    partId: string | null;
+    reason: string;
+  };
+  "ui:costume-part-selected": {
+    instanceId: string;
+    partType: string;
+    partId: string;
+    isCorrect: boolean;
+    isLocked: boolean;
+  };
+  "ui:costume-confirm": {
+    instanceId: string;
+    equippedParts: {
+      head: string | null;
+      torso: string | null;
+      feet: string | null;
+    };
+  };
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
+  "ui:sound-click": undefined;
+  "ui:sound-hover": undefined;
+  "ui:sound-modal-open": undefined;
+  "ui:sound-modal-close": undefined;
+  "ui:sound-badge-unlock": undefined;
+  "ui:sound-level-complete": undefined;
   "dialogue:show": DialogueShowData;
   "dialogue:confirm": DialogueConfirmData;
   "dialogue:dismissed": { callbackId: string };
   "dialogue:completed": DialogueCompletedData;
   "dialogue:dequeue-started": undefined;
   "dialogue:queue-cleared": undefined;
+  "dialogue:camera-sync": DialogueCameraSyncData;
   "ui:label-show": LabelInfoData;
   "ui:label-hide": undefined;
   "ui:badge-gallery-toggle": BadgeGalleryToggleData;
@@ -196,4 +243,6 @@ export interface GameEventMap {
   "progression:updated": UserProgressState;
   "intro:start": { levelId: string; config: IntroConfig };
   "intro:complete": { levelId: string };
+  "intro:music-start": { levelId: string };
+  "intro:rollout-start": { levelId: string };
 }

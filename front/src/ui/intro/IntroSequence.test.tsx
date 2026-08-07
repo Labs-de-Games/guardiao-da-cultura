@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import * as EventBus from "../../shared/events/event-bus";
 import { IntroSequence } from "./IntroSequence";
 import type { IntroConfig } from "./types";
 
@@ -62,6 +61,33 @@ jest.mock("../../shared/events/event-bus", () => ({
     once: jest.fn(),
   },
 }));
+
+// Mock canvas components — fire onDone once per mount via useEffect
+jest.mock("./PixelRevealCanvas", () => {
+  const { useEffect } = require("react");
+  return {
+    PixelRevealCanvas: ({ onDone }: { onDone?: () => void }) => {
+      useEffect(() => {
+        const t = setTimeout(() => onDone?.(), 0);
+        return () => clearTimeout(t);
+      }, []);
+      return <canvas data-testid="pixel-reveal" />;
+    },
+  };
+});
+
+jest.mock("./PixelDissolveCanvas", () => {
+  const { useEffect } = require("react");
+  return {
+    PixelDissolveCanvas: ({ onDone }: { onDone?: () => void }) => {
+      useEffect(() => {
+        const t = setTimeout(() => onDone?.(), 0);
+        return () => clearTimeout(t);
+      }, []);
+      return <canvas data-testid="pixel-dissolve" />;
+    },
+  };
+});
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -205,7 +231,8 @@ describe("IntroSequence E2E", () => {
   });
 
   describe("Skip Functionality", () => {
-    it("should skip on ESC key", async () => {
+    it("should skip on ESC key and emit intro:complete", async () => {
+      const { EventBus } = await import("../../shared/events/event-bus");
       const onComplete = jest.fn();
 
       render(<IntroSequence {...defaultProps} onComplete={onComplete} />);
@@ -234,6 +261,9 @@ describe("IntroSequence E2E", () => {
         jest.advanceTimersByTime(2000);
       });
 
+      expect(EventBus.emit).toHaveBeenCalledWith("intro:complete", {
+        levelId: "test-level",
+      });
       expect(onComplete).toHaveBeenCalled();
     });
 
@@ -346,6 +376,28 @@ describe("IntroSequence E2E", () => {
 
       // onComplete should not be called yet
       expect(onComplete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Natural Completion", () => {
+    it("should emit intro:complete when rollout finishes naturally", async () => {
+      const { EventBus } = await import("../../shared/events/event-bus");
+      const onComplete = jest.fn();
+
+      render(<IntroSequence {...defaultProps} onComplete={onComplete} />);
+
+      // Flush panel reveals, holds, shrinks, and ComicSequence.onComplete → handleComplete → ROLL_DELAY_MS (2000)
+      // Then rollout stagger + dissolve. Run multiple rounds to allow React state propagation.
+      for (let i = 0; i < 20; i++) {
+        await act(async () => {
+          jest.advanceTimersByTime(500);
+        });
+      }
+
+      expect(EventBus.emit).toHaveBeenCalledWith("intro:complete", {
+        levelId: "test-level",
+      });
+      expect(onComplete).toHaveBeenCalled();
     });
   });
 

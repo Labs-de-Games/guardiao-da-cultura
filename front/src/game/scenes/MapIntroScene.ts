@@ -4,6 +4,7 @@ import posthog from "posthog-js";
 import { createGamePersistence } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import {
   AUTO_START_DELAY_MS,
   AUTO_START_REGISTRY_KEY,
@@ -14,6 +15,7 @@ import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
 import { SceneNames } from "../constants/SceneNames";
+import { LEVEL_REGISTRY } from "../data/LevelConfig";
 import { onKeyDown, registerScene } from "../systems/InputManager";
 import type {
   CompletedLevelRecord,
@@ -43,6 +45,7 @@ export class MapIntroScene extends Scene {
   private autoStartStartMs = 0;
   private homeEnteredAtMs = 0;
   private completedLevels: Record<string, CompletedLevelRecord> = {};
+  private isTransitioningToLevel = false;
   private maxUnlockedLevel: number = 1; // from cookie or progression:updated
 
   private readonly handleResize = () => {
@@ -57,14 +60,24 @@ export class MapIntroScene extends Scene {
     this.load.setPath("assets/");
     this.load.image(this.mapKey, "misc/map.png");
     this.load.image(this.markerKey, "misc/marker.png");
+    loadGlobalAudio(this);
   }
 
   create() {
     posthog.capture("game_home_viewed");
     this.homeEnteredAtMs = Date.now();
+    this.isTransitioningToLevel = false;
+
+    // Clear music started registry keys so levels can restart music on replay
+    const levelIds = Object.keys(LEVEL_REGISTRY);
+    for (const levelId of levelIds) {
+      this.registry.remove(`music_started:${levelId}`);
+    }
 
     this.cameras.main.setBackgroundColor(LayoutConfig.COLORS.BLACK);
     this.cameras.main.fadeIn(350, 0, 0, 0);
+    AudioManager.init(this);
+    AudioManager.playMusic("music.menu", 2000);
 
     this.mapImage = this.add
       .image(0, 0, this.mapKey)
@@ -179,6 +192,10 @@ export class MapIntroScene extends Scene {
   private beginGame(
     source: "spacebar" | "confirm" | "marker_click" | "auto_start",
   ) {
+    if (this.isTransitioningToLevel) {
+      return;
+    }
+
     this.cancelAutoStart("started");
     const marker = MARKERS[this.activeMarkerIndex];
     if (!this.isMarkerAvailable(this.activeMarkerIndex) || !marker.levelId) {
@@ -193,7 +210,30 @@ export class MapIntroScene extends Scene {
     }
 
     if (marker.levelId) {
-      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: marker.levelId });
+      this.isTransitioningToLevel = true;
+      // Save level info for PhaseInfoCard before clearing map UI state
+      const marker = MARKERS[this.activeMarkerIndex];
+      useGameUIStore.getState().setLevelInfo({
+        title: marker.title,
+        location: marker.location,
+      });
+      // Clear map UI state immediately when transitioning
+      // This ensures MapInfoBox and MapPinTooltip disappear with the map
+      useGameUIStore.getState().setActiveMapMarker(null);
+      const camera = this.cameras?.main;
+      if (!camera) {
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, {
+          levelId: marker.levelId,
+        });
+        return;
+      }
+
+      camera.once("camerafadeoutcomplete", () => {
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, {
+          levelId: marker.levelId,
+        });
+      });
+      camera.fadeOut(350, 0, 0, 0);
     }
   }
 
