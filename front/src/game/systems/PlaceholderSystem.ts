@@ -329,7 +329,7 @@ export class PlaceholderSystem {
         p.area.centerX,
         p.area.centerY,
       );
-      if (dist < 150) {
+      if (dist < 150 && p.type === item.interactiveType) {
         nearbyMismatch = true;
         break;
       }
