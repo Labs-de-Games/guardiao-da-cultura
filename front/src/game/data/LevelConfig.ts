@@ -127,7 +127,10 @@ export const LEVEL_ASSETS = {
       { key: "chunk_1-3", path: "artworks/photos/chunk-2.png" },
       { key: "chunk_1-4", path: "artworks/photos/chunk-3.png" },
     ],
-    OTHERS: [{ key: "rec", path: "misc/rec.png" }],
+    OTHERS: [
+      { key: "rec", path: "misc/rec.png" },
+      { key: "ladder_image", path: "misc/ladder.png" },
+    ],
     COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
     CONTENT: {
       key: "content",

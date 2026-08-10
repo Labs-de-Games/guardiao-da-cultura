@@ -245,4 +245,6 @@ export interface GameEventMap {
   "intro:complete": { levelId: string };
   "intro:music-start": { levelId: string };
   "intro:rollout-start": { levelId: string };
+  "star-animation-complete": undefined;
+  "ladder:cinematic-complete": undefined;
 }

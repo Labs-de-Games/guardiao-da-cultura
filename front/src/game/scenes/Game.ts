@@ -55,6 +55,7 @@ import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
+import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -97,6 +98,9 @@ export class Game extends Scene implements GameDataAccessor {
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+  pendingStairsLayers: Phaser.Tilemaps.TilemapLayer[] = [];
+  colliders: Phaser.Tilemaps.TilemapLayer[] = [];
+  ladderSprites: Record<string, Phaser.GameObjects.Sprite> = {};
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
   private isControlsOpen: boolean = false;
@@ -107,6 +111,7 @@ export class Game extends Scene implements GameDataAccessor {
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
+  private ladderCinematicSystem!: LadderCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   private hintKeySystem!: HintKeySystem;
@@ -297,6 +302,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.processModularData();
     this.effects = new EffectsManager(this);
+    this.ladderCinematicSystem = new LadderCinematicSystem(
+      this,
+      this.effects,
+      this.mapScale,
+    );
     this.createAnimations();
 
     // Initialize audio manager with this scene
@@ -330,6 +340,45 @@ export class Game extends Scene implements GameDataAccessor {
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
+
+      const stairsLayersToAssign: Phaser.Tilemaps.TilemapLayer[] = [];
+      if (this.stairsLayer) {
+        stairsLayersToAssign.push(this.stairsLayer);
+      }
+
+      const ladder1 = mapData.tileLayers.ladder_floor1;
+      if (ladder1) {
+        ladder1.setVisible(false);
+        stairsLayersToAssign.push(ladder1);
+      }
+
+      const ladder2 = mapData.tileLayers.ladder_floor2;
+      if (ladder2) {
+        ladder2.setVisible(false);
+        stairsLayersToAssign.push(ladder2);
+      }
+
+      this.pendingStairsLayers = stairsLayersToAssign;
+
+      // Spawn ladder images at their Tiled positions from the start
+      this.ladderSprites = {};
+      for (const objLayerKey of ["Ladder1", "Ladder2"]) {
+        const objLayer = mapData.objectLayers[objLayerKey];
+        const ladderObj = objLayer?.objects?.find(
+          (o: any) => o.name === "ladder_image" || o.type === "ladder_image",
+        );
+        if (ladderObj) {
+          const sprite = this.add.sprite(
+            (ladderObj.x ?? 0) * this.mapScale,
+            (ladderObj.y ?? 0) * this.mapScale,
+            "ladder_image",
+          );
+          sprite.setScale(this.mapScale);
+          sprite.setDepth(10);
+          this.ladderSprites[objLayerKey] = sprite;
+        }
+      }
+
       this.portals = MapManager.createPortals(this, mapData);
     }
 
@@ -368,6 +417,32 @@ export class Game extends Scene implements GameDataAccessor {
           total: this.scoreManager.getMaxStars(),
           score: payload.totalQuarters,
         });
+      },
+    );
+
+    this.scoreManager.on(
+      ScoringEvents.INTERMEDIATE_QUIZ_COMPLETED,
+      (payload: any) => {
+        let targetLayerName: string | null = null;
+        if (payload.infoKey === "sculptures_done") {
+          targetLayerName = "ladder_floor1";
+        } else if (payload.infoKey === "paintings_done") {
+          targetLayerName = "ladder_floor2";
+        }
+
+        if (targetLayerName && mapData) {
+          const targetLayer = mapData.tileLayers[targetLayerName];
+          if (targetLayer) {
+            const floorNum = targetLayerName.match(/(\d+)$/)?.[1];
+            const objLayerKey = `Ladder${floorNum}`;
+            const sprite = this.ladderSprites[objLayerKey];
+            if (sprite) {
+              this.time.delayedCall(4000, () => {
+                this.ladderCinematicSystem.playCinematic(sprite, targetLayer);
+              });
+            }
+          }
+        }
       },
     );
 
@@ -765,15 +840,6 @@ export class Game extends Scene implements GameDataAccessor {
       "info-collected",
       (data: { missionId: string; infoKey: string }) => {
         this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-        const reqs = this.questManager.getRequiredInfos(data.missionId);
-        EventBus.emit("quest:progress-changed", {
-          missionId: data.missionId,
-          missionTitle: MissionRegistry[data.missionId]?.title || "",
-          collectedInfos: this.questManager.getCollectedInfos(data.missionId),
-          totalSteps: reqs.length,
-          steps: MissionRegistry[data.missionId]?.steps,
-          stepProgress: this.getMissionStepProgress(data.missionId),
-        });
       },
     );
 
@@ -781,15 +847,18 @@ export class Game extends Scene implements GameDataAccessor {
       "status-changed",
       (data: { missionId: string; status: QuestStatus }) => {
         this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-        EventBus.emit("quest:mission-status-changed", {
-          missionId: data.missionId,
-          status:
-            data.status === QuestStatus.COMPLETED
-              ? "completed"
-              : data.status === QuestStatus.READY_FOR_QUIZ
-                ? "accepted"
-                : "accepted",
-        });
+
+        if (this.levelDef.activeMissions?.includes(data.missionId)) {
+          EventBus.emit("quest:mission-status-changed", {
+            missionId: data.missionId,
+            status:
+              data.status === QuestStatus.COMPLETED
+                ? "completed"
+                : data.status === QuestStatus.READY_FOR_QUIZ
+                  ? "accepted"
+                  : "accepted",
+          });
+        }
       },
     );
 
@@ -988,7 +1057,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
     this.player.setDepth(20);
-    this.player.stairsLayer = this.stairsLayer;
+    // We push individual stairsLayers instead of just this.stairsLayer now.
+    // this.player.stairsLayer is deprecated in Player, we use stairsLayers
+    for (const layer of this.pendingStairsLayers) {
+      this.player.stairsLayers.push(layer);
+    }
     this.player.setCollisionLayers(mapData.colliders);
 
     this.effects.initSpotlight();
@@ -1205,16 +1278,6 @@ export class Game extends Scene implements GameDataAccessor {
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
           this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-          EventBus.emit("quest:progress-changed", {
-            missionId: MissionIds.CURATOR,
-            missionTitle: MissionRegistry[MissionIds.CURATOR]?.title || "",
-            collectedInfos: this.questManager.getCollectedInfos(
-              MissionIds.CURATOR,
-            ),
-            totalSteps: MissionRegistry[MissionIds.CURATOR]?.steps.length ?? 0,
-            steps: MissionRegistry[MissionIds.CURATOR]?.steps,
-            stepProgress: this.getMissionStepProgress(MissionIds.CURATOR),
-          });
           if (
             this.totalPhotoChunks > 0 &&
             this.photoChunksCollected >= this.totalPhotoChunks
@@ -1403,6 +1466,7 @@ export class Game extends Scene implements GameDataAccessor {
     colliders: Phaser.Tilemaps.TilemapLayer[],
     oneWayColliders: Phaser.Tilemaps.TilemapLayer[] = [],
   ) {
+    this.colliders = colliders;
     colliders.forEach((layer) => {
       if (layer) {
         this.physics.add.collider(this.player, layer);
