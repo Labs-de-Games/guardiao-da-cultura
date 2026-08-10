@@ -20,4 +20,7 @@ export const GameEvents = {
 
   SHOW_BADGE_TOAST: "show-badge-toast",
   SHOW_QUIZ_RESULTS: "show-quiz-results",
+
+  TUTORIAL_SHOWN: "tutorial-shown",
+  TUTORIAL_DISMISSED: "tutorial-dismissed",
 } as const;
