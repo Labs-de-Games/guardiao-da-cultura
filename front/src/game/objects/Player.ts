@@ -21,6 +21,7 @@ export class Player
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
+  isTutorialActive: boolean = false;
   stairsLayers: Phaser.Tilemaps.TilemapLayer[] = [];
   isClimbingStairs: boolean = false;
 
@@ -515,7 +516,7 @@ export class Player
       // Stop movement sounds when in dialogue
       this.stopMovementSounds();
       this.applyMovementRestriction(isOnStairs);
-      return;
+      if (!this.isTutorialActive) return;
     }
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
@@ -618,7 +619,7 @@ export class Player
       !this.isCarrying;
 
     const ePress = Phaser.Input.Keyboard.JustDown(this.keys.e);
-    if (this.isInDialogue) return;
+    if (this.isInDialogue && !this.isTutorialActive) return;
     if (ePress) {
       if (this.isGrabbing) {
         this.releaseGrab();
@@ -642,6 +643,8 @@ export class Player
         }
       }
     }
+
+    if (this.isInDialogue) return;
 
     if (body) {
       const NOMINAL_DT = 1000 / 60;
