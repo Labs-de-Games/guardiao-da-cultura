@@ -244,8 +244,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":63.6031257040962,
-                 "y":498.707703395007
+                 "x":63.603125704,
+                 "y":498.707703395
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -635,9 +635,9 @@
                  "rotation":0,
                  "type":"TutorialZone",
                  "visible":true,
-                 "width":64,
-                 "x":400,
-                 "y":128
+                 "width":32,
+                 "x":416,
+                 "y":121.272727272727
                 }],
          "opacity":1,
          "type":"objectgroup",
