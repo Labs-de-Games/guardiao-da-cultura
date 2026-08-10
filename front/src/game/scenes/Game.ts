@@ -61,6 +61,7 @@ import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { QuizManager } from "../systems/QuizManager";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
+import { TutorialSystem } from "../systems/TutorialSystem";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { GameDataAccessor } from "../types/GameDataAccessor";
 import type {
@@ -107,6 +108,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
@@ -115,6 +117,7 @@ export class Game extends Scene implements GameDataAccessor {
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   private hintKeySystem!: HintKeySystem;
+  private tutorialSystem!: TutorialSystem;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
@@ -610,6 +613,13 @@ export class Game extends Scene implements GameDataAccessor {
       }
 
       this.hintKeySystem = new HintKeySystem(this);
+
+      this.tutorialSystem = new TutorialSystem(this);
+      const tutorialLayer =
+        mapData.objectLayers.Tutorial || mapData.objectLayers.tutorial;
+      if (tutorialLayer) {
+        this.tutorialSystem.registerFromLayer(tutorialLayer, this.mapScale);
+      }
       this.hintKeySystem.registerItems([
         ...this.draggableItems.map((item) => ({
           get x() {
@@ -923,11 +933,45 @@ export class Game extends Scene implements GameDataAccessor {
     EventBus.on("ui:label-hide", () => {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
     });
+
+    this.events.on(
+      GameEvents.TUTORIAL_SHOWN,
+      (data: { tutorialId: string; blockMovement: boolean }) => {
+        this.isDialogueOpen = data.blockMovement;
+        this.tutorialSetDialogueOpen = data.blockMovement;
+        if (this.player) {
+          this.player.isInDialogue = data.blockMovement;
+          this.player.isTutorialActive = true;
+          if (data.blockMovement) {
+            this.player.setVelocity(0, 0);
+          }
+        }
+      },
+    );
+
+    this.events.on(
+      GameEvents.TUTORIAL_DISMISSED,
+      (_data: { tutorialId: string }) => {
+        if (this.tutorialSetDialogueOpen) {
+          this.isDialogueOpen = false;
+          this.tutorialSetDialogueOpen = false;
+        }
+        if (this.player) {
+          this.player.isTutorialActive = false;
+          this.checkDialogState();
+        }
+      },
+    );
+
+    EventBus.on("ui:label-show", () => {
+      this.tutorialSystem?.completeTutorial("tutorial_read_label");
+    });
   }
 
   private setupEvents() {
     this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
+      this.tutorialSetDialogueOpen = false;
       if (this.player) {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
@@ -1129,7 +1173,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.player.on("interact-placeholder", () => {
       if (
-        this.isDialogueOpen ||
+        (this.isDialogueOpen && !this.player?.isTutorialActive) ||
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen
       )
@@ -1185,6 +1229,7 @@ export class Game extends Scene implements GameDataAccessor {
           );
 
         this.isChunkSelectorOpen = true;
+        this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
         this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
         const expectedSlots = Array.isArray(nearby.id)
           ? nearby.id
@@ -1274,6 +1319,8 @@ export class Game extends Scene implements GameDataAccessor {
         if (opinion) {
           this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [opinion]);
         }
+
+        this.tutorialSystem?.completeTutorial("tutorial_drag_sculpture");
 
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
@@ -1399,6 +1446,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
       this.hintKeySystem?.destroy();
+      this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
       AudioManager.destroy();
       EventBus.off("game:pause-requested");
@@ -1412,6 +1460,7 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:costume-part-rejected");
       EventBus.off("ui:costume-confirm");
       EventBus.off("ui:label-hide");
+      EventBus.off("ui:label-show");
     });
   }
 
@@ -1611,6 +1660,10 @@ export class Game extends Scene implements GameDataAccessor {
         isPanelOpen,
         isPlayerBusy,
       );
+
+      if (this.tutorialSystem) {
+        this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
+      }
     }
   }
 
