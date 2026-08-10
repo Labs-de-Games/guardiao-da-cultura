@@ -1,4 +1,6 @@
 import * as Phaser from "phaser";
+import posthog from "posthog-js";
+
 import { GameEvents } from "../constants/GameEvents";
 import type { Game } from "../scenes/Game";
 import type { NpcDialogues, QuizQuestion } from "../types/GameDataTypes";
@@ -181,6 +183,12 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
     const missionId = this.config.missionId;
     const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;
+
+    posthog.capture("npc_interacted", {
+      npc_id: this.config.name,
+      mission_id: missionId,
+      quest_status: status,
+    });
 
     const pending = this.questManager.getPendingResult(missionId);
     if (pending) {
