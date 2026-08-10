@@ -760,7 +760,7 @@ export class Game extends Scene implements GameDataAccessor {
             get active() {
               return !p.isFilled;
             },
-            interactionDistance: 150,
+            interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
