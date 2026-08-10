@@ -644,6 +644,8 @@ export class Player
       }
     }
 
+    this.syncHeldItemPosition(body);
+
     if (this.isInDialogue) return;
 
     if (body) {
@@ -728,12 +730,6 @@ export class Player
     }
 
     if (this.isGrabbing && this.grabbedItem) {
-      this.grabbedItem.x = this.x + this.grabOffset;
-      this.grabbedItem.y = this.y + this.grabOffsetY;
-      const itemBody = this.grabbedItem.body as
-        | Phaser.Physics.Arcade.Body
-        | undefined;
-      itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
       // Play drag loop sound only when moving
@@ -821,9 +817,19 @@ export class Player
         this.anims.pause();
       }
     }
+  }
+
+  private syncHeldItemPosition(body: Phaser.Physics.Arcade.Body) {
+    if (this.isGrabbing && this.grabbedItem) {
+      this.grabbedItem.x = this.x + this.grabOffset;
+      this.grabbedItem.y = this.y + this.grabOffsetY;
+      const itemBody = this.grabbedItem.body as
+        | Phaser.Physics.Arcade.Body
+        | undefined;
+      itemBody?.updateFromGameObject();
+    }
 
     if (this.isCarrying && this.carriedItem) {
-      // Offset so the base of the item rests near the player's hands (above their head)
       const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
