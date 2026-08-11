@@ -11,7 +11,7 @@ import type { InteractiveType } from "./InteractiveTypes";
 export interface QuizQuestion {
   question: string;
   options: string[];
-  correctOptionIndex: number;
+  correctOptionIndex?: number;
   explanation?: string;
 }
 
