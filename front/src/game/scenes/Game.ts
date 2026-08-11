@@ -407,8 +407,23 @@ export class Game extends Scene implements GameDataAccessor {
         const previousStars = Math.floor(lastTotalQuarters / 4);
         const currentStars = Math.floor(payload.totalQuarters / 4);
 
+        if (payload.totalQuarters > lastTotalQuarters) {
+          posthog.capture("player_scored", {
+            level_id: this.levelId,
+            total_quarters: payload.totalQuarters,
+            total_stars: currentStars,
+            quarters_earned: payload.totalQuarters - lastTotalQuarters,
+          });
+        }
+
         if (currentStars > previousStars) {
           this.effects.playScoreFeedback(this.player.x, this.player.y);
+          posthog.capture("star_collected", {
+            level_id: this.levelId,
+            total_stars: currentStars,
+            previous_stars: previousStars,
+            total_quarters: payload.totalQuarters,
+          });
         }
         lastTotalQuarters = payload.totalQuarters;
 
