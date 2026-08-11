@@ -147,9 +147,15 @@ export class UIScene extends Scene {
         onYes: () => void,
         onNo: () => void,
         worldPosition?: { x: number; y: number },
+        onDismiss?: () => void,
       ) => {
         const callbackId = crypto.randomUUID();
-        this.callbackRegistry.registerConfirm(callbackId, onYes, onNo);
+        this.callbackRegistry.registerConfirm(
+          callbackId,
+          onYes,
+          onNo,
+          onDismiss,
+        );
 
         const pos = worldPosition ?? {
           x: gameScene.player.x,
