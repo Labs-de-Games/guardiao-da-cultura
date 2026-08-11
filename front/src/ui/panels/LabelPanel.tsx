@@ -417,6 +417,7 @@ export function LabelPanel() {
           >
             <Box
               component="img"
+              className="ph-no-deadclick"
               src="/images/etiqueta/icon-text-to-speech.svg"
               alt="Ouvir descrição"
               onClick={() => {
