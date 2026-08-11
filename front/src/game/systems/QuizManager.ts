@@ -7,6 +7,7 @@ import {
   MissionIds,
   NPC_FLOOR_3_POSITION,
 } from "../constants/MissionConstants";
+import { QUIZ_PASS_THRESHOLD } from "../constants/QuizConstants";
 import type { LevelDefinition } from "../data/LevelConfig";
 import type { LevelManager } from "../objects/LevelManager";
 import type { ProgressionManager } from "../objects/ProgressionManager";
@@ -121,7 +122,9 @@ export class QuizManager {
             this.scoreManager,
             (score: number) => {
               this.scoreManager.recordQuizResult(score, questions.length);
-              const required = Math.ceil(questions.length * 0.7);
+              const required = Math.ceil(
+                questions.length * QUIZ_PASS_THRESHOLD,
+              );
               const isSuccess = score >= required;
               console.log(
                 `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
