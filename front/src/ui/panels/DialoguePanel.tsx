@@ -69,6 +69,7 @@ function TextToSpeechIcon({ onClick }: { onClick?: () => void }) {
   return (
     <Box
       component="img"
+      className="ph-no-deadclick"
       src="/images/etiqueta/icon-text-to-speech.svg"
       alt=""
       aria-hidden="true"
