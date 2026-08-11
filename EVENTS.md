@@ -168,6 +168,9 @@ minigames, quizzes e carregamento do jogo.
 | `quiz_answer_submitted` | `quiz_number` (null for regular end-of-level quizzes), `question_id`, `selected_answer`, `is_correct`, `attempt_number` | `game-ui-store.ts` (`selectOption`) |
 | `game_load_success` | `level_id`, `loading_time_ms` | `PhaserGame.tsx` |
 | `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`/`asset_load`) | `PhaserGame.tsx`, `Game.ts` (asset `loaderror`) |
+| `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
+| `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
+| `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
 
 `browser`/`operating_system` are not sent as custom properties — PostHog
 autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`
