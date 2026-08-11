@@ -663,6 +663,7 @@ export default function QuizPanel() {
                 >
                   <Button
                     disableElevation
+                    className="ph-no-deadclick"
                     onClick={() =>
                       currentQuestion?.question &&
                       speak(currentQuestion.question)
