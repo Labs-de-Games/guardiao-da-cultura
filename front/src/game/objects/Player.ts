@@ -21,6 +21,7 @@ export class Player
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
+  isTutorialActive: boolean = false;
   stairsLayers: Phaser.Tilemaps.TilemapLayer[] = [];
   isClimbingStairs: boolean = false;
 
@@ -515,7 +516,7 @@ export class Player
       // Stop movement sounds when in dialogue
       this.stopMovementSounds();
       this.applyMovementRestriction(isOnStairs);
-      return;
+      if (!this.isTutorialActive) return;
     }
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
@@ -618,7 +619,7 @@ export class Player
       !this.isCarrying;
 
     const ePress = Phaser.Input.Keyboard.JustDown(this.keys.e);
-    if (this.isInDialogue) return;
+    if (this.isInDialogue && !this.isTutorialActive) return;
     if (ePress) {
       if (this.isGrabbing) {
         this.releaseGrab();
@@ -642,6 +643,10 @@ export class Player
         }
       }
     }
+
+    this.syncHeldItemPosition(body);
+
+    if (this.isInDialogue) return;
 
     if (body) {
       const NOMINAL_DT = 1000 / 60;
@@ -725,12 +730,6 @@ export class Player
     }
 
     if (this.isGrabbing && this.grabbedItem) {
-      this.grabbedItem.x = this.x + this.grabOffset;
-      this.grabbedItem.y = this.y + this.grabOffsetY;
-      const itemBody = this.grabbedItem.body as
-        | Phaser.Physics.Arcade.Body
-        | undefined;
-      itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
       // Play drag loop sound only when moving
@@ -818,9 +817,19 @@ export class Player
         this.anims.pause();
       }
     }
+  }
+
+  private syncHeldItemPosition(body: Phaser.Physics.Arcade.Body) {
+    if (this.isGrabbing && this.grabbedItem) {
+      this.grabbedItem.x = this.x + this.grabOffset;
+      this.grabbedItem.y = this.y + this.grabOffsetY;
+      const itemBody = this.grabbedItem.body as
+        | Phaser.Physics.Arcade.Body
+        | undefined;
+      itemBody?.updateFromGameObject();
+    }
 
     if (this.isCarrying && this.carriedItem) {
-      // Offset so the base of the item rests near the player's hands (above their head)
       const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;

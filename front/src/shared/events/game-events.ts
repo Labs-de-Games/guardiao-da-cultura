@@ -247,4 +247,6 @@ export interface GameEventMap {
   "intro:rollout-start": { levelId: string };
   "star-animation-complete": undefined;
   "ladder:cinematic-complete": undefined;
+  "tutorial:shown": { tutorialId: string };
+  "tutorial:dismissed": { tutorialId: string };
 }
