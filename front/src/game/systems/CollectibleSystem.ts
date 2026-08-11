@@ -196,7 +196,7 @@ export class CollectibleSystem {
         const totalCollected = this.collectibles.filter(
           (c) => c.isCollected,
         ).length;
-        posthog.capture("star_collected", {
+        posthog.capture("clue_collected", {
           level_id: this.scene.registry.get("currentLevelId"),
           collectible_id: instance.collectibleId,
           collectible_type: instance.collectibleType,
