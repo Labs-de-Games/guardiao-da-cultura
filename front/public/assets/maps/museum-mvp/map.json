@@ -244,8 +244,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":63.6031257040962,
-                 "y":498.707703395007
+                 "x":63.603125704,
+                 "y":498.707703395
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -386,8 +386,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":700.333333333333,
-                 "y":483.416666666666
+                 "x":704,
+                 "y":484.666666666667
                 }, 
                 {
                  "height":0,
@@ -410,8 +410,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":646.833333333333,
-                 "y":485.166666666667
+                 "x":621.333333333333,
+                 "y":492.666666666667
                 }, 
                 {
                  "height":0,
@@ -434,8 +434,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":293.083333333333,
-                 "y":482.166666666667
+                 "x":666,
+                 "y":484
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -528,6 +528,116 @@
                  "width":0,
                  "x":132,
                  "y":173.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":20,
+         "name":"Tutorial",
+         "objects":[
+                {
+                 "height":32,
+                 "id":63,
+                 "name":"T_0",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blockMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"tutorial_read_label"
+                        }, 
+                        {
+                         "name":"message",
+                         "type":"string",
+                         "value":"Leia"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"TutorialZone"
+                        }],
+                 "rotation":0,
+                 "type":"TutorialZone",
+                 "visible":true,
+                 "width":16,
+                 "x":384,
+                 "y":480
+                }, 
+                {
+                 "height":32,
+                 "id":64,
+                 "name":"T_1",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blockMovement",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"tutorial_drag_sculpture"
+                        }, 
+                        {
+                         "name":"message",
+                         "type":"string",
+                         "value":"Arraste"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"TutorialZone"
+                        }],
+                 "rotation":0,
+                 "type":"TutorialZone",
+                 "visible":true,
+                 "width":128,
+                 "x":608,
+                 "y":480
+                }, 
+                {
+                 "height":16,
+                 "id":66,
+                 "name":"T_2",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blockMovement",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"tutorial_photo_placeholder"
+                        }, 
+                        {
+                         "name":"message",
+                         "type":"string",
+                         "value":"Interaja"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"TutorialZone"
+                        }],
+                 "rotation":0,
+                 "type":"TutorialZone",
+                 "visible":true,
+                 "width":32,
+                 "x":416,
+                 "y":121.272727272727
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1135,11 +1245,11 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":20,
- "nextobjectid":63,
+ "nextlayerid":21,
+ "nextobjectid":67,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {
