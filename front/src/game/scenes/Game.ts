@@ -814,7 +814,7 @@ export class Game extends Scene implements GameDataAccessor {
             return s.sprite.displayHeight;
           },
           get active() {
-            return s.sprite.active;
+            return !s.isLocked;
           },
           interactionDistance: 170,
         })) || []),
