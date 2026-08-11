@@ -8,6 +8,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LEVEL_02_ENABLED } from "@/game/constants/FeatureFlags";
+import { QUIZ_PASS_THRESHOLD } from "@/game/constants/QuizConstants";
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
 import { useSound } from "@/ui/hooks/useSound";
@@ -195,7 +196,8 @@ export default function QuizPanel() {
     return total > 0 ? Math.round((quiz.score / total) * 100) : 0;
   }, [quiz.score, quiz.questions.length]);
 
-  const isRetryMode = scorePercentage < 70;
+  const passPercentage = QUIZ_PASS_THRESHOLD * 100;
+  const isRetryMode = scorePercentage < passPercentage;
   const isPerfectScore = scorePercentage === 100;
 
   const starCount = isPerfectScore || isRetryMode ? 3 : 1;
@@ -209,36 +211,40 @@ export default function QuizPanel() {
         return {
           headerTitle: `Pontos: ${scorePercentage}%`,
           headerSubTitle:
-            scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
+            scorePercentage >= passPercentage
+              ? "Boa pontuação"
+              : "Pontuação baixa",
           performanceTitle:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? "Parabéns!"
               : scorePercentage < 25
                 ? "Essa não"
                 : "Por pouco!",
           performanceSubTitle:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? scorePercentage === 100
                 ? "Pontuação perfeita!"
                 : "Boa pontuação"
               : "Pontuação baixa",
           performanceMessage:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? scorePercentage === 100
                 ? "Gabaritou!"
                 : "Muito bom!"
               : "Revise as placas das obras",
           performanceHint:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? ""
               : "Leia com atenção as informações antes de continuar.",
         };
       }
       return {
         headerTitle:
-          scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
+          scorePercentage >= passPercentage
+            ? "Parabéns!"
+            : `Pontos: ${scorePercentage}%`,
         headerSubTitle:
-          scorePercentage >= 70
+          scorePercentage >= passPercentage
             ? scorePercentage === 100
               ? "Pontuação perfeita"
               : "Pontuação boa"
@@ -246,11 +252,11 @@ export default function QuizPanel() {
         performanceTitle:
           scorePercentage < 25
             ? "Essa não"
-            : scorePercentage < 70
+            : scorePercentage < passPercentage
               ? "Por pouco!"
               : "Parabéns!",
         performanceSubTitle:
-          scorePercentage < 25 || scorePercentage < 70
+          scorePercentage < 25 || scorePercentage < passPercentage
             ? "Pontuação baixa"
             : scorePercentage < 100
               ? "Boa pontuação"
@@ -258,13 +264,13 @@ export default function QuizPanel() {
         performanceMessage:
           scorePercentage < 25
             ? "Tente novamente"
-            : scorePercentage < 70
+            : scorePercentage < passPercentage
               ? "Com mais atenção, você consegue!"
               : scorePercentage < 100
                 ? "Muito bom!"
                 : "Gabaritou!",
         performanceHint:
-          scorePercentage >= 70
+          scorePercentage >= passPercentage
             ? "Você já pode encarar o próximo nível!"
             : "Sua pontuação não foi o suficiente. Mas não desista!",
       };
