@@ -17,6 +17,12 @@ function buildQuestion(overrides: Partial<QuizQuestion> = {}): QuizQuestion {
   };
 }
 
+function buildFiveQuestions(): QuizQuestion[] {
+  return Array.from({ length: 5 }, (_, i) =>
+    buildQuestion({ question: `Pergunta ${i + 1}?` }),
+  );
+}
+
 describe("QuizPanel reveal feedback", () => {
   beforeEach(() => {
     useGameUIStore.getState().resetQuiz();
@@ -67,5 +73,84 @@ describe("QuizPanel reveal feedback", () => {
     render(<QuizPanel />);
 
     expect(screen.queryByText(/fundidas em bronze/)).not.toBeInTheDocument();
+  });
+});
+
+describe("QuizPanel performance phase", () => {
+  beforeEach(() => {
+    useGameUIStore.getState().resetQuiz();
+  });
+
+  function setupPerformancePhase(score: number, isIntermediate = false) {
+    const questions = buildFiveQuestions();
+    useGameUIStore.getState().startQuiz(questions, jest.fn(), isIntermediate);
+    useGameUIStore.setState((s) => ({
+      quiz: {
+        ...s.quiz,
+        phase: "performance",
+        score,
+        answers: questions.map((_, i) => (i < score ? "correct" : "wrong")),
+      },
+    }));
+  }
+
+  it("shows 'Proxima fase' when score passes threshold", () => {
+    setupPerformancePhase(3);
+    render(<QuizPanel />);
+    expect(screen.getByText(/Próxima fase/)).toBeInTheDocument();
+  });
+
+  it("shows 'Tentar novamente' when score fails threshold", () => {
+    setupPerformancePhase(2);
+    render(<QuizPanel />);
+    expect(screen.getByText(/Tentar novamente/)).toBeInTheDocument();
+  });
+
+  it("shows 'Parabens' title on passing score", () => {
+    setupPerformancePhase(3);
+    render(<QuizPanel />);
+    expect(screen.getAllByText("Parabéns!").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows score-based message on failing score", () => {
+    setupPerformancePhase(2);
+    render(<QuizPanel />);
+    expect(
+      screen.getByText("Com mais atenção, você consegue!"),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("QuizPanel intermediate mode", () => {
+  beforeEach(() => {
+    useGameUIStore.getState().resetQuiz();
+  });
+
+  it("shows 'Boa pontuacao' subtitle when intermediate score passes", () => {
+    const questions = buildFiveQuestions();
+    useGameUIStore.getState().startQuiz(questions, jest.fn(), true);
+    useGameUIStore.setState((s) => ({
+      quiz: {
+        ...s.quiz,
+        phase: "performance",
+        score: 3,
+        answers: ["correct", "correct", "correct", "wrong", "wrong"],
+      },
+    }));
+    render(<QuizPanel />);
+    expect(screen.getByText("Boa pontuação")).toBeInTheDocument();
+  });
+});
+
+describe("QuizPanel questioning phase", () => {
+  beforeEach(() => {
+    useGameUIStore.getState().resetQuiz();
+  });
+
+  it("shows question counter as current/total", () => {
+    const questions = buildFiveQuestions();
+    useGameUIStore.getState().startQuiz(questions, jest.fn());
+    render(<QuizPanel />);
+    expect(screen.getByText("Pergunta 1/5")).toBeInTheDocument();
   });
 });
