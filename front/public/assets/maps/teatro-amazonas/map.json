@@ -1323,7 +1323,7 @@
                         {
                          "name":"yOffset",
                          "type":"int",
-                         "value":120
+                         "value":100
                         }],
                  "rotation":0,
                  "type":"PlaceholderInstance",
@@ -1679,7 +1679,7 @@
                         {
                          "name":"yOffset",
                          "type":"int",
-                         "value":120
+                         "value":100
                         }],
                  "rotation":0,
                  "type":"PlaceholderInstance",
