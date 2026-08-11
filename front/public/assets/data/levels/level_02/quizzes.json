@@ -5,12 +5,11 @@
       "category": "Teatro",
       "question": "Por que Ajuricaba se jogou no rio Amazonas?",
       "options": [
+        "Para não ser escravizado",
         "Para roubar o ouro das ninfas",
         "Foi seduzido pelo canto da Iara",
-        "Para não ser escravizado",
         "Porque tinha paixão por aventura"
       ],
-      "correctOptionIndex": 2,
       "explanation": "Capturado pelos portugueses, Ajuricaba preferiu a morte à escravização.",
       "hints": [
         "Ele foi acorrentado pelos portugueses.",
@@ -24,12 +23,11 @@
       "category": "Teatro",
       "question": "Qual espetáculo ajudou a tornar o Teatro Amazonas uma das principais casas de ópera da América?",
       "options": [
-        "Ópera do malandro com elenco amazonense",
         "Quatro ciclos d'O anel do nibelungo",
+        "Ópera do malandro com elenco amazonense",
         "Carmina Burana com Amazonas Filarmônica",
         "A paixão de Ajuricaba na língua ticuna"
       ],
-      "correctOptionIndex": 1,
       "explanation": "A apresentação completa, totalizando 16 horas, fez o teatro ganhar destaque mundial.",
       "hints": [
         "Totalizou 16 horas de espetáculo.",
@@ -43,12 +41,11 @@
       "category": "Teatro",
       "question": "A peça “Zona Franca, meu amor” estreou dez anos depois sob qual outro nome?",
       "options": [
+        "Tem piranha no pirarucu",
         "Tem pato no tucupi",
         "Tem caroço nesse angu",
-        "Tem ratos nessas fases",
-        "Tem piranha no pirarucu"
+        "Tem ratos nessas fases"
       ],
-      "correctOptionIndex": 3,
       "explanation": "Após ser censurada, a peça só estreou anos depois, com o nome alterado para “Tem piranha no pirarucu”.",
       "hints": [
         "Menciona pelo menos um animal.",
@@ -67,7 +64,6 @@
         "Uniforme verde-musgo e botas de couro",
         "Costeiro de plumas e tanga"
       ],
-      "correctOptionIndex": 0,
       "explanation": "O tecido de linho claro e bem cuidado mostrava que mantinha dignidade sem precisar de trabalho formal.",
       "hints": ["Tem o estilo dos anos 40.", "Passa um ar de respeito."],
       "tags": ["rio", "vestuario"],
@@ -78,12 +74,11 @@
       "category": "Teatro",
       "question": "Qual dessas ideias combina menos com a luz vermelha no palco?",
       "options": [
-        "Cansaço pelo calor",
         "Sonata ao luar",
+        "Cansaço pelo calor",
         "Beijos ao pôr-do-sol",
         "Conflito de interesses"
       ],
-      "correctOptionIndex": 1,
       "explanation": "A cor vermelha remete a sentimentos de raiva, paixão e conflito, mas não a serenidade.",
       "hints": [
         "O vermelho evoca sentimentos de intensidade.",

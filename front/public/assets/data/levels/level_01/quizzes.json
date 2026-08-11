@@ -4,8 +4,7 @@
       "id": "q1",
       "category": "Escultura",
       "question": "Qual desses temas está mais presente nas obras de Edgard de Souza?",
-      "options": ["Hiperrealismo", "Transformação", "Miniaturas", "Gigantismo"],
-      "correctOptionIndex": 1,
+      "options": ["Transformação", "Hiperrealismo", "Miniaturas", "Gigantismo"],
       "explanation": "As obras exploram a transformação do corpo.",
       "hints": [
         "Representa coisas incomuns no mundo real.",
@@ -19,7 +18,6 @@
       "category": "Pintura",
       "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião?",
       "options": ["Umbanda", "Protestantismo", "Islamismo", "Budismo"],
-      "correctOptionIndex": 0,
       "explanation": "As obras retratam símbolos da Umbanda.",
       "hint": [
         "As divindades dessa religião são chamadas orixás.",
@@ -38,11 +36,10 @@
         "Independência ou morte",
         "Diga ao povo que fico"
       ],
-      "correctOptionIndex": 0,
       "explanation": "A obra substitui o lema da bandeira.",
       "hint": [
         "Um lema presente na bandeira nacional.",
-        "No desfile da Mangueira no ano de 2019, esse mesmo lema foi substituído por “Índios, negros e pobres”."
+        "No desfile da Mangueira no ano de 2019, esse mesmo lema foi substituído por \u201cÍndios, negros e pobres\u201d."
       ],
       "tags": ["pintura", "religiao", "brasil", "abdiasn"],
       "difficulty": "easy"
@@ -52,12 +49,11 @@
       "category": "Fotografia",
       "question": "Qual fotógrafa foi ativa na luta pela demarcação das terras yanomamis?",
       "options": [
+        "Claudia Andujar",
         "Luisa Dörr",
         "Nair Benedicto",
-        "Bárbara Wagner",
-        "Claudia Andujar"
+        "Bárbara Wagner"
       ],
-      "correctOptionIndex": 3,
       "explanation": "Ela defendeu os direitos dos Yanomami.",
       "hints": [
         "Ela teve boa parte da família morta no holocausto judeu e imigrou para o Brasil ainda criança.",
@@ -70,8 +66,7 @@
       "id": "q5",
       "category": "Pintura",
       "question": "Abdias Nascimento pintou itens dos orixás, como o oxé e o ofá. O que é um ofá?",
-      "options": ["Machado", "Espelho", "Arco e flecha", "Lança"],
-      "correctOptionIndex": 2,
+      "options": ["Arco e flecha", "Machado", "Espelho", "Lança"],
       "explanation": "O ofá é o arco e flecha de Oxóssi.",
       "hints": ["É um instrumento de Oxóssi.", "É usado em combate."],
       "tags": ["abdiasn", "pintura", "cultura", "religiao"],

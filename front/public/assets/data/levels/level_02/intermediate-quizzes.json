@@ -3,12 +3,11 @@
     {
       "question": "Qual desses autores escreveu peças sobre a história e cultura amazonense?",
       "options": [
+        "Márcio Souza",
         "Cacique Ajuricaba",
         "Chico Buarque",
-        "Márcio Souza",
         "Chico Mendes"
-      ],
-      "correctOptionIndex": 2
+      ]
     },
     {
       "question": "Qual dessas peças é a mais recente?",
@@ -17,18 +16,16 @@
         "Zona Franca, meu amor",
         "O anel do nibelungo",
         "A paixão de Ajuricaba"
-      ],
-      "correctOptionIndex": 0
+      ]
     },
     {
       "question": "O anel do nibelungo é uma série de óperas baseada em quê?",
       "options": [
-        "Quatro contos d'As mil e uma noites",
         "Mitos nórdicos e germânicos",
+        "Quatro contos d'As mil e uma noites",
         "Lendas yanomamis",
         "Personagens de Tolkien"
-      ],
-      "correctOptionIndex": 1
+      ]
     }
   ],
   "costumes_done": [
@@ -39,25 +36,21 @@
         "O anel do nibelungo",
         "Ópera do malandro",
         "A paixão de Ajuricaba"
-      ],
-      "correctOptionIndex": 0
+      ]
     },
     {
       "question": "Como se chama a parte do teatro em que se guardam as roupas e acessórios usados pelos atores?",
-      "options": ["Coxia", "Urdimento", "Proscênio", "Camarim"],
-      "correctOptionIndex": 3
+      "options": ["Camarim", "Coxia", "Urdimento", "Proscênio"]
     },
     {
       "question": "Como se chamam, geralmente, as roupas usadas pelos atores?",
-      "options": ["Fantasias", "Hábitos", "Figurinos", "Trapos"],
-      "correctOptionIndex": 2
+      "options": ["Figurinos", "Fantasias", "Hábitos", "Trapos"]
     }
   ],
   "stage_done": [
     {
       "question": "Como se chama a parte do teatro onde os atores geralmente se apresentam?",
-      "options": ["Bastidores", "Palco", "Frisa", "Balcão nobre"],
-      "correctOptionIndex": 1
+      "options": ["Palco", "Bastidores", "Frisa", "Balcão nobre"]
     },
     {
       "question": "Qual dessas opções não é função da iluminação numa cena de teatro?",
@@ -66,13 +59,11 @@
         "Inspirar emoções e ambientes",
         "Guiar o olhar do público",
         "Realçar a expressão dos atores"
-      ],
-      "correctOptionIndex": 0
+      ]
     },
     {
       "question": "Como se chama o conjunto de objetos que pode haver no palco?",
-      "options": ["Figurantes", "Holofote", "Elenco de apoio", "Cenário"],
-      "correctOptionIndex": 3
+      "options": ["Cenário", "Figurantes", "Holofote", "Elenco de apoio"]
     }
   ]
 }
