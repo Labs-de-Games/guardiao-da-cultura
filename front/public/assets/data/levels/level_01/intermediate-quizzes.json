@@ -3,12 +3,14 @@
     {
       "question": "Qual material Edgard de Souza usou nessas esculturas?",
       "options": ["Argila", "Mármore", "Bronze", "Madeira"],
-      "correctOptionIndex": 2
+      "correctOptionIndex": 2,
+      "explanation": "As esculturas foram fundidas em bronze."
     },
     {
       "question": "Em que período foram criadas essas três esculturas?",
       "options": ["Anos 70", "Anos 80", "Anos 90", "Anos 2000"],
-      "correctOptionIndex": 3
+      "correctOptionIndex": 3,
+      "explanation": "As obras foram produzidas nos anos 2000."
     },
     {
       "question": "Quem serviu de modelo para essas esculturas?",
@@ -18,14 +20,16 @@
         "Crianças bailarinas",
         "O próprio artista"
       ],
-      "correctOptionIndex": 3
+      "correctOptionIndex": 3,
+      "explanation": "As esculturas foram moldadas a partir do artista."
     }
   ],
   "paintings_done": [
     {
       "question": "Qual símbolo representa Xangô na pintura 'Xangô Rodrigues Alves'?",
       "options": ["Pássaro", "Machado", "Coroa", "Estrela"],
-      "correctOptionIndex": 1
+      "correctOptionIndex": 1,
+      "explanation": "O machado é um símbolo de Xangô."
     },
     {
       "question": "Em 'Okê Oxóssi', para onde aponta o ofá, o arco e flecha?",
@@ -35,7 +39,8 @@
         "Para a esquerda",
         "Para a direita"
       ],
-      "correctOptionIndex": 0
+      "correctOptionIndex": 0,
+      "explanation": "O arco aponta para o alto na pintura."
     },
     {
       "question": "Qual informação sobre Abdias Nascimento é falsa?",
@@ -45,19 +50,22 @@
         "Foi poeta, professor e deputado",
         "Foi membro da Academia Brasileira de Letras"
       ],
-      "correctOptionIndex": 3
+      "correctOptionIndex": 3,
+      "explanation": "Abdias nunca integrou a ABL."
     }
   ],
   "photo_done": [
     {
       "question": "A fotografia retrata um curumim. O que é curumim?",
       "options": ["Um peixe", "Uma casa", "Uma criança", "Um pássaro"],
-      "correctOptionIndex": 2
+      "correctOptionIndex": 2,
+      "explanation": "Curumim significa criança indígena."
     },
     {
       "question": "Qual povo foi retratado nas fotografias de Claudia Andujar?",
       "options": ["Guarani", "Xavante", "Yanomami", "Manau"],
-      "correctOptionIndex": 2
+      "correctOptionIndex": 2,
+      "explanation": "Claudia Andujar fotografou os Yanomami."
     },
     {
       "question": "O que aconteceu com as terras yanomami nos anos 1970?",
@@ -67,7 +75,8 @@
         "Viraram um estacionamento",
         "Garimpeiros tentaram invadir"
       ],
-      "correctOptionIndex": 3
+      "correctOptionIndex": 3,
+      "explanation": "Garimpeiros invadiram terras yanomami."
     }
   ]
 }
