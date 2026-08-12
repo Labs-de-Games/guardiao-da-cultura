@@ -154,6 +154,7 @@ export interface QuizCompleteData {
 export interface MapMarkerChangedData {
   markerId: string;
   title: string;
+  shortlocation: string;
   location: string;
   isAvailable: boolean;
   screenX: number;
