@@ -190,6 +190,7 @@ export default function QuizPanel() {
   const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
   const isPerformance = quiz.phase === "performance";
   const isIntermediate = quiz.isIntermediate;
+  const starCount = useGameUIStore((s) => Math.floor(s.stars));
 
   const scorePercentage = useMemo(() => {
     const total = quiz.questions.length;
@@ -200,7 +201,6 @@ export default function QuizPanel() {
   const isRetryMode = scorePercentage < passPercentage;
   const isPerfectScore = scorePercentage === 100;
 
-  const starCount = isPerfectScore || isRetryMode ? 3 : 1;
   const starAsset = isRetryMode ? "star_gray" : "gold_star";
 
   const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
@@ -559,33 +559,15 @@ export default function QuizPanel() {
                   }}
                 >
                   {Array.from({ length: starCount }).map((_, i) => {
-                    const isMiddleStar = starCount === 3 && i === 1;
-                    const isSingleStar = starCount === 1;
-                    const isLargeStar = isMiddleStar || isSingleStar;
                     return (
                       <Box
                         key={i}
                         component="img"
                         src={`/assets/ui/stars/${starAsset}.png`}
                         sx={{
-                          width: isLargeStar
-                            ? { xs: 56, md: 93 }
-                            : { xs: 40, md: 66 },
-                          height: isLargeStar
-                            ? { xs: 53, md: 89 }
-                            : { xs: 38, md: 63 },
+                          width: { xs: 56, md: 93 },
+                          height: { xs: 53, md: 89 },
                           objectFit: "contain",
-                          transform: isMiddleStar
-                            ? {
-                                xs: "translateY(-7px)",
-                                md: "translateY(-12px)",
-                              }
-                            : isSingleStar
-                              ? "none"
-                              : {
-                                  xs: "translateY(5px)",
-                                  md: "translateY(8px)",
-                                },
                         }}
                       />
                     );
