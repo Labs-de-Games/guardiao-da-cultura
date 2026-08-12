@@ -23,6 +23,12 @@
     "COSTUME": {
       "SUCCESS": ["O manequim está completamente vestido!"],
       "ERROR": []
+    },
+    "SPOTLIGHT": {
+      "SUCCESS": [],
+      "ERROR": [
+        "Essa não é a luz correta. Parece que preciso algo que remeta a conflitos."
+      ]
     }
   }
 }

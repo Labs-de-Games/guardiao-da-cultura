@@ -387,6 +387,33 @@ export class Player
     return closestItem;
   }
 
+  public getNearbyDraggableItem(): DraggableItem | null {
+    if (this.isCarrying) return null;
+    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
+    let closestItem: DraggableItem | null = null;
+    let minDist: number = GRAB_DIST;
+
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
+    for (const item of this.draggableRegistry) {
+      if (!item.input?.enabled) continue;
+
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        closestItem = item;
+      }
+    }
+
+    return closestItem;
+  }
+
   setCollisionLayers(layers: Phaser.Tilemaps.TilemapLayer[]) {
     this.collisionLayers = layers;
   }
@@ -838,28 +865,7 @@ export class Player
   }
 
   private tryGrab(): boolean {
-    if (this.isCarrying) return false;
-    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
-    let closestItem: DraggableItem | null = null;
-    let minDist: number = GRAB_DIST;
-
-    const playerFootY = this.body
-      ? this.body.bottom
-      : this.y + this.displayHeight / 2;
-    for (const item of this.draggableRegistry) {
-      if (!item.input?.enabled) continue;
-
-      const dist = Phaser.Math.Distance.Between(
-        this.x,
-        playerFootY,
-        item.x,
-        item.y,
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        closestItem = item;
-      }
-    }
+    const closestItem = this.getNearbyDraggableItem();
 
     if (!closestItem) return false;
 

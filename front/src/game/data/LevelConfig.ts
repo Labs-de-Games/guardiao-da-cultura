@@ -225,6 +225,30 @@ export const LEVEL_ASSETS = {
         key: "poster-label",
         path: "misc/poster-label.png",
       },
+      {
+        key: "stage-ph",
+        path: "misc/stage-placeholder.png",
+      },
+      {
+        key: "spotlight-off-red",
+        path: "misc/spotlights/spotlight-off-red.png",
+      },
+      { key: "spotlight-red", path: "misc/spotlights/spotlight-red.png" },
+      {
+        key: "spotlight-off-green",
+        path: "misc/spotlights/spotlight-off-green.png",
+      },
+      { key: "spotlight-green", path: "misc/spotlights/spotlight-green.png" },
+      {
+        key: "spotlight-off-blue",
+        path: "misc/spotlights/spotlight-off-blue.png",
+      },
+      { key: "spotlight-blue", path: "misc/spotlights/spotlight-blue.png" },
+      {
+        key: "spotlight-off-yellow",
+        path: "misc/spotlights/spotlight-off-yellow.png",
+      },
+      { key: "spotlight-yellow", path: "misc/spotlights/spotlight-yellow.png" },
     ],
     COLLECTIBLES: [],
     CONTENT: {
