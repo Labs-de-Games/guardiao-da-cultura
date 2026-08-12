@@ -16,6 +16,7 @@ import type { ScoreManager } from "../objects/ScoreManager";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { QuizQuestion } from "../types/GameDataTypes";
 import type { QuizResultRecord } from "../types/ProgressionTypes";
+import { prepareQuizQuestions } from "../utils/shuffleQuiz";
 import type { AnalyticsSystem } from "./AnalyticsSystem";
 import type { BadgeSystem } from "./BadgeSystem";
 import type { PersistenceBridge } from "./PersistenceBridge";
@@ -77,7 +78,7 @@ export class QuizManager {
   startQuiz(missionId: string) {
     try {
       const npc = this.findNpcByMission(missionId);
-      const questions = npc?.getQuiz();
+      const questions = npc?.getQuiz() as QuizQuestion[] | null;
 
       if (!questions || questions.length === 0) {
         console.error(
@@ -90,6 +91,8 @@ export class QuizManager {
           ]);
         return;
       }
+
+      const shuffledQuestions = prepareQuizQuestions(questions);
 
       const dialogues = npc?.getDialogues();
       const quizQuestionLines = dialogues?.start_quiz_question;
@@ -111,23 +114,26 @@ export class QuizManager {
           posthog.capture("quiz_started", {
             level_id: this.context.getLevelId(),
             mission_id: missionId,
-            total_questions: questions.length,
+            total_questions: shuffledQuestions.length,
             attempt_number: this.quizAttemptsForMission,
           });
 
           this.quizMode = "regular";
           this.context.getEvents().emit(
             GameEvents.SHOW_QUIZ_REQUEST,
-            questions,
+            shuffledQuestions,
             this.scoreManager,
             (score: number) => {
-              this.scoreManager.recordQuizResult(score, questions.length);
+              this.scoreManager.recordQuizResult(
+                score,
+                shuffledQuestions.length,
+              );
               const required = Math.ceil(
-                questions.length * QUIZ_PASS_THRESHOLD,
+                shuffledQuestions.length * QUIZ_PASS_THRESHOLD,
               );
               const isSuccess = score >= required;
               console.log(
-                `[QuizManager] Quiz result: score=${score}/${questions.length}, success=${isSuccess}`,
+                `[QuizManager] Quiz result: score=${score}/${shuffledQuestions.length}, success=${isSuccess}`,
               );
 
               AudioManager.playSfx(
@@ -139,7 +145,7 @@ export class QuizManager {
               const registry = this.context.getRegistry();
 
               if (isSuccess) {
-                if (score === questions.length) {
+                if (score === shuffledQuestions.length) {
                   registry.set("quiz_perfect_score", 1);
                   this.badgeSystem.checkRequirements("quiz_perfect_score", 1);
                 }
@@ -185,7 +191,7 @@ export class QuizManager {
                   level_number: levelDef.levelNumber,
                   mission_id: missionId,
                   score,
-                  total_questions: questions.length,
+                  total_questions: shuffledQuestions.length,
                 });
                 void this.persistenceBridge.submitScore();
               }
@@ -196,7 +202,7 @@ export class QuizManager {
                 mission_id: missionId,
                 score,
                 correct_answers: scoringPayload.quiz.correctAnswers,
-                total_questions: questions.length,
+                total_questions: shuffledQuestions.length,
                 accuracy_percent: scoringPayload.quiz.accuracyPercent,
                 passed: isSuccess,
               });
@@ -206,7 +212,7 @@ export class QuizManager {
                 metadata: {
                   missionId,
                   score,
-                  totalQuestions: questions.length,
+                  totalQuestions: shuffledQuestions.length,
                   accuracyPercent: scoringPayload.quiz.accuracyPercent,
                   quartersEarned: scoringPayload.quiz.quartersEarned,
                   passed: isSuccess,
@@ -219,7 +225,7 @@ export class QuizManager {
                 completedAt: new Date().toISOString(),
                 passed: isSuccess,
                 score,
-                totalQuestions: questions.length,
+                totalQuestions: shuffledQuestions.length,
                 accuracyPercent: scoringPayload.quiz.accuracyPercent,
                 quartersEarned: scoringPayload.quiz.quartersEarned,
                 timeSpentMs:
@@ -259,7 +265,7 @@ export class QuizManager {
                 mission_id: missionId,
                 passed: isSuccess,
                 score,
-                total_questions: questions.length,
+                total_questions: shuffledQuestions.length,
               });
 
               const quizNpc = this.findNpcByMission(missionId);
@@ -339,6 +345,8 @@ export class QuizManager {
         return;
       }
 
+      const shuffledQuestions = prepareQuizQuestions(questions);
+
       posthog.capture("intermediate_quiz_started", {
         quiz_number: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
         level_id: this.context.getLevelId(),
@@ -361,7 +369,7 @@ export class QuizManager {
 
       const onComplete = this.createIntermediateQuizCallback(
         infoKey,
-        questions,
+        shuffledQuestions,
         npc,
         spawnPos,
         activeMissionId,
@@ -369,7 +377,7 @@ export class QuizManager {
 
       const explanationLines = npc.getIntermediateQuizDialogues();
       if (explanationLines.length > 0) {
-        this.pendingIntermediateQuizQuestions = questions;
+        this.pendingIntermediateQuizQuestions = shuffledQuestions;
         this.pendingIntermediateQuizOnComplete = onComplete;
         this.context.getEvents().emit(
           GameEvents.SHOW_DIALOGUE_REQUEST,
@@ -381,7 +389,7 @@ export class QuizManager {
               .getEvents()
               .emit(
                 GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-                questions,
+                shuffledQuestions,
                 onComplete,
                 {
                   quizNumber: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,
@@ -396,7 +404,7 @@ export class QuizManager {
           .getEvents()
           .emit(
             GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-            questions,
+            shuffledQuestions,
             onComplete,
             {
               quizNumber: INTERMEDIATE_QUIZ_NUMBERS[infoKey] ?? null,

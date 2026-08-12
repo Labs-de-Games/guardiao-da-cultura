@@ -124,7 +124,7 @@ describe("QuizManager", () => {
 
     const mockNpc = createMockNpc({
       missionId: "sculptor",
-      quiz: [{ q: "Pergunta 1?" }],
+      quiz: [{ question: "Pergunta 1?", options: ["A", "B", "C", "D"] }],
       dialogues: { success: ["Parabéns!"], failure: ["Falhou."] },
     });
 
@@ -335,7 +335,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -362,7 +364,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -395,7 +399,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -419,7 +425,13 @@ describe("QuizManager", () => {
 
     expect(events.emit).toHaveBeenCalledWith(
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-      [{ q: "Pergunta?" }],
+      expect.arrayContaining([
+        expect.objectContaining({
+          question: "Pergunta?",
+          options: expect.arrayContaining(["A", "B", "C", "D"]),
+          correctOptionIndex: expect.any(Number),
+        }),
+      ]),
       expect.any(Function),
       { quizNumber: null, attemptNumber: 1 },
     );
@@ -434,7 +446,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -452,7 +466,13 @@ describe("QuizManager", () => {
 
     expect(events.emit).toHaveBeenCalledWith(
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-      [{ q: "Pergunta?" }],
+      expect.arrayContaining([
+        expect.objectContaining({
+          question: "Pergunta?",
+          options: expect.arrayContaining(["A", "B", "C", "D"]),
+          correctOptionIndex: expect.any(Number),
+        }),
+      ]),
       expect.any(Function),
       { quizNumber: null, attemptNumber: 1 },
     );
@@ -467,7 +487,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -582,7 +604,8 @@ describe("QuizManager", () => {
 
   function setupFiveQuestionQuiz(overrides: { missionId?: string } = {}) {
     const fiveQuestions = Array.from({ length: 5 }, (_, i) => ({
-      q: `Pergunta ${i + 1}?`,
+      question: `Pergunta ${i + 1}?`,
+      options: ["A", "B", "C", "D"],
     }));
     const npc = createMockNpc({
       missionId: overrides.missionId ?? "sculptor",
