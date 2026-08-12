@@ -214,6 +214,8 @@ describe("QuizManager", () => {
       "NPC",
       expect.any(Function),
       expect.any(Function),
+      undefined,
+      expect.any(Function),
     );
   });
 
@@ -288,6 +290,33 @@ describe("QuizManager", () => {
     );
     const onReject = confirmCall[4];
     onReject();
+
+    expect(questManager.setStatus).toHaveBeenCalledWith(
+      "sculptor",
+      QuestStatus.READY_FOR_QUIZ,
+    );
+    expect(events.emit).toHaveBeenCalledWith(GameEvents.MISSION_STATUS_CHANGED);
+  });
+
+  it("should reset quest status to READY_FOR_QUIZ on dismiss (Esc)", () => {
+    const quizManager = new QuizManager(
+      context,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startQuiz("sculptor");
+
+    const confirmCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_CONFIRMATION_REQUEST,
+    );
+    const onDismiss = confirmCall[6];
+    onDismiss();
 
     expect(questManager.setStatus).toHaveBeenCalledWith(
       "sculptor",

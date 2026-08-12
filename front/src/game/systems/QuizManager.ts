@@ -299,6 +299,11 @@ export class QuizManager {
           this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
           this.context.getEvents().emit(GameEvents.MISSION_STATUS_CHANGED);
         },
+        undefined,
+        () => {
+          this.questManager.setStatus(missionId, QuestStatus.READY_FOR_QUIZ);
+          this.context.getEvents().emit(GameEvents.MISSION_STATUS_CHANGED);
+        },
       );
     } catch (error) {
       console.error("[QuizManager] Erro fatal ao iniciar Quiz:", error);
