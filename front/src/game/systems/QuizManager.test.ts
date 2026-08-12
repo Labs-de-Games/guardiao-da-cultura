@@ -604,7 +604,8 @@ describe("QuizManager", () => {
 
   function setupFiveQuestionQuiz(overrides: { missionId?: string } = {}) {
     const fiveQuestions = Array.from({ length: 5 }, (_, i) => ({
-      q: `Pergunta ${i + 1}?`,
+      question: `Pergunta ${i + 1}?`,
+      options: ["A", "B", "C", "D"],
     }));
     const npc = createMockNpc({
       missionId: overrides.missionId ?? "sculptor",
