@@ -20,7 +20,8 @@ export type SfxKey =
   | "sfx.puzzle.failure"
   | "sfx.badge.unlock"
   | "sfx.level.complete"
-  | "sfx.star.earned";
+  | "sfx.star.earned"
+  | "sfx.ladder.drop";
 
 /** Semantic keys for music tracks.
  * Level-specific music follows pattern: "music.level_{id}.main" */

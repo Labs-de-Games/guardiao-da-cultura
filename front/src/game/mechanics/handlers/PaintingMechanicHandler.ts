@@ -1,9 +1,7 @@
 import type * as Phaser from "phaser";
-import { EventBus } from "../../../shared/events/event-bus";
 import { AudioManager } from "../../audio";
 import { GameEvents } from "../../constants/GameEvents";
 import { MissionIds, MissionKeys } from "../../constants/MissionConstants";
-import { MissionRegistry } from "../../data/MissionRegistry";
 import type { Game } from "../../scenes/Game";
 import type { PlaceholderInstance } from "../../systems/PlaceholderSystem";
 import { InteractiveType } from "../../types/InteractiveTypes";
@@ -53,7 +51,6 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
 
     const missionId = MissionIds.CURATOR;
     g.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-    this.emitMissionProgress(g, missionId);
 
     if (g.placeholderSystem.checkCategoryCompletion(InteractiveType.PAINTING)) {
       g.completeFloor(this.scoringFloor);
@@ -63,7 +60,6 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
           infoKey: MissionKeys.PAINTINGS_DONE,
         });
         g.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-        this.emitMissionProgress(g, missionId);
       });
     }
   }
@@ -91,17 +87,5 @@ export class PaintingMechanicHandler implements BaseMechanicHandler {
         sysDialogs.PAINTING?.ERROR || ["Esta obra não pertence a este local."],
       );
     }
-  }
-
-  private emitMissionProgress(g: Game, missionId: string): void {
-    const reqs = g.questManager.getRequiredInfos(missionId);
-    EventBus.emit("quest:progress-changed", {
-      missionId,
-      missionTitle: MissionRegistry[missionId]?.title || "",
-      collectedInfos: g.questManager.getCollectedInfos(missionId),
-      totalSteps: reqs.length,
-      steps: MissionRegistry[missionId]?.steps,
-      stepProgress: g.getMissionStepProgress(missionId),
-    });
   }
 }

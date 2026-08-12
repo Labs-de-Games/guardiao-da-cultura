@@ -21,7 +21,8 @@ export class Player
   isDead: boolean = false;
   isHit: boolean = false;
   isInDialogue: boolean = false;
-  stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+  isTutorialActive: boolean = false;
+  stairsLayers: Phaser.Tilemaps.TilemapLayer[] = [];
   isClimbingStairs: boolean = false;
 
   private draggableRegistry: DraggableItem[] = [];
@@ -386,6 +387,33 @@ export class Player
     return closestItem;
   }
 
+  public getNearbyDraggableItem(): DraggableItem | null {
+    if (this.isCarrying) return null;
+    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
+    let closestItem: DraggableItem | null = null;
+    let minDist: number = GRAB_DIST;
+
+    const playerFootY = this.body
+      ? this.body.bottom
+      : this.y + this.displayHeight / 2;
+    for (const item of this.draggableRegistry) {
+      if (!item.input?.enabled) continue;
+
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        playerFootY,
+        item.x,
+        item.y,
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        closestItem = item;
+      }
+    }
+
+    return closestItem;
+  }
+
   setCollisionLayers(layers: Phaser.Tilemaps.TilemapLayer[]) {
     this.collisionLayers = layers;
   }
@@ -474,28 +502,35 @@ export class Player
     let hasStairAbove = false;
     let hasStairBelow = false;
 
-    if (this.stairsLayer && body) {
-      const tileHeight = this.stairsLayer.tilemap.tileHeight || 16;
-      const tCenter = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.center.y,
-        true,
-      );
-      const tBottom = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.bottom + 2,
-        true,
-      );
-      const tAbove = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.center.y - tileHeight,
-        true,
-      );
-      const tBelow = this.stairsLayer.getTileAtWorldXY(
-        body.center.x,
-        body.bottom + tileHeight,
-        true,
-      );
+    let tCenter: Phaser.Tilemaps.Tile | null = null;
+    let tBottom: Phaser.Tilemaps.Tile | null = null;
+    let tAbove: Phaser.Tilemaps.Tile | null = null;
+    let tBelow: Phaser.Tilemaps.Tile | null = null;
+
+    if (this.stairsLayers.length > 0 && body) {
+      for (const layer of this.stairsLayers) {
+        if (!layer || !layer.visible) continue;
+
+        const tileHeight = layer.tilemap.tileHeight || 16;
+        const tc = layer.getTileAtWorldXY(body.center.x, body.center.y, true);
+        const tb = layer.getTileAtWorldXY(body.center.x, body.bottom - 4, true);
+        const ta = layer.getTileAtWorldXY(
+          body.center.x,
+          body.center.y - tileHeight,
+          true,
+        );
+        const tbel = layer.getTileAtWorldXY(
+          body.center.x,
+          body.bottom + tileHeight,
+          true,
+        );
+
+        if (tc && tc.index !== -1) tCenter = tc;
+        if (tb && tb.index !== -1) tBottom = tb;
+        if (ta && ta.index !== -1) tAbove = ta;
+        if (tbel && tbel.index !== -1) tBelow = tbel;
+      }
+
       isOnStairsCenter = !!(tCenter && tCenter.index !== -1);
       isOnStairsBottom = !!(tBottom && tBottom.index !== -1);
       hasStairAbove = !!(tAbove && tAbove.index !== -1);
@@ -508,7 +543,7 @@ export class Player
       // Stop movement sounds when in dialogue
       this.stopMovementSounds();
       this.applyMovementRestriction(isOnStairs);
-      return;
+      if (!this.isTutorialActive) return;
     }
 
     const upDown = this.keys.up.isDown || this.keys.w.isDown;
@@ -611,7 +646,7 @@ export class Player
       !this.isCarrying;
 
     const ePress = Phaser.Input.Keyboard.JustDown(this.keys.e);
-    if (this.isInDialogue) return;
+    if (this.isInDialogue && !this.isTutorialActive) return;
     if (ePress) {
       if (this.isGrabbing) {
         this.releaseGrab();
@@ -635,6 +670,10 @@ export class Player
         }
       }
     }
+
+    this.syncHeldItemPosition(body);
+
+    if (this.isInDialogue) return;
 
     if (body) {
       const NOMINAL_DT = 1000 / 60;
@@ -718,12 +757,6 @@ export class Player
     }
 
     if (this.isGrabbing && this.grabbedItem) {
-      this.grabbedItem.x = this.x + this.grabOffset;
-      this.grabbedItem.y = this.y + this.grabOffsetY;
-      const itemBody = this.grabbedItem.body as
-        | Phaser.Physics.Arcade.Body
-        | undefined;
-      itemBody?.updateFromGameObject();
       const isMoving = Math.abs(body.velocity.x) > 10;
 
       // Play drag loop sound only when moving
@@ -811,9 +844,19 @@ export class Player
         this.anims.pause();
       }
     }
+  }
+
+  private syncHeldItemPosition(body: Phaser.Physics.Arcade.Body) {
+    if (this.isGrabbing && this.grabbedItem) {
+      this.grabbedItem.x = this.x + this.grabOffset;
+      this.grabbedItem.y = this.y + this.grabOffsetY;
+      const itemBody = this.grabbedItem.body as
+        | Phaser.Physics.Arcade.Body
+        | undefined;
+      itemBody?.updateFromGameObject();
+    }
 
     if (this.isCarrying && this.carriedItem) {
-      // Offset so the base of the item rests near the player's hands (above their head)
       const offsetY = this.displayHeight / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
@@ -822,28 +865,7 @@ export class Player
   }
 
   private tryGrab(): boolean {
-    if (this.isCarrying) return false;
-    const GRAB_DIST = PLAYER_MOVEMENT.GRAB_DISTANCE;
-    let closestItem: DraggableItem | null = null;
-    let minDist: number = GRAB_DIST;
-
-    const playerFootY = this.body
-      ? this.body.bottom
-      : this.y + this.displayHeight / 2;
-    for (const item of this.draggableRegistry) {
-      if (!item.input?.enabled) continue;
-
-      const dist = Phaser.Math.Distance.Between(
-        this.x,
-        playerFootY,
-        item.x,
-        item.y,
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        closestItem = item;
-      }
-    }
+    const closestItem = this.getNearbyDraggableItem();
 
     if (!closestItem) return false;
 
