@@ -83,7 +83,7 @@ export interface GameUIState {
   controlsOpen: boolean;
   gameStarted: boolean;
   activeMapMarker: MapMarkerChangedData | null;
-  levelInfo: { title: string; location: string } | null;
+  levelInfo: { title: string; location: string; shortlocation: string } | null;
   autoStartProgress: number | null;
   stars: number;
   totalStars: number;
@@ -132,7 +132,9 @@ export interface GameUIState {
   startGame: () => void;
   endGame: () => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
-  setLevelInfo: (info: { title: string; location: string } | null) => void;
+  setLevelInfo: (
+    info: { title: string; location: string; shortlocation: string } | null,
+  ) => void;
   setAutoStartProgress: (progress: number | null) => void;
   setStars: (current: number, total: number) => void;
   setScore: (score: number) => void;

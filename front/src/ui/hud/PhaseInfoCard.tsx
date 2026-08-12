@@ -45,7 +45,7 @@ export function PhaseInfoCard({ sx }: PhaseInfoCardProps) {
             lineHeight: 1.4,
           }}
         >
-          {levelInfo.location}
+          {levelInfo.shortlocation}
         </Typography>
       </CardContent>
     </Card>
