@@ -16,6 +16,7 @@ export interface PlaceholderInstance {
   isFilled?: boolean;
   filledTexture?: string;
   filledScale?: number;
+  yOffset?: number;
 }
 
 export interface PlaceholderConfig {
@@ -32,6 +33,7 @@ export interface PlaceholderConfig {
   alpha?: number;
   filledTexture?: string;
   filledScale?: number;
+  yOffset?: number;
 }
 
 export class PlaceholderSystem {
@@ -59,6 +61,7 @@ export class PlaceholderSystem {
       const rawAlpha = TiledUtils.getProperty(obj, "alpha");
       const filledTexture = TiledUtils.getProperty(obj, "filledTexture");
       const rawFilledScale = TiledUtils.getProperty(obj, "filledScale");
+      const rawYOffset = TiledUtils.getProperty(obj, "yOffset");
       const targetId = TiledUtils.parseTargetIds(rawProp);
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
@@ -82,6 +85,7 @@ export class PlaceholderSystem {
         filledTexture: filledTexture as string | undefined,
         filledScale:
           rawFilledScale !== undefined ? Number(rawFilledScale) : undefined,
+        yOffset: rawYOffset !== undefined ? Number(rawYOffset) : undefined,
       });
     });
   }
@@ -107,6 +111,7 @@ export class PlaceholderSystem {
       isFilled: false,
       filledTexture: config.filledTexture,
       filledScale: config.filledScale,
+      yOffset: config.yOffset,
     };
 
     const primaryId = Array.isArray(config.id) ? config.id[0] : config.id;
@@ -114,7 +119,10 @@ export class PlaceholderSystem {
     if (config.type === InteractiveType.PHOTO) {
       const cellW = 122;
       const cellH = 80;
-      const container = this.scene.add.container(rect.centerX, rect.centerY);
+      const container = this.scene.add.container(
+        rect.centerX,
+        rect.centerY + (config.yOffset ?? 0),
+      );
 
       for (let i = 0; i < 4; i++) {
         const cell = this.scene.add.image(0, 0, "rec");
@@ -177,19 +185,19 @@ export class PlaceholderSystem {
       instance.hintSprite = container;
     } else {
       let textureKey = "placeholder";
-      if (config.type === InteractiveType.PAINTING) {
+      if (config.texture) {
+        textureKey = config.texture;
+      } else if (config.type === InteractiveType.PAINTING) {
         textureKey = "standard_painting_placeholder";
       } else if (config.type === InteractiveType.SCULPTURE) {
         textureKey = "standard_sculpture_placeholder";
-      } else if (config.type === InteractiveType.POSTER && config.texture) {
-        textureKey = config.texture;
       } else if (primaryId) {
         textureKey = `${primaryId}_ph`;
       }
 
       const placeholder = this.scene.add.sprite(
         rect.centerX,
-        rect.centerY,
+        rect.centerY + (config.yOffset ?? 0),
         textureKey,
         0,
       );
@@ -264,7 +272,9 @@ export class PlaceholderSystem {
     if (placeholder) {
       item.x = placeholder.area.centerX;
 
-      if (item.interactiveType !== InteractiveType.SCULPTURE) {
+      if (placeholder.yOffset !== undefined) {
+        item.y = placeholder.area.centerY + placeholder.yOffset;
+      } else if (item.interactiveType !== InteractiveType.SCULPTURE) {
         item.y = placeholder.area.centerY;
       }
 
@@ -284,7 +294,7 @@ export class PlaceholderSystem {
         const filledKey = placeholder.filledTexture ?? `${item.itemId}_placed`;
         const filledSprite = this.scene.add.image(
           placeholder.area.centerX,
-          placeholder.area.centerY,
+          placeholder.area.centerY + (placeholder.yOffset ?? 0),
           filledKey,
         );
         if (placeholder.filledScale !== undefined) {

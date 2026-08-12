@@ -54,6 +54,7 @@ export class Portal extends Phaser.GameObjects.Zone {
 
       if (!body || !body.blocked.down) return;
       if (!p.isCarrying && p.getNearbyCarryableItem()) return;
+      if (!p.isCarrying && p.getNearbyDraggableItem()) return;
       if (p.isInDialogue) return;
 
       p.isInDialogue = true;
