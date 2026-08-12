@@ -24,6 +24,7 @@ export class UIScene extends Scene {
   private callbackRegistry!: CallbackRegistry;
   private dialogueEndHandled: boolean = false;
   private dialogueActive: boolean = false;
+  private isConfirmationPending: boolean = false;
   private unsubQuizClose: (() => void) | null = null;
   private unsubQuizRetry: (() => void) | null = null;
   private unsubQuizVisibilityWatcher: (() => void) | null = null;
@@ -147,9 +148,15 @@ export class UIScene extends Scene {
         onYes: () => void,
         onNo: () => void,
         worldPosition?: { x: number; y: number },
+        onDismiss?: () => void,
       ) => {
         const callbackId = crypto.randomUUID();
-        this.callbackRegistry.registerConfirm(callbackId, onYes, onNo);
+        this.callbackRegistry.registerConfirm(
+          callbackId,
+          onYes,
+          onNo,
+          onDismiss,
+        );
 
         const pos = worldPosition ?? {
           x: gameScene.player.x,
@@ -158,6 +165,7 @@ export class UIScene extends Scene {
 
         this.dialogueEndHandled = false;
         this.dialogueActive = true;
+        this.isConfirmationPending = true;
         gameScene.events.emit(GameEvents.DIALOGUE_STARTED);
         this.time.delayedCall(
           LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
@@ -199,6 +207,10 @@ export class UIScene extends Scene {
 
     const unsubDialogueCompleted = EventBus.on("dialogue:completed", () => {
       if (this.dialogueEndHandled) return;
+      if (this.isConfirmationPending) {
+        this.isConfirmationPending = false;
+        return;
+      }
       this.dialogueEndHandled = true;
       this.dialogueActive = false;
       gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { dismissed: false });

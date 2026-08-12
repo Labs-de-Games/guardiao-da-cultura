@@ -1,7 +1,11 @@
 import { EventBus } from "../../shared/events/event-bus";
 
 type DialogueCallback = () => void;
-type ConfirmCallbacks = { onYes: () => void; onNo: () => void };
+type ConfirmCallbacks = {
+  onYes: () => void;
+  onNo: () => void;
+  onDismiss?: () => void;
+};
 
 export class CallbackRegistry {
   private dialogueCallbacks = new Map<string, DialogueCallback>();
@@ -12,8 +16,13 @@ export class CallbackRegistry {
     this.dialogueCallbacks.set(id, cb);
   }
 
-  registerConfirm(id: string, onYes: () => void, onNo: () => void) {
-    this.confirmCallbacks.set(id, { onYes, onNo });
+  registerConfirm(
+    id: string,
+    onYes: () => void,
+    onNo: () => void,
+    onDismiss?: () => void,
+  ) {
+    this.confirmCallbacks.set(id, { onYes, onNo, onDismiss });
   }
 
   setupListeners() {
@@ -39,12 +48,19 @@ export class CallbackRegistry {
     const unsubDismissed = EventBus.on(
       "dialogue:dismissed",
       ({ callbackId }) => {
+        const confirmCbs = this.confirmCallbacks.get(callbackId);
+        if (confirmCbs?.onDismiss) {
+          confirmCbs.onDismiss();
+        }
         this.dialogueCallbacks.delete(callbackId);
         this.confirmCallbacks.delete(callbackId);
       },
     );
 
     const unsubCleared = EventBus.on("dialogue:queue-cleared", () => {
+      for (const cb of this.confirmCallbacks.values()) {
+        cb.onDismiss?.();
+      }
       this.dialogueCallbacks.clear();
       this.confirmCallbacks.clear();
     });
