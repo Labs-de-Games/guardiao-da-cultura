@@ -128,7 +128,9 @@ export class QuizManager {
                 score,
                 shuffledQuestions.length,
               );
-              const required = Math.ceil(shuffledQuestions.length * QUIZ_PASS_THRESHOLD);
+              const required = Math.ceil(
+                shuffledQuestions.length * QUIZ_PASS_THRESHOLD,
+              );
               const isSuccess = score >= required;
               console.log(
                 `[QuizManager] Quiz result: score=${score}/${shuffledQuestions.length}, success=${isSuccess}`,
