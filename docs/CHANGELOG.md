@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.10.0] - 2026-08-12
+
+### Added
+
+- Quiz randomization with shuffle utility
+- Quiz answer explanations for level 1
+- Quiz retries before revealing the correct answer
+- `QUIZ_PASS_THRESHOLD` constant for consistent pass/fail logic
+- Spotlight system for stage challenge with color-specific textures
+- Tutorial system for zone-based tutorials with `TutorialBubble` UI
+- Ladder cinematic system for intermediate quiz rewards
+- PostHog events: `player_scored`, `clue_collected`, sidebar/badge/label/costume/NPC interactions
+- Short location display for labels on map
+- `Explanation` field added to `QuizQuestion` type
+
+### Fixed
+
+- Block player movement during confirmation panel to prevent input overlap
+- Derive quiz star count from game store instead of hardcoded value
+- Handle Esc dismissal in quiz confirmation to prevent softlock
+- Remove hint key after turning the correct light on
+- Suppress `dead_click` on TTS icon clicks
+- Advance quiz on mouse click when explanation is revealed
+- Prevent poster mismatch feedback on costume placeholders
+- Reduce photo placeholder interaction distance to 120px
+- Sync held item position before dialogue guard to prevent regression
+- Prevent inactive missions from appearing in status bar
+
+### Changed
+
+- Migrated quiz data to first-option-is-correct convention
+- Sculpture placeholders repositioned (yOffset decreased, moved downwards)
+- Delayed audio and camera shake in ladder cinematic to sync with ladder hitting ground
+- Updated museum-mvp tilemap with ladder layers
+
+### Chore
+
+- Resized tutorial zone `T_2` for photo interaction
+- Updated `EVENTS.md` with new PostHog event taxonomy
+
+### Tests
+
+- Added QuizManager threshold boundary tests
+- Added Quiz performance phase tests
+- Added tests for confirmation dismiss callback
+
 ## [1.9.0] - 2026-08-07
 
 ### Added
