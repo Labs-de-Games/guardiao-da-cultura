@@ -14,7 +14,13 @@ export const MissionRequirements = [
   },
   {
     id: MissionIds.CURATOR_L2,
-    requiredInfos: [MissionKeys.COSTUMES_DONE, MissionKeys.POSTERS_DONE],
+    requiredInfos: [
+      MissionKeys.COSTUMES_DONE,
+      MissionKeys.POSTERS_DONE,
+      MissionKeys.SCULPTURES_DONE,
+      MissionKeys.SPOTLIGHTS_DONE,
+      MissionKeys.STAGE_DONE,
+    ],
   },
 ];
 
@@ -57,6 +63,16 @@ export const MissionRegistry: Record<string, MissionDef> = {
         infoKey: MissionKeys.POSTERS_DONE,
         text: "Pendurar todos os cartazes",
         categoryType: InteractiveType.POSTER,
+      },
+      {
+        infoKey: MissionKeys.SCULPTURES_DONE,
+        text: "Reorganizar as esculturas do palco",
+        categoryType: InteractiveType.SCULPTURE,
+      },
+      {
+        infoKey: MissionKeys.SPOTLIGHTS_DONE,
+        text: "Acender o holofote correto",
+        categoryType: InteractiveType.SPOTLIGHT,
       },
     ],
   },

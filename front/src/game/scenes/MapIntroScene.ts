@@ -216,6 +216,7 @@ export class MapIntroScene extends Scene {
       useGameUIStore.getState().setLevelInfo({
         title: marker.title,
         location: marker.location,
+        shortlocation: marker.shortlocation,
       });
       // Clear map UI state immediately when transitioning
       // This ensures MapInfoBox and MapPinTooltip disappear with the map
@@ -303,6 +304,7 @@ export class MapIntroScene extends Scene {
     const data = {
       markerId: marker.id,
       title: marker.title,
+      shortlocation: marker.shortlocation,
       location: marker.location,
       isAvailable,
       isCompleted,

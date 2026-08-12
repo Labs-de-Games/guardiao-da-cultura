@@ -124,7 +124,7 @@ describe("QuizManager", () => {
 
     const mockNpc = createMockNpc({
       missionId: "sculptor",
-      quiz: [{ q: "Pergunta 1?" }],
+      quiz: [{ question: "Pergunta 1?", options: ["A", "B", "C", "D"] }],
       dialogues: { success: ["Parabéns!"], failure: ["Falhou."] },
     });
 
@@ -214,6 +214,8 @@ describe("QuizManager", () => {
       "NPC",
       expect.any(Function),
       expect.any(Function),
+      undefined,
+      expect.any(Function),
     );
   });
 
@@ -296,6 +298,33 @@ describe("QuizManager", () => {
     expect(events.emit).toHaveBeenCalledWith(GameEvents.MISSION_STATUS_CHANGED);
   });
 
+  it("should reset quest status to READY_FOR_QUIZ on dismiss (Esc)", () => {
+    const quizManager = new QuizManager(
+      context,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+
+    quizManager.startQuiz("sculptor");
+
+    const confirmCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_CONFIRMATION_REQUEST,
+    );
+    const onDismiss = confirmCall[6];
+    onDismiss();
+
+    expect(questManager.setStatus).toHaveBeenCalledWith(
+      "sculptor",
+      QuestStatus.READY_FOR_QUIZ,
+    );
+    expect(events.emit).toHaveBeenCalledWith(GameEvents.MISSION_STATUS_CHANGED);
+  });
+
   it("should not start intermediate quiz when already done", () => {
     (questManager.isIntermediateQuizDone as jest.Mock).mockReturnValue(true);
     const curatorNpc = createMockNpc({
@@ -306,7 +335,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -333,7 +364,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -366,7 +399,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -390,7 +425,13 @@ describe("QuizManager", () => {
 
     expect(events.emit).toHaveBeenCalledWith(
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-      [{ q: "Pergunta?" }],
+      expect.arrayContaining([
+        expect.objectContaining({
+          question: "Pergunta?",
+          options: expect.arrayContaining(["A", "B", "C", "D"]),
+          correctOptionIndex: expect.any(Number),
+        }),
+      ]),
       expect.any(Function),
       { quizNumber: null, attemptNumber: 1 },
     );
@@ -405,7 +446,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -423,7 +466,13 @@ describe("QuizManager", () => {
 
     expect(events.emit).toHaveBeenCalledWith(
       GameEvents.SHOW_INTERMEDIATE_QUIZ_REQUEST,
-      [{ q: "Pergunta?" }],
+      expect.arrayContaining([
+        expect.objectContaining({
+          question: "Pergunta?",
+          options: expect.arrayContaining(["A", "B", "C", "D"]),
+          correctOptionIndex: expect.any(Number),
+        }),
+      ]),
       expect.any(Function),
       { quizNumber: null, attemptNumber: 1 },
     );
@@ -438,7 +487,9 @@ describe("QuizManager", () => {
       ...context,
       getNpcs: () => [curatorNpc as unknown as Phaser.GameObjects.GameObject],
       getContentData: () => ({
-        intermediateQuizzes: { info_1: [{ q: "Pergunta?" }] },
+        intermediateQuizzes: {
+          info_1: [{ question: "Pergunta?", options: ["A", "B", "C", "D"] }],
+        },
       }),
     };
     const quizManager = new QuizManager(
@@ -549,5 +600,133 @@ describe("QuizManager", () => {
     confirmCall[4]();
 
     expect(events.emit).toHaveBeenCalledWith(GameEvents.MISSION_STATUS_CHANGED);
+  });
+
+  function setupFiveQuestionQuiz(overrides: { missionId?: string } = {}) {
+    const fiveQuestions = Array.from({ length: 5 }, (_, i) => ({
+      question: `Pergunta ${i + 1}?`,
+      options: ["A", "B", "C", "D"],
+    }));
+    const npc = createMockNpc({
+      missionId: overrides.missionId ?? "sculptor",
+      quiz: fiveQuestions,
+      dialogues: { success: ["Parabéns!"], failure: ["Falhou."] },
+    });
+    const ctx = {
+      ...context,
+      getNpcs: () => [npc as unknown as Phaser.GameObjects.GameObject],
+    };
+    const qm = new QuizManager(
+      ctx,
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+    return { quizManager: qm, npc };
+  }
+
+  function acceptQuizAndGetCallback(qm: QuizManager) {
+    qm.startQuiz("sculptor");
+    const confirmCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_CONFIRMATION_REQUEST,
+    );
+    confirmCall[3]();
+    const quizCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_QUIZ_REQUEST,
+    );
+    return quizCall[3] as (score: number) => void;
+  }
+
+  it("should pass when score meets threshold (3/5 with 0.5)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(3);
+
+    expect(scoreManager.recordQuizResult).toHaveBeenCalledWith(3, 5);
+    expect(questManager.setStatus).toHaveBeenCalledWith(
+      "sculptor",
+      QuestStatus.COMPLETED,
+    );
+  });
+
+  it("should fail when score is below threshold (2/5 with 0.5)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(2);
+
+    expect(questManager.setStatus).toHaveBeenCalledWith(
+      "sculptor",
+      QuestStatus.READY_FOR_QUIZ,
+    );
+    expect(registry.get("has_failed_quiz")).toBe(1);
+  });
+
+  it("should set quiz_perfect_score badge on 5/5", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(5);
+
+    expect(registry.get("quiz_perfect_score")).toBe(1);
+    expect(badgeSystem.checkRequirements).toHaveBeenCalledWith(
+      "quiz_perfect_score",
+      1,
+    );
+  });
+
+  it("should set quiz_solved_after_failure badge when passing after previous failure", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(2);
+    expect(registry.get("has_failed_quiz")).toBe(1);
+
+    jest.clearAllMocks();
+    events.emit.mockClear();
+
+    const onComplete2 = acceptQuizAndGetCallback(qm);
+    onComplete2(4);
+
+    expect(registry.get("quiz_solved_after_failure")).toBe(1);
+    expect(badgeSystem.checkRequirements).toHaveBeenCalledWith(
+      "quiz_solved_after_failure",
+      1,
+    );
+  });
+
+  it("should pass correct score and total to scoreManager", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(4);
+
+    expect(scoreManager.recordQuizResult).toHaveBeenCalledWith(4, 5);
+  });
+
+  it("should increment attempt number on second quiz attempt", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(2);
+
+    jest.clearAllMocks();
+    events.emit.mockClear();
+
+    const onComplete2 = acceptQuizAndGetCallback(qm);
+    onComplete2(4);
+
+    const secondQuizCall = events.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === GameEvents.SHOW_QUIZ_REQUEST,
+    );
+    expect(secondQuizCall[4]).toEqual({
+      quizNumber: null,
+      attemptNumber: 2,
+    });
   });
 });

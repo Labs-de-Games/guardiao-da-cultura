@@ -34,6 +34,7 @@ import { PaintingMechanicHandler } from "../mechanics/handlers/PaintingMechanicH
 import { PhotoMechanicHandler } from "../mechanics/handlers/PhotoMechanicHandler";
 import { PosterMechanicHandler } from "../mechanics/handlers/PosterMechanicHandler";
 import { SculptureMechanicHandler } from "../mechanics/handlers/SculptureMechanicHandler";
+import { SpotlightMechanicHandler } from "../mechanics/handlers/SpotlightMechanicHandler";
 import { MechanicsManager } from "../mechanics/MechanicsManager";
 import { EffectsManager } from "../objects/EffectsManager";
 import { Enemy } from "../objects/Enemy";
@@ -55,11 +56,14 @@ import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
+import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { QuizManager } from "../systems/QuizManager";
+import { SpotlightSystem } from "../systems/SpotlightSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
+import { TutorialSystem } from "../systems/TutorialSystem";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { GameDataAccessor } from "../types/GameDataAccessor";
 import type {
@@ -94,22 +98,30 @@ export class Game extends Scene implements GameDataAccessor {
     costumes: 1,
     photo: 2,
     posters: 3,
+    spotlights: 0,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+  pendingStairsLayers: Phaser.Tilemaps.TilemapLayer[] = [];
+  colliders: Phaser.Tilemaps.TilemapLayer[] = [];
+  ladderSprites: Record<string, Phaser.GameObjects.Sprite> = {};
   private effects!: EffectsManager;
   private levelManager!: LevelManager;
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
   private isDialogueOpen: boolean = false;
+  private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
   private totalPhotoChunks: number = 0;
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
+  private ladderCinematicSystem!: LadderCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
+  public spotlightSystem!: SpotlightSystem;
   private hintKeySystem!: HintKeySystem;
+  private tutorialSystem!: TutorialSystem;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
@@ -297,6 +309,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.processModularData();
     this.effects = new EffectsManager(this);
+    this.ladderCinematicSystem = new LadderCinematicSystem(
+      this,
+      this.effects,
+      this.mapScale,
+    );
     this.createAnimations();
 
     // Initialize audio manager with this scene
@@ -330,6 +347,45 @@ export class Game extends Scene implements GameDataAccessor {
     if (tileset) {
       mapData = TiledMapLoader.loadMap(this, map, tileset, this.mapScale);
       this.stairsLayer = mapData.tileLayers.Stairs || null;
+
+      const stairsLayersToAssign: Phaser.Tilemaps.TilemapLayer[] = [];
+      if (this.stairsLayer) {
+        stairsLayersToAssign.push(this.stairsLayer);
+      }
+
+      const ladder1 = mapData.tileLayers.ladder_floor1;
+      if (ladder1) {
+        ladder1.setVisible(false);
+        stairsLayersToAssign.push(ladder1);
+      }
+
+      const ladder2 = mapData.tileLayers.ladder_floor2;
+      if (ladder2) {
+        ladder2.setVisible(false);
+        stairsLayersToAssign.push(ladder2);
+      }
+
+      this.pendingStairsLayers = stairsLayersToAssign;
+
+      // Spawn ladder images at their Tiled positions from the start
+      this.ladderSprites = {};
+      for (const objLayerKey of ["Ladder1", "Ladder2"]) {
+        const objLayer = mapData.objectLayers[objLayerKey];
+        const ladderObj = objLayer?.objects?.find(
+          (o: any) => o.name === "ladder_image" || o.type === "ladder_image",
+        );
+        if (ladderObj) {
+          const sprite = this.add.sprite(
+            (ladderObj.x ?? 0) * this.mapScale,
+            (ladderObj.y ?? 0) * this.mapScale,
+            "ladder_image",
+          );
+          sprite.setScale(this.mapScale);
+          sprite.setDepth(10);
+          this.ladderSprites[objLayerKey] = sprite;
+        }
+      }
+
       this.portals = MapManager.createPortals(this, mapData);
     }
 
@@ -355,8 +411,23 @@ export class Game extends Scene implements GameDataAccessor {
         const previousStars = Math.floor(lastTotalQuarters / 4);
         const currentStars = Math.floor(payload.totalQuarters / 4);
 
+        if (payload.totalQuarters > lastTotalQuarters) {
+          posthog.capture("player_scored", {
+            level_id: this.levelId,
+            total_quarters: payload.totalQuarters,
+            total_stars: currentStars,
+            quarters_earned: payload.totalQuarters - lastTotalQuarters,
+          });
+        }
+
         if (currentStars > previousStars) {
           this.effects.playScoreFeedback(this.player.x, this.player.y);
+          posthog.capture("star_collected", {
+            level_id: this.levelId,
+            total_stars: currentStars,
+            previous_stars: previousStars,
+            total_quarters: payload.totalQuarters,
+          });
         }
         lastTotalQuarters = payload.totalQuarters;
 
@@ -368,6 +439,32 @@ export class Game extends Scene implements GameDataAccessor {
           total: this.scoreManager.getMaxStars(),
           score: payload.totalQuarters,
         });
+      },
+    );
+
+    this.scoreManager.on(
+      ScoringEvents.INTERMEDIATE_QUIZ_COMPLETED,
+      (payload: any) => {
+        let targetLayerName: string | null = null;
+        if (payload.infoKey === "sculptures_done") {
+          targetLayerName = "ladder_floor1";
+        } else if (payload.infoKey === "paintings_done") {
+          targetLayerName = "ladder_floor2";
+        }
+
+        if (targetLayerName && mapData) {
+          const targetLayer = mapData.tileLayers[targetLayerName];
+          if (targetLayer) {
+            const floorNum = targetLayerName.match(/(\d+)$/)?.[1];
+            const objLayerKey = `Ladder${floorNum}`;
+            const sprite = this.ladderSprites[objLayerKey];
+            if (sprite) {
+              this.time.delayedCall(4000, () => {
+                this.ladderCinematicSystem.playCinematic(sprite, targetLayer);
+              });
+            }
+          }
+        }
       },
     );
 
@@ -519,6 +616,9 @@ export class Game extends Scene implements GameDataAccessor {
     this.mechanicsManager.registerHandler(
       new PosterMechanicHandler(this.scoringFloors.posters),
     );
+    this.mechanicsManager.registerHandler(
+      new SpotlightMechanicHandler(this.scoringFloors.spotlights),
+    );
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
@@ -534,7 +634,21 @@ export class Game extends Scene implements GameDataAccessor {
         this.labelSystem.registerAllFromLayer(placeholderLayer);
       }
 
+      const spotlightLayer =
+        mapData.objectLayers.Spotlights || mapData.objectLayers.Spotlight;
+      if (spotlightLayer) {
+        this.spotlightSystem = new SpotlightSystem(this, this.effects);
+        this.spotlightSystem.registerAllFromLayer(spotlightLayer);
+      }
+
       this.hintKeySystem = new HintKeySystem(this);
+
+      this.tutorialSystem = new TutorialSystem(this);
+      const tutorialLayer =
+        mapData.objectLayers.Tutorial || mapData.objectLayers.tutorial;
+      if (tutorialLayer) {
+        this.tutorialSystem.registerFromLayer(tutorialLayer, this.mapScale);
+      }
       this.hintKeySystem.registerItems([
         ...this.draggableItems.map((item) => ({
           get x() {
@@ -675,7 +789,7 @@ export class Game extends Scene implements GameDataAccessor {
             get active() {
               return !p.isFilled;
             },
-            interactionDistance: 150,
+            interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
@@ -701,6 +815,24 @@ export class Game extends Scene implements GameDataAccessor {
             },
             interactionDistance: 120,
           })),
+        ...(this.spotlightSystem?.getAll().map((s) => ({
+          get x() {
+            return s.sprite.x;
+          },
+          get y() {
+            return s.sprite.y;
+          },
+          get interactionY() {
+            return s.sprite.y;
+          },
+          get displayHeight() {
+            return s.sprite.displayHeight;
+          },
+          get active() {
+            return !s.isLocked;
+          },
+          interactionDistance: 170,
+        })) || []),
       ]);
 
       this.analyticsSystem.trackLevelEvent(
@@ -737,11 +869,42 @@ export class Game extends Scene implements GameDataAccessor {
         }
 
         if (
+          infoKey === MissionKeys.SCULPTURES_DONE ||
+          infoKey === MissionKeys.SPOTLIGHTS_DONE
+        ) {
+          const collected = this.questManager.getCollectedInfos(
+            MissionIds.CURATOR_L2,
+          );
+          if (
+            collected.includes(MissionKeys.SCULPTURES_DONE) &&
+            collected.includes(MissionKeys.SPOTLIGHTS_DONE) &&
+            !collected.includes(MissionKeys.STAGE_DONE)
+          ) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR_L2,
+              infoKey: MissionKeys.STAGE_DONE,
+            });
+          }
+        }
+
+        if (
           this.contentData.intermediateQuizzes[infoKey] &&
           !this.questManager.isIntermediateQuizDone(infoKey) &&
           this.quizManager.getQuizMode() === "none"
         ) {
-          this.startIntermediateQuiz(infoKey);
+          if (infoKey === MissionKeys.STAGE_DONE) {
+            const collected = this.questManager.getCollectedInfos(
+              MissionIds.CURATOR_L2,
+            );
+            if (
+              collected.includes(MissionKeys.SCULPTURES_DONE) &&
+              collected.includes(MissionKeys.SPOTLIGHTS_DONE)
+            ) {
+              this.startIntermediateQuiz(infoKey);
+            }
+          } else {
+            this.startIntermediateQuiz(infoKey);
+          }
         }
       },
     );
@@ -749,13 +912,13 @@ export class Game extends Scene implements GameDataAccessor {
     this.events.on(GameEvents.MISSION_PROGRESS_CHANGED, () => {
       for (const missionId of this.levelDef.activeMissions || []) {
         if (!MissionRegistry[missionId]) continue;
-        const reqs = this.questManager.getRequiredInfos(missionId);
+        const steps = MissionRegistry[missionId]?.steps || [];
         EventBus.emit("quest:progress-changed", {
           missionId,
           missionTitle: MissionRegistry[missionId]?.title || "",
           collectedInfos: this.questManager.getCollectedInfos(missionId),
-          totalSteps: reqs.length,
-          steps: MissionRegistry[missionId]?.steps,
+          totalSteps: steps.length,
+          steps,
           stepProgress: this.getMissionStepProgress(missionId),
         });
       }
@@ -765,15 +928,6 @@ export class Game extends Scene implements GameDataAccessor {
       "info-collected",
       (data: { missionId: string; infoKey: string }) => {
         this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-        const reqs = this.questManager.getRequiredInfos(data.missionId);
-        EventBus.emit("quest:progress-changed", {
-          missionId: data.missionId,
-          missionTitle: MissionRegistry[data.missionId]?.title || "",
-          collectedInfos: this.questManager.getCollectedInfos(data.missionId),
-          totalSteps: reqs.length,
-          steps: MissionRegistry[data.missionId]?.steps,
-          stepProgress: this.getMissionStepProgress(data.missionId),
-        });
       },
     );
 
@@ -781,15 +935,18 @@ export class Game extends Scene implements GameDataAccessor {
       "status-changed",
       (data: { missionId: string; status: QuestStatus }) => {
         this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
-        EventBus.emit("quest:mission-status-changed", {
-          missionId: data.missionId,
-          status:
-            data.status === QuestStatus.COMPLETED
-              ? "completed"
-              : data.status === QuestStatus.READY_FOR_QUIZ
-                ? "accepted"
-                : "accepted",
-        });
+
+        if (this.levelDef.activeMissions?.includes(data.missionId)) {
+          EventBus.emit("quest:mission-status-changed", {
+            missionId: data.missionId,
+            status:
+              data.status === QuestStatus.COMPLETED
+                ? "completed"
+                : data.status === QuestStatus.READY_FOR_QUIZ
+                  ? "accepted"
+                  : "accepted",
+          });
+        }
       },
     );
 
@@ -854,11 +1011,45 @@ export class Game extends Scene implements GameDataAccessor {
     EventBus.on("ui:label-hide", () => {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
     });
+
+    this.events.on(
+      GameEvents.TUTORIAL_SHOWN,
+      (data: { tutorialId: string; blockMovement: boolean }) => {
+        this.isDialogueOpen = data.blockMovement;
+        this.tutorialSetDialogueOpen = data.blockMovement;
+        if (this.player) {
+          this.player.isInDialogue = data.blockMovement;
+          this.player.isTutorialActive = true;
+          if (data.blockMovement) {
+            this.player.setVelocity(0, 0);
+          }
+        }
+      },
+    );
+
+    this.events.on(
+      GameEvents.TUTORIAL_DISMISSED,
+      (_data: { tutorialId: string }) => {
+        if (this.tutorialSetDialogueOpen) {
+          this.isDialogueOpen = false;
+          this.tutorialSetDialogueOpen = false;
+        }
+        if (this.player) {
+          this.player.isTutorialActive = false;
+          this.checkDialogState();
+        }
+      },
+    );
+
+    EventBus.on("ui:label-show", () => {
+      this.tutorialSystem?.completeTutorial("tutorial_read_label");
+    });
   }
 
   private setupEvents() {
     this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
+      this.tutorialSetDialogueOpen = false;
       if (this.player) {
         this.player.isInDialogue = true;
         this.player.setVelocity(0, 0);
@@ -988,7 +1179,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.player = new Player(this, spawnX, spawnY, PLAYER_SPAWN.TEXTURE);
     this.player.setDepth(20);
-    this.player.stairsLayer = this.stairsLayer;
+    // We push individual stairsLayers instead of just this.stairsLayer now.
+    // this.player.stairsLayer is deprecated in Player, we use stairsLayers
+    for (const layer of this.pendingStairsLayers) {
+      this.player.stairsLayers.push(layer);
+    }
     this.player.setCollisionLayers(mapData.colliders);
 
     this.effects.initSpotlight();
@@ -1056,7 +1251,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.player.on("interact-placeholder", () => {
       if (
-        this.isDialogueOpen ||
+        (this.isDialogueOpen && !this.player?.isTutorialActive) ||
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen
       )
@@ -1089,6 +1284,10 @@ export class Game extends Scene implements GameDataAccessor {
             findWorkDataById(id, this.contentData),
           );
           EventBus.emit("ui:label-show", payload);
+          posthog.capture("label_interacted", {
+            label_title: payload.title,
+            label_author: payload.author,
+          });
           return;
         }
       }
@@ -1112,6 +1311,7 @@ export class Game extends Scene implements GameDataAccessor {
           );
 
         this.isChunkSelectorOpen = true;
+        this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
         this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
         const expectedSlots = Array.isArray(nearby.id)
           ? nearby.id
@@ -1173,10 +1373,39 @@ export class Game extends Scene implements GameDataAccessor {
           equippedParts,
           lockedParts,
         });
+        posthog.capture("costume_interacted", {
+          level_id: this.levelId,
+        });
+      }
+
+      if (this.spotlightSystem) {
+        const nearbySpotlight = this.spotlightSystem.getNearbySpotlight(
+          this.player.x,
+          this.player.y,
+          120,
+        );
+        if (nearbySpotlight) {
+          this.handleSpotlightInteraction(nearbySpotlight);
+        }
       }
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
+      const typeEventMap: Partial<Record<InteractiveType, string>> = {
+        [InteractiveType.PAINTING]: "painting_interacted",
+        [InteractiveType.SCULPTURE]: "sculpture_interacted",
+        [InteractiveType.POSTER]: "poster_interacted",
+        [InteractiveType.PHOTO_CHUNK]: "photo_chunk_collected",
+      };
+      const eventName = typeEventMap[item.interactiveType];
+      if (eventName) {
+        posthog.capture(eventName, {
+          item_id: item.itemId,
+          item_name: item.itemName,
+          level_id: this.levelId,
+        });
+      }
+
       const floorForType: Partial<Record<InteractiveType, number>> = {
         [InteractiveType.SCULPTURE]: this.scoringFloors.sculptures,
         [InteractiveType.PAINTING]: this.scoringFloors.paintings,
@@ -1202,19 +1431,11 @@ export class Game extends Scene implements GameDataAccessor {
           this.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [opinion]);
         }
 
+        this.tutorialSystem?.completeTutorial("tutorial_drag_sculpture");
+
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
           this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-          EventBus.emit("quest:progress-changed", {
-            missionId: MissionIds.CURATOR,
-            missionTitle: MissionRegistry[MissionIds.CURATOR]?.title || "",
-            collectedInfos: this.questManager.getCollectedInfos(
-              MissionIds.CURATOR,
-            ),
-            totalSteps: MissionRegistry[MissionIds.CURATOR]?.steps.length ?? 0,
-            steps: MissionRegistry[MissionIds.CURATOR]?.steps,
-            stepProgress: this.getMissionStepProgress(MissionIds.CURATOR),
-          });
           if (
             this.totalPhotoChunks > 0 &&
             this.photoChunksCollected >= this.totalPhotoChunks
@@ -1336,6 +1557,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
       this.hintKeySystem?.destroy();
+      this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
       AudioManager.destroy();
       EventBus.off("game:pause-requested");
@@ -1349,6 +1571,7 @@ export class Game extends Scene implements GameDataAccessor {
       EventBus.off("ui:costume-part-rejected");
       EventBus.off("ui:costume-confirm");
       EventBus.off("ui:label-hide");
+      EventBus.off("ui:label-show");
     });
   }
 
@@ -1368,6 +1591,10 @@ export class Game extends Scene implements GameDataAccessor {
     if (!isNearRat && !isOverlappingRat) return false;
 
     this.rat.fleeLeftAndDisappear();
+
+    posthog.capture("rat_interacted", {
+      level_id: this.levelId,
+    });
 
     if (!this.hasInteractedWithRat) {
       this.hasInteractedWithRat = true;
@@ -1403,6 +1630,7 @@ export class Game extends Scene implements GameDataAccessor {
     colliders: Phaser.Tilemaps.TilemapLayer[],
     oneWayColliders: Phaser.Tilemaps.TilemapLayer[] = [],
   ) {
+    this.colliders = colliders;
     colliders.forEach((layer) => {
       if (layer) {
         this.physics.add.collider(this.player, layer);
@@ -1547,6 +1775,10 @@ export class Game extends Scene implements GameDataAccessor {
         isPanelOpen,
         isPlayerBusy,
       );
+
+      if (this.tutorialSystem) {
+        this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
+      }
     }
   }
 
@@ -1595,6 +1827,20 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects.showSpotlightBeam(duration, 200, px, py);
   }
 
+  public handleSpotlightInteraction(
+    spotlight: import("../systems/SpotlightSystem").SpotlightInstance,
+  ) {
+    const handler = this.mechanicsManager.getHandler(InteractiveType.SPOTLIGHT);
+    if (handler && "handleActivation" in handler) {
+      const wasActivated = this.spotlightSystem.activateSpotlight(spotlight);
+      if (wasActivated) {
+        (
+          handler as import("../mechanics/handlers/SpotlightMechanicHandler").SpotlightMechanicHandler
+        ).handleActivation(this, spotlight);
+      }
+    }
+  }
+
   public getScoringPayload(): ScoringPayload {
     return this.scoreManager.getPayload();
   }
@@ -1611,6 +1857,14 @@ export class Game extends Scene implements GameDataAccessor {
           filled: this.photoChunksCollected,
           total: this.totalPhotoChunks,
         };
+      }
+      if (step.categoryType === InteractiveType.SPOTLIGHT) {
+        return (
+          this.spotlightSystem?.getCategoryProgress() || {
+            filled: 0,
+            total: 1,
+          }
+        );
       }
       if (step.categoryType) {
         return this.placeholderSystem.getCategoryProgress(step.categoryType);

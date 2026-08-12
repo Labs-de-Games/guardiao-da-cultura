@@ -8,6 +8,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LEVEL_02_ENABLED } from "@/game/constants/FeatureFlags";
+import { QUIZ_PASS_THRESHOLD } from "@/game/constants/QuizConstants";
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
 import { useSound } from "@/ui/hooks/useSound";
@@ -180,6 +181,7 @@ export default function QuizPanel() {
   const selectedOptionIndex = quiz.selectedOptionIndex;
   const moveSelection = useGameUIStore((s) => s.moveSelection);
   const selectOption = useGameUIStore((s) => s.selectOption);
+  const continueAfterReveal = useGameUIStore((s) => s.continueAfterReveal);
   const { speak } = useAudioAccessibility();
   const { playModalOpen, playModalClose, playClick } = useSound();
 
@@ -188,16 +190,17 @@ export default function QuizPanel() {
   const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
   const isPerformance = quiz.phase === "performance";
   const isIntermediate = quiz.isIntermediate;
+  const starCount = useGameUIStore((s) => Math.floor(s.stars));
 
   const scorePercentage = useMemo(() => {
     const total = quiz.questions.length;
     return total > 0 ? Math.round((quiz.score / total) * 100) : 0;
   }, [quiz.score, quiz.questions.length]);
 
-  const isRetryMode = scorePercentage < 70;
+  const passPercentage = QUIZ_PASS_THRESHOLD * 100;
+  const isRetryMode = scorePercentage < passPercentage;
   const isPerfectScore = scorePercentage === 100;
 
-  const starCount = isPerfectScore || isRetryMode ? 3 : 1;
   const starAsset = isRetryMode ? "star_gray" : "gold_star";
 
   const performanceColor = isRetryMode ? "#FFFFFF" : "#D9AD56";
@@ -208,36 +211,40 @@ export default function QuizPanel() {
         return {
           headerTitle: `Pontos: ${scorePercentage}%`,
           headerSubTitle:
-            scorePercentage >= 70 ? "Boa pontuação" : "Pontuação baixa",
+            scorePercentage >= passPercentage
+              ? "Boa pontuação"
+              : "Pontuação baixa",
           performanceTitle:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? "Parabéns!"
               : scorePercentage < 25
                 ? "Essa não"
                 : "Por pouco!",
           performanceSubTitle:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? scorePercentage === 100
                 ? "Pontuação perfeita!"
                 : "Boa pontuação"
               : "Pontuação baixa",
           performanceMessage:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? scorePercentage === 100
                 ? "Gabaritou!"
                 : "Muito bom!"
               : "Revise as placas das obras",
           performanceHint:
-            scorePercentage >= 70
+            scorePercentage >= passPercentage
               ? ""
               : "Leia com atenção as informações antes de continuar.",
         };
       }
       return {
         headerTitle:
-          scorePercentage >= 70 ? "Parabéns!" : `Pontos: ${scorePercentage}%`,
+          scorePercentage >= passPercentage
+            ? "Parabéns!"
+            : `Pontos: ${scorePercentage}%`,
         headerSubTitle:
-          scorePercentage >= 70
+          scorePercentage >= passPercentage
             ? scorePercentage === 100
               ? "Pontuação perfeita"
               : "Pontuação boa"
@@ -245,11 +252,11 @@ export default function QuizPanel() {
         performanceTitle:
           scorePercentage < 25
             ? "Essa não"
-            : scorePercentage < 70
+            : scorePercentage < passPercentage
               ? "Por pouco!"
               : "Parabéns!",
         performanceSubTitle:
-          scorePercentage < 25 || scorePercentage < 70
+          scorePercentage < 25 || scorePercentage < passPercentage
             ? "Pontuação baixa"
             : scorePercentage < 100
               ? "Boa pontuação"
@@ -257,13 +264,13 @@ export default function QuizPanel() {
         performanceMessage:
           scorePercentage < 25
             ? "Tente novamente"
-            : scorePercentage < 70
+            : scorePercentage < passPercentage
               ? "Com mais atenção, você consegue!"
               : scorePercentage < 100
                 ? "Muito bom!"
                 : "Gabaritou!",
         performanceHint:
-          scorePercentage >= 70
+          scorePercentage >= passPercentage
             ? "Você já pode encarar o próximo nível!"
             : "Sua pontuação não foi o suficiente. Mas não desista!",
       };
@@ -321,6 +328,18 @@ export default function QuizPanel() {
         return;
       }
 
+      if (quiz.revealedAnswer) {
+        switch (e.key) {
+          case " ":
+          case "Enter":
+            e.preventDefault();
+            playClick();
+            continueAfterReveal();
+            break;
+        }
+        return;
+      }
+
       if (quiz.isProcessingAnswer) return;
 
       switch (e.key) {
@@ -362,9 +381,12 @@ export default function QuizPanel() {
   }, [
     quiz.isVisible,
     quiz.isProcessingAnswer,
+    quiz.revealedAnswer,
     isPerformance,
     moveSelection,
     selectOption,
+    continueAfterReveal,
+    playClick,
     activateSelectedNav,
   ]);
 
@@ -402,9 +424,7 @@ export default function QuizPanel() {
 
   const options = currentQuestion?.options.slice(0, 4) ?? [];
 
-  const currentAnswer = quiz.isProcessingAnswer
-    ? (quiz.answers[quiz.currentQuestionIndex] ?? undefined)
-    : undefined;
+  const currentAnswer = quiz.attemptFeedback ?? undefined;
 
   return (
     <Box
@@ -423,6 +443,12 @@ export default function QuizPanel() {
         ref={cardRef}
         tabIndex={-1}
         elevation={0}
+        onClick={() => {
+          if (quiz.revealedAnswer && !isPerformance) {
+            playClick();
+            continueAfterReveal();
+          }
+        }}
         sx={{
           width: 939,
           height: 715,
@@ -533,33 +559,15 @@ export default function QuizPanel() {
                   }}
                 >
                   {Array.from({ length: starCount }).map((_, i) => {
-                    const isMiddleStar = starCount === 3 && i === 1;
-                    const isSingleStar = starCount === 1;
-                    const isLargeStar = isMiddleStar || isSingleStar;
                     return (
                       <Box
                         key={i}
                         component="img"
                         src={`/assets/ui/stars/${starAsset}.png`}
                         sx={{
-                          width: isLargeStar
-                            ? { xs: 56, md: 93 }
-                            : { xs: 40, md: 66 },
-                          height: isLargeStar
-                            ? { xs: 53, md: 89 }
-                            : { xs: 38, md: 63 },
+                          width: { xs: 56, md: 93 },
+                          height: { xs: 53, md: 89 },
                           objectFit: "contain",
-                          transform: isMiddleStar
-                            ? {
-                                xs: "translateY(-7px)",
-                                md: "translateY(-12px)",
-                              }
-                            : isSingleStar
-                              ? "none"
-                              : {
-                                  xs: "translateY(5px)",
-                                  md: "translateY(8px)",
-                                },
                         }}
                       />
                     );
@@ -643,6 +651,7 @@ export default function QuizPanel() {
                 >
                   <Button
                     disableElevation
+                    className="ph-no-deadclick"
                     onClick={() =>
                       currentQuestion?.question &&
                       speak(currentQuestion.question)
@@ -687,6 +696,9 @@ export default function QuizPanel() {
               {/* ANSWERS */}
               <Grid container rowSpacing={4} columnSpacing={2} sx={{ mb: 4.5 }}>
                 {options.map((option, index) => {
+                  const isCorrectOption =
+                    index === currentQuestion?.correctOptionIndex;
+
                   const selectAnswer = () => {
                     if (!quiz.isProcessingAnswer) {
                       handleSelectAnswer();
@@ -723,10 +735,16 @@ export default function QuizPanel() {
                           selectedOptionIndex === index
                         }
                         feedback={
-                          selectedOptionIndex !== null &&
-                          selectedOptionIndex === index
-                            ? currentAnswer
-                            : undefined
+                          quiz.revealedAnswer
+                            ? isCorrectOption
+                              ? "correct"
+                              : selectedOptionIndex === index
+                                ? "wrong"
+                                : undefined
+                            : selectedOptionIndex !== null &&
+                                selectedOptionIndex === index
+                              ? currentAnswer
+                              : undefined
                         }
                         onClick={selectAnswer}
                         onMouseEnter={hoverHighlight}
@@ -735,6 +753,36 @@ export default function QuizPanel() {
                   );
                 })}
               </Grid>
+
+              {/* RETRY FEEDBACK */}
+              {quiz.feedbackMessage && !quiz.revealedAnswer && (
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', sans-serif",
+                    color: "#E0C16A",
+                    fontStyle: "italic",
+                    fontSize: "1.25rem",
+                    mt: 3,
+                  }}
+                >
+                  {quiz.feedbackMessage}
+                </Typography>
+              )}
+
+              {/* REVEAL: explanation for the correct answer */}
+              {quiz.revealedAnswer && currentQuestion?.explanation && (
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', sans-serif",
+                    color: "#E0C16A",
+                    fontStyle: "italic",
+                    fontSize: "1.25rem",
+                    mt: 3,
+                  }}
+                >
+                  {currentQuestion.explanation}
+                </Typography>
+              )}
             </>
           )}
         </Box>
@@ -762,7 +810,9 @@ export default function QuizPanel() {
                 fontSize: "1.125rem",
               }}
             >
-              Utilize as teclas WASD ou as setas do teclado para selecionar.
+              {quiz.revealedAnswer
+                ? "Pressione ESPAÇO ou ENTER para continuar."
+                : "Utilize as teclas WASD ou as setas do teclado para selecionar."}
             </Typography>
           </Box>
         )}

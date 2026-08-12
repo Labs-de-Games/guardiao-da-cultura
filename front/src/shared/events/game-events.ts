@@ -154,6 +154,7 @@ export interface QuizCompleteData {
 export interface MapMarkerChangedData {
   markerId: string;
   title: string;
+  shortlocation: string;
   location: string;
   isAvailable: boolean;
   screenX: number;
@@ -245,4 +246,8 @@ export interface GameEventMap {
   "intro:complete": { levelId: string };
   "intro:music-start": { levelId: string };
   "intro:rollout-start": { levelId: string };
+  "star-animation-complete": undefined;
+  "ladder:cinematic-complete": undefined;
+  "tutorial:shown": { tutorialId: string };
+  "tutorial:dismissed": { tutorialId: string };
 }
