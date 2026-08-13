@@ -49,26 +49,29 @@ describe("CostumeSelectorPanel", () => {
   it("is hidden when costumeSelectorOpen is false", () => {
     render(<CostumeSelectorPanel />);
 
-    // costumeSelectorData is null while closed, so the title falls back to
-    // the "malandro" default rather than "Vista o Manequim"
+    // The title is static, so it renders in the DOM even while closed
     const container = screen
-      .getByText("Vista o malandro")
+      .getByText("Vista o Manequim Corretamente")
       .closest("div")?.parentElement;
     expect(container).toHaveStyle("display: none");
   });
 
-  it("renders the costume title for a known costume", () => {
+  it("renders the static panel title for a known costume", () => {
     openSelector({ correctCostume: "indian" });
     render(<CostumeSelectorPanel />);
 
-    expect(screen.getByText("Vista o traje indígena")).toBeInTheDocument();
+    expect(
+      screen.getByText("Vista o Manequim Corretamente"),
+    ).toBeInTheDocument();
   });
 
-  it("falls back to a default title for an unknown costume", () => {
+  it("keeps the static title for an unknown costume", () => {
     openSelector({ correctCostume: "unknown_costume" });
     render(<CostumeSelectorPanel />);
 
-    expect(screen.getByText("Vista o Manequim")).toBeInTheDocument();
+    expect(
+      screen.getByText("Vista o Manequim Corretamente"),
+    ).toBeInTheDocument();
   });
 
   it("renders carousel images for every part", () => {
