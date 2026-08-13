@@ -123,5 +123,87 @@
         "sprite": "zona-franca"
       }
     }
+  },
+  "COSTUMES": {
+    "indian_head": {
+      "id": "indian_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Ajuricaba, cacique dos manaus",
+        "author": "Márcio Souza",
+        "year": "1974",
+        "place": "Manaus, AM"
+      },
+      "educational": {
+        "description": "Um cocar de penas coloridas, enfeites nos braços e uma tanga. Devia pertencer a alguém respeitado por seu povo.",
+        "medium": "",
+        "opinion": "Figurino de um cacique indígena, com cocar e adornos que remetem à liderança do seu povo.",
+        "feedbackError": "Aqui deve ter um figurino de cacique indígena, com cocar.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "indian"
+      }
+    },
+    "malandro_head": {
+      "id": "malandro_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Max, o malandro",
+        "author": "Chico Buarque",
+        "year": "1978",
+        "place": "Rio de Janeiro, RJ"
+      },
+      "educational": {
+        "description": "Um terno branco, chapéu panamá e uma gravata. Traja como alguém que vive de conversa fiada.",
+        "medium": "",
+        "opinion": "Figurino de malandro carioca, elegante e cheio de golpes na manga.",
+        "feedbackError": "Aqui deve ter um figurino de malandro, com terno e chapéu.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "malandro"
+      }
+    },
+    "warrior_head": {
+      "id": "warrior_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Siegfried, o herói guerreiro",
+        "author": "Richard Wagner",
+        "year": "1848-1874",
+        "place": "Zurique (Suíça), Dresden e Bayreuth (Alemanha)"
+      },
+      "educational": {
+        "description": "Uma armadura reluzente e uma espada na cintura. Parece pertencer a um herói de lendas antigas.",
+        "medium": "",
+        "opinion": "Figurino de guerreiro dos mitos nórdicos e germânicos, com armadura e espada.",
+        "feedbackError": "Aqui deve ter um figurino de guerreiro, com armadura e espada.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "warrior"
+      }
+    },
+    "soldier_head": {
+      "id": "soldier_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Soldado da Zona Franca",
+        "author": "Márcio Souza",
+        "year": "1968",
+        "place": "Manaus, AM"
+      },
+      "educational": {
+        "description": "Figurino de soldado do regime militar, obediente às ordens superiores.",
+        "medium": "",
+        "opinion": "Um uniforme verde-oliva com botas pesadas e uma boina.",
+        "feedbackError": "Aqui deve ter um figurino de soldado, com uniforme militar.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "soldier"
+      }
+    }
   }
 }
