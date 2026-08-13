@@ -1767,7 +1767,7 @@
                  "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":480,
+                 "x":432,
                  "y":576
                 }, 
                 {
@@ -1808,7 +1808,7 @@
                  "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":448,
+                 "x":144,
                  "y":576
                 }, 
                 {
@@ -1849,8 +1849,124 @@
                  "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":416,
+                 "x":48,
                  "y":576
+                }, 
+                {
+                 "height":0,
+                 "id":111,
+                 "name":"L_6",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_6"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.2
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"poster-label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":528,
+                 "y":572
+                }, 
+                {
+                 "height":0,
+                 "id":112,
+                 "name":"L_7",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_7"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.2
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"poster-label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":448,
+                 "y":572
+                }, 
+                {
+                 "height":0,
+                 "id":113,
+                 "name":"L_8",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_8"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.2
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"poster-label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":161,
+                 "y":572
+                }, 
+                {
+                 "height":0,
+                 "id":114,
+                 "name":"L_9",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_9"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.2
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"poster-label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":64,
+                 "y":572
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1973,10 +2089,10 @@
          "y":0
         }],
  "nextlayerid":35,
- "nextobjectid":111,
+ "nextobjectid":115,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {
