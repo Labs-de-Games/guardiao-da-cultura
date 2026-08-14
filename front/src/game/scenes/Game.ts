@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { Scene } from "phaser";
+import { Scene, WEBGL } from "phaser";
 import posthog from "posthog-js";
 
 import { EventBus } from "../../shared/events/event-bus";
@@ -59,6 +59,7 @@ import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
+import { LightBarSystem } from "../systems/LightBarSystem";
 import { NudgeManager } from "../systems/NudgeManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
@@ -132,6 +133,7 @@ export class Game extends Scene implements GameDataAccessor {
   private ladderCinematicSystem!: LadderCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
+  public lightBarSystem!: LightBarSystem;
   public spotlightSystem!: SpotlightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
@@ -737,6 +739,12 @@ export class Game extends Scene implements GameDataAccessor {
         this.spotlightSystem.registerAllFromLayer(spotlightLayer);
       }
 
+      const lightBarLayer = mapData.objectLayers.LightBars;
+      if (lightBarLayer) {
+        this.lightBarSystem = new LightBarSystem(this);
+        this.lightBarSystem.registerAllFromLayer(lightBarLayer);
+      }
+
       this.hintKeySystem = new HintKeySystem(this);
 
       this.tutorialSystem = new TutorialSystem(this);
@@ -1199,6 +1207,31 @@ export class Game extends Scene implements GameDataAccessor {
     this.onEventBus("ui:label-show", () => {
       this.tutorialSystem?.completeTutorial("tutorial_read_label");
       this.nudgeManager?.recordInteraction();
+    });
+
+    this.setupLighting();
+  }
+
+  private setupLighting() {
+    if (this.renderer.type !== WEBGL) return;
+
+    this.lights.enable();
+    this.lights.setAmbientColor(0x333333);
+
+    this.children.list.forEach((obj) => {
+      const pipelineObj = obj as unknown as {
+        setPipeline?: (name: string) => void;
+      };
+      if (typeof pipelineObj.setPipeline === "function") {
+        pipelineObj.setPipeline("Conelight");
+      }
+    });
+
+    // Light bars are the light source themselves — keep them on the
+    // default pipeline so they render at full brightness instead of
+    // being dimmed by their own ambient/cone lighting.
+    this.lightBarSystem?.getAll().forEach(({ sprite }) => {
+      sprite.resetPipeline();
     });
   }
 
@@ -2301,6 +2334,9 @@ export class Game extends Scene implements GameDataAccessor {
           this.playConfettiBurst(
             result.placeholder.area.centerX,
             result.placeholder.area.centerY,
+          );
+          this.lightBarSystem?.turnOnByPlaceholder(
+            result.placeholder.instanceId,
           );
         }
       }
