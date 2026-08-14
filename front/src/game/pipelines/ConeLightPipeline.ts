@@ -52,15 +52,16 @@ const ConeFrag = [
   "            vec3 lightNormal = normalize(lightDir);",
   "            float distToSurf = length(lightDir) * uCamera.w;",
   "            float diffuseFactor = max(dot(normal, lightNormal), 0.0);",
-  "            float radius = (light.radius / res.x * uCamera.w) * uCamera.w;",
+  "            float radius = max((light.radius / res.x * uCamera.w) * uCamera.w, 0.0001);",
   "            float attenuation = clamp(1.0 - distToSurf * distToSurf / (radius * radius), 0.0, 1.0);",
   "            float halfAngle = uConeAngles[index];",
   "            float coneCos = cos(halfAngle);",
-  "            vec2 dir = normalize(uConeDirections[index]);",
+  "            vec2 rawDir = uConeDirections[index];",
+  "            vec2 dir = (dot(rawDir, rawDir) > 0.0001) ? normalize(rawDir) : vec2(0.0, -1.0);",
   "            vec2 toFrag = normalize((gl_FragCoord.xy - light.position.xy) / res);",
   "            float cosAngle = dot(toFrag, dir);",
   "            float coneFactor = clamp((cosAngle - coneCos) / max(0.001, 1.0 - coneCos), 0.0, 1.0);",
-  "            float beam = pow(coneFactor, uConeFalloffs[index]);",
+  "            float beam = pow(max(coneFactor, 0.0001), max(uConeFalloffs[index], 0.0001));",
   "            vec3 diffuse = light.color * diffuseFactor;",
   "            finalColor += (attenuation * beam * diffuse) * light.intensity;",
   "        }",
@@ -77,6 +78,10 @@ export class ConeLightPipeline extends LightPipeline {
   defaultDirectionY = -1;
   defaultAngle = Math.PI;
   defaultFalloff = 1.2;
+
+  private directionBuffer = new Float32Array(0);
+  private angleBuffer = new Float32Array(0);
+  private falloffBuffer = new Float32Array(0);
 
   constructor(config: Phaser.Game | { game: Phaser.Game }) {
     const game =
@@ -115,18 +120,32 @@ export class ConeLightPipeline extends LightPipeline {
     const lights = lightManager.getLights(camera) as unknown as {
       light: Phaser.GameObjects.Light;
     }[];
-    const count = lights.length;
+    const renderer = this.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
+    const maxLights: number =
+      (renderer.config as { maxLights?: number }).maxLights ?? 10;
+    const count = Math.min(lights.length, maxLights);
+
+    const dirLen = count * 2;
+    if (this.directionBuffer.length !== dirLen) {
+      this.directionBuffer = new Float32Array(dirLen);
+      this.angleBuffer = new Float32Array(count);
+      this.falloffBuffer = new Float32Array(count);
+    }
 
     for (let i = 0; i < count; i++) {
       const light = lights[i].light;
-      const halfAngle = (light as any)._coneAngle ?? this.defaultAngle / 2;
-      const falloff = (light as any)._coneFalloff ?? this.defaultFalloff;
-      const dirX = (light as any)._coneDirectionX ?? this.defaultDirectionX;
-      const dirY = (light as any)._coneDirectionY ?? this.defaultDirectionY;
-
-      this.set2f("uConeDirections[" + i + "]", dirX, dirY);
-      this.set1f("uConeAngles[" + i + "]", halfAngle);
-      this.set1f("uConeFalloffs[" + i + "]", falloff);
+      const i2 = i * 2;
+      this.directionBuffer[i2] =
+        (light as any)._coneDirectionX ?? this.defaultDirectionX;
+      this.directionBuffer[i2 + 1] =
+        (light as any)._coneDirectionY ?? this.defaultDirectionY;
+      this.angleBuffer[i] = (light as any)._coneAngle ?? this.defaultAngle / 2;
+      this.falloffBuffer[i] =
+        (light as any)._coneFalloff ?? this.defaultFalloff;
     }
+
+    this.set2fv("uConeDirections", this.directionBuffer);
+    this.set1fv("uConeAngles", this.angleBuffer);
+    this.set1fv("uConeFalloffs", this.falloffBuffer);
   }
 }
