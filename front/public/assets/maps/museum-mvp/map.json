@@ -1114,12 +1114,12 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":40
+                         "value":50
                         }, 
                         {
                          "name":"color",
                          "type":"string",
-                         "value":"#ffcc88"
+                         "value":"#ffff99"
                         }, 
                         {
                          "name":"intensity",
@@ -1134,7 +1134,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":840
+                         "value":1500
                         }, 
                         {
                          "name":"scale",
@@ -1158,12 +1158,12 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":40
+                         "value":50
                         }, 
                         {
                          "name":"color",
                          "type":"string",
-                         "value":"#ffcc88"
+                         "value":"#ffff99"
                         }, 
                         {
                          "name":"intensity",
@@ -1178,7 +1178,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":840
+                         "value":1500
                         }, 
                         {
                          "name":"scale",
@@ -1202,12 +1202,12 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":40
+                         "value":50
                         }, 
                         {
                          "name":"color",
                          "type":"string",
-                         "value":"#ffcc88"
+                         "value":"#ffff99"
                         }, 
                         {
                          "name":"intensity",
@@ -1222,7 +1222,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":840
+                         "value":1500
                         }, 
                         {
                          "name":"scale",
@@ -1266,7 +1266,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1024
+                         "value":2500
                         }, 
                         {
                          "name":"scale",
@@ -1310,7 +1310,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1024
+                         "value":2500
                         }, 
                         {
                          "name":"scale",
@@ -1354,7 +1354,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1024
+                         "value":2500
                         }, 
                         {
                          "name":"scale",
@@ -1398,7 +1398,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1024
+                         "value":2500
                         }, 
                         {
                          "name":"scale",
