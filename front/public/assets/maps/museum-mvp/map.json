@@ -1112,11 +1112,6 @@
                  "point":true,
                  "properties":[
                         {
-                         "name":"420",
-                         "type":"int",
-                         "value":0
-                        }, 
-                        {
                          "name":"angle",
                          "type":"float",
                          "value":30
@@ -1135,6 +1130,11 @@
                          "name":"placeholderId",
                          "type":"string",
                          "value":"PH_3"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":420
                         }, 
                         {
                          "name":"scale",
