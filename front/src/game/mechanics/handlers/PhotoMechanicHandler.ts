@@ -135,6 +135,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
       });
 
       gameScene.placeholderSystem.lockPlaceholder(placeholder.instanceId);
+      gameScene.lightBarSystem?.turnOnByPlaceholder(placeholder.instanceId);
     } else if (anyCorrect) {
       gameScene.events.emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
         "Só algumas peças encaixaram, faltam outras.",
