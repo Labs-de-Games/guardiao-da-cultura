@@ -52,6 +52,7 @@ import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
+import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
@@ -121,6 +122,7 @@ export class Game extends Scene implements GameDataAccessor {
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   public lightBarSystem!: LightBarSystem;
+  public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
@@ -727,6 +729,12 @@ export class Game extends Scene implements GameDataAccessor {
       if (lightBarLayer) {
         this.lightBarSystem = new LightBarSystem(this);
         this.lightBarSystem.registerAllFromLayer(lightBarLayer);
+      }
+
+      const chandelierLayer = mapData.objectLayers.Chandeliers;
+      if (chandelierLayer) {
+        this.chandelierLightSystem = new ChandelierLightSystem(this);
+        this.chandelierLightSystem.registerAllFromLayer(chandelierLayer);
       }
 
       this.hintKeySystem = new HintKeySystem(this);
