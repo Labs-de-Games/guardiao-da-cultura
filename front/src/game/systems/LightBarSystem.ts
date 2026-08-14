@@ -40,7 +40,7 @@ const DEFAULT_CONE_LIGHT = {
 
 // Accepts a numeric color, or a hex string such as "#ffcc88", "0xffcc88",
 // or Tiled's native "#AARRGGBB" color property format.
-function parseColor(raw: unknown): number {
+export function parseColor(raw: unknown): number {
   if (typeof raw === "number") return raw;
 
   const hex = String(raw).trim().replace(/^#/, "").replace(/^0x/i, "");
