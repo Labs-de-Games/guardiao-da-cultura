@@ -130,6 +130,7 @@ export const LEVEL_ASSETS = {
     OTHERS: [
       { key: "rec", path: "misc/rec.png" },
       { key: "ladder_image", path: "misc/ladder.png" },
+      { key: "light_bar", path: "misc/spotlights/light_bar.png" },
     ],
     COLLECTIBLES: [
       { key: "cachimbo", path: "collectibles/cachimbo.png" },
