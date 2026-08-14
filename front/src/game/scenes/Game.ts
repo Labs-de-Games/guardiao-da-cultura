@@ -1224,7 +1224,7 @@ export class Game extends Scene implements GameDataAccessor {
     if (this.renderer.type !== WEBGL) return;
 
     this.lights.enable();
-    this.lights.setAmbientColor(0x333333);
+    this.lights.setAmbientColor(0xd9d9d9);
 
     this.children.list.forEach((obj) => {
       const pipelineObj = obj as unknown as {
