@@ -1115,27 +1115,27 @@
                          "name":"angle",
                          "type":"float",
                          "value":40
-                        },
+                        }, 
                         {
                          "name":"color",
                          "type":"string",
                          "value":"#ffcc88"
-                        },
+                        }, 
                         {
                          "name":"intensity",
                          "type":"float",
                          "value":6
-                        },
+                        }, 
                         {
                          "name":"placeholderId",
                          "type":"string",
                          "value":"PH_3"
-                        },
+                        }, 
                         {
                          "name":"radius",
                          "type":"int",
                          "value":840
-                        },
+                        }, 
                         {
                          "name":"scale",
                          "type":"float",
@@ -1147,7 +1147,7 @@
                  "width":0,
                  "x":362.05,
                  "y":431
-                },
+                }, 
                 {
                  "height":0,
                  "id":69,
@@ -1159,27 +1159,27 @@
                          "name":"angle",
                          "type":"float",
                          "value":40
-                        },
+                        }, 
                         {
                          "name":"color",
                          "type":"string",
                          "value":"#ffcc88"
-                        },
+                        }, 
                         {
                          "name":"intensity",
                          "type":"float",
                          "value":6
-                        },
+                        }, 
                         {
                          "name":"placeholderId",
                          "type":"string",
                          "value":"PH_2"
-                        },
+                        }, 
                         {
                          "name":"radius",
                          "type":"int",
                          "value":840
-                        },
+                        }, 
                         {
                          "name":"scale",
                          "type":"float",
@@ -1191,7 +1191,7 @@
                  "width":0,
                  "x":448.666666667,
                  "y":431
-                },
+                }, 
                 {
                  "height":0,
                  "id":68,
@@ -1203,27 +1203,27 @@
                          "name":"angle",
                          "type":"float",
                          "value":40
-                        },
+                        }, 
                         {
                          "name":"color",
                          "type":"string",
                          "value":"#ffcc88"
-                        },
+                        }, 
                         {
                          "name":"intensity",
                          "type":"float",
                          "value":6
-                        },
+                        }, 
                         {
                          "name":"placeholderId",
                          "type":"string",
                          "value":"PH_1"
-                        },
+                        }, 
                         {
                          "name":"radius",
                          "type":"int",
                          "value":840
-                        },
+                        }, 
                         {
                          "name":"scale",
                          "type":"float",
@@ -1235,13 +1235,233 @@
                  "width":0,
                  "x":545.833333333,
                  "y":431
+                }, 
+                {
+                 "height":0,
+                 "id":67,
+                 "name":"LB_5",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":80
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffcc88"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_5"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1024
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":728.391178218,
+                 "y":282.476774667
+                }, 
+                {
+                 "height":0,
+                 "id":68,
+                 "name":"LB_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":80
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffcc88"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_4"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1024
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":615.740694138618,
+                 "y":160.136940337632
+                }, 
+                {
+                 "height":0,
+                 "id":69,
+                 "name":"LB_6",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":80
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffcc88"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_6"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1024
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":344.894337103,
+                 "y":282.015023161
+                }, 
+                {
+                 "height":0,
+                 "id":70,
+                 "name":"LB_7",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":80
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffcc88"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_7"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1024
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":246,
+                 "y":282.015023161
+                }, 
+                {
+                 "height":0,
+                 "id":71,
+                 "name":"LB_8",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":80
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffcc88"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_8"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1024
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":432.377644756,
+                 "y":88.904420021
                 }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
          "x":0,
          "y":0
-        },
+        }, 
         {
          "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1437,7 +1657,7 @@
          "y":0
         }],
  "nextlayerid":21,
- "nextobjectid":69,
+ "nextobjectid":72,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
