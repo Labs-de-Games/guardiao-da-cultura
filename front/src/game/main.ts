@@ -1,4 +1,5 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
+import { ConeLightPipeline } from "./pipelines/ConeLightPipeline";
 import { Game as MainGame } from "./scenes/Game";
 import { LevelCinematic } from "./scenes/LevelCinematic";
 import { MapIntroScene } from "./scenes/MapIntroScene";
@@ -26,6 +27,7 @@ const baseConfig: Types.Core.GameConfig = {
     mode: Scale.RESIZE,
     autoCenter: Scale.CENTER_BOTH,
   },
+  pipeline: { Conelight: ConeLightPipeline },
 };
 
 function getScenes(entryFlow: EntryFlow) {
