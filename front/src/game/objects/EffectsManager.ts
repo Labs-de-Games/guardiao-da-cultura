@@ -146,36 +146,12 @@ export class EffectsManager {
   }
 
   public showSpotlightBeam(
-    duration: number = 2000,
-    revealDuration: number = 200,
-    px: number = 0,
-    py: number = 0,
+    _duration: number = 2000,
+    _revealDuration: number = 200,
+    _px: number = 0,
+    _py: number = 0,
   ) {
-    this.spotlightTargetX = px;
-    this.spotlightTargetY = py;
-    this.spotlightVisible = true;
-    this.revealProgress = 0;
     AudioManager.playSfx("sfx.puzzle.success", 0.7);
-
-    this.scene.tweens.add({
-      targets: this,
-      revealProgress: 1,
-      duration: revealDuration,
-      ease: "Power2",
-    });
-
-    this.scene.time.delayedCall(duration, () => {
-      this.scene.tweens.add({
-        targets: this,
-        revealProgress: 0,
-        duration: revealDuration,
-        ease: "Power2",
-        onComplete: () => {
-          this.spotlightVisible = false;
-          this.spotlightBeam?.clear();
-        },
-      });
-    });
   }
 
   private drawSpotlightBeam(px: number, py: number) {
