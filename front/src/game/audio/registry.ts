@@ -74,6 +74,8 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   // Puzzle/quiz
   { key: "sfx.puzzle.success", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.puzzle.failure", path: "sound/sfx/puzzle.error.mp3" },
+  // Camera/flash
+  { key: "sfx.camera.click", path: "sound/sfx/camera.click.wav" },
   // Rewards
   { key: "sfx.badge.unlock", path: "sound/sfx/badge.unlock.mp3" },
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
