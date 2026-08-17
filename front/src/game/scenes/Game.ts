@@ -514,7 +514,11 @@ export class Game extends Scene implements GameDataAccessor {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.collectibleSystem = new CollectibleSystem(this, this.mapScale);
+    this.collectibleSystem = new CollectibleSystem(
+      this,
+      this.mapScale,
+      this.effects,
+    );
 
     const actorId = (this.registry.get("userId") as string | undefined) ?? null;
     const isGuest = this.registry.get("isGuest") === true;
@@ -1261,12 +1265,19 @@ export class Game extends Scene implements GameDataAccessor {
         return;
       }
 
+      const INTERACT_RANGE = 120;
+      const px = this.player.x;
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body | null;
+      const py = playerBody ? playerBody.bottom : this.player.y;
+
+      const candidates: Array<{ dist: number; open: () => void }> = [];
+
+      // Label candidate
       const label = this.labelSystem.getNearbyLabel(
         this.player.x,
         this.player.y,
-        120,
+        INTERACT_RANGE,
       );
-
       if (label) {
         const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
           label.placeholderId,
@@ -1276,118 +1287,167 @@ export class Game extends Scene implements GameDataAccessor {
           this.contentData,
         );
         const work = workId ? findWorkDataById(workId, this.contentData) : null;
-
         if (work) {
-          // Play inspect sound for label interaction
-          AudioManager.playSfx("sfx.clue.inspect");
-          const payload = buildLabelInfo(work, (id) =>
-            findWorkDataById(id, this.contentData),
+          const labelDist = Phaser.Math.Distance.Between(
+            px,
+            py,
+            label.sprite.x,
+            label.sprite.y + label.sprite.displayHeight / 2,
           );
-          EventBus.emit("ui:label-show", payload);
-          posthog.capture("label_interacted", {
-            label_title: payload.title,
-            label_author: payload.author,
+          candidates.push({
+            dist: labelDist,
+            open: () => {
+              // Play inspect sound for label interaction
+              AudioManager.playSfx("sfx.clue.inspect");
+              const payload = buildLabelInfo(work, (id) =>
+                findWorkDataById(id, this.contentData),
+              );
+              EventBus.emit("ui:label-show", payload);
+              posthog.capture("label_interacted", {
+                label_title: payload.title,
+                label_author: payload.author,
+              });
+            },
           });
-          return;
         }
       }
 
-      const nearby = this.placeholderSystem.getNearbyPlaceholder(
+      // Photo placeholder candidate
+      const photo = this.placeholderSystem.getNearbyPlaceholder(
         this.player.x,
         this.player.y,
-        120,
+        INTERACT_RANGE,
         InteractiveType.PHOTO,
       );
+      if (photo && !photo.isFilled) {
+        const photoInteractionY = photo.area.centerY + 100;
+        const photoDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          photo.area.centerX,
+          photoInteractionY,
+        );
+        candidates.push({
+          dist: photoDist,
+          open: () => {
+            const filled = Array.isArray(photo.state?.filledSlots)
+              ? (photo.state.filledSlots as (string | null)[])
+              : [null, null, null, null];
+            const availableChunks = this.player
+              .getInventory()
+              .filter(
+                (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
+              );
 
-      if (nearby) {
-        if (nearby.isFilled) return;
-        const filled = Array.isArray(nearby.state?.filledSlots)
-          ? (nearby.state.filledSlots as (string | null)[])
-          : [null, null, null, null];
-        const availableChunks = this.player
-          .getInventory()
-          .filter(
-            (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
-          );
-
-        this.isChunkSelectorOpen = true;
-        this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
-        this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
-        const expectedSlots = Array.isArray(nearby.id)
-          ? nearby.id
-          : String(nearby.id)
-              .split(",")
-              .map((s) => s.trim());
-        EventBus.emit("ui:chunk-selector-open", {
-          instanceId: nearby.instanceId,
-          availableItems: availableChunks.map((item) => ({
-            id: item.itemId,
-            name: item.itemName,
-            levelId: this.levelId,
-          })),
-          filledSlots: filled,
-          expectedSlots,
+            this.isChunkSelectorOpen = true;
+            this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
+            this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
+            const expectedSlots = Array.isArray(photo.id)
+              ? photo.id
+              : String(photo.id)
+                  .split(",")
+                  .map((s) => s.trim());
+            EventBus.emit("ui:chunk-selector-open", {
+              instanceId: photo.instanceId,
+              availableItems: availableChunks.map((item) => ({
+                id: item.itemId,
+                name: item.itemName,
+                levelId: this.levelId,
+              })),
+              filledSlots: filled,
+              expectedSlots,
+            });
+          },
         });
       }
 
-      const nearbyCostume = this.placeholderSystem.getNearbyPlaceholder(
+      // Costume placeholder candidate
+      const costume = this.placeholderSystem.getNearbyPlaceholder(
         this.player.x,
         this.player.y,
-        120,
+        INTERACT_RANGE,
         InteractiveType.COSTUME,
       );
+      if (costume) {
+        const costumeDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          costume.area.centerX,
+          costume.area.centerY,
+        );
+        candidates.push({
+          dist: costumeDist,
+          open: () => {
+            if (this.markFloorStarted(this.scoringFloors.costumes)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.costumes + 1,
+                level_id: this.levelId,
+              });
+            }
 
-      if (nearbyCostume) {
-        if (this.markFloorStarted(this.scoringFloors.costumes)) {
-          posthog.capture("minigame_started", {
-            minigame_number: this.scoringFloors.costumes + 1,
-            level_id: this.levelId,
-          });
-        }
+            const ids = Array.isArray(costume.id)
+              ? (costume.id as string[])
+              : String(costume.id)
+                  .split(",")
+                  .map((s) => s.trim());
+            const correctCostume =
+              CostumeMechanicHandler.deriveCorrectCostume(ids);
 
-        const ids = Array.isArray(nearbyCostume.id)
-          ? (nearbyCostume.id as string[])
-          : String(nearbyCostume.id)
-              .split(",")
-              .map((s) => s.trim());
-        const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
+            const initialCostumeState =
+              CostumeMechanicHandler.createInitialState();
+            const costumeState = costume.state as
+              | Partial<CostumeState>
+              | undefined;
+            const equippedParts = {
+              ...initialCostumeState.equippedParts,
+              ...costumeState?.equippedParts,
+            };
+            const lockedParts = {
+              ...initialCostumeState.lockedParts,
+              ...costumeState?.lockedParts,
+            };
 
-        const initialCostumeState = CostumeMechanicHandler.createInitialState();
-        const costumeState = nearbyCostume.state as
-          | Partial<CostumeState>
-          | undefined;
-        const equippedParts = {
-          ...initialCostumeState.equippedParts,
-          ...costumeState?.equippedParts,
-        };
-        const lockedParts = {
-          ...initialCostumeState.lockedParts,
-          ...costumeState?.lockedParts,
-        };
-
-        this.isCostumeSelectorOpen = true;
-        this.events.emit(GameEvents.DIALOGUE_STARTED);
-        EventBus.emit("ui:costume-selector-open", {
-          instanceId: nearbyCostume.instanceId,
-          correctCostume,
-          equippedParts,
-          lockedParts,
-        });
-        posthog.capture("costume_interacted", {
-          level_id: this.levelId,
+            this.isCostumeSelectorOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED);
+            EventBus.emit("ui:costume-selector-open", {
+              instanceId: costume.instanceId,
+              correctCostume,
+              equippedParts,
+              lockedParts,
+            });
+            posthog.capture("costume_interacted", {
+              level_id: this.levelId,
+            });
+          },
         });
       }
 
+      // Spotlight candidate
       if (this.spotlightSystem) {
-        const nearbySpotlight = this.spotlightSystem.getNearbySpotlight(
+        const spotlight = this.spotlightSystem.getNearbySpotlight(
           this.player.x,
           this.player.y,
-          120,
+          INTERACT_RANGE,
         );
-        if (nearbySpotlight) {
-          this.handleSpotlightInteraction(nearbySpotlight);
+        if (spotlight) {
+          const spotlightDist = Phaser.Math.Distance.Between(
+            px,
+            py,
+            spotlight.sprite.x,
+            spotlight.sprite.y,
+          );
+          candidates.push({
+            dist: spotlightDist,
+            open: () => {
+              this.handleSpotlightInteraction(spotlight);
+            },
+          });
         }
       }
+
+      if (candidates.length === 0) return;
+      candidates.sort((a, b) => a.dist - b.dist);
+      candidates[0].open();
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
