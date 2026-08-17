@@ -122,6 +122,26 @@
       "assets": {
         "sprite": "zona-franca"
       }
+    },
+    "zona-franca-luz": {
+      "id": "zona-franca",
+      "type": "Poster",
+      "metadata": {
+        "title": "Zona Franca, meu amor",
+        "author": "Márcio Souza",
+        "year": "1968",
+        "place": "Manaus, AM"
+      },
+      "educational": {
+        "description": "A peça deve ter uma iluminação que remete a conflitos.",
+        "medium": "",
+        "opinion": "Um cartaz branco que mostra um coração e máquinas pesadas. Está escrito “Zona Franca, meu amor” e o ano de 1968.",
+        "feedbackError": "Aqui deve ter um espetáculo do ano 1968.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "zona-franca"
+      }
     }
   },
   "COSTUMES": {
