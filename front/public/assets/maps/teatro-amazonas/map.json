@@ -703,6 +703,458 @@
         }, 
         {
          "draworder":"topdown",
+         "id":36,
+         "name":"LightBars",
+         "objects":[
+                {
+                 "height":0,
+                 "id":119,
+                 "name":"LB_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_1"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":543.785504078,
+                 "y":348.254653578
+                }, 
+                {
+                 "height":0,
+                 "id":120,
+                 "name":"LB_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_2"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":627.532094875,
+                 "y":348.254653578
+                }, 
+                {
+                 "height":0,
+                 "id":121,
+                 "name":"LB_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_3"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":684.123237901,
+                 "y":514.320911611
+                }, 
+                {
+                 "height":0,
+                 "id":122,
+                 "name":"LB_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_4"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":732.123237901,
+                 "y":514.320911611
+                }, 
+                {
+                 "height":0,
+                 "id":123,
+                 "name":"LB_5",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_5"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":780.123237901,
+                 "y":514.320911611
+                }, 
+                {
+                 "height":0,
+                 "id":124,
+                 "name":"LB_6",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_6"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":828.123237901,
+                 "y":514.320911611
+                }, 
+                {
+                 "height":0,
+                 "id":125,
+                 "name":"LB_7",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_7"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":512,
+                 "y":535.224107841
+                }, 
+                {
+                 "height":0,
+                 "id":126,
+                 "name":"LB_8",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_8"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":480,
+                 "y":535.224107841
+                }, 
+                {
+                 "height":0,
+                 "id":127,
+                 "name":"LB_9",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_9"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":448,
+                 "y":535.224107841
+                }, 
+                {
+                 "height":0,
+                 "id":128,
+                 "name":"LB_10",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_10"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":416,
+                 "y":535.224107841
+                }
+],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":30,
          "name":"MovingPlatforms",
          "objects":[
@@ -1418,7 +1870,7 @@
                 {
                  "height":0,
                  "id":88,
-                 "name":"PH_2",
+                 "name":"PH_3",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1467,7 +1919,7 @@
                 {
                  "height":0,
                  "id":111,
-                 "name":"PH_10",
+                 "name":"PH_11",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1475,7 +1927,7 @@
                          "name":"alpha",
                          "type":"float",
                          "value":0
-                        }, 
+                        },
                         {
                          "name":"filledScale",
                          "type":"float",
@@ -1511,7 +1963,7 @@
                 {
                  "height":0,
                  "id":93,
-                 "name":"PH_3",
+                 "name":"PH_4",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1560,7 +2012,7 @@
                 {
                  "height":0,
                  "id":95,
-                 "name":"PH_4",
+                 "name":"PH_5",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1609,7 +2061,7 @@
                 {
                  "height":0,
                  "id":97,
-                 "name":"PH_5",
+                 "name":"PH_6",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1658,20 +2110,20 @@
                 {
                  "height":0,
                  "id":89,
-                 "name":"L_2",
+                 "name":"L_3",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_2"
-                        }, 
+                         "value":"PH_3"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
                          "value":2.2
-                        }, 
+                        },
                         {
                          "name":"texture",
                          "type":"string",
@@ -1683,24 +2135,24 @@
                  "width":0,
                  "x":684.123237901468,
                  "y":572.497747420433
-                }, 
+                },
                 {
                  "height":0,
                  "id":112,
-                 "name":"L_10",
+                 "name":"L_11",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_10"
-                        }, 
+                         "value":"PH_11"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
                          "value":2.2
-                        }, 
+                        },
                         {
                          "name":"texture",
                          "type":"string",
@@ -1712,19 +2164,19 @@
                  "width":0,
                  "x":520.194167643486,
                  "y":91.1883432833551
-                }, 
+                },
                 {
                  "height":0,
                  "id":92,
-                 "name":"L_3",
+                 "name":"L_4",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_3"
-                        }, 
+                         "value":"PH_4"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
@@ -1745,14 +2197,14 @@
                 {
                  "height":0,
                  "id":94,
-                 "name":"L_4",
+                 "name":"L_5",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_4"
+                         "value":"PH_5"
                         }, 
                         {
                          "name":"scale",
@@ -1774,14 +2226,14 @@
                 {
                  "height":0,
                  "id":96,
-                 "name":"L_5",
+                 "name":"L_6",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_5"
+                         "value":"PH_6"
                         }, 
                         {
                          "name":"scale",
@@ -1847,7 +2299,7 @@
                 {
                  "height":0,
                  "id":103,
-                 "name":"PH_6",
+                 "name":"PH_7",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1888,7 +2340,7 @@
                 {
                  "height":0,
                  "id":104,
-                 "name":"PH_7",
+                 "name":"PH_8",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1929,7 +2381,7 @@
                 {
                  "height":0,
                  "id":105,
-                 "name":"PH_8",
+                 "name":"PH_9",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1970,7 +2422,7 @@
                 {
                  "height":0,
                  "id":106,
-                 "name":"PH_9",
+                 "name":"PH_10",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -2011,15 +2463,15 @@
                 {
                  "height":0,
                  "id":111,
-                 "name":"L_6",
+                 "name":"L_7",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_6"
-                        }, 
+                         "value":"PH_7"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
@@ -2040,15 +2492,15 @@
                 {
                  "height":0,
                  "id":112,
-                 "name":"L_7",
+                 "name":"L_8",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_7"
-                        }, 
+                         "value":"PH_8"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
@@ -2069,15 +2521,15 @@
                 {
                  "height":0,
                  "id":113,
-                 "name":"L_8",
+                 "name":"L_9",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_8"
-                        }, 
+                         "value":"PH_9"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
@@ -2098,15 +2550,15 @@
                 {
                  "height":0,
                  "id":114,
-                 "name":"L_9",
+                 "name":"L_10",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_9"
-                        }, 
+                         "value":"PH_10"
+                        },
                         {
                          "name":"scale",
                          "type":"float",
@@ -2244,11 +2696,11 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":36,
- "nextobjectid":119,
+ "nextlayerid":37,
+ "nextobjectid":129,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {

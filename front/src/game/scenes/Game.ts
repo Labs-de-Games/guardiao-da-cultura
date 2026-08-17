@@ -1791,6 +1791,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
       this.playConfettiBurst(p.area.centerX, p.area.centerY);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
       if (
