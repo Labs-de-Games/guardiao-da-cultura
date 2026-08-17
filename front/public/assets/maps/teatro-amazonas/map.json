@@ -840,8 +840,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1080.00094524444,
-                 "y":579.006249893497
+                 "x":1080.000945244,
+                 "y":579.006249893
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1275,7 +1275,7 @@
                  "visible":true,
                  "width":0,
                  "x":1025.46047751475,
-                 "y":580.390281831917
+                 "y":578.390281831917
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1380,6 +1380,50 @@
                  "width":0,
                  "x":684.123237901468,
                  "y":549.051446010754
+                }, 
+                {
+                 "height":0,
+                 "id":111,
+                 "name":"PH_7",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"filledScale",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"zona-franca-luz"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":""
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"poster"
+                        }],
+                 "rotation":0,
+                 "type":"PlaceholderInstance",
+                 "visible":true,
+                 "width":0,
+                 "x":520.657936249375,
+                 "y":43.724175947623
                 }, 
                 {
                  "height":0,
@@ -1556,6 +1600,35 @@
                  "width":0,
                  "x":684.123237901468,
                  "y":572.497747420433
+                }, 
+                {
+                 "height":0,
+                 "id":112,
+                 "name":"L_10",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_7"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.2
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"poster-label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":520.194167643486,
+                 "y":91.1883432833551
                 }, 
                 {
                  "height":0,
@@ -1973,7 +2046,7 @@
          "y":0
         }],
  "nextlayerid":35,
- "nextobjectid":111,
+ "nextobjectid":113,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
