@@ -32,3 +32,23 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: OWASP Dependency-Check (dependências npm)
+        if: github.base_ref == 'develop'
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        with:
+          project: 'gameplate'
+          path: '.'
+          format: 'JSON'
+          out: 'reports'
+          args: >
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+            --exclude "**/node_modules/**"
+            --exclude "**/supabase/**"
+
+      - name: SonarQube Scan
+        if: github.base_ref == 'develop'
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
