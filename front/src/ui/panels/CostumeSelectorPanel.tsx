@@ -53,13 +53,6 @@ const CAROUSEL_ITEMS_BY_PART: Record<
   feet: FEET_CAROUSEL_ITEMS,
 };
 
-const COSTUME_TITLES: Record<string, string> = {
-  indian: "Vista o traje indígena",
-  malandro: "Vista o malandro",
-  warrior: "Prepare o guerreiro",
-  soldier: "Equipe o soldado",
-};
-
 const PART_SIZES = {
   head: { width: "35%", height: "auto", mt: 8, mb: 0 },
   torso: { width: "60%", height: "auto", mt: 0, mb: 0 },
@@ -195,7 +188,7 @@ export function CostumeSelectorPanel() {
 
   const instanceId = costumeSelectorData?.instanceId ?? "";
   const correctCostume = costumeSelectorData?.correctCostume ?? "malandro";
-  const costumeTitle = COSTUME_TITLES[correctCostume] ?? "Vista o Manequim";
+  const costumeTitle = "Vista o Manequim Corretamente";
 
   // Initialize carousel states from data
   const initialStates = useMemo(() => {
