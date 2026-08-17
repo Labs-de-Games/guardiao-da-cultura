@@ -298,6 +298,7 @@ export const LEVEL_ASSETS = {
         path: "misc/spotlights/spotlight-off-yellow.png",
       },
       { key: "spotlight-yellow", path: "misc/spotlights/spotlight-yellow.png" },
+      { key: "light_bar", path: "misc/spotlights/light_bar.png" },
     ],
     COLLECTIBLES: [
       { key: "document", path: "collectibles/document.png" },
