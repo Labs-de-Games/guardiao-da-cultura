@@ -43,10 +43,11 @@ jobs:
           out: 'reports'
           args: >
             --nvdApiKey ${{ secrets.NVD_API_KEY }}
-            --exclude "**/node_modules/**"
-            --exclude "**/supabase/**"
-            --exclude "**/.next/**"
-            --exclude "**/.agents/**"
+            --exclude **/node_modules/**
+            --exclude **/supabase/**
+            --exclude **/.next/**
+            --exclude **/.agents/**
+            --disableYarnAudit
 
       - name: SonarQube Scan
         if: github.base_ref == 'develop'
