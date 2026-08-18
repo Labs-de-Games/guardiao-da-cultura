@@ -298,11 +298,16 @@ export class CollectibleSystem {
       .rectangle(0, 0, cardSize - 32, cardSize - 32, 0xffffff, 1)
       .setStrokeStyle(2, 0x1f1f1f, 0.8);
 
-    const inspectScale = instance.collectibleData.assets.scaleOnInspect ?? 6;
     const inspectSprite = this.scene.add
       .sprite(0, 0, instance.collectibleData.assets.sprite)
-      .setScale(inspectScale)
       .setOrigin(0.5, 0.5);
+
+    const maxSpriteSize = (cardSize - 32) * 0.85;
+    const fitScale = Math.min(
+      maxSpriteSize / inspectSprite.width,
+      maxSpriteSize / inspectSprite.height,
+    );
+    inspectSprite.setScale(fitScale);
 
     container.add([shadow, paper, innerFrame, inspectSprite]);
 
@@ -349,9 +354,14 @@ export class CollectibleSystem {
       return;
     }
 
+    const clueId = this.activeCollectible?.collectibleId ?? null;
     this.hideInspectCard();
     this.activeCollectible = null;
     this.inspectMode = "idle";
+
+    if (clueId) {
+      EventBus.emit("ui:evidence-board-open-with-clue", { clueId });
+    }
   }
 
   private getCardPosition(
