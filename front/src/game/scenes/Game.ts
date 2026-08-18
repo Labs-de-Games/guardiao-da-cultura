@@ -287,6 +287,15 @@ export class Game extends Scene implements GameDataAccessor {
       this.load.json(`${this.levelId}__collectibles_${index}`, path);
     });
 
+    // Load other levels' collectibles for global evidence board
+    Object.entries(LEVEL_REGISTRY).forEach(([id, def]) => {
+      if (id !== this.levelId) {
+        def.data.collectibles.forEach((path, index) => {
+          this.load.json(`${id}__collectibles_${index}`, path);
+        });
+      }
+    });
+
     this.load.spritesheet("placeholder", "misc/questionmark-spritesheet.png", {
       frameWidth: 315,
       frameHeight: 574,
@@ -562,24 +571,91 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     void this.persistenceBridge.initializeProgression();
-    void this.persistenceBridge.initializeCollectibles().then(() => {
+    void this.persistenceBridge.initializeCollectibles().then(async () => {
       const collectedIds = new Set(
         this.collectibleSystem
           .getCollectedCollectibles()
           .map((c) => c.collectibleId),
       );
-      const allCollectibles = Object.entries(
+
+      const allCollectibles: Array<{
+        id: string;
+        name: string;
+        category: string;
+        collected: boolean;
+        board?: {
+          position: { x: number; y: number; rotation: number };
+          connectedTo: string[];
+        };
+        educational?: {
+          description: string;
+          medium?: string;
+          opinion?: string;
+        };
+        metadata?: {
+          title: string;
+          author?: string;
+          year?: string;
+          place?: string;
+        };
+      }> = [];
+
+      // Current level's collectibles
+      for (const [category, items] of Object.entries(
         this.contentData.collectibles,
-      ).flatMap(([category, items]) =>
-        Object.entries(items as Record<string, CollectibleData>).map(
-          ([id, data]) => ({
+      )) {
+        for (const [id, data] of Object.entries(
+          items as Record<string, CollectibleData>,
+        )) {
+          allCollectibles.push({
             id,
             name: data.metadata.title || id,
             category,
             collected: collectedIds.has(id),
-          }),
-        ),
-      );
+            board: data.board,
+            educational: data.educational,
+            metadata: data.metadata,
+          });
+        }
+      }
+
+      // Other levels' collectibles (global board)
+      for (const [levelId, levelDef] of Object.entries(LEVEL_REGISTRY)) {
+        if (levelId === this.levelId) continue;
+
+        let otherCollected: Set<string> = new Set();
+        try {
+          const records =
+            await this.persistenceBridge.persistence.loadCollectibles(levelId);
+          otherCollected = new Set(records.map((c) => c.collectibleId));
+        } catch {
+          // Ignore — will show as uncollected
+        }
+
+        for (let i = 0; i < levelDef.data.collectibles.length; i++) {
+          const data = this.cache.json.get(`${levelId}__collectibles_${i}`);
+          if (data && typeof data === "object" && "collectibles" in data) {
+            for (const [category, items] of Object.entries(
+              (data as { collectibles: Record<string, unknown> }).collectibles,
+            )) {
+              for (const [id, itemData] of Object.entries(
+                items as Record<string, CollectibleData>,
+              )) {
+                allCollectibles.push({
+                  id,
+                  name: itemData.metadata?.title || id,
+                  category,
+                  collected: otherCollected.has(id),
+                  board: itemData.board,
+                  educational: itemData.educational,
+                  metadata: itemData.metadata,
+                });
+              }
+            }
+          }
+        }
+      }
+
       EventBus.emit("collectible:collectibles-sync", {
         entries: allCollectibles,
       });
@@ -967,18 +1043,71 @@ export class Game extends Scene implements GameDataAccessor {
       score: initialPayload.totalQuarters,
     });
 
-    const allCollectibles = Object.entries(
+    const allCollectibles: Array<{
+      id: string;
+      name: string;
+      category: string;
+      collected: boolean;
+      board?: {
+        position: { x: number; y: number; rotation: number };
+        connectedTo: string[];
+      };
+      educational?: { description: string; medium?: string; opinion?: string };
+      metadata?: {
+        title: string;
+        author?: string;
+        year?: string;
+        place?: string;
+      };
+    }> = [];
+
+    // Current level's collectibles
+    for (const [category, items] of Object.entries(
       this.contentData.collectibles,
-    ).flatMap(([category, items]) =>
-      Object.entries(items as Record<string, CollectibleData>).map(
-        ([id, data]) => ({
+    )) {
+      for (const [id, data] of Object.entries(
+        items as Record<string, CollectibleData>,
+      )) {
+        allCollectibles.push({
           id,
           name: data.metadata.title || id,
           category,
           collected: false,
-        }),
-      ),
-    );
+          board: data.board,
+          educational: data.educational,
+          metadata: data.metadata,
+        });
+      }
+    }
+
+    // Other levels' collectibles (global board)
+    for (const [levelId, levelDef] of Object.entries(LEVEL_REGISTRY)) {
+      if (levelId === this.levelId) continue;
+
+      for (let i = 0; i < levelDef.data.collectibles.length; i++) {
+        const data = this.cache.json.get(`${levelId}__collectibles_${i}`);
+        if (data && typeof data === "object" && "collectibles" in data) {
+          for (const [category, items] of Object.entries(
+            (data as { collectibles: Record<string, unknown> }).collectibles,
+          )) {
+            for (const [id, itemData] of Object.entries(
+              items as Record<string, CollectibleData>,
+            )) {
+              allCollectibles.push({
+                id,
+                name: itemData.metadata?.title || id,
+                category,
+                collected: false,
+                board: itemData.board,
+                educational: itemData.educational,
+                metadata: itemData.metadata,
+              });
+            }
+          }
+        }
+      }
+    }
+
     EventBus.emit("collectible:collectibles-sync", {
       entries: allCollectibles,
     });
