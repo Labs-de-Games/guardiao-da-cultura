@@ -50,26 +50,18 @@ export class Player
   private standingPlatform: Phaser.Physics.Arcade.Sprite | null = null;
 
   private setPhysicsBodyForVisualScale(scale: number) {
-    const isDragging = scale === PLAYER_PHYSICS.DRAGGING_SCALE;
-    const isJumping = this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key;
+    const hitbox = PLAYER_PHYSICS.HITBOX;
 
-    let hitbox: { readonly WIDTH: number; readonly HEIGHT: number } =
-      PLAYER_PHYSICS.HITBOX;
-    let hitboxOffset: { readonly X: number; readonly Y: number } =
-      PLAYER_PHYSICS.HITBOX_OFFSET;
-
-    if (isDragging) {
-      hitbox = PLAYER_PHYSICS.DRAGGING_HITBOX;
-      hitboxOffset = PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET;
-    } else if (isJumping) {
-      hitbox = PLAYER_PHYSICS.JUMP_HITBOX;
-      hitboxOffset = PLAYER_PHYSICS.JUMP_HITBOX_OFFSET;
-    }
+    // Horizontally center and vertically foot-anchor the hitbox within
+    // whichever frame is currently active (walk/idle/jump/dragging frames
+    // are 64x44-ish while back/front/carrying frames are 48x37).
+    const offsetX = (this.frame.width - hitbox.WIDTH) / 2;
+    const offsetY = this.frame.height - hitbox.HEIGHT - 0.5;
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
     const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
-    const worldOffX = hitboxOffset.X * PLAYER_PHYSICS.SCALE;
-    const worldOffY = hitboxOffset.Y * PLAYER_PHYSICS.SCALE;
+    const worldOffX = offsetX * PLAYER_PHYSICS.SCALE;
+    const worldOffY = offsetY * PLAYER_PHYSICS.SCALE;
 
     this.setSize(worldW / scale, worldH / scale);
     this.setOffset(worldOffX / scale, worldOffY / scale);
@@ -82,6 +74,14 @@ export class Player
       {
         frameWidth: PLAYER_ASSETS.WALK_SPRITESHEET.frameWidth,
         frameHeight: PLAYER_ASSETS.WALK_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.IDLE_SPRITESHEET.key,
+      PLAYER_ASSETS.IDLE_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.IDLE_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.IDLE_SPRITESHEET.frameHeight,
       },
     );
     scene.load.spritesheet(
@@ -307,11 +307,7 @@ export class Player
 
     this.setScale(PLAYER_PHYSICS.SCALE);
     this.setDamping(PLAYER_PHYSICS.DAMPING);
-    this.setSize(PLAYER_PHYSICS.HITBOX.WIDTH, PLAYER_PHYSICS.HITBOX.HEIGHT);
-    this.setOffset(
-      PLAYER_PHYSICS.HITBOX_OFFSET.X,
-      PLAYER_PHYSICS.HITBOX_OFFSET.Y,
-    );
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
     this.setDrag(PLAYER_PHYSICS.DRAG.X, PLAYER_PHYSICS.DRAG.Y);
     this.setGravity(PLAYER_PHYSICS.GRAVITY.X, PLAYER_PHYSICS.GRAVITY.Y);
     this.setMaxVelocity(
@@ -724,8 +720,13 @@ export class Player
           ? PLAYER_ANIMS.CARRY_IDLE.key
           : PLAYER_ANIMS.IDLE.key;
         const changed = this.anims.currentAnim?.key !== idleAnim;
-        this.anims.play(idleAnim, true);
-        if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+        // Only (re)start the idle anim on the transition into it - calling
+        // play() every idle frame would restart the loop from frame 0 on
+        // every tick instead of letting it play continuously.
+        if (changed) {
+          this.anims.play(idleAnim, true);
+          this.setPhysicsBodyForVisualScale(this.scaleX);
+        }
       }
     }
 
@@ -758,6 +759,13 @@ export class Player
 
     if (this.isGrabbing && this.grabbedItem) {
       const isMoving = Math.abs(body.velocity.x) > 10;
+
+      // The dragging sheet's moving frames are drawn facing left, opposite
+      // of the walk sheet's right-facing default, so the flip direction is
+      // inverted here.
+      if (isMoving) {
+        this.setFlipX(body.velocity.x > 0);
+      }
 
       // Play drag loop sound only when moving
       if (isMoving) {
@@ -877,16 +885,12 @@ export class Player
     const prevBodyY = body?.y;
     this.grabbedItem.setDepth(11);
 
-    // Switch player to the dragging pose (visual), but keep the physics
-    // body stable to avoid collision ejection.
-    this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
-    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
-
-    // Swap to the dragging spritesheet immediately so we can compensate any
-    // body shift caused by the new (bigger) animation frame size.
+    // Swap to the dragging spritesheet first so the hitbox recalculation
+    // below reads its (slightly shorter) frame dimensions.
     this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
 
-    // Keep the Arcade body world position stable across scale/animation changes.
+    // Keep the Arcade body world position stable across the frame-size change.
     if (
       body &&
       typeof prevBodyX === "number" &&
@@ -993,11 +997,10 @@ export class Player
     this.isGrabbing = false;
     this.grabbedItem = null;
 
-    this.setScale(PLAYER_PHYSICS.SCALE);
-    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
-
-    // Swap back to the walking spritesheet immediately for the same reason as above.
+    // Swap back to the walking spritesheet first so the hitbox recalculation
+    // below reads its frame dimensions.
     this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
   }
 
   private getMovementAcceleration(): number {
