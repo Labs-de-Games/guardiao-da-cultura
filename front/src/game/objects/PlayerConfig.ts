@@ -12,13 +12,21 @@ export const PLAYER_ASSETS = {
   WALK_SPRITESHEET: {
     key: "player_walk",
     path: "player/animations/walking.png",
-    frameWidth: 48,
-    frameHeight: 37,
+    // frameWidth: 48,
+    // frameHeight: 37,
+    frameWidth: 64,
+    frameHeight: 44,
+  },
+  IDLE_SPRITESHEET: {
+    key: "player_idle",
+    path: "player/animations/idle.png",
+    frameWidth: 64,
+    frameHeight: 45,
   },
   JUMP_SPRITESHEET: {
     key: "player_jump",
     path: "player/animations/jump.png",
-    frameWidth: 48,
+    frameWidth: 64,
     frameHeight: 48,
   },
   CLIMB_SPRITESHEET: {
@@ -36,8 +44,8 @@ export const PLAYER_ASSETS = {
   DRAGGING_SPRITESHEET: {
     key: "player_dragging",
     path: "player/animations/dragging.png",
-    frameWidth: 162,
-    frameHeight: 183,
+    frameWidth: 64,
+    frameHeight: 42,
   },
   CARRYING_SPRITESHEET: {
     key: "player_carrying",
@@ -93,38 +101,20 @@ export const PLAYER_STATS = {
 // PHYSICS
 // ------------------------------------------------------------
 export const PLAYER_PHYSICS = {
-  SCALE: 4.5,
+  SCALE: 3.5,
 
-  /** Hitbox size (setSize) */
+  /**
+   * Hitbox size (setSize) for the default (walk/idle/carry/back/front)
+   * states. Its offset is derived dynamically from the active frame's
+   * dimensions in Player.setPhysicsBodyForVisualScale — centered
+   * horizontally, foot-anchored vertically — since those spritesheets
+   * don't all share the same frame size.
+   */
   HITBOX: {
     WIDTH: 12,
     HEIGHT: 38,
   },
 
-  /** Hitbox offset (setOffset) */
-  HITBOX_OFFSET: {
-    X: 18,
-    Y: -1.5,
-  },
-
-  /** Scale and Hitbox for the dragging animation */
-  DRAGGING_SCALE: 0.9,
-  DRAGGING_HITBOX: {
-    WIDTH: 12,
-    HEIGHT: 38,
-  },
-  DRAGGING_HITBOX_OFFSET: {
-    X: 10,
-    Y: -1.5,
-  },
-  JUMP_HITBOX: {
-    WIDTH: 12,
-    HEIGHT: 38,
-  },
-  JUMP_HITBOX_OFFSET: {
-    X: 18,
-    Y: 5,
-  },
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
 
@@ -182,9 +172,9 @@ export const PLAYER_DAMAGE = {
 export const PLAYER_ANIMS = {
   IDLE: {
     key: "idle",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [0],
-    frameRate: 10,
+    spritesheet: PLAYER_ASSETS.IDLE_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 7,
     repeat: -1,
   },
   WALK: {
@@ -270,14 +260,14 @@ export const PLAYER_ANIMS = {
   PUSH: {
     key: "push",
     spritesheet: "player_dragging",
-    frames: [0, 1, 2, 3],
+    frames: [1, 2, 3, 4, 5, 6],
     frameRate: 13,
     repeat: -1,
   },
   PULL: {
     key: "pull",
     spritesheet: "player_dragging",
-    frames: [3, 2, 1, 0],
+    frames: [6, 5, 4, 3, 2, 1],
     frameRate: 13,
     repeat: -1,
   },
