@@ -111,7 +111,7 @@ flowchart TB
 1. **Identity & Access (Auth):** Passwordless magic-link authentication, JWT session management, refresh token rotation, and role-based access control.
 2. **Users:** User profile management, roles (`player`, `institution`, `admin`), and account status.
 3. **Game Ingestion:** Receives gameplay events (e.g., `LEVEL_COMPLETED`, `ITEM_COLLECTED`) from the frontend via HTTP.
-4. **Progression Engine:** Tracks player level completion, stars, clues, and chapter status.
+4. **Progression Engine:** Tracks player level completion, stars, clues, and chapter status. Collected clues are displayed on the evidence board overlay (Pistas).
 5. **Scoring:** Manages user scores, leaderboard data, and score history.
 6. **Badges:** Badge definitions, user-badge associations, and achievement tracking.
 7. **Analytics:** Stores raw game event logs (append-only) for funnel metrics and dashboards.
@@ -151,7 +151,7 @@ The codebase is structured as a **Modular Monolith**.
 - The repository is split top-level into `front/` and `back/`.
 - Inside the backend (`/back/src`), features are grouped into logical, domain-driven folders (e.g., `users`, `health`, `database`).
 - Inside the frontend (`/front/src`), the web UI and the Phaser game logic (`/game`) are strictly separated. The game communicates with the outer React shell, which in turn communicates with the backend.
-- UI overlays (HUD and modal panels) are being centralized in React and synchronized with gameplay through a shared typed EventBus.
+- UI overlays (HUD, evidence board, modal panels) are centralized in React and synchronized with gameplay through a shared typed EventBus. The evidence board (`EvidenceBoardOverlay`) loads collectibles across all levels and renders them as pinned cards with SVG connections.
 
 ### Directory Structure
 
@@ -269,7 +269,7 @@ Admin-only endpoints guarded by `RolesGuard`.
 |--------|------|------|-------------|
 | `GET` | `/progression/state` | JWT | Get current player progression state. |
 | `POST` | `/progression/level-complete` | JWT | Register level completion with stars and badges. |
-| `GET` | `/progression/inventory` | JWT | Get collected clues and artwork info. |
+| `GET` | `/progression/inventory` | JWT | Get collected clues and artwork info. Consumed by the evidence board overlay. |
 
 ### Scoring Module (`/scoring`)
 
