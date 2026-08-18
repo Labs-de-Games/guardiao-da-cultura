@@ -47,11 +47,23 @@ export const PLAYER_ASSETS = {
     frameWidth: 64,
     frameHeight: 42,
   },
-  CARRYING_SPRITESHEET: {
-    key: "player_carrying",
-    path: "player/animations/carrying.png",
-    frameWidth: 48,
-    frameHeight: 37,
+  CARRYING_IDLE_SPRITESHEET: {
+    key: "player_carrying_idle",
+    path: "player/animations/carrying_idle.png",
+    frameWidth: 64,
+    frameHeight: 45,
+  },
+  CARRYING_WALK_SPRITESHEET: {
+    key: "player_carrying_walk",
+    path: "player/animations/carrying_walk.png",
+    frameWidth: 64,
+    frameHeight: 46,
+  },
+  CARRYING_JUMP_SPRITESHEET: {
+    key: "player_carrying_jump",
+    path: "player/animations/carrying_jump.png",
+    frameWidth: 64,
+    frameHeight: 64,
   },
   BACK_SPRITESHEET: {
     key: "player_back",
@@ -114,6 +126,23 @@ export const PLAYER_PHYSICS = {
     WIDTH: 12,
     HEIGHT: 38,
   },
+
+  /**
+   * carrying_jump.png's frame canvas (64px tall) is taller than the other
+   * carry frames (45-46px) to fit the raised jump pose, which leaves ~10px
+   * of transparent padding below the character's feet. Subtracted from the
+   * foot-anchored offset so the hitbox tracks the sprite, not the canvas.
+   */
+  CARRY_JUMP_FOOT_PADDING: 10,
+
+  /**
+   * Total vertical padding baked into carrying_jump.png's 64px-tall canvas
+   * (~9px above, ~10px below the character) versus the other carry frames'
+   * tight 45-46px canvas. Subtracted from the frame height anywhere the
+   * carried item's offset is derived from it, so the item doesn't jump
+   * further from the player just because that texture's canvas is taller.
+   */
+  CARRY_JUMP_CANVAS_PADDING: 18,
 
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
@@ -186,14 +215,14 @@ export const PLAYER_ANIMS = {
   },
   CARRY_IDLE: {
     key: "carry_idle",
-    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
-    frames: [0],
-    frameRate: 10,
+    spritesheet: PLAYER_ASSETS.CARRYING_IDLE_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 7,
     repeat: -1,
   },
   CARRY_WALK: {
     key: "carry_walk",
-    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
+    spritesheet: PLAYER_ASSETS.CARRYING_WALK_SPRITESHEET.key,
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
     frameRate: 15,
     repeat: -1,
@@ -201,6 +230,13 @@ export const PLAYER_ANIMS = {
   JUMP: {
     key: "jump",
     spritesheet: PLAYER_ASSETS.JUMP_SPRITESHEET.key,
+    frames: [1, 2, 3, 4, 5, 6, 7, 8],
+    frameRate: 17,
+    repeat: 0,
+  },
+  CARRY_JUMP: {
+    key: "carry_jump",
+    spritesheet: PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key,
     frames: [1, 2, 3, 4, 5, 6, 7, 8],
     frameRate: 17,
     repeat: 0,
