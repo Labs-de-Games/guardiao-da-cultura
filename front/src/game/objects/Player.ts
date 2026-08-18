@@ -53,10 +53,14 @@ export class Player
     const hitbox = PLAYER_PHYSICS.HITBOX;
 
     // Horizontally center and vertically foot-anchor the hitbox within
-    // whichever frame is currently active (walk/idle/jump/dragging frames
-    // are 64x44-ish while back/front/carrying frames are 48x37).
+    // whichever frame is currently active (walk/idle/jump/dragging/carrying
+    // frames are 64x44-ish while back/front frames are 48x37).
     const offsetX = (this.frame.width - hitbox.WIDTH) / 2;
-    const offsetY = this.frame.height - hitbox.HEIGHT - 0.5;
+    const footPadding =
+      this.texture.key === PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key
+        ? PLAYER_PHYSICS.CARRY_JUMP_FOOT_PADDING
+        : 0;
+    const offsetY = this.frame.height - hitbox.HEIGHT - footPadding - 0.5;
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
     const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
@@ -117,11 +121,27 @@ export class Player
       },
     );
     scene.load.spritesheet(
-      PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
-      PLAYER_ASSETS.CARRYING_SPRITESHEET.path,
+      PLAYER_ASSETS.CARRYING_IDLE_SPRITESHEET.key,
+      PLAYER_ASSETS.CARRYING_IDLE_SPRITESHEET.path,
       {
-        frameWidth: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameHeight,
+        frameWidth: PLAYER_ASSETS.CARRYING_IDLE_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.CARRYING_IDLE_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.CARRYING_WALK_SPRITESHEET.key,
+      PLAYER_ASSETS.CARRYING_WALK_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.CARRYING_WALK_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.CARRYING_WALK_SPRITESHEET.frameHeight,
+      },
+    );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key,
+      PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.frameHeight,
       },
     );
     scene.load.spritesheet(
@@ -204,6 +224,17 @@ export class Player
       }),
       frameRate: PLAYER_ANIMS.JUMP.frameRate,
       repeat: PLAYER_ANIMS.JUMP.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.CARRY_JUMP.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.CARRY_JUMP.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.CARRY_JUMP.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.CARRY_JUMP.frameRate,
+      repeat: PLAYER_ANIMS.CARRY_JUMP.repeat,
     });
     scene.anims.create({
       key: PLAYER_ANIMS.CLIMB.key,
@@ -489,7 +520,8 @@ export class Player
     }
 
     const isJumpPlaying =
-      this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
+      (this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key ||
+        this.anims.currentAnim?.key === PLAYER_ANIMS.CARRY_JUMP.key) &&
       this.anims.isPlaying;
 
     let isOnStairsCenter = false;
@@ -830,10 +862,11 @@ export class Player
         }
       }
 
-      if (!this.isCarrying) {
-        this.anims.play(PLAYER_ANIMS.JUMP.key, true);
-        this.setPhysicsBodyForVisualScale(this.scaleX);
-      }
+      const jumpAnim = this.isCarrying
+        ? PLAYER_ANIMS.CARRY_JUMP.key
+        : PLAYER_ANIMS.JUMP.key;
+      this.anims.play(jumpAnim, true);
+      this.setPhysicsBodyForVisualScale(this.scaleX);
     }
 
     if (
@@ -865,7 +898,11 @@ export class Player
     }
 
     if (this.isCarrying && this.carriedItem) {
-      const offsetY = this.displayHeight / 2 - 10;
+      const carryFrameHeight =
+        this.texture.key === PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key
+          ? this.frame.height - PLAYER_PHYSICS.CARRY_JUMP_CANVAS_PADDING
+          : this.frame.height;
+      const offsetY = (carryFrameHeight * this.scaleY) / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
       this.carriedItem.setDepth(this.depth + 2);
