@@ -112,8 +112,11 @@ export class Portal extends Phaser.GameObjects.Zone {
             const frontAnim = p.isCarrying
               ? PLAYER_ANIMS.FRONT_CARRYING.key
               : PLAYER_ANIMS.IDLE_SOUTH.key;
+            const exitIdleAnim = p.isCarrying
+              ? PLAYER_ANIMS.CARRY_IDLE_SOUTH.key
+              : PLAYER_ANIMS.IDLE_SOUTH.key;
             p.anims.play(frontAnim, true);
-            p.setPortalExitIdleAnim(frontAnim);
+            p.setPortalExitIdleAnim(exitIdleAnim);
 
             if (p.isCarrying && p.carriedItem) {
               const carriedItem = p.carriedItem;
