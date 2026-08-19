@@ -171,6 +171,7 @@ minigames, quizzes e carregamento do jogo.
 | `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
+| `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
 
 `browser`/`operating_system` are not sent as custom properties — PostHog
 autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`

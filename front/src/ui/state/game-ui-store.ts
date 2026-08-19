@@ -51,11 +51,19 @@ export interface MissionProgress {
   steps: QuestStep[];
 }
 
+export interface BoardPosition {
+  position: { x: number; y: number; rotation: number };
+  connectedTo: string[];
+}
+
 export interface CollectibleEntry {
   id: string;
   name: string;
   collected: boolean;
   category: string;
+  board?: BoardPosition;
+  educational?: { description: string; medium?: string; opinion?: string };
+  metadata?: { title: string; author?: string; year?: string; place?: string };
 }
 
 export interface ChunkSelectorData {
@@ -105,6 +113,8 @@ export interface GameUIState {
   isInterestDialogOpen: boolean;
   progression: UserProgressState | null;
   introData: { levelId: string; config: IntroConfig } | null;
+  evidenceBoardOpen: boolean;
+  evidenceBoardSelectedClueId: string | null;
 
   quiz: {
     isVisible: boolean;
@@ -171,6 +181,8 @@ export interface GameUIState {
   closeInterestDialog: () => void;
   setProgression: (state: UserProgressState) => void;
   setIntroData: (data: { levelId: string; config: IntroConfig } | null) => void;
+  setEvidenceBoardOpen: (open: boolean) => void;
+  setEvidenceBoardSelectedClueId: (id: string | null) => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -274,6 +286,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     isInterestDialogOpen: false,
     progression: null,
     introData: null,
+    evidenceBoardOpen: false,
+    evidenceBoardSelectedClueId: null,
 
     quiz: {
       isVisible: false,
@@ -320,6 +334,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           chunkSelectorData: null,
           labelData: null,
           levelInfo: null,
+          evidenceBoardOpen: false,
+          evidenceBoardSelectedClueId: null,
         });
       }
     },
@@ -479,6 +495,9 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     closeInterestDialog: () => set({ isInterestDialogOpen: false }),
     setProgression: (state) => set({ progression: state }),
     setIntroData: (data) => set({ introData: data }),
+    setEvidenceBoardOpen: (open) => set({ evidenceBoardOpen: open }),
+    setEvidenceBoardSelectedClueId: (id) =>
+      set({ evidenceBoardSelectedClueId: id }),
 
     startQuiz: (
       questions,
