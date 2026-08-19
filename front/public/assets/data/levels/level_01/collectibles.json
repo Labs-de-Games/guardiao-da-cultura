@@ -1,24 +1,64 @@
 {
   "collectibles": {
     "CLUE_VILLAIN": {
-      "cachimbo": {
-        "id": "cachimbo",
+      "paper": {
+        "id": "paper",
         "metadata": {
-          "title": "Cachimbo"
+          "title": "Anotação antiga"
         },
         "educational": {
-          "description": "Um cachimbo largado na cena do crime",
-          "medium": "Madeira",
-          "opinion": "Um cachimbo bem fedorento, com restos de plantas queimadas. Parece que foi usado há pouco tempo, não deve ser um item do museu."
+          "description": "Uma anotação antiga sobre as posições das obras",
+          "medium": "Papel",
+          "opinion": "Ele sabia exatamente onde cada peça deveria estar. Isso não parece coisa de quem veio aqui só de passagem."
         },
         "assets": {
-          "sprite": "cachimbo",
-          "scaleOnMap": 0.4,
+          "sprite": "paper",
+          "scaleOnMap": 5,
           "scaleOnInspect": 5
         },
         "board": {
-          "position": { "x": 48, "y": 35, "rotation": -2 },
-          "connectedTo": []
+          "position": { "x": 30, "y": 65, "rotation": -2 },
+          "connectedTo": ["varnish"]
+        }
+      },
+      "varnish": {
+        "id": "varnish",
+        "metadata": {
+          "title": "Verniz de conservação"
+        },
+        "educational": {
+          "description": "Uma lata de verniz de conservação largada na cena do crime",
+          "medium": "Metal",
+          "opinion": "Verniz de conservação...\nSe essa lata pertence a ele, talvez eu esteja diante de alguém com experiência profissional no acervo."
+        },
+        "assets": {
+          "sprite": "varnish",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 10, "y": 40, "rotation": -2 },
+          "connectedTo": ["document", "paper"]
+        }
+      },
+      "message": {
+        "id": "message",
+        "metadata": {
+          "title": "Mensagem do Vândalo"
+        },
+        "educational": {
+          "description": "Uma mensagem do Vândalo dizendo: \"Nada está fora do lugar. Apenas foi colocado no lugar errado.\"",
+          "medium": "Papel",
+          "opinion": "\"Nada está fora do lugar. Apenas foi colocado no lugar errado\". Então ele queria que encontrássemos isso."
+        },
+        "assets": {
+          "sprite": "message",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 60, "y": 65, "rotation": -2 },
+          "connectedTo": ["paper", "signature"]
         }
       }
     }
