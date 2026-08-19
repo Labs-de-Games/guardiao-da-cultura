@@ -639,6 +639,7 @@ export class Player
       ) {
         if (!this.isClimbingStairs) {
           this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
+          this.setPhysicsBodyForVisualScale(this.scaleX);
         }
         this.isClimbingStairs = true;
       }
@@ -914,11 +915,12 @@ export class Player
       !this.isCarrying
     ) {
       if (isClimbing) {
-        if (downDown) {
-          this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
-        } else {
-          this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
-        }
+        const climbAnim = downDown
+          ? PLAYER_ANIMS.CLIMB_DOWN.key
+          : PLAYER_ANIMS.CLIMB.key;
+        const changed = this.anims.currentAnim?.key !== climbAnim;
+        this.anims.play(climbAnim, true);
+        if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
       } else if (shouldPlayClimbPause) {
         this.anims.pause();
       }
@@ -1117,6 +1119,7 @@ export class Player
     if (isOnStairs && !this.isCarrying) {
       if (this.anims.currentAnim?.key !== PLAYER_ANIMS.CLIMB.key) {
         this.anims.play(PLAYER_ANIMS.CLIMB.key);
+        this.setPhysicsBodyForVisualScale(this.scaleX);
       }
       this.anims.pause();
       return;

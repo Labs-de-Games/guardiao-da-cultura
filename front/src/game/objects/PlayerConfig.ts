@@ -31,15 +31,15 @@ export const PLAYER_ASSETS = {
   },
   CLIMB_SPRITESHEET: {
     key: "player_climb",
-    path: "player/animations/climbing_up.png",
+    path: "player/animations/climbing.png",
     frameWidth: 48,
-    frameHeight: 48,
+    frameHeight: 46,
   },
   CLIMB_DOWN_SPRITESHEET: {
     key: "player_climb_down",
-    path: "player/animations/climbing_up.png",
+    path: "player/animations/climbing.png",
     frameWidth: 48,
-    frameHeight: 48,
+    frameHeight: 46,
   },
   DRAGGING_SPRITESHEET: {
     key: "player_dragging",
@@ -257,14 +257,14 @@ export const PLAYER_ANIMS = {
   CLIMB: {
     key: "climb",
     spritesheet: "player_climb",
-    frames: [0, 1, 2, 3, 4],
+    frames: [0, 1, 2, 3, 4, 5, 6, 7, 8],
     frameRate: 5,
     repeat: -1,
   },
   CLIMB_DOWN: {
     key: "climb_down",
     spritesheet: "player_climb",
-    frames: [4, 3, 2, 1, 0],
+    frames: [8, 7, 6, 5, 4, 3, 2, 1, 0],
     frameRate: 5,
     repeat: -1,
   },
