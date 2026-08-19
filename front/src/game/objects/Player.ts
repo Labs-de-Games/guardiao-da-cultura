@@ -176,6 +176,14 @@ export class Player
         frameHeight: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameHeight,
       },
     );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.IDLE_SOUTH_SPRITESHEET.key,
+      PLAYER_ASSETS.IDLE_SOUTH_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.IDLE_SOUTH_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.IDLE_SOUTH_SPRITESHEET.frameHeight,
+      },
+    );
   }
 
   static createAnims(scene: Phaser.Scene) {
@@ -318,6 +326,17 @@ export class Player
       ),
       frameRate: PLAYER_ANIMS.FRONT_CARRYING.frameRate,
       repeat: PLAYER_ANIMS.FRONT_CARRYING.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.IDLE_SOUTH.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.IDLE_SOUTH.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.IDLE_SOUTH.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.IDLE_SOUTH.frameRate,
+      repeat: PLAYER_ANIMS.IDLE_SOUTH.repeat,
     });
   }
 
@@ -1065,7 +1084,8 @@ export class Player
       this.anims.currentAnim?.key === PLAYER_ANIMS.BACK.key ||
       this.anims.currentAnim?.key === PLAYER_ANIMS.BACK_CARRYING.key ||
       this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key ||
-      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT_CARRYING.key
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT_CARRYING.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.IDLE_SOUTH.key
     ) {
       return;
     }
