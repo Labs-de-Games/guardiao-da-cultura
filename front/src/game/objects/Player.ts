@@ -59,7 +59,9 @@ export class Player
     const footPadding =
       this.texture.key === PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key
         ? PLAYER_PHYSICS.CARRY_JUMP_FOOT_PADDING
-        : 0;
+        : this.texture.key === PLAYER_ASSETS.IDLE_SPRITESHEET.key
+          ? PLAYER_PHYSICS.IDLE_FOOT_PADDING
+          : 0;
     const offsetY = this.frame.height - hitbox.HEIGHT - footPadding - 0.5;
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
