@@ -841,7 +841,7 @@
                  "visible":true,
                  "width":0,
                  "x":1080.000945244,
-                 "y":579.006249893
+                 "y":581.390281832
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1258,7 +1258,7 @@
                         {
                          "name":"finalPositionY",
                          "type":"int",
-                         "value":226
+                         "value":228
                         }, 
                         {
                          "name":"flipX",
@@ -1275,7 +1275,7 @@
                  "visible":true,
                  "width":0,
                  "x":1025.46047751475,
-                 "y":578.390281831917
+                 "y":580.390281831917
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1384,7 +1384,7 @@
                 {
                  "height":0,
                  "id":111,
-                 "name":"PH_7",
+                 "name":"PH_10",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1611,7 +1611,7 @@
                         {
                          "name":"placeholder_id",
                          "type":"string",
-                         "value":"PH_7"
+                         "value":"PH_10"
                         }, 
                         {
                          "name":"scale",
