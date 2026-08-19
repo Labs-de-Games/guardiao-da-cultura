@@ -112,7 +112,7 @@
                         {
                          "name":"finalPositionY",
                          "type":"int",
-                         "value":67
+                         "value":69
                         }, 
                         {
                          "name":"flipX",
@@ -129,7 +129,7 @@
                  "visible":true,
                  "width":0,
                  "x":115.479543540266,
-                 "y":498.803944371064
+                 "y":499.803944371064
                 }],
          "opacity":1,
          "type":"objectgroup",
