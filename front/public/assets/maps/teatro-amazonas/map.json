@@ -620,6 +620,89 @@
         }, 
         {
          "draworder":"topdown",
+         "id":35,
+         "name":"collectibles",
+         "objects":[
+                {
+                 "height":0,
+                 "id":116,
+                 "name":"I1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"document"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":985.733477837193,
+                 "y":572.284293378226
+                }, 
+                {
+                 "height":0,
+                 "id":117,
+                 "name":"I2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"notes"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":295.29657030689,
+                 "y":591.861444642621
+                }, 
+                {
+                 "height":0,
+                 "id":118,
+                 "name":"I3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"signature"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":167.796812735147,
+                 "y":332.122351454117
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":30,
          "name":"MovingPlatforms",
          "objects":[
@@ -2161,11 +2244,11 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":35,
- "nextobjectid":115,
+ "nextlayerid":36,
+ "nextobjectid":119,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.2",
+ "tiledversion":"1.12.1",
  "tileheight":16,
  "tilesets":[
         {
