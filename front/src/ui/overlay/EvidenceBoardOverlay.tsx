@@ -150,6 +150,7 @@ export function EvidenceBoardOverlay() {
         alignItems: "center",
         justifyContent: "center",
         pointerEvents: "auto",
+        imageRendering: "pixelated",
       }}
     >
       <Box
