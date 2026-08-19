@@ -131,7 +131,12 @@ export const LEVEL_ASSETS = {
       { key: "rec", path: "misc/rec.png" },
       { key: "ladder_image", path: "misc/ladder.png" },
     ],
-    COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
+    COLLECTIBLES: [
+      { key: "cachimbo", path: "collectibles/cachimbo.png" },
+      { key: "message", path: "collectibles/message.png" },
+      { key: "paper", path: "collectibles/paper.png" },
+      { key: "varnish", path: "collectibles/varnish.png" },
+    ],
     CONTENT: {
       key: "content",
       path: "data/content.json",
@@ -250,7 +255,11 @@ export const LEVEL_ASSETS = {
       },
       { key: "spotlight-yellow", path: "misc/spotlights/spotlight-yellow.png" },
     ],
-    COLLECTIBLES: [],
+    COLLECTIBLES: [
+      { key: "document", path: "collectibles/document.png" },
+      { key: "notes", path: "collectibles/notes.png" },
+      { key: "signature", path: "collectibles/signature.png" },
+    ],
     CONTENT: {
       key: "content",
       path: "data/content.json",
