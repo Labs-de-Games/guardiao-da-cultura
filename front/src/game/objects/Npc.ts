@@ -137,6 +137,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       this.exclamationIcon.setVisible(true);
       this.exclamationIcon.setPosition(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y);
     }
+    this.faceThePlayer();
   }
 
   public hideAfterQuiz() {
@@ -182,9 +183,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    if (this.player) {
-      this.setFlipX(this.player.x < this.x);
-    }
+    this.faceThePlayer();
 
     const missionId = this.config.missionId;
     const status = this.questManager.getStatus(missionId);
@@ -263,6 +262,14 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
   setPlayerTracking(player: Phaser.Physics.Arcade.Sprite) {
     this.player = player;
     this.interaction.setPlayerTracking(player);
+    this.faceThePlayer();
+  }
+
+  /** Orient the NPC to look towards the player's current position. */
+  private faceThePlayer() {
+    if (this.player) {
+      this.setFlipX(this.player.x < this.x);
+    }
   }
 
   update(_ts: number, _dt: number) {
