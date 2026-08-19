@@ -20,8 +20,8 @@ export const PLAYER_ASSETS = {
   IDLE_SPRITESHEET: {
     key: "player_idle",
     path: "player/animations/idle.png",
-    frameWidth: 64,
-    frameHeight: 45,
+    frameWidth: 48,
+    frameHeight: 48,
   },
   JUMP_SPRITESHEET: {
     key: "player_jump",
@@ -156,6 +156,13 @@ export const PLAYER_PHYSICS = {
    */
   CARRY_JUMP_CANVAS_PADDING: 18,
 
+  /**
+   * idle.png's 48px-tall canvas leaves ~2px of transparent padding below the
+   * character's feet (they stop around y=46). Subtracted from the
+   * foot-anchored offset so the idle hitbox tracks the sprite, not the canvas.
+   */
+  IDLE_FOOT_PADDING: 2,
+
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
 
@@ -214,7 +221,7 @@ export const PLAYER_ANIMS = {
   IDLE: {
     key: "idle",
     spritesheet: PLAYER_ASSETS.IDLE_SPRITESHEET.key,
-    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frames: [0, 1, 2, 3, 4, 5],
     frameRate: 7,
     repeat: -1,
   },
