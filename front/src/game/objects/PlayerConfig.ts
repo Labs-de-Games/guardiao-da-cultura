@@ -155,6 +155,12 @@ export const PLAYER_PHYSICS = {
    */
   IDLE_FOOT_PADDING: 2,
 
+  /**
+   * Shifts the sprite 1px lower relative to the foot-anchored hitbox so the
+   * character reads as standing on top of platforms rather than floating.
+   */
+  GROUND_VISUAL_OFFSET: 1,
+
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
 
