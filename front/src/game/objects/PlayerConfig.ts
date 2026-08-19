@@ -73,9 +73,9 @@ export const PLAYER_ASSETS = {
   },
   BACK_CARRYING_SPRITESHEET: {
     key: "player_back_carrying",
-    path: "player/animations/back-carrying.png",
+    path: "player/animations/carrying_north_walk.png",
     frameWidth: 48,
-    frameHeight: 37,
+    frameHeight: 44,
   },
   FRONT_SPRITESHEET: {
     key: "player_front",
@@ -85,15 +85,21 @@ export const PLAYER_ASSETS = {
   },
   FRONT_CARRYING_SPRITESHEET: {
     key: "player_front_carrying",
-    path: "player/animations/front-carrying.png",
+    path: "player/animations/carrying_south_walk.png",
     frameWidth: 48,
-    frameHeight: 37,
+    frameHeight: 44,
   },
   IDLE_SOUTH_SPRITESHEET: {
     key: "player_idle_south",
     path: "player/animations/idle_south.png",
     frameWidth: 64,
     frameHeight: 45,
+  },
+  CARRY_IDLE_SOUTH_SPRITESHEET: {
+    key: "player_carry_idle_south",
+    path: "player/animations/carrying_south_idle.png",
+    frameWidth: 48,
+    frameHeight: 44,
   },
   SOUNDS: {},
 } as const;
@@ -272,8 +278,8 @@ export const PLAYER_ANIMS = {
   BACK_CARRYING: {
     key: "back_carrying",
     spritesheet: "player_back_carrying",
-    frames: [0],
-    frameRate: 5,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 15,
     repeat: -1,
   },
   FRONT: {
@@ -286,14 +292,21 @@ export const PLAYER_ANIMS = {
   FRONT_CARRYING: {
     key: "front_carrying",
     spritesheet: "player_front_carrying",
-    frames: [0],
-    frameRate: 5,
+    frames: [0, 1, 2, 3, 4, 5, 6],
+    frameRate: 15,
     repeat: -1,
   },
   IDLE_SOUTH: {
     key: "idle_south",
     spritesheet: "player_idle_south",
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 7,
+    repeat: -1,
+  },
+  CARRY_IDLE_SOUTH: {
+    key: "carry_idle_south",
+    spritesheet: "player_carry_idle_south",
+    frames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
     frameRate: 7,
     repeat: -1,
   },

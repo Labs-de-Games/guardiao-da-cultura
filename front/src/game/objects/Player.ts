@@ -184,6 +184,14 @@ export class Player
         frameHeight: PLAYER_ASSETS.IDLE_SOUTH_SPRITESHEET.frameHeight,
       },
     );
+    scene.load.spritesheet(
+      PLAYER_ASSETS.CARRY_IDLE_SOUTH_SPRITESHEET.key,
+      PLAYER_ASSETS.CARRY_IDLE_SOUTH_SPRITESHEET.path,
+      {
+        frameWidth: PLAYER_ASSETS.CARRY_IDLE_SOUTH_SPRITESHEET.frameWidth,
+        frameHeight: PLAYER_ASSETS.CARRY_IDLE_SOUTH_SPRITESHEET.frameHeight,
+      },
+    );
   }
 
   static createAnims(scene: Phaser.Scene) {
@@ -337,6 +345,17 @@ export class Player
       ),
       frameRate: PLAYER_ANIMS.IDLE_SOUTH.frameRate,
       repeat: PLAYER_ANIMS.IDLE_SOUTH.repeat,
+    });
+    scene.anims.create({
+      key: PLAYER_ANIMS.CARRY_IDLE_SOUTH.key,
+      frames: scene.anims.generateFrameNumbers(
+        PLAYER_ANIMS.CARRY_IDLE_SOUTH.spritesheet,
+        {
+          frames: [...PLAYER_ANIMS.CARRY_IDLE_SOUTH.frames],
+        },
+      ),
+      frameRate: PLAYER_ANIMS.CARRY_IDLE_SOUTH.frameRate,
+      repeat: PLAYER_ANIMS.CARRY_IDLE_SOUTH.repeat,
     });
   }
 
