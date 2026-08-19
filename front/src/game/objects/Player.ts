@@ -73,7 +73,12 @@ export class Player
         : this.texture.key === PLAYER_ASSETS.IDLE_SPRITESHEET.key
           ? PLAYER_PHYSICS.IDLE_FOOT_PADDING
           : 0;
-    const offsetY = this.frame.height - hitbox.HEIGHT - footPadding - 0.5;
+    const offsetY =
+      this.frame.height -
+      hitbox.HEIGHT -
+      footPadding -
+      PLAYER_PHYSICS.GROUND_VISUAL_OFFSET -
+      0.5;
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
     const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
