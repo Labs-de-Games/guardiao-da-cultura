@@ -7,7 +7,7 @@
           "title": "Cachimbo"
         },
         "educational": {
-          "description": "",
+          "description": "Um cachimbo largado na cena do crime",
           "medium": "Madeira",
           "opinion": "Um cachimbo bem fedorento, com restos de plantas queimadas. Parece que foi usado há pouco tempo, não deve ser um item do museu."
         },
@@ -15,6 +15,10 @@
           "sprite": "cachimbo",
           "scaleOnMap": 0.4,
           "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 48, "y": 35, "rotation": -2 },
+          "connectedTo": []
         }
       }
     }

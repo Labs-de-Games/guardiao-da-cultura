@@ -23,6 +23,10 @@ export function useEventBridge({
   const setCollectibles = useGameUIStore((s) => s.setCollectibles);
   const collectItem = useGameUIStore((s) => s.collectItem);
   const setProgression = useGameUIStore((s) => s.setProgression);
+  const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
+  const setEvidenceBoardSelectedClueId = useGameUIStore(
+    (s) => s.setEvidenceBoardSelectedClueId,
+  );
 
   useEffect(() => {
     const currentStatus = useGameUIStore.getState().gameStarted;
@@ -94,6 +98,14 @@ export function useEventBridge({
       setProgression(data);
     });
 
+    const unsubEvidenceBoardClue = safeSubscribe(
+      "ui:evidence-board-open-with-clue",
+      (data) => {
+        setEvidenceBoardSelectedClueId(data.clueId);
+        setEvidenceBoardOpen(true);
+      },
+    );
+
     return () => {
       unsubStarted();
       unsubEnded();
@@ -103,6 +115,7 @@ export function useEventBridge({
       unsubCollectSync();
       unsubCollectItem();
       unsubProgression();
+      unsubEvidenceBoardClue();
     };
   }, [
     entryFlow,
@@ -116,5 +129,7 @@ export function useEventBridge({
     setCollectibles,
     collectItem,
     setProgression,
+    setEvidenceBoardOpen,
+    setEvidenceBoardSelectedClueId,
   ]);
 }
