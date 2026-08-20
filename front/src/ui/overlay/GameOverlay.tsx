@@ -89,6 +89,7 @@ function OverlayContent({
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
+  const setNudgeActive = useGameUIStore((s) => s.setNudgeActive);
 
   const { isAuthenticated } = useAuth();
   useEffect(() => {
@@ -176,6 +177,14 @@ function OverlayContent({
       },
     );
 
+    const unsubNudgeShow = EventBus.on("nudge:show", () => {
+      setNudgeActive(true);
+    });
+
+    const unsubNudgeHide = EventBus.on("nudge:hide", () => {
+      setNudgeActive(false);
+    });
+
     return () => {
       unsubControls();
       unsubToast();
@@ -189,6 +198,8 @@ function OverlayContent({
       unsubAutoStartTick();
       unsubAutoStartCanceled();
       unsubAutoStartCompleted();
+      unsubNudgeShow();
+      unsubNudgeHide();
     };
   }, [
     setControlsOpen,
@@ -201,6 +212,7 @@ function OverlayContent({
     openCostumeSelector,
     setActiveMapMarker,
     setAutoStartProgress,
+    setNudgeActive,
   ]);
 
   useEffect(() => {
