@@ -49,7 +49,7 @@
         "educational": {
           "description": "Uma mensagem do Vândalo dizendo: \"Nada está fora do lugar. Apenas foi colocado no lugar errado.\"",
           "medium": "Papel",
-          "opinion": "\"Nada está fora do lugar. Apenas foi colocado no lugar errado\". Então ele queria que encontrássemos isso."
+          "opinion": "\"Nada está fora do lugar. Apenas foi colocado no lugar errado\". Então, ele queria que encontrássemos isso."
         },
         "assets": {
           "sprite": "message",
