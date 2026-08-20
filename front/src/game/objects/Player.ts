@@ -49,245 +49,68 @@ export class Player
   /** Reference to the moving platform the player is standing on. */
   private standingPlatform: Phaser.Physics.Arcade.Sprite | null = null;
 
+  /**
+   * Play an animation and, if it wasn't already playing, resync the hitbox
+   * to the new anim's frame size (spritesheets have different dimensions).
+   */
+  private playAnim(key: string) {
+    const changed = this.anims.currentAnim?.key !== key;
+    this.anims.play(key, true);
+    if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+    return changed;
+  }
+
   private setPhysicsBodyForVisualScale(scale: number) {
-    const isDragging = scale === PLAYER_PHYSICS.DRAGGING_SCALE;
-    const isJumping = this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key;
+    const hitbox = PLAYER_PHYSICS.HITBOX;
 
-    let hitbox: { readonly WIDTH: number; readonly HEIGHT: number } =
-      PLAYER_PHYSICS.HITBOX;
-    let hitboxOffset: { readonly X: number; readonly Y: number } =
-      PLAYER_PHYSICS.HITBOX_OFFSET;
-
-    if (isDragging) {
-      hitbox = PLAYER_PHYSICS.DRAGGING_HITBOX;
-      hitboxOffset = PLAYER_PHYSICS.DRAGGING_HITBOX_OFFSET;
-    } else if (isJumping) {
-      hitbox = PLAYER_PHYSICS.JUMP_HITBOX;
-      hitboxOffset = PLAYER_PHYSICS.JUMP_HITBOX_OFFSET;
-    }
+    // Horizontally center and vertically foot-anchor the hitbox within
+    // whichever frame is currently active (walk/idle/jump/dragging/carrying
+    // frames are 64x44-ish while back/front frames are 48x37).
+    const offsetX = (this.frame.width - hitbox.WIDTH) / 2;
+    const footPadding =
+      this.texture.key === PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key
+        ? PLAYER_PHYSICS.CARRY_JUMP_FOOT_PADDING
+        : this.texture.key === PLAYER_ASSETS.IDLE_SPRITESHEET.key
+          ? PLAYER_PHYSICS.IDLE_FOOT_PADDING
+          : 0;
+    const offsetY =
+      this.frame.height -
+      hitbox.HEIGHT -
+      footPadding -
+      PLAYER_PHYSICS.GROUND_VISUAL_OFFSET -
+      0.5;
 
     const worldW = hitbox.WIDTH * PLAYER_PHYSICS.SCALE;
     const worldH = hitbox.HEIGHT * PLAYER_PHYSICS.SCALE;
-    const worldOffX = hitboxOffset.X * PLAYER_PHYSICS.SCALE;
-    const worldOffY = hitboxOffset.Y * PLAYER_PHYSICS.SCALE;
+    const worldOffX = offsetX * PLAYER_PHYSICS.SCALE;
+    const worldOffY = offsetY * PLAYER_PHYSICS.SCALE;
 
     this.setSize(worldW / scale, worldH / scale);
     this.setOffset(worldOffX / scale, worldOffY / scale);
   }
 
   static preload(scene: Phaser.Scene) {
-    scene.load.spritesheet(
-      PLAYER_ASSETS.WALK_SPRITESHEET.key,
-      PLAYER_ASSETS.WALK_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.WALK_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.WALK_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.JUMP_SPRITESHEET.key,
-      PLAYER_ASSETS.JUMP_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.JUMP_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.JUMP_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.CLIMB_SPRITESHEET.key,
-      PLAYER_ASSETS.CLIMB_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.CLIMB_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.CLIMB_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.key,
-      PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.CLIMB_DOWN_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.DRAGGING_SPRITESHEET.key,
-      PLAYER_ASSETS.DRAGGING_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.DRAGGING_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
-      PLAYER_ASSETS.CARRYING_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.CARRYING_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.BACK_SPRITESHEET.key,
-      PLAYER_ASSETS.BACK_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.BACK_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.BACK_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.key,
-      PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.FRONT_SPRITESHEET.key,
-      PLAYER_ASSETS.FRONT_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.FRONT_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.FRONT_SPRITESHEET.frameHeight,
-      },
-    );
-    scene.load.spritesheet(
-      PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.key,
-      PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.path,
-      {
-        frameWidth: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameWidth,
-        frameHeight: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.frameHeight,
-      },
-    );
+    for (const asset of Object.values(PLAYER_ASSETS)) {
+      if (!("path" in asset)) continue;
+      scene.load.spritesheet(asset.key, asset.path, {
+        frameWidth: asset.frameWidth,
+        frameHeight: asset.frameHeight,
+      });
+    }
   }
 
   static createAnims(scene: Phaser.Scene) {
-    scene.anims.create({
-      key: PLAYER_ANIMS.IDLE.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.IDLE.spritesheet, {
-        frames: [...PLAYER_ANIMS.IDLE.frames],
-      }),
-      frameRate: PLAYER_ANIMS.IDLE.frameRate,
-      repeat: PLAYER_ANIMS.IDLE.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.WALK.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.WALK.spritesheet, {
-        frames: [...PLAYER_ANIMS.WALK.frames],
-      }),
-      frameRate: PLAYER_ANIMS.WALK.frameRate,
-      repeat: PLAYER_ANIMS.WALK.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.CARRY_IDLE.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.CARRY_IDLE.spritesheet,
-        {
-          frames: [...PLAYER_ANIMS.CARRY_IDLE.frames],
-        },
-      ),
-      frameRate: PLAYER_ANIMS.CARRY_IDLE.frameRate,
-      repeat: PLAYER_ANIMS.CARRY_IDLE.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.CARRY_WALK.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.CARRY_WALK.spritesheet,
-        {
-          frames: [...PLAYER_ANIMS.CARRY_WALK.frames],
-        },
-      ),
-      frameRate: PLAYER_ANIMS.CARRY_WALK.frameRate,
-      repeat: PLAYER_ANIMS.CARRY_WALK.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.JUMP.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.JUMP.spritesheet, {
-        frames: [...PLAYER_ANIMS.JUMP.frames],
-      }),
-      frameRate: PLAYER_ANIMS.JUMP.frameRate,
-      repeat: PLAYER_ANIMS.JUMP.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.CLIMB.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.CLIMB.spritesheet, {
-        frames: [...PLAYER_ANIMS.CLIMB.frames],
-      }),
-      frameRate: PLAYER_ANIMS.CLIMB.frameRate,
-      repeat: PLAYER_ANIMS.CLIMB.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.CLIMB_DOWN.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.CLIMB_DOWN.spritesheet,
-        { frames: [...PLAYER_ANIMS.CLIMB_DOWN.frames] },
-      ),
-      frameRate: PLAYER_ANIMS.CLIMB_DOWN.frameRate,
-      repeat: PLAYER_ANIMS.CLIMB_DOWN.repeat,
-    });
-
-    scene.anims.create({
-      key: PLAYER_ANIMS.GRAB_IDLE.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.GRAB_IDLE.spritesheet,
-        { frames: [...PLAYER_ANIMS.GRAB_IDLE.frames] },
-      ),
-      frameRate: PLAYER_ANIMS.GRAB_IDLE.frameRate,
-      repeat: PLAYER_ANIMS.GRAB_IDLE.repeat,
-    });
-
-    scene.anims.create({
-      key: PLAYER_ANIMS.PUSH.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.PUSH.spritesheet, {
-        frames: [...PLAYER_ANIMS.PUSH.frames],
-      }),
-      frameRate: PLAYER_ANIMS.PUSH.frameRate,
-      repeat: PLAYER_ANIMS.PUSH.repeat,
-    });
-
-    scene.anims.create({
-      key: PLAYER_ANIMS.PULL.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.PULL.spritesheet, {
-        frames: [...PLAYER_ANIMS.PULL.frames],
-      }),
-      frameRate: PLAYER_ANIMS.PULL.frameRate,
-      repeat: PLAYER_ANIMS.PULL.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.BACK.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.BACK.spritesheet, {
-        frames: [...PLAYER_ANIMS.BACK.frames],
-      }),
-      frameRate: PLAYER_ANIMS.BACK.frameRate,
-      repeat: PLAYER_ANIMS.BACK.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.BACK_CARRYING.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.BACK_CARRYING.spritesheet,
-        {
-          frames: [...PLAYER_ANIMS.BACK_CARRYING.frames],
-        },
-      ),
-      frameRate: PLAYER_ANIMS.BACK_CARRYING.frameRate,
-      repeat: PLAYER_ANIMS.BACK_CARRYING.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.FRONT.key,
-      frames: scene.anims.generateFrameNumbers(PLAYER_ANIMS.FRONT.spritesheet, {
-        frames: [...PLAYER_ANIMS.FRONT.frames],
-      }),
-      frameRate: PLAYER_ANIMS.FRONT.frameRate,
-      repeat: PLAYER_ANIMS.FRONT.repeat,
-    });
-    scene.anims.create({
-      key: PLAYER_ANIMS.FRONT_CARRYING.key,
-      frames: scene.anims.generateFrameNumbers(
-        PLAYER_ANIMS.FRONT_CARRYING.spritesheet,
-        {
-          frames: [...PLAYER_ANIMS.FRONT_CARRYING.frames],
-        },
-      ),
-      frameRate: PLAYER_ANIMS.FRONT_CARRYING.frameRate,
-      repeat: PLAYER_ANIMS.FRONT_CARRYING.repeat,
-    });
+    for (const anim of Object.values(PLAYER_ANIMS)) {
+      if (typeof anim === "string") continue;
+      scene.anims.create({
+        key: anim.key,
+        frames: scene.anims.generateFrameNumbers(anim.spritesheet, {
+          frames: [...anim.frames],
+        }),
+        frameRate: anim.frameRate,
+        repeat: anim.repeat,
+      });
+    }
   }
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
@@ -307,11 +130,7 @@ export class Player
 
     this.setScale(PLAYER_PHYSICS.SCALE);
     this.setDamping(PLAYER_PHYSICS.DAMPING);
-    this.setSize(PLAYER_PHYSICS.HITBOX.WIDTH, PLAYER_PHYSICS.HITBOX.HEIGHT);
-    this.setOffset(
-      PLAYER_PHYSICS.HITBOX_OFFSET.X,
-      PLAYER_PHYSICS.HITBOX_OFFSET.Y,
-    );
+    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
     this.setDrag(PLAYER_PHYSICS.DRAG.X, PLAYER_PHYSICS.DRAG.Y);
     this.setGravity(PLAYER_PHYSICS.GRAVITY.X, PLAYER_PHYSICS.GRAVITY.Y);
     this.setMaxVelocity(
@@ -493,7 +312,8 @@ export class Player
     }
 
     const isJumpPlaying =
-      this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key &&
+      (this.anims.currentAnim?.key === PLAYER_ANIMS.JUMP.key ||
+        this.anims.currentAnim?.key === PLAYER_ANIMS.CARRY_JUMP.key) &&
       this.anims.isPlaying;
 
     let isOnStairsCenter = false;
@@ -572,7 +392,7 @@ export class Player
         !this.isCarrying
       ) {
         if (!this.isClimbingStairs) {
-          this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
+          this.playAnim(PLAYER_ANIMS.CLIMB.key);
         }
         this.isClimbingStairs = true;
       }
@@ -689,9 +509,7 @@ export class Player
             const walkAnim = this.isCarrying
               ? PLAYER_ANIMS.CARRY_WALK.key
               : PLAYER_ANIMS.WALK.key;
-            const changed = this.anims.currentAnim?.key !== walkAnim;
-            this.anims.play(walkAnim, true);
-            if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+            this.playAnim(walkAnim);
           }
           body.velocity.x -= accel;
           if (!this.isGrabbing) this.setFlipX(true);
@@ -704,28 +522,24 @@ export class Player
             const walkAnim = this.isCarrying
               ? PLAYER_ANIMS.CARRY_WALK.key
               : PLAYER_ANIMS.WALK.key;
-            const changed = this.anims.currentAnim?.key !== walkAnim;
-            this.anims.play(walkAnim, true);
-            if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+            this.playAnim(walkAnim);
           }
           body.velocity.x += accel;
           if (!this.isGrabbing) this.setFlipX(false);
         }
       } else if (!this.isMovementRestricted(isJumpPlaying, isOnStairs)) {
         if (this.portalExitIdleAnim) {
-          const changed =
-            this.anims.currentAnim?.key !== this.portalExitIdleAnim;
-          this.anims.play(this.portalExitIdleAnim, true);
-          if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+          this.playAnim(this.portalExitIdleAnim);
           return;
         }
 
         const idleAnim = this.isCarrying
           ? PLAYER_ANIMS.CARRY_IDLE.key
           : PLAYER_ANIMS.IDLE.key;
-        const changed = this.anims.currentAnim?.key !== idleAnim;
-        this.anims.play(idleAnim, true);
-        if (changed) this.setPhysicsBodyForVisualScale(this.scaleX);
+        // playAnim only calls anims.play() on transition into the anim -
+        // calling it every idle frame would restart the loop from frame 0
+        // on every tick instead of letting it play continuously.
+        this.playAnim(idleAnim);
       }
     }
 
@@ -758,6 +572,13 @@ export class Player
 
     if (this.isGrabbing && this.grabbedItem) {
       const isMoving = Math.abs(body.velocity.x) > 10;
+
+      // The dragging sheet's moving frames are drawn facing left, opposite
+      // of the walk sheet's right-facing default, so the flip direction is
+      // inverted here.
+      if (isMoving) {
+        this.setFlipX(body.velocity.x > 0);
+      }
 
       // Play drag loop sound only when moving
       if (isMoving) {
@@ -822,10 +643,10 @@ export class Player
         }
       }
 
-      if (!this.isCarrying) {
-        this.anims.play(PLAYER_ANIMS.JUMP.key, true);
-        this.setPhysicsBodyForVisualScale(this.scaleX);
-      }
+      const jumpAnim = this.isCarrying
+        ? PLAYER_ANIMS.CARRY_JUMP.key
+        : PLAYER_ANIMS.JUMP.key;
+      this.playAnim(jumpAnim);
     }
 
     if (
@@ -835,11 +656,10 @@ export class Player
       !this.isCarrying
     ) {
       if (isClimbing) {
-        if (downDown) {
-          this.anims.play(PLAYER_ANIMS.CLIMB_DOWN.key, true);
-        } else {
-          this.anims.play(PLAYER_ANIMS.CLIMB.key, true);
-        }
+        const climbAnim = downDown
+          ? PLAYER_ANIMS.CLIMB_DOWN.key
+          : PLAYER_ANIMS.CLIMB.key;
+        this.playAnim(climbAnim);
       } else if (shouldPlayClimbPause) {
         this.anims.pause();
       }
@@ -857,7 +677,11 @@ export class Player
     }
 
     if (this.isCarrying && this.carriedItem) {
-      const offsetY = this.displayHeight / 2 - 10;
+      const carryFrameHeight =
+        this.texture.key === PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key
+          ? this.frame.height - PLAYER_PHYSICS.CARRY_JUMP_CANVAS_PADDING
+          : this.frame.height;
+      const offsetY = (carryFrameHeight * this.scaleY) / 2 - 10;
       this.carriedItem.x = this.x;
       this.carriedItem.y = this.y - offsetY;
       this.carriedItem.setDepth(this.depth + 2);
@@ -877,16 +701,11 @@ export class Player
     const prevBodyY = body?.y;
     this.grabbedItem.setDepth(11);
 
-    // Switch player to the dragging pose (visual), but keep the physics
-    // body stable to avoid collision ejection.
-    this.setScale(PLAYER_PHYSICS.DRAGGING_SCALE);
-    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.DRAGGING_SCALE);
+    // Swap to the dragging spritesheet first so the hitbox recalculation
+    // reads its (slightly shorter) frame dimensions.
+    this.playAnim(PLAYER_ANIMS.GRAB_IDLE.key);
 
-    // Swap to the dragging spritesheet immediately so we can compensate any
-    // body shift caused by the new (bigger) animation frame size.
-    this.anims.play(PLAYER_ANIMS.GRAB_IDLE.key, true);
-
-    // Keep the Arcade body world position stable across scale/animation changes.
+    // Keep the Arcade body world position stable across the frame-size change.
     if (
       body &&
       typeof prevBodyX === "number" &&
@@ -923,7 +742,7 @@ export class Player
       this.scene.events.emit("item-dropped", this.carriedItem);
       this.carriedItem = null;
       this.isCarrying = false;
-      this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+      this.playAnim(PLAYER_ANIMS.IDLE.key);
       return true;
     }
 
@@ -944,7 +763,7 @@ export class Player
       this.carriedItem = closestItem;
       this.carriedItem.setCarried(true);
 
-      this.anims.play(PLAYER_ANIMS.CARRY_IDLE.key, true);
+      this.playAnim(PLAYER_ANIMS.CARRY_IDLE.key);
       this.emit("item-interacted", closestItem);
       return true;
     }
@@ -993,11 +812,9 @@ export class Player
     this.isGrabbing = false;
     this.grabbedItem = null;
 
-    this.setScale(PLAYER_PHYSICS.SCALE);
-    this.setPhysicsBodyForVisualScale(PLAYER_PHYSICS.SCALE);
-
-    // Swap back to the walking spritesheet immediately for the same reason as above.
-    this.anims.play(PLAYER_ANIMS.IDLE.key, true);
+    // Swap back to the walking spritesheet so the hitbox recalculation
+    // reads its frame dimensions.
+    this.playAnim(PLAYER_ANIMS.IDLE.key);
   }
 
   private getMovementAcceleration(): number {
@@ -1025,7 +842,8 @@ export class Player
       this.anims.currentAnim?.key === PLAYER_ANIMS.BACK.key ||
       this.anims.currentAnim?.key === PLAYER_ANIMS.BACK_CARRYING.key ||
       this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT.key ||
-      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT_CARRYING.key
+      this.anims.currentAnim?.key === PLAYER_ANIMS.FRONT_CARRYING.key ||
+      this.anims.currentAnim?.key === PLAYER_ANIMS.IDLE_SOUTH.key
     ) {
       return;
     }
@@ -1036,9 +854,7 @@ export class Player
     }
 
     if (isOnStairs && !this.isCarrying) {
-      if (this.anims.currentAnim?.key !== PLAYER_ANIMS.CLIMB.key) {
-        this.anims.play(PLAYER_ANIMS.CLIMB.key);
-      }
+      this.playAnim(PLAYER_ANIMS.CLIMB.key);
       this.anims.pause();
       return;
     }

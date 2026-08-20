@@ -12,62 +12,86 @@ export const PLAYER_ASSETS = {
   WALK_SPRITESHEET: {
     key: "player_walk",
     path: "player/animations/walking.png",
+    frameWidth: 64,
+    frameHeight: 44,
+  },
+  IDLE_SPRITESHEET: {
+    key: "player_idle",
+    path: "player/animations/idle.png",
     frameWidth: 48,
-    frameHeight: 37,
+    frameHeight: 48,
   },
   JUMP_SPRITESHEET: {
     key: "player_jump",
     path: "player/animations/jump.png",
-    frameWidth: 48,
+    frameWidth: 64,
     frameHeight: 48,
   },
   CLIMB_SPRITESHEET: {
     key: "player_climb",
-    path: "player/animations/climbing_up.png",
+    path: "player/animations/climbing.png",
     frameWidth: 48,
-    frameHeight: 48,
-  },
-  CLIMB_DOWN_SPRITESHEET: {
-    key: "player_climb_down",
-    path: "player/animations/climbing_up.png",
-    frameWidth: 48,
-    frameHeight: 48,
+    frameHeight: 46,
   },
   DRAGGING_SPRITESHEET: {
     key: "player_dragging",
     path: "player/animations/dragging.png",
-    frameWidth: 162,
-    frameHeight: 183,
+    frameWidth: 64,
+    frameHeight: 42,
   },
-  CARRYING_SPRITESHEET: {
-    key: "player_carrying",
-    path: "player/animations/carrying.png",
-    frameWidth: 48,
-    frameHeight: 37,
+  CARRYING_IDLE_SPRITESHEET: {
+    key: "player_carrying_idle",
+    path: "player/animations/carrying_idle.png",
+    frameWidth: 64,
+    frameHeight: 45,
+  },
+  CARRYING_WALK_SPRITESHEET: {
+    key: "player_carrying_walk",
+    path: "player/animations/carrying_walk.png",
+    frameWidth: 64,
+    frameHeight: 46,
+  },
+  CARRYING_JUMP_SPRITESHEET: {
+    key: "player_carrying_jump",
+    path: "player/animations/carrying_jump.png",
+    frameWidth: 64,
+    frameHeight: 64,
   },
   BACK_SPRITESHEET: {
     key: "player_back",
-    path: "player/animations/back.png",
-    frameWidth: 48,
-    frameHeight: 37,
+    path: "player/animations/walk_north.png",
+    frameWidth: 64,
+    frameHeight: 64,
   },
   BACK_CARRYING_SPRITESHEET: {
     key: "player_back_carrying",
-    path: "player/animations/back-carrying.png",
+    path: "player/animations/carrying_north_walk.png",
     frameWidth: 48,
-    frameHeight: 37,
+    frameHeight: 44,
   },
   FRONT_SPRITESHEET: {
     key: "player_front",
-    path: "player/animations/front.png",
-    frameWidth: 48,
-    frameHeight: 37,
+    path: "player/animations/walk_south.png",
+    frameWidth: 64,
+    frameHeight: 47,
   },
   FRONT_CARRYING_SPRITESHEET: {
     key: "player_front_carrying",
-    path: "player/animations/front-carrying.png",
+    path: "player/animations/carrying_south_walk.png",
     frameWidth: 48,
-    frameHeight: 37,
+    frameHeight: 44,
+  },
+  IDLE_SOUTH_SPRITESHEET: {
+    key: "player_idle_south",
+    path: "player/animations/idle_south.png",
+    frameWidth: 64,
+    frameHeight: 45,
+  },
+  CARRY_IDLE_SOUTH_SPRITESHEET: {
+    key: "player_carry_idle_south",
+    path: "player/animations/carrying_south_idle.png",
+    frameWidth: 48,
+    frameHeight: 44,
   },
   SOUNDS: {},
 } as const;
@@ -93,38 +117,50 @@ export const PLAYER_STATS = {
 // PHYSICS
 // ------------------------------------------------------------
 export const PLAYER_PHYSICS = {
-  SCALE: 4.5,
+  SCALE: 3.5,
 
-  /** Hitbox size (setSize) */
+  /**
+   * Hitbox size (setSize) for the default (walk/idle/carry/back/front)
+   * states. Its offset is derived dynamically from the active frame's
+   * dimensions in Player.setPhysicsBodyForVisualScale — centered
+   * horizontally, foot-anchored vertically — since those spritesheets
+   * don't all share the same frame size.
+   */
   HITBOX: {
     WIDTH: 12,
     HEIGHT: 38,
   },
 
-  /** Hitbox offset (setOffset) */
-  HITBOX_OFFSET: {
-    X: 18,
-    Y: -1.5,
-  },
+  /**
+   * carrying_jump.png's frame canvas (64px tall) is taller than the other
+   * carry frames (45-46px) to fit the raised jump pose, which leaves ~10px
+   * of transparent padding below the character's feet. Subtracted from the
+   * foot-anchored offset so the hitbox tracks the sprite, not the canvas.
+   */
+  CARRY_JUMP_FOOT_PADDING: 10,
 
-  /** Scale and Hitbox for the dragging animation */
-  DRAGGING_SCALE: 0.9,
-  DRAGGING_HITBOX: {
-    WIDTH: 12,
-    HEIGHT: 38,
-  },
-  DRAGGING_HITBOX_OFFSET: {
-    X: 10,
-    Y: -1.5,
-  },
-  JUMP_HITBOX: {
-    WIDTH: 12,
-    HEIGHT: 38,
-  },
-  JUMP_HITBOX_OFFSET: {
-    X: 18,
-    Y: 5,
-  },
+  /**
+   * Total vertical padding baked into carrying_jump.png's 64px-tall canvas
+   * (~9px above, ~10px below the character) versus the other carry frames'
+   * tight 45-46px canvas. Subtracted from the frame height anywhere the
+   * carried item's offset is derived from it, so the item doesn't jump
+   * further from the player just because that texture's canvas is taller.
+   */
+  CARRY_JUMP_CANVAS_PADDING: 18,
+
+  /**
+   * idle.png's 48px-tall canvas leaves ~2px of transparent padding below the
+   * character's feet (they stop around y=46). Subtracted from the
+   * foot-anchored offset so the idle hitbox tracks the sprite, not the canvas.
+   */
+  IDLE_FOOT_PADDING: 2,
+
+  /**
+   * Shifts the sprite 1px lower relative to the foot-anchored hitbox so the
+   * character reads as standing on top of platforms rather than floating.
+   */
+  GROUND_VISUAL_OFFSET: 1,
+
   DAMPING: true,
   DRAG: { Y: 1, X: 0.0001 },
 
@@ -182,9 +218,9 @@ export const PLAYER_DAMAGE = {
 export const PLAYER_ANIMS = {
   IDLE: {
     key: "idle",
-    spritesheet: PLAYER_ASSETS.WALK_SPRITESHEET.key,
-    frames: [0],
-    frameRate: 10,
+    spritesheet: PLAYER_ASSETS.IDLE_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5],
+    frameRate: 7,
     repeat: -1,
   },
   WALK: {
@@ -196,14 +232,14 @@ export const PLAYER_ANIMS = {
   },
   CARRY_IDLE: {
     key: "carry_idle",
-    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
-    frames: [0],
-    frameRate: 10,
+    spritesheet: PLAYER_ASSETS.CARRYING_IDLE_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 7,
     repeat: -1,
   },
   CARRY_WALK: {
     key: "carry_walk",
-    spritesheet: PLAYER_ASSETS.CARRYING_SPRITESHEET.key,
+    spritesheet: PLAYER_ASSETS.CARRYING_WALK_SPRITESHEET.key,
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
     frameRate: 15,
     repeat: -1,
@@ -215,69 +251,90 @@ export const PLAYER_ANIMS = {
     frameRate: 17,
     repeat: 0,
   },
+  CARRY_JUMP: {
+    key: "carry_jump",
+    spritesheet: PLAYER_ASSETS.CARRYING_JUMP_SPRITESHEET.key,
+    frames: [1, 2, 3, 4, 5, 6, 7, 8],
+    frameRate: 17,
+    repeat: 0,
+  },
 
   CLIMB: {
     key: "climb",
-    spritesheet: "player_climb",
-    frames: [0, 1, 2, 3, 4],
+    spritesheet: PLAYER_ASSETS.CLIMB_SPRITESHEET.key,
+    frames: [0, 1, 2, 3],
     frameRate: 5,
     repeat: -1,
   },
   CLIMB_DOWN: {
     key: "climb_down",
-    spritesheet: "player_climb",
-    frames: [4, 3, 2, 1, 0],
+    spritesheet: PLAYER_ASSETS.CLIMB_SPRITESHEET.key,
+    frames: [3, 2, 1, 0],
     frameRate: 5,
     repeat: -1,
   },
   BACK: {
     key: "back",
-    spritesheet: "player_back",
-    frames: [0],
-    frameRate: 5,
+    spritesheet: PLAYER_ASSETS.BACK_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 15,
     repeat: -1,
   },
   BACK_CARRYING: {
     key: "back_carrying",
-    spritesheet: "player_back_carrying",
-    frames: [0],
-    frameRate: 5,
+    spritesheet: PLAYER_ASSETS.BACK_CARRYING_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 15,
     repeat: -1,
   },
   FRONT: {
     key: "front",
-    spritesheet: "player_front",
-    frames: [0],
-    frameRate: 5,
+    spritesheet: PLAYER_ASSETS.FRONT_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 15,
     repeat: -1,
   },
   FRONT_CARRYING: {
     key: "front_carrying",
-    spritesheet: "player_front_carrying",
-    frames: [0],
-    frameRate: 5,
+    spritesheet: PLAYER_ASSETS.FRONT_CARRYING_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6],
+    frameRate: 15,
+    repeat: -1,
+  },
+  IDLE_SOUTH: {
+    key: "idle_south",
+    spritesheet: PLAYER_ASSETS.IDLE_SOUTH_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7],
+    frameRate: 7,
+    repeat: -1,
+  },
+  CARRY_IDLE_SOUTH: {
+    key: "carry_idle_south",
+    spritesheet: PLAYER_ASSETS.CARRY_IDLE_SOUTH_SPRITESHEET.key,
+    frames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    frameRate: 7,
     repeat: -1,
   },
 
   /** Grabbing / Pushing animations */
   GRAB_IDLE: {
     key: "grab_idle",
-    spritesheet: "player_dragging",
+    spritesheet: PLAYER_ASSETS.DRAGGING_SPRITESHEET.key,
     frames: [0],
     frameRate: 13,
     repeat: -1,
   },
   PUSH: {
     key: "push",
-    spritesheet: "player_dragging",
-    frames: [0, 1, 2, 3],
+    spritesheet: PLAYER_ASSETS.DRAGGING_SPRITESHEET.key,
+    frames: [1, 2, 3, 4, 5, 6],
     frameRate: 13,
     repeat: -1,
   },
   PULL: {
     key: "pull",
-    spritesheet: "player_dragging",
-    frames: [3, 2, 1, 0],
+    spritesheet: PLAYER_ASSETS.DRAGGING_SPRITESHEET.key,
+    frames: [6, 5, 4, 3, 2, 1],
     frameRate: 13,
     repeat: -1,
   },

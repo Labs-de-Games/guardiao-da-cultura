@@ -10,6 +10,8 @@ export class Portal extends Phaser.GameObjects.Zone {
   public targetPortal: Portal | null = null;
   private playerRef: Player | null = null;
   private POSTER_OFFSET = { x: 40, y: 74 };
+  /** Amount the player's scale shrinks by while transitioning through a portal. */
+  private PORTAL_SCALE_DELTA = 0.5;
 
   constructor(
     scene: Phaser.Scene,
@@ -74,11 +76,14 @@ export class Portal extends Phaser.GameObjects.Zone {
       const originalItemScaleX = p.carriedItem?.scaleX ?? 1;
       const originalItemScaleY = p.carriedItem?.scaleY ?? 1;
 
+      const enterScaleX = originalScaleX - this.PORTAL_SCALE_DELTA;
+      const enterScaleY = originalScaleY - this.PORTAL_SCALE_DELTA;
+
       if (p.isCarrying && p.carriedItem) {
         this.scene.tweens.add({
           targets: p.carriedItem,
-          scaleX: originalItemScaleX * (4 / originalScaleX),
-          scaleY: originalItemScaleY * (4 / originalScaleY),
+          scaleX: originalItemScaleX * (enterScaleX / originalScaleX),
+          scaleY: originalItemScaleY * (enterScaleY / originalScaleY),
           alpha: 0,
           duration: 500,
           ease: "Cubic.in",
@@ -87,8 +92,8 @@ export class Portal extends Phaser.GameObjects.Zone {
 
       this.scene.tweens.add({
         targets: p,
-        scaleX: 4,
-        scaleY: 4,
+        scaleX: enterScaleX,
+        scaleY: enterScaleY,
         alpha: 0,
         duration: 500,
         ease: "Cubic.in",
@@ -106,9 +111,12 @@ export class Portal extends Phaser.GameObjects.Zone {
           this.scene.time.delayedCall(1000, () => {
             const frontAnim = p.isCarrying
               ? PLAYER_ANIMS.FRONT_CARRYING.key
-              : PLAYER_ANIMS.FRONT.key;
+              : PLAYER_ANIMS.IDLE_SOUTH.key;
+            const exitIdleAnim = p.isCarrying
+              ? PLAYER_ANIMS.CARRY_IDLE_SOUTH.key
+              : PLAYER_ANIMS.IDLE_SOUTH.key;
             p.anims.play(frontAnim, true);
-            p.setPortalExitIdleAnim(frontAnim);
+            p.setPortalExitIdleAnim(exitIdleAnim);
 
             if (p.isCarrying && p.carriedItem) {
               const carriedItem = p.carriedItem;
