@@ -1,5 +1,4 @@
 import * as Phaser from "phaser";
-import type { EffectsManager } from "../objects/EffectsManager";
 import type { ConeLightPipeline } from "../pipelines/ConeLightPipeline";
 import { TiledUtils } from "../utils/TiledUtils";
 import { parseColor } from "./LightBarSystem";
@@ -16,8 +15,10 @@ export interface SpotlightInstance {
   lightIntensity?: number;
 }
 
-// Spotlights wired to the ConeLightPipeline instead of the
-// EffectsManager graphics cone.
+// Spotlights wired to the ConeLightPipeline. On non-WebGL (Canvas)
+// renderers, createConeLight returns undefined and these spotlights
+// simply render without a beam — same degradation as light bars and
+// chandelier lights.
 const CONE_LIGHT_SPOTLIGHT_IDS = new Set(["SP_0", "SP_1", "SP_2", "SP_3"]);
 
 const DEFAULT_SPOTLIGHT_LIGHT = {
@@ -33,21 +34,11 @@ const SPOTLIGHT_LIGHT_Y_OFFSET = -80;
 
 export class SpotlightSystem {
   private scene: Phaser.Scene;
-  private effects: EffectsManager;
   private spotlights: SpotlightInstance[] = [];
   private activeSpotlight: SpotlightInstance | null = null;
 
-  private static COLOR_MAP: Record<string, number> = {
-    red: 0xff4444,
-    green: 0x44ff44,
-    blue: 0x4444ff,
-    yellow: 0xffff44,
-  };
-
-  constructor(scene: Phaser.Scene, effects: EffectsManager) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.effects = effects;
-    this.effects.initPersistentCone();
   }
 
   public registerAllFromLayer(layer: Phaser.Tilemaps.ObjectLayer) {
@@ -176,25 +167,14 @@ export class SpotlightSystem {
   }
 
   private drawCone(spotlight: SpotlightInstance) {
-    if (spotlight.light) {
-      spotlight.light.intensity =
-        spotlight.lightIntensity ?? DEFAULT_SPOTLIGHT_LIGHT.intensity;
-      return;
-    }
-
-    const color = SpotlightSystem.COLOR_MAP[spotlight.color] || 0xffffff;
-    const px = spotlight.sprite.x;
-    const py = spotlight.sprite.y;
-    this.effects.showPersistentCone(px, py + 459, color);
+    if (!spotlight.light) return;
+    spotlight.light.intensity =
+      spotlight.lightIntensity ?? DEFAULT_SPOTLIGHT_LIGHT.intensity;
   }
 
   private clearCone(spotlight: SpotlightInstance) {
-    if (spotlight.light) {
-      spotlight.light.intensity = 0;
-      return;
-    }
-
-    this.effects.hidePersistentCone();
+    if (!spotlight.light) return;
+    spotlight.light.intensity = 0;
   }
 
   private createConeLight(
