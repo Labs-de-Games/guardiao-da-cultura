@@ -1387,8 +1387,6 @@ export class Game extends Scene implements GameDataAccessor {
     }
     this.player.setCollisionLayers(mapData.colliders);
 
-    this.effects.initSpotlight();
-
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
       npc.setQuestManager(this.questManager);
@@ -2018,7 +2016,6 @@ export class Game extends Scene implements GameDataAccessor {
       });
     }
 
-    this.effects.updateSpotlight(this.player.x, this.player.y);
     this.effects.updateScoreFeedback(
       this.player.x,
       this.player.y,
