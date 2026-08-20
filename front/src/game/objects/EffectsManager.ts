@@ -151,8 +151,12 @@ export class EffectsManager {
     _px: number = 0,
     _py: number = 0,
   ) {
-    // Temporarily disabled while the persistent cone is migrated to
-    // ConeLightPipeline (see SpotlightSystem).
+    // Visual beam graphic is disabled while the persistent cone is
+    // migrated to ConeLightPipeline (see SpotlightSystem), but this is
+    // also the shared "placeholder solved" hook for paintings,
+    // sculptures, posters, costumes and photo puzzles, so the success
+    // sound must still play.
+    AudioManager.playSfx("sfx.puzzle.success", 0.7);
   }
 
   private drawSpotlightBeam(px: number, py: number) {
