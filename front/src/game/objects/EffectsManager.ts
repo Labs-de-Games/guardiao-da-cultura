@@ -11,8 +11,6 @@ export class EffectsManager {
   private camera: Phaser.Cameras.Scene2D.Camera;
   private colorMatrix?: Phaser.FX.ColorMatrix;
   private vignette?: Phaser.FX.Vignette;
-  private persistentCone: Phaser.GameObjects.Graphics | null = null;
-  private persistentConeVisible = false;
   private scoreFeedbackStar: Phaser.GameObjects.Sprite | null = null;
   private scoreFeedbackActive = false;
   public scoreFeedbackFloatY = 0;
@@ -132,63 +130,16 @@ export class EffectsManager {
     );
   }
 
-  public initPersistentCone() {
-    this.persistentCone = this.scene.add.graphics();
-    this.persistentCone.setDepth(1000);
-  }
-
-  public showPersistentCone(px: number, py: number, color: number) {
-    if (!this.persistentCone) return;
-
-    this.persistentConeVisible = true;
-    this.persistentCone.clear();
-
-    const topHalfWidth = 18;
-    const bottomHalfWidth = 650;
-    const topOffsetY = -500;
-    const bottomOffsetY = 1600;
-    const bottomBulge = bottomHalfWidth * 0.12;
-
-    this.persistentCone.fillStyle(color, 0.35);
-    this.persistentCone.beginPath();
-    this.persistentCone.moveTo(px - topHalfWidth, py + topOffsetY);
-    this.persistentCone.lineTo(px + topHalfWidth, py + topOffsetY);
-    this.persistentCone.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
-    this.persistentCone.lineTo(
-      px + bottomHalfWidth * 0.2,
-      py + bottomOffsetY + bottomBulge,
-    );
-    this.persistentCone.lineTo(px, py + bottomOffsetY + bottomBulge);
-    this.persistentCone.lineTo(
-      px - bottomHalfWidth * 0.2,
-      py + bottomOffsetY + bottomBulge,
-    );
-    this.persistentCone.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
-    this.persistentCone.closePath();
-    this.persistentCone.fillPath();
-    this.persistentCone.setDepth(1000);
-  }
-
-  public hidePersistentCone() {
-    this.persistentConeVisible = false;
-    this.persistentCone?.clear();
-  }
-
-  public isPersistentConeVisible(): boolean {
-    return this.persistentConeVisible;
-  }
-
   public showSpotlightBeam(
     _duration: number = 2000,
     _revealDuration: number = 200,
     _px: number = 0,
     _py: number = 0,
   ) {
-    // Visual beam graphic is disabled while the persistent cone is
-    // migrated to ConeLightPipeline (see SpotlightSystem), but this is
-    // also the shared "placeholder solved" hook for paintings,
-    // sculptures, posters, costumes and photo puzzles, so the success
-    // sound must still play.
+    // Visual beam graphic is gone now that spotlights use ConeLightPipeline
+    // (see SpotlightSystem), but this is also the shared "placeholder
+    // solved" hook for paintings, sculptures, posters, costumes and photo
+    // puzzles, so the success sound must still play.
     AudioManager.playSfx("sfx.puzzle.success", 0.7);
   }
 

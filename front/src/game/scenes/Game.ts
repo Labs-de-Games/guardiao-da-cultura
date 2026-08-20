@@ -721,7 +721,7 @@ export class Game extends Scene implements GameDataAccessor {
       const spotlightLayer =
         mapData.objectLayers.Spotlights || mapData.objectLayers.Spotlight;
       if (spotlightLayer) {
-        this.spotlightSystem = new SpotlightSystem(this, this.effects);
+        this.spotlightSystem = new SpotlightSystem(this);
         this.spotlightSystem.registerAllFromLayer(spotlightLayer);
       }
 
