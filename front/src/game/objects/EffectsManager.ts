@@ -1,4 +1,4 @@
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import { AudioManager } from "../audio";
 
@@ -9,11 +9,8 @@ import { AudioManager } from "../audio";
 export class EffectsManager {
   private scene: Phaser.Scene;
   private camera: Phaser.Cameras.Scene2D.Camera;
-  private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
-  private spotlightVisible = false;
-  private revealProgress = 1;
-  private spotlightTargetX = 0;
-  private spotlightTargetY = 0;
+  private colorMatrix?: Phaser.FX.ColorMatrix;
+  private vignette?: Phaser.FX.Vignette;
   private persistentCone: Phaser.GameObjects.Graphics | null = null;
   private persistentConeVisible = false;
   private scoreFeedbackStar: Phaser.GameObjects.Sprite | null = null;
@@ -94,11 +91,6 @@ export class EffectsManager {
     );
   }
 
-  public initSpotlight() {
-    this.spotlightBeam = this.scene.add.graphics();
-    this.spotlightBeam.setDepth(15);
-  }
-
   public initPersistentCone() {
     this.persistentCone = this.scene.add.graphics();
     this.persistentCone.setDepth(1000);
@@ -157,46 +149,6 @@ export class EffectsManager {
     // sculptures, posters, costumes and photo puzzles, so the success
     // sound must still play.
     AudioManager.playSfx("sfx.puzzle.success", 0.7);
-  }
-
-  private drawSpotlightBeam(px: number, py: number) {
-    if (!this.spotlightBeam || !this.spotlightVisible) return;
-
-    const beam = this.spotlightBeam;
-    beam.clear();
-
-    const topHalfWidth = 10;
-    const bottomHalfWidth = 120;
-    const topOffsetY = -500;
-    const bottomOffsetY = 100;
-    const bottomBulge = bottomHalfWidth * 0.12;
-
-    const progress = this.revealProgress;
-    const currentBottomY = Phaser.Math.Linear(
-      topOffsetY,
-      bottomOffsetY,
-      progress,
-    );
-    const currentBulge = bottomBulge * progress;
-
-    beam.fillStyle(0xffffff, 0.35 * progress);
-    beam.beginPath();
-    beam.moveTo(px - topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + bottomHalfWidth, py + currentBottomY);
-    beam.lineTo(px + bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
-    beam.lineTo(px, py + currentBottomY + currentBulge * 1);
-    beam.lineTo(px - bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
-    beam.lineTo(px - bottomHalfWidth, py + currentBottomY);
-    beam.closePath();
-    beam.fillPath();
-    beam.setDepth(1000);
-  }
-
-  /** Atualiza o spotlight (chamar a cada frame) */
-  public updateSpotlight(_px: number, _py: number) {
-    if (!this.spotlightVisible) return;
-    this.drawSpotlightBeam(this.spotlightTargetX, this.spotlightTargetY);
   }
 
   public playScoreFeedback(x: number, y: number) {
