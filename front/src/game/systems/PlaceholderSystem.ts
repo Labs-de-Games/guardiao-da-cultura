@@ -301,6 +301,13 @@ export class PlaceholderSystem {
           filledSprite.setScale(placeholder.filledScale);
         }
         filledSprite.setDepth(10);
+        // Placeholder hint sprites are on the Conelight pipeline as of
+        // Game.setupLighting(), which only runs once at scene start. This
+        // replacement sprite is created later, so it needs the pipeline
+        // applied explicitly to react to dynamic lights.
+        if (this.scene.renderer.type === Phaser.WEBGL) {
+          filledSprite.setPipeline("Conelight");
+        }
         placeholder.hintSprite = filledSprite;
 
         // Hide the carried item — the filled sprite replaces it visually
