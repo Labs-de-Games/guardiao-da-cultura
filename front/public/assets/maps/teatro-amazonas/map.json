@@ -1499,7 +1499,7 @@
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"poster"
+                         "value":""
                         }],
                  "rotation":0,
                  "type":"PlaceholderInstance",
