@@ -1,3 +1,66 @@
 {
-  "collectibles": {}
+  "collectibles": {
+    "CLUE_VILLAIN": {
+      "document": {
+        "id": "document",
+        "metadata": {
+          "title": "Documento de autorização ao acervo"
+        },
+        "educational": {
+          "description": "Um documento que diz: Serviço de conservação — acesso autorizado ao acervo.",
+          "medium": "Papel",
+          "opinion": "Então ele não estava explorando às cegas. Já tinha autorização para estar aqui — e conhecia o acervo por dentro."
+        },
+        "assets": {
+          "sprite": "document",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 30, "y": 15, "rotation": -2 },
+          "connectedTo": ["varnish", "notes"]
+        }
+      },
+      "notes": {
+        "id": "notes",
+        "metadata": {
+          "title": "Notas do vândalo"
+        },
+        "educational": {
+          "description": "Uma anotação do vândalo dizendo: \"Vocês organizaram as peças para contar uma história. Eu apenas devolvi a elas a história que vocês esconderam.\"",
+          "medium": "Papel",
+          "opinion": "Ele não estava interessado apenas nas obras, estava interessado na maneira como nós contamos a história delas."
+        },
+        "assets": {
+          "sprite": "notes",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 55, "y": 15, "rotation": -2 },
+          "connectedTo": ["document", "signature"]
+        }
+      },
+      "signature": {
+        "id": "signature",
+        "metadata": {
+          "title": "Assinatura do Vândalo"
+        },
+        "educational": {
+          "description": "Documento de conservação assinado por A.V.",
+          "medium": "Papel",
+          "opinion": "A mesma caligrafia, o mesmo conhecimento sobre as peças, e agora temos uma inicial."
+        },
+        "assets": {
+          "sprite": "signature",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 76, "y": 40, "rotation": -2 },
+          "connectedTo": ["notes", "message"]
+        }
+      }
+    }
+  }
 }
