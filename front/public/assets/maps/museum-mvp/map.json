@@ -67,7 +67,7 @@
                         {
                          "name":"collectible_id",
                          "type":"string",
-                         "value":"cachimbo"
+                         "value":"message"
                         }, 
                         {
                          "name":"collectible_type",
@@ -78,8 +78,56 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":30.0807406789557,
-                 "y":177.48502794228
+                 "x":758.080740678956,
+                 "y":240.48502794228
+                }, 
+                {
+                 "height":0,
+                 "id":67,
+                 "name":"I2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"varnish"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":423.8507548022,
+                 "y":383.670414101501
+                }, 
+                {
+                 "height":0,
+                 "id":68,
+                 "name":"I1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"paper"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":731.869338017839,
+                 "y":512.212895332453
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1246,10 +1294,10 @@
          "y":0
         }],
  "nextlayerid":21,
- "nextobjectid":67,
+ "nextobjectid":69,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.2",
+ "tiledversion":"1.12.1",
  "tileheight":16,
  "tilesets":[
         {
