@@ -115,6 +115,7 @@ export interface GameUIState {
   introData: { levelId: string; config: IntroConfig } | null;
   evidenceBoardOpen: boolean;
   evidenceBoardSelectedClueId: string | null;
+  nudgeActive: boolean;
 
   quiz: {
     isVisible: boolean;
@@ -183,6 +184,7 @@ export interface GameUIState {
   setIntroData: (data: { levelId: string; config: IntroConfig } | null) => void;
   setEvidenceBoardOpen: (open: boolean) => void;
   setEvidenceBoardSelectedClueId: (id: string | null) => void;
+  setNudgeActive: (active: boolean) => void;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -288,6 +290,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     introData: null,
     evidenceBoardOpen: false,
     evidenceBoardSelectedClueId: null,
+    nudgeActive: false,
 
     quiz: {
       isVisible: false,
@@ -498,6 +501,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     setEvidenceBoardOpen: (open) => set({ evidenceBoardOpen: open }),
     setEvidenceBoardSelectedClueId: (id) =>
       set({ evidenceBoardSelectedClueId: id }),
+    setNudgeActive: (active) => set({ nudgeActive: active }),
 
     startQuiz: (
       questions,
