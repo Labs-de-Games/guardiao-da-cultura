@@ -482,4 +482,63 @@ export class PlaceholderSystem {
     const filled = categoryPlaceholders.filter((p) => p.isFilled).length;
     return { filled, total };
   }
+
+  public pulseNearestPlaceholder(
+    x: number,
+    y: number,
+    radius: number = 300,
+    type?: InteractiveType,
+  ): void {
+    const placeholder = this.getNearbyPlaceholder(x, y, radius, type);
+    if (!placeholder) return;
+
+    const sprite = placeholder.hintSprite;
+    if (!sprite) return;
+
+    const targets: (Phaser.GameObjects.Sprite | Phaser.GameObjects.Image)[] =
+      [];
+
+    if (sprite instanceof Phaser.GameObjects.Container) {
+      for (const child of sprite.getAll()) {
+        if (
+          child instanceof Phaser.GameObjects.Sprite ||
+          child instanceof Phaser.GameObjects.Image
+        ) {
+          targets.push(child);
+        }
+      }
+    } else if (
+      sprite instanceof Phaser.GameObjects.Sprite ||
+      sprite instanceof Phaser.GameObjects.Image
+    ) {
+      targets.push(sprite);
+    }
+
+    if (targets.length === 0) return;
+
+    const alreadyTweening = targets.some((t) =>
+      this.scene.tweens.isTweening(t),
+    );
+    if (alreadyTweening) return;
+
+    for (const target of targets) {
+      const originalAlpha = target.alpha;
+      const pulseAlpha =
+        originalAlpha >= 0.6
+          ? originalAlpha * 0.5
+          : Math.min(originalAlpha + 0.25, 1);
+
+      this.scene.tweens.add({
+        targets: target,
+        alpha: { from: originalAlpha, to: pulseAlpha },
+        duration: 500,
+        yoyo: true,
+        repeat: 2,
+        ease: "Sine.easeInOut",
+        onComplete: () => {
+          target.setAlpha(originalAlpha);
+        },
+      });
+    }
+  }
 }
