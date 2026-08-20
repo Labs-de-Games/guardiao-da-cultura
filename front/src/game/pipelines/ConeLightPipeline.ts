@@ -22,6 +22,7 @@ const ConeFrag = [
   "uniform vec2  uConeDirections[kMaxLights];",
   "uniform float uConeAngles[kMaxLights];",
   "uniform float uConeFalloffs[kMaxLights];",
+  "uniform float uConeDiffuse[kMaxLights];",
   "varying vec2 outTexCoord;",
   "varying float outTexId;",
   "varying float outTintEffect;",
@@ -62,7 +63,8 @@ const ConeFrag = [
   "            float cosAngle = dot(toFrag, dir);",
   "            float coneFactor = clamp((cosAngle - coneCos) / max(0.001, 1.0 - coneCos), 0.0, 1.0);",
   "            float beam = pow(max(coneFactor, 0.0001), max(uConeFalloffs[index], 0.0001));",
-  "            vec3 diffuse = light.color * diffuseFactor;",
+  "            float df = mix(1.0, diffuseFactor, uConeDiffuse[index]);",
+  "            vec3 diffuse = light.color * df;",
   "            finalColor += (attenuation * beam * diffuse) * light.intensity;",
   "        }",
   "    }",
@@ -82,6 +84,7 @@ export class ConeLightPipeline extends LightPipeline {
   private directionBuffer = new Float32Array(0);
   private angleBuffer = new Float32Array(0);
   private falloffBuffer = new Float32Array(0);
+  private diffuseBuffer = new Float32Array(0);
 
   constructor(config: Phaser.Game | { game: Phaser.Game }) {
     const game =
@@ -102,12 +105,23 @@ export class ConeLightPipeline extends LightPipeline {
     intensity: number,
     angle: number,
     falloff: number = 1.2,
+    directionX: number = this.defaultDirectionX,
+    directionY: number = this.defaultDirectionY,
+    // 1 = shaded by the fake surface normal, like every other cone
+    // light (matches existing light bars/chandeliers). 0 = ignore the
+    // normal entirely, so reach is governed purely by radius/angle —
+    // the normal-based term collapses to near-zero at long range
+    // (the light's implicit forward offset is tiny next to large
+    // on-screen distances), which is what silently caps "reach" for
+    // long beams no matter how big radius gets.
+    diffuse: number = 1,
   ): Phaser.GameObjects.Light {
     const light = scene.lights.addLight(x, y, radius, color, intensity);
     (light as any)._coneAngle = angle / 2;
     (light as any)._coneFalloff = falloff;
-    (light as any)._coneDirectionX = this.defaultDirectionX;
-    (light as any)._coneDirectionY = this.defaultDirectionY;
+    (light as any)._coneDirectionX = directionX;
+    (light as any)._coneDirectionY = directionY;
+    (light as any)._coneDiffuse = diffuse;
     return light;
   }
 
@@ -130,6 +144,7 @@ export class ConeLightPipeline extends LightPipeline {
       this.directionBuffer = new Float32Array(dirLen);
       this.angleBuffer = new Float32Array(count);
       this.falloffBuffer = new Float32Array(count);
+      this.diffuseBuffer = new Float32Array(count);
     }
 
     for (let i = 0; i < count; i++) {
@@ -142,10 +157,12 @@ export class ConeLightPipeline extends LightPipeline {
       this.angleBuffer[i] = (light as any)._coneAngle ?? this.defaultAngle / 2;
       this.falloffBuffer[i] =
         (light as any)._coneFalloff ?? this.defaultFalloff;
+      this.diffuseBuffer[i] = (light as any)._coneDiffuse ?? 1;
     }
 
     this.set2fv("uConeDirections", this.directionBuffer);
     this.set1fv("uConeAngles", this.angleBuffer);
     this.set1fv("uConeFalloffs", this.falloffBuffer);
+    this.set1fv("uConeDiffuse", this.diffuseBuffer);
   }
 }
