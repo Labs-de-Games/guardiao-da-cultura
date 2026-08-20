@@ -1218,6 +1218,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.lightBarSystem?.getAll().forEach(({ sprite }) => {
       sprite.resetPipeline();
     });
+
+    this.spotlightSystem?.getAll().forEach(({ sprite, light }) => {
+      if (light) sprite.resetPipeline();
+    });
   }
 
   private setupEvents() {
