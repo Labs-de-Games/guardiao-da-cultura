@@ -519,6 +519,26 @@
                  "point":true,
                  "properties":[
                         {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#44ff44"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":2500
+                        }, 
+                        {
                          "name":"scale",
                          "type":"float",
                          "value":6
@@ -538,10 +558,30 @@
                 {
                  "height":0,
                  "id":108,
-                 "name":"SP_1",
+                 "name":"SP_3",
                  "opacity":1,
                  "point":true,
                  "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#4444ff"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":2500
+                        }, 
                         {
                          "name":"scale",
                          "type":"float",
@@ -567,6 +607,26 @@
                  "point":true,
                  "properties":[
                         {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff44"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":2500
+                        }, 
+                        {
                          "name":"scale",
                          "type":"float",
                          "value":6
@@ -586,14 +646,34 @@
                 {
                  "height":0,
                  "id":110,
-                 "name":"SP_2",
+                 "name":"SP_1",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ff4444"
+                        }, 
+                        {
                          "name":"correctColor",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":6
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":2500
                         }, 
                         {
                          "name":"scale",
