@@ -57,6 +57,7 @@ import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
+import { NudgeAction, NudgeManager } from "../systems/NudgeManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -79,6 +80,16 @@ import {
   findWorkDataById,
   resolveWorkIdFromPlaceholder,
 } from "../utils/WorkDataHelper";
+
+const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
+  [InteractiveType.SCULPTURE]: "nudge_hint_shown_sculpture",
+  [InteractiveType.PAINTING]: "nudge_hint_shown_painting",
+  [InteractiveType.POSTER]: "nudge_hint_shown_poster",
+  [InteractiveType.PHOTO]: "nudge_hint_shown_photo",
+  [InteractiveType.PHOTO_CHUNK]: "nudge_hint_shown_photo",
+  [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
+  [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
+};
 
 export class Game extends Scene implements GameDataAccessor {
   private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
@@ -122,6 +133,7 @@ export class Game extends Scene implements GameDataAccessor {
   public spotlightSystem!: SpotlightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
+  private nudgeManager!: NudgeManager;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
@@ -729,6 +741,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (tutorialLayer) {
         this.tutorialSystem.registerFromLayer(tutorialLayer, this.mapScale);
       }
+
+      this.nudgeManager = new NudgeManager();
       this.hintKeySystem.registerItems([
         ...this.draggableItems.map((item) => ({
           get x() {
@@ -1016,6 +1030,10 @@ export class Game extends Scene implements GameDataAccessor {
       (data: { missionId: string; status: QuestStatus }) => {
         this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
 
+        if (data.status === QuestStatus.COLLECTING) {
+          this.nudgeManager?.reset(data.missionId);
+        }
+
         if (this.levelDef.activeMissions?.includes(data.missionId)) {
           EventBus.emit("quest:mission-status-changed", {
             missionId: data.missionId,
@@ -1176,6 +1194,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     EventBus.on("ui:label-show", () => {
       this.tutorialSystem?.completeTutorial("tutorial_read_label");
+      this.nudgeManager?.recordInteraction();
     });
   }
 
@@ -1470,6 +1489,7 @@ export class Game extends Scene implements GameDataAccessor {
 
             this.isChunkSelectorOpen = true;
             this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
+            this.nudgeManager?.recordInteraction();
             this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
             const expectedSlots = Array.isArray(photo.id)
               ? photo.id
@@ -1610,6 +1630,7 @@ export class Game extends Scene implements GameDataAccessor {
 
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
+        this.nudgeManager?.recordInteraction();
 
         const currentInspected = this.registry.get("objects_inspected") || 0;
         this.registry.set("objects_inspected", currentInspected + 1);
@@ -1621,6 +1642,7 @@ export class Game extends Scene implements GameDataAccessor {
         }
 
         this.tutorialSystem?.completeTutorial("tutorial_drag_sculpture");
+        this.nudgeManager?.recordInteraction();
 
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
@@ -1749,6 +1771,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
       AudioManager.destroy();
+      EventBus.emit("nudge:hide", undefined);
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
@@ -1968,11 +1991,191 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.tutorialSystem) {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
+
+      if (this.nudgeManager) {
+        const nudgeAction = this.nudgeManager.evaluate(
+          Date.now(),
+          isPlayerBusy || isPanelOpen,
+        );
+
+        if (nudgeAction !== NudgeAction.NONE) {
+          const nearbyCostume =
+            !this.isCategoryComplete(InteractiveType.COSTUME) &&
+            this.placeholderSystem.getNearbyPlaceholder(
+              this.player.x,
+              this.player.y,
+              500,
+              InteractiveType.COSTUME,
+            );
+          const nearbySpotlight =
+            !this.isCategoryComplete(InteractiveType.SPOTLIGHT) &&
+            this.spotlightSystem?.getNearestIncomplete(
+              this.player.x,
+              this.player.y,
+              500,
+            );
+
+          if (nearbyCostume || nearbySpotlight) {
+            if (nearbyCostume) {
+              this.placeholderSystem.pulseNearestPlaceholder(
+                this.player.x,
+                this.player.y,
+                500,
+                InteractiveType.COSTUME,
+              );
+              posthog.capture("nudge_pulse_shown_costume", {
+                level_id: this.levelId,
+                mission_id: this.nudgeManager.getCurrentMissionId(),
+              });
+            }
+            if (nearbySpotlight) {
+              this.spotlightSystem?.pulseNearestSpotlight(
+                this.player.x,
+                this.player.y,
+                500,
+              );
+              posthog.capture("nudge_pulse_shown_spotlight", {
+                level_id: this.levelId,
+                mission_id: this.nudgeManager.getCurrentMissionId(),
+              });
+            }
+            this.nudgeManager.recordNudge();
+            EventBus.emit("nudge:show", { type: "pulse" });
+          } else if (nudgeAction === NudgeAction.SHOW_HINT) {
+            const hintResult = this.findNearestHint();
+            if (hintResult) {
+              this.nudgeManager.recordNudge();
+              EventBus.emit("ui:toast-show", {
+                message: hintResult.message,
+                duration: 5000,
+              });
+              EventBus.emit("nudge:show", {
+                type: "hint",
+                message: hintResult.message,
+              });
+              posthog.capture(NUDGE_HINT_EVENT_BY_TYPE[hintResult.category], {
+                level_id: this.levelId,
+                mission_id: this.nudgeManager.getCurrentMissionId(),
+                hint_message: hintResult.message,
+              });
+            }
+          }
+        }
+      }
     }
   }
 
   public getLevelId(): string {
     return this.levelId;
+  }
+
+  private static readonly TYPE_TO_DONE_KEY: Partial<
+    Record<InteractiveType, { infoKey: string; missionId: string }>
+  > = {
+    [InteractiveType.SCULPTURE]: {
+      infoKey: MissionKeys.SCULPTURES_DONE,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.PAINTING]: {
+      infoKey: MissionKeys.PAINTINGS_DONE,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.PHOTO_CHUNK]: {
+      infoKey: MissionKeys.PHOTO_COLLECTED,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.PHOTO]: {
+      infoKey: MissionKeys.PHOTO_COLLECTED,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.COSTUME]: {
+      infoKey: MissionKeys.COSTUMES_DONE,
+      missionId: MissionIds.CURATOR_L2,
+    },
+    [InteractiveType.POSTER]: {
+      infoKey: MissionKeys.POSTERS_DONE,
+      missionId: MissionIds.CURATOR_L2,
+    },
+    [InteractiveType.SPOTLIGHT]: {
+      infoKey: MissionKeys.SPOTLIGHTS_DONE,
+      missionId: MissionIds.CURATOR_L2,
+    },
+  };
+
+  private isCategoryComplete(type: InteractiveType): boolean {
+    const entry = Game.TYPE_TO_DONE_KEY[type];
+    if (!entry) return false;
+    return this.questManager.hasInfo(entry.missionId, entry.infoKey);
+  }
+
+  private findNearestHint(): {
+    message: string;
+    category: InteractiveType;
+  } | null {
+    const px = this.player.x;
+    const py = this.player.y;
+    const candidates: {
+      dist: number;
+      hint: string;
+      category: InteractiveType;
+    }[] = [];
+    const NUDGE_RADIUS = 500;
+
+    for (const item of this.draggableItems) {
+      if (!item.active || item.isGrabbed || item.input?.enabled === false)
+        continue;
+      if (this.isCategoryComplete(item.interactiveType)) continue;
+      const work = findWorkDataById(item.itemId, this.contentData);
+      const hint = work?.educational?.hint;
+      if (hint && hint !== "XXXXX" && hint !== "") {
+        const dist = Phaser.Math.Distance.Between(px, py, item.x, item.y);
+        if (dist <= NUDGE_RADIUS) {
+          candidates.push({ dist, hint, category: item.interactiveType });
+        }
+      }
+    }
+
+    for (const item of this.carryableItems) {
+      if (!item.active || item.isCarried || item.input?.enabled === false)
+        continue;
+      if (this.isCategoryComplete(item.interactiveType)) continue;
+      const work = findWorkDataById(item.itemId, this.contentData);
+      const hint = work?.educational?.hint;
+      if (hint && hint !== "XXXXX" && hint !== "") {
+        const dist = Phaser.Math.Distance.Between(px, py, item.x, item.y);
+        if (dist <= NUDGE_RADIUS) {
+          candidates.push({ dist, hint, category: item.interactiveType });
+        }
+      }
+    }
+
+    const photo = this.placeholderSystem.getNearbyPlaceholder(
+      px,
+      py,
+      NUDGE_RADIUS,
+      InteractiveType.PHOTO,
+    );
+    if (photo && !this.isCategoryComplete(InteractiveType.PHOTO)) {
+      const workId = resolveWorkIdFromPlaceholder(photo.id, this.contentData);
+      if (workId) {
+        const work = findWorkDataById(workId, this.contentData);
+        const hint = work?.educational?.hint;
+        if (hint && hint !== "XXXXX" && hint !== "") {
+          const dist = Phaser.Math.Distance.Between(
+            px,
+            py,
+            photo.area.centerX,
+            photo.area.centerY,
+          );
+          candidates.push({ dist, hint, category: InteractiveType.PHOTO });
+        }
+      }
+    }
+
+    if (candidates.length === 0) return null;
+
+    candidates.sort((a, b) => a.dist - b.dist);
+    return { message: candidates[0].hint, category: candidates[0].category };
   }
 
   public markFloorStarted(floorIndex: number): boolean {
