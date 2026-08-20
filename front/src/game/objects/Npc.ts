@@ -27,6 +27,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
   private missionAccepted: boolean = false;
   private config: NpcConfig;
   private autoIntroPlayed: boolean = false;
+  private player: Phaser.Physics.Arcade.Sprite | null = null;
 
   static preload(scene: Phaser.Scene) {
     scene.load.spritesheet(
@@ -136,6 +137,7 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       this.exclamationIcon.setVisible(true);
       this.exclamationIcon.setPosition(x, y + NPC_PHYSICS.EXCLAMATION_GAP_Y);
     }
+    this.faceThePlayer();
   }
 
   public hideAfterQuiz() {
@@ -180,6 +182,9 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
       console.warn("[Npc] QuestManager not found!");
       return;
     }
+
+    this.faceThePlayer();
+
     const missionId = this.config.missionId;
     const status = this.questManager.getStatus(missionId);
     const game = this.scene as Game;
@@ -255,7 +260,16 @@ export class Npc extends Phaser.Physics.Arcade.Sprite {
   }
 
   setPlayerTracking(player: Phaser.Physics.Arcade.Sprite) {
+    this.player = player;
     this.interaction.setPlayerTracking(player);
+    this.faceThePlayer();
+  }
+
+  /** Orient the NPC to look towards the player's current position. */
+  private faceThePlayer() {
+    if (this.player) {
+      this.setFlipX(this.player.x < this.x);
+    }
   }
 
   update(_ts: number, _dt: number) {
