@@ -151,7 +151,8 @@ export class EffectsManager {
     _px: number = 0,
     _py: number = 0,
   ) {
-    AudioManager.playSfx("sfx.puzzle.success", 0.7);
+    // Temporarily disabled while the persistent cone is migrated to
+    // ConeLightPipeline (see SpotlightSystem).
   }
 
   private drawSpotlightBeam(px: number, py: number) {
