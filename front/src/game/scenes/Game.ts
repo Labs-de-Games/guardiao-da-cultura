@@ -57,7 +57,7 @@ import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
-import { NudgeAction, NudgeManager } from "../systems/NudgeManager";
+import { NudgeManager } from "../systems/NudgeManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -1642,7 +1642,6 @@ export class Game extends Scene implements GameDataAccessor {
         }
 
         this.tutorialSystem?.completeTutorial("tutorial_drag_sculpture");
-        this.nudgeManager?.recordInteraction();
 
         if (item.interactiveType === InteractiveType.PHOTO_CHUNK) {
           this.photoChunksCollected++;
@@ -1771,7 +1770,6 @@ export class Game extends Scene implements GameDataAccessor {
       this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
       AudioManager.destroy();
-      EventBus.emit("nudge:hide", undefined);
       EventBus.off("game:pause-requested");
       EventBus.off("game:resume-requested");
       EventBus.off("ui:chunk-selector-submit");
@@ -1992,73 +1990,63 @@ export class Game extends Scene implements GameDataAccessor {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
 
-      if (this.nudgeManager) {
-        const nudgeAction = this.nudgeManager.evaluate(
-          Date.now(),
-          isPlayerBusy || isPanelOpen,
-        );
+      if (
+        this.nudgeManager?.evaluate(Date.now(), isPlayerBusy || isPanelOpen)
+      ) {
+        const nearbyCostume =
+          !this.isCategoryComplete(InteractiveType.COSTUME) &&
+          this.placeholderSystem.getNearbyPlaceholder(
+            this.player.x,
+            this.player.y,
+            500,
+            InteractiveType.COSTUME,
+          );
+        const nearbySpotlight =
+          !this.isCategoryComplete(InteractiveType.SPOTLIGHT) &&
+          this.spotlightSystem?.getNearestIncomplete(
+            this.player.x,
+            this.player.y,
+            500,
+          );
 
-        if (nudgeAction !== NudgeAction.NONE) {
-          const nearbyCostume =
-            !this.isCategoryComplete(InteractiveType.COSTUME) &&
-            this.placeholderSystem.getNearbyPlaceholder(
+        if (nearbyCostume || nearbySpotlight) {
+          if (nearbyCostume) {
+            this.placeholderSystem.pulseNearestPlaceholder(
               this.player.x,
               this.player.y,
               500,
               InteractiveType.COSTUME,
             );
-          const nearbySpotlight =
-            !this.isCategoryComplete(InteractiveType.SPOTLIGHT) &&
-            this.spotlightSystem?.getNearestIncomplete(
+            posthog.capture("nudge_pulse_shown_costume", {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+            });
+          }
+          if (nearbySpotlight) {
+            this.spotlightSystem?.pulseNearestSpotlight(
               this.player.x,
               this.player.y,
               500,
             );
-
-          if (nearbyCostume || nearbySpotlight) {
-            if (nearbyCostume) {
-              this.placeholderSystem.pulseNearestPlaceholder(
-                this.player.x,
-                this.player.y,
-                500,
-                InteractiveType.COSTUME,
-              );
-              posthog.capture("nudge_pulse_shown_costume", {
-                level_id: this.levelId,
-                mission_id: this.nudgeManager.getCurrentMissionId(),
-              });
-            }
-            if (nearbySpotlight) {
-              this.spotlightSystem?.pulseNearestSpotlight(
-                this.player.x,
-                this.player.y,
-                500,
-              );
-              posthog.capture("nudge_pulse_shown_spotlight", {
-                level_id: this.levelId,
-                mission_id: this.nudgeManager.getCurrentMissionId(),
-              });
-            }
+            posthog.capture("nudge_pulse_shown_spotlight", {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+            });
+          }
+          this.nudgeManager.recordNudge();
+        } else {
+          const hintResult = this.findNearestHint();
+          if (hintResult) {
             this.nudgeManager.recordNudge();
-            EventBus.emit("nudge:show", { type: "pulse" });
-          } else if (nudgeAction === NudgeAction.SHOW_HINT) {
-            const hintResult = this.findNearestHint();
-            if (hintResult) {
-              this.nudgeManager.recordNudge();
-              EventBus.emit("ui:toast-show", {
-                message: hintResult.message,
-                duration: 5000,
-              });
-              EventBus.emit("nudge:show", {
-                type: "hint",
-                message: hintResult.message,
-              });
-              posthog.capture(NUDGE_HINT_EVENT_BY_TYPE[hintResult.category], {
-                level_id: this.levelId,
-                mission_id: this.nudgeManager.getCurrentMissionId(),
-                hint_message: hintResult.message,
-              });
-            }
+            EventBus.emit("ui:toast-show", {
+              message: hintResult.message,
+              duration: 5000,
+            });
+            posthog.capture(NUDGE_HINT_EVENT_BY_TYPE[hintResult.category], {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+              hint_message: hintResult.message,
+            });
           }
         }
       }
