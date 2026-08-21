@@ -172,6 +172,27 @@ minigames, quizzes e carregamento do jogo.
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
 | `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
+| `nudge_pulse_shown_{costume,spotlight}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
+| `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
+
+## Nudge — regras de disparo
+
+Necessário para interpretar os eventos `nudge_*`:
+
+- **Gatilho:** ~15s de inatividade do jogador, avaliado no máximo 1x/s, e nunca enquanto o
+  jogador está ocupado ou com painel/diálogo aberto.
+- **Tipo por proximidade, não por escalonamento:** o pulse dispara quando há um placeholder de
+  figurino ou um refletor incompleto num raio de ~500px; caso contrário, exibe-se o
+  `educational.hint` da obra mais próxima como toast. Por isso as duas famílias de evento são
+  mutuamente exclusivas por disparo — o atraso é o mesmo para as duas.
+- **Cooldown global de 5 minutos** após qualquer nudge, com reset a cada troca de missão. A
+  contagem de eventos por sessão é baixa por design, não por falta de instrumentação.
+- Os dois eventos de pulse podem disparar no mesmo tick quando há um placeholder de figurino
+  **e** um refletor incompleto no raio.
+- `mission_id` vem de `NudgeManager.getCurrentMissionId()` e é `""` até a primeira missão
+  entrar em `COLLECTING` — considerar antes de agrupar por esse campo.
+- `PHOTO` e `PHOTO_CHUNK` mapeiam para o mesmo `nudge_hint_shown_photo`: 7 tipos interativos,
+  6 nomes distintos de evento de dica.
 
 `browser`/`operating_system` are not sent as custom properties — PostHog
 autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`
