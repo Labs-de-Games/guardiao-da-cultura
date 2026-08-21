@@ -145,6 +145,12 @@ export class PlaceholderSystem {
       const scale = config.scale ?? 1;
       instance.state = { ...(instance.state || {}), costumeScale: scale };
 
+      // Container children are never visited by Game.setupLighting() — it only
+      // walks the scene's top-level display list, and Phaser Containers don't
+      // support the render Pipeline component anyway. Apply the lighting
+      // pipeline to each part image directly so costumes react to dynamic lights.
+      const isWebGL = this.scene.renderer.type === Phaser.WEBGL;
+
       const pedestalConfig = LayoutConfig.COSTUME.PEDESTAL_DEFAULT;
       const pedestal = this.scene.add.image(0, 0, "pedestal");
       pedestal.setDisplaySize(
@@ -153,6 +159,7 @@ export class PlaceholderSystem {
       );
       pedestal.setOrigin(pedestalConfig.originX, pedestalConfig.originY);
       pedestal.setPosition(0, pedestalConfig.yOffset * scale);
+      if (isWebGL) pedestal.setPipeline("Conelight");
       container.add(pedestal);
 
       const cells = TEXTURES.map((textureKey) => {
@@ -160,7 +167,9 @@ export class PlaceholderSystem {
           | "head"
           | "torso"
           | "feet";
-        return { partName, cell: this.scene.add.image(0, 0, textureKey) };
+        const cell = this.scene.add.image(0, 0, textureKey);
+        if (isWebGL) cell.setPipeline("Conelight");
+        return { partName, cell };
       });
 
       let nextBottomY = Math.round(pedestalConfig.yOffset * scale);
