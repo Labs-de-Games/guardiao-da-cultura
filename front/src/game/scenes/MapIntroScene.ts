@@ -10,7 +10,7 @@ import {
   AUTO_START_REGISTRY_KEY,
   AUTO_START_TICK_INTERVAL_MS,
 } from "../constants/AutoStart";
-import { LEVEL_02_ENABLED } from "../constants/FeatureFlags";
+import { isLevelEnabled } from "../constants/FeatureFlags";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
@@ -282,9 +282,9 @@ export class MapIntroScene extends Scene {
 
   private isMarkerAvailable(index: number): boolean {
     const marker = MARKERS[index];
-    // Feature-gate level 02 so it doesn't appear unlocked on the map
-    // before it's ready to ship.
-    if (marker?.levelId === "level_02" && !LEVEL_02_ENABLED) {
+    // Feature-gate levels still in development so they don't appear
+    // unlocked on the map before they're ready to ship.
+    if (marker?.levelId && !isLevelEnabled(marker.levelId)) {
       return false;
     }
 
