@@ -14,6 +14,7 @@ import {
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
 import { useCanvasViewport } from "@/ui/hooks/useCanvasViewport";
+import { CanvasViewportLayer } from "@/ui/panels/CanvasViewportLayer";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -289,16 +290,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   if (!open || mode !== "dialogue") return null;
 
   return (
-    <Box
-      sx={{
-        position: "absolute",
-        left: viewport.left,
-        top: viewport.top,
-        width: viewport.width,
-        height: viewport.height,
-        pointerEvents: "none",
-      }}
-    >
+    <CanvasViewportLayer viewport={viewport}>
       <Box
         sx={{
           ...positioning.outerStyle,
@@ -358,7 +350,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
           />
         </Box>
       </Box>
-    </Box>
+    </CanvasViewportLayer>
   );
 }
 
