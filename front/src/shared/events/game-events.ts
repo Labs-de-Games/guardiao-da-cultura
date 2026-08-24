@@ -135,6 +135,18 @@ export interface DialogueCameraSyncData {
   zoom: number;
 }
 
+export interface CanvasViewportData {
+  /** Canvas's CSS-pixel offset from #game-container's top-left (letterbox offset). */
+  left: number;
+  top: number;
+  /** Canvas's actual displayed CSS-pixel size. */
+  width: number;
+  height: number;
+  /** Displayed size divided by the base game resolution (LayoutConfig.GAME.WIDTH/HEIGHT). */
+  scaleX: number;
+  scaleY: number;
+}
+
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import type { IntroConfig } from "@/ui/intro/types";
@@ -238,6 +250,7 @@ export interface GameEventMap {
   "dialogue:dequeue-started": undefined;
   "dialogue:queue-cleared": undefined;
   "dialogue:camera-sync": DialogueCameraSyncData;
+  "canvas:viewport-changed": CanvasViewportData;
   "ui:label-show": LabelInfoData;
   "ui:label-hide": undefined;
   "ui:badge-gallery-toggle": BadgeGalleryToggleData;
