@@ -1790,7 +1790,7 @@ export class Game extends Scene implements GameDataAccessor {
       );
       if (!p) return;
 
-      this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
+      this.showSpotlightBeam();
       this.playConfettiBurst(p.area.centerX, p.area.centerY);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
       this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
@@ -2254,12 +2254,8 @@ export class Game extends Scene implements GameDataAccessor {
     this.completeFloor(this.scoringFloors.photo);
   }
 
-  public showSpotlightBeam(
-    duration: number = 2000,
-    px: number = 0,
-    py: number = 0,
-  ) {
-    this.effects.showSpotlightBeam(duration, 200, px, py);
+  public showSpotlightBeam() {
+    this.effects.showSpotlightBeam();
   }
 
   public playConfettiBurst(px: number, py: number) {
@@ -2335,11 +2331,8 @@ export class Game extends Scene implements GameDataAccessor {
       }
 
       if (result.snapped) {
-        this.showSpotlightBeam(
-          2000,
-          result.placeholder?.area.centerX,
-          result.placeholder?.area.centerY,
-        );
+        this.showSpotlightBeam();
+
         if (result.placeholder) {
           this.playConfettiBurst(
             result.placeholder.area.centerX,
