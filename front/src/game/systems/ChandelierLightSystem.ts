@@ -1,8 +1,7 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import type { ConeLightPipeline } from "../pipelines/ConeLightPipeline";
+import { getConeLightPipeline, parseColor } from "../utils/lightUtils";
 import { TiledUtils } from "../utils/TiledUtils";
-import { parseColor } from "./LightBarSystem";
 
 export interface ChandelierLightInstance {
   instanceId: string;
@@ -86,12 +85,7 @@ export class ChandelierLightSystem {
   private createPointLight(
     config: ChandelierLightConfig,
   ): Phaser.GameObjects.Light | undefined {
-    if (this.scene.renderer.type !== Phaser.WEBGL) return undefined;
-
-    const renderer = this.scene.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
-    const pipeline = renderer.pipelines.get("Conelight") as
-      | ConeLightPipeline
-      | undefined;
+    const pipeline = getConeLightPipeline(this.scene);
     if (!pipeline) return undefined;
 
     const radius = config.radius ?? DEFAULT_CHANDELIER_LIGHT.radius;
