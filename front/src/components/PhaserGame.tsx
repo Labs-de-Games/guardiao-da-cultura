@@ -3,12 +3,14 @@
 import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
+import { LayoutConfig } from "../game/constants/LayoutConfig";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
 import { useAuth } from "../lib/auth/useAuth";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
 import { useEntryFlow } from "../lib/posthog/useEntryFlow";
+import { EventBus } from "../shared/events/event-bus";
 import LoadingGameScreen from "./LoadingGameScreen";
 import LoadingScreen from "./LoadingScreen";
 
@@ -28,6 +30,7 @@ export default function PhaserGame() {
   const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasViewportCleanupRef = useRef<(() => void) | null>(null);
   const isInitializingRef = useRef(false);
   const resumeAudioRef = useRef<(() => void) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,6 +133,30 @@ export default function PhaserGame() {
         const game = StartGame("game-container", playerId, isGuest, entryFlow);
         gameRef.current = game;
 
+        const emitCanvasViewport = () => {
+          const canvas = game.canvas;
+          const container = containerRef.current;
+          if (!canvas || !container) return;
+          const canvasRect = canvas.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          EventBus.emit("canvas:viewport-changed", {
+            left: canvasRect.left - containerRect.left,
+            top: canvasRect.top - containerRect.top,
+            width: canvasRect.width,
+            height: canvasRect.height,
+            scaleX: canvasRect.width / LayoutConfig.GAME.WIDTH,
+            scaleY: canvasRect.height / LayoutConfig.GAME.HEIGHT,
+          });
+        };
+        emitCanvasViewport();
+        requestAnimationFrame(emitCanvasViewport);
+        game.scale.on("resize", emitCanvasViewport);
+        window.addEventListener("resize", emitCanvasViewport);
+        canvasViewportCleanupRef.current = () => {
+          game.scale.off("resize", emitCanvasViewport);
+          window.removeEventListener("resize", emitCanvasViewport);
+        };
+
         // Pass Phaser's sound manager for TTS volume ducking
         AudioAccessibilityService.setSoundManager(game.sound);
 
@@ -185,6 +212,10 @@ export default function PhaserGame() {
         clearTimeout(minLoadingTimeoutRef.current);
         minLoadingTimeoutRef.current = null;
       }
+      if (canvasViewportCleanupRef.current) {
+        canvasViewportCleanupRef.current();
+        canvasViewportCleanupRef.current = null;
+      }
       if (gameRef.current) {
         gameRef.current.destroy(false);
         gameRef.current = null;
@@ -203,6 +234,7 @@ export default function PhaserGame() {
         width: "100%",
         height: "100vh",
         overflow: "hidden",
+        backgroundColor: "#000000",
       }}
     >
       {isLoading &&

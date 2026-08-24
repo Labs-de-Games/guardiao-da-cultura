@@ -13,6 +13,7 @@ const replayableEvents = new Set<keyof GameEventMap>([
   "collectible:collectibles-sync",
   "map:marker-changed",
   "dialogue:camera-sync",
+  "canvas:viewport-changed",
 ]);
 
 const lastEventPayloads = new Map<
