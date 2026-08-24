@@ -115,6 +115,9 @@ export class MapIntroScene extends Scene {
 
     registerScene(this);
 
+    // Under Scale.FIT, this.scale.width/height stay fixed at the base game
+    // resolution — only display size/letterbox margins change — so this
+    // still fires on every window resize but recomputes the same layout.
     this.scale.on("resize", this.handleResize);
 
     const store = useGameUIStore.getState();
