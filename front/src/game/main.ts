@@ -1,4 +1,5 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
+import { LayoutConfig } from "./constants/LayoutConfig";
 import { ConeLightPipeline } from "./pipelines/ConeLightPipeline";
 import { Game as MainGame } from "./scenes/Game";
 import { LevelCinematic } from "./scenes/LevelCinematic";
@@ -11,8 +12,8 @@ export type EntryFlow = "map" | "direct";
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const baseConfig: Types.Core.GameConfig = {
   type: AUTO,
-  width: 1920,
-  height: 1080,
+  width: LayoutConfig.GAME.WIDTH,
+  height: LayoutConfig.GAME.HEIGHT,
   parent: "game-container",
   backgroundColor: "#000000",
   pixelArt: true,
@@ -24,7 +25,7 @@ const baseConfig: Types.Core.GameConfig = {
     },
   },
   scale: {
-    mode: Scale.RESIZE,
+    mode: Scale.FIT,
     autoCenter: Scale.CENTER_BOTH,
   },
   pipeline: { Conelight: ConeLightPipeline },
