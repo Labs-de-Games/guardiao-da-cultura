@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import type { ConeLightPipeline } from "../pipelines/ConeLightPipeline";
+import { getConeLightPipeline, parseColor } from "../utils/lightUtils";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface LightBarInstance {
@@ -37,18 +37,6 @@ const DEFAULT_CONE_LIGHT = {
   intensity: 6,
   angleDeg: 30,
 };
-
-// Accepts a numeric color, or a hex string such as "#ffcc88", "0xffcc88",
-// or Tiled's native "#AARRGGBB" color property format.
-export function parseColor(raw: unknown): number {
-  if (typeof raw === "number") return raw;
-
-  const hex = String(raw).trim().replace(/^#/, "").replace(/^0x/i, "");
-  const rgbHex = hex.length === 8 ? hex.slice(2) : hex;
-  const parsed = Number.parseInt(rgbHex, 16);
-
-  return Number.isNaN(parsed) ? DEFAULT_CONE_LIGHT.color : parsed;
-}
 
 export class LightBarSystem {
   private lightBars: LightBarInstance[] = [];
@@ -124,12 +112,7 @@ export class LightBarSystem {
     config: LightBarConfig,
     intensity: number,
   ): Phaser.GameObjects.Light | undefined {
-    if (this.scene.renderer.type !== Phaser.WEBGL) return undefined;
-
-    const renderer = this.scene.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
-    const pipeline = renderer.pipelines.get("Conelight") as
-      | ConeLightPipeline
-      | undefined;
+    const pipeline = getConeLightPipeline(this.scene);
     if (!pipeline) return undefined;
 
     const radius = config.radius ?? DEFAULT_CONE_LIGHT.radius;
