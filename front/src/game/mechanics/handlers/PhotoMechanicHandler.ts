@@ -114,11 +114,7 @@ export class PhotoMechanicHandler implements BaseMechanicHandler {
     gameScene.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
     if (allCorrect) {
-      gameScene.showSpotlightBeam(
-        2000,
-        placeholder.area.centerX,
-        placeholder.area.centerY,
-      );
+      gameScene.showSpotlightBeam();
       gameScene.playConfettiBurst(
         placeholder.area.centerX,
         placeholder.area.centerY,

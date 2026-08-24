@@ -89,12 +89,7 @@ export class EffectsManager {
     );
   }
 
-  public showSpotlightBeam(
-    _duration: number = 2000,
-    _revealDuration: number = 200,
-    _px: number = 0,
-    _py: number = 0,
-  ) {
+  public showSpotlightBeam() {
     // Visual beam graphic is gone now that spotlights use ConeLightPipeline
     // (see SpotlightSystem), but this is also the shared "placeholder
     // solved" hook for paintings, sculptures, posters, costumes and photo
