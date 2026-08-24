@@ -3,6 +3,7 @@
 import { Box, Typography } from "@mui/material";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { useCanvasViewport } from "@/ui/hooks/useCanvasViewport";
+import { CanvasViewportLayer } from "@/ui/panels/CanvasViewportLayer";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
@@ -79,16 +80,7 @@ export function MapPinTooltip() {
     : "Este local está em reforma.";
 
   return (
-    <Box
-      sx={{
-        position: "absolute",
-        left: viewport.left,
-        top: viewport.top,
-        width: viewport.width,
-        height: viewport.height,
-        pointerEvents: "none",
-      }}
-    >
+    <CanvasViewportLayer viewport={viewport}>
       <Box
         role="tooltip"
         aria-live="polite"
@@ -175,6 +167,6 @@ export function MapPinTooltip() {
           }}
         />
       </Box>
-    </Box>
+    </CanvasViewportLayer>
   );
 }
