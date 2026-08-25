@@ -314,4 +314,88 @@ export class EffectsManager {
         playerY - playerHeight / 2 - 65 + this.scoreFeedbackFloatY;
     }
   }
+
+  private static readonly CONFETTI_TEXTURE = "confetti";
+  private static readonly CONFETTI_COLORS = [
+    0xff595e, 0xffca3a, 0x8ac926, 0x1982c4, 0x6a4c93,
+  ];
+  /** Total degrees each confetti particle spins over its lifespan. */
+  private static readonly CONFETTI_SPIN_DEGREES = 720;
+
+  private ensureConfettiTexture() {
+    if (this.scene.textures.exists(EffectsManager.CONFETTI_TEXTURE)) return;
+
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillRect(0, 0, 30, 9);
+    graphics.generateTexture(EffectsManager.CONFETTI_TEXTURE, 30, 9);
+    graphics.destroy();
+  }
+
+  private spawnConfettiEmitter(
+    x: number,
+    y: number,
+    angle: { min: number; max: number },
+  ) {
+    const lifespan = 2500;
+    const emitter = this.scene.add.particles(
+      x,
+      y,
+      EffectsManager.CONFETTI_TEXTURE,
+      {
+        speed: { min: 150, max: 350 },
+        angle,
+        gravityY: 500,
+        lifespan,
+        quantity: 40,
+        scale: { start: 0.8, end: 0.3 },
+        alpha: { start: 1, end: 0 },
+        rotate: {
+          onEmit: (particle?: Phaser.GameObjects.Particles.Particle) => {
+            const startAngle = Phaser.Math.Between(0, 360);
+            const p = particle as unknown as {
+              confettiStartAngle: number;
+              confettiSpinDirection: number;
+            };
+            p.confettiStartAngle = startAngle;
+            p.confettiSpinDirection = Phaser.Math.RND.pick([-1, 1]);
+            return startAngle;
+          },
+          onUpdate: (
+            particle: Phaser.GameObjects.Particles.Particle,
+            _key: string,
+            t: number,
+          ) => {
+            const p = particle as unknown as {
+              confettiStartAngle: number;
+              confettiSpinDirection: number;
+            };
+            return (
+              p.confettiStartAngle +
+              t * EffectsManager.CONFETTI_SPIN_DEGREES * p.confettiSpinDirection
+            );
+          },
+        },
+        tint: EffectsManager.CONFETTI_COLORS,
+        emitting: false,
+      },
+    );
+    emitter.setDepth(50);
+    emitter.explode(40);
+
+    this.scene.time.delayedCall(lifespan, () => emitter.destroy());
+  }
+
+  /** Dispara duas explosões de confete (esquerda e direita) para celebrar o sucesso em um placeholder */
+  public playConfettiBurst(
+    x: number,
+    y: number,
+    offset: number = 60,
+    verticalOffset: number = 160,
+  ) {
+    this.ensureConfettiTexture();
+    const burstY = y - verticalOffset;
+    this.spawnConfettiEmitter(x - offset, burstY, { min: 190, max: 270 });
+    this.spawnConfettiEmitter(x + offset, burstY, { min: 270, max: 350 });
+  }
 }

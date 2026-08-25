@@ -21,19 +21,34 @@ const mockTween = {
   add: jest.fn(),
 };
 
+const mockEmitter = {
+  setDepth: jest.fn(),
+  explode: jest.fn(),
+  destroy: jest.fn(),
+};
+
+const mockGraphics = {
+  setDepth: jest.fn(),
+  clear: jest.fn(),
+  fillStyle: jest.fn(),
+  fillRect: jest.fn(),
+  beginPath: jest.fn(),
+  moveTo: jest.fn(),
+  lineTo: jest.fn(),
+  closePath: jest.fn(),
+  fillPath: jest.fn(),
+  generateTexture: jest.fn(),
+  destroy: jest.fn(),
+};
+
 const mockScene = {
   add: {
     sprite: jest.fn().mockReturnValue(mockSprite),
-    graphics: jest.fn().mockReturnValue({
-      setDepth: jest.fn(),
-      clear: jest.fn(),
-      fillStyle: jest.fn(),
-      beginPath: jest.fn(),
-      moveTo: jest.fn(),
-      lineTo: jest.fn(),
-      closePath: jest.fn(),
-      fillPath: jest.fn(),
-    }),
+    graphics: jest.fn().mockReturnValue(mockGraphics),
+    particles: jest.fn().mockReturnValue(mockEmitter),
+  },
+  textures: {
+    exists: jest.fn().mockReturnValue(false),
   },
   tweens: mockTween,
   sound: {
@@ -58,6 +73,7 @@ describe("EffectsManager", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (mockScene.textures.exists as jest.Mock).mockReturnValue(false);
     manager = new EffectsManager(mockScene);
   });
 
@@ -109,6 +125,55 @@ describe("EffectsManager", () => {
       // Since the logic of checking the score increase happens in Game.ts,
       // here we just test that the EffectsManager responds accurately to calls.
       // The test verifies star is created on trigger.
+    });
+  });
+
+  describe("Confetti Burst", () => {
+    it("should generate the confetti texture once and spawn two emitters", () => {
+      manager.playConfettiBurst(100, 200);
+
+      expect(mockScene.add.graphics).toHaveBeenCalledTimes(1);
+      expect(mockGraphics.generateTexture).toHaveBeenCalledWith(
+        "confetti",
+        30,
+        9,
+      );
+      expect(mockGraphics.destroy).toHaveBeenCalledTimes(1);
+
+      expect(mockScene.add.particles).toHaveBeenCalledTimes(2);
+      expect(mockScene.add.particles).toHaveBeenCalledWith(
+        40,
+        40,
+        "confetti",
+        expect.objectContaining({ emitting: false }),
+      );
+      expect(mockScene.add.particles).toHaveBeenCalledWith(
+        160,
+        40,
+        "confetti",
+        expect.objectContaining({ emitting: false }),
+      );
+      expect(mockEmitter.explode).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not regenerate the texture if it already exists", () => {
+      (mockScene.textures.exists as jest.Mock).mockReturnValue(true);
+
+      manager.playConfettiBurst(100, 200);
+
+      expect(mockScene.add.graphics).not.toHaveBeenCalled();
+    });
+
+    it("should destroy each emitter after its lifespan", () => {
+      manager.playConfettiBurst(100, 200);
+
+      const delayedCall = mockScene.time.delayedCall as jest.Mock;
+      expect(delayedCall).toHaveBeenCalledTimes(2);
+      delayedCall.mock.calls.forEach(([, callback]) => {
+        callback();
+      });
+
+      expect(mockEmitter.destroy).toHaveBeenCalledTimes(2);
     });
   });
 });

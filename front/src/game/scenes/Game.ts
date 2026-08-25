@@ -1744,6 +1744,7 @@ export class Game extends Scene implements GameDataAccessor {
       if (!p) return;
 
       this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
+      this.playConfettiBurst(p.area.centerX, p.area.centerY);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
@@ -2207,6 +2208,10 @@ export class Game extends Scene implements GameDataAccessor {
     this.effects.showSpotlightBeam(duration, 200, px, py);
   }
 
+  public playConfettiBurst(px: number, py: number) {
+    this.effects.playConfettiBurst(px, py);
+  }
+
   public handleSpotlightInteraction(
     spotlight: import("../systems/SpotlightSystem").SpotlightInstance,
   ) {
@@ -2281,6 +2286,12 @@ export class Game extends Scene implements GameDataAccessor {
           result.placeholder?.area.centerX,
           result.placeholder?.area.centerY,
         );
+        if (result.placeholder) {
+          this.playConfettiBurst(
+            result.placeholder.area.centerX,
+            result.placeholder.area.centerY,
+          );
+        }
       }
     }
   }
