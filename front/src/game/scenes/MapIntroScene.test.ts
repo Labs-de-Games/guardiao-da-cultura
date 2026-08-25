@@ -1,3 +1,4 @@
+import { isLevelEnabled } from "@/game/constants/FeatureFlags";
 import { SceneNames } from "@/game/constants/SceneNames";
 import { EventBus } from "@/shared/events/event-bus";
 import { MapIntroScene } from "./MapIntroScene";
@@ -17,9 +18,14 @@ jest.mock("js-cookie", () => ({
   set: jest.fn(),
 }));
 
+jest.mock("@/game/constants/FeatureFlags", () => ({
+  isLevelEnabled: jest.fn(() => true),
+}));
+
 describe("MapIntroScene", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (isLevelEnabled as jest.Mock).mockImplementation(() => true);
   });
 
   it("keeps the active map marker when starting the game", () => {
@@ -49,6 +55,39 @@ describe("MapIntroScene", () => {
     expect(EventBus.emit).not.toHaveBeenCalledWith("map:marker-changed", null);
     expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
       levelId: "level_01",
+    });
+  });
+
+  describe("isMarkerAvailable", () => {
+    function buildScene(maxUnlockedLevel: number) {
+      const scene = new MapIntroScene();
+      Object.defineProperty(scene, "maxUnlockedLevel", {
+        value: maxUnlockedLevel,
+        writable: true,
+      });
+      return scene;
+    }
+
+    it("unlocks level 02 once the player has completed level 01", () => {
+      const scene = buildScene(2);
+
+      expect((scene as any).isMarkerAvailable(1)).toBe(true);
+    });
+
+    it("keeps level 02 locked while the player is on level 01", () => {
+      const scene = buildScene(1);
+
+      expect((scene as any).isMarkerAvailable(1)).toBe(false);
+    });
+
+    it("keeps a disabled level locked even when progression allows it", () => {
+      (isLevelEnabled as jest.Mock).mockImplementation(
+        (levelId: string) => levelId !== "level_02",
+      );
+      const scene = buildScene(2);
+
+      expect((scene as any).isMarkerAvailable(1)).toBe(false);
+      expect((scene as any).isMarkerAvailable(0)).toBe(true);
     });
   });
 });
