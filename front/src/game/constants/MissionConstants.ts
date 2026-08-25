@@ -23,6 +23,7 @@ export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
   MissionKeys.COSTUMES_DONE,
   MissionKeys.POSTERS_DONE,
   MissionKeys.SPOTLIGHTS_DONE,
+  MissionKeys.STAGE_DONE,
 ]);
 
 export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
