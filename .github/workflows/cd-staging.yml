@@ -85,5 +85,5 @@ jobs:
             exit 1
           fi
           echo "Triggering staging deployment with tag: ${{ needs.build-and-push.outputs.image_tag }}"
-          curl -X GET "$COOLIFY_WEBHOOK_URL" \
+          curl -X POST "$COOLIFY_WEBHOOK_URL" \
             -H "Authorization: Bearer $COOLIFY_TOKEN"
