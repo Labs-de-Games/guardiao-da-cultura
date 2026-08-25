@@ -73,10 +73,27 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       intermediateQuizzes: ["data/levels/level_02/intermediate-quizzes.json"],
       npcs: ["data/levels/level_02/npcs.json"],
       messages: ["data/global/messages.json"],
-      collectibles: ["data/levels/level_01/collectibles.json"], // mock from level_01
+      collectibles: ["data/levels/level_02/collectibles.json"],
     },
   },
 };
+
+/** Level ids sorted by `levelNumber` — the canonical play order. */
+export function getOrderedLevelIds(): string[] {
+  return Object.values(LEVEL_REGISTRY)
+    .sort((a, b) => a.levelNumber - b.levelNumber)
+    .map((level) => level.id);
+}
+
+/**
+ * The level that comes after `levelId`, or `undefined` when it is the last
+ * one in the registry (or unknown).
+ */
+export function getNextLevelId(levelId: string): string | undefined {
+  const ids = getOrderedLevelIds();
+  const index = ids.indexOf(levelId);
+  return index === -1 ? undefined : ids[index + 1];
+}
 
 export const LEVEL_ASSETS = {
   level_01: {
@@ -131,7 +148,12 @@ export const LEVEL_ASSETS = {
       { key: "rec", path: "misc/rec.png" },
       { key: "ladder_image", path: "misc/ladder.png" },
     ],
-    COLLECTIBLES: [{ key: "cachimbo", path: "collectibles/cachimbo.png" }],
+    COLLECTIBLES: [
+      { key: "cachimbo", path: "collectibles/cachimbo.png" },
+      { key: "message", path: "collectibles/message.png" },
+      { key: "paper", path: "collectibles/paper.png" },
+      { key: "varnish", path: "collectibles/varnish.png" },
+    ],
     CONTENT: {
       key: "content",
       path: "data/content.json",
@@ -250,7 +272,11 @@ export const LEVEL_ASSETS = {
       },
       { key: "spotlight-yellow", path: "misc/spotlights/spotlight-yellow.png" },
     ],
-    COLLECTIBLES: [],
+    COLLECTIBLES: [
+      { key: "document", path: "collectibles/document.png" },
+      { key: "notes", path: "collectibles/notes.png" },
+      { key: "signature", path: "collectibles/signature.png" },
+    ],
     CONTENT: {
       key: "content",
       path: "data/content.json",

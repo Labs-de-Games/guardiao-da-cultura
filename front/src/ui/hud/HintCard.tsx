@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Card, CardContent, Typography } from "@mui/material";
+import posthog from "posthog-js";
 import { useShallow } from "zustand/react/shallow";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
@@ -9,26 +10,27 @@ import {
   useGameUIStore,
 } from "@/ui/state/game-ui-store";
 
-interface HintCardProps {
-  isActive: boolean;
-  onToggle: () => void;
-}
-
-export function HintCard({ isActive, onToggle }: HintCardProps) {
+export function HintCard() {
   const hintCollectibles = useGameUIStore(
     useShallow((s) => selectHintCollectibles(s)),
   );
+  const openBoard = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const hintCollectiblesCount = hintCollectibles.length;
   const collectedHintCount = hintCollectibles.filter((i) => i.collected).length;
 
   if (hintCollectiblesCount === 0) return null;
 
+  const handleClick = () => {
+    posthog.capture("pistas_board_opened");
+    openBoard(true);
+  };
+
   return (
     <Card
-      onClick={onToggle}
+      onClick={handleClick}
       sx={{
         bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
-        borderRadius: isActive ? "0 16px 16px 0" : "16px",
+        borderRadius: "16px",
         border: "none",
         cursor: "pointer",
         transition: "all 0.15s",

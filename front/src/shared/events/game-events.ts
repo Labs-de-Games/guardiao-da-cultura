@@ -56,6 +56,17 @@ export interface CollectiblesSyncData {
     name: string;
     category: string;
     collected: boolean;
+    board?: {
+      position: { x: number; y: number; rotation: number };
+      connectedTo: string[];
+    };
+    educational?: { description: string; medium?: string; opinion?: string };
+    metadata?: {
+      title: string;
+      author?: string;
+      year?: string;
+      place?: string;
+    };
   }[];
 }
 
@@ -237,6 +248,7 @@ export interface GameEventMap {
   "quiz:complete": QuizCompleteData;
   "quiz:close": undefined;
   "quiz:retry": undefined;
+  "quiz:next-level": undefined;
   "map:marker-changed": MapMarkerChangedData | null;
   "map:auto-start-tick": AutoStartTickData;
   "map:auto-start-canceled": undefined;
@@ -250,4 +262,5 @@ export interface GameEventMap {
   "ladder:cinematic-complete": undefined;
   "tutorial:shown": { tutorialId: string };
   "tutorial:dismissed": { tutorialId: string };
+  "ui:evidence-board-open-with-clue": { clueId: string | null };
 }

@@ -39,6 +39,7 @@ The scope of the project is a web-based educational game. Core features include:
 - **Free Public Access:** Barrier-free entry for general users.
 - **Game Mechanics:** Quiz-based gameplay integrated with thematic content.
 - **Progression System:** Levels, achievements, and badges.
+- **Contextual Assistance:** Inactivity-driven hints that keep players from getting blocked in a level without removing the sense of discovery.
 - **Thematic Tracks:** Curated content paths focused on art and culture.
 - **Role-Based Access:** Distinct areas and permissions for General Users, Educators/Institutions, and Administrators.
 - **Institutional Dashboard:** Aggregated data visualization for educators to track player progress.
@@ -111,7 +112,7 @@ flowchart TB
 1. **Identity & Access (Auth):** Passwordless magic-link authentication, JWT session management, refresh token rotation, and role-based access control.
 2. **Users:** User profile management, roles (`player`, `institution`, `admin`), and account status.
 3. **Game Ingestion:** Receives gameplay events (e.g., `LEVEL_COMPLETED`, `ITEM_COLLECTED`) from the frontend via HTTP.
-4. **Progression Engine:** Tracks player level completion, stars, clues, and chapter status.
+4. **Progression Engine:** Tracks player level completion, stars, clues, and chapter status. Collected clues are displayed on the evidence board overlay (Pistas).
 5. **Scoring:** Manages user scores, leaderboard data, and score history.
 6. **Badges:** Badge definitions, user-badge associations, and achievement tracking.
 7. **Analytics:** Stores raw game event logs (append-only) for funnel metrics and dashboards.
@@ -151,7 +152,7 @@ The codebase is structured as a **Modular Monolith**.
 - The repository is split top-level into `front/` and `back/`.
 - Inside the backend (`/back/src`), features are grouped into logical, domain-driven folders (e.g., `users`, `health`, `database`).
 - Inside the frontend (`/front/src`), the web UI and the Phaser game logic (`/game`) are strictly separated. The game communicates with the outer React shell, which in turn communicates with the backend.
-- UI overlays (HUD and modal panels) are being centralized in React and synchronized with gameplay through a shared typed EventBus.
+- UI overlays (HUD, evidence board, modal panels) are centralized in React and synchronized with gameplay through a shared typed EventBus. The evidence board (`EvidenceBoardOverlay`) loads collectibles across all levels and renders them as pinned cards with SVG connections.
 
 ### Directory Structure
 
@@ -166,6 +167,7 @@ gameplate/
 │   │       ├── scenes/
 │   │       ├── objects/
 │   │       ├── mechanics/
+│   │       ├── systems/      # Cross-cutting gameplay systems (nudges, placeholders, spotlights)
 │   │       └── constants/
 │
 └── back/
@@ -213,6 +215,7 @@ The gameplay itself will operate mostly as a client-side application (Next.js + 
 - **Chunk Selector UI Migration (Phase 7):** The photo restoration ChunkSelector panel is implemented in React overlay, wired through the shared EventBus, and preserves keyboard interaction parity (Arrow keys + WASD for navigation, Enter/Space for confirm, Esc for close). The panel layout was refined to better balance inventory/frame space and includes automatic inventory scroll-on-navigation to keep keyboard-selected items visible.
 - **MapInfoBox & Map Progression (PR #517):** The `MapInfoBox` React panel exposes three UI states (available, completed, locked) driven by the `map:marker-changed` EventBus event. `MapIntroScene` dynamically computes marker availability from `progression.completedLevels`, so Phase N unlocks only after Phase N−1 is complete. The event payload (`MapMarkerChangedData`) includes `isCompleted?: boolean`, removing `MapInfoBox`'s need for a separate Zustand `progression` selector. To handle Turbopack module isolation and React mount-timing races (React overlay mounts after `StartGame()` returns), `MapIntroScene.emitMarkerChanged()` writes directly to the Zustand store via `useGameUIStore.getState().setActiveMapMarker()` in addition to emitting the EventBus event. A dev debug shortcut (`localStorage.setItem("gameplate:debug:completedLevels", ...)`) allows pre-seeding completion state without playing through levels.
 - **Server-Side TTS Proxy:** The ResponsiveVoice API key is stored as a server-only env var (`RESPONSIVEVOICE_API_KEY`) in the frontend deployment. A Next.js Route Handler (`/api/tts/synthesize`) proxies requests to ResponsiveVoice v1 REST API, returning `audio/mpeg`. This eliminates domain whitelist concerns since the proxy runs server-side. The frontend falls back to native Web Speech API (`window.speechSynthesis`) on error.
+- **Contextual Nudge System (PR #733):** Anti-blocking assistance driven by player inactivity. Responsibility is split so the timing rules stay testable: `NudgeManager` (`front/src/game/systems/NudgeManager.ts`) owns *when* to nudge — a dependency-free class whose `evaluate(now, isPlayerBusy)` returns a boolean, governed by a 15s inactivity threshold, a 1s evaluation throttle, a global 5-minute cooldown, and a per-mission reset — while `Game.ts` owns *which kind* of nudge, chosen by proximity rather than by escalation (the delay is identical for both kinds). A pulse fires via `PlaceholderSystem.pulseNearestPlaceholder()` or `SpotlightSystem.pulseNearestSpotlight()` when an incomplete costume placeholder or spotlight sits within ~500px; otherwise the nearest artwork's `educational.hint` (from the level's `works.json`) is surfaced through the existing `ui:toast-show` EventBus event, so no bespoke overlay UI was introduced. Because `NudgeManager` has no imports, it is unit-tested in isolation (`NudgeManager.test.ts`, 11 cases covering threshold, busy suppression, timer reset, cooldown window and expiry, throttle, and per-mission reset); the `Game.ts` wiring is verified manually. Telemetry is emitted straight to PostHog as `nudge_pulse_shown_*` and `nudge_hint_shown_*`, with the firing rules documented in `EVENTS.md` (§ *Nudge — regras de disparo*).
 
 ### Pending
 
@@ -269,7 +272,7 @@ Admin-only endpoints guarded by `RolesGuard`.
 |--------|------|------|-------------|
 | `GET` | `/progression/state` | JWT | Get current player progression state. |
 | `POST` | `/progression/level-complete` | JWT | Register level completion with stars and badges. |
-| `GET` | `/progression/inventory` | JWT | Get collected clues and artwork info. |
+| `GET` | `/progression/inventory` | JWT | Get collected clues and artwork info. Consumed by the evidence board overlay. |
 
 ### Scoring Module (`/scoring`)
 

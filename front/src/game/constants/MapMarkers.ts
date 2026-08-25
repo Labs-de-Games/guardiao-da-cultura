@@ -30,7 +30,7 @@ export const MAP_MARKERS: MapMarker[] = [
     image: "/assets/ui/map-cards/teatro-amazonas.png",
     levelId: "level_02",
   },
-  /*{
+  {
     id: "campina-grande",
     shortlocation: "Campina Grande, PB",
     x: 0.75,
@@ -39,7 +39,7 @@ export const MAP_MARKERS: MapMarker[] = [
     location: "Campina Grande, Paraíba",
     image: "/assets/ui/map-cards/festa-sao-joao.png",
     levelId: "level_03",
-  }, */
+  },
 ];
 
 export const DEFAULT_MAP_MARKER = {

@@ -26,14 +26,15 @@ export class SpotlightMechanicHandler implements BaseMechanicHandler {
 
   public handleActivation(gameScene: Game, spotlight: SpotlightInstance): void {
     if (spotlight.isCorrect) {
-      this.handleCorrect(gameScene);
+      this.handleCorrect(gameScene, spotlight);
     } else {
       this.handleWrong(gameScene);
     }
   }
 
-  private handleCorrect(gameScene: Game): void {
+  private handleCorrect(gameScene: Game, spotlight: SpotlightInstance): void {
     gameScene.sound.play("sfx.puzzle.success", { volume: 0.7 });
+    gameScene.playConfettiBurst(spotlight.sprite.x, spotlight.sprite.y);
     gameScene.completeFloor(this.scoringFloor);
     gameScene.spotlightSystem.lockAll();
 

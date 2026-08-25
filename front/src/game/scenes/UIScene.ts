@@ -4,10 +4,13 @@ import { EventBus } from "../../shared/events/event-bus";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager } from "../audio";
+import { isLevelEnabled } from "../constants/FeatureFlags";
 import { GameEvents } from "../constants/GameEvents";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import { MAP_MARKERS } from "../constants/MapMarkers";
 import { SceneNames } from "../constants/SceneNames";
+import { getNextLevelId } from "../data/LevelConfig";
 import type { QuestManager } from "../objects/QuestManager";
 import type { ScoreManager } from "../objects/ScoreManager";
 import { CallbackRegistry } from "../systems/CallbackRegistry";
@@ -27,6 +30,7 @@ export class UIScene extends Scene {
   private isConfirmationPending: boolean = false;
   private unsubQuizClose: (() => void) | null = null;
   private unsubQuizRetry: (() => void) | null = null;
+  private unsubQuizNextLevel: (() => void) | null = null;
   private unsubQuizVisibilityWatcher: (() => void) | null = null;
 
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
@@ -281,6 +285,7 @@ export class UIScene extends Scene {
       unsubBadgeUnlocked();
       this.unsubQuizClose?.();
       this.unsubQuizRetry?.();
+      this.unsubQuizNextLevel?.();
       this.unsubQuizVisibilityWatcher?.();
       this.callbackRegistry.cleanup();
 
@@ -310,18 +315,54 @@ export class UIScene extends Scene {
     this.unsubQuizClose = EventBus.on("quiz:close", () => {
       useGameUIStore.getState().closeQuiz();
 
-      const entryFlow =
-        (this.registry.get("entryFlow") as string | undefined) ?? "map";
-
-      if (entryFlow === "direct") {
-        this.scene.stop(SceneNames.GAME);
-        this.scene.start(SceneNames.GAME, { levelId: "level_01" });
-        return;
-      }
-
       EventBus.emit("game:ended", undefined);
       this.scene.stop(SceneNames.GAME);
       this.scene.start(SceneNames.INTRO);
+    });
+
+    this.unsubQuizNextLevel = EventBus.on("quiz:next-level", () => {
+      const currentLevelId = this.registry.get("currentLevelId") as
+        | string
+        | undefined;
+      const nextLevelId = currentLevelId
+        ? getNextLevelId(currentLevelId)
+        : undefined;
+
+      // No next playable level: keep the quiz open and invite the player to
+      // register interest in what comes next.
+      if (!nextLevelId || !isLevelEnabled(nextLevelId)) {
+        useGameUIStore.getState().openInterestDialog();
+        return;
+      }
+
+      posthog.capture("level_next_started", {
+        from_level_id: currentLevelId,
+        to_level_id: nextLevelId,
+      });
+
+      // Close the quiz while the Game scene is still alive so the visibility
+      // watcher can release the dialogue lock on it.
+      useGameUIStore.getState().closeQuiz();
+      // Clear level-scoped UI (missions, collectibles, score, levelInfo…)
+      // before seeding the next level's info — endGame() nulls levelInfo.
+      EventBus.emit("game:ended", undefined);
+
+      const nextMarker = MAP_MARKERS.find((m) => m.levelId === nextLevelId);
+      if (nextMarker) {
+        useGameUIStore.getState().setLevelInfo({
+          title: nextMarker.title,
+          location: nextMarker.location,
+          shortlocation: nextMarker.shortlocation,
+        });
+      }
+      useGameUIStore.getState().setActiveMapMarker(null);
+
+      // Let the next level start its own music (mirrors MapIntroScene).
+      this.registry.remove(`music_started:${nextLevelId}`);
+      AudioManager.fadeOutMusic(350);
+
+      this.scene.stop(SceneNames.GAME);
+      this.scene.start(SceneNames.LEVEL_CINEMATIC, { levelId: nextLevelId });
     });
 
     this.unsubQuizRetry = EventBus.on("quiz:retry", () => {

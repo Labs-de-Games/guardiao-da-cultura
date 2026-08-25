@@ -14,7 +14,7 @@
         "medium": "",
         "opinion": "Um homem com roupas nas cores azul, vermelho e branco. Ele é diferente das pessoas que vi por aqui no Amazonas.",
         "feedbackError": "Aqui deve ter um homem na posição de comando.",
-        "hint": ""
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "sam"
@@ -34,7 +34,7 @@
         "medium": "",
         "opinion": "Um soldado carregando uma caixa cheia de eletrônicos.",
         "feedbackError": "Aqui deve ter um homem obedecendo ordens.",
-        "hint": ""
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "soldado-caixa"
@@ -57,7 +57,7 @@
         "medium": "",
         "opinion": "Um cartaz alaranjado que mostra um índio em queda e um barco com pessoas. Está escrito “A paixão de Ajuricaba” e o ano de 1974.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1974.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "ajuricaba"
@@ -77,7 +77,7 @@
         "medium": "",
         "opinion": "Um cartaz colorido que mostra figuras ao redor de um anel, e um castelo no centro. Está escrito “O anel do nibelungo” e o ano de 1876.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1876.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "anel-do-nibelungo"
@@ -97,7 +97,7 @@
         "medium": "",
         "opinion": "Um cartaz que mostra dois rostos de homens separados pela metade. Está escrito “Ópera do malandro” e o ano de 1978.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1978.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "opera-do-malandro"
@@ -117,10 +117,112 @@
         "medium": "",
         "opinion": "Um cartaz branco que mostra um coração e máquinas pesadas. Está escrito “Zona Franca, meu amor” e o ano de 1968.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1968.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "zona-franca"
+      }
+    },
+    "zona-franca-luz": {
+      "id": "zona-franca",
+      "type": "Poster",
+      "metadata": {
+        "title": "Zona Franca, meu amor",
+        "author": "Márcio Souza",
+        "year": "1968",
+        "place": "Manaus, AM"
+      },
+      "educational": {
+        "description": "A peça deve ter uma iluminação que remete a conflitos.",
+        "medium": "",
+        "opinion": "Um cartaz branco que mostra um coração e máquinas pesadas. Está escrito “Zona Franca, meu amor” e o ano de 1968.",
+        "feedbackError": "Aqui deve ter um espetáculo do ano 1968.",
+        "hint": "Observe o cartaz próximo"
+      },
+      "assets": {
+        "sprite": "zona-franca"
+      }
+    }
+  },
+  "COSTUMES": {
+    "indian_head": {
+      "id": "indian_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Ajuricaba, cacique dos manaus",
+        "author": "Márcio Souza",
+        "year": "1974",
+        "place": "Manaus, AM"
+      },
+      "educational": {
+        "description": "Um cocar de penas coloridas, enfeites nos braços e uma tanga. Devia pertencer a alguém respeitado por seu povo.",
+        "medium": "",
+        "opinion": "Figurino de um cacique indígena, com cocar e adornos que remetem à liderança do seu povo.",
+        "feedbackError": "Aqui deve ter um figurino de cacique indígena, com cocar.",
+        "hint": "Procure o figurino com cocar de penas"
+      },
+      "assets": {
+        "sprite": "indian"
+      }
+    },
+    "malandro_head": {
+      "id": "malandro_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Max, o malandro",
+        "author": "Chico Buarque",
+        "year": "1978",
+        "place": "Rio de Janeiro, RJ"
+      },
+      "educational": {
+        "description": "Um terno branco, chapéu panamá e uma gravata. Traja como alguém que vive de conversa fiada.",
+        "medium": "",
+        "opinion": "Figurino de malandro carioca, elegante e cheio de golpes na manga.",
+        "feedbackError": "Aqui deve ter um figurino de malandro, com terno e chapéu.",
+        "hint": "Observe o terno branco e o chapéu"
+      },
+      "assets": {
+        "sprite": "malandro"
+      }
+    },
+    "warrior_head": {
+      "id": "warrior_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Siegfried, o herói guerreiro",
+        "author": "Richard Wagner",
+        "year": "1848-1874",
+        "place": "Zurique (Suíça), Dresden e Bayreuth (Alemanha)"
+      },
+      "educational": {
+        "description": "Uma armadura reluzente e uma espada na cintura. Parece pertencer a um herói de lendas antigas.",
+        "medium": "",
+        "opinion": "Figurino de guerreiro dos mitos nórdicos e germânicos, com armadura e espada.",
+        "feedbackError": "Aqui deve ter um figurino de guerreiro, com armadura e espada.",
+        "hint": "Procure a armadura reluzente"
+      },
+      "assets": {
+        "sprite": "warrior"
+      }
+    },
+    "soldier_head": {
+      "id": "soldier_head",
+      "type": "Costume",
+      "metadata": {
+        "title": "Soldado da Zona Franca",
+        "author": "Márcio Souza",
+        "year": "1968",
+        "place": "Manaus, AM"
+      },
+      "educational": {
+        "description": "Figurino de soldado do regime militar, obediente às ordens superiores.",
+        "medium": "",
+        "opinion": "Um uniforme verde-oliva com botas pesadas e uma boina.",
+        "feedbackError": "Aqui deve ter um figurino de soldado, com uniforme militar.",
+        "hint": "Observe o uniforme verde-oliva"
+      },
+      "assets": {
+        "sprite": "soldier"
       }
     }
   }

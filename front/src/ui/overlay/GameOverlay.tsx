@@ -25,6 +25,7 @@ import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
+import { EvidenceBoardOverlay } from "./EvidenceBoardOverlay";
 
 export default function GameOverlay({
   entryFlow = "map",
@@ -83,6 +84,8 @@ function OverlayContent({
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
   const openCostumeSelector = useGameUIStore((s) => s.openCostumeSelector);
   const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
+  const evidenceBoardOpen = useGameUIStore((s) => s.evidenceBoardOpen);
+  const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
@@ -216,6 +219,11 @@ function OverlayContent({
         }
       }
       if (e.key === "Escape") {
+        if (evidenceBoardOpen) {
+          e.preventDefault();
+          setEvidenceBoardOpen(false);
+          return;
+        }
         if (labelData) {
           setLabelData(null);
           EventBus.emit("ui:label-hide", undefined);
@@ -254,6 +262,8 @@ function OverlayContent({
     setBadgeGalleryOpen,
     chunkSelectorOpen,
     costumeSelectorOpen,
+    evidenceBoardOpen,
+    setEvidenceBoardOpen,
   ]);
 
   useEffect(() => {
@@ -312,6 +322,7 @@ function OverlayContent({
       <LabelPanel />
       <BadgeGalleryPanel />
       <QuizPanel />
+      <EvidenceBoardOverlay />
       <InterestDialog />
     </>
   );

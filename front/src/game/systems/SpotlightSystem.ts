@@ -162,4 +162,36 @@ export class SpotlightSystem {
 
     return closest;
   }
+
+  public getNearestIncomplete(
+    playerX: number,
+    playerY: number,
+    radius: number,
+  ): SpotlightInstance | null {
+    return this.getNearbySpotlight(playerX, playerY, radius);
+  }
+
+  public pulseNearestSpotlight(
+    playerX: number,
+    playerY: number,
+    radius: number = 300,
+  ): void {
+    const spotlight = this.getNearestIncomplete(playerX, playerY, radius);
+    if (!spotlight) return;
+
+    const sprite = spotlight.sprite;
+    if (this.scene.tweens.isTweening(sprite)) return;
+
+    this.scene.tweens.add({
+      targets: sprite,
+      alpha: { from: 0.45, to: 1 },
+      duration: 500,
+      yoyo: true,
+      repeat: 2,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        sprite.setAlpha(1);
+      },
+    });
+  }
 }

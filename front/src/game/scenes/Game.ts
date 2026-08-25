@@ -57,6 +57,7 @@ import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
+import { NudgeManager } from "../systems/NudgeManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
@@ -79,6 +80,16 @@ import {
   findWorkDataById,
   resolveWorkIdFromPlaceholder,
 } from "../utils/WorkDataHelper";
+
+const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
+  [InteractiveType.SCULPTURE]: "nudge_hint_shown_sculpture",
+  [InteractiveType.PAINTING]: "nudge_hint_shown_painting",
+  [InteractiveType.POSTER]: "nudge_hint_shown_poster",
+  [InteractiveType.PHOTO]: "nudge_hint_shown_photo",
+  [InteractiveType.PHOTO_CHUNK]: "nudge_hint_shown_photo",
+  [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
+  [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
+};
 
 export class Game extends Scene implements GameDataAccessor {
   private static readonly EMPTY_COLLECTIBLES = { CLUE_VILLAIN: {} } as const;
@@ -122,6 +133,7 @@ export class Game extends Scene implements GameDataAccessor {
   public spotlightSystem!: SpotlightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
+  private nudgeManager!: NudgeManager;
   public badgeSystem!: BadgeSystem;
   public analyticsSystem!: AnalyticsSystem;
   public mechanicsManager!: MechanicsManager;
@@ -285,6 +297,15 @@ export class Game extends Scene implements GameDataAccessor {
     });
     this.levelDef.data.collectibles.forEach((path, index) => {
       this.load.json(`${this.levelId}__collectibles_${index}`, path);
+    });
+
+    // Load other levels' collectibles for global evidence board
+    Object.entries(LEVEL_REGISTRY).forEach(([id, def]) => {
+      if (id !== this.levelId) {
+        def.data.collectibles.forEach((path, index) => {
+          this.load.json(`${id}__collectibles_${index}`, path);
+        });
+      }
     });
 
     this.load.spritesheet("placeholder", "misc/questionmark-spritesheet.png", {
@@ -514,7 +535,11 @@ export class Game extends Scene implements GameDataAccessor {
     this.scene.bringToTop(SceneNames.UI);
     this.labelSystem = new LabelSystem(this);
 
-    this.collectibleSystem = new CollectibleSystem(this, this.mapScale);
+    this.collectibleSystem = new CollectibleSystem(
+      this,
+      this.mapScale,
+      this.effects,
+    );
 
     const actorId = (this.registry.get("userId") as string | undefined) ?? null;
     const isGuest = this.registry.get("isGuest") === true;
@@ -558,24 +583,91 @@ export class Game extends Scene implements GameDataAccessor {
     );
 
     void this.persistenceBridge.initializeProgression();
-    void this.persistenceBridge.initializeCollectibles().then(() => {
+    void this.persistenceBridge.initializeCollectibles().then(async () => {
       const collectedIds = new Set(
         this.collectibleSystem
           .getCollectedCollectibles()
           .map((c) => c.collectibleId),
       );
-      const allCollectibles = Object.entries(
+
+      const allCollectibles: Array<{
+        id: string;
+        name: string;
+        category: string;
+        collected: boolean;
+        board?: {
+          position: { x: number; y: number; rotation: number };
+          connectedTo: string[];
+        };
+        educational?: {
+          description: string;
+          medium?: string;
+          opinion?: string;
+        };
+        metadata?: {
+          title: string;
+          author?: string;
+          year?: string;
+          place?: string;
+        };
+      }> = [];
+
+      // Current level's collectibles
+      for (const [category, items] of Object.entries(
         this.contentData.collectibles,
-      ).flatMap(([category, items]) =>
-        Object.entries(items as Record<string, CollectibleData>).map(
-          ([id, data]) => ({
+      )) {
+        for (const [id, data] of Object.entries(
+          items as Record<string, CollectibleData>,
+        )) {
+          allCollectibles.push({
             id,
             name: data.metadata.title || id,
             category,
             collected: collectedIds.has(id),
-          }),
-        ),
-      );
+            board: data.board,
+            educational: data.educational,
+            metadata: data.metadata,
+          });
+        }
+      }
+
+      // Other levels' collectibles (global board)
+      for (const [levelId, levelDef] of Object.entries(LEVEL_REGISTRY)) {
+        if (levelId === this.levelId) continue;
+
+        let otherCollected: Set<string> = new Set();
+        try {
+          const records =
+            await this.persistenceBridge.persistence.loadCollectibles(levelId);
+          otherCollected = new Set(records.map((c) => c.collectibleId));
+        } catch {
+          // Ignore — will show as uncollected
+        }
+
+        for (let i = 0; i < levelDef.data.collectibles.length; i++) {
+          const data = this.cache.json.get(`${levelId}__collectibles_${i}`);
+          if (data && typeof data === "object" && "collectibles" in data) {
+            for (const [category, items] of Object.entries(
+              (data as { collectibles: Record<string, unknown> }).collectibles,
+            )) {
+              for (const [id, itemData] of Object.entries(
+                items as Record<string, CollectibleData>,
+              )) {
+                allCollectibles.push({
+                  id,
+                  name: itemData.metadata?.title || id,
+                  category,
+                  collected: otherCollected.has(id),
+                  board: itemData.board,
+                  educational: itemData.educational,
+                  metadata: itemData.metadata,
+                });
+              }
+            }
+          }
+        }
+      }
+
       EventBus.emit("collectible:collectibles-sync", {
         entries: allCollectibles,
       });
@@ -649,6 +741,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (tutorialLayer) {
         this.tutorialSystem.registerFromLayer(tutorialLayer, this.mapScale);
       }
+
+      this.nudgeManager = new NudgeManager();
       this.hintKeySystem.registerItems([
         ...this.draggableItems.map((item) => ({
           get x() {
@@ -936,6 +1030,10 @@ export class Game extends Scene implements GameDataAccessor {
       (data: { missionId: string; status: QuestStatus }) => {
         this.events.emit(GameEvents.MISSION_STATUS_CHANGED);
 
+        if (data.status === QuestStatus.COLLECTING) {
+          this.nudgeManager?.reset(data.missionId);
+        }
+
         if (this.levelDef.activeMissions?.includes(data.missionId)) {
           EventBus.emit("quest:mission-status-changed", {
             missionId: data.missionId,
@@ -963,18 +1061,71 @@ export class Game extends Scene implements GameDataAccessor {
       score: initialPayload.totalQuarters,
     });
 
-    const allCollectibles = Object.entries(
+    const allCollectibles: Array<{
+      id: string;
+      name: string;
+      category: string;
+      collected: boolean;
+      board?: {
+        position: { x: number; y: number; rotation: number };
+        connectedTo: string[];
+      };
+      educational?: { description: string; medium?: string; opinion?: string };
+      metadata?: {
+        title: string;
+        author?: string;
+        year?: string;
+        place?: string;
+      };
+    }> = [];
+
+    // Current level's collectibles
+    for (const [category, items] of Object.entries(
       this.contentData.collectibles,
-    ).flatMap(([category, items]) =>
-      Object.entries(items as Record<string, CollectibleData>).map(
-        ([id, data]) => ({
+    )) {
+      for (const [id, data] of Object.entries(
+        items as Record<string, CollectibleData>,
+      )) {
+        allCollectibles.push({
           id,
           name: data.metadata.title || id,
           category,
           collected: false,
-        }),
-      ),
-    );
+          board: data.board,
+          educational: data.educational,
+          metadata: data.metadata,
+        });
+      }
+    }
+
+    // Other levels' collectibles (global board)
+    for (const [levelId, levelDef] of Object.entries(LEVEL_REGISTRY)) {
+      if (levelId === this.levelId) continue;
+
+      for (let i = 0; i < levelDef.data.collectibles.length; i++) {
+        const data = this.cache.json.get(`${levelId}__collectibles_${i}`);
+        if (data && typeof data === "object" && "collectibles" in data) {
+          for (const [category, items] of Object.entries(
+            (data as { collectibles: Record<string, unknown> }).collectibles,
+          )) {
+            for (const [id, itemData] of Object.entries(
+              items as Record<string, CollectibleData>,
+            )) {
+              allCollectibles.push({
+                id,
+                name: itemData.metadata?.title || id,
+                category,
+                collected: false,
+                board: itemData.board,
+                educational: itemData.educational,
+                metadata: itemData.metadata,
+              });
+            }
+          }
+        }
+      }
+    }
+
     EventBus.emit("collectible:collectibles-sync", {
       entries: allCollectibles,
     });
@@ -1043,6 +1194,7 @@ export class Game extends Scene implements GameDataAccessor {
 
     EventBus.on("ui:label-show", () => {
       this.tutorialSystem?.completeTutorial("tutorial_read_label");
+      this.nudgeManager?.recordInteraction();
     });
   }
 
@@ -1261,12 +1413,19 @@ export class Game extends Scene implements GameDataAccessor {
         return;
       }
 
+      const INTERACT_RANGE = 120;
+      const px = this.player.x;
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body | null;
+      const py = playerBody ? playerBody.bottom : this.player.y;
+
+      const candidates: Array<{ dist: number; open: () => void }> = [];
+
+      // Label candidate
       const label = this.labelSystem.getNearbyLabel(
         this.player.x,
         this.player.y,
-        120,
+        INTERACT_RANGE,
       );
-
       if (label) {
         const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
           label.placeholderId,
@@ -1276,118 +1435,168 @@ export class Game extends Scene implements GameDataAccessor {
           this.contentData,
         );
         const work = workId ? findWorkDataById(workId, this.contentData) : null;
-
         if (work) {
-          // Play inspect sound for label interaction
-          AudioManager.playSfx("sfx.clue.inspect");
-          const payload = buildLabelInfo(work, (id) =>
-            findWorkDataById(id, this.contentData),
+          const labelDist = Phaser.Math.Distance.Between(
+            px,
+            py,
+            label.sprite.x,
+            label.sprite.y + label.sprite.displayHeight / 2,
           );
-          EventBus.emit("ui:label-show", payload);
-          posthog.capture("label_interacted", {
-            label_title: payload.title,
-            label_author: payload.author,
+          candidates.push({
+            dist: labelDist,
+            open: () => {
+              // Play inspect sound for label interaction
+              AudioManager.playSfx("sfx.clue.inspect");
+              const payload = buildLabelInfo(work, (id) =>
+                findWorkDataById(id, this.contentData),
+              );
+              EventBus.emit("ui:label-show", payload);
+              posthog.capture("label_interacted", {
+                label_title: payload.title,
+                label_author: payload.author,
+              });
+            },
           });
-          return;
         }
       }
 
-      const nearby = this.placeholderSystem.getNearbyPlaceholder(
+      // Photo placeholder candidate
+      const photo = this.placeholderSystem.getNearbyPlaceholder(
         this.player.x,
         this.player.y,
-        120,
+        INTERACT_RANGE,
         InteractiveType.PHOTO,
       );
+      if (photo && !photo.isFilled) {
+        const photoInteractionY = photo.area.centerY + 100;
+        const photoDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          photo.area.centerX,
+          photoInteractionY,
+        );
+        candidates.push({
+          dist: photoDist,
+          open: () => {
+            const filled = Array.isArray(photo.state?.filledSlots)
+              ? (photo.state.filledSlots as (string | null)[])
+              : [null, null, null, null];
+            const availableChunks = this.player
+              .getInventory()
+              .filter(
+                (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
+              );
 
-      if (nearby) {
-        if (nearby.isFilled) return;
-        const filled = Array.isArray(nearby.state?.filledSlots)
-          ? (nearby.state.filledSlots as (string | null)[])
-          : [null, null, null, null];
-        const availableChunks = this.player
-          .getInventory()
-          .filter(
-            (item) => item.interactiveType === InteractiveType.PHOTO_CHUNK,
-          );
-
-        this.isChunkSelectorOpen = true;
-        this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
-        this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
-        const expectedSlots = Array.isArray(nearby.id)
-          ? nearby.id
-          : String(nearby.id)
-              .split(",")
-              .map((s) => s.trim());
-        EventBus.emit("ui:chunk-selector-open", {
-          instanceId: nearby.instanceId,
-          availableItems: availableChunks.map((item) => ({
-            id: item.itemId,
-            name: item.itemName,
-            levelId: this.levelId,
-          })),
-          filledSlots: filled,
-          expectedSlots,
+            this.isChunkSelectorOpen = true;
+            this.tutorialSystem?.completeTutorial("tutorial_photo_placeholder");
+            this.nudgeManager?.recordInteraction();
+            this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
+            const expectedSlots = Array.isArray(photo.id)
+              ? photo.id
+              : String(photo.id)
+                  .split(",")
+                  .map((s) => s.trim());
+            EventBus.emit("ui:chunk-selector-open", {
+              instanceId: photo.instanceId,
+              availableItems: availableChunks.map((item) => ({
+                id: item.itemId,
+                name: item.itemName,
+                levelId: this.levelId,
+              })),
+              filledSlots: filled,
+              expectedSlots,
+            });
+          },
         });
       }
 
-      const nearbyCostume = this.placeholderSystem.getNearbyPlaceholder(
+      // Costume placeholder candidate
+      const costume = this.placeholderSystem.getNearbyPlaceholder(
         this.player.x,
         this.player.y,
-        120,
+        INTERACT_RANGE,
         InteractiveType.COSTUME,
       );
+      if (costume) {
+        const costumeDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          costume.area.centerX,
+          costume.area.centerY,
+        );
+        candidates.push({
+          dist: costumeDist,
+          open: () => {
+            if (this.markFloorStarted(this.scoringFloors.costumes)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.costumes + 1,
+                level_id: this.levelId,
+              });
+            }
 
-      if (nearbyCostume) {
-        if (this.markFloorStarted(this.scoringFloors.costumes)) {
-          posthog.capture("minigame_started", {
-            minigame_number: this.scoringFloors.costumes + 1,
-            level_id: this.levelId,
-          });
-        }
+            const ids = Array.isArray(costume.id)
+              ? (costume.id as string[])
+              : String(costume.id)
+                  .split(",")
+                  .map((s) => s.trim());
+            const correctCostume =
+              CostumeMechanicHandler.deriveCorrectCostume(ids);
 
-        const ids = Array.isArray(nearbyCostume.id)
-          ? (nearbyCostume.id as string[])
-          : String(nearbyCostume.id)
-              .split(",")
-              .map((s) => s.trim());
-        const correctCostume = CostumeMechanicHandler.deriveCorrectCostume(ids);
+            const initialCostumeState =
+              CostumeMechanicHandler.createInitialState();
+            const costumeState = costume.state as
+              | Partial<CostumeState>
+              | undefined;
+            const equippedParts = {
+              ...initialCostumeState.equippedParts,
+              ...costumeState?.equippedParts,
+            };
+            const lockedParts = {
+              ...initialCostumeState.lockedParts,
+              ...costumeState?.lockedParts,
+            };
 
-        const initialCostumeState = CostumeMechanicHandler.createInitialState();
-        const costumeState = nearbyCostume.state as
-          | Partial<CostumeState>
-          | undefined;
-        const equippedParts = {
-          ...initialCostumeState.equippedParts,
-          ...costumeState?.equippedParts,
-        };
-        const lockedParts = {
-          ...initialCostumeState.lockedParts,
-          ...costumeState?.lockedParts,
-        };
-
-        this.isCostumeSelectorOpen = true;
-        this.events.emit(GameEvents.DIALOGUE_STARTED);
-        EventBus.emit("ui:costume-selector-open", {
-          instanceId: nearbyCostume.instanceId,
-          correctCostume,
-          equippedParts,
-          lockedParts,
-        });
-        posthog.capture("costume_interacted", {
-          level_id: this.levelId,
+            this.isCostumeSelectorOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED);
+            EventBus.emit("ui:costume-selector-open", {
+              instanceId: costume.instanceId,
+              correctCostume,
+              equippedParts,
+              lockedParts,
+            });
+            posthog.capture("costume_interacted", {
+              level_id: this.levelId,
+            });
+          },
         });
       }
 
+      // Spotlight candidate
       if (this.spotlightSystem) {
-        const nearbySpotlight = this.spotlightSystem.getNearbySpotlight(
+        const spotlight = this.spotlightSystem.getNearbySpotlight(
           this.player.x,
           this.player.y,
-          120,
+          INTERACT_RANGE,
         );
-        if (nearbySpotlight) {
-          this.handleSpotlightInteraction(nearbySpotlight);
+        if (spotlight) {
+          const spotlightDist = Phaser.Math.Distance.Between(
+            px,
+            py,
+            spotlight.sprite.x,
+            spotlight.sprite.y,
+          );
+          candidates.push({
+            dist: spotlightDist,
+            open: () => {
+              this.handleSpotlightInteraction(spotlight);
+            },
+          });
         }
       }
+
+      if (candidates.length === 0) return;
+      candidates.sort((a, b) => a.dist - b.dist);
+      candidates[0].open();
     });
 
     this.player.on("item-interacted", (item: DraggableItem | CarryableItem) => {
@@ -1421,6 +1630,7 @@ export class Game extends Scene implements GameDataAccessor {
 
       if (!this.itemsInteracted.has(item.itemId)) {
         this.itemsInteracted.add(item.itemId);
+        this.nudgeManager?.recordInteraction();
 
         const currentInspected = this.registry.get("objects_inspected") || 0;
         this.registry.set("objects_inspected", currentInspected + 1);
@@ -1534,6 +1744,7 @@ export class Game extends Scene implements GameDataAccessor {
       if (!p) return;
 
       this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
+      this.playConfettiBurst(p.area.centerX, p.area.centerY);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
@@ -1779,11 +1990,181 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.tutorialSystem) {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
+
+      if (
+        this.nudgeManager?.evaluate(Date.now(), isPlayerBusy || isPanelOpen)
+      ) {
+        const nearbyCostume =
+          !this.isCategoryComplete(InteractiveType.COSTUME) &&
+          this.placeholderSystem.getNearbyPlaceholder(
+            this.player.x,
+            this.player.y,
+            500,
+            InteractiveType.COSTUME,
+          );
+        const nearbySpotlight =
+          !this.isCategoryComplete(InteractiveType.SPOTLIGHT) &&
+          this.spotlightSystem?.getNearestIncomplete(
+            this.player.x,
+            this.player.y,
+            500,
+          );
+
+        if (nearbyCostume || nearbySpotlight) {
+          if (nearbyCostume) {
+            this.placeholderSystem.pulseNearestPlaceholder(
+              this.player.x,
+              this.player.y,
+              500,
+              InteractiveType.COSTUME,
+            );
+            posthog.capture("nudge_pulse_shown_costume", {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+            });
+          }
+          if (nearbySpotlight) {
+            this.spotlightSystem?.pulseNearestSpotlight(
+              this.player.x,
+              this.player.y,
+              500,
+            );
+            posthog.capture("nudge_pulse_shown_spotlight", {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+            });
+          }
+          this.nudgeManager.recordNudge();
+        } else {
+          const hintResult = this.findNearestHint();
+          if (hintResult) {
+            this.nudgeManager.recordNudge();
+            EventBus.emit("ui:toast-show", {
+              message: hintResult.message,
+              duration: 5000,
+            });
+            posthog.capture(NUDGE_HINT_EVENT_BY_TYPE[hintResult.category], {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+              hint_message: hintResult.message,
+            });
+          }
+        }
+      }
     }
   }
 
   public getLevelId(): string {
     return this.levelId;
+  }
+
+  private static readonly TYPE_TO_DONE_KEY: Partial<
+    Record<InteractiveType, { infoKey: string; missionId: string }>
+  > = {
+    [InteractiveType.SCULPTURE]: {
+      infoKey: MissionKeys.SCULPTURES_DONE,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.PAINTING]: {
+      infoKey: MissionKeys.PAINTINGS_DONE,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.PHOTO_CHUNK]: {
+      infoKey: MissionKeys.PHOTO_COLLECTED,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.PHOTO]: {
+      infoKey: MissionKeys.PHOTO_COLLECTED,
+      missionId: MissionIds.CURATOR,
+    },
+    [InteractiveType.COSTUME]: {
+      infoKey: MissionKeys.COSTUMES_DONE,
+      missionId: MissionIds.CURATOR_L2,
+    },
+    [InteractiveType.POSTER]: {
+      infoKey: MissionKeys.POSTERS_DONE,
+      missionId: MissionIds.CURATOR_L2,
+    },
+    [InteractiveType.SPOTLIGHT]: {
+      infoKey: MissionKeys.SPOTLIGHTS_DONE,
+      missionId: MissionIds.CURATOR_L2,
+    },
+  };
+
+  private isCategoryComplete(type: InteractiveType): boolean {
+    const entry = Game.TYPE_TO_DONE_KEY[type];
+    if (!entry) return false;
+    return this.questManager.hasInfo(entry.missionId, entry.infoKey);
+  }
+
+  private findNearestHint(): {
+    message: string;
+    category: InteractiveType;
+  } | null {
+    const px = this.player.x;
+    const py = this.player.y;
+    const candidates: {
+      dist: number;
+      hint: string;
+      category: InteractiveType;
+    }[] = [];
+    const NUDGE_RADIUS = 500;
+
+    for (const item of this.draggableItems) {
+      if (!item.active || item.isGrabbed || item.input?.enabled === false)
+        continue;
+      if (this.isCategoryComplete(item.interactiveType)) continue;
+      const work = findWorkDataById(item.itemId, this.contentData);
+      const hint = work?.educational?.hint;
+      if (hint && hint !== "XXXXX" && hint !== "") {
+        const dist = Phaser.Math.Distance.Between(px, py, item.x, item.y);
+        if (dist <= NUDGE_RADIUS) {
+          candidates.push({ dist, hint, category: item.interactiveType });
+        }
+      }
+    }
+
+    for (const item of this.carryableItems) {
+      if (!item.active || item.isCarried || item.input?.enabled === false)
+        continue;
+      if (this.isCategoryComplete(item.interactiveType)) continue;
+      const work = findWorkDataById(item.itemId, this.contentData);
+      const hint = work?.educational?.hint;
+      if (hint && hint !== "XXXXX" && hint !== "") {
+        const dist = Phaser.Math.Distance.Between(px, py, item.x, item.y);
+        if (dist <= NUDGE_RADIUS) {
+          candidates.push({ dist, hint, category: item.interactiveType });
+        }
+      }
+    }
+
+    const photo = this.placeholderSystem.getNearbyPlaceholder(
+      px,
+      py,
+      NUDGE_RADIUS,
+      InteractiveType.PHOTO,
+    );
+    if (photo && !this.isCategoryComplete(InteractiveType.PHOTO)) {
+      const workId = resolveWorkIdFromPlaceholder(photo.id, this.contentData);
+      if (workId) {
+        const work = findWorkDataById(workId, this.contentData);
+        const hint = work?.educational?.hint;
+        if (hint && hint !== "XXXXX" && hint !== "") {
+          const dist = Phaser.Math.Distance.Between(
+            px,
+            py,
+            photo.area.centerX,
+            photo.area.centerY,
+          );
+          candidates.push({ dist, hint, category: InteractiveType.PHOTO });
+        }
+      }
+    }
+
+    if (candidates.length === 0) return null;
+
+    candidates.sort((a, b) => a.dist - b.dist);
+    return { message: candidates[0].hint, category: candidates[0].category };
   }
 
   public markFloorStarted(floorIndex: number): boolean {
@@ -1825,6 +2206,10 @@ export class Game extends Scene implements GameDataAccessor {
     py: number = 0,
   ) {
     this.effects.showSpotlightBeam(duration, 200, px, py);
+  }
+
+  public playConfettiBurst(px: number, py: number) {
+    this.effects.playConfettiBurst(px, py);
   }
 
   public handleSpotlightInteraction(
@@ -1901,6 +2286,12 @@ export class Game extends Scene implements GameDataAccessor {
           result.placeholder?.area.centerX,
           result.placeholder?.area.centerY,
         );
+        if (result.placeholder) {
+          this.playConfettiBurst(
+            result.placeholder.area.centerX,
+            result.placeholder.area.centerY,
+          );
+        }
       }
     }
   }
