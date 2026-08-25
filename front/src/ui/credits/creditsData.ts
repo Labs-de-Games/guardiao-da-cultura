@@ -27,42 +27,57 @@ export const CREDITS_SECTIONS: CreditSection[] = [
     ],
   },
   {
-    heading: "Equipe",
+    heading: "Desenvolvedores",
     entries: [
       {
-        name: "Desenvolvedor Alessandro Soares",
+        name: "Alessandro Soares",
         url: "https://www.linkedin.com/in/alessandro-soares-51a08327a/",
       },
       {
-        name: "Desenvolvedor César Augusto do Nascimento",
+        name: "César Augusto do Nascimento",
         url: "https://www.linkedin.com/in/cesaran42/",
       },
       {
-        name: "Desenvolvedor Felipe Dórea",
+        name: "Felipe Dórea",
         url: "https://www.linkedin.com/in/flpdorea/",
       },
       {
-        name: "Desenvolvedor Gabriel Salgado",
+        name: "Gabriel Salgado",
         url: "https://www.linkedin.com/in/abg2jz/",
       },
       {
-        name: "Desenvolvedor Henrique Jarbas",
+        name: "Henrique Jarbas",
         url: "https://www.linkedin.com/in/henrique-jarbas-71a0b6bb/",
       },
       {
-        name: "Desenvolvedor Yuri Faustino",
+        name: "Yuri Faustino",
         url: "https://www.linkedin.com/in/yuri-faustino-7b08a2193/",
       },
+    ],
+  },
+  {
+    heading: "Designer",
+    entries: [
       {
-        name: "Designer Letícia Murteira",
+        name: "Letícia Murteira",
         url: "https://www.linkedin.com/in/leticiamcardoso/",
       },
+    ],
+  },
+  {
+    heading: "Product Owner",
+    entries: [
       {
-        name: "Product Owner Ana Carla César",
+        name: "Ana Carla César",
         url: "https://www.linkedin.com/in/anacarlacesar/",
       },
+    ],
+  },
+  {
+    heading: "Tech Lead",
+    entries: [
       {
-        name: "Tech Lead Tamillys Pantuza",
+        name: "Tamillys Pantuza",
         url: "https://www.linkedin.com/in/tamillys/",
       },
     ],
@@ -106,7 +121,7 @@ export const CREDITS_SECTIONS: CreditSection[] = [
     ],
   },
   {
-    heading: "API",
+    heading: "Licenças",
     entries: [
       {
         name: "Phaser",
@@ -276,5 +291,9 @@ export const CREDITS_SECTIONS: CreditSection[] = [
       { name: "Ipeafro", url: "https://ipeafro.org.br/" },
       { name: "Galeria Vermelho", url: "https://galeriavermelho.com.br/" },
     ],
+  },
+  {
+    heading: "",
+    entries: [{ name: "Não, o rato não vai falar." }],
   },
 ];
