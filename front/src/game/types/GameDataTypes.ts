@@ -124,11 +124,17 @@ export interface CollectibleAssets {
   scaleOnInspect?: number;
 }
 
+export interface BoardMetadata {
+  position: { x: number; y: number; rotation: number };
+  connectedTo: string[];
+}
+
 export interface CollectibleData {
   id: string;
   metadata: CollectibleMetadata;
   educational: CollectibleEducational;
   assets: CollectibleAssets;
+  board?: BoardMetadata;
 }
 
 export interface CollectiblesJson {

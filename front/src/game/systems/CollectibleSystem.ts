@@ -1,8 +1,10 @@
 import * as Phaser from "phaser";
 import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
+import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import type { EffectsManager } from "../objects/EffectsManager";
 import { InteractiveButton } from "../objects/InteractiveButton";
 import type { CollectibleData, ContentJson } from "../types/GameDataTypes";
 import { TiledUtils } from "../utils/TiledUtils";
@@ -26,6 +28,7 @@ export interface PersistedCollectible {
 export class CollectibleSystem {
   private readonly scene: Phaser.Scene;
   private readonly mapScale: number;
+  private readonly effects: EffectsManager;
   private collectibles: CollectibleInstance[] = [];
   private activeCollectible: CollectibleInstance | null = null;
   private inspectMode: CollectibleInspectMode = "idle";
@@ -37,9 +40,11 @@ export class CollectibleSystem {
   constructor(
     scene: Phaser.Scene,
     mapScale: number = LayoutConfig.GAME.MAP_SCALE,
+    effects: EffectsManager,
   ) {
     this.scene = scene;
     this.mapScale = mapScale;
+    this.effects = effects;
 
     this.scene.events.on(GameEvents.DIALOGUE_ENDED, this.dialogueEndedHandler);
   }
@@ -191,7 +196,7 @@ export class CollectibleSystem {
       this.activeCollectible = instance;
 
       if (!instance.isCollected) {
-        this.collectAndDestroy(instance);
+        this.collectAndDestroy(instance, true);
 
         const totalCollected = this.collectibles.filter(
           (c) => c.isCollected,
@@ -226,10 +231,31 @@ export class CollectibleSystem {
     }
   }
 
-  private collectAndDestroy(instance: CollectibleInstance): void {
+  private collectAndDestroy(
+    instance: CollectibleInstance,
+    animate = false,
+  ): void {
     instance.isCollected = true;
-    instance.sprite.destroy();
-    instance.button.destroy();
+
+    if (animate) {
+      this.effects.flash(650, 0xffffff);
+      AudioManager.playSfx("sfx.camera.click");
+
+      this.scene.tweens.add({
+        targets: instance.sprite,
+        scaleX: 1.5,
+        scaleY: 1.5,
+        alpha: 0,
+        duration: 150,
+        onComplete: () => {
+          instance.sprite.destroy();
+          instance.button.destroy();
+        },
+      });
+    } else {
+      instance.sprite.destroy();
+      instance.button.destroy();
+    }
   }
 
   private showInspectCard(
@@ -272,11 +298,16 @@ export class CollectibleSystem {
       .rectangle(0, 0, cardSize - 32, cardSize - 32, 0xffffff, 1)
       .setStrokeStyle(2, 0x1f1f1f, 0.8);
 
-    const inspectScale = instance.collectibleData.assets.scaleOnInspect ?? 6;
     const inspectSprite = this.scene.add
       .sprite(0, 0, instance.collectibleData.assets.sprite)
-      .setScale(inspectScale)
       .setOrigin(0.5, 0.5);
+
+    const maxSpriteSize = (cardSize - 32) * 0.85;
+    const fitScale = Math.min(
+      maxSpriteSize / inspectSprite.width,
+      maxSpriteSize / inspectSprite.height,
+    );
+    inspectSprite.setScale(fitScale);
 
     container.add([shadow, paper, innerFrame, inspectSprite]);
 
@@ -323,9 +354,14 @@ export class CollectibleSystem {
       return;
     }
 
+    const clueId = this.activeCollectible?.collectibleId ?? null;
     this.hideInspectCard();
     this.activeCollectible = null;
     this.inspectMode = "idle";
+
+    if (clueId) {
+      EventBus.emit("ui:evidence-board-open-with-clue", { clueId });
+    }
   }
 
   private getCardPosition(

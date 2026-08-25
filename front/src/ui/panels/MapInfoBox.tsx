@@ -195,13 +195,17 @@ export function MapInfoBox() {
           <Typography
             sx={{
               position: "absolute",
-              top: "57px",
+              top: "65px",
               left: "45px",
-              right: "55%",
+              right: "42%",
               fontFamily: "Jockey One, sans-serif",
-              fontSize: "26px",
+              fontSize: "20px",
               color: "#D9AD56",
-              lineHeight: 1.1,
+              lineHeight: 1.15,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
             }}
           >
             {activeMapMarker.title}
