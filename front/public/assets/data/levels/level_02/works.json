@@ -14,7 +14,7 @@
         "medium": "",
         "opinion": "Um homem com roupas nas cores azul, vermelho e branco. Ele é diferente das pessoas que vi por aqui no Amazonas.",
         "feedbackError": "Aqui deve ter um homem na posição de comando.",
-        "hint": ""
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "sam"
@@ -34,7 +34,7 @@
         "medium": "",
         "opinion": "Um soldado carregando uma caixa cheia de eletrônicos.",
         "feedbackError": "Aqui deve ter um homem obedecendo ordens.",
-        "hint": ""
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "soldado-caixa"
@@ -57,7 +57,7 @@
         "medium": "",
         "opinion": "Um cartaz alaranjado que mostra um índio em queda e um barco com pessoas. Está escrito “A paixão de Ajuricaba” e o ano de 1974.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1974.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "ajuricaba"
@@ -77,7 +77,7 @@
         "medium": "",
         "opinion": "Um cartaz colorido que mostra figuras ao redor de um anel, e um castelo no centro. Está escrito “O anel do nibelungo” e o ano de 1876.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1876.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "anel-do-nibelungo"
@@ -97,7 +97,7 @@
         "medium": "",
         "opinion": "Um cartaz que mostra dois rostos de homens separados pela metade. Está escrito “Ópera do malandro” e o ano de 1978.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1978.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "opera-do-malandro"
@@ -117,7 +117,7 @@
         "medium": "",
         "opinion": "Um cartaz branco que mostra um coração e máquinas pesadas. Está escrito “Zona Franca, meu amor” e o ano de 1968.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1968.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "zona-franca"
@@ -137,7 +137,7 @@
         "medium": "",
         "opinion": "Um cartaz branco que mostra um coração e máquinas pesadas. Está escrito “Zona Franca, meu amor” e o ano de 1968.",
         "feedbackError": "Aqui deve ter um espetáculo do ano 1968.",
-        "hint": ""
+        "hint": "Observe o cartaz próximo"
       },
       "assets": {
         "sprite": "zona-franca"
@@ -159,7 +159,7 @@
         "medium": "",
         "opinion": "Figurino de um cacique indígena, com cocar e adornos que remetem à liderança do seu povo.",
         "feedbackError": "Aqui deve ter um figurino de cacique indígena, com cocar.",
-        "hint": ""
+        "hint": "Procure o figurino com cocar de penas"
       },
       "assets": {
         "sprite": "indian"
@@ -179,7 +179,7 @@
         "medium": "",
         "opinion": "Figurino de malandro carioca, elegante e cheio de golpes na manga.",
         "feedbackError": "Aqui deve ter um figurino de malandro, com terno e chapéu.",
-        "hint": ""
+        "hint": "Observe o terno branco e o chapéu"
       },
       "assets": {
         "sprite": "malandro"
@@ -199,7 +199,7 @@
         "medium": "",
         "opinion": "Figurino de guerreiro dos mitos nórdicos e germânicos, com armadura e espada.",
         "feedbackError": "Aqui deve ter um figurino de guerreiro, com armadura e espada.",
-        "hint": ""
+        "hint": "Procure a armadura reluzente"
       },
       "assets": {
         "sprite": "warrior"
@@ -219,7 +219,7 @@
         "medium": "",
         "opinion": "Um uniforme verde-oliva com botas pesadas e uma boina.",
         "feedbackError": "Aqui deve ter um figurino de soldado, com uniforme militar.",
-        "hint": ""
+        "hint": "Observe o uniforme verde-oliva"
       },
       "assets": {
         "sprite": "soldier"

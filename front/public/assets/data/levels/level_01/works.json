@@ -14,7 +14,7 @@
         "medium": "Bronze fundido",
         "opinion": "Uma escultura de duas pessoas juntas. Não sei se estão se abraçando ou se querem se soltar.",
         "feedbackError": "Aqui deve ter algo mostrando dois corpos colados.",
-        "hint": "XXXXX"
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "edgards_sem_titulo_i_fundidos"
@@ -34,7 +34,7 @@
         "medium": "Bronze fundido",
         "opinion": "Uma escultura de uma pessoa que parece estar mergulhando.",
         "feedbackError": "Aqui deve ter algo mostrando um corpo que faz força.",
-        "hint": "XXXXX"
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "edgards_sem_titulo_ii_flexao"
@@ -54,7 +54,7 @@
         "medium": "Bronze fundido",
         "opinion": "Uma escultura de uma pessoa totalmente curvada. Parece que olha para seu próprio corpo.",
         "feedbackError": "Aqui deve ter algo mostrando um corpo dobrado.",
-        "hint": "XXXXX"
+        "hint": "Observe as esculturas próximas"
       },
       "assets": {
         "sprite": "edgards_sem_titulo_iii_em_pe"
@@ -78,7 +78,7 @@
         "medium": "Acrílica sobre linho",
         "opinion": "Um vermelho muito forte. Me lembra uma máscara negra com uma coroa de prata, dividida por um grande machado.",
         "feedbackError": "Aqui deve ter algo vermelho e relacionado a Xangô.",
-        "hint": "XXXXX"
+        "hint": "Observe as pinturas próximas"
       },
       "assets": {
         "sprite": "abdiasn_xango_rodrigues_alves"
@@ -100,7 +100,7 @@
         "medium": "Acrílica sobre tela",
         "opinion": "Vejo o céu em muitos tons de azul e um pássaro voando livremente. No chão tem um arco e flecha apontando para cima.",
         "feedbackError": "Aqui deve ter algo relacionado a um pássaro no céu azul.",
-        "hint": "XXXXX"
+        "hint": "Observe as pinturas próximas"
       },
       "assets": {
         "sprite": "abdiasn_invocacao_noturna_oxossi"
@@ -122,7 +122,7 @@
         "medium": "Acrílica sobre tela",
         "opinion": "Parece muito a bandeira do Brasil com uma flecha, mas tem poucas estrelas. Está escrito “okê” várias vezes?",
         "feedbackError": "Aqui deve ter algo relacionado às cores da nossa bandeira.",
-        "hint": "XXXXX"
+        "hint": "Observe as pinturas próximas"
       },
       "assets": {
         "sprite": "abdiasn_oke_oxossi"
@@ -144,7 +144,7 @@
         "medium": "Acrílica sobre tela",
         "opinion": "Que pintura colorida! Mostra uma linda moça coroada, com os olhos cobertos e estrelas multicor em seu peito.",
         "feedbackError": "Aqui deve ter algo muito colorido e relacionado à Oxum.",
-        "hint": "XXXXX"
+        "hint": "Observe as pinturas próximas"
       },
       "assets": {
         "sprite": "abdiasn_oxum_em_extase"
@@ -158,7 +158,8 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "1/4" },
       "educational": {
-        "opinion": "Uma foto rasgada! Está em preto e branco e parece ser o teto de algum lugar."
+        "opinion": "Uma foto rasgada! Está em preto e branco e parece ser o teto de algum lugar.",
+        "hint": "Observe os pedaços de foto próximos"
       }
     },
     "chunk_1-2": {
@@ -167,7 +168,8 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "2/4" },
       "educational": {
-        "opinion": "Uma foto rasgada! Vejo a claridade entrando pelos buracos."
+        "opinion": "Uma foto rasgada! Vejo a claridade entrando pelos buracos.",
+        "hint": "Observe os pedaços de foto próximos"
       }
     },
     "chunk_1-3": {
@@ -176,7 +178,8 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "3/4" },
       "educational": {
-        "opinion": "Uma foto rasgada! Parece a entrada de um lugar e chão de terra batida."
+        "opinion": "Uma foto rasgada! Parece a entrada de um lugar e chão de terra batida.",
+        "hint": "Observe os pedaços de foto próximos"
       }
     },
     "chunk_1-4": {
@@ -185,7 +188,8 @@
       "parent_id": "candujar_sem_titulo_yanomami",
       "metadata": { "title": "Sem título (Yanomami)", "part": "4/4" },
       "educational": {
-        "opinion": "Uma foto rasgada! É de uma criança iluminada."
+        "opinion": "Uma foto rasgada! É de uma criança iluminada.",
+        "hint": "Observe os pedaços de foto próximos"
       }
     },
     "candujar_sem_titulo_yanomami": {
@@ -203,7 +207,7 @@
         "medium": "Gelatina de prata sobre papel Ilford Multigrade",
         "opinion": "Essa é uma foto muito legal! A luz do sol invade a oca comunitária e ilumina uma criança.",
         "feedbackError": "Aqui deve ter outro pedaço da fotografia.",
-        "hint": "XXXXX"
+        "hint": "Observe os pedaços de foto próximos"
       },
       "assets": {
         "sprite": "candujar_sem_titulo_yanomami"
