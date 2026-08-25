@@ -5,6 +5,7 @@ import type { EntryFlow } from "@/game/main";
 import { getGuestId } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
+import { CreditsScreen } from "@/ui/credits/CreditsScreen";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
 import { ScorePanel } from "@/ui/hud/ScorePanel";
@@ -16,6 +17,7 @@ import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
 import { CostumeSelectorPanel } from "@/ui/panels/CostumeSelectorPanel";
+import { CreditsButton } from "@/ui/panels/CreditsButton";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
@@ -86,6 +88,8 @@ function OverlayContent({
   const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
   const evidenceBoardOpen = useGameUIStore((s) => s.evidenceBoardOpen);
   const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
+  const creditsOpen = useGameUIStore((s) => s.creditsOpen);
+  const setCreditsOpen = useGameUIStore((s) => s.setCreditsOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
@@ -176,6 +180,14 @@ function OverlayContent({
       },
     );
 
+    const unsubCreditsOpen = EventBus.on("credits:open", () => {
+      setCreditsOpen(true);
+    });
+
+    const unsubCreditsClose = EventBus.on("credits:close", () => {
+      setCreditsOpen(false);
+    });
+
     return () => {
       unsubControls();
       unsubToast();
@@ -189,6 +201,8 @@ function OverlayContent({
       unsubAutoStartTick();
       unsubAutoStartCanceled();
       unsubAutoStartCompleted();
+      unsubCreditsOpen();
+      unsubCreditsClose();
     };
   }, [
     setControlsOpen,
@@ -201,6 +215,7 @@ function OverlayContent({
     openCostumeSelector,
     setActiveMapMarker,
     setAutoStartProgress,
+    setCreditsOpen,
   ]);
 
   useEffect(() => {
@@ -296,11 +311,27 @@ function OverlayContent({
     );
   }
 
+  if (creditsOpen) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: UI_Z_INDEX.OVERLAY + 1000,
+          pointerEvents: "auto",
+        }}
+      >
+        <CreditsScreen onClose={() => setCreditsOpen(false)} />
+      </div>
+    );
+  }
+
   if (!gameStarted) {
     return (
       <>
         <MapPinTooltip />
         <MapInfoBox />
+        <CreditsButton />
       </>
     );
   }
