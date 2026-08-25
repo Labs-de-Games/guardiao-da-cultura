@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, Link, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 import {
@@ -11,7 +11,6 @@ import {
   CREDITS_LICENSE_SIZE,
   CREDITS_TITLE_FONT,
   CREDITS_TITLE_SIZE,
-  EASE_CRAWL,
   ENTRY_GAP,
   SCROLL_LEAD_IN_MS,
   SCROLL_SPEED_PX_PER_SEC,
@@ -26,14 +25,18 @@ export type CreditsScreenProps = {
 /**
  * Full-screen credits crawl: renders every credited person/asset in one
  * tall column and scrolls it continuously upward, like movie end credits,
- * until it clears the top of the screen. Click anywhere or press
- * Escape/Enter to close early.
+ * until it clears the top of the screen. Click anywhere (other than a
+ * link) to pause/resume the crawl so links can actually be clicked while
+ * they're not sliding under the cursor. Escape closes the screen.
  */
 export function CreditsScreen({ onClose }: CreditsScreenProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [distance, setDistance] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [started, setStarted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const elapsedRef = useRef(0);
   const finishedRef = useRef(false);
 
   const finish = useCallback(() => {
@@ -60,8 +63,27 @@ export function CreditsScreen({ onClose }: CreditsScreenProps) {
   }, [distance]);
 
   useEffect(() => {
+    if (!started || paused || distance <= 0 || durationMs <= 0) return;
+    let rafId: number;
+    const startTime = performance.now() - elapsedRef.current;
+    const tick = () => {
+      const elapsed = performance.now() - startTime;
+      elapsedRef.current = elapsed;
+      const clamped = Math.min(elapsed, durationMs);
+      setOffset((clamped / durationMs) * distance);
+      if (clamped >= durationMs) {
+        finish();
+        return;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [started, paused, distance, durationMs, finish]);
+
+  useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === "Enter") {
+      if (e.key === "Escape") {
         e.preventDefault();
         finish();
       }
@@ -72,9 +94,9 @@ export function CreditsScreen({ onClose }: CreditsScreenProps) {
 
   return (
     <Box
-      onClick={finish}
+      onClick={() => setPaused((prev) => !prev)}
       onKeyDown={(e) => {
-        if (e.key === "Escape" || e.key === "Enter") {
+        if (e.key === "Escape") {
           e.preventDefault();
           finish();
         }
@@ -113,18 +135,12 @@ export function CreditsScreen({ onClose }: CreditsScreenProps) {
 
       <Box
         ref={contentRef}
-        onTransitionEnd={(e: React.TransitionEvent<HTMLDivElement>) => {
-          if (e.propertyName === "transform") finish();
-        }}
         sx={{
           position: "absolute",
           top: "100%",
           left: "50%",
           width: `min(${CREDITS_COLUMN_WIDTH}px, calc(100vw - 48px))`,
-          transform: `translate(-50%, ${started ? -distance : 0}px)`,
-          transition: started
-            ? `transform ${durationMs}ms ${EASE_CRAWL}`
-            : "none",
+          transform: `translate(-50%, ${started ? -offset : 0}px)`,
           willChange: "transform",
           textAlign: "center",
         }}
@@ -192,7 +208,26 @@ export function CreditsScreen({ onClose }: CreditsScreenProps) {
                         lineHeight: 1.4,
                       }}
                     >
-                      {[entry.url, entry.license].filter(Boolean).join(" — ")}
+                      {entry.url && (
+                        <Link
+                          href={entry.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          sx={{
+                            color: "inherit",
+                            textDecoration: "underline",
+                            "&:hover": {
+                              color: GAME_UI_TOKENS.colors.accentGoldHover,
+                            },
+                          }}
+                        >
+                          {entry.url}
+                        </Link>
+                      )}
+                      {entry.url && entry.license && " — "}
+                      {entry.license}
                     </Typography>
                   )}
                 </Box>
