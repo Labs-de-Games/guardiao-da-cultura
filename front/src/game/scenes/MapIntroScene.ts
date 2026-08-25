@@ -174,10 +174,14 @@ export class MapIntroScene extends Scene {
     };
     EventBus.on("progression:updated", onProgression, this);
 
+    const onCreditsOpen = () => this.cancelAutoStart("credits");
+    EventBus.on("credits:open", onCreditsOpen, this);
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
       this.cancelAutoStart("shutdown");
       EventBus.off("progression:updated", onProgression, this);
+      EventBus.off("credits:open", onCreditsOpen, this);
       posthog.capture("game_home_dwell_time", {
         dwell_ms: Date.now() - this.homeEnteredAtMs,
       });
@@ -269,13 +273,15 @@ export class MapIntroScene extends Scene {
     });
   }
 
-  private cancelAutoStart(reason: "started" | "cycled" | "shutdown") {
+  private cancelAutoStart(
+    reason: "started" | "cycled" | "shutdown" | "credits",
+  ) {
     if (!this.autoStartEvent) {
       return;
     }
     this.autoStartEvent.remove();
     this.autoStartEvent = undefined;
-    if (reason === "started" || reason === "cycled") {
+    if (reason === "started" || reason === "cycled" || reason === "credits") {
       EventBus.emit("map:auto-start-canceled", undefined);
     }
   }
