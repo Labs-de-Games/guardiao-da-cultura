@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.11.0] - 2026-08-25
+
+### Added
+
+- Sequential level flow via `quiz:next-level` event, with level ordering utilities
+- Campina Grande map marker enabled
+- Confetti burst effect (`EffectsManager`) triggered on placeholder/spotlight success
+- Contextual nudge system (`NudgeManager`) for level 01 and level 02, wired into the Game scene and `GameOverlay`
+- Evidence board: overlay with inspect panel and pin connections, global collectible loading across levels, Zustand state, clue-open event bridging
+- Collectible sprite assets and data for level 01 and level 02, with extended board/educational metadata
+- Player animation overhaul: climbing (4-frame), idle south, and carrying idle/jump spritesheets, with hitbox derived from the active animation frame
+- Teatro Amazonas costume label markers and level 02 costume content data
+- Camera click sound effect (asset, registry, `SfxKey`) and flash effect on `CLUE_VILLAIN` collection
+
+### Fixed
+
+- Level 02 NPC final position (`STAGE_DONE` added to floor completion keys)
+- `MapInfoBox` title overflow constrained and vertically centered
+- Confetti burst positioned on spotlight sprite
+- Poster placeholder type conflict removed
+- Signature label text and a grammar error corrected
+- Missing `GROUND_VISUAL_OFFSET` constant added to `PlayerConfig`
+- NPC now faces the player on spawn
+- Map object positions adjusted for player alignment
+- Dragging idle frame recentered to match hitbox alignment
+- Player nudged 1px lower against platforms
+- Pixelated rendering added for collectible images
+- Physics body synced with climb animation scale
+- Dynamic sprite scaling and clue-open event emission on dialog close
+- Static title used in costume selector
+
+### Changed
+
+- `LEVEL_02_ENABLED` replaced with a scalable `LEVEL_ENABLED` map
+- `NudgeManager` simplified to a boolean API; unused nudge UI wiring removed
+- Player animation/preload boilerplate deduped; carry hitbox resync fixed
+- Inline `CollectibleGrid` drawer replaced with the evidence board
+- Interaction now targets the nearest nearby placeholder
+
+### Docs
+
+- Contextual nudge system architecture documented
+- Nudge analytics events and firing rules documented
+- `pistas_board_opened` PostHog event documented
+- Evidence board added to architecture documentation
+
+### Tests
+
+- Unit tests added for `NudgeManager`
+- Costume selector tests updated for static title
+
+### Chore
+
+- Player animation spritesheets updated
+- Collectible data added for level 01 and empty level 02
+- Label added to the lighting challenge
+- Poster, NPC, and player spawn positions updated
+
 ## [1.10.0] - 2026-08-12
 
 ### Added
