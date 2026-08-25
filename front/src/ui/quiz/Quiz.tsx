@@ -7,7 +7,6 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import StarIcon from "@mui/icons-material/Star";
 import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LEVEL_02_ENABLED } from "@/game/constants/FeatureFlags";
 import { QUIZ_PASS_THRESHOLD } from "@/game/constants/QuizConstants";
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
@@ -281,10 +280,10 @@ export default function QuizPanel() {
       EventBus.emit("quiz:close", undefined);
     } else if (isRetryMode) {
       EventBus.emit("quiz:retry", undefined);
-    } else if (LEVEL_02_ENABLED) {
-      EventBus.emit("quiz:close", undefined);
     } else {
-      useGameUIStore.getState().openInterestDialog();
+      // UIScene decides: load the next level, or fall back to the
+      // interest dialog when there is no next enabled level.
+      EventBus.emit("quiz:next-level", undefined);
     }
   }, [selectedNavIndex, isRetryMode]);
 

@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { QuizQuestion } from "@/game/types/GameDataTypes";
+import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "../state/game-ui-store";
 import QuizPanel from "./Quiz";
 
@@ -118,6 +119,29 @@ describe("QuizPanel performance phase", () => {
     expect(
       screen.getByText("Com mais atenção, você consegue!"),
     ).toBeInTheDocument();
+  });
+
+  it("asks for the next level when 'Proxima fase' is clicked", () => {
+    const emit = jest.spyOn(EventBus, "emit");
+    setupPerformancePhase(3);
+    render(<QuizPanel />);
+
+    fireEvent.click(screen.getByText(/Próxima fase/));
+
+    expect(emit).toHaveBeenCalledWith("quiz:next-level", undefined);
+    emit.mockRestore();
+  });
+
+  it("retries instead of advancing when the score failed", () => {
+    const emit = jest.spyOn(EventBus, "emit");
+    setupPerformancePhase(2);
+    render(<QuizPanel />);
+
+    fireEvent.click(screen.getByText(/Tentar novamente/));
+
+    expect(emit).toHaveBeenCalledWith("quiz:retry", undefined);
+    expect(emit).not.toHaveBeenCalledWith("quiz:next-level", undefined);
+    emit.mockRestore();
   });
 });
 

@@ -78,6 +78,23 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
   },
 };
 
+/** Level ids sorted by `levelNumber` — the canonical play order. */
+export function getOrderedLevelIds(): string[] {
+  return Object.values(LEVEL_REGISTRY)
+    .sort((a, b) => a.levelNumber - b.levelNumber)
+    .map((level) => level.id);
+}
+
+/**
+ * The level that comes after `levelId`, or `undefined` when it is the last
+ * one in the registry (or unknown).
+ */
+export function getNextLevelId(levelId: string): string | undefined {
+  const ids = getOrderedLevelIds();
+  const index = ids.indexOf(levelId);
+  return index === -1 ? undefined : ids[index + 1];
+}
+
 export const LEVEL_ASSETS = {
   level_01: {
     MAP: LEVEL_REGISTRY.level_01.map,
