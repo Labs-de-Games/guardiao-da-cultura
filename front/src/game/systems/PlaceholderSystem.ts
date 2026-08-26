@@ -147,8 +147,8 @@ export class PlaceholderSystem {
 
       // Container children are never visited by Game.setupLighting() — it only
       // walks the scene's top-level display list, and Phaser Containers don't
-      // support the render Pipeline component anyway. Apply the lighting
-      // pipeline to each part image directly so costumes react to dynamic lights.
+      // support the Lighting component anyway. Enable lighting on each part
+      // image directly so costumes react to dynamic lights.
       const isWebGL = this.scene.renderer.type === Phaser.WEBGL;
 
       const pedestalConfig = LayoutConfig.COSTUME.PEDESTAL_DEFAULT;
@@ -159,7 +159,7 @@ export class PlaceholderSystem {
       );
       pedestal.setOrigin(pedestalConfig.originX, pedestalConfig.originY);
       pedestal.setPosition(0, pedestalConfig.yOffset * scale);
-      if (isWebGL) pedestal.setPipeline("Conelight");
+      if (isWebGL) pedestal.setLighting(true);
       container.add(pedestal);
 
       const cells = TEXTURES.map((textureKey) => {
@@ -168,7 +168,7 @@ export class PlaceholderSystem {
           | "torso"
           | "feet";
         const cell = this.scene.add.image(0, 0, textureKey);
-        if (isWebGL) cell.setPipeline("Conelight");
+        if (isWebGL) cell.setLighting(true);
         return { partName, cell };
       });
 
@@ -310,12 +310,12 @@ export class PlaceholderSystem {
           filledSprite.setScale(placeholder.filledScale);
         }
         filledSprite.setDepth(10);
-        // Placeholder hint sprites are on the Conelight pipeline as of
+        // Placeholder hint sprites have lighting enabled as of
         // Game.setupLighting(), which only runs once at scene start. This
-        // replacement sprite is created later, so it needs the pipeline
-        // applied explicitly to react to dynamic lights.
+        // replacement sprite is created later, so it needs lighting enabled
+        // explicitly to react to dynamic lights.
         if (this.scene.renderer.type === Phaser.WEBGL) {
-          filledSprite.setPipeline("Conelight");
+          filledSprite.setLighting(true);
         }
         placeholder.hintSprite = filledSprite;
 

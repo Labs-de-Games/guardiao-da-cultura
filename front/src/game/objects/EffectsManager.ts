@@ -90,8 +90,8 @@ export class EffectsManager {
   }
 
   public showSpotlightBeam() {
-    // Visual beam graphic is gone now that spotlights use ConeLightPipeline
-    // (see SpotlightSystem), but this is also the shared "placeholder
+    // Visual beam graphic is gone now that spotlights use native cone
+    // lights (see SpotlightSystem), but this is also the shared "placeholder
     // solved" hook for paintings, sculptures, posters, costumes and photo
     // puzzles, so the success sound must still play.
     AudioManager.playSfx("sfx.puzzle.success", 0.7);

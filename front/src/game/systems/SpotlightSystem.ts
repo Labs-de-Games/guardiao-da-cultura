@@ -1,5 +1,9 @@
 import * as Phaser from "phaser";
-import { getConeLightPipeline, parseColor } from "../utils/lightUtils";
+import {
+  canUseLighting,
+  DEFAULT_CONE_ROTATION,
+  parseColor,
+} from "../utils/lightUtils";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface SpotlightInstance {
@@ -14,7 +18,7 @@ export interface SpotlightInstance {
   lightIntensity?: number;
 }
 
-// Spotlights wired to the ConeLightPipeline. On non-WebGL (Canvas)
+// Spotlights wired to Phaser's native cone lights. On non-WebGL (Canvas)
 // renderers, createConeLight returns undefined and these spotlights
 // simply render without a beam — same degradation as light bars and
 // chandelier lights.
@@ -181,34 +185,36 @@ export class SpotlightSystem {
     y: number,
     config: { radius?: number; color?: number; angleDeg?: number },
   ): Phaser.GameObjects.Light | undefined {
-    const pipeline = getConeLightPipeline(this.scene);
-    if (!pipeline) return undefined;
+    if (!canUseLighting(this.scene)) return undefined;
 
     const radius = config.radius ?? DEFAULT_SPOTLIGHT_LIGHT.radius;
     const color = config.color ?? DEFAULT_SPOTLIGHT_LIGHT.color;
     const angleDeg = config.angleDeg ?? DEFAULT_SPOTLIGHT_LIGHT.angleDeg;
     const angle = (angleDeg * Math.PI) / 180;
 
-    // Spotlights hang above and shine straight down, unlike the
-    // sideways-facing default direction used by wall-mounted light bars.
-    // diffuse=0 disables the fake-normal shading term so the beam's
-    // reach is governed purely by radius/angle — the shaded version
-    // fades to near-nothing over long screen distances no matter how
-    // big radius gets, which is unusable for a beam meant to travel
-    // far down the level.
-    return pipeline.addConeLight(
-      this.scene,
+    const light = this.scene.lights.addConeLight(
       x,
       y,
       radius,
       color,
       0,
+      DEFAULT_CONE_ROTATION,
       angle,
-      1.2,
-      0,
-      -1,
-      0,
+      angle,
     );
+
+    // Native cone lights don't have a "diffuse" toggle like the old
+    // custom shader did. Lit fragments are shaded by
+    // dot(normal, lightDirection), and that dot product is governed by
+    // the light's z (elevation): the higher z is relative to travel
+    // distance, the less the beam dims over long range. These beams
+    // travel up to ~2500px, so push z to the top of Phaser's documented
+    // "strong values" band (0 to radius/2) to keep reach close to the
+    // old radius/angle-only falloff. Playtest and re-tune if the beam
+    // still dims before reaching its configured radius.
+    light.setZNormal(0.5);
+
+    return light;
   }
 
   public getCategoryProgress(): { filled: number; total: number } {
