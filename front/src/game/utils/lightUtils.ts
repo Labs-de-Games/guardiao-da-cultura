@@ -1,7 +1,5 @@
 import * as Phaser from "phaser";
 
-import type { ConeLightPipeline } from "../pipelines/ConeLightPipeline";
-
 // Fallback color used when a "color" property is missing or unparsable.
 // Kept as a literal (matches the historical LightBarSystem default) so this
 // helper has no dependency on any one system's own DEFAULT_* config.
@@ -19,14 +17,16 @@ export function parseColor(raw: unknown): number {
   return Number.isNaN(parsed) ? FALLBACK_COLOR : parsed;
 }
 
-// Looks up the shared ConeLightPipeline registered on the scene's WebGL
-// renderer. Returns undefined on non-WebGL (Canvas) renderers, or if the
-// pipeline hasn't been registered, so callers can degrade gracefully.
-export function getConeLightPipeline(
-  scene: Phaser.Scene,
-): ConeLightPipeline | undefined {
-  if (scene.renderer.type !== Phaser.WEBGL) return undefined;
-
-  const renderer = scene.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
-  return renderer.pipelines.get("Conelight") as ConeLightPipeline | undefined;
+// Native lighting is WebGL-only (Lighting component + LightsManager are
+// no-ops elsewhere), so callers use this to skip creating lights on
+// Canvas and degrade gracefully.
+export function canUseLighting(scene: Phaser.Scene): boolean {
+  return scene.renderer.type === Phaser.WEBGL;
 }
+
+// All cone lights in this project historically pointed the same way
+// (the old ConeLightPipeline's default directionX=0/directionY=-1,
+// rendered as pointing down). Native coneRotation runs the opposite
+// sense through the camera-space transform, so +PI/2 — not -PI/2 —
+// is what actually points down; verified visually against LightBars.
+export const DEFAULT_CONE_ROTATION = Math.PI / 2;

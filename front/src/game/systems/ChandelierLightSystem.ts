@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import { getConeLightPipeline, parseColor } from "../utils/lightUtils";
+import { canUseLighting, parseColor } from "../utils/lightUtils";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface ChandelierLightInstance {
@@ -17,7 +17,6 @@ export interface ChandelierLightConfig {
   radius?: number;
   color?: number;
   intensity?: number;
-  falloff?: number;
 }
 
 const DEFAULT_CHANDELIER_LIGHT = {
@@ -25,10 +24,6 @@ const DEFAULT_CHANDELIER_LIGHT = {
   color: 0xffcc88,
   intensity: 3,
 };
-
-// Chandeliers shine in every direction, so their cone always covers a
-// full circle instead of the narrow beam used by LightBarSystem.
-const FULL_CIRCLE_ANGLE = Math.PI * 2;
 
 export class ChandelierLightSystem {
   private chandelierLights: ChandelierLightInstance[] = [];
@@ -49,7 +44,6 @@ export class ChandelierLightSystem {
       const rawRadius = TiledUtils.getProperty(obj, "radius");
       const rawColor = TiledUtils.getProperty(obj, "color");
       const rawIntensity = TiledUtils.getProperty(obj, "intensity");
-      const rawFalloff = TiledUtils.getProperty(obj, "falloff");
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
       this.registerChandelierLight({
@@ -60,7 +54,6 @@ export class ChandelierLightSystem {
         color: rawColor !== undefined ? parseColor(rawColor) : undefined,
         intensity:
           rawIntensity !== undefined ? Number(rawIntensity) : undefined,
-        falloff: rawFalloff !== undefined ? Number(rawFalloff) : undefined,
       });
     });
   }
@@ -85,22 +78,19 @@ export class ChandelierLightSystem {
   private createPointLight(
     config: ChandelierLightConfig,
   ): Phaser.GameObjects.Light | undefined {
-    const pipeline = getConeLightPipeline(this.scene);
-    if (!pipeline) return undefined;
+    if (!canUseLighting(this.scene)) return undefined;
 
     const radius = config.radius ?? DEFAULT_CHANDELIER_LIGHT.radius;
     const color = config.color ?? DEFAULT_CHANDELIER_LIGHT.color;
     const intensity = config.intensity ?? DEFAULT_CHANDELIER_LIGHT.intensity;
 
-    return pipeline.addConeLight(
-      this.scene,
+    // Omnidirectional — coneEnabled stays false (the Light default).
+    return this.scene.lights.addLight(
       config.x,
       config.y,
       radius,
       color,
       intensity,
-      FULL_CIRCLE_ANGLE,
-      config.falloff,
     );
   }
 

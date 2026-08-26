@@ -1227,23 +1227,23 @@ export class Game extends Scene implements GameDataAccessor {
     this.lights.setAmbientColor(0xd9d9d9);
 
     this.children.list.forEach((obj) => {
-      const pipelineObj = obj as unknown as {
-        setPipeline?: (name: string) => void;
+      const lightingObj = obj as unknown as {
+        setLighting?: (enable: boolean) => void;
       };
-      if (typeof pipelineObj.setPipeline === "function") {
-        pipelineObj.setPipeline("Conelight");
+      if (typeof lightingObj.setLighting === "function") {
+        lightingObj.setLighting(true);
       }
     });
 
-    // Light bars are the light source themselves — keep them on the
-    // default pipeline so they render at full brightness instead of
-    // being dimmed by their own ambient/cone lighting.
+    // Light bars are the light source themselves — keep lighting off so
+    // they render at full brightness instead of being dimmed by their
+    // own ambient/cone lighting.
     this.lightBarSystem?.getAll().forEach(({ sprite }) => {
-      sprite.resetPipeline();
+      sprite.setLighting(false);
     });
 
     this.spotlightSystem?.getAll().forEach(({ sprite, light }) => {
-      if (light) sprite.resetPipeline();
+      if (light) sprite.setLighting(false);
     });
   }
 

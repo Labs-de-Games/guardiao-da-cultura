@@ -1,6 +1,5 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
 import { LayoutConfig } from "./constants/LayoutConfig";
-import { ConeLightPipeline } from "./pipelines/ConeLightPipeline";
 import { Game as MainGame } from "./scenes/Game";
 import { LevelCinematic } from "./scenes/LevelCinematic";
 import { MapIntroScene } from "./scenes/MapIntroScene";
@@ -28,7 +27,6 @@ const baseConfig: Types.Core.GameConfig = {
     mode: Scale.FIT,
     autoCenter: Scale.CENTER_BOTH,
   },
-  pipeline: { Conelight: ConeLightPipeline },
   // Phaser's LightsManager defaults to 10 and silently drops the
   // farthest-from-camera lights beyond that cap. Levels combine light
   // bars, chandeliers and spotlights that can exceed 10 at once (e.g.

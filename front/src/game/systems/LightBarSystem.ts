@@ -1,6 +1,10 @@
 import * as Phaser from "phaser";
 import { LayoutConfig } from "../constants/LayoutConfig";
-import { getConeLightPipeline, parseColor } from "../utils/lightUtils";
+import {
+  canUseLighting,
+  DEFAULT_CONE_ROTATION,
+  parseColor,
+} from "../utils/lightUtils";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface LightBarInstance {
@@ -24,7 +28,6 @@ export interface LightBarConfig {
   color?: number;
   intensity?: number;
   angleDeg?: number;
-  falloff?: number;
   // When set, the cone light starts off and only turns on once the
   // linked placeholder (by its Tiled object name, e.g. "PH_3") is
   // correctly filled.
@@ -60,7 +63,6 @@ export class LightBarSystem {
       const rawColor = TiledUtils.getProperty(obj, "color");
       const rawIntensity = TiledUtils.getProperty(obj, "intensity");
       const rawAngleDeg = TiledUtils.getProperty(obj, "angle");
-      const rawFalloff = TiledUtils.getProperty(obj, "falloff");
       const placeholderId = TiledUtils.getProperty(obj, "placeholderId");
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
@@ -75,7 +77,6 @@ export class LightBarSystem {
         intensity:
           rawIntensity !== undefined ? Number(rawIntensity) : undefined,
         angleDeg: rawAngleDeg !== undefined ? Number(rawAngleDeg) : undefined,
-        falloff: rawFalloff !== undefined ? Number(rawFalloff) : undefined,
         placeholderId: placeholderId as string | undefined,
       });
     });
@@ -112,23 +113,25 @@ export class LightBarSystem {
     config: LightBarConfig,
     intensity: number,
   ): Phaser.GameObjects.Light | undefined {
-    const pipeline = getConeLightPipeline(this.scene);
-    if (!pipeline) return undefined;
+    if (!canUseLighting(this.scene)) return undefined;
 
     const radius = config.radius ?? DEFAULT_CONE_LIGHT.radius;
     const color = config.color ?? DEFAULT_CONE_LIGHT.color;
     const angleDeg = config.angleDeg ?? DEFAULT_CONE_LIGHT.angleDeg;
     const angle = (angleDeg * Math.PI) / 180;
 
-    return pipeline.addConeLight(
-      this.scene,
+    // innerAngle === outerAngle gives a hard cone edge, closest match to
+    // the old shader's default falloff behavior (no Tiled property maps
+    // to a soft edge today).
+    return this.scene.lights.addConeLight(
       config.x,
       config.y - 28,
       radius,
       color,
       intensity,
+      DEFAULT_CONE_ROTATION,
       angle,
-      config.falloff,
+      angle,
     );
   }
 
