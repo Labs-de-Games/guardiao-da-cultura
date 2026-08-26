@@ -1,6 +1,7 @@
 export const MissionIds = {
   CURATOR: "missao_curador",
   CURATOR_L2: "missao_curador_l2",
+  CURATOR_L3: "missao_curador_l3",
 } as const;
 
 export const MissionKeys = {
