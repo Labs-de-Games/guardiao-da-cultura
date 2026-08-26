@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import posthog from "posthog-js";
 
 import { EventBus } from "../../shared/events/event-bus";
+import type { GameEventMap } from "../../shared/events/game-events";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio } from "../audio";
@@ -144,6 +145,7 @@ export class Game extends Scene implements GameDataAccessor {
   private carryableItems: CarryableItem[] = [];
   private movingPlatforms: MovingPlatform[] = [];
   private itemsInteracted: Set<string> = new Set();
+  private eventBusUnsubs: Array<() => void> = [];
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
@@ -193,6 +195,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
     this.itemsInteracted.clear();
+    this.unsubscribeFromEventBus();
     this.contentData = {
       works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
       quizzes: {},
@@ -1145,21 +1148,21 @@ export class Game extends Scene implements GameDataAccessor {
       });
     });
 
-    EventBus.on("game:pause-requested", () => {
+    this.onEventBus("game:pause-requested", () => {
       this.scene.pause(SceneNames.GAME);
       this.scene.pause(SceneNames.UI);
     });
 
-    EventBus.on("game:resume-requested", () => {
+    this.onEventBus("game:resume-requested", () => {
       this.scene.resume(SceneNames.GAME);
       this.scene.resume(SceneNames.UI);
     });
 
-    EventBus.on("ui:label-show", () => {
+    this.onEventBus("ui:label-show", () => {
       this.events.emit(GameEvents.DIALOGUE_STARTED);
     });
 
-    EventBus.on("ui:label-hide", () => {
+    this.onEventBus("ui:label-hide", () => {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
     });
 
@@ -1192,7 +1195,7 @@ export class Game extends Scene implements GameDataAccessor {
       },
     );
 
-    EventBus.on("ui:label-show", () => {
+    this.onEventBus("ui:label-show", () => {
       this.tutorialSystem?.completeTutorial("tutorial_read_label");
       this.nudgeManager?.recordInteraction();
     });
@@ -1679,8 +1682,8 @@ export class Game extends Scene implements GameDataAccessor {
       handleInteractionSubmitted,
     );
 
-    EventBus.on("ui:chunk-selector-submit", handleInteractionSubmitted);
-    EventBus.on("ui:chunk-slot-placed", (data) => {
+    this.onEventBus("ui:chunk-selector-submit", handleInteractionSubmitted);
+    this.onEventBus("ui:chunk-slot-placed", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
       );
@@ -1692,22 +1695,22 @@ export class Game extends Scene implements GameDataAccessor {
       handler.placeCorrectChunk(this, p, data.itemId, data.slotIndex);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
     });
-    EventBus.on("ui:chunk-slot-rejected", () => {
+    this.onEventBus("ui:chunk-slot-rejected", () => {
       this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
     });
-    EventBus.on("ui:chunk-selector-close", () => {
+    this.onEventBus("ui:chunk-selector-close", () => {
       if (!this.isChunkSelectorOpen) return;
       this.isChunkSelectorOpen = false;
       this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       this.checkDialogState();
     });
-    EventBus.on("ui:costume-selector-close", () => {
+    this.onEventBus("ui:costume-selector-close", () => {
       if (!this.isCostumeSelectorOpen) return;
       this.isCostumeSelectorOpen = false;
       this.events.emit(GameEvents.DIALOGUE_ENDED);
       this.checkDialogState();
     });
-    EventBus.on("ui:costume-part-selected", (data) => {
+    this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
       );
@@ -1733,11 +1736,11 @@ export class Game extends Scene implements GameDataAccessor {
         data.partId,
       );
     });
-    EventBus.on("ui:costume-part-rejected", () => {
+    this.onEventBus("ui:costume-part-rejected", () => {
       this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
       this.recordFloorError(this.scoringFloors.costumes);
     });
-    EventBus.on("ui:costume-confirm", (data) => {
+    this.onEventBus("ui:costume-confirm", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
       );
@@ -1771,18 +1774,7 @@ export class Game extends Scene implements GameDataAccessor {
       this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
       AudioManager.destroy();
-      EventBus.off("game:pause-requested");
-      EventBus.off("game:resume-requested");
-      EventBus.off("ui:chunk-selector-submit");
-      EventBus.off("ui:chunk-slot-placed");
-      EventBus.off("ui:chunk-slot-rejected");
-      EventBus.off("ui:chunk-selector-close");
-      EventBus.off("ui:costume-selector-close");
-      EventBus.off("ui:costume-part-selected");
-      EventBus.off("ui:costume-part-rejected");
-      EventBus.off("ui:costume-confirm");
-      EventBus.off("ui:label-hide");
-      EventBus.off("ui:label-show");
+      this.unsubscribeFromEventBus();
     });
   }
 
@@ -1822,6 +1814,24 @@ export class Game extends Scene implements GameDataAccessor {
 
   public startIntermediateQuiz(infoKey: string) {
     this.quizManager.startIntermediateQuiz(infoKey);
+  }
+
+  // Subscribes to a global EventBus event for the lifetime of this scene instance.
+  // The unsubscriber is tracked so SHUTDOWN removes only the listener this scene
+  // registered. EventBus.off(event) without a handler would wipe every listener for
+  // that event, including the ones React owns (e.g. GameOverlay's "ui:label-show").
+  private onEventBus<K extends keyof GameEventMap>(
+    event: K,
+    fn: (data: GameEventMap[K]) => void,
+  ) {
+    this.eventBusUnsubs.push(EventBus.on(event, fn));
+  }
+
+  private unsubscribeFromEventBus() {
+    for (const unsubscribe of this.eventBusUnsubs) {
+      unsubscribe();
+    }
+    this.eventBusUnsubs = [];
   }
 
   private checkDialogState() {
