@@ -1,3 +1,4 @@
+import * as Phaser from "phaser";
 import { getPoolVariations, isSoundPoolKey } from "./loader";
 import type {
   AudioCategory,
