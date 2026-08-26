@@ -1124,7 +1124,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1134,7 +1134,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1168,7 +1168,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1178,7 +1178,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1212,7 +1212,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1222,7 +1222,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1246,7 +1246,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":80
+                         "value":70
                         }, 
                         {
                          "name":"color",
@@ -1256,7 +1256,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1266,7 +1266,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1290,7 +1290,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":80
+                         "value":70
                         }, 
                         {
                          "name":"color",
@@ -1300,7 +1300,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1310,7 +1310,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1334,7 +1334,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":80
+                         "value":70
                         }, 
                         {
                          "name":"color",
@@ -1344,7 +1344,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1354,7 +1354,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1378,7 +1378,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":80
+                         "value":70
                         }, 
                         {
                          "name":"color",
@@ -1388,7 +1388,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1398,7 +1398,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1432,7 +1432,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1442,7 +1442,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1024
+                         "value":400
                         }, 
                         {
                          "name":"scale",
@@ -1932,7 +1932,7 @@
  "nextobjectid":81,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {

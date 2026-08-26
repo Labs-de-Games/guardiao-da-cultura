@@ -531,12 +531,12 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":7
                         }, 
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":2800
                         }, 
                         {
                          "name":"scale",
@@ -575,12 +575,12 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":7
                         }, 
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":2800
                         }, 
                         {
                          "name":"scale",
@@ -619,12 +619,12 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":7
                         }, 
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":2800
                         }, 
                         {
                          "name":"scale",
@@ -668,12 +668,12 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":7
                         }, 
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":2500
+                         "value":2800
                         }, 
                         {
                          "name":"scale",
@@ -806,7 +806,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -816,7 +816,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -850,7 +850,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -860,7 +860,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -894,7 +894,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -904,7 +904,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -938,7 +938,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -948,7 +948,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -982,7 +982,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -992,7 +992,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1026,7 +1026,7 @@
                         {
                          "name":"intensity",
                          "type":"float",
-                         "value":6
+                         "value":4
                         }, 
                         {
                          "name":"placeholderId",
@@ -1036,7 +1036,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1080,7 +1080,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1124,7 +1124,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1168,7 +1168,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1212,7 +1212,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":1500
+                         "value":600
                         }, 
                         {
                          "name":"scale",
@@ -1454,8 +1454,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1080.000945244,
-                 "y":581.390281832
+                 "x":654.351753671242,
+                 "y":91.6592676232788
                 }],
          "opacity":1,
          "type":"objectgroup",
