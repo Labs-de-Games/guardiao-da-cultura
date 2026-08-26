@@ -1,3 +1,4 @@
+import * as Phaser from "phaser";
 import { Scene } from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import type { IntroConfig } from "../../ui/intro/types";
