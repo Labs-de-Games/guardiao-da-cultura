@@ -9,8 +9,6 @@ import { AudioManager } from "../audio";
 export class EffectsManager {
   private scene: Phaser.Scene;
   private camera: Phaser.Cameras.Scene2D.Camera;
-  private colorMatrix?: Phaser.FX.ColorMatrix;
-  private vignette?: Phaser.FX.Vignette;
   private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
   private spotlightVisible = false;
   private revealProgress = 1;
@@ -29,17 +27,6 @@ export class EffectsManager {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.camera = scene.cameras.main;
-
-    if (this.camera.postFX) {
-      //this.colorMatrix = this.camera.postFX.addColorMatrix();
-      //this.vignette = this.camera.postFX.addVignette();
-      //this.vignette.radius = 0.9;
-      //this.vignette.strength = 0.6;
-    }
-  }
-
-  public get vignetteEffect() {
-    return this.vignette;
   }
 
   /** Ajusta o zoom da câmera com transição suave */
@@ -53,38 +40,8 @@ export class EffectsManager {
     });
   }
 
-  /** Ajusta o nível de Grayscale (0 a 1) com transição suave */
-  public setGrayscale(amount: number, duration: number = 1000) {
-    if (!this.colorMatrix) return;
-
-    const currentAmount = { val: amount };
-    // Nota: Idealmente rastrearíamos o valor atual, mas para o protótipo
-    // forçamos o valor final ou animamos se necessário.
-    this.scene.tweens.add({
-      targets: currentAmount,
-      val: amount,
-      duration: duration,
-      ease: "Power2",
-      onUpdate: () => {
-        this.colorMatrix?.grayscale(currentAmount.val);
-      },
-    });
-  }
-
-  /** Efeito de Vinheta (Tweens o objeto externo) */
-  public setVignette(
-    vignette: Phaser.FX.Vignette | undefined,
-    radius: number,
-    duration: number = 500,
-  ) {
-    if (!vignette) return;
-    this.scene.tweens.add({
-      targets: vignette,
-      radius: radius,
-      duration: duration,
-      ease: "Power2",
-    });
-  }
+  /** Ajusta o nível de Grayscale (0 a 1) com transição suave. No-op: never wired to a live filter. */
+  public setGrayscale(_amount: number, _duration: number = 1000) {}
 
   /** Shake de câmera para feedback de erro/dano */
   public shake(duration: number = 250, intensity: number = 0.01) {
