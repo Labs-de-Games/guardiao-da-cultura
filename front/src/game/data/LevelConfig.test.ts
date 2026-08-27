@@ -2,13 +2,14 @@ import { getNextLevelId, getOrderedLevelIds } from "./LevelConfig";
 
 describe("getOrderedLevelIds", () => {
   it("orders levels by levelNumber", () => {
-    expect(getOrderedLevelIds()).toEqual(["level_01", "level_02"]);
+    expect(getOrderedLevelIds()).toEqual(["level_01", "level_02", "level_03"]);
   });
 });
 
 describe("getNextLevelId", () => {
   it("returns the following level", () => {
     expect(getNextLevelId("level_01")).toBe("level_02");
+    expect(getNextLevelId("level_02")).toBe("level_03");
   });
 
   it("returns undefined for the last level", () => {
