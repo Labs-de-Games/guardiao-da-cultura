@@ -1,4 +1,4 @@
-import type * as Phaser from "phaser";
+import * as Phaser from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import { AudioManager } from "../audio";
 
@@ -9,8 +9,8 @@ import { AudioManager } from "../audio";
 export class EffectsManager {
   private scene: Phaser.Scene;
   private camera: Phaser.Cameras.Scene2D.Camera;
-  private colorMatrix?: Phaser.FX.ColorMatrix;
-  private vignette?: Phaser.FX.Vignette;
+  private colorMatrix?: Phaser.Display.ColorMatrix;
+  private vignette?: Phaser.Filters.Vignette;
   private scoreFeedbackStar: Phaser.GameObjects.Sprite | null = null;
   private scoreFeedbackActive = false;
   public scoreFeedbackFloatY = 0;
