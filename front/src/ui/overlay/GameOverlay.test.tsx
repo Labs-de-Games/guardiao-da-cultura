@@ -5,6 +5,13 @@ import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import GameOverlay from "./GameOverlay";
 
+// The real EventBus drives this suite, so it needs a working EventEmitter.
+// The global test-setup mock stubs every emitter method with jest.fn(), which
+// would silently swallow every emit. Phaser's emitter is eventemitter3.
+jest.mock("phaser", () => ({
+  Events: { EventEmitter: jest.requireActual("eventemitter3") },
+}));
+
 jest.mock("@/lib/auth/useAuth", () => ({
   useAuth: () => ({
     isAuthenticated: true,
@@ -181,6 +188,34 @@ describe("GameOverlay", () => {
 
     expect(emitSpy).toHaveBeenCalledWith("ui:label-hide", undefined);
     emitSpy.mockRestore();
+  });
+
+  it("keeps showing labels after a scene-scoped subscriber unsubscribes", () => {
+    useGameUIStore.setState({ gameStarted: true, labelData: null });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    // The Game scene subscribes to ui:label-show too and drops its listener on
+    // SHUTDOWN. Tearing that listener down must not detach the overlay's, or the
+    // label panel never renders while movement stays locked (issue #752).
+    const sceneHandler = jest.fn();
+    const unsubscribeScene = EventBus.on("ui:label-show", sceneHandler);
+    unsubscribeScene();
+
+    act(() => {
+      EventBus.emit("ui:label-show", {
+        title: "Obra",
+        author: "Art",
+        description: "Desc",
+      });
+    });
+
+    expect(sceneHandler).not.toHaveBeenCalled();
+    expect(useGameUIStore.getState().labelData).toEqual({
+      title: "Obra",
+      author: "Art",
+      description: "Desc",
+    });
   });
 
   it("does not close the label when E is pressed and no label is open", () => {
