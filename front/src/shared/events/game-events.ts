@@ -263,4 +263,6 @@ export interface GameEventMap {
   "tutorial:shown": { tutorialId: string };
   "tutorial:dismissed": { tutorialId: string };
   "ui:evidence-board-open-with-clue": { clueId: string | null };
+  "credits:open": undefined;
+  "credits:close": undefined;
 }
