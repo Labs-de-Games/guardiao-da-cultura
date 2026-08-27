@@ -1,4 +1,5 @@
 import Cookies from "js-cookie";
+import * as Phaser from "phaser";
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { createGamePersistence } from "@/lib/persistence/gamePersistence";

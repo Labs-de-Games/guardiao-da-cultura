@@ -1,6 +1,6 @@
 # Performance Optimization
 
-Strategies for maintaining smooth 60fps in Phaser 3 games.
+Strategies for maintaining smooth 60fps in Phaser 4 games.
 
 ## Object Pooling
 
@@ -93,7 +93,7 @@ Combine sprites into atlases to reduce draw calls.
 
 ### Using TexturePacker
 
-Export as Phaser 3 JSON Hash format.
+Export as Phaser JSON Hash format.
 
 ```javascript
 // Load atlas

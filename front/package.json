@@ -21,7 +21,7 @@
     "embla-carousel-react": "^8.6.0",
     "js-cookie": "^3.0.5",
     "next": "latest",
-    "phaser": "3.90.0",
+    "phaser": "4.2.1",
     "posthog-js": "^1.376.3",
     "react": "latest",
     "react-dom": "latest",
