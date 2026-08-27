@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.12.0] - 2026-08-27
+
+### Added
+
+- Credits screen with data, scroll crawl, and clickable links
+- Credits open/close events and `creditsOpen` state in game UI store
+- Credits entry button on map screen
+- Credits screen wired into game overlay with role sections
+
+### Fixed
+
+- `EventBus.off` wiping React listeners on scene shutdown
+
 ## [1.11.0] - 2026-08-25
 
 ### Added
