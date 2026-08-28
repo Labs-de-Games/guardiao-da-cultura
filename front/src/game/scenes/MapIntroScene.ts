@@ -68,6 +68,8 @@ export class MapIntroScene extends Scene {
     posthog.capture("game_home_viewed");
     this.homeEnteredAtMs = Date.now();
     this.isTransitioningToLevel = false;
+    // Back on the map: map-only UI (credits button, tooltips) may show again.
+    useGameUIStore.getState().setLevelTransitionActive(false);
 
     // Clear music started registry keys so levels can restart music on replay
     const levelIds = Object.keys(LEVEL_REGISTRY);
@@ -216,6 +218,9 @@ export class MapIntroScene extends Scene {
 
     if (marker.levelId) {
       this.isTransitioningToLevel = true;
+      // Hide map-only UI for the whole hand-off: fade, cinematic asset load,
+      // comic intro and the Game scene load, until the map is entered again.
+      useGameUIStore.getState().setLevelTransitionActive(true);
       // Save level info for PhaseInfoCard before clearing map UI state
       const marker = MARKERS[this.activeMarkerIndex];
       useGameUIStore.getState().setLevelInfo({

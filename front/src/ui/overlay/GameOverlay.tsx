@@ -64,6 +64,7 @@ function OverlayContent({
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
+  const levelTransitionActive = useGameUIStore((s) => s.levelTransitionActive);
   const dialogueOpen = useDialogueStore((s) => s.dialogueOpen);
   const dialogueMode = useDialogueStore((s) => s.dialogueMode);
   const badgeGalleryOpen = useGameUIStore((s) => s.badgeGalleryOpen);
@@ -324,6 +325,11 @@ function OverlayContent({
         <CreditsScreen onClose={() => setCreditsOpen(false)} />
       </div>
     );
+  }
+
+  if (levelTransitionActive && !gameStarted) {
+    // Level hand-off in flight: Phaser and LoadingGameScreen own the screen.
+    return null;
   }
 
   if (!gameStarted) {
