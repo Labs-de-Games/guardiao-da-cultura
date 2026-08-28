@@ -42,6 +42,17 @@ export class NudgeManager {
     this.lastInteractionTime = Date.now();
   }
 
+  /**
+   * Marks raw player input (movement, jump, interact) as activity. Takes the
+   * timestamp of the last input rather than `Date.now()` so a stale stamp can
+   * never rewind the inactivity clock.
+   */
+  notifyActivity(timestamp: number): void {
+    if (timestamp > this.lastInteractionTime) {
+      this.lastInteractionTime = timestamp;
+    }
+  }
+
   recordNudge(): void {
     this.lastNudgeTime = Date.now();
   }

@@ -48,6 +48,28 @@ describe("NudgeManager", () => {
     expect(manager.evaluate(releasedAt + THRESHOLD, false)).toBe(true);
   });
 
+  it("notifyActivity restarts the inactivity timer", () => {
+    const manager = createManager();
+    const inputAt = START + THRESHOLD - 1;
+
+    manager.notifyActivity(inputAt);
+
+    expect(manager.evaluate(START + THRESHOLD, false)).toBe(false);
+    expect(manager.evaluate(inputAt + THRESHOLD, false)).toBe(true);
+  });
+
+  it("notifyActivity never rewinds the inactivity timer", () => {
+    const manager = createManager();
+    const inputAt = START + THRESHOLD - 1;
+
+    manager.notifyActivity(inputAt);
+    // A stale stamp (older than the last recorded activity) must be ignored.
+    manager.notifyActivity(START - THRESHOLD);
+
+    expect(manager.evaluate(inputAt + THRESHOLD - THROTTLE, false)).toBe(false);
+    expect(manager.evaluate(inputAt + THRESHOLD, false)).toBe(true);
+  });
+
   it("recordInteraction restarts the inactivity timer", () => {
     const manager = createManager();
     const interactionAt = START + THRESHOLD - 1;

@@ -44,6 +44,9 @@ export class Player
   private lastOnGroundTime = 0;
   private hasJumped = false;
 
+  /** Timestamp of the last frame on which any tracked key was held. */
+  private lastInputTime: number = Date.now();
+
   private collisionLayers: Phaser.Tilemaps.TilemapLayer[] = [];
 
   /** Reference to the moving platform the player is standing on. */
@@ -294,10 +297,45 @@ export class Player
     return false;
   }
 
+  /**
+   * Stamps the current time whenever the player is holding any tracked key.
+   * Read by the nudge system to tell a genuinely idle player apart from one
+   * who is playing without triggering a scripted interaction.
+   *
+   * Uses `isDown` rather than `JustDown` on purpose: `JustDown` mutates the
+   * key's internal state and would swallow the presses consumed later in
+   * `update()` for interact and jump.
+   */
+  private trackInputActivity(): void {
+    const k = this.keys;
+    const anyKeyDown =
+      k.up.isDown ||
+      k.down.isDown ||
+      k.left.isDown ||
+      k.right.isDown ||
+      k.w.isDown ||
+      k.a.isDown ||
+      k.s.isDown ||
+      k.d.isDown ||
+      k.e.isDown ||
+      k.space.isDown;
+
+    if (anyKeyDown) {
+      this.lastInputTime = Date.now();
+    }
+  }
+
+  /** Timestamp of the most recent player input, for idle detection. */
+  public getLastInputTime(): number {
+    return this.lastInputTime;
+  }
+
   update(_ts: number, dt: number) {
     if (this.isDead) return;
 
     if (this.isHit) return;
+
+    this.trackInputActivity();
 
     const body = this.body as Phaser.Physics.Arcade.Body;
 
