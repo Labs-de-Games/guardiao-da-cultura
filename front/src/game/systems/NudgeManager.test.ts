@@ -37,11 +37,15 @@ describe("NudgeManager", () => {
     expect(manager.evaluate(START + THRESHOLD * 10, true)).toBe(false);
   });
 
-  it("nudges as soon as the player stops being busy", () => {
+  it("does not nudge immediately after the player stops being busy", () => {
     const manager = createManager();
+    const releasedAt = START + THRESHOLD * 10;
 
-    expect(manager.evaluate(START + THRESHOLD, true)).toBe(false);
-    expect(manager.evaluate(START + THRESHOLD + THROTTLE, false)).toBe(true);
+    // Time spent busy is engaged time, not idle time.
+    expect(manager.evaluate(releasedAt, true)).toBe(false);
+    expect(manager.evaluate(releasedAt + THROTTLE, false)).toBe(false);
+    // The inactivity window restarts from the moment the player was released.
+    expect(manager.evaluate(releasedAt + THRESHOLD, false)).toBe(true);
   });
 
   it("recordInteraction restarts the inactivity timer", () => {
