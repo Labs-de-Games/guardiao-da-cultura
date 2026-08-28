@@ -2,6 +2,8 @@
 
 import { Box, Typography } from "@mui/material";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
+import { useCanvasViewport } from "@/ui/hooks/useCanvasViewport";
+import { CanvasViewportLayer } from "@/ui/panels/CanvasViewportLayer";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
@@ -43,19 +45,17 @@ function Keycap({ label }: { label: string }) {
   );
 }
 
-function clampHorizontalPosition(screenX: number) {
+function clampHorizontalPosition(displayX: number, viewportWidth: number) {
   const halfWidth = TOOLTIP_WIDTH / 2;
-  const maxLeft =
-    typeof window === "undefined"
-      ? screenX
-      : window.innerWidth - VIEWPORT_PADDING - halfWidth;
+  const maxLeft = viewportWidth - VIEWPORT_PADDING - halfWidth;
 
-  return Math.min(Math.max(screenX, VIEWPORT_PADDING + halfWidth), maxLeft);
+  return Math.min(Math.max(displayX, VIEWPORT_PADDING + halfWidth), maxLeft);
 }
 
 export function MapPinTooltip() {
   const activeMapMarker = useGameUIStore((s) => s.activeMapMarker);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
+  const viewport = useCanvasViewport();
 
   if (
     !activeMapMarker ||
@@ -66,100 +66,107 @@ export function MapPinTooltip() {
     return null;
   }
 
-  const left = clampHorizontalPosition(activeMapMarker.screenX);
-  const arrowOffsetX = activeMapMarker.screenX - left;
-  const showBelowPin = activeMapMarker.screenY < 160;
+  // activeMapMarker.screenX/Y are canvas-internal pixel coordinates; convert
+  // to CSS pixels local to the viewport-aligned wrapper rendered below.
+  const displayX = activeMapMarker.screenX * viewport.scaleX;
+  const displayY = activeMapMarker.screenY * viewport.scaleY;
+
+  const left = clampHorizontalPosition(displayX, viewport.width);
+  const arrowOffsetX = displayX - left;
+  const showBelowPin = displayY < 160;
 
   const instructionText = activeMapMarker.isAvailable
     ? "Pressione ESPAÇO para entrar no mapa."
     : "Este local está em reforma.";
 
   return (
-    <Box
-      role="tooltip"
-      aria-live="polite"
-      sx={{
-        position: "absolute",
-        left,
-        top: showBelowPin
-          ? activeMapMarker.screenY + TOOLTIP_OFFSET_Y
-          : activeMapMarker.screenY - TOOLTIP_OFFSET_Y,
-        transform: showBelowPin
-          ? "translate(-50%, 0)"
-          : "translate(-50%, -100%)",
-        width: TOOLTIP_WIDTH,
-        pointerEvents: "none",
-        zIndex: 35,
-      }}
-    >
+    <CanvasViewportLayer viewport={viewport}>
       <Box
+        role="tooltip"
+        aria-live="polite"
         sx={{
-          bgcolor: "rgba(22, 23, 23, 0.96)",
-          border: `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
-          borderRadius: `${GAME_UI_TOKENS.radius.small}px`,
-          p: 2,
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.45)",
+          position: "absolute",
+          left,
+          top: showBelowPin
+            ? displayY + TOOLTIP_OFFSET_Y
+            : displayY - TOOLTIP_OFFSET_Y,
+          transform: showBelowPin
+            ? "translate(-50%, 0)"
+            : "translate(-50%, -100%)",
+          width: TOOLTIP_WIDTH,
+          pointerEvents: "none",
+          zIndex: 35,
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1,
-            mb: 1.25,
+            bgcolor: "rgba(22, 23, 23, 0.96)",
+            border: `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
+            borderRadius: `${GAME_UI_TOKENS.radius.small}px`,
+            p: 2,
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.45)",
           }}
         >
-          <Keycap label="ESPAÇO" />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1,
+              mb: 1.25,
+            }}
+          >
+            <Keycap label="ESPAÇO" />
+            <Typography
+              sx={{
+                fontFamily: "Jockey One, sans-serif",
+                fontSize: "18px",
+                color: LayoutConfig.COLORS.INFO_TITLE,
+                lineHeight: 1.2,
+                textAlign: "center",
+              }}
+            >
+              {activeMapMarker.title}
+            </Typography>
+          </Box>
+
           <Typography
             sx={{
-              fontFamily: "Jockey One, sans-serif",
-              fontSize: "18px",
-              color: LayoutConfig.COLORS.INFO_TITLE,
-              lineHeight: 1.2,
+              fontFamily: "Inter, sans-serif",
+              fontSize: "14px",
+              color: LayoutConfig.COLORS.INFO_BODY,
+              lineHeight: 1.4,
               textAlign: "center",
             }}
           >
-            {activeMapMarker.title}
+            {instructionText}
           </Typography>
         </Box>
 
-        <Typography
+        <Box
+          aria-hidden
           sx={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "14px",
-            color: LayoutConfig.COLORS.INFO_BODY,
-            lineHeight: 1.4,
-            textAlign: "center",
+            position: "absolute",
+            left: `calc(50% + ${arrowOffsetX}px)`,
+            transform: "translateX(-50%)",
+            width: 0,
+            height: 0,
+            ...(showBelowPin
+              ? {
+                  top: -ARROW_SIZE,
+                  borderLeft: `${ARROW_SIZE}px solid transparent`,
+                  borderRight: `${ARROW_SIZE}px solid transparent`,
+                  borderBottom: `${ARROW_SIZE}px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
+                }
+              : {
+                  bottom: -ARROW_SIZE,
+                  borderLeft: `${ARROW_SIZE}px solid transparent`,
+                  borderRight: `${ARROW_SIZE}px solid transparent`,
+                  borderTop: `${ARROW_SIZE}px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
+                }),
           }}
-        >
-          {instructionText}
-        </Typography>
+        />
       </Box>
-
-      <Box
-        aria-hidden
-        sx={{
-          position: "absolute",
-          left: `calc(50% + ${arrowOffsetX}px)`,
-          transform: "translateX(-50%)",
-          width: 0,
-          height: 0,
-          ...(showBelowPin
-            ? {
-                top: -ARROW_SIZE,
-                borderLeft: `${ARROW_SIZE}px solid transparent`,
-                borderRight: `${ARROW_SIZE}px solid transparent`,
-                borderBottom: `${ARROW_SIZE}px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
-              }
-            : {
-                bottom: -ARROW_SIZE,
-                borderLeft: `${ARROW_SIZE}px solid transparent`,
-                borderRight: `${ARROW_SIZE}px solid transparent`,
-                borderTop: `${ARROW_SIZE}px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
-              }),
-        }}
-      />
-    </Box>
+    </CanvasViewportLayer>
   );
 }
