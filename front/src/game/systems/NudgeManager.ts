@@ -21,8 +21,14 @@ export class NudgeManager {
     this.lastInteractionTime = Date.now();
   }
 
-  evaluate(now: number, isPlayerBusy: boolean): boolean {
-    if (isPlayerBusy) return false;
+  evaluate(now: number, isSuppressed: boolean): boolean {
+    // While suppressed (busy hands, open panel/dialogue/quiz) the player is
+    // engaged, not idle - keep the inactivity clock re-armed so the nudge does
+    // not fire on the first frame after the suppression ends.
+    if (isSuppressed) {
+      this.lastInteractionTime = now;
+      return false;
+    }
 
     if (!this.canHint(now)) return false;
 
@@ -33,6 +39,27 @@ export class NudgeManager {
   }
 
   recordInteraction(): void {
+    this.lastInteractionTime = Date.now();
+  }
+
+  /**
+   * Marks raw player input (movement, jump, interact) as activity. Takes the
+   * timestamp of the last input rather than `Date.now()` so a stale stamp can
+   * never rewind the inactivity clock.
+   */
+  notifyActivity(timestamp: number): void {
+    if (timestamp > this.lastInteractionTime) {
+      this.lastInteractionTime = timestamp;
+    }
+  }
+
+  /**
+   * Called when a nudge was due but nothing could be shown (no hint or pulse
+   * target in range). Re-arms the inactivity threshold so the scene stops
+   * re-running the proximity scan every ATTEMPT_INTERVAL_MS, without burning
+   * the global cooldown on a nudge the player never saw.
+   */
+  recordFailedAttempt(): void {
     this.lastInteractionTime = Date.now();
   }
 
