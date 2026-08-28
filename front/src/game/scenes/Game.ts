@@ -2002,6 +2002,8 @@ export class Game extends Scene implements GameDataAccessor {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
 
+      this.nudgeManager?.notifyActivity(this.player.getLastInputTime());
+
       if (
         this.nudgeManager?.evaluate(Date.now(), isPlayerBusy || isPanelOpen)
       ) {
