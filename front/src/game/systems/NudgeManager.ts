@@ -21,8 +21,14 @@ export class NudgeManager {
     this.lastInteractionTime = Date.now();
   }
 
-  evaluate(now: number, isPlayerBusy: boolean): boolean {
-    if (isPlayerBusy) return false;
+  evaluate(now: number, isSuppressed: boolean): boolean {
+    // While suppressed (busy hands, open panel/dialogue/quiz) the player is
+    // engaged, not idle - keep the inactivity clock re-armed so the nudge does
+    // not fire on the first frame after the suppression ends.
+    if (isSuppressed) {
+      this.lastInteractionTime = now;
+      return false;
+    }
 
     if (!this.canHint(now)) return false;
 
