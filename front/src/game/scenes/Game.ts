@@ -2045,6 +2045,8 @@ export class Game extends Scene implements GameDataAccessor {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
 
+      this.nudgeManager?.notifyActivity(this.player.getLastInputTime());
+
       if (
         this.nudgeManager?.evaluate(Date.now(), isPlayerBusy || isPanelOpen)
       ) {
@@ -2102,6 +2104,10 @@ export class Game extends Scene implements GameDataAccessor {
               mission_id: this.nudgeManager.getCurrentMissionId(),
               hint_message: hintResult.message,
             });
+          } else {
+            // Nothing to show right now - wait a full inactivity window before
+            // scanning again instead of retrying every ATTEMPT_INTERVAL_MS.
+            this.nudgeManager.recordFailedAttempt();
           }
         }
       }

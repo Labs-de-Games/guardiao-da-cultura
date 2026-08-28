@@ -37,11 +37,61 @@ describe("NudgeManager", () => {
     expect(manager.evaluate(START + THRESHOLD * 10, true)).toBe(false);
   });
 
-  it("nudges as soon as the player stops being busy", () => {
+  it("does not nudge immediately after the player stops being busy", () => {
     const manager = createManager();
+    const releasedAt = START + THRESHOLD * 10;
 
-    expect(manager.evaluate(START + THRESHOLD, true)).toBe(false);
-    expect(manager.evaluate(START + THRESHOLD + THROTTLE, false)).toBe(true);
+    // Time spent busy is engaged time, not idle time.
+    expect(manager.evaluate(releasedAt, true)).toBe(false);
+    expect(manager.evaluate(releasedAt + THROTTLE, false)).toBe(false);
+    // The inactivity window restarts from the moment the player was released.
+    expect(manager.evaluate(releasedAt + THRESHOLD, false)).toBe(true);
+  });
+
+  it("notifyActivity restarts the inactivity timer", () => {
+    const manager = createManager();
+    const inputAt = START + THRESHOLD - 1;
+
+    manager.notifyActivity(inputAt);
+
+    expect(manager.evaluate(START + THRESHOLD, false)).toBe(false);
+    expect(manager.evaluate(inputAt + THRESHOLD, false)).toBe(true);
+  });
+
+  it("notifyActivity never rewinds the inactivity timer", () => {
+    const manager = createManager();
+    const inputAt = START + THRESHOLD - 1;
+
+    manager.notifyActivity(inputAt);
+    // A stale stamp (older than the last recorded activity) must be ignored.
+    manager.notifyActivity(START - THRESHOLD);
+
+    expect(manager.evaluate(inputAt + THRESHOLD - THROTTLE, false)).toBe(false);
+    expect(manager.evaluate(inputAt + THRESHOLD, false)).toBe(true);
+  });
+
+  it("recordFailedAttempt delays the next attempt by a full threshold", () => {
+    const manager = createManager();
+    const attemptedAt = START + THRESHOLD;
+
+    expect(manager.evaluate(attemptedAt, false)).toBe(true);
+    jest.setSystemTime(attemptedAt);
+    manager.recordFailedAttempt();
+
+    expect(manager.evaluate(attemptedAt + THROTTLE, false)).toBe(false);
+    expect(manager.evaluate(attemptedAt + THRESHOLD, false)).toBe(true);
+  });
+
+  it("recordFailedAttempt does not start the global cooldown", () => {
+    const manager = createManager();
+    const attemptedAt = START + THRESHOLD;
+
+    jest.setSystemTime(attemptedAt);
+    manager.recordFailedAttempt();
+
+    // Had this burned the cooldown, this evaluation would be suppressed well
+    // past the inactivity threshold.
+    expect(manager.evaluate(attemptedAt + THRESHOLD, false)).toBe(true);
   });
 
   it("recordInteraction restarts the inactivity timer", () => {
