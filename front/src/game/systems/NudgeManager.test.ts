@@ -70,6 +70,30 @@ describe("NudgeManager", () => {
     expect(manager.evaluate(inputAt + THRESHOLD, false)).toBe(true);
   });
 
+  it("recordFailedAttempt delays the next attempt by a full threshold", () => {
+    const manager = createManager();
+    const attemptedAt = START + THRESHOLD;
+
+    expect(manager.evaluate(attemptedAt, false)).toBe(true);
+    jest.setSystemTime(attemptedAt);
+    manager.recordFailedAttempt();
+
+    expect(manager.evaluate(attemptedAt + THROTTLE, false)).toBe(false);
+    expect(manager.evaluate(attemptedAt + THRESHOLD, false)).toBe(true);
+  });
+
+  it("recordFailedAttempt does not start the global cooldown", () => {
+    const manager = createManager();
+    const attemptedAt = START + THRESHOLD;
+
+    jest.setSystemTime(attemptedAt);
+    manager.recordFailedAttempt();
+
+    // Had this burned the cooldown, this evaluation would be suppressed well
+    // past the inactivity threshold.
+    expect(manager.evaluate(attemptedAt + THRESHOLD, false)).toBe(true);
+  });
+
   it("recordInteraction restarts the inactivity timer", () => {
     const manager = createManager();
     const interactionAt = START + THRESHOLD - 1;

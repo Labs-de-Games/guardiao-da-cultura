@@ -2061,6 +2061,10 @@ export class Game extends Scene implements GameDataAccessor {
               mission_id: this.nudgeManager.getCurrentMissionId(),
               hint_message: hintResult.message,
             });
+          } else {
+            // Nothing to show right now - wait a full inactivity window before
+            // scanning again instead of retrying every ATTEMPT_INTERVAL_MS.
+            this.nudgeManager.recordFailedAttempt();
           }
         }
       }

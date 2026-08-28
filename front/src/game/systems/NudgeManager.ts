@@ -53,6 +53,16 @@ export class NudgeManager {
     }
   }
 
+  /**
+   * Called when a nudge was due but nothing could be shown (no hint or pulse
+   * target in range). Re-arms the inactivity threshold so the scene stops
+   * re-running the proximity scan every ATTEMPT_INTERVAL_MS, without burning
+   * the global cooldown on a nudge the player never saw.
+   */
+  recordFailedAttempt(): void {
+    this.lastInteractionTime = Date.now();
+  }
+
   recordNudge(): void {
     this.lastNudgeTime = Date.now();
   }
