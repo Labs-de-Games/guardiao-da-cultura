@@ -9,13 +9,8 @@ import { AudioManager } from "../audio";
 export class EffectsManager {
   private scene: Phaser.Scene;
   private camera: Phaser.Cameras.Scene2D.Camera;
-  private spotlightBeam: Phaser.GameObjects.Graphics | null = null;
-  private spotlightVisible = false;
-  private revealProgress = 1;
-  private spotlightTargetX = 0;
-  private spotlightTargetY = 0;
-  private persistentCone: Phaser.GameObjects.Graphics | null = null;
-  private persistentConeVisible = false;
+  private colorMatrix?: Phaser.Display.ColorMatrix;
+  private vignette?: Phaser.Filters.Vignette;
   private scoreFeedbackStar: Phaser.GameObjects.Sprite | null = null;
   private scoreFeedbackActive = false;
   public scoreFeedbackFloatY = 0;
@@ -94,128 +89,12 @@ export class EffectsManager {
     );
   }
 
-  public initSpotlight() {
-    this.spotlightBeam = this.scene.add.graphics();
-    this.spotlightBeam.setDepth(15);
-  }
-
-  public initPersistentCone() {
-    this.persistentCone = this.scene.add.graphics();
-    this.persistentCone.setDepth(1000);
-  }
-
-  public showPersistentCone(px: number, py: number, color: number) {
-    if (!this.persistentCone) return;
-
-    this.persistentConeVisible = true;
-    this.persistentCone.clear();
-
-    const topHalfWidth = 18;
-    const bottomHalfWidth = 650;
-    const topOffsetY = -500;
-    const bottomOffsetY = 1600;
-    const bottomBulge = bottomHalfWidth * 0.12;
-
-    this.persistentCone.fillStyle(color, 0.35);
-    this.persistentCone.beginPath();
-    this.persistentCone.moveTo(px - topHalfWidth, py + topOffsetY);
-    this.persistentCone.lineTo(px + topHalfWidth, py + topOffsetY);
-    this.persistentCone.lineTo(px + bottomHalfWidth, py + bottomOffsetY);
-    this.persistentCone.lineTo(
-      px + bottomHalfWidth * 0.2,
-      py + bottomOffsetY + bottomBulge,
-    );
-    this.persistentCone.lineTo(px, py + bottomOffsetY + bottomBulge);
-    this.persistentCone.lineTo(
-      px - bottomHalfWidth * 0.2,
-      py + bottomOffsetY + bottomBulge,
-    );
-    this.persistentCone.lineTo(px - bottomHalfWidth, py + bottomOffsetY);
-    this.persistentCone.closePath();
-    this.persistentCone.fillPath();
-    this.persistentCone.setDepth(1000);
-  }
-
-  public hidePersistentCone() {
-    this.persistentConeVisible = false;
-    this.persistentCone?.clear();
-  }
-
-  public isPersistentConeVisible(): boolean {
-    return this.persistentConeVisible;
-  }
-
-  public showSpotlightBeam(
-    duration: number = 2000,
-    revealDuration: number = 200,
-    px: number = 0,
-    py: number = 0,
-  ) {
-    this.spotlightTargetX = px;
-    this.spotlightTargetY = py;
-    this.spotlightVisible = true;
-    this.revealProgress = 0;
+  public showSpotlightBeam() {
+    // Visual beam graphic is gone now that spotlights use native cone
+    // lights (see SpotlightSystem), but this is also the shared "placeholder
+    // solved" hook for paintings, sculptures, posters, costumes and photo
+    // puzzles, so the success sound must still play.
     AudioManager.playSfx("sfx.puzzle.success", 0.7);
-
-    this.scene.tweens.add({
-      targets: this,
-      revealProgress: 1,
-      duration: revealDuration,
-      ease: "Power2",
-    });
-
-    this.scene.time.delayedCall(duration, () => {
-      this.scene.tweens.add({
-        targets: this,
-        revealProgress: 0,
-        duration: revealDuration,
-        ease: "Power2",
-        onComplete: () => {
-          this.spotlightVisible = false;
-          this.spotlightBeam?.clear();
-        },
-      });
-    });
-  }
-
-  private drawSpotlightBeam(px: number, py: number) {
-    if (!this.spotlightBeam || !this.spotlightVisible) return;
-
-    const beam = this.spotlightBeam;
-    beam.clear();
-
-    const topHalfWidth = 10;
-    const bottomHalfWidth = 120;
-    const topOffsetY = -500;
-    const bottomOffsetY = 100;
-    const bottomBulge = bottomHalfWidth * 0.12;
-
-    const progress = this.revealProgress;
-    const currentBottomY = Phaser.Math.Linear(
-      topOffsetY,
-      bottomOffsetY,
-      progress,
-    );
-    const currentBulge = bottomBulge * progress;
-
-    beam.fillStyle(0xffffff, 0.35 * progress);
-    beam.beginPath();
-    beam.moveTo(px - topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + topHalfWidth, py + topOffsetY);
-    beam.lineTo(px + bottomHalfWidth, py + currentBottomY);
-    beam.lineTo(px + bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
-    beam.lineTo(px, py + currentBottomY + currentBulge * 1);
-    beam.lineTo(px - bottomHalfWidth * 0.2, py + currentBottomY + currentBulge);
-    beam.lineTo(px - bottomHalfWidth, py + currentBottomY);
-    beam.closePath();
-    beam.fillPath();
-    beam.setDepth(1000);
-  }
-
-  /** Atualiza o spotlight (chamar a cada frame) */
-  public updateSpotlight(_px: number, _py: number) {
-    if (!this.spotlightVisible) return;
-    this.drawSpotlightBeam(this.spotlightTargetX, this.spotlightTargetY);
   }
 
   public playScoreFeedback(x: number, y: number) {

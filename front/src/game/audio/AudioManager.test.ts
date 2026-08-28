@@ -1,7 +1,18 @@
+// Mock the phaser module: AudioManager imports it directly (`import * as
+// Phaser from "phaser"`), so a `global.Phaser` assignment no longer
+// reaches it — Phaser 4's ESM build doesn't set that global as a side
+// effect the way Phaser 3's CJS bundle did.
+jest.mock("phaser", () => ({
+  Sound: {
+    Events: {
+      COMPLETE: "complete",
+    },
+  },
+}));
+
 import { AudioManager } from "./AudioManager";
 import { AUDIO_SETTINGS_KEY, DEFAULT_AUDIO_SETTINGS } from "./types";
 
-// Mock Phaser before importing AudioManager
 const mockSound = {
   play: jest.fn(),
   stop: jest.fn(),
@@ -31,15 +42,6 @@ const mockScene = {
     cache: mockCache,
   },
 } as unknown as Phaser.Scene;
-
-// Mock Phaser globally
-global.Phaser = {
-  Sound: {
-    Events: {
-      COMPLETE: "complete",
-    },
-  },
-} as unknown as typeof Phaser;
 
 // Mock localStorage
 const localStorageMock = {
