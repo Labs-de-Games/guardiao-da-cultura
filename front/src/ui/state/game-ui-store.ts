@@ -90,6 +90,8 @@ export interface GameUIState {
   sidebarOpen: boolean;
   controlsOpen: boolean;
   gameStarted: boolean;
+  /** True from the moment the map hands off to a level until the map is re-entered. */
+  levelTransitionActive: boolean;
   activeMapMarker: MapMarkerChangedData | null;
   levelInfo: { title: string; location: string; shortlocation: string } | null;
   autoStartProgress: number | null;
@@ -140,6 +142,7 @@ export interface GameUIState {
   toggleSidebar: () => void;
   setControlsOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
+  setLevelTransitionActive: (active: boolean) => void;
   startGame: () => void;
   endGame: () => void;
   setActiveMapMarker: (marker: MapMarkerChangedData | null) => void;
@@ -265,6 +268,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     sidebarOpen: false,
     controlsOpen: false,
     gameStarted: false,
+    levelTransitionActive: false,
     activeMapMarker: DEFAULT_MAP_MARKER,
     levelInfo: null,
     autoStartProgress: null,
@@ -315,6 +319,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
     setControlsOpen: (open) => set({ controlsOpen: open }),
     setGameStarted: (started) => set({ gameStarted: started }),
+    setLevelTransitionActive: (active) =>
+      set({ levelTransitionActive: active }),
     startGame: () => {
       const { gameStarted } = get();
       if (!gameStarted) {
@@ -328,6 +334,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         // into the next level load (missions, collectibles, panels).
         set({
           gameStarted: false,
+          levelTransitionActive: false,
           sidebarOpen: false,
           controlsOpen: false,
           score: 0,

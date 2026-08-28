@@ -1,6 +1,7 @@
 import { isLevelEnabled } from "@/game/constants/FeatureFlags";
 import { SceneNames } from "@/game/constants/SceneNames";
 import { EventBus } from "@/shared/events/event-bus";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { MapIntroScene } from "./MapIntroScene";
 
 jest.mock("phaser", () => ({
@@ -56,6 +57,27 @@ describe("MapIntroScene", () => {
     expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
       levelId: "level_01",
     });
+  });
+
+  it("flags a level transition when starting the game", () => {
+    useGameUIStore.setState({ levelTransitionActive: false });
+
+    const scene = new MapIntroScene();
+
+    Object.defineProperty(scene, "activeMarkerIndex", {
+      value: 0,
+      writable: true,
+    });
+    Object.defineProperty(scene, "maxUnlockedLevel", {
+      value: 1,
+      writable: true,
+    });
+    Object.defineProperty(scene, "cancelAutoStart", { value: jest.fn() });
+    Object.defineProperty(scene, "scene", { value: { start: jest.fn() } });
+
+    (scene as any).beginGame("spacebar");
+
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(true);
   });
 
   describe("isMarkerAvailable", () => {
