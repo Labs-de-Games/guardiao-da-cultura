@@ -113,6 +113,9 @@ describe("GameOverlay", () => {
       chunkSelectorOpen: false,
       labelData: null,
       isInterestDialogOpen: false,
+      introData: null,
+      creditsOpen: false,
+      levelTransitionActive: false,
     });
   });
 
@@ -249,6 +252,25 @@ describe("GameOverlay", () => {
     render(<GameOverlay entryFlow="map" />);
 
     expect(screen.queryByTestId("toast-notification")).toBeNull();
+  });
+
+  it("renders the credits button on the map screen", () => {
+    useGameUIStore.setState({ gameStarted: false });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    expect(screen.queryByRole("button", { name: "Créditos" })).not.toBeNull();
+  });
+
+  it("hides the credits button while a level hand-off is in flight", () => {
+    useGameUIStore.setState({
+      gameStarted: false,
+      levelTransitionActive: true,
+    });
+
+    render(<GameOverlay entryFlow="map" />);
+
+    expect(screen.queryByRole("button", { name: "Créditos" })).toBeNull();
   });
 
   it("renders ToastNotification when gameStarted is true", () => {
