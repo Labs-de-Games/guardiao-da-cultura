@@ -54,7 +54,10 @@ describe("UIScene quiz navigation", () => {
     jest.clearAllMocks();
     unsubs = [];
     useGameUIStore.getState().resetQuiz();
-    useGameUIStore.setState({ isInterestDialogOpen: false });
+    useGameUIStore.setState({
+      isInterestDialogOpen: false,
+      levelTransitionActive: false,
+    });
   });
 
   afterEach(() => {
@@ -99,6 +102,22 @@ describe("UIScene quiz navigation", () => {
       location: "Manaus, Amazonas",
       shortlocation: "Manaus, AM",
     });
+  });
+
+  it("keeps the level transition flagged while handing off to the next level", () => {
+    const { scene } = buildScene("level_01");
+    track(scene);
+
+    useGameUIStore.setState({
+      gameStarted: true,
+      levelTransitionActive: true,
+    });
+
+    // Nothing on this path may clear the flag, or the map-only UI renders on
+    // top of the next level's cinematic load.
+    EventBus.emit("quiz:next-level", undefined);
+
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(true);
   });
 
   it("opens the interest dialog when there is no next enabled level", () => {
