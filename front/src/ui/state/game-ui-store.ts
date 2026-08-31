@@ -90,7 +90,7 @@ export interface GameUIState {
   sidebarOpen: boolean;
   controlsOpen: boolean;
   gameStarted: boolean;
-  /** True from the moment the map hands off to a level until the map is re-entered. */
+  /** True from the moment any hand-off into a level starts until the map is re-entered. */
   levelTransitionActive: boolean;
   activeMapMarker: MapMarkerChangedData | null;
   levelInfo: { title: string; location: string; shortlocation: string } | null;
@@ -320,7 +320,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     setControlsOpen: (open) => set({ controlsOpen: open }),
     setGameStarted: (started) => set({ gameStarted: started }),
     setLevelTransitionActive: (active) =>
-      set({ levelTransitionActive: active }),
+      set(
+        active
+          ? // The hand-off owns the screen: dismiss the credits crawl along
+            // with the rest of the map-only UI so it cannot outlive the map.
+            { levelTransitionActive: true, creditsOpen: false }
+          : { levelTransitionActive: false },
+      ),
     startGame: () => {
       const { gameStarted } = get();
       if (!gameStarted) {
@@ -333,8 +339,10 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         // When leaving a level, ensure no level-scoped UI leaks
         // into the next level load (missions, collectibles, panels).
         set({
+          // levelTransitionActive is deliberately left alone: endGame() marks
+          // the *start* of leaving a level, not the end of a transition. Only
+          // MapIntroScene.create() clears it, when the player is back on the map.
           gameStarted: false,
-          levelTransitionActive: false,
           sidebarOpen: false,
           controlsOpen: false,
           score: 0,
