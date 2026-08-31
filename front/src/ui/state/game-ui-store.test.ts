@@ -178,3 +178,40 @@ describe("game-ui-store quiz answer flow", () => {
     expect(quiz.isVisible).toBe(true);
   });
 });
+
+describe("game-ui-store level transition flag", () => {
+  beforeEach(() => {
+    useGameUIStore.setState({
+      levelTransitionActive: false,
+      creditsOpen: false,
+      gameStarted: false,
+    });
+  });
+
+  it("dismisses the credits screen when a hand-off starts", () => {
+    useGameUIStore.setState({ creditsOpen: true });
+
+    useGameUIStore.getState().setLevelTransitionActive(true);
+
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(true);
+    expect(useGameUIStore.getState().creditsOpen).toBe(false);
+  });
+
+  it("leaves the credits screen alone when the flag is cleared", () => {
+    useGameUIStore.setState({ creditsOpen: true, levelTransitionActive: true });
+
+    useGameUIStore.getState().setLevelTransitionActive(false);
+
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(false);
+    expect(useGameUIStore.getState().creditsOpen).toBe(true);
+  });
+
+  it("keeps the flag set through endGame, which starts a transition", () => {
+    useGameUIStore.setState({ gameStarted: true, levelTransitionActive: true });
+
+    useGameUIStore.getState().endGame();
+
+    expect(useGameUIStore.getState().gameStarted).toBe(false);
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(true);
+  });
+});
