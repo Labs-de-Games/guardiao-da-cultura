@@ -1,12 +1,31 @@
 import type * as Phaser from "phaser";
-
 import type { TiledProperty } from "../utils/TiledUtils";
+import type { DisappearingPlatformConfig } from "./DisappearingPlatformTracker";
+
+export interface DisappearingPlatformLayer {
+  layer: Phaser.Tilemaps.TilemapLayer;
+  config: DisappearingPlatformConfig;
+}
 
 export interface MapData {
   tileLayers: Record<string, Phaser.Tilemaps.TilemapLayer>;
   objectLayers: Record<string, Phaser.Tilemaps.ObjectLayer>;
   colliders: Phaser.Tilemaps.TilemapLayer[];
   oneWayColliders: Phaser.Tilemaps.TilemapLayer[];
+  disappearingLayers: DisappearingPlatformLayer[];
+}
+
+const DEFAULT_DISAPPEARING_DELAY_MS = 500;
+const DEFAULT_DISAPPEARING_FADE_DURATION_MS = 300;
+const DEFAULT_DISAPPEARING_RESPAWN_DELAY_MS = 2000;
+
+function getNumberProperty(
+  properties: TiledProperty[] | undefined,
+  name: string,
+  defaultValue: number,
+): number {
+  const prop = properties?.find((p) => p.name === name);
+  return prop ? (prop.value as number) : defaultValue;
 }
 
 export namespace TiledMapLoader {
@@ -21,6 +40,7 @@ export namespace TiledMapLoader {
       objectLayers: {},
       colliders: [],
       oneWayColliders: [],
+      disappearingLayers: [],
     };
 
     for (const layerData of map.layers) {
@@ -45,10 +65,19 @@ export namespace TiledMapLoader {
       const oneWayProp = properties?.find((p) => p.name === "oneWay");
       const isOneWay = oneWayProp ? (oneWayProp.value as boolean) : false;
 
-      if (hasCollider || isOneWay) {
+      const disappearingProp = properties?.find(
+        (p) => p.name === "disappearing",
+      );
+      const isDisappearing = disappearingProp
+        ? (disappearingProp.value as boolean)
+        : false;
+
+      if (hasCollider || isOneWay || isDisappearing) {
         layer.setCollisionByExclusion([-1]);
 
-        if (isOneWay) {
+        if (isOneWay || isDisappearing) {
+          // Same one-way behavior as oneWay layers: only the top face collides,
+          // so the player can jump up through the platform from below.
           layer.forEachTile((tile) => {
             if (tile.index !== -1) {
               tile.collideUp = true;
@@ -57,7 +86,31 @@ export namespace TiledMapLoader {
               tile.collideRight = false;
             }
           });
-          result.oneWayColliders.push(layer);
+
+          if (isDisappearing) {
+            result.disappearingLayers.push({
+              layer,
+              config: {
+                delay: getNumberProperty(
+                  properties,
+                  "delay",
+                  DEFAULT_DISAPPEARING_DELAY_MS,
+                ),
+                fadeDuration: getNumberProperty(
+                  properties,
+                  "fadeDuration",
+                  DEFAULT_DISAPPEARING_FADE_DURATION_MS,
+                ),
+                respawnDelay: getNumberProperty(
+                  properties,
+                  "respawnDelay",
+                  DEFAULT_DISAPPEARING_RESPAWN_DELAY_MS,
+                ),
+              },
+            });
+          } else {
+            result.oneWayColliders.push(layer);
+          }
         } else {
           result.colliders.push(layer);
         }
