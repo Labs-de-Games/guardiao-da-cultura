@@ -145,6 +145,19 @@ export class Phase3Parallax {
     }
   }
 
+  /**
+   * The backdrop is atmospheric set dressing, not part of the physically lit
+   * world, so it must opt out of dynamic lighting. It also sits behind the
+   * Tiled world as viewport-sized layers with no camera culling, so every
+   * one of its pixels would otherwise run the multi-light shader every
+   * frame — call after `Game.setupLighting()`'s blanket enable sweep.
+   */
+  public setLighting(enabled: boolean) {
+    for (const { sprite } of this.layers) {
+      sprite.setLighting(enabled);
+    }
+  }
+
   /** Destroys the layers. Safe to call more than once. */
   public destroy() {
     for (const { sprite } of this.layers) {
