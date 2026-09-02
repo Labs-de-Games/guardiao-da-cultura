@@ -47,6 +47,7 @@ import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import type { MovingPlatform } from "../objects/MovingPlatform";
 import { Npc } from "../objects/Npc";
+import { Phase3Parallax } from "../objects/Phase3Parallax";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
 import type { Portal } from "../objects/Portal";
@@ -159,6 +160,7 @@ export class Game extends Scene implements GameDataAccessor {
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
+  private phase3Parallax?: Phase3Parallax;
   public contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
     quizzes: {},
@@ -251,6 +253,10 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
+
+    if (this.levelDef.levelNumber === Phase3Parallax.LEVEL_NUMBER) {
+      Phase3Parallax.preload(this);
+    }
 
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
       (asset) => {
@@ -997,6 +1003,18 @@ export class Game extends Scene implements GameDataAccessor {
       );
     }
     this.setupCameras(map);
+
+    // Level 3 gets a night-sky backdrop behind the Tiled world. Created after
+    // the camera bounds are set, since the parallax reads them.
+    if (this.levelDef.levelNumber === Phase3Parallax.LEVEL_NUMBER) {
+      this.phase3Parallax = new Phase3Parallax(this);
+      this.phase3Parallax.create();
+
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.phase3Parallax?.destroy();
+        this.phase3Parallax = undefined;
+      });
+    }
 
     this.events.on(
       GameEvents.INFO_COLLECTED,
@@ -2162,6 +2180,8 @@ export class Game extends Scene implements GameDataAccessor {
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    this.phase3Parallax?.update(this.cameras.main);
 
     if (this.isDialogueOpen) {
       const cam = this.cameras.main;
