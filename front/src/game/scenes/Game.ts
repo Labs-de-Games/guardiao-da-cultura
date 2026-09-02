@@ -58,6 +58,7 @@ import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { DisappearingPlatformTracker } from "../systems/DisappearingPlatformTracker";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
@@ -70,7 +71,11 @@ import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
-import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
+import {
+  type DisappearingPlatformLayer,
+  type MapData,
+  TiledMapLoader,
+} from "../systems/TiledMapLoader";
 import { TutorialSystem } from "../systems/TutorialSystem";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { GameDataAccessor } from "../types/GameDataAccessor";
@@ -155,6 +160,10 @@ export class Game extends Scene implements GameDataAccessor {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private movingPlatforms: MovingPlatform[] = [];
+  private disappearingPlatforms: {
+    layer: Phaser.Tilemaps.TilemapLayer;
+    tracker: DisappearingPlatformTracker;
+  }[] = [];
   private itemsInteracted: Set<string> = new Set();
   private eventBusUnsubs: Array<() => void> = [];
 
@@ -734,7 +743,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
-      this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
+      this.setupCollisions(
+        mapData.colliders,
+        mapData.oneWayColliders,
+        mapData.disappearingLayers,
+      );
 
       const placeholderLayer =
         mapData.objectLayers.PlaceHolder ||
@@ -2066,9 +2079,23 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
+  private updateDisappearingPlatforms(time: number) {
+    for (const { layer, tracker } of this.disappearingPlatforms) {
+      for (const update of tracker.update(time)) {
+        const [x, y] = update.key.split(",").map(Number);
+        const tile = layer.getTileAt(x, y);
+        if (!tile) continue;
+
+        tile.alpha = update.alpha;
+        tile.collideUp = update.collidable;
+      }
+    }
+  }
+
   private setupCollisions(
     colliders: Phaser.Tilemaps.TilemapLayer[],
     oneWayColliders: Phaser.Tilemaps.TilemapLayer[] = [],
+    disappearingLayers: DisappearingPlatformLayer[] = [],
   ) {
     this.colliders = colliders;
     colliders.forEach((layer) => {
@@ -2113,6 +2140,48 @@ export class Game extends Scene implements GameDataAccessor {
         for (const item of this.carryableItems) {
           this.physics.add.collider(item, layer);
         }
+      }
+    });
+
+    this.disappearingPlatforms = disappearingLayers.map(
+      ({ layer, config }) => ({
+        layer,
+        tracker: new DisappearingPlatformTracker(config),
+      }),
+    );
+
+    this.disappearingPlatforms.forEach(({ layer, tracker }) => {
+      this.physics.add.collider(
+        this.player,
+        layer,
+        // Collision callback: a tile the player is resting on top of starts its timer
+        (player, tile) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            const t = tile as Phaser.Tilemaps.Tile;
+            tracker.onStand(`${t.x},${t.y}`, this.time.now);
+          }
+        },
+        // Process callback: same one-way behavior as oneWay platforms
+        () => {
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+          return true;
+        },
+        this,
+      );
+
+      this.physics.add.collider(this.rat, layer);
+      for (const npc of this.npcs) {
+        this.physics.add.collider(npc, layer);
+      }
+      for (const item of this.draggableItems) {
+        this.physics.add.collider(item, layer);
+      }
+      for (const item of this.carryableItems) {
+        this.physics.add.collider(item, layer);
       }
     });
 
@@ -2175,7 +2244,9 @@ export class Game extends Scene implements GameDataAccessor {
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, delta: number) {
+  update(time: number, delta: number) {
+    this.updateDisappearingPlatforms(time);
+
     const NOMINAL_DT = 1000 / 60;
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
