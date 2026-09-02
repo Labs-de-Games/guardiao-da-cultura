@@ -1315,6 +1315,12 @@ export class Game extends Scene implements GameDataAccessor {
     this.spotlightSystem?.getAll().forEach(({ sprite, light }) => {
       if (light) sprite.setLighting(false);
     });
+
+    // The parallax backdrop is atmospheric set dressing, not part of the
+    // physically lit world — and its layers are viewport-sized with no
+    // camera culling, so leaving lighting on them would run the multi-light
+    // shader over the full screen every frame.
+    this.phase3Parallax?.setLighting(false);
   }
 
   private setupEvents() {
