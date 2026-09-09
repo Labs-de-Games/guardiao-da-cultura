@@ -1,1 +1,31 @@
-{}
+{
+  "dance_done": [
+    {
+      "question": "Qual é a função da sequência em uma apresentação de quadrilha?",
+      "options": [
+        "Organizar a progressão dos movimentos da apresentação",
+        "Não existe uma ordem específica",
+        "Definir apenas as músicas",
+        "Escolher os instrumentos"
+      ]
+    },
+    {
+      "question": "Qual movimento representa uma formação coletiva?",
+      "options": [
+        "Túnel",
+        "Cumprimento",
+        "Entrada dos pares",
+        "Giro individual"
+      ]
+    },
+    {
+      "question": "Qual elemento aparece como encerramento da sequência proposta?",
+      "options": [
+        "Grande roda",
+        "Caminho da roça",
+        "Cumprimento",
+        "Entrada dos pares"
+      ]
+    }
+  ]
+}
