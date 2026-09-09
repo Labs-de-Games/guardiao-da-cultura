@@ -344,12 +344,54 @@
                  "name":"PH_2",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"balance"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"side_step"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"spin"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"caipira_jump"
+                                }]
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"step_sequence_ph"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"step_sequence"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":624,
-                 "y":352
+                 "x":207,
+                 "y":478
                 }, 
                 {
                  "height":0,
