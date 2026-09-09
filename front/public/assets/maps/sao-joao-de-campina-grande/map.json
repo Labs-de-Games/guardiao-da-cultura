@@ -91,7 +91,7 @@
                          "value":4
                         }, 
                         {
-                         "name":"placeholder",
+                         "name":"placeholderId",
                          "type":"string",
                          "value":"PH_1"
                         }, 
@@ -135,7 +135,7 @@
                          "value":4
                         }, 
                         {
-                         "name":"placeholder",
+                         "name":"placeholderId",
                          "type":"string",
                          "value":"PH_2"
                         }, 
@@ -179,7 +179,7 @@
                          "value":4
                         }, 
                         {
-                         "name":"placeholder",
+                         "name":"placeholderId",
                          "type":"string",
                          "value":"PH_3"
                         }, 
@@ -223,7 +223,7 @@
                          "value":4
                         }, 
                         {
-                         "name":"placeholder",
+                         "name":"placeholderId",
                          "type":"string",
                          "value":"PH_4"
                         }, 
@@ -1213,7 +1213,7 @@
                  "visible":true,
                  "width":0,
                  "x":320,
-                 "y":480
+                 "y":496
                 }, 
                 {
                  "height":0,
@@ -1242,7 +1242,7 @@
                  "visible":true,
                  "width":0,
                  "x":352,
-                 "y":480
+                 "y":496
                 }, 
                 {
                  "height":0,
@@ -1271,7 +1271,7 @@
                  "visible":true,
                  "width":0,
                  "x":384,
-                 "y":480
+                 "y":496
                 }, 
                 {
                  "height":0,
@@ -1300,7 +1300,7 @@
                  "visible":true,
                  "width":0,
                  "x":416,
-                 "y":480
+                 "y":496
                 }],
          "opacity":1,
          "type":"objectgroup",
