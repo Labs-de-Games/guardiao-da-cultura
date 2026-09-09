@@ -84,6 +84,11 @@ export interface CostumeSelectorData {
   lockedParts: { head: boolean; torso: boolean; feet: boolean };
 }
 
+export interface BandPanelData {
+  instanceId: string;
+  id: string;
+}
+
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
 import type { StepSequenceData } from "../panels/step-sequence-types";
 
@@ -107,6 +112,8 @@ export interface GameUIState {
   costumeSelectorData: CostumeSelectorData | null;
   stepSequenceOpen: boolean;
   stepSequenceData: StepSequenceData | null;
+  bandPanelOpen: boolean;
+  bandPanelData: BandPanelData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -177,6 +184,8 @@ export interface GameUIState {
   closeCostumeSelector: () => void;
   openStepSequence: (data: StepSequenceData) => void;
   closeStepSequence: () => void;
+  openBandPanel: (data: BandPanelData) => void;
+  closeBandPanel: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -288,6 +297,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     costumeSelectorData: null,
     stepSequenceOpen: false,
     stepSequenceData: null,
+    bandPanelOpen: false,
+    bandPanelData: null,
     toasts: [],
     labelData: null,
     badgeGalleryOpen: false,
@@ -359,6 +370,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           chunkSelectorData: null,
           stepSequenceOpen: false,
           stepSequenceData: null,
+          bandPanelOpen: false,
+          bandPanelData: null,
           labelData: null,
           levelInfo: null,
           evidenceBoardOpen: false,
@@ -455,6 +468,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
       set({
         stepSequenceOpen: false,
         stepSequenceData: null,
+      }),
+    openBandPanel: (data) =>
+      set({
+        bandPanelOpen: true,
+        bandPanelData: data,
+      }),
+    closeBandPanel: () =>
+      set({
+        bandPanelOpen: false,
+        bandPanelData: null,
       }),
     addToast: (message, duration, iconSrc) =>
       set((s) => {
