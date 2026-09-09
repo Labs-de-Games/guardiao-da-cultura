@@ -310,7 +310,8 @@ export const LEVEL_ASSETS = {
       path: "data/content.json",
     },
   },
-  // Mock level: no artwork of its own yet, only the tilemap.
+  // Mock level: no artwork/collectibles of its own yet, only the tilemap
+  // plus the LightBars/PlaceHolder layers.
   level_03: {
     MAP: LEVEL_REGISTRY.level_03.map,
     SCULPTURES: [],
