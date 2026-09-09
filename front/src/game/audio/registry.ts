@@ -119,6 +119,14 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
       loop: true,
     },
   },
+  level_03: {
+    levelId: "level_03",
+    music: {
+      key: "music.level_3.main",
+      path: "sound/music/level_3_cricket.ogg",
+      loop: true,
+    },
+  },
 };
 
 /**
