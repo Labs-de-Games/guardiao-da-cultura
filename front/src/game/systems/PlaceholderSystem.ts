@@ -5,6 +5,11 @@ import type { CarryableItem } from "../objects/interactives/CarryableItem";
 import type { DraggableItem } from "../objects/interactives/DraggableItem";
 import { InteractiveType } from "../types/InteractiveTypes";
 import { TiledUtils } from "../utils/TiledUtils";
+import {
+  getInteractionConfig,
+  type InteractionPoint,
+  resolveInteractionPoint,
+} from "./placeholderInteraction";
 
 export interface PlaceholderInstance {
   area: Phaser.Geom.Rectangle;
@@ -399,6 +404,53 @@ export class PlaceholderSystem {
     return closest;
   }
 
+  public getInteractionPoint(p: PlaceholderInstance): InteractionPoint {
+    const area = {
+      centerX: p.area.centerX,
+      centerY: p.area.centerY,
+      top: p.area.top,
+      height: p.area.height,
+    };
+
+    const sprite = p.hintSprite;
+    const spriteMetrics =
+      sprite instanceof Phaser.GameObjects.Sprite
+        ? {
+            x: sprite.x,
+            y: sprite.y,
+            displayWidth: sprite.displayWidth,
+            displayHeight: sprite.displayHeight,
+            originX: sprite.originX,
+            originY: sprite.originY,
+          }
+        : undefined;
+
+    return resolveInteractionPoint(area, spriteMetrics, p.type);
+  }
+
+  public getNearbyInteractable(
+    x: number,
+    y: number,
+    type: InteractiveType,
+  ): PlaceholderInstance | null {
+    const { range } = getInteractionConfig(type);
+    let closest: PlaceholderInstance | null = null;
+    let minDist = range;
+
+    for (const p of this.placeholders) {
+      if (p.isFilled) continue;
+      if (p.type !== type) continue;
+
+      const point = this.getInteractionPoint(p);
+      const dist = Phaser.Math.Distance.Between(x, y, point.x, point.y);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = p;
+      }
+    }
+    return closest;
+  }
+
   public getAll(): PlaceholderInstance[] {
     return this.placeholders;
   }
@@ -456,6 +508,7 @@ export class PlaceholderSystem {
       if (
         p.type !== InteractiveType.PHOTO &&
         p.type !== InteractiveType.COSTUME &&
+        p.type !== InteractiveType.STEP_SEQUENCE &&
         p.hintSprite
       ) {
         if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
