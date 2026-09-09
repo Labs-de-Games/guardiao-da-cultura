@@ -160,8 +160,10 @@ minigames, quizzes e carregamento do jogo.
 | `game_home_dwell_time` | `dwell_ms` | `MapIntroScene.ts` |
 | `map_pin_clicked` | `marker_id`, `level_id`, `is_available` | `MapIntroScene.ts` |
 | `game_started_with_spacebar` | `marker_id`, `level_id` | `MapIntroScene.ts` |
-| `minigame_started` | `minigame_number` (1=sculptures, 2=paintings, 3=photo), `level_id` | `PaintingMechanicHandler.ts`, `SculptureMechanicHandler.ts`, `Game.ts` (photo) |
+| `minigame_started` | `minigame_number` (1=sculptures, 2=paintings, 3=photo), `level_id` | `Game.ts` |
 | `minigame_completed` | `minigame_number`, `level_id`, `errors`, `quarters_earned` | `Game.ts` (`completeFloor`) |
+| `step_sequence_interacted` | `level_id` | `Game.ts` |
+| `step_sequence_failed_attempt` | `level_id`, `instance_id`, `attempt_number`, `wrong_count`, `correct_count`, `total_slots` | `Game.ts` |
 | `intermediate_quiz_started` | `quiz_number` (1=sculptures, 2=paintings, 3=photo), `level_id`, `info_key` | `QuizManager.ts` |
 | `intermediate_quiz_completed` | `quiz_number`, `level_id`, `info_key`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
@@ -172,7 +174,7 @@ minigames, quizzes e carregamento do jogo.
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
 | `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
-| `nudge_pulse_shown_{costume,spotlight}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
+| `nudge_pulse_shown_{costume,spotlight,step_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
 | `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
 
 ## Nudge — regras de disparo
