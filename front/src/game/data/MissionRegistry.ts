@@ -23,9 +23,8 @@ export const MissionRequirements = [
     ],
   },
   {
-    // Mock: placeholder objective until the level 3 map has real interactives.
     id: MissionIds.CURATOR_L3,
-    requiredInfos: [MissionKeys.SCULPTURES_DONE],
+    requiredInfos: [MissionKeys.DANCE_DONE],
   },
 ];
 
@@ -87,9 +86,9 @@ export const MissionRegistry: Record<string, MissionDef> = {
     title: "Festa de São João",
     steps: [
       {
-        infoKey: MissionKeys.SCULPTURES_DONE,
-        text: "Reorganizar as esculturas da festa",
-        categoryType: InteractiveType.SCULPTURE,
+        infoKey: MissionKeys.DANCE_DONE,
+        text: "Remontar a sequência de passos da quadrilha",
+        categoryType: InteractiveType.STEP_SEQUENCE,
       },
     ],
   },
