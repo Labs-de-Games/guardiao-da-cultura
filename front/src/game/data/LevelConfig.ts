@@ -316,7 +316,12 @@ export const LEVEL_ASSETS = {
     SCULPTURES: [],
     PAINTINGS: [],
     CHUNKS: [],
-    OTHERS: [],
+    OTHERS: [
+      {
+        key: "step_sequence_ph",
+        path: "artworks/dance/sequence_step_placeholder.png",
+      },
+    ],
     COLLECTIBLES: [],
     CONTENT: {
       key: "content",
