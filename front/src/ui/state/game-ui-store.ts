@@ -85,6 +85,7 @@ export interface CostumeSelectorData {
 }
 
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
+import type { StepSequenceData } from "../panels/step-sequence-types";
 
 export interface GameUIState {
   sidebarOpen: boolean;
@@ -104,6 +105,8 @@ export interface GameUIState {
   chunkSelectorData: ChunkSelectorData | null;
   costumeSelectorOpen: boolean;
   costumeSelectorData: CostumeSelectorData | null;
+  stepSequenceOpen: boolean;
+  stepSequenceData: StepSequenceData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -172,6 +175,8 @@ export interface GameUIState {
   closeChunkSelector: () => void;
   openCostumeSelector: (data: CostumeSelectorData) => void;
   closeCostumeSelector: () => void;
+  openStepSequence: (data: StepSequenceData) => void;
+  closeStepSequence: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -281,6 +286,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     chunkSelectorData: null,
     costumeSelectorOpen: false,
     costumeSelectorData: null,
+    stepSequenceOpen: false,
+    stepSequenceData: null,
     toasts: [],
     labelData: null,
     badgeGalleryOpen: false,
@@ -350,6 +357,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           collectibles: [],
           chunkSelectorOpen: false,
           chunkSelectorData: null,
+          stepSequenceOpen: false,
+          stepSequenceData: null,
           labelData: null,
           levelInfo: null,
           evidenceBoardOpen: false,
@@ -436,6 +445,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
       set({
         costumeSelectorOpen: false,
         costumeSelectorData: null,
+      }),
+    openStepSequence: (data) =>
+      set({
+        stepSequenceOpen: true,
+        stepSequenceData: data,
+      }),
+    closeStepSequence: () =>
+      set({
+        stepSequenceOpen: false,
+        stepSequenceData: null,
       }),
     addToast: (message, duration, iconSrc) =>
       set((s) => {
