@@ -9,4 +9,5 @@ export enum InteractiveType {
   PHOTO = "photo",
   COSTUME = "costume",
   SPOTLIGHT = "spotlight",
+  STEP_SEQUENCE = "step_sequence",
 }
