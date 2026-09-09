@@ -1194,6 +1194,11 @@
                  "point":true,
                  "properties":[
                         {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
                          "name":"id",
                          "type":"string",
                          "value":"zabumba"
@@ -1201,7 +1206,12 @@
                         {
                          "name":"scale",
                          "type":"float",
-                         "value":1
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
                         }, 
                         {
                          "name":"type",
@@ -1213,7 +1223,7 @@
                  "visible":true,
                  "width":0,
                  "x":320,
-                 "y":496
+                 "y":512
                 }, 
                 {
                  "height":0,
@@ -1223,6 +1233,11 @@
                  "point":true,
                  "properties":[
                         {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
                          "name":"id",
                          "type":"string",
                          "value":"accordion"
@@ -1230,7 +1245,12 @@
                         {
                          "name":"scale",
                          "type":"float",
-                         "value":1
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
                         }, 
                         {
                          "name":"type",
@@ -1242,7 +1262,7 @@
                  "visible":true,
                  "width":0,
                  "x":352,
-                 "y":496
+                 "y":512
                 }, 
                 {
                  "height":0,
@@ -1252,6 +1272,11 @@
                  "point":true,
                  "properties":[
                         {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
                          "name":"id",
                          "type":"string",
                          "value":"triangle"
@@ -1259,7 +1284,12 @@
                         {
                          "name":"scale",
                          "type":"float",
-                         "value":1
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
                         }, 
                         {
                          "name":"type",
@@ -1271,7 +1301,7 @@
                  "visible":true,
                  "width":0,
                  "x":384,
-                 "y":496
+                 "y":512
                 }, 
                 {
                  "height":0,
@@ -1281,6 +1311,11 @@
                  "point":true,
                  "properties":[
                         {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
                          "name":"id",
                          "type":"string",
                          "value":"jam_block"
@@ -1288,7 +1323,12 @@
                         {
                          "name":"scale",
                          "type":"float",
-                         "value":1
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
                         }, 
                         {
                          "name":"type",
@@ -1300,7 +1340,7 @@
                  "visible":true,
                  "width":0,
                  "x":416,
-                 "y":496
+                 "y":512
                 }],
          "opacity":1,
          "type":"objectgroup",
