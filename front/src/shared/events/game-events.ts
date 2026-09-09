@@ -245,6 +245,8 @@ export interface GameEventMap {
   "ui:chunk-selector-submit": ChunkSelectorSubmitData;
   "ui:costume-selector-open": CostumeSelectorOpenData;
   "ui:costume-selector-close": undefined;
+  "ui:band-panel-open": { instanceId: string; id: string };
+  "ui:band-panel-close": undefined;
   "ui:costume-part-rejected": {
     instanceId: string;
     partType: string;

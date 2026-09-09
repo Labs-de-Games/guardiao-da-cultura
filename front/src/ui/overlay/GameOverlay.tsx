@@ -13,6 +13,7 @@ import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
 import { IntroSequence } from "@/ui/intro/IntroSequence";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
+import { BandPanel } from "@/ui/panels/BandPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -90,6 +91,7 @@ function OverlayContent({
   const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
   const openStepSequence = useGameUIStore((s) => s.openStepSequence);
   const stepSequenceOpen = useGameUIStore((s) => s.stepSequenceOpen);
+  const openBandPanel = useGameUIStore((s) => s.openBandPanel);
   const evidenceBoardOpen = useGameUIStore((s) => s.evidenceBoardOpen);
   const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const creditsOpen = useGameUIStore((s) => s.creditsOpen);
@@ -166,6 +168,10 @@ function OverlayContent({
       },
     );
 
+    const unsubBandPanelOpen = EventBus.on("ui:band-panel-open", (data) => {
+      openBandPanel(data);
+    });
+
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
       if (data && !data.isAvailable) {
@@ -209,6 +215,7 @@ function OverlayContent({
       unsubChunkSelectorOpen();
       unsubCostumeSelectorOpen();
       unsubStepSequenceOpen();
+      unsubBandPanelOpen();
       unsubMapMarker();
       unsubAutoStartTick();
       unsubAutoStartCanceled();
@@ -226,6 +233,7 @@ function OverlayContent({
     openChunkSelector,
     openCostumeSelector,
     openStepSequence,
+    openBandPanel,
     setActiveMapMarker,
     setAutoStartProgress,
     setCreditsOpen,
@@ -362,6 +370,7 @@ function OverlayContent({
       <ChunkSelectorPanel />
       <CostumeSelectorPanel />
       <StepSequencePanel />
+      <BandPanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />

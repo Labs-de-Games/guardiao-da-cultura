@@ -104,6 +104,7 @@ const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
   [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
   [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
   [InteractiveType.STEP_SEQUENCE]: "nudge_hint_shown_step_sequence",
+  [InteractiveType.BAND]: "nudge_hint_shown_band",
 };
 
 export class Game extends Scene implements GameDataAccessor {
@@ -138,6 +139,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
   private isStepSequenceOpen: boolean = false;
+  private isBandPanelOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -217,6 +219,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.isChunkSelectorOpen = false;
     this.isCostumeSelectorOpen = false;
     this.isStepSequenceOpen = false;
+    this.isBandPanelOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -992,6 +995,30 @@ export class Game extends Scene implements GameDataAccessor {
               interactionDistance: config.range,
             };
           }),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.BAND && !p.isFilled)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top;
+            },
+            get active() {
+              return !p.isFilled;
+            },
+            interactionDistance: 120,
+          })),
         ...(this.spotlightSystem?.getAll().map((s) => ({
           get x() {
             return s.sprite.x;
@@ -1544,7 +1571,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (
         (this.isDialogueOpen && !this.player?.isTutorialActive) ||
         this.isChunkSelectorOpen ||
-        this.isCostumeSelectorOpen
+        this.isCostumeSelectorOpen ||
+        this.isBandPanelOpen
       )
         return;
 
@@ -1755,6 +1783,33 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
 
+      // Band placeholder candidate
+      const band = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        INTERACT_RANGE,
+        InteractiveType.BAND,
+      );
+      if (band) {
+        const bandDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          band.area.centerX,
+          band.area.centerY,
+        );
+        candidates.push({
+          dist: bandDist,
+          open: () => {
+            this.isBandPanelOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
+            EventBus.emit("ui:band-panel-open", {
+              instanceId: band.instanceId,
+              id: String(band.id),
+            });
+          },
+        });
+      }
+
       // Spotlight candidate
       if (this.spotlightSystem) {
         const spotlight = this.spotlightSystem.getNearbySpotlight(
@@ -1955,6 +2010,12 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
     });
+    this.onEventBus("ui:band-panel-close", () => {
+      if (!this.isBandPanelOpen) return;
+      this.isBandPanelOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
+      this.checkDialogState();
+    });
     this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
@@ -2094,6 +2155,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isChunkSelectorOpen &&
       !this.isCostumeSelectorOpen &&
       !this.isStepSequenceOpen &&
+      !this.isBandPanelOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -2325,6 +2387,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen ||
         this.isStepSequenceOpen ||
+        this.isBandPanelOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
