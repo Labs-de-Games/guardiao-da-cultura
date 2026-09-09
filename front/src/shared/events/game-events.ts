@@ -105,6 +105,38 @@ export interface ChunkSlotRejectedData {
   itemId: string;
 }
 
+export interface StepSequenceOpenData {
+  instanceId: string;
+  videoPath: string;
+  availableSteps: { id: string; name: string; imagePath: string }[];
+  expectedSequence: string[];
+  filledSlots?: (string | null)[];
+}
+
+export interface StepSequenceSubmitData {
+  instanceId: string;
+  placedSteps: (string | null)[];
+}
+
+export interface StepSlotData {
+  instanceId: string;
+  slotIndex: number;
+  stepId: string;
+}
+
+/**
+ * One failed submit, not one wrong slot: a blind first try emits a
+ * `ui:step-rejected` per wrong slot, which would read as several failures.
+ * The player's unit of error on a sequence puzzle is the attempt.
+ */
+export interface StepSequenceRejectedData {
+  instanceId: string;
+  attemptNumber: number;
+  wrongCount: number;
+  correctCount: number;
+  totalSlots: number;
+}
+
 export interface ToastShowData {
   message: string;
   duration: number;
@@ -234,6 +266,12 @@ export interface GameEventMap {
       feet: string | null;
     };
   };
+  "ui:step-sequence-open": StepSequenceOpenData;
+  "ui:step-sequence-close": undefined;
+  "ui:step-sequence-submit": StepSequenceSubmitData;
+  "ui:step-placed": StepSlotData;
+  "ui:step-rejected": StepSlotData;
+  "ui:step-sequence-rejected": StepSequenceRejectedData;
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
