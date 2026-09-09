@@ -20,7 +20,7 @@
 export const LEVEL_ENABLED: Record<string, boolean> = {
   level_01: true,
   level_02: true,
-  level_03: true, // Mock level: playable map, no content yet.
+  level_03: false, // Mock level: playable map, no content yet.
 };
 
 export function isLevelEnabled(levelId: string): boolean {
