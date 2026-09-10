@@ -5,7 +5,7 @@ import { Check } from "@mui/icons-material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
 import { Box, Button, IconButton, Paper, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { BandMechanicHandler } from "@/game/mechanics/handlers/BandMechanicHandler";
 import { EventBus } from "@/shared/events/event-bus";
@@ -37,10 +37,17 @@ export function BandSelectorPanel() {
   const [isRejecting, setIsRejecting] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
 
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [confirmFocused, setConfirmFocused] = useState(false);
+  const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     setSelectedIndex(null);
     setIsRejecting(false);
     setIsLocked(false);
+    setFocusedIndex(0);
+    setConfirmFocused(false);
   }, [bandPanelData]);
 
   const handleClose = useCallback(() => {
@@ -55,11 +62,58 @@ export function BandSelectorPanel() {
         e.preventDefault();
         e.stopPropagation();
         handleClose();
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      const optionCount = shuffledOptions.length;
+
+      if (key === "arrowleft" || key === "a") {
+        if (!confirmFocused && !isLocked && optionCount > 0) {
+          e.preventDefault();
+          const next = Math.max(focusedIndex - 1, 0);
+          setFocusedIndex(next);
+          setSelectedIndex(next);
+          squareRefs.current[next]?.focus();
+        }
+      } else if (key === "arrowright" || key === "d") {
+        if (!confirmFocused && !isLocked && optionCount > 0) {
+          e.preventDefault();
+          const next = Math.min(focusedIndex + 1, optionCount - 1);
+          setFocusedIndex(next);
+          setSelectedIndex(next);
+          squareRefs.current[next]?.focus();
+        }
+      } else if (key === "arrowdown" || key === "s") {
+        if (!confirmFocused && selectedIndex !== null) {
+          e.preventDefault();
+          setConfirmFocused(true);
+          confirmButtonRef.current?.focus();
+        }
+      } else if (key === "arrowup" || key === "w") {
+        if (confirmFocused) {
+          e.preventDefault();
+          setConfirmFocused(false);
+          squareRefs.current[focusedIndex]?.focus();
+        }
+      } else if (key === "enter" || key === " ") {
+        if (confirmFocused) {
+          e.preventDefault();
+          handleConfirm();
+        }
       }
     };
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [bandPanelOpen, handleClose]);
+  }, [
+    bandPanelOpen,
+    handleClose,
+    confirmFocused,
+    focusedIndex,
+    shuffledOptions,
+    isLocked,
+    selectedIndex,
+  ]);
 
   const handleToggle = (index: number) => {
     if (isLocked) return;
@@ -174,14 +228,21 @@ export function BandSelectorPanel() {
                 ? LayoutConfig.COLORS.UNAVAILABLE_RED
                 : isSelected
                   ? LayoutConfig.COLORS.INFO_TITLE
-                  : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY;
+                  : LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS;
 
             return (
               <Box
                 key={`${musicianId}-${index}`}
+                ref={(el: HTMLButtonElement | null) => {
+                  squareRefs.current[index] = el;
+                }}
                 component="button"
                 type="button"
                 onClick={() => handleToggle(index)}
+                onFocus={() => {
+                  setFocusedIndex(index);
+                  setConfirmFocused(false);
+                }}
                 disabled={isLocked}
                 sx={{
                   position: "relative",
@@ -199,6 +260,12 @@ export function BandSelectorPanel() {
                     isRejecting && isSelected ? `${shake} 0.4s ease` : "none",
                   opacity: isLocked && !isSelected ? 0.5 : 1,
                   transition: "border-color 0.15s ease-out",
+                  "&:focus-visible": {
+                    outline: isSelected
+                      ? "none"
+                      : `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`,
+                    outlineOffset: 2,
+                  },
                 }}
               >
                 <Box
@@ -232,10 +299,12 @@ export function BandSelectorPanel() {
         </Box>
 
         <Button
+          ref={confirmButtonRef}
           variant="contained"
           size="large"
           startIcon={<Check />}
           onClick={handleConfirm}
+          onFocus={() => setConfirmFocused(true)}
           disabled={selectedIndex === null || isLocked}
           sx={{
             mx: "auto",
