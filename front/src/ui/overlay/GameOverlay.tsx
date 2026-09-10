@@ -13,7 +13,7 @@ import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
 import { IntroSequence } from "@/ui/intro/IntroSequence";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
-import { BandPanel } from "@/ui/panels/BandPanel";
+import { BandSelectorPanel } from "@/ui/panels/BandSelectorPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -370,7 +370,7 @@ function OverlayContent({
       <ChunkSelectorPanel />
       <CostumeSelectorPanel />
       <StepSequencePanel />
-      <BandPanel />
+      <BandSelectorPanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />
