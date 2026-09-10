@@ -81,6 +81,8 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.star.earned", path: "sound/sfx/star_sound.mp3" },
   { key: "sfx.object.drop", path: "sound/sfx/object.drop_5.mp3" },
+  // Switches
+  { key: "sfx.switch", path: "sound/sfx/switch.ogg" },
 ];
 
 /**
