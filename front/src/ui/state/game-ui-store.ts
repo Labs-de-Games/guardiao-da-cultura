@@ -87,6 +87,7 @@ export interface CostumeSelectorData {
 export interface BandPanelData {
   instanceId: string;
   id: string;
+  options: string[];
 }
 
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
