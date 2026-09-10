@@ -2049,7 +2049,7 @@ export class Game extends Scene implements GameDataAccessor {
       );
       if (!p) return;
 
-      this.placeholderSystem.updateBandInstrument(
+      this.placeholderSystem.updateBandMember(
         data.instanceId,
         `band_${data.musicianId}`,
       );

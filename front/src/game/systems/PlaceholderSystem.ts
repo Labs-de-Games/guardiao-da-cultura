@@ -11,6 +11,8 @@ import {
   resolveInteractionPoint,
 } from "./placeholderInteraction";
 
+const BAND_CONFIRM_Y_OFFSET = 85;
+
 export interface PlaceholderInstance {
   area: Phaser.Geom.Rectangle;
   instanceId: string;
@@ -511,11 +513,12 @@ export class PlaceholderSystem {
     cell.setDisplaySize(cell.width * scale, cell.height * scale);
   }
 
-  public updateBandInstrument(instanceId: string, textureKey: string) {
+  public updateBandMember(instanceId: string, textureKey: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (!p || !(p.hintSprite instanceof Phaser.GameObjects.Sprite)) return;
     p.hintSprite.play(`${textureKey}_anim`, true);
     p.hintSprite.setAlpha(1);
+    p.hintSprite.y -= BAND_CONFIRM_Y_OFFSET;
   }
 
   public lockPlaceholder(instanceId: string) {
