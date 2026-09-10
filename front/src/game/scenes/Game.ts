@@ -54,6 +54,7 @@ import type { Portal } from "../objects/Portal";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
+import { Trampoline } from "../objects/Trampoline";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
@@ -76,6 +77,7 @@ import {
   type MapData,
   TiledMapLoader,
 } from "../systems/TiledMapLoader";
+import { TrampolineSystem } from "../systems/TrampolineSystem";
 import { TutorialSystem } from "../systems/TutorialSystem";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { GameDataAccessor } from "../types/GameDataAccessor";
@@ -148,6 +150,7 @@ export class Game extends Scene implements GameDataAccessor {
   public lightBarSystem!: LightBarSystem;
   public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
+  public trampolineSystem!: TrampolineSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
   private nudgeManager!: NudgeManager;
@@ -160,6 +163,7 @@ export class Game extends Scene implements GameDataAccessor {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private movingPlatforms: MovingPlatform[] = [];
+  private trampolines: Trampoline[] = [];
   private disappearingPlatforms: {
     layer: Phaser.Tilemaps.TilemapLayer;
     tracker: DisappearingPlatformTracker;
@@ -255,6 +259,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
+    Trampoline.preload(this);
     EffectsManager.preload(this);
 
     // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
@@ -1398,6 +1403,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.createAnims(this);
     Npc.createAnims(this);
     Enemy.createAnims(this);
+    Trampoline.createAnims(this);
 
     if (!this.anims.exists("placeholder_hint_anim")) {
       this.anims.create({
@@ -1437,6 +1443,16 @@ export class Game extends Scene implements GameDataAccessor {
       mapData,
       this.mapScale,
     );
+
+    const trampolineLayer = mapData.objectLayers.Trampoline;
+    if (trampolineLayer) {
+      this.trampolineSystem = new TrampolineSystem(this);
+      this.trampolineSystem.registerAllFromLayer(
+        trampolineLayer,
+        this.mapScale,
+      );
+      this.trampolines = this.trampolineSystem.getAll();
+    }
 
     this.rat = new Enemy(this, 2000, 315, 1);
 
@@ -2234,17 +2250,44 @@ export class Game extends Scene implements GameDataAccessor {
         this,
       );
     }
+
+    // Trampolines — launch the player upward on contact from above.
+    for (const trampoline of this.trampolines) {
+      this.physics.add.collider(
+        this.player,
+        trampoline,
+        (player, _trampoline) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down && playerBody.velocity.y >= 0) {
+            (player as Player).launch(
+              PLAYER_MOVEMENT.JUMP_VELOCITY_Y * trampoline.power,
+            );
+            trampoline.bounce();
+          }
+        },
+        () => {
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+          return true;
+        },
+        this,
+      );
+    }
   }
 
   private setupCameras(map?: Phaser.Tilemaps.Tilemap) {
     this.cameras.main.setZoom(1.0);
     if (map) {
-      this.cameras.main.setBounds(
-        0,
-        0,
-        map.widthInPixels * this.mapScale,
-        map.heightInPixels * this.mapScale,
-      );
+      const worldWidth = map.widthInPixels * this.mapScale;
+      const worldHeight = map.heightInPixels * this.mapScale;
+      this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+      // Arcade Physics defaults world bounds to the base canvas size
+      // (LayoutConfig.GAME.WIDTH/HEIGHT) unless set explicitly, which is far
+      // smaller than the scaled level — sync it so setCollideWorldBounds
+      // actually clamps against the full level instead of a tiny top-left box.
+      this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     }
     this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
