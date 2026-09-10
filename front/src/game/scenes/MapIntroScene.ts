@@ -1,4 +1,5 @@
 import Cookies from "js-cookie";
+import * as Phaser from "phaser";
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { createGamePersistence } from "@/lib/persistence/gamePersistence";
@@ -67,6 +68,8 @@ export class MapIntroScene extends Scene {
     posthog.capture("game_home_viewed");
     this.homeEnteredAtMs = Date.now();
     this.isTransitioningToLevel = false;
+    // Back on the map: map-only UI (credits button, tooltips) may show again.
+    useGameUIStore.getState().setLevelTransitionActive(false);
 
     // Clear music started registry keys so levels can restart music on replay
     const levelIds = Object.keys(LEVEL_REGISTRY);
@@ -114,6 +117,9 @@ export class MapIntroScene extends Scene {
 
     registerScene(this);
 
+    // Under Scale.FIT, this.scale.width/height stay fixed at the base game
+    // resolution — only display size/letterbox margins change — so this
+    // still fires on every window resize but recomputes the same layout.
     this.scale.on("resize", this.handleResize);
 
     const store = useGameUIStore.getState();
@@ -193,10 +199,19 @@ export class MapIntroScene extends Scene {
     this.maybeStartAutoStart();
   }
 
+  /**
+   * The credits crawl is a full-screen React overlay, but Phaser's keyboard
+   * listeners are document-level, so map keys still fire behind it. Treat the
+   * credits screen as modal and ignore map input while it is up.
+   */
+  private isCreditsOpen(): boolean {
+    return useGameUIStore.getState().creditsOpen;
+  }
+
   private beginGame(
     source: "spacebar" | "confirm" | "marker_click" | "auto_start",
   ) {
-    if (this.isTransitioningToLevel) {
+    if (this.isTransitioningToLevel || this.isCreditsOpen()) {
       return;
     }
 
@@ -215,6 +230,9 @@ export class MapIntroScene extends Scene {
 
     if (marker.levelId) {
       this.isTransitioningToLevel = true;
+      // Hide map-only UI for the whole hand-off: fade, cinematic asset load,
+      // comic intro and the Game scene load, until the map is entered again.
+      useGameUIStore.getState().setLevelTransitionActive(true);
       // Save level info for PhaseInfoCard before clearing map UI state
       const marker = MARKERS[this.activeMarkerIndex];
       useGameUIStore.getState().setLevelInfo({
@@ -324,12 +342,18 @@ export class MapIntroScene extends Scene {
   }
 
   private cycleMarkerForward = () => {
+    if (this.isCreditsOpen()) {
+      return;
+    }
     this.cancelAutoStart("cycled");
     this.activeMarkerIndex = (this.activeMarkerIndex + 1) % MARKERS.length;
     this.emitMarkerChanged();
   };
 
   private cycleMarkerBackward = () => {
+    if (this.isCreditsOpen()) {
+      return;
+    }
     this.cancelAutoStart("cycled");
     this.activeMarkerIndex =
       (this.activeMarkerIndex - 1 + MARKERS.length) % MARKERS.length;

@@ -69,4 +69,9 @@ jest.mock("phaser", () => ({
   Events: {
     EventEmitter: MockEventEmitter,
   },
+  Sound: {
+    Events: {
+      COMPLETE: "complete",
+    },
+  },
 }));

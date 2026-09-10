@@ -109,6 +109,8 @@ export const LayoutConfig = {
 
   // Configurações do Jogo
   GAME: {
+    WIDTH: 1920,
+    HEIGHT: 1080,
     MAP_SCALE: 6,
     CAMERA: {
       DIALOGUE_ZOOM: 1.2,

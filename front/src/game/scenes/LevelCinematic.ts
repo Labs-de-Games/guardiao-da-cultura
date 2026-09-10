@@ -1,6 +1,8 @@
+import * as Phaser from "phaser";
 import { Scene } from "phaser";
 import { EventBus } from "../../shared/events/event-bus";
 import type { IntroConfig } from "../../ui/intro/types";
+import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
 import { SceneNames } from "../constants/SceneNames";
 
@@ -27,6 +29,11 @@ export class LevelCinematic extends Scene {
   }
 
   init(data?: { levelId: string }) {
+    // Every route into a level funnels through this scene (map start and the
+    // level -> level "Próxima fase" hand-off), so this is the one place that
+    // can reliably hide map-only UI for the whole transition.
+    useGameUIStore.getState().setLevelTransitionActive(true);
+
     if (data?.levelId) {
       this.levelId = data.levelId;
     }

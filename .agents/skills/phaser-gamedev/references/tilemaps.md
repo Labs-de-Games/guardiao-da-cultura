@@ -1,6 +1,6 @@
 # Tilemaps Reference
 
-Comprehensive guide for Phaser 3 tilemap integration with Tiled.
+Comprehensive guide for Phaser 4 tilemap integration with Tiled.
 
 ## Tiled Setup Best Practices
 

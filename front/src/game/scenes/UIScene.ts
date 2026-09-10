@@ -1,3 +1,4 @@
+import * as Phaser from "phaser";
 import { Scene } from "phaser";
 import posthog from "posthog-js";
 import { EventBus } from "../../shared/events/event-bus";
@@ -269,6 +270,8 @@ export class UIScene extends Scene {
       AudioManager.playSfx("sfx.badge.unlock");
     });
 
+    // Under Scale.FIT, this.scale.width/height stay fixed at the base game
+    // resolution, so this recomputes the same layout on every resize.
     this.scale.on("resize", () => this.layout());
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {

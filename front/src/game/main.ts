@@ -1,4 +1,5 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
+import { LayoutConfig } from "./constants/LayoutConfig";
 import { Game as MainGame } from "./scenes/Game";
 import { LevelCinematic } from "./scenes/LevelCinematic";
 import { MapIntroScene } from "./scenes/MapIntroScene";
@@ -10,8 +11,8 @@ export type EntryFlow = "map" | "direct";
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const baseConfig: Types.Core.GameConfig = {
   type: AUTO,
-  width: 1920,
-  height: 1080,
+  width: LayoutConfig.GAME.WIDTH,
+  height: LayoutConfig.GAME.HEIGHT,
   parent: "game-container",
   backgroundColor: "#000000",
   pixelArt: true,
@@ -23,9 +24,15 @@ const baseConfig: Types.Core.GameConfig = {
     },
   },
   scale: {
-    mode: Scale.RESIZE,
+    mode: Scale.FIT,
     autoCenter: Scale.CENTER_BOTH,
   },
+  // Phaser's LightsManager defaults to 10 and silently drops the
+  // farthest-from-camera lights beyond that cap. Levels combine light
+  // bars, chandeliers and spotlights that can exceed 10 at once (e.g.
+  // museum-mvp: 8 light bars + 9 chandeliers), so raise the ceiling
+  // with headroom above the highest current per-level light count.
+  render: { maxLights: 32 },
 };
 
 function getScenes(entryFlow: EntryFlow) {

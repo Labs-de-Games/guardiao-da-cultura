@@ -76,6 +76,32 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
       collectibles: ["data/levels/level_02/collectibles.json"],
     },
   },
+  // Mock level: the map is playable but has no content or reachable objectives
+  // yet. See docs/CHANGELOG.md.
+  level_03: {
+    id: "level_03",
+    levelNumber: 3,
+    title: MAP_MARKERS[2].title,
+    maxStars: 2,
+    initialGrayscale: 0.82,
+    activeMissions: ["missao_curador_l3"],
+    map: {
+      key: "map_level_03",
+      json: "maps/sao-joao-de-campina-grande/map.json",
+      tileset: "tiles_level_03",
+      tilesetImg: "maps/sao-joao-de-campina-grande/spritesheet.png",
+      // Must match the tileset `name` inside that map.json.
+      tilesetName: "museum",
+    },
+    data: {
+      works: ["data/levels/level_03/works.json"],
+      quizzes: ["data/levels/level_03/quizzes.json"],
+      intermediateQuizzes: ["data/levels/level_03/intermediate-quizzes.json"],
+      npcs: ["data/levels/level_03/npcs.json"],
+      messages: ["data/global/messages.json"],
+      collectibles: ["data/levels/level_03/collectibles.json"],
+    },
+  },
 };
 
 /** Level ids sorted by `levelNumber` — the canonical play order. */
@@ -147,6 +173,7 @@ export const LEVEL_ASSETS = {
     OTHERS: [
       { key: "rec", path: "misc/rec.png" },
       { key: "ladder_image", path: "misc/ladder.png" },
+      { key: "light_bar", path: "misc/spotlights/light_bar.png" },
     ],
     COLLECTIBLES: [
       { key: "cachimbo", path: "collectibles/cachimbo.png" },
@@ -271,12 +298,26 @@ export const LEVEL_ASSETS = {
         path: "misc/spotlights/spotlight-off-yellow.png",
       },
       { key: "spotlight-yellow", path: "misc/spotlights/spotlight-yellow.png" },
+      { key: "light_bar", path: "misc/spotlights/light_bar.png" },
     ],
     COLLECTIBLES: [
       { key: "document", path: "collectibles/document.png" },
       { key: "notes", path: "collectibles/notes.png" },
       { key: "signature", path: "collectibles/signature.png" },
     ],
+    CONTENT: {
+      key: "content",
+      path: "data/content.json",
+    },
+  },
+  // Mock level: no artwork of its own yet, only the tilemap.
+  level_03: {
+    MAP: LEVEL_REGISTRY.level_03.map,
+    SCULPTURES: [],
+    PAINTINGS: [],
+    CHUNKS: [],
+    OTHERS: [],
+    COLLECTIBLES: [],
     CONTENT: {
       key: "content",
       path: "data/content.json",
