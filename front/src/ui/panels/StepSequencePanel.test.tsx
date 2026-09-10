@@ -155,7 +155,7 @@ describe("StepSequencePanel", () => {
     expect(useGameUIStore.getState().stepSequenceOpen).toBe(false);
   });
 
-  it("restores a locked slot and stops offering its card on reopen", () => {
+  it("restores a locked slot and removes its card from the carousel", () => {
     render(<StepSequencePanel />);
     openPanel({ filledSlots: [FIRST_STEP, null] });
 
@@ -172,13 +172,11 @@ describe("StepSequencePanel", () => {
       "Passo 2 vazio",
     );
 
-    // ...and dnd-kit no longer arms its carousel card, so it cannot be
-    // dropped into a second slot. An untouched card still carries the
-    // draggable attributes, which is what makes this assertion mean something.
-    expect(screen.getByLabelText(restored?.name as string)).not.toHaveAttribute(
-      "aria-roledescription",
-      "draggable",
-    );
+    // ...and the carousel no longer shows the restored card at all.
+    expect(
+      screen.queryByLabelText(restored?.name as string),
+    ).not.toBeInTheDocument();
+    // An untouched card still appears and is draggable.
     expect(screen.getByLabelText(stillFree?.name as string)).toHaveAttribute(
       "aria-roledescription",
       "draggable",
