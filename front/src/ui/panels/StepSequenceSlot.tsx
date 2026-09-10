@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { keyframes } from "@mui/system";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
+import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 import { getStepImageSrc, type StepCard } from "./step-sequence-types";
 
 const shake = keyframes`
@@ -19,12 +20,16 @@ export function StepSequenceSlot({
   isLocked,
   isJustPlaced,
   isRejecting,
+  previewCard,
+  isSelected,
 }: {
   idx: number;
   card: StepCard | null;
   isLocked: boolean;
   isJustPlaced?: boolean;
   isRejecting?: boolean;
+  previewCard?: StepCard | null;
+  isSelected?: boolean;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `slot-${idx}`,
@@ -50,7 +55,9 @@ export function StepSequenceSlot({
         ? `3px solid ${LayoutConfig.COLORS.AVAILABLE_GREEN}`
         : isLocked
           ? `2px solid ${LayoutConfig.COLORS.AVAILABLE_GREEN}`
-          : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`;
+          : isSelected
+            ? `2px solid ${GAME_UI_TOKENS.colors.accentGold}`
+            : `2px solid ${LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS}`;
 
   return (
     <Box
@@ -89,6 +96,19 @@ export function StepSequenceSlot({
             width: "100%",
             height: "100%",
             objectFit: "cover",
+          }}
+        />
+      ) : previewCard ? (
+        <Box
+          component="img"
+          src={getStepImageSrc(previewCard)}
+          alt=""
+          draggable={false}
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: 0.6,
           }}
         />
       ) : (

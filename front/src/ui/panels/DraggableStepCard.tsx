@@ -8,22 +8,21 @@ import { getStepImageSrc, type StepCard } from "./step-sequence-types";
 export function DraggableStepCard({
   index,
   card,
-  isUsed,
+  isSelected,
 }: {
   index: number;
   card: StepCard;
-  isUsed: boolean;
+  isSelected?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `step-${index}`,
-    disabled: isUsed,
   });
 
   return (
     <Box
       ref={setNodeRef}
-      {...(isUsed ? {} : listeners)}
-      {...(isUsed ? {} : attributes)}
+      {...listeners}
+      {...attributes}
       aria-label={card.name}
       sx={{
         width: "100%",
@@ -33,15 +32,13 @@ export function DraggableStepCard({
         justifyContent: "center",
         overflow: "hidden",
         userSelect: "none",
-        cursor: isUsed ? "default" : "grab",
+        cursor: "grab",
         bgcolor: LayoutConfig.COLORS.CHUNK_BG_CSS,
         borderRadius: "10px",
-        border: `2px solid ${
-          isUsed
-            ? LayoutConfig.COLORS.CHUNK_STROKE_EMPTY_CSS
-            : GAME_UI_TOKENS.colors.accentGoldMuted
-        }`,
-        opacity: isDragging ? 0.3 : isUsed ? 0.35 : 1,
+        border: isSelected
+          ? `2px solid ${GAME_UI_TOKENS.colors.accentGold}`
+          : `2px solid ${GAME_UI_TOKENS.colors.accentGoldMuted}`,
+        opacity: isDragging ? 0.3 : 1,
       }}
     >
       <Box
