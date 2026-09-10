@@ -103,6 +103,61 @@
          "y":0
         }, 
         {
+         "draworder":"topdown",
+         "id":23,
+         "name":"LightBars",
+         "objects":[
+                {
+                 "height":0,
+                 "id":74,
+                 "name":"LB_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":50
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":4
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_2"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":600
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":206,
+                 "y":428
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 77, 78, 79, 0, 0, 0, 0, 0, 0, 0, 0, 77, 78, 79, 0, 0, 0, 0, 0, 0, 0, 0, 77, 78, 79, 0, 0, 0, 0, 0, 0, 0, 0, 77, 78, 79, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 89, 90, 91, 0, 0, 0, 0, 0, 0, 0, 0, 89, 90, 91, 0, 0, 0, 0, 0, 0, 0, 0, 89, 90, 91, 0, 0, 0, 0, 0, 0, 0, 0, 89, 90, 91, 0, 0, 0, 0, 0, 0, 0,
@@ -412,8 +467,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":23,
- "nextobjectid":74,
+ "nextlayerid":24,
+ "nextobjectid":75,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.2",
