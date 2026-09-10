@@ -326,6 +326,12 @@ export const LEVEL_ASSETS = {
         key: "light_bar",
         path: "misc/spotlights/light_bar.png",
       },
+      {
+        key: "switch_light",
+        path: "misc/switch_light.png",
+        frameWidth: 32,
+        frameHeight: 20,
+      },
       { key: "stage-band-ph", path: "misc/stage-band-placeholder.png" },
       {
         key: "band_accordion",
