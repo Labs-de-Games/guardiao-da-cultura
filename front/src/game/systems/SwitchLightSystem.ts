@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { AudioManager } from "../audio";
-import { InteractionComponent } from "../objects/InteractionComponent";
 import { LayoutConfig } from "../constants/LayoutConfig";
+import { InteractionComponent } from "../objects/InteractionComponent";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface SwitchLightInstance {
@@ -52,12 +52,7 @@ export class SwitchLightSystem {
 
   // Registers a single switch at the specified position.
   public registerSwitch(config: SwitchLightConfig): SwitchLightInstance {
-    const sprite = this.scene.add.sprite(
-      config.x,
-      config.y,
-      "switch_light",
-      0,
-    );
+    const sprite = this.scene.add.sprite(config.x, config.y, "switch_light", 0);
     sprite.setOrigin(0.5, 1);
     sprite.setScale(config.scale !== undefined ? config.scale : 1);
     sprite.setDepth(10);
@@ -88,13 +83,15 @@ export class SwitchLightSystem {
   }
 
   public setPlayerTracking(player: Phaser.Physics.Arcade.Sprite): void {
-    this.switches.forEach(({ interaction }) =>
-      interaction.setPlayerTracking(player),
-    );
+    this.switches.forEach(({ interaction }) => {
+      interaction.setPlayerTracking(player);
+    });
   }
 
   public update(): void {
-    this.switches.forEach(({ interaction }) => interaction.update());
+    this.switches.forEach(({ interaction }) => {
+      interaction.update();
+    });
   }
 
   // Gets all registered switches.
