@@ -251,7 +251,7 @@ export function BandSelectorPanel() {
                   alignItems: "center",
                   justifyContent: "center",
                   bgcolor: GAME_UI_TOKENS.colors.bgTertiary,
-                  border: `2px solid ${borderColor}`,
+                  border: `${isSelected && confirmFocused ? 2 : 3}px solid ${borderColor}`,
                   borderRadius: `${GAME_UI_TOKENS.radius.small}px`,
                   cursor: isLocked ? "default" : "pointer",
                   animation:
