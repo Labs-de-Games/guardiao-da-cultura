@@ -126,6 +126,31 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
       path: "sound/music/level_3_cricket.ogg",
       loop: true,
     },
+    // Instrument stems for the band mechanic. All start muted at level load
+    // and are unlocked in place as each band member is confirmed, so they
+    // stay phase-locked to the same shared timeline.
+    musicLayers: [
+      {
+        key: "music.level_3.layer.zabumba",
+        path: "sound/music/level_3_zabumba.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.accordion",
+        path: "sound/music/level_3_accordion.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.triangle",
+        path: "sound/music/level_3_triangle.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.jam_block",
+        path: "sound/music/level_3_jam_block.ogg",
+        loop: true,
+      },
+    ],
   },
 };
 
@@ -159,6 +184,9 @@ export function getLevelAudioAssets(levelId: string): AudioAssetDefinition[] {
   const assets: AudioAssetDefinition[] = [];
   if (manifest.music) {
     assets.push(manifest.music);
+  }
+  if (manifest.musicLayers) {
+    assets.push(...manifest.musicLayers);
   }
   if (manifest.sfx) {
     assets.push(...manifest.sfx);
