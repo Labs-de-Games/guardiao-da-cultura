@@ -73,6 +73,7 @@ import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
+import { SwitchLightSystem } from "../systems/SwitchLightSystem";
 import {
   type DisappearingPlatformLayer,
   type MapData,
@@ -154,6 +155,7 @@ export class Game extends Scene implements GameDataAccessor {
   public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
   public trampolineSystem!: TrampolineSystem;
+  public switchLightSystem!: SwitchLightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
   private nudgeManager!: NudgeManager;
@@ -797,6 +799,13 @@ export class Game extends Scene implements GameDataAccessor {
         this.chandelierLightSystem.registerAllFromLayer(chandelierLayer);
       }
 
+      const switchLightLayer = mapData.objectLayers.SwitchLight;
+      if (switchLightLayer) {
+        this.switchLightSystem = new SwitchLightSystem(this);
+        this.switchLightSystem.registerAllFromLayer(switchLightLayer);
+        this.switchLightSystem.setPlayerTracking(this.player);
+      }
+
       this.hintKeySystem = new HintKeySystem(this);
 
       this.tutorialSystem = new TutorialSystem(this);
@@ -1047,6 +1056,24 @@ export class Game extends Scene implements GameDataAccessor {
             return !s.isLocked;
           },
           interactionDistance: 170,
+        })) || []),
+        ...(this.switchLightSystem?.getAll().map((sw) => ({
+          get x() {
+            return sw.sprite.x;
+          },
+          get y() {
+            return sw.sprite.y;
+          },
+          get interactionY() {
+            return sw.sprite.y;
+          },
+          get displayHeight() {
+            return sw.sprite.displayHeight;
+          },
+          get active() {
+            return !sw.isActivated;
+          },
+          interactionDistance: 130,
         })) || []),
       ]);
 
@@ -1452,6 +1479,18 @@ export class Game extends Scene implements GameDataAccessor {
         }),
         frameRate: 8,
         repeat: -1,
+      });
+    }
+
+    if (!this.anims.exists("switch_light_anim")) {
+      this.anims.create({
+        key: "switch_light_anim",
+        frames: this.anims.generateFrameNumbers("switch_light", {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 8,
+        repeat: 0,
       });
     }
 
@@ -2129,6 +2168,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
+      this.switchLightSystem?.destroy();
       this.hintKeySystem?.destroy();
       this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
@@ -2456,6 +2496,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.tutorialSystem) {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
+
+      this.switchLightSystem?.update();
 
       this.nudgeManager?.notifyActivity(this.player.getLastInputTime());
 
