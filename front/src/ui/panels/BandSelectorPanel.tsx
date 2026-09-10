@@ -116,7 +116,7 @@ export function BandSelectorPanel() {
 
   const handleToggle = (index: number) => {
     if (isLocked) return;
-    setSelectedIndex((prev) => (prev === index ? null : index));
+    setSelectedIndex(index);
   };
 
   const handleConfirm = () => {
