@@ -1204,6 +1204,23 @@
                          "value":"zabumba"
                         }, 
                         {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"bass"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"guitar"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"zabumba"
+                                }]
+                        }, 
+                        {
                          "name":"scale",
                          "type":"float",
                          "value":4
@@ -1241,6 +1258,23 @@
                          "name":"id",
                          "type":"string",
                          "value":"accordion"
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"rapper"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"saxophone"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"accordion"
+                                }]
                         }, 
                         {
                          "name":"scale",
@@ -1282,6 +1316,23 @@
                          "value":"triangle"
                         }, 
                         {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"violin"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"guitar"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"triangle"
+                                }]
+                        }, 
+                        {
                          "name":"scale",
                          "type":"float",
                          "value":4
@@ -1319,6 +1370,23 @@
                          "name":"id",
                          "type":"string",
                          "value":"jam_block"
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"trumpet"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"flute"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"jam_block"
+                                }]
                         }, 
                         {
                          "name":"scale",
