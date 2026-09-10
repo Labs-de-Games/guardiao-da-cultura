@@ -1805,6 +1805,7 @@ export class Game extends Scene implements GameDataAccessor {
             EventBus.emit("ui:band-panel-open", {
               instanceId: band.instanceId,
               id: String(band.id),
+              options: band.options ?? [],
             });
           },
         });
@@ -2015,6 +2016,24 @@ export class Game extends Scene implements GameDataAccessor {
       this.isBandPanelOpen = false;
       this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
       this.checkDialogState();
+    });
+    this.onEventBus("ui:band-choice-rejected", () => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+    });
+    this.onEventBus("ui:band-confirm", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      this.placeholderSystem.updateBandInstrument(
+        data.instanceId,
+        `band_${data.musicianId}`,
+      );
+      this.showSpotlightBeam();
+      this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
     });
     this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
