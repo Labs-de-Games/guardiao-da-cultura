@@ -6,6 +6,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import type { GameEventMap } from "../../shared/events/game-events";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import type { AudioKey } from "../audio";
 import { AudioManager, loadGlobalAudio } from "../audio";
 import { getLevelAudioManifest } from "../audio/registry";
 import { GameEvents } from "../constants/GameEvents";
@@ -395,6 +396,9 @@ export class Game extends Scene implements GameDataAccessor {
         AudioManager.playMusic(musicKey);
         this.registry.set(musicStartedKey, true);
       }
+      manifest?.musicLayers?.forEach((layer) => {
+        AudioManager.playMusicLayer(layer.key);
+      });
     }
 
     const map = this.make.tilemap({
@@ -2057,6 +2061,12 @@ export class Game extends Scene implements GameDataAccessor {
       this.playConfettiBurst(p.area.centerX, p.area.centerY);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
       this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
+
+      const layerKey = `music.level_3.layer.${data.musicianId}` as AudioKey;
+      AudioManager.unlockMusicLayer(layerKey, 400);
+      if (AudioManager.isPlaying("music.level_3.main" as AudioKey)) {
+        AudioManager.fadeOutMusic(400);
+      }
     });
     this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
