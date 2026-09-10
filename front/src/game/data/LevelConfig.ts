@@ -327,6 +327,10 @@ export const LEVEL_ASSETS = {
         path: "misc/spotlights/light_bar.png",
       },
       { key: "stage-band-ph", path: "misc/stage-band-placeholder.png" },
+      { key: "band_accordion", path: "band/correct/accordion.png" },
+      { key: "band_jam_block", path: "band/correct/jam_block.png" },
+      { key: "band_triangle", path: "band/correct/triangle.png" },
+      { key: "band_zabumba", path: "band/correct/zabumba.png" },
     ],
     COLLECTIBLES: [],
     CONTENT: {
