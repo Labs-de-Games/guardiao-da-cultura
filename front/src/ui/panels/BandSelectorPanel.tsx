@@ -20,7 +20,6 @@ const shake = keyframes`
   80%       { transform: translateX(4px); }
 `;
 
-const CONFIRM_CLOSE_DELAY_MS = 600;
 const REJECT_SHAKE_DURATION_MS = 400;
 
 export function BandSelectorPanel() {
@@ -128,9 +127,7 @@ export function BandSelectorPanel() {
     if (musicianId === correctMusicianId) {
       setIsLocked(true);
       EventBus.emit("ui:band-confirm", { instanceId, musicianId });
-      setTimeout(() => {
-        handleClose();
-      }, CONFIRM_CLOSE_DELAY_MS);
+      handleClose();
     } else {
       setIsRejecting(true);
       EventBus.emit("ui:band-choice-rejected", { instanceId, musicianId });
