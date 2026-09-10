@@ -1858,6 +1858,7 @@ export class Game extends Scene implements GameDataAccessor {
     // One error per failed attempt, not per wrong slot, so
     // `minigame_completed.errors` reads as "failed attempts".
     this.onEventBus("ui:step-sequence-rejected", (data) => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
       this.recordFloorError(this.scoringFloors.dance);
       posthog.capture("step_sequence_failed_attempt", {
         level_id: this.levelId,
@@ -1871,7 +1872,18 @@ export class Game extends Scene implements GameDataAccessor {
     this.onEventBus("ui:step-sequence-submit", (data) => {
       this.closeStepSequence();
 
+      this.sound.play("sfx.puzzle.success", { volume: 0.7 });
       this.placeholderSystem.lockPlaceholder(data.instanceId);
+
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (p) {
+        this.showSpotlightBeam();
+        this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      }
+
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
       if (
