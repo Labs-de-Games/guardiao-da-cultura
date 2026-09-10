@@ -514,7 +514,7 @@ export class PlaceholderSystem {
   public updateBandInstrument(instanceId: string, textureKey: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (!p || !(p.hintSprite instanceof Phaser.GameObjects.Sprite)) return;
-    p.hintSprite.setTexture(textureKey);
+    p.hintSprite.play(`${textureKey}_anim`, true);
     p.hintSprite.setAlpha(1);
   }
 

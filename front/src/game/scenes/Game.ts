@@ -277,7 +277,14 @@ export class Game extends Scene implements GameDataAccessor {
 
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
       (asset) => {
-        this.load.image(asset.key, asset.path);
+        if ("frameWidth" in asset && "frameHeight" in asset) {
+          this.load.spritesheet(asset.key, asset.path, {
+            frameWidth: asset.frameWidth as number,
+            frameHeight: asset.frameHeight as number,
+          });
+        } else {
+          this.load.image(asset.key, asset.path);
+        }
       },
     );
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].SCULPTURES.forEach(
@@ -1454,6 +1461,22 @@ export class Game extends Scene implements GameDataAccessor {
         frameRate: 10,
         repeat: -1,
       });
+    }
+
+    const bandMusicians = ["accordion", "jam_block", "triangle", "zabumba"];
+    for (const musician of bandMusicians) {
+      const animKey = `band_${musician}_anim`;
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key: animKey,
+          frames: this.anims.generateFrameNumbers(`band_${musician}`, {
+            start: 0,
+            end: 8,
+          }),
+          frameRate: 10,
+          repeat: -1,
+        });
+      }
     }
   }
 
