@@ -9,6 +9,13 @@
           "Já que se disfarçou de zelador, procure pistas sem chamar atenção, já basta essa bagunça que fizeram.",
           "Leia as placas e coloque as obras no lugar certo."
         ],
+        "collecting": [
+          "Essas obras são assim mesmo, esculturas sem cabeça, quadros surreais. Não é obra de nenhum vândalo.",
+          "Parece que ele não danificou as obras aqui do Inhotim, apenas tirou tudo do lugar.",
+          "Observe as placas informativas. Cada uma fala sobre uma obra em exposição. Leia sobre elas, encontre-as e leve-as até seus respectivos lugares.",
+          "O que elas têm em comum? Estavam todas em manutenção, reunidas nesse prédio em vez de suas galerias.",
+          "Isso pode ter sido frustrante para o vândalo, ou exatamente o que ele, ou ela, queria; encontrar tudo junto num lugar só."
+        ],
         "ready": [
           "Uai, você arredou tudo? Demorou um tiquinho, quase criei raiz esperando…",
           "As pinturas, esculturas e até a fotografia estão no lugar. Milagre, porque cola você não tinha.",

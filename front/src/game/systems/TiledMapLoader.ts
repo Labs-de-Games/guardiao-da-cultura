@@ -24,7 +24,14 @@ export namespace TiledMapLoader {
     };
 
     for (const layerData of map.layers) {
-      const layer = map.createLayer(layerData.name, tileset, 0, 0);
+      // createLayer's return type is now a TilemapLayer | TilemapGPULayer union
+      // (Phaser 4 added an opt-in GPU layer); this project never requests one.
+      const layer = map.createLayer(
+        layerData.name,
+        tileset,
+        0,
+        0,
+      ) as Phaser.Tilemaps.TilemapLayer | null;
       if (!layer) continue;
 
       layer.setScale(scale);

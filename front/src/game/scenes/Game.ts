@@ -1,4 +1,5 @@
-import { Scene } from "phaser";
+import * as Phaser from "phaser";
+import { Scene, WEBGL } from "phaser";
 import posthog from "posthog-js";
 
 import { EventBus } from "../../shared/events/event-bus";
@@ -53,11 +54,13 @@ import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
+import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
 import { LadderCinematicSystem } from "../systems/LadderCinematicSystem";
+import { LightBarSystem } from "../systems/LightBarSystem";
 import { NudgeManager } from "../systems/NudgeManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
@@ -131,6 +134,8 @@ export class Game extends Scene implements GameDataAccessor {
   private ladderCinematicSystem!: LadderCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
+  public lightBarSystem!: LightBarSystem;
+  public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
@@ -732,8 +737,20 @@ export class Game extends Scene implements GameDataAccessor {
       const spotlightLayer =
         mapData.objectLayers.Spotlights || mapData.objectLayers.Spotlight;
       if (spotlightLayer) {
-        this.spotlightSystem = new SpotlightSystem(this, this.effects);
+        this.spotlightSystem = new SpotlightSystem(this);
         this.spotlightSystem.registerAllFromLayer(spotlightLayer);
+      }
+
+      const lightBarLayer = mapData.objectLayers.LightBars;
+      if (lightBarLayer) {
+        this.lightBarSystem = new LightBarSystem(this);
+        this.lightBarSystem.registerAllFromLayer(lightBarLayer);
+      }
+
+      const chandelierLayer = mapData.objectLayers.Chandeliers;
+      if (chandelierLayer) {
+        this.chandelierLightSystem = new ChandelierLightSystem(this);
+        this.chandelierLightSystem.registerAllFromLayer(chandelierLayer);
       }
 
       this.hintKeySystem = new HintKeySystem(this);
@@ -1199,6 +1216,35 @@ export class Game extends Scene implements GameDataAccessor {
       this.tutorialSystem?.completeTutorial("tutorial_read_label");
       this.nudgeManager?.recordInteraction();
     });
+
+    this.setupLighting();
+  }
+
+  private setupLighting() {
+    if (this.renderer.type !== WEBGL) return;
+
+    this.lights.enable();
+    this.lights.setAmbientColor(0xd9d9d9);
+
+    this.children.list.forEach((obj) => {
+      const lightingObj = obj as unknown as {
+        setLighting?: (enable: boolean) => void;
+      };
+      if (typeof lightingObj.setLighting === "function") {
+        lightingObj.setLighting(true);
+      }
+    });
+
+    // Light bars are the light source themselves — keep lighting off so
+    // they render at full brightness instead of being dimmed by their
+    // own ambient/cone lighting.
+    this.lightBarSystem?.getAll().forEach(({ sprite }) => {
+      sprite.setLighting(false);
+    });
+
+    this.spotlightSystem?.getAll().forEach(({ sprite, light }) => {
+      if (light) sprite.setLighting(false);
+    });
   }
 
   private setupEvents() {
@@ -1340,8 +1386,6 @@ export class Game extends Scene implements GameDataAccessor {
       this.player.stairsLayers.push(layer);
     }
     this.player.setCollisionLayers(mapData.colliders);
-
-    this.effects.initSpotlight();
 
     for (const npc of this.npcs) {
       npc.setPlayerTracking(this.player);
@@ -1746,9 +1790,10 @@ export class Game extends Scene implements GameDataAccessor {
       );
       if (!p) return;
 
-      this.showSpotlightBeam(2000, p.area.centerX, p.area.centerY);
+      this.showSpotlightBeam();
       this.playConfettiBurst(p.area.centerX, p.area.centerY);
       this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
       if (
@@ -1971,7 +2016,6 @@ export class Game extends Scene implements GameDataAccessor {
       });
     }
 
-    this.effects.updateSpotlight(this.player.x, this.player.y);
     this.effects.updateScoreFeedback(
       this.player.x,
       this.player.y,
@@ -2000,6 +2044,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.tutorialSystem) {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
+
+      this.nudgeManager?.notifyActivity(this.player.getLastInputTime());
 
       if (
         this.nudgeManager?.evaluate(Date.now(), isPlayerBusy || isPanelOpen)
@@ -2058,6 +2104,10 @@ export class Game extends Scene implements GameDataAccessor {
               mission_id: this.nudgeManager.getCurrentMissionId(),
               hint_message: hintResult.message,
             });
+          } else {
+            // Nothing to show right now - wait a full inactivity window before
+            // scanning again instead of retrying every ATTEMPT_INTERVAL_MS.
+            this.nudgeManager.recordFailedAttempt();
           }
         }
       }
@@ -2210,12 +2260,8 @@ export class Game extends Scene implements GameDataAccessor {
     this.completeFloor(this.scoringFloors.photo);
   }
 
-  public showSpotlightBeam(
-    duration: number = 2000,
-    px: number = 0,
-    py: number = 0,
-  ) {
-    this.effects.showSpotlightBeam(duration, 200, px, py);
+  public showSpotlightBeam() {
+    this.effects.showSpotlightBeam();
   }
 
   public playConfettiBurst(px: number, py: number) {
@@ -2291,15 +2337,15 @@ export class Game extends Scene implements GameDataAccessor {
       }
 
       if (result.snapped) {
-        this.showSpotlightBeam(
-          2000,
-          result.placeholder?.area.centerX,
-          result.placeholder?.area.centerY,
-        );
+        this.showSpotlightBeam();
+
         if (result.placeholder) {
           this.playConfettiBurst(
             result.placeholder.area.centerX,
             result.placeholder.area.centerY,
+          );
+          this.lightBarSystem?.turnOnByPlaceholder(
+            result.placeholder.instanceId,
           );
         }
       }

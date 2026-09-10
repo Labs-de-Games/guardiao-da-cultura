@@ -1,5 +1,9 @@
 import * as Phaser from "phaser";
-import type { EffectsManager } from "../objects/EffectsManager";
+import {
+  canUseLighting,
+  DEFAULT_CONE_ROTATION,
+  parseColor,
+} from "../utils/lightUtils";
 import { TiledUtils } from "../utils/TiledUtils";
 
 export interface SpotlightInstance {
@@ -10,25 +14,34 @@ export interface SpotlightInstance {
   area: Phaser.Geom.Rectangle;
   isOn: boolean;
   isLocked: boolean;
+  light?: Phaser.GameObjects.Light;
+  lightIntensity?: number;
 }
+
+// Spotlights wired to Phaser's native cone lights. On non-WebGL (Canvas)
+// renderers, createConeLight returns undefined and these spotlights
+// simply render without a beam — same degradation as light bars and
+// chandelier lights.
+const CONE_LIGHT_SPOTLIGHT_IDS = new Set(["SP_0", "SP_1", "SP_2", "SP_3"]);
+
+const DEFAULT_SPOTLIGHT_LIGHT = {
+  radius: 2200,
+  color: 0xffffff,
+  intensity: 5,
+  angleDeg: 40,
+};
+
+// Pulls the light's origin up behind the fixture sprite, same as
+// LightBarSystem, so the cone's tip doesn't float in front of it.
+const SPOTLIGHT_LIGHT_Y_OFFSET = -80;
 
 export class SpotlightSystem {
   private scene: Phaser.Scene;
-  private effects: EffectsManager;
   private spotlights: SpotlightInstance[] = [];
   private activeSpotlight: SpotlightInstance | null = null;
 
-  private static COLOR_MAP: Record<string, number> = {
-    red: 0xff4444,
-    green: 0x44ff44,
-    blue: 0x4444ff,
-    yellow: 0xffff44,
-  };
-
-  constructor(scene: Phaser.Scene, effects: EffectsManager) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.effects = effects;
-    this.effects.initPersistentCone();
   }
 
   public registerAllFromLayer(layer: Phaser.Tilemaps.ObjectLayer) {
@@ -60,14 +73,45 @@ export class SpotlightSystem {
         height,
       );
 
+      const id = (obj.name as string) || `spotlight_${color}`;
+      let light: Phaser.GameObjects.Light | undefined;
+      let lightIntensity: number | undefined;
+
+      if (CONE_LIGHT_SPOTLIGHT_IDS.has(id)) {
+        const rawRadius = TiledUtils.getProperty(obj, "radius");
+        const rawLightColor = TiledUtils.getProperty(obj, "color");
+        const rawAngleDeg = TiledUtils.getProperty(obj, "angle");
+        const rawIntensity = TiledUtils.getProperty(obj, "intensity");
+
+        lightIntensity =
+          rawIntensity !== undefined
+            ? Number(rawIntensity)
+            : DEFAULT_SPOTLIGHT_LIGHT.intensity;
+        light = this.createConeLight(
+          coords.x,
+          coords.y + SPOTLIGHT_LIGHT_Y_OFFSET,
+          {
+            radius: rawRadius !== undefined ? Number(rawRadius) : undefined,
+            color:
+              rawLightColor !== undefined
+                ? parseColor(rawLightColor)
+                : undefined,
+            angleDeg:
+              rawAngleDeg !== undefined ? Number(rawAngleDeg) : undefined,
+          },
+        );
+      }
+
       const spotlight: SpotlightInstance = {
-        id: (obj.name as string) || `spotlight_${color}`,
+        id,
         color,
         isCorrect,
         sprite,
         area,
         isOn: false,
         isLocked: false,
+        light,
+        lightIntensity,
       };
 
       this.spotlights.push(spotlight);
@@ -115,7 +159,7 @@ export class SpotlightSystem {
       this.activeSpotlight = null;
     }
     this.updateSpriteTexture(spotlight);
-    this.clearCone();
+    this.clearCone(spotlight);
   }
 
   private updateSpriteTexture(spotlight: SpotlightInstance) {
@@ -126,14 +170,51 @@ export class SpotlightSystem {
   }
 
   private drawCone(spotlight: SpotlightInstance) {
-    const color = SpotlightSystem.COLOR_MAP[spotlight.color] || 0xffffff;
-    const px = spotlight.sprite.x;
-    const py = spotlight.sprite.y;
-    this.effects.showPersistentCone(px, py + 459, color);
+    if (!spotlight.light) return;
+    spotlight.light.intensity =
+      spotlight.lightIntensity ?? DEFAULT_SPOTLIGHT_LIGHT.intensity;
   }
 
-  private clearCone() {
-    this.effects.hidePersistentCone();
+  private clearCone(spotlight: SpotlightInstance) {
+    if (!spotlight.light) return;
+    spotlight.light.intensity = 0;
+  }
+
+  private createConeLight(
+    x: number,
+    y: number,
+    config: { radius?: number; color?: number; angleDeg?: number },
+  ): Phaser.GameObjects.Light | undefined {
+    if (!canUseLighting(this.scene)) return undefined;
+
+    const radius = config.radius ?? DEFAULT_SPOTLIGHT_LIGHT.radius;
+    const color = config.color ?? DEFAULT_SPOTLIGHT_LIGHT.color;
+    const angleDeg = config.angleDeg ?? DEFAULT_SPOTLIGHT_LIGHT.angleDeg;
+    const angle = (angleDeg * Math.PI) / 180;
+
+    const light = this.scene.lights.addConeLight(
+      x,
+      y,
+      radius,
+      color,
+      0,
+      DEFAULT_CONE_ROTATION,
+      angle,
+      angle,
+    );
+
+    // Native cone lights don't have a "diffuse" toggle like the old
+    // custom shader did. Lit fragments are shaded by
+    // dot(normal, lightDirection), and that dot product is governed by
+    // the light's z (elevation): the higher z is relative to travel
+    // distance, the less the beam dims over long range. These beams
+    // travel up to ~2500px, so push z to the top of Phaser's documented
+    // "strong values" band (0 to radius/2) to keep reach close to the
+    // old radius/angle-only falloff. Playtest and re-tune if the beam
+    // still dims before reaching its configured radius.
+    light.setZNormal(0.5);
+
+    return light;
   }
 
   public getCategoryProgress(): { filled: number; total: number } {

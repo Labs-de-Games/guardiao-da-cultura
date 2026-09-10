@@ -1,14 +1,14 @@
 ---
 name: phaser-gamedev
 description: >
-  Build 2D games with Phaser 3 framework. Covers scene lifecycle, sprites, physics (Arcade/Matter),
+  Build 2D games with Phaser 4 framework. Covers scene lifecycle, sprites, physics (Arcade/Matter),
   tilemaps, animations, input handling, and game architecture. Trigger: "create phaser game",
   "add phaser scene", "phaser sprite", "phaser physics", "game development with phaser".
 ---
 
 # Phaser Game Development
 
-Build fast, polished 2D browser games using Phaser 3's scene-based architecture and physics systems.
+Build fast, polished 2D browser games using Phaser 4's scene-based architecture and physics systems.
 
 ## Philosophy: Games as Living Systems
 
@@ -549,6 +549,8 @@ const config = {
 
 new Phaser.Game(config);
 ```
+
+**Phaser 4 gotcha**: Phaser 3's CJS bundle set `window.Phaser` as an import side effect, so bare `Phaser.X` references (`Phaser.AUTO`, `Phaser.Scale.FIT`, `Phaser.Math.FloatBetween`, etc.) worked at runtime even without a local import. Phaser 4's ESM-first build does **not** set this global. Any file using `Phaser.X` as a runtime value (not just a type) must have `import Phaser from "phaser"` or `import * as Phaser from "phaser"` — otherwise it throws `Uncaught ReferenceError: Phaser is not defined`, invisible to `tsc`/build since `.d.ts` still declares the ambient type. See `phaser-4-debug` skill if this surfaces.
 
 ---
 

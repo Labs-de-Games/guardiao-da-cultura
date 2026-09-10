@@ -13,22 +13,10 @@ import {
 
 import { useAudioAccessibility } from "@/lib/audio";
 import { EventBus } from "@/shared/events/event-bus";
+import { useCanvasViewport } from "@/ui/hooks/useCanvasViewport";
+import { CanvasViewportLayer } from "@/ui/panels/CanvasViewportLayer";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
-
-function useWindowSize() {
-  const [size, setSize] = useState({
-    width: typeof window !== "undefined" ? window.innerWidth : 1024,
-    height: typeof window !== "undefined" ? window.innerHeight : 768,
-  });
-  useEffect(() => {
-    const handler = () =>
-      setSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return size;
-}
 
 const TYPING_SPEED = 30;
 const BUBBLE_MAX_WIDTH = 900;
@@ -109,7 +97,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   // suppresses spurious input immediately after dialogue opens
   const ignoreNextInputRef = useRef(true);
   const charIndexRef = useRef(0);
-  const { width: vw, height: vh } = useWindowSize();
+  const viewport = useCanvasViewport();
   const [cameraTransform, setCameraTransform] = useState<{
     worldViewX: number;
     worldViewY: number;
@@ -137,29 +125,32 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     }
 
     const { worldViewX, worldViewY, zoom } = cameraTransform;
-    const screenX = (speakerPos.x - worldViewX) * zoom;
-    const screenY = (speakerPos.y - worldViewY) * zoom;
+    // Coordinates below are local to a wrapper sized/positioned to match the
+    // canvas's displayed (possibly letterboxed) rect — see the render below
+    // — so they only need the canvas-to-CSS-pixel scale, not its offset.
+    const screenX = (speakerPos.x - worldViewX) * zoom * viewport.scaleX;
+    const screenY = (speakerPos.y - worldViewY) * zoom * viewport.scaleY;
 
     const minLeft = BUBBLE_HALF + VIEWPORT_MARGIN;
-    const maxLeft = vw - BUBBLE_HALF - VIEWPORT_MARGIN;
+    const maxLeft = viewport.width - BUBBLE_HALF - VIEWPORT_MARGIN;
     const clampedLeft = Math.max(minLeft, Math.min(screenX, maxLeft));
     const bubbleLeftEdge = clampedLeft - BUBBLE_HALF;
     const ratio = (screenX - bubbleLeftEdge) / BUBBLE_MAX_WIDTH;
     const triangleLeft = Math.round(Math.max(15, Math.min(ratio * 100, 85)));
 
+    const headOffset = HEAD_OFFSET * zoom * viewport.scaleY;
+    const belowOffset = BELOW_OFFSET * zoom * viewport.scaleY;
+
     // Not enough room above the speaker's head to fit the bubble without it
     // being clipped off the top of the viewport (e.g. interactions near the
     // top of the map) — flip it to appear below the speaker instead.
     const spaceNeededAbove =
-      HEAD_OFFSET * zoom +
-      TRIANGLE_HEIGHT +
-      ESTIMATED_BUBBLE_HEIGHT +
-      VIEWPORT_MARGIN;
+      headOffset + TRIANGLE_HEIGHT + ESTIMATED_BUBBLE_HEIGHT + VIEWPORT_MARGIN;
 
     if (screenY < spaceNeededAbove) {
-      const topRaw = screenY + BELOW_OFFSET * zoom + TRIANGLE_HEIGHT;
+      const topRaw = screenY + belowOffset + TRIANGLE_HEIGHT;
       const top = Math.min(
-        vh - VIEWPORT_MARGIN,
+        viewport.height - VIEWPORT_MARGIN,
         Math.max(VIEWPORT_MARGIN, topRaw),
       );
 
@@ -176,10 +167,10 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
     }
 
     const bottom = Math.min(
-      vh - VIEWPORT_MARGIN,
+      viewport.height - VIEWPORT_MARGIN,
       Math.max(
         VIEWPORT_MARGIN,
-        vh - (screenY - TRIANGLE_HEIGHT - HEAD_OFFSET * zoom),
+        viewport.height - (screenY - TRIANGLE_HEIGHT - headOffset),
       ),
     );
 
@@ -193,7 +184,7 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
       triangleLeft,
       direction: "above" as const,
     };
-  }, [speakerPos, cameraTransform, vw, vh]);
+  }, [speakerPos, cameraTransform, viewport]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -299,65 +290,67 @@ export function DialoguePanel({ onComplete, onDismiss }: DialoguePanelProps) {
   if (!open || mode !== "dialogue") return null;
 
   return (
-    <Box
-      sx={{
-        ...positioning.outerStyle,
-        maxWidth: "min(900px, 90vw)",
-        width: "min(900px, 90vw)",
-        pointerEvents: "auto",
-        zIndex: UI_LAYERS.IN_WORLD,
-      }}
-    >
+    <CanvasViewportLayer viewport={viewport}>
       <Box
-        role="dialog"
-        aria-live="polite"
         sx={{
-          position: "relative",
-          bgcolor: GAME_UI_TOKENS.colors.dialogueBg,
-          borderRadius: "12px",
-          px: "40px",
-          py: "32px",
-          maxWidth: "min(862px, 90vw)",
-          width: "100%",
-          overflow: "visible",
+          ...positioning.outerStyle,
+          maxWidth: "min(900px, 90vw)",
+          width: "min(900px, 90vw)",
+          pointerEvents: "auto",
+          zIndex: UI_LAYERS.IN_WORLD,
         }}
       >
-        <TextToSpeechIcon onClick={() => currentText && speak(currentText)} />
-        <DialogueContent
-          speakerName={speakerName}
-          text={displayedText}
-          isLastLine={isLastLine}
-          onAdvance={handleAdvance}
-        />
         <Box
+          role="dialog"
+          aria-live="polite"
           sx={{
-            position: "absolute",
-            // Overlaps the box's edge by a couple px so sub-pixel rounding
-            // of the (zoom-scaled) position never leaves a hairline gap
-            // between the box border and the triangle's point.
-            ...(positioning.direction === "below"
-              ? {
-                  top: -(TRIANGLE_HEIGHT - 2),
-                  borderBottom: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
-                }
-              : {
-                  bottom: -(TRIANGLE_HEIGHT - 2),
-                  borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
-                }),
-            ...(positioning.triangleLeft !== null
-              ? {
-                  left: `${positioning.triangleLeft}%`,
-                  transform: "translateX(-20%)",
-                }
-              : { right: 40 }),
-            width: 0,
-            height: 0,
-            borderLeft: "24px solid transparent",
-            borderRight: "24px solid transparent",
+            position: "relative",
+            bgcolor: GAME_UI_TOKENS.colors.dialogueBg,
+            borderRadius: "12px",
+            px: "40px",
+            py: "32px",
+            maxWidth: "min(862px, 90vw)",
+            width: "100%",
+            overflow: "visible",
           }}
-        />
+        >
+          <TextToSpeechIcon onClick={() => currentText && speak(currentText)} />
+          <DialogueContent
+            speakerName={speakerName}
+            text={displayedText}
+            isLastLine={isLastLine}
+            onAdvance={handleAdvance}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              // Overlaps the box's edge by a couple px so sub-pixel rounding
+              // of the (zoom-scaled) position never leaves a hairline gap
+              // between the box border and the triangle's point.
+              ...(positioning.direction === "below"
+                ? {
+                    top: -(TRIANGLE_HEIGHT - 2),
+                    borderBottom: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+                  }
+                : {
+                    bottom: -(TRIANGLE_HEIGHT - 2),
+                    borderTop: `${TRIANGLE_HEIGHT}px solid ${GAME_UI_TOKENS.colors.dialogueBg}`,
+                  }),
+              ...(positioning.triangleLeft !== null
+                ? {
+                    left: `${positioning.triangleLeft}%`,
+                    transform: "translateX(-20%)",
+                  }
+                : { right: 40 }),
+              width: 0,
+              height: 0,
+              borderLeft: "24px solid transparent",
+              borderRight: "24px solid transparent",
+            }}
+          />
+        </Box>
       </Box>
-    </Box>
+    </CanvasViewportLayer>
   );
 }
 
