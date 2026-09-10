@@ -165,7 +165,7 @@ export function BandSelectorPanel() {
         aria-modal="true"
         sx={{
           width: "100%",
-          maxWidth: 520,
+          maxWidth: 600,
           position: "relative",
           bgcolor: GAME_UI_TOKENS.colors.bgSecondary,
           border: `2px solid ${GAME_UI_TOKENS.colors.accentGold}`,
@@ -246,8 +246,9 @@ export function BandSelectorPanel() {
                 disabled={isLocked}
                 sx={{
                   position: "relative",
-                  width: 120,
-                  height: 120,
+                  width: 160,
+                  height: 160,
+                  flexShrink: 0,
                   p: 1,
                   display: "flex",
                   alignItems: "center",
