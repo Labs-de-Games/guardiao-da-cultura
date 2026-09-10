@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./VERSIONING.md) for the release process and branching model.
 
+## [1.13.0] - 2026-09-10
+
+### Added
+
+- Light bar / spotlight lighting system: `LightBarSystem`, cone light WebGL pipeline, point lights for chandeliers, and level_02 spotlight wiring
+- `level_03` mock definition, registry entry, mission constants, and Sao Joao de Campina Grande tilemap
+- `useCanvasViewport` hook and canvas viewport tracking for letterboxed `Scale.FIT` canvas
+
+### Changed
+
+- Upgraded Phaser to 4.2.1, migrating cone lights to the native Phaser 4 Light API
+
+### Fixed
+
+- NPC dialogue progression
+- Credits button hidden and map input blocked during level intro/transition
+- Nudge idle timer behavior (idle reset while suppressed, held-key activity counted, back-off after failed attempts)
+- Dialogue bubble and map pin tooltip positioned relative to the letterboxed canvas
+
 ## [1.12.0] - 2026-08-27
 
 ### Added
