@@ -225,7 +225,36 @@
          "draworder":"topdown",
          "id":10,
          "name":"NPCS",
-         "objects":[],
+         "objects":[
+                {
+                 "height":0,
+                 "id":92,
+                 "name":"NPC_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"contentId",
+                         "type":"string",
+                         "value":"professor_curador_l3"
+                        }, 
+                        {
+                         "name":"flipX",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"missionId",
+                         "type":"string",
+                         "value":"missao_curador_l3"
+                        }],
+                 "rotation":0,
+                 "type":"Npc",
+                 "visible":true,
+                 "width":0,
+                 "x":256,
+                 "y":496
+                }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -291,7 +320,7 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":224,
+                 "x":192,
                  "y":496
                 }],
          "opacity":1,
@@ -1430,7 +1459,7 @@
          "y":0
         }],
  "nextlayerid":25,
- "nextobjectid":92,
+ "nextobjectid":93,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
