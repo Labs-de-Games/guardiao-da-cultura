@@ -13,7 +13,10 @@ import { captureAnonymousPlayerCreatedOnce } from "../lib/edital/events";
 import { env } from "../lib/env";
 import { getGuestSessionId } from "../lib/guestSession";
 import { createBeforeSend } from "../lib/posthog/beforeSend";
-import { registerEventContext } from "../lib/posthog/eventContext";
+import {
+  registerEventContext,
+  setAnonymousPlayerId,
+} from "../lib/posthog/eventContext";
 import { FeatureFlagProvider } from "../lib/posthog/FeatureFlagContext";
 import { PostHogStub } from "../lib/posthogStub";
 
@@ -115,6 +118,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         if (environment === "development") {
           ph.debug();
         }
+        setAnonymousPlayerId(cookieDistinctId);
         registerEventContext(ph, {
           environment,
           searchParams: new URLSearchParams(window.location.search),
