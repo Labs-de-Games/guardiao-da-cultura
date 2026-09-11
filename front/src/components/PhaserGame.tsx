@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
 import { LayoutConfig } from "../game/constants/LayoutConfig";
+import { GameEventType } from "../game/types/AnalyticsTypes";
+import { sendGameEvent } from "../lib/analyticsApi";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
 import { useAuth } from "../lib/auth/useAuth";
@@ -44,6 +46,7 @@ export default function PhaserGame() {
   );
   const gameLoadSuccessSentRef = useRef(false);
   const gameLoadFailedSentRef = useRef(false);
+  const playerIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleLoadingStart = (event: Event) => {
@@ -94,16 +97,61 @@ export default function PhaserGame() {
       }, remaining);
     };
 
-    const handleLoadingError = (_event: Event) => {};
+    // Previously a no-op: Game.ts's `loaderror` handler (scenes/Game.ts)
+    // dispatched this DOM event straight into nothing, so asset-load
+    // failures during actual gameplay (not just module import/init, which
+    // game_load_failed above already covers) were captured nowhere. See
+    // docs/specs/discovery-738-dashboard-edital.md §3.1, §8 step 3.
+    const handleLoadingError = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        stage?: string;
+        key?: string;
+      }>;
+      const errorCode = "asset_load_failed";
+      const metadata = {
+        error_code: errorCode,
+        is_blocking: true,
+        loading_stage: customEvent.detail?.stage,
+        asset_key: customEvent.detail?.key,
+        level_id: currentLevelIdRef.current,
+      };
 
-    window.addEventListener("phaser-loading-start", handleLoadingStart);
-    window.addEventListener("phaser-loading-progress", handleLoadingProgress);
-    window.addEventListener("phaser-loading-complete", handleLoadingComplete);
-    window.addEventListener("phaser-loading-error", handleLoadingError);
+      posthog.capture("critical_error_occurred", metadata);
+
+      // Also mirrored into game_event (severity: "critical") via the
+      // existing generic EVENT_LOGGED type — no new enum value needed —
+      // so #748's "keep the legacy dashboard as a fallback" promise has
+      // something to show. Closes the same pendency tracked in
+      // docs/EPIC-analytics-dashboard.md ("emit event.logged for critical
+      // errors").
+      sendGameEvent({
+        userId: playerIdRef.current ?? undefined,
+        type: GameEventType.EVENT_LOGGED,
+        timestamp: new Date().toISOString(),
+        metadata: { severity: "critical", ...metadata },
+      }).catch((err) => {
+        console.error(
+          "[PhaserGame] Failed to log critical_error_occurred:",
+          err,
+        );
+      });
+    };
 
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
     if (isFlowLoading) return;
+
+    // Registered only once all early-return guards above have passed, and
+    // always paired with the cleanup below in the same effect run. Adding
+    // these before the guards (as before) meant every early-bail re-render
+    // (e.g. while isFlowLoading was still true) leaked a duplicate listener
+    // set with no matching cleanup — each real phaser-loading-error would
+    // then fire handleLoadingError once per leaked listener, multiplying
+    // critical_error_occurred captures and game_event writes.
+    window.addEventListener("phaser-loading-start", handleLoadingStart);
+    window.addEventListener("phaser-loading-progress", handleLoadingProgress);
+    window.addEventListener("phaser-loading-complete", handleLoadingComplete);
+    window.addEventListener("phaser-loading-error", handleLoadingError);
 
     isInitializingRef.current = true;
 
@@ -121,6 +169,7 @@ export default function PhaserGame() {
         if (!playerId) {
           throw new Error("Player ID is required to start the game.");
         }
+        playerIdRef.current = playerId;
 
         if (isGuest && guestSessionId) {
           setGuestId(guestSessionId);

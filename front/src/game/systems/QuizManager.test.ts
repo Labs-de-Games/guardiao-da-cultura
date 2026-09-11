@@ -10,8 +10,14 @@ jest.mock("posthog-js", () => ({
   __esModule: true,
   default: { capture: jest.fn() },
 }));
+// QuizManager.ts does not actually import "../../lib/env" — this mock was
+// long inert (and using a stale flat shape besides). Kept only as a guard:
+// if QuizManager ever starts importing env, the shape below must match the
+// real module's {client: …} export or this file's own guard test below
+// (which imports the *real*, unmocked module) will fail loudly instead of
+// silently running against a wrong mock.
 jest.mock("../../lib/env", () => ({
-  env: { NEXT_PUBLIC_POSTHOG_KEY: "test", NEXT_PUBLIC_POSTHOG_HOST: "test" },
+  env: { client: { env: "test" } },
 }));
 
 function createMockNpc(
@@ -654,6 +660,58 @@ describe("QuizManager", () => {
     );
   });
 
+  it("captures the canonical chapter_1_completed on a level-1 success (getLevelDef fixture is levelNumber: 1)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(3);
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "chapter_1_completed",
+      expect.objectContaining({ level_id: context.getLevelId() }),
+    );
+  });
+
+  it("does not capture chapter_1_completed for a level-2 success", () => {
+    const level2Context = {
+      ...context,
+      getLevelDef: () => ({
+        ...context.getLevelDef(),
+        levelNumber: 2,
+      }),
+    };
+    const npc = createMockNpc({
+      missionId: "sculptor",
+      quiz: Array.from({ length: 5 }, (_, i) => ({
+        question: `Pergunta ${i + 1}?`,
+        options: ["A", "B", "C", "D"],
+      })),
+      dialogues: { success: ["Parabéns!"], failure: ["Falhou."] },
+    });
+    const qm = new QuizManager(
+      {
+        ...level2Context,
+        getNpcs: () => [npc as unknown as Phaser.GameObjects.GameObject],
+      },
+      scoreManager,
+      questManager as never,
+      progressionManager,
+      badgeSystem as never,
+      persistenceBridge as never,
+      analyticsSystem as never,
+      levelManager as never,
+    );
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    (posthog.capture as jest.Mock).mockClear();
+    onComplete(3);
+
+    expect(posthog.capture).not.toHaveBeenCalledWith(
+      "chapter_1_completed",
+      expect.anything(),
+    );
+  });
+
   it("should fail when score is below threshold (2/5 with 0.5)", () => {
     const { quizManager: qm } = setupFiveQuestionQuiz();
     const onComplete = acceptQuizAndGetCallback(qm);
@@ -728,5 +786,15 @@ describe("QuizManager", () => {
       quizNumber: null,
       attemptNumber: 2,
     });
+  });
+});
+
+describe("../../lib/env mock guard", () => {
+  it("real module still exports {client: …} — update the mock above if this fails", () => {
+    const realEnv = jest.requireActual<{
+      env: { client: Record<string, unknown> };
+    }>("../../lib/env");
+    expect(realEnv.env).toHaveProperty("client");
+    expect(typeof realEnv.env.client).toBe("object");
   });
 });

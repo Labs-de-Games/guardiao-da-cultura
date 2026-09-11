@@ -22,7 +22,11 @@ export default function PlayLanding() {
   }, []);
 
   const handlePlay = () => {
+    // Legacy — unchanged.
     posthog.capture("landing_page_play_clicked");
+    // Canonical funnel step (step 2 of 7) — see
+    // docs/specs/edital-onepager.md.
+    posthog.capture("play_clicked");
     const query = searchParams.toString();
     router.push(query ? `/game?${query}` : "/game");
   };
