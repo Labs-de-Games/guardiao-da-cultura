@@ -110,7 +110,11 @@ O backend identifica “Sessão 1” via:
 - `event.logged` **com metadados de erro crítico**
 
 ### Status atual
-- ❌ **Faltando** emissão de erro crítico
+- ✅ **Emitido** — `PhaserGame.tsx`'s `handleLoadingError` was a no-op until #741; it now
+  captures `critical_error_occurred` to PostHog and mirrors an `event.logged` row with
+  `severity: "critical"` on asset-load failures (Phaser `loaderror`). Closes the same
+  pendency `docs/EPIC-analytics-dashboard.md` tracked ("emit `event.logged` for critical
+  errors") — see `docs/specs/discovery-738-dashboard-edital.md` §3.6.
 
 ### Metadados de erro críticos aceitos pelo backend
 Qualquer um dos campos abaixo:
@@ -133,15 +137,15 @@ Qualquer um dos campos abaixo:
 | `level.completed` | ✅ | `Game.ts` |
 | `quiz.completed` / `quiz.failed` | ✅ | `sendQuizOutcomeEvent` |
 | `badge.earned` | ✅ | `BadgeSystem` |
-| `session.end` | ✅ | shutdown da cena `Game` |
+| `session.end` | ✅ | shutdown da cena `Game`; também via `AnalyticsSystem.setupAbandonmentTracking` (session-scoped, ver #741) |
 | `event.logged` (interação) | ✅ | `InteractionComponent` |
+| `event.logged` (`severity: "critical"`) | ✅ | `PhaserGame.tsx` (`handleLoadingError`, ajuste #741) |
 
 ---
 
 # Eventos faltando (resumo)
 | Evento | Motivo | Impacto no Dashboard |
 |---|---|---|
-| `event.logged` de erro crítico | Não emitido atualmente | `Sessões sem erro` fica 0 |
 | Interações adicionais (drag/drop, puzzle, etc.) | Não emitido | `Interação com pistas e objetos` subestimada |
 
 ---
@@ -169,13 +173,46 @@ minigames, quizzes e carregamento do jogo.
 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
 | `quiz_answer_submitted` | `quiz_number` (null for regular end-of-level quizzes), `question_id`, `selected_answer`, `is_correct`, `attempt_number` | `game-ui-store.ts` (`selectOption`) |
 | `game_load_success` | `level_id`, `loading_time_ms` | `PhaserGame.tsx` |
-| `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`/`asset_load`) | `PhaserGame.tsx`, `Game.ts` (asset `loaderror`) |
+| `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`) | `PhaserGame.tsx` (module import / Phaser init failures only — **not** asset `loaderror`; that is `critical_error_occurred` below. This row previously and incorrectly claimed asset-load coverage too — `handleLoadingError` was a no-op until #741, see docs/specs/discovery-738-dashboard-edital.md §3.6) |
+| `critical_error_occurred` | `error_code` (e.g. `asset_load_failed`), `is_blocking`, `loading_stage`, `asset_key`, `level_id` | `PhaserGame.tsx` (`phaser-loading-error` — asset `loaderror`, dispatched from `Game.ts`'s `preload()`). Also mirrored into `game_event` with `severity: "critical"` via the `EVENT_LOGGED` type |
 | `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
 | `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
 | `nudge_pulse_shown_{costume,spotlight,step_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
 | `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
+
+---
+
+# Funil canônico do Edital (epic #738)
+
+7 passos definidos em `docs/specs/edital-onepager.md` (interino até o onepager real ser
+commitado — ver §1.1 de `docs/specs/discovery-738-dashboard-edital.md`). Cada evento é
+**dual-emit**: existe ao lado do evento legado equivalente, nunca o substitui — ver
+`docs/specs/discovery-738-dashboard-edital.md` §5.3 para por que `before_send` não é usado
+para renomear/fundir eventos.
+
+| # | Evento canônico | Propriedades | Onde é emitido | Guarda de disparo único |
+|---|---|---|---|---|
+| 1 | `landing_page_viewed` | — | `PlayLanding.tsx` | nenhuma (uma vez por mount da landing) |
+| 2 | `play_clicked` | — | `PlayLanding.tsx` (`handlePlay`) | nenhuma |
+| 3 | `gameplay_started` | `level_id`, `level_number` | `Game.ts` (`create()`) | `captureOncePerSession` (sessionStorage) — o legado `game_started` continua disparando 1x por nível |
+| 4 | `chapter_1_started` | `level_id` | `Game.ts` (junto ao `LEVEL_STARTED`, `levelNumber === 1`) | nenhuma além da condição de nível |
+| 5 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` | nenhuma (já existente, exclui quizzes intermediários) |
+| 6 | `quiz_completed` | `level_id`, `mission_id`, `score`, `correct_answers`, `total_questions`, `accuracy_percent`, `passed` | `QuizManager.ts` | nenhuma (já existente) |
+| 7 | `chapter_1_completed` | `level_id` | `QuizManager.ts` (junto ao `level_completed`, `levelNumber === 1`) | nenhuma além da condição de nível |
+
+Eventos de suporte ao funil, fora da sequência de 7 passos mas necessários para
+identidade/qualidade dos dados (epic #740/#741):
+
+| Evento | Propriedades | Onde é emitido | Guarda de disparo único |
+|---|---|---|---|
+| `anonymous_player_created` | — | `PostHogProvider.tsx` | localStorage, condicionado ao marcador "recém-semeado" do middleware (#740) |
+| `session_finished` | `reason` (`pagehide`/`visibilitychange`/`browser_close`), `duration_seconds`, `last_level_id` | `AnalyticsSystem.ts` (`setupAbandonmentTracking`) | sessionStorage — substitui a inflação por nível do `session.end` legado |
+| `critical_error_occurred` | `error_code`, `is_blocking`, `loading_stage`, `asset_key`, `level_id` | `PhaserGame.tsx` (`handleLoadingError`) | nenhuma (cada asset falho é um erro distinto) |
+
+**Ainda não definido** (ver §4/§7 da discovery): a taxonomia `CAMPAIGN_ORIGINS`, o enum
+completo de `error_code`, e o que a tela mostra para jogadores sem `utm_institution` algum.
 
 ## Nudge — regras de disparo
 
