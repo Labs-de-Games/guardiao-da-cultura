@@ -123,13 +123,22 @@ ORDER BY depth`.trim();
  * guarded to `BETWEEN 1 AND 14400` seconds (max 4 hours) to exclude
  * abandoned/zombie sessions from skewing the average. Median is returned
  * alongside average so a PO can see outlier distortion.
+ *
+ * Also returns `sessions_started` — `count()` over the same grouped set,
+ * i.e. the number of distinct sessions that reached `gameplay_started`.
+ * This is issue #745's card 2 ("Sessões iniciadas"), which is a session
+ * count, not a unique-player count — a returning player across two
+ * sessions counts twice here, unlike card 1's `uniqExactIf`.
  */
 export function buildSessionDurationQuery(
   scope: Scope,
   range: ResolvedDateRange,
 ): HogQLQueryPlan {
   const query = `
-SELECT avg(duration_seconds) AS avg_seconds, median(duration_seconds) AS median_seconds
+SELECT
+  avg(duration_seconds) AS avg_seconds,
+  median(duration_seconds) AS median_seconds,
+  count() AS sessions_started
 FROM (
   SELECT
     properties.\`$session_id\` AS session_id,
@@ -140,6 +149,29 @@ FROM (
   HAVING countIf(event = 'gameplay_started') > 0
      AND duration_seconds BETWEEN 1 AND 14400
 )`.trim();
+
+  return { query, values: baseValues(scope, range) };
+}
+
+/**
+ * Card 7 ("Taxa de aprovação no quiz") — per-attempt pass rate, not
+ * per-player: `countIf`, not `uniqExactIf`. A player who retries a failed
+ * quiz and passes contributes one failure and one pass, which is the
+ * correct denominator for "of the quiz attempts made, how many passed" —
+ * the auditor-facing question this card answers, distinct from card 1's
+ * per-player funnel counts. `properties.passed` is set on every
+ * `quiz_completed` event (see EVENTS.md).
+ */
+export function buildQuizPassRateQuery(
+  scope: Scope,
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  countIf(event = 'quiz_completed' AND toBool(properties.passed)) AS passed,
+  countIf(event = 'quiz_completed') AS total
+FROM events
+WHERE ${COMMON_PREDICATE}`.trim();
 
   return { query, values: baseValues(scope, range) };
 }
