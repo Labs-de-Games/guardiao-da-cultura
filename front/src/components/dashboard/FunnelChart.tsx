@@ -1,13 +1,25 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
 
-interface FunnelStep {
+export interface FunnelStep {
   label: string;
   value: number;
+  /**
+   * Absolute count for this step — optional, backward-compatible.
+   * Issue #745: "FunnelStep ganha count e stepConversion opcionais...
+   * o número do auditor é uma contagem, não uma taxa" (discovery §5.6).
+   */
+  count?: number;
+  /** Step-over-step conversion (this step's count / previous step's), optional. */
+  stepConversion?: number;
 }
 
 interface FunnelChartProps {
   steps: FunnelStep[];
   highlightIndex?: number;
+}
+
+function formatCount(value: number): string {
+  return value.toLocaleString("pt-BR");
 }
 
 export function FunnelChart({
@@ -28,6 +40,16 @@ export function FunnelChart({
                 sx={{ fontWeight: isHighlight ? 700 : 500 }}
               >
                 {step.label}
+                {typeof step.count === "number" ? (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 1 }}
+                  >
+                    ({formatCount(step.count)})
+                  </Typography>
+                ) : null}
               </Typography>
               <Typography
                 variant="body2"
@@ -37,6 +59,16 @@ export function FunnelChart({
                 }}
               >
                 {Math.round(step.value * 100)}%
+                {typeof step.stepConversion === "number" ? (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 1 }}
+                  >
+                    ({Math.round(step.stepConversion * 100)}% do anterior)
+                  </Typography>
+                ) : null}
               </Typography>
             </Box>
             <LinearProgress
