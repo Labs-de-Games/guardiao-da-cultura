@@ -68,8 +68,13 @@ export interface EditalFunnelResponse {
 export interface EditalReportResponse {
   linked: boolean;
   data: {
-    sessionDuration: { avgSeconds: number; medianSeconds: number };
+    sessionDuration: {
+      avgSeconds: number;
+      medianSeconds: number;
+      sessionsStarted: number;
+    };
     criticalErrors: { total: number; byErrorCode: Record<string, number> };
+    quizPassRate: Rate;
   } | null;
 }
 
