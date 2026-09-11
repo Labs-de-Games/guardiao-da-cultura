@@ -162,14 +162,28 @@ PostHog keys are variables, not secrets, because they ship in the browser bundle
 regardless.
 
 Coolify runtime holds `JWT_SECRET`, `MAGIC_LINK_SECRET`, `DATABASE_URL`,
-Postgres and Gmail credentials, `POSTHOG_API_KEY`, `RESPONSIVEVOICE_API_KEY` and
-`CLOUDFLARE_TUNNEL_TOKEN`.
+Postgres and Gmail credentials, `POSTHOG_API_KEY`, `RESPONSIVEVOICE_API_KEY`,
+`CLOUDFLARE_TUNNEL_TOKEN`, `POSTHOG_PERSONAL_API_KEY`, `AUTH_SECRET`,
+`AUTH_TRUST_HOST` and `AUTH_OAUTH_UPSERT_TOKEN`.
 
 `JWT_SECRET` and `MAGIC_LINK_SECRET` ship as `change-me-in-production` in
 `.env.example`. They must be rotated values in staging and production.
 
 `RESPONSIVEVOICE_API_KEY` is not passed by any CD workflow. It exists only in
 the Coolify runtime. Check there first when text to speech fails.
+
+`POSTHOG_PERSONAL_API_KEY` is a personal `phx_` PostHog key (Query API, not the
+ingestion `phc_` write key above) used only by the `/institution` edital
+dashboard's Next.js route handlers — server-only, never `NEXT_PUBLIC_*`. It is
+a front-service runtime secret, same shape as `RESPONSIVEVOICE_API_KEY`: not
+passed by any CD workflow, exists only in the Coolify runtime. `AUTH_SECRET`
+and `AUTH_TRUST_HOST` are NextAuth.js requirements for the same dashboard;
+`AUTH_TRUST_HOST` must be set because the app runs behind the nginx reverse
+proxy. `AUTH_OAUTH_UPSERT_TOKEN` is a shared secret between the front and back
+services for the institution-account upsert endpoint. See
+`docs/specs/discovery-738-dashboard-edital.md` §3.2 and
+`docs/specs/implementation-plan-738-dashboard-edital.md` step 1 for the full
+rationale.
 
 ## Who dispatches
 
