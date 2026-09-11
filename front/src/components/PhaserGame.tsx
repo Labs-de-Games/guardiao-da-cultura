@@ -228,6 +228,27 @@ export default function PhaserGame() {
             error_type: err instanceof Error ? err.name : "unknown",
             loading_stage: stage,
           });
+
+          // Issue #741's first critical_error_occurred hook: a boot
+          // failure means the player can't reach chapter_1_completed
+          // without reloading — always blocking.
+          const criticalMetadata = {
+            error_code: `game_boot_failed:${stage}`,
+            is_blocking: true,
+            loading_stage: stage,
+          };
+          posthog.capture("critical_error_occurred", criticalMetadata);
+          sendGameEvent({
+            userId: playerIdRef.current ?? undefined,
+            type: GameEventType.EVENT_LOGGED,
+            timestamp: new Date().toISOString(),
+            metadata: { severity: "critical", ...criticalMetadata },
+          }).catch((mirrorErr) => {
+            console.error(
+              "[PhaserGame] Failed to log critical_error_occurred:",
+              mirrorErr,
+            );
+          });
         }
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
