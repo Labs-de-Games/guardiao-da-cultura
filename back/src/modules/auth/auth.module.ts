@@ -5,8 +5,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { EmailModule } from "../../core/email/email.module";
 import { UsersModule } from "../users/users.module";
 import { AuthController } from "./controllers/auth.controller";
+import { OAuthUpsertController } from "./controllers/oauth-upsert.controller";
 import { MagicLinkToken } from "./entities/magic-link-token.entity";
 import { RefreshToken } from "./entities/refresh-token.entity";
+import { OAuthUpsertTokenGuard } from "./guards/oauth-upsert-token.guard";
 import { AuthService } from "./services/auth.service";
 import { MagicLinkService } from "./services/magic-link.service";
 import { TokenService } from "./services/token.service";
@@ -20,8 +22,14 @@ import { JwtAccessStrategy } from "./strategies/jwt-access.strategy";
     UsersModule,
     EmailModule,
   ],
-  controllers: [AuthController],
-  providers: [AuthService, TokenService, MagicLinkService, JwtAccessStrategy],
+  controllers: [AuthController, OAuthUpsertController],
+  providers: [
+    AuthService,
+    TokenService,
+    MagicLinkService,
+    JwtAccessStrategy,
+    OAuthUpsertTokenGuard,
+  ],
   exports: [AuthService, TokenService, MagicLinkService],
 })
 export class AuthModule {}
