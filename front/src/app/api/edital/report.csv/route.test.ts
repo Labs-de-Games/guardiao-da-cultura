@@ -19,10 +19,12 @@ jest.mock("@/lib/edital/server/routeGuard", () => ({
 
 const mockFetchSessionDuration = jest.fn();
 const mockFetchCriticalErrors = jest.fn();
+const mockFetchQuizPassRate = jest.fn();
 jest.mock("@/lib/edital/server/metrics", () => ({
   fetchSessionDuration: (...args: unknown[]) =>
     mockFetchSessionDuration(...args),
   fetchCriticalErrors: (...args: unknown[]) => mockFetchCriticalErrors(...args),
+  fetchQuizPassRate: (...args: unknown[]) => mockFetchQuizPassRate(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -38,6 +40,12 @@ describe("GET /api/edital/report.csv", () => {
     mockResolveEditalRequestContext.mockReset();
     mockFetchSessionDuration.mockReset();
     mockFetchCriticalErrors.mockReset();
+    mockFetchQuizPassRate.mockReset();
+    mockFetchQuizPassRate.mockResolvedValue({
+      value: 0,
+      numerator: 0,
+      denominator: 0,
+    });
   });
 
   it("returns 401 when there is no session", async () => {
@@ -70,6 +78,7 @@ describe("GET /api/edital/report.csv", () => {
     mockFetchSessionDuration.mockResolvedValue({
       avgSeconds: 300,
       medianSeconds: 250,
+      sessionsStarted: 120,
     });
     mockFetchCriticalErrors.mockResolvedValue({
       total: 2,
@@ -90,6 +99,7 @@ describe("GET /api/edital/report.csv", () => {
     expect(buffer[2]).toBe(0xbf);
 
     const text = buffer.toString("utf-8");
+    expect(text).toContain("sessions_started;120");
     expect(text).toContain("avg_session_duration_seconds;300");
     expect(text).toContain("critical_errors_asset_load_failed;2");
   });
@@ -105,6 +115,7 @@ describe("GET /api/edital/report.csv", () => {
     mockFetchSessionDuration.mockResolvedValue({
       avgSeconds: 1,
       medianSeconds: 1,
+      sessionsStarted: 1,
     });
     const manyErrorCodes = Object.fromEntries(
       Array.from({ length: 2000 }, (_, i) => [`error_${i}`, 1]),

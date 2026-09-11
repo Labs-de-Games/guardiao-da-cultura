@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { toCsv } from "@/lib/edital/server/csv";
 import {
   fetchCriticalErrors,
+  fetchQuizPassRate,
   fetchSessionDuration,
 } from "@/lib/edital/server/metrics";
 import { resolveEditalRequestContext } from "@/lib/edital/server/routeGuard";
@@ -32,12 +33,14 @@ export async function GET(request: NextRequest): Promise<Response> {
     );
   }
 
-  const [sessionDuration, criticalErrors] = await Promise.all([
+  const [sessionDuration, criticalErrors, quizPassRate] = await Promise.all([
     fetchSessionDuration(ctx.scope, ctx.range),
     fetchCriticalErrors(ctx.scope, ctx.range),
+    fetchQuizPassRate(ctx.scope, ctx.range),
   ]);
 
   const rows: ReportRow[] = [
+    { metric: "sessions_started", value: sessionDuration.sessionsStarted },
     {
       metric: "avg_session_duration_seconds",
       value: sessionDuration.avgSeconds,
@@ -46,6 +49,9 @@ export async function GET(request: NextRequest): Promise<Response> {
       metric: "median_session_duration_seconds",
       value: sessionDuration.medianSeconds,
     },
+    { metric: "quiz_pass_rate", value: quizPassRate.value },
+    { metric: "quiz_passed", value: quizPassRate.numerator },
+    { metric: "quiz_total_attempts", value: quizPassRate.denominator },
     { metric: "critical_errors_total", value: criticalErrors.total },
     ...Object.entries(criticalErrors.byErrorCode).map(([code, count]) => ({
       metric: `critical_errors_${code}`,
