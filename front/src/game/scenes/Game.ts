@@ -942,10 +942,7 @@ export class Game extends Scene implements GameDataAccessor {
         })),
         ...this.placeholderSystem
           .getAll()
-          .filter(
-            (p) =>
-              p.type === InteractiveType.PHOTO && !p.isFilled && !p.isLocked,
-          )
+          .filter((p) => p.type === InteractiveType.PHOTO)
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -969,10 +966,7 @@ export class Game extends Scene implements GameDataAccessor {
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter(
-            (p) =>
-              p.type === InteractiveType.COSTUME && !p.isFilled && !p.isLocked,
-          )
+          .filter((p) => p.type === InteractiveType.COSTUME)
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -996,12 +990,7 @@ export class Game extends Scene implements GameDataAccessor {
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter(
-            (p) =>
-              p.type === InteractiveType.STEP_SEQUENCE &&
-              !p.isFilled &&
-              !p.isLocked,
-          )
+          .filter((p) => p.type === InteractiveType.STEP_SEQUENCE)
           .map((p) => {
             const placeholderSystem = this.placeholderSystem;
             const config = getInteractionConfig(p.type);
@@ -1032,10 +1021,7 @@ export class Game extends Scene implements GameDataAccessor {
           }),
         ...this.placeholderSystem
           .getAll()
-          .filter(
-            (p) =>
-              p.type === InteractiveType.BAND && !p.isFilled && !p.isLocked,
-          )
+          .filter((p) => p.type === InteractiveType.BAND)
           .map((p) => ({
             get x() {
               return p.area.centerX;
