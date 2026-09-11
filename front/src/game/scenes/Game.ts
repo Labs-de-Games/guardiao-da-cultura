@@ -936,7 +936,10 @@ export class Game extends Scene implements GameDataAccessor {
         })),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.PHOTO && !p.isFilled)
+          .filter(
+            (p) =>
+              p.type === InteractiveType.PHOTO && !p.isFilled && !p.isLocked,
+          )
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -954,13 +957,16 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.COSTUME && !p.isFilled)
+          .filter(
+            (p) =>
+              p.type === InteractiveType.COSTUME && !p.isFilled && !p.isLocked,
+          )
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -978,14 +984,17 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top - 115;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
           .filter(
-            (p) => p.type === InteractiveType.STEP_SEQUENCE && !p.isFilled,
+            (p) =>
+              p.type === InteractiveType.STEP_SEQUENCE &&
+              !p.isFilled &&
+              !p.isLocked,
           )
           .map((p) => {
             const placeholderSystem = this.placeholderSystem;
@@ -1010,14 +1019,17 @@ export class Game extends Scene implements GameDataAccessor {
                 );
               },
               get active() {
-                return !p.isFilled;
+                return !p.isFilled && !p.isLocked;
               },
               interactionDistance: config.range,
             };
           }),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.BAND && !p.isFilled)
+          .filter(
+            (p) =>
+              p.type === InteractiveType.BAND && !p.isFilled && !p.isLocked,
+          )
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -1035,7 +1047,7 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),

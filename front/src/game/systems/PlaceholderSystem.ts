@@ -22,6 +22,7 @@ export interface PlaceholderInstance {
   state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.GameObject;
   isFilled?: boolean;
+  isLocked?: boolean;
   filledTexture?: string;
   filledScale?: number;
   yOffset?: number;
@@ -40,6 +41,7 @@ export interface PlaceholderConfig {
   scale?: number;
   texture?: string;
   alpha?: number;
+  isLocked?: boolean;
   filledTexture?: string;
   filledScale?: number;
   yOffset?: number;
@@ -71,6 +73,7 @@ export class PlaceholderSystem {
       const filledTexture = TiledUtils.getProperty(obj, "filledTexture");
       const rawFilledScale = TiledUtils.getProperty(obj, "filledScale");
       const rawYOffset = TiledUtils.getProperty(obj, "yOffset");
+      const isLocked = TiledUtils.getBoolProperty(obj, "is_locked");
       const targetId = TiledUtils.parseTargetIds(rawProp);
       const rawOptions = TiledUtils.getProperty(obj, "options");
       const parsedOptions = rawOptions
@@ -101,6 +104,7 @@ export class PlaceholderSystem {
         filledScale:
           rawFilledScale !== undefined ? Number(rawFilledScale) : undefined,
         yOffset: rawYOffset !== undefined ? Number(rawYOffset) : undefined,
+        isLocked,
       });
     });
   }
@@ -125,6 +129,7 @@ export class PlaceholderSystem {
       options: config.options,
       state: config.state || {},
       isFilled: false,
+      isLocked: config.isLocked ?? false,
       filledTexture: config.filledTexture,
       filledScale: config.filledScale,
       yOffset: config.yOffset,
@@ -272,6 +277,7 @@ export class PlaceholderSystem {
 
       if (isInside || isCloseEnough) {
         if (p.isFilled) continue;
+        if (p.isLocked) continue;
         if (item.interactiveType !== p.type) continue;
 
         const isMatch = Array.isArray(p.id)
@@ -399,6 +405,7 @@ export class PlaceholderSystem {
 
     for (const p of this.placeholders) {
       if (p.isFilled) continue;
+      if (p.isLocked) continue;
       if (type && p.type !== type) continue;
 
       const dist = Phaser.Math.Distance.Between(
