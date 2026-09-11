@@ -1,4 +1,5 @@
 import "server-only";
+import type { Session } from "next-auth";
 
 /**
  * Opaque, branded institution scope. Producible only by `resolveScope`
@@ -20,16 +21,32 @@ export interface Scope {
 }
 
 /**
- * `resolveScope(session)` itself is #744's job — it doesn't exist yet
- * because the NextAuth session type it takes doesn't exist yet. This
- * factory exists ONLY so #742a's query builders and tests can be written
- * and typechecked against a real `Scope` value now, instead of #745
- * blocking on #744 to even compile. It lives under server/ (server-only
- * boundary) precisely so it can never reach a client bundle or a route
- * handler that isn't already scope-gated.
+ * The one real way to obtain a `Scope`. Only this function ever sees the
+ * `scopeBrand` symbol, so a `Scope` cannot be forged from a plain object
+ * literal anywhere else in the codebase.
  *
- * Every real call site must eventually be `resolveScope(session)`, not
- * this. Do not import this from a route handler.
+ * Returns `null` — not a thrown error — for every case where a route
+ * handler must render the "not linked" empty state instead of querying
+ * PostHog at all: no session, a non-institution role, or an institution
+ * account with `institutionSlug: null` (not yet linked by the admin
+ * seed/update script). This is the short-circuit issue #744's acceptance
+ * criteria require: "conta com institutionSlug = null curto-circuita
+ * antes de qualquer chamada ao PostHog" — a null Scope makes it
+ * impossible for a caller to reach a query builder without checking
+ * first, the same compile-time discipline the type itself is for.
+ */
+export function resolveScope(session: Session | null): Scope | null {
+  if (!session?.user) return null;
+  if (session.user.role !== "institution") return null;
+  if (!session.user.institutionSlug) return null;
+  return { slug: session.user.institutionSlug } as Scope;
+}
+
+/**
+ * Test-only: builds a `Scope` directly from a slug, bypassing
+ * `resolveScope`'s session checks. For #742a's query-builder tests, which
+ * need a `Scope` value but shouldn't have to construct a fake NextAuth
+ * session to get one. Never import this from a route handler.
  */
 export function __createScopeForTests(slug: string): Scope {
   return { slug } as Scope;
