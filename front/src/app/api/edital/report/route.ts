@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
   fetchCriticalErrors,
+  fetchQuizPassRate,
   fetchSessionDuration,
 } from "@/lib/edital/server/metrics";
 import { resolveEditalRequestContext } from "@/lib/edital/server/routeGuard";
@@ -21,14 +22,15 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const [sessionDuration, criticalErrors] = await Promise.all([
+  const [sessionDuration, criticalErrors, quizPassRate] = await Promise.all([
     fetchSessionDuration(ctx.scope, ctx.range),
     fetchCriticalErrors(ctx.scope, ctx.range),
+    fetchQuizPassRate(ctx.scope, ctx.range),
   ]);
 
   const body: EditalReportResponse = {
     linked: true,
-    data: { sessionDuration, criticalErrors },
+    data: { sessionDuration, criticalErrors, quizPassRate },
   };
   return NextResponse.json(body);
 }

@@ -19,10 +19,12 @@ jest.mock("@/lib/edital/server/routeGuard", () => ({
 
 const mockFetchSessionDuration = jest.fn();
 const mockFetchCriticalErrors = jest.fn();
+const mockFetchQuizPassRate = jest.fn();
 jest.mock("@/lib/edital/server/metrics", () => ({
   fetchSessionDuration: (...args: unknown[]) =>
     mockFetchSessionDuration(...args),
   fetchCriticalErrors: (...args: unknown[]) => mockFetchCriticalErrors(...args),
+  fetchQuizPassRate: (...args: unknown[]) => mockFetchQuizPassRate(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -38,6 +40,7 @@ describe("GET /api/edital/report", () => {
     mockResolveEditalRequestContext.mockReset();
     mockFetchSessionDuration.mockReset();
     mockFetchCriticalErrors.mockReset();
+    mockFetchQuizPassRate.mockReset();
   });
 
   it("returns 401 when there is no session", async () => {
@@ -50,6 +53,7 @@ describe("GET /api/edital/report", () => {
     expect(response.status).toBe(401);
     expect(mockFetchSessionDuration).not.toHaveBeenCalled();
     expect(mockFetchCriticalErrors).not.toHaveBeenCalled();
+    expect(mockFetchQuizPassRate).not.toHaveBeenCalled();
   });
 
   it("returns linked:false with zero upstream calls when unlinked", async () => {
@@ -61,9 +65,10 @@ describe("GET /api/edital/report", () => {
     expect(data).toEqual({ linked: false, data: null });
     expect(mockFetchSessionDuration).not.toHaveBeenCalled();
     expect(mockFetchCriticalErrors).not.toHaveBeenCalled();
+    expect(mockFetchQuizPassRate).not.toHaveBeenCalled();
   });
 
-  it("combines session duration and critical errors on success", async () => {
+  it("combines session duration, critical errors, and quiz pass rate on success", async () => {
     const scope = __createScopeForTests("escola-teste");
     const range = { from: new Date(0), to: new Date() };
     mockResolveEditalRequestContext.mockResolvedValue({
@@ -74,10 +79,16 @@ describe("GET /api/edital/report", () => {
     mockFetchSessionDuration.mockResolvedValue({
       avgSeconds: 300,
       medianSeconds: 250,
+      sessionsStarted: 120,
     });
     mockFetchCriticalErrors.mockResolvedValue({
       total: 3,
       byErrorCode: { asset_load_failed: 3 },
+    });
+    mockFetchQuizPassRate.mockResolvedValue({
+      value: 0.8,
+      numerator: 40,
+      denominator: 50,
     });
 
     const response = await GET(makeRequest());
@@ -86,8 +97,13 @@ describe("GET /api/edital/report", () => {
     expect(data).toEqual({
       linked: true,
       data: {
-        sessionDuration: { avgSeconds: 300, medianSeconds: 250 },
+        sessionDuration: {
+          avgSeconds: 300,
+          medianSeconds: 250,
+          sessionsStarted: 120,
+        },
         criticalErrors: { total: 3, byErrorCode: { asset_load_failed: 3 } },
+        quizPassRate: { value: 0.8, numerator: 40, denominator: 50 },
       },
     });
   });
