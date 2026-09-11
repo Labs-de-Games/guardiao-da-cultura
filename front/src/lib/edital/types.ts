@@ -39,3 +39,46 @@ export interface Rate {
 export interface EditalHealthResponse {
   configured: boolean;
 }
+
+/**
+ * `linked: false` on every response below means the caller's account has
+ * no `institutionSlug` yet (or isn't an institution session at all) —
+ * the route handler made zero upstream PostHog calls, per #744's
+ * acceptance criteria. `data` is always `null` in that case; #745 must
+ * render the "awaiting linkage" empty state, not mistake it for zero
+ * players.
+ */
+export interface EditalSummaryResponse {
+  linked: boolean;
+  /** Unique-player count per canonical funnel event name. */
+  data: Record<string, number> | null;
+}
+
+export interface FunnelStepCount {
+  label: string;
+  value: number;
+}
+
+export interface EditalFunnelResponse {
+  linked: boolean;
+  /** Monotonically non-increasing, in canonical funnel order. */
+  data: FunnelStepCount[] | null;
+}
+
+export interface EditalReportResponse {
+  linked: boolean;
+  data: {
+    sessionDuration: { avgSeconds: number; medianSeconds: number };
+    criticalErrors: { total: number; byErrorCode: Record<string, number> };
+  } | null;
+}
+
+export interface EditalCampaignsResponse {
+  linked: boolean;
+  /**
+   * Total unique players attributed to the caller's own slug. Not yet
+   * the full per-origin breakdown #746 wants — see
+   * server/queries.ts's buildCampaignsQuery for why.
+   */
+  data: { uniquePlayers: number } | null;
+}
