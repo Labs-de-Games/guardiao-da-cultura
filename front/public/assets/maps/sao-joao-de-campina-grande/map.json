@@ -78,7 +78,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":50
+                         "value":30
                         }, 
                         {
                          "name":"color",
@@ -103,7 +103,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":600
+                         "value":500
                         }, 
                         {
                          "name":"scale",
@@ -127,7 +127,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":50
+                         "value":30
                         }, 
                         {
                          "name":"color",
@@ -152,7 +152,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":600
+                         "value":500
                         }, 
                         {
                          "name":"scale",
@@ -176,7 +176,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":50
+                         "value":30
                         }, 
                         {
                          "name":"color",
@@ -201,7 +201,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":600
+                         "value":500
                         }, 
                         {
                          "name":"scale",
@@ -225,7 +225,7 @@
                         {
                          "name":"angle",
                          "type":"float",
-                         "value":50
+                         "value":30
                         }, 
                         {
                          "name":"color",
@@ -250,7 +250,7 @@
                         {
                          "name":"radius",
                          "type":"int",
-                         "value":600
+                         "value":500
                         }, 
                         {
                          "name":"scale",
