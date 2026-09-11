@@ -3,6 +3,7 @@
 import {
   Dashboard as DashboardIcon,
   FilterAlt as FunnelIcon,
+  Link as LinksIcon,
   Logout as LogoutIcon,
   Assessment as ReportIcon,
 } from "@mui/icons-material";
@@ -26,15 +27,14 @@ import InstitutionGuard from "@/components/auth/InstitutionGuard";
 
 const DRAWER_WIDTH = 280;
 
-// #settings/page.tsx (69-line inoperative placeholder) is removed per
-// issue #745 — this issue owns that deletion, not #748 (discovery §2.7).
-// Issue text says "4 entradas"; only 3 real screens exist as of this
-// step (#746's campaign-links screen is the likely 4th, not built yet)
-// — 3 entries here, not a fabricated 4th destination.
+// #settings/page.tsx (69-line inoperative placeholder) was removed in
+// #745 — that issue owns the deletion, not #748 (discovery §2.7). #745
+// said "4 entradas" ahead of #746 landing; now all 4 exist.
 const NAV_ITEMS = [
   { label: "Resumo Executivo", href: "/institution", icon: DashboardIcon },
   { label: "Funil", href: "/institution/funnel", icon: FunnelIcon },
   { label: "Relatório", href: "/institution/report", icon: ReportIcon },
+  { label: "Links de Campanha", href: "/institution/links", icon: LinksIcon },
 ];
 
 function SidebarContent() {
