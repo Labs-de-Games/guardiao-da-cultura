@@ -1,6 +1,17 @@
 import "server-only";
 import { serverEnv } from "../../env-server";
 import type { Rate } from "../types";
+import { runHogQLQuery } from "./hogql";
+import type { ResolvedDateRange } from "./period";
+import {
+  buildCampaignsQuery,
+  buildCriticalErrorsQuery,
+  buildFunnelQuery,
+  buildSessionDurationQuery,
+  buildSummaryQuery,
+  FUNNEL_EVENTS,
+} from "./queries";
+import type { Scope } from "./scope";
 
 /**
  * `{value, numerator, denominator}` for every rate the dashboard shows —
@@ -129,4 +140,118 @@ export async function withCache<T>(
 /** Test-only: clears the module-level cache between test cases. */
 export function __resetQueryCacheForTests(): void {
   cache.clear();
+}
+
+function rangeKey(range: ResolvedDateRange): string {
+  return `${range.from.toISOString()}:${range.to.toISOString()}`;
+}
+
+/** Q1 orchestration: unique-player count per canonical funnel event. */
+export async function fetchSummary(
+  scope: Scope,
+  range: ResolvedDateRange,
+): Promise<Record<string, number>> {
+  const key = `summary:${scope.slug}:${rangeKey(range)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildSummaryQuery(scope, range);
+    const result = await runHogQLQuery(query, values);
+    const row = result.results[0] ?? [];
+    const record: Record<string, number> = {};
+    result.columns.forEach((column, index) => {
+      record[column] = Number(row[index] ?? 0);
+    });
+    return record;
+  });
+}
+
+/**
+ * Q4 orchestration: `windowFunnel`'s per-person "depth reached" histogram
+ * converted into "at least N steps reached" cumulative counts (depth >=
+ * step index), then run through `clampMonotonicFunnel` as the defensive
+ * floor — `windowFunnel` already guarantees monotonicity, this just
+ * makes it structurally impossible for a bug here to violate it too.
+ */
+export async function fetchFunnel(
+  scope: Scope,
+  range: ResolvedDateRange,
+): Promise<Array<{ label: string; value: number }>> {
+  const key = `funnel:${scope.slug}:${rangeKey(range)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildFunnelQuery(scope, range);
+    const result = await runHogQLQuery(query, values);
+
+    const playersByDepth = new Map<number, number>();
+    for (const row of result.results) {
+      const [depth, players] = row as [number, number];
+      playersByDepth.set(depth, players);
+    }
+
+    const rawCounts = FUNNEL_EVENTS.map((_label, index) => {
+      const stepNumber = index + 1;
+      let reached = 0;
+      for (const [depth, players] of playersByDepth) {
+        if (depth >= stepNumber) reached += players;
+      }
+      return reached;
+    });
+
+    const clamped = clampMonotonicFunnel(rawCounts);
+    return FUNNEL_EVENTS.map((label, index) => ({
+      label,
+      value: clamped[index],
+    }));
+  });
+}
+
+/** Q2 orchestration: average and median session duration in seconds. */
+export async function fetchSessionDuration(
+  scope: Scope,
+  range: ResolvedDateRange,
+): Promise<{ avgSeconds: number; medianSeconds: number }> {
+  const key = `session-duration:${scope.slug}:${rangeKey(range)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildSessionDurationQuery(scope, range);
+    const result = await runHogQLQuery(query, values);
+    const [avgSeconds, medianSeconds] = result.results[0] ?? [0, 0];
+    return {
+      avgSeconds: Number(avgSeconds ?? 0),
+      medianSeconds: Number(medianSeconds ?? 0),
+    };
+  });
+}
+
+/** Q3 orchestration: total critical errors + breakdown by error_code. */
+export async function fetchCriticalErrors(
+  scope: Scope,
+  range: ResolvedDateRange,
+): Promise<{ total: number; byErrorCode: Record<string, number> }> {
+  const key = `critical-errors:${scope.slug}:${rangeKey(range)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildCriticalErrorsQuery(scope, range);
+    const result = await runHogQLQuery(query, values);
+    const byErrorCode: Record<string, number> = {};
+    let total = 0;
+    for (const row of result.results) {
+      const [errorCode, count] = row as [string | null, number];
+      const codeKey = errorCode ?? "unknown";
+      const value = Number(count ?? 0);
+      byErrorCode[codeKey] = value;
+      total += value;
+    }
+    return { total, byErrorCode };
+  });
+}
+
+/** Campaigns orchestration (#746) — see queries.ts's buildCampaignsQuery. */
+export async function fetchCampaigns(
+  scope: Scope,
+  range: ResolvedDateRange,
+): Promise<{ uniquePlayers: number }> {
+  const key = `campaigns:${scope.slug}:${rangeKey(range)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildCampaignsQuery(scope, range);
+    const result = await runHogQLQuery(query, values);
+    const [uniquePlayers] = result.results[0] ?? [0];
+    return { uniquePlayers: Number(uniquePlayers ?? 0) };
+  });
 }
