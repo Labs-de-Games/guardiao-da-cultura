@@ -9,6 +9,7 @@ import {
   wasAnonymousPlayerCookieFreshlySeeded,
 } from "../lib/edital/anonymousPlayer";
 import { INSTITUTION_UTM_PARAM } from "../lib/edital/campaign";
+import { captureAnonymousPlayerCreatedOnce } from "../lib/edital/events";
 import { env } from "../lib/env";
 import { getGuestSessionId } from "../lib/guestSession";
 import { createBeforeSend } from "../lib/posthog/beforeSend";
@@ -74,13 +75,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const freshlySeeded = wasAnonymousPlayerCookieFreshlySeeded();
+
     // One-time seed of the pre-existing localStorage guest id into the
     // durable cookie, only on the request where middleware just minted a
     // brand-new one — see lib/edital/anonymousPlayer.ts.
-    migrateLegacyGuestIdToCookie(
-      getGuestSessionId(),
-      wasAnonymousPlayerCookieFreshlySeeded(),
-    );
+    migrateLegacyGuestIdToCookie(getGuestSessionId(), freshlySeeded);
 
     const cookieDistinctId = readAnonymousPlayerIdFromDocumentCookie();
 
@@ -123,6 +123,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     } as Parameters<typeof posthog.init>[1]);
 
     setClient(posthog);
+    captureAnonymousPlayerCreatedOnce(posthog, freshlySeeded);
 
     void (async () => {
       const bootstrap = await fetchBootstrap(cookieDistinctId);
