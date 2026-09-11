@@ -1,8 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { ANONYMOUS_PLAYER_COOKIE_NAME } from "../lib/edital/anonymousPlayer";
+import {
+  ANONYMOUS_PLAYER_COOKIE_NAME,
+  ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME,
+} from "../lib/edital/anonymousPlayer";
+import { ANONYMOUS_PLAYER_CREATED_EVENT } from "../lib/edital/events";
 import { PostHogProvider } from "./PostHogProvider";
 
 const initMock = jest.fn();
+const captureMock = jest.fn();
 
 jest.mock("posthog-js", () => ({
   __esModule: true,
@@ -10,6 +15,7 @@ jest.mock("posthog-js", () => ({
     init: (...args: unknown[]) => initMock(...args),
     get_distinct_id: () => "test-distinct-id",
     get_property: () => undefined,
+    capture: (...args: unknown[]) => captureMock(...args),
   },
 }));
 
@@ -33,7 +39,9 @@ describe("PostHogProvider", () => {
 
   beforeEach(() => {
     initMock.mockClear();
+    captureMock.mockClear();
     document.cookie = `${ANONYMOUS_PLAYER_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    document.cookie = `${ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
     window.localStorage.clear();
     global.fetch = jest.fn().mockImplementation(
       () =>
@@ -106,5 +114,31 @@ describe("PostHogProvider", () => {
     expect(
       (options as { bootstrap: { distinctID?: string } }).bootstrap.distinctID,
     ).toBe("f47ac10b-58cc-4372-a567-0e02b2c3d479");
+  });
+
+  it("captures anonymous_player_created when the cookie was freshly seeded", () => {
+    document.cookie = `${ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME}=1; path=/`;
+
+    render(
+      <PostHogProvider>
+        <div>child</div>
+      </PostHogProvider>,
+    );
+
+    expect(captureMock).toHaveBeenCalledWith(ANONYMOUS_PLAYER_CREATED_EVENT);
+  });
+
+  it("does not capture anonymous_player_created on a returning visit", () => {
+    document.cookie = `${ANONYMOUS_PLAYER_COOKIE_NAME}=f47ac10b-58cc-4372-a567-0e02b2c3d479; path=/`;
+
+    render(
+      <PostHogProvider>
+        <div>child</div>
+      </PostHogProvider>,
+    );
+
+    expect(captureMock).not.toHaveBeenCalledWith(
+      ANONYMOUS_PLAYER_CREATED_EVENT,
+    );
   });
 });
