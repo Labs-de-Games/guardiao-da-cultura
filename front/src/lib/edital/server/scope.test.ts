@@ -44,4 +44,21 @@ describe("resolveScope", () => {
   it("returns null when session.user is missing", () => {
     expect(resolveScope({ expires: "2099-01-01" } as Session)).toBeNull();
   });
+
+  it("returns null for a malformed institutionSlug (e.g. uppercase or spaces)", () => {
+    expect(
+      resolveScope(makeSession({ institutionSlug: "Escola Teste" })),
+    ).toBeNull();
+  });
+
+  it("returns null for an institutionSlug containing SQL-injection-shaped input", () => {
+    expect(
+      resolveScope(makeSession({ institutionSlug: "' OR 1=1 --" })),
+    ).toBeNull();
+  });
+
+  it("returns a Scope for a well-formed institutionSlug", () => {
+    const scope = resolveScope(makeSession({ institutionSlug: "escola-42" }));
+    expect(scope?.slug).toBe("escola-42");
+  });
 });
