@@ -23,6 +23,10 @@ const schema = z
     LOG_LEVEL: z
       .enum(["trace", "debug", "info", "warn", "error", "fatal"])
       .default("debug"),
+    // Shared secret for the /auth/oauth/upsert endpoint (epic #738, #744).
+    // Optional so the app boots without it; the endpoint itself refuses
+    // every request when unset (see auth.controller.ts).
+    AUTH_OAUTH_UPSERT_TOKEN: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -61,6 +65,7 @@ export class ConfigService {
       POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
       POSTHOG_HOST: process.env.POSTHOG_HOST,
       LOG_LEVEL: process.env.LOG_LEVEL,
+      AUTH_OAUTH_UPSERT_TOKEN: process.env.AUTH_OAUTH_UPSERT_TOKEN,
     });
   }
 
@@ -111,5 +116,8 @@ export class ConfigService {
   }
   get logLevel() {
     return this.config.LOG_LEVEL;
+  }
+  get authOauthUpsertToken() {
+    return this.config.AUTH_OAUTH_UPSERT_TOKEN;
   }
 }
