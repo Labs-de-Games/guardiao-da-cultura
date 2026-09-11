@@ -10,8 +10,14 @@ jest.mock("posthog-js", () => ({
   __esModule: true,
   default: { capture: jest.fn() },
 }));
+// QuizManager.ts does not actually import "../../lib/env" — this mock was
+// long inert (and using a stale flat shape besides). Kept only as a guard:
+// if QuizManager ever starts importing env, the shape below must match the
+// real module's {client: …} export or this file's own guard test below
+// (which imports the *real*, unmocked module) will fail loudly instead of
+// silently running against a wrong mock.
 jest.mock("../../lib/env", () => ({
-  env: { NEXT_PUBLIC_POSTHOG_KEY: "test", NEXT_PUBLIC_POSTHOG_HOST: "test" },
+  env: { client: { env: "test" } },
 }));
 
 function createMockNpc(
@@ -728,5 +734,15 @@ describe("QuizManager", () => {
       quizNumber: null,
       attemptNumber: 2,
     });
+  });
+});
+
+describe("../../lib/env mock guard", () => {
+  it("real module still exports {client: …} — update the mock above if this fails", () => {
+    const realEnv = jest.requireActual<{
+      env: { client: Record<string, unknown> };
+    }>("../../lib/env");
+    expect(realEnv.env).toHaveProperty("client");
+    expect(typeof realEnv.env.client).toBe("object");
   });
 });
