@@ -24,7 +24,7 @@ export const MissionRequirements = [
   },
   {
     id: MissionIds.CURATOR_L3,
-    requiredInfos: [MissionKeys.DANCE_DONE],
+    requiredInfos: [MissionKeys.DANCE_DONE, MissionKeys.STAGE_DONE],
   },
 ];
 
