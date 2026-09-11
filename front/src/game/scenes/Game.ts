@@ -73,6 +73,7 @@ import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
+import { SwitchLightCinematicSystem } from "../systems/SwitchLightCinematicSystem";
 import { SwitchLightSystem } from "../systems/SwitchLightSystem";
 import {
   type DisappearingPlatformLayer,
@@ -149,6 +150,7 @@ export class Game extends Scene implements GameDataAccessor {
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   private ladderCinematicSystem!: LadderCinematicSystem;
+  private switchLightCinematicSystem!: SwitchLightCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   public lightBarSystem!: LightBarSystem;
@@ -381,6 +383,10 @@ export class Game extends Scene implements GameDataAccessor {
       this,
       this.effects,
       this.mapScale,
+    );
+    this.switchLightCinematicSystem = new SwitchLightCinematicSystem(
+      this,
+      this.effects,
     );
     this.createAnimations();
 
@@ -1406,6 +1412,20 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   private setupEvents() {
+    this.events.on(
+      GameEvents.SWITCH_LIGHT_ACTIVATED,
+      (payload: { lightBarName: string }) => {
+        const lb = this.lightBarSystem?.getByInstanceId(payload.lightBarName);
+        if (!lb) return;
+        this.switchLightCinematicSystem.playCinematic(lb.x, lb.y, () => {
+          this.lightBarSystem?.fix(payload.lightBarName);
+          if (lb.placeholderId) {
+            this.placeholderSystem.unlockByInstanceId(lb.placeholderId);
+          }
+        });
+      },
+    );
+
     this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
       this.tutorialSetDialogueOpen = false;

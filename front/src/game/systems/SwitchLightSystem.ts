@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { AudioManager } from "../audio";
+import { GameEvents } from "../constants/GameEvents";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractionComponent } from "../objects/InteractionComponent";
 import { TiledUtils } from "../utils/TiledUtils";
@@ -80,6 +81,13 @@ export class SwitchLightSystem {
     AudioManager.playSfx("sfx.switch");
     instance.sprite.play("switch_light_anim");
     instance.interaction.destroy();
+
+    instance.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      if (!instance.lightBarName) return;
+      this.scene.events.emit(GameEvents.SWITCH_LIGHT_ACTIVATED, {
+        lightBarName: instance.lightBarName,
+      });
+    });
   }
 
   public setPlayerTracking(player: Phaser.Physics.Arcade.Sprite): void {
