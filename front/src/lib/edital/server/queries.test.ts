@@ -4,7 +4,11 @@
 jest.mock("server-only", () => ({}));
 
 import { resetServerEnv } from "../../env-server";
-import { __resetQueryCacheForTests, withCache } from "./queries";
+import {
+  __resetQueryCacheForTests,
+  MAX_CACHE_ENTRIES,
+  withCache,
+} from "./queries";
 
 beforeEach(() => {
   process.env.RESPONSIVEVOICE_API_KEY = "test-key";
@@ -71,5 +75,38 @@ describe("withCache", () => {
     expect(b).toBe("b");
     expect(fnA).toHaveBeenCalledTimes(1);
     expect(fnB).toHaveBeenCalledTimes(1);
+  });
+
+  it("evicts the oldest entry once the cache exceeds MAX_CACHE_ENTRIES", async () => {
+    for (let i = 0; i < MAX_CACHE_ENTRIES + 1; i++) {
+      await withCache(`key-${i}`, () => Promise.resolve(i), {
+        ttlMs: 60_000,
+      });
+    }
+
+    // key-0 was the first inserted and should have been evicted, so this
+    // call must re-run fn instead of serving a cached value.
+    const fn = jest.fn().mockResolvedValue("re-fetched");
+    await withCache("key-0", fn, { ttlMs: 60_000 });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("never grows the cache beyond MAX_CACHE_ENTRIES", async () => {
+    for (let i = 0; i < MAX_CACHE_ENTRIES + 50; i++) {
+      await withCache(`key-${i}`, () => Promise.resolve(i), {
+        ttlMs: 60_000,
+      });
+    }
+
+    // Re-fetching the most recently inserted key must be a cache hit —
+    // proves eviction only removed the oldest entries, not everything.
+    const fn = jest.fn().mockResolvedValue("should not run");
+    const result = await withCache(`key-${MAX_CACHE_ENTRIES + 49}`, fn, {
+      ttlMs: 60_000,
+    });
+
+    expect(fn).not.toHaveBeenCalled();
+    expect(result).toBe(MAX_CACHE_ENTRIES + 49);
   });
 });
