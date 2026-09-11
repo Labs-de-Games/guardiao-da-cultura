@@ -42,6 +42,17 @@ export interface RunHogQLQueryOptions {
 }
 
 /**
+ * HogQL value bindings, e.g. `{ slug: "escola-teste", from_ts: "..." }`
+ * for a query containing `{slug}` / `{from_ts}` placeholders. This is the
+ * *only* channel for caller-supplied variability, per issue #742: "nunca
+ * aceitar fragmento de SQL vindo do chamador — todas as queries são
+ * constantes de compilação e toda variabilidade passa por values
+ * bindados." `query` itself must always be a compile-time string literal
+ * from queries.ts, never built by concatenating a caller value into SQL.
+ */
+export type HogQLValues = Record<string, string | number | boolean>;
+
+/**
  * Raw HogQL Query API client. Scope enforcement (the branded `Scope` type)
  * happens one layer up, in the query builders that construct the `query`
  * string passed here — this function is deliberately scope-agnostic
@@ -53,6 +64,7 @@ export interface RunHogQLQueryOptions {
  */
 export async function runHogQLQuery(
   query: string,
+  values: HogQLValues = {},
   options: RunHogQLQueryOptions = {},
 ): Promise<HogQLQueryResult> {
   if (!isEditalPosthogConfigured()) {
@@ -79,7 +91,7 @@ export async function runHogQLQuery(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: { kind: "HogQLQuery", query },
+        query: { kind: "HogQLQuery", query, values },
         refresh: "blocking",
       }),
       signal: controller.signal,
