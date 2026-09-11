@@ -12,6 +12,13 @@ export default function RootError({
 }) {
   useEffect(() => {
     posthog.captureException(error);
+    // Issue #741's fourth critical_error_occurred hook: a route-segment
+    // error boundary means the player is stuck on this screen — blocking.
+    posthog.capture("critical_error_occurred", {
+      error_code: "react_error_boundary",
+      is_blocking: true,
+      boundary: "app/error.tsx",
+    });
   }, [error]);
 
   return (

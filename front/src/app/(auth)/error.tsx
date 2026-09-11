@@ -12,6 +12,14 @@ export default function AuthError({
 }) {
   useEffect(() => {
     posthog.captureException(error);
+    // Issue #741's fourth critical_error_occurred hook: an error here is
+    // on the auth flow, not inside gameplay — not blocking the edital's
+    // chapter_1_completed funnel by itself.
+    posthog.capture("critical_error_occurred", {
+      error_code: "react_error_boundary",
+      is_blocking: false,
+      boundary: "app/(auth)/error.tsx",
+    });
   }, [error]);
 
   return (
