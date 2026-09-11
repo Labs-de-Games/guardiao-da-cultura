@@ -49,4 +49,48 @@ describe("applyFirstTouchCampaignSource", () => {
 
     expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBe("escola-teste");
   });
+
+  it("rejects a poisoned utm_institution value instead of registering it (#740)", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "<script>alert(1)</script>",
+    });
+
+    applyFirstTouchCampaignSource(client, params);
+
+    expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBeUndefined();
+  });
+
+  it("rejects an oversized utm_institution value", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "a".repeat(101),
+    });
+
+    applyFirstTouchCampaignSource(client, params);
+
+    expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBeUndefined();
+  });
+
+  it("rejects uppercase, underscores, and double hyphens", () => {
+    const client = new PostHogStub();
+    for (const bad of ["Escola-Teste", "escola_teste", "escola--teste"]) {
+      const params = new URLSearchParams({ [INSTITUTION_UTM_PARAM]: bad });
+      applyFirstTouchCampaignSource(client, params);
+      expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBeUndefined();
+    }
+  });
+
+  it("accepts a well-formed slug", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "escola-municipal-centro-2",
+    });
+
+    applyFirstTouchCampaignSource(client, params);
+
+    expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBe(
+      "escola-municipal-centro-2",
+    );
+  });
 });
