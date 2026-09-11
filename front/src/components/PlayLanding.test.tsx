@@ -19,9 +19,12 @@ describe("PlayLanding", () => {
     pushMock.mockClear();
   });
 
-  it("captures landing_page_viewed on mount", () => {
+  it("captures landing_page_viewed on mount, with referrer", () => {
     render(<PlayLanding />);
-    expect(posthog.capture).toHaveBeenCalledWith("landing_page_viewed");
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "landing_page_viewed",
+      expect.objectContaining({ referrer: expect.any(String) }),
+    );
   });
 
   it("dual-emits both the legacy and canonical click events", () => {

@@ -12,7 +12,12 @@ export default function PlayLanding() {
   const enteredAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    posthog.capture("landing_page_viewed");
+    // referrer: issue #741's dual-emit table asks for it specifically on
+    // this event (the funnel's first step). Empty string for direct
+    // visits/new tabs is a legitimate value, not omitted.
+    posthog.capture("landing_page_viewed", {
+      referrer: document.referrer,
+    });
     const enteredAt = enteredAtRef.current;
 
     // The effect-cleanup capture below only fires on unmount, which is
@@ -48,8 +53,11 @@ export default function PlayLanding() {
     // Legacy — unchanged.
     posthog.capture("landing_page_play_clicked");
     // Canonical funnel step (step 2 of 7) — see
-    // docs/specs/edital-onepager.md.
-    posthog.capture("play_clicked");
+    // docs/specs/edital-onepager.md. dwell_ms per issue #741's dual-emit
+    // table ("+ dwell_ms").
+    posthog.capture("play_clicked", {
+      dwell_ms: Date.now() - enteredAtRef.current,
+    });
     const query = searchParams.toString();
     router.push(query ? `/game?${query}` : "/game");
   };
