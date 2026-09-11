@@ -91,6 +91,11 @@
                          "value":4
                         }, 
                         {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"placeholderId",
                          "type":"string",
                          "value":"PH_1"
@@ -133,6 +138,11 @@
                          "name":"intensity",
                          "type":"float",
                          "value":4
+                        }, 
+                        {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
                          "name":"placeholderId",
@@ -179,6 +189,11 @@
                          "value":4
                         }, 
                         {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"placeholderId",
                          "type":"string",
                          "value":"PH_3"
@@ -221,6 +236,11 @@
                          "name":"intensity",
                          "type":"float",
                          "value":4
+                        }, 
+                        {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
                          "name":"placeholderId",
