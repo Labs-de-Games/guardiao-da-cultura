@@ -7,6 +7,7 @@ import {
   buildCampaignsQuery,
   buildCriticalErrorsQuery,
   buildFunnelQuery,
+  buildQuizPassRateQuery,
   buildSessionDurationQuery,
   buildSummaryQuery,
   FUNNEL_EVENTS,
@@ -25,6 +26,7 @@ const ALL_BUILDERS = [
   ["buildSessionDurationQuery", buildSessionDurationQuery],
   ["buildCriticalErrorsQuery", buildCriticalErrorsQuery],
   ["buildCampaignsQuery", buildCampaignsQuery],
+  ["buildQuizPassRateQuery", buildQuizPassRateQuery],
 ] as const;
 
 describe("HogQL query builders — non-negotiable rules (issue #742)", () => {
@@ -105,5 +107,21 @@ describe("HogQL query builders — non-negotiable rules (issue #742)", () => {
     expect(query).toContain("event = 'critical_error_occurred'");
     expect(query).toContain("GROUP BY error_code");
     expect(query).toContain("toBool(properties.is_blocking)");
+  });
+
+  it("buildSessionDurationQuery also selects sessions_started (card 2)", () => {
+    const { query } = buildSessionDurationQuery(scope, range);
+    expect(query).toContain("count() AS sessions_started");
+  });
+
+  it("buildQuizPassRateQuery counts quiz_completed attempts, not unique players", () => {
+    const { query } = buildQuizPassRateQuery(scope, range);
+    expect(query).toContain("countIf(event = 'quiz_completed'");
+    expect(query).not.toContain("uniqExact");
+  });
+
+  it("buildQuizPassRateQuery filters passed attempts via properties.passed", () => {
+    const { query } = buildQuizPassRateQuery(scope, range);
+    expect(query).toContain("toBool(properties.passed)");
   });
 });
