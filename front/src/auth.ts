@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { authConfig } from "./auth.config";
 import { serverEnv } from "./lib/env-server";
@@ -8,6 +9,16 @@ interface OAuthUpsertResponse {
   role: "player" | "institution" | "admin";
   email: string;
   institutionSlug: string | null;
+}
+
+interface PasswordLoginResponse {
+  redirectTo: string;
+  user: {
+    id: string;
+    email: string;
+    role: "player" | "institution" | "admin";
+    institutionSlug: string | null;
+  };
 }
 
 function backendUrl(path: string): string {
@@ -24,7 +35,55 @@ function backendUrl(path: string): string {
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  providers: [Google],
+  providers: [
+    Google,
+    /**
+     * Institution password login (#747). authorize() has no access to the
+     * backend's Set-Cookie response (this is a server-to-server fetch, not
+     * a browser request) — identity travels back in the JSON body instead
+     * and is carried forward through jwt/session exactly like the Google
+     * path above. Any non-institution or unverified credential is
+     * rejected by the backend itself (generic 401), so authorize just
+     * forwards that failure as `null`.
+     */
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Senha", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email;
+        const password = credentials?.password;
+        if (typeof email !== "string" || typeof password !== "string") {
+          return null;
+        }
+
+        try {
+          const response = await fetch(
+            backendUrl("/api/v1/auth/password/login"),
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            },
+          );
+          if (!response.ok) return null;
+
+          const data = (await response.json()) as PasswordLoginResponse;
+          return {
+            id: data.user.id,
+            email: data.user.email,
+            backendId: data.user.id,
+            backendRole: data.user.role,
+            institutionSlug: data.user.institutionSlug,
+          };
+        } catch (err) {
+          console.error("[auth] password login request failed:", err);
+          return null;
+        }
+      },
+    }),
+  ],
   callbacks: {
     /**
      * find-or-create against the backend, gated by the shared upsert
@@ -33,7 +92,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      * fails — an institution session with no backing User row would be a
      * worse failure mode than a rejected login.
      */
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      // Credentials already fully authenticated the user against the
+      // backend inside authorize() above — the OAuth upsert dance below is
+      // Google-only, would send garbage (no real Google identity) for a
+      // credentials sign-in, and must not run for it.
+      if (account?.provider === "credentials") {
+        return true;
+      }
+
       const token = serverEnv.server.authOauthUpsertToken;
       if (!token) {
         console.error(
