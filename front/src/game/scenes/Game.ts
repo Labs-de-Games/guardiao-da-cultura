@@ -27,6 +27,7 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { buildStepSequenceData } from "../data/stepSequenceContent";
 import {
   CostumeMechanicHandler,
   type CostumePartType,
@@ -65,6 +66,7 @@ import { NudgeManager } from "../systems/NudgeManager";
 import { ObjectLayerProcessor } from "../systems/ObjectLayerProcessor";
 import { PersistenceBridge } from "../systems/PersistenceBridge";
 import { PlaceholderSystem } from "../systems/PlaceholderSystem";
+import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
 import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
@@ -93,6 +95,7 @@ const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
   [InteractiveType.PHOTO_CHUNK]: "nudge_hint_shown_photo",
   [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
   [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
+  [InteractiveType.STEP_SEQUENCE]: "nudge_hint_shown_step_sequence",
 };
 
 export class Game extends Scene implements GameDataAccessor {
@@ -114,6 +117,7 @@ export class Game extends Scene implements GameDataAccessor {
     photo: 2,
     posters: 3,
     spotlights: 0,
+    dance: 0,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -125,6 +129,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isControlsOpen: boolean = false;
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
+  private isStepSequenceOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -196,6 +201,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.isControlsOpen = false;
     this.isChunkSelectorOpen = false;
     this.isCostumeSelectorOpen = false;
+    this.isStepSequenceOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -929,6 +935,39 @@ export class Game extends Scene implements GameDataAccessor {
             },
             interactionDistance: 120,
           })),
+        ...this.placeholderSystem
+          .getAll()
+          .filter(
+            (p) => p.type === InteractiveType.STEP_SEQUENCE && !p.isFilled,
+          )
+          .map((p) => {
+            const placeholderSystem = this.placeholderSystem;
+            const config = getInteractionConfig(p.type);
+            return {
+              get x() {
+                return placeholderSystem.getInteractionPoint(p).x;
+              },
+              get y() {
+                return placeholderSystem.getInteractionPoint(p).y;
+              },
+              get interactionY() {
+                return placeholderSystem.getInteractionPoint(p).y;
+              },
+              get displayHeight() {
+                return placeholderSystem.getInteractionPoint(p).height;
+              },
+              get hintY() {
+                return (
+                  placeholderSystem.getInteractionPoint(p).y -
+                  (config.hintOffsetY ?? 0)
+                );
+              },
+              get active() {
+                return !p.isFilled;
+              },
+              interactionDistance: config.range,
+            };
+          }),
         ...(this.spotlightSystem?.getAll().map((s) => ({
           get x() {
             return s.sprite.x;
@@ -1618,6 +1657,51 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
 
+      // Step sequence placeholder candidate
+      const stepSequence = this.placeholderSystem.getNearbyInteractable(
+        px,
+        py,
+        InteractiveType.STEP_SEQUENCE,
+      );
+      if (stepSequence) {
+        const stepSequencePoint =
+          this.placeholderSystem.getInteractionPoint(stepSequence);
+        const stepSequenceDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          stepSequencePoint.x,
+          stepSequencePoint.y,
+        );
+        candidates.push({
+          dist: stepSequenceDist,
+          open: () => {
+            // The ordered ids authored on the Tiled object are the answer.
+            const data = buildStepSequenceData(
+              stepSequence.instanceId,
+              stepSequence.id,
+              stepSequence.state?.filledSlots as (string | null)[] | undefined,
+            );
+            // Bail before flipping any state, so a misconfigured placeholder
+            // cannot freeze the player behind a panel that never opens.
+            if (!data) return;
+
+            if (this.markFloorStarted(this.scoringFloors.dance)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.dance + 1,
+                level_id: this.levelId,
+              });
+            }
+
+            this.isStepSequenceOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED);
+            EventBus.emit("ui:step-sequence-open", data);
+            posthog.capture("step_sequence_interacted", {
+              level_id: this.levelId,
+            });
+          },
+        });
+      }
+
       // Spotlight candidate
       if (this.spotlightSystem) {
         const spotlight = this.spotlightSystem.getNearbySpotlight(
@@ -1754,6 +1838,70 @@ export class Game extends Scene implements GameDataAccessor {
       this.events.emit(GameEvents.DIALOGUE_ENDED);
       this.checkDialogState();
     });
+    this.onEventBus("ui:step-sequence-close", () => {
+      this.closeStepSequence();
+    });
+    // Persist each locked slot on the placeholder, so partial progress
+    // survives closing and reopening the panel.
+    this.onEventBus("ui:step-placed", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      const filledSlots = [
+        ...((p.state?.filledSlots as (string | null)[]) ?? []),
+      ];
+      filledSlots[data.slotIndex] = data.stepId;
+      p.state = { ...p.state, filledSlots };
+    });
+    // One error per failed attempt, not per wrong slot, so
+    // `minigame_completed.errors` reads as "failed attempts".
+    this.onEventBus("ui:step-sequence-rejected", (data) => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.dance);
+      posthog.capture("step_sequence_failed_attempt", {
+        level_id: this.levelId,
+        instance_id: data.instanceId,
+        attempt_number: data.attemptNumber,
+        wrong_count: data.wrongCount,
+        correct_count: data.correctCount,
+        total_slots: data.totalSlots,
+      });
+    });
+    this.onEventBus("ui:step-sequence-submit", (data) => {
+      this.closeStepSequence();
+
+      this.sound.play("sfx.puzzle.success", { volume: 0.7 });
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (p) {
+        this.showSpotlightBeam();
+        this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      }
+
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
+      if (
+        this.placeholderSystem.checkCategoryCompletion(
+          InteractiveType.STEP_SEQUENCE,
+        )
+      ) {
+        this.completeFloor(this.scoringFloors.dance);
+        // Let the panel finish closing before the curator opens the quiz.
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L3,
+            infoKey: MissionKeys.DANCE_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        });
+      }
+    });
     this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
@@ -1879,12 +2027,20 @@ export class Game extends Scene implements GameDataAccessor {
     this.eventBusUnsubs = [];
   }
 
+  private closeStepSequence() {
+    if (!this.isStepSequenceOpen) return;
+    this.isStepSequenceOpen = false;
+    this.events.emit(GameEvents.DIALOGUE_ENDED);
+    this.checkDialogState();
+  }
+
   private checkDialogState() {
     if (
       !this.isDialogueOpen &&
       !this.isControlsOpen &&
       !this.isChunkSelectorOpen &&
       !this.isCostumeSelectorOpen &&
+      !this.isStepSequenceOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -2028,6 +2184,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isControlsOpen ||
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen ||
+        this.isStepSequenceOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
@@ -2065,8 +2222,16 @@ export class Game extends Scene implements GameDataAccessor {
             this.player.y,
             500,
           );
+        const nearbyStepSequence =
+          !this.isCategoryComplete(InteractiveType.STEP_SEQUENCE) &&
+          this.placeholderSystem.getNearbyPlaceholder(
+            this.player.x,
+            this.player.y,
+            500,
+            InteractiveType.STEP_SEQUENCE,
+          );
 
-        if (nearbyCostume || nearbySpotlight) {
+        if (nearbyCostume || nearbySpotlight || nearbyStepSequence) {
           if (nearbyCostume) {
             this.placeholderSystem.pulseNearestPlaceholder(
               this.player.x,
@@ -2086,6 +2251,18 @@ export class Game extends Scene implements GameDataAccessor {
               500,
             );
             posthog.capture("nudge_pulse_shown_spotlight", {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+            });
+          }
+          if (nearbyStepSequence) {
+            this.placeholderSystem.pulseNearestPlaceholder(
+              this.player.x,
+              this.player.y,
+              500,
+              InteractiveType.STEP_SEQUENCE,
+            );
+            posthog.capture("nudge_pulse_shown_step_sequence", {
               level_id: this.levelId,
               mission_id: this.nudgeManager.getCurrentMissionId(),
             });
@@ -2148,6 +2325,10 @@ export class Game extends Scene implements GameDataAccessor {
     [InteractiveType.SPOTLIGHT]: {
       infoKey: MissionKeys.SPOTLIGHTS_DONE,
       missionId: MissionIds.CURATOR_L2,
+    },
+    [InteractiveType.STEP_SEQUENCE]: {
+      infoKey: MissionKeys.DANCE_DONE,
+      missionId: MissionIds.CURATOR_L3,
     },
   };
 

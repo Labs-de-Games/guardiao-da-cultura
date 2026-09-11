@@ -23,6 +23,7 @@ import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { MapInfoBox } from "@/ui/panels/MapInfoBox";
 import { MapPinTooltip } from "@/ui/panels/MapPinTooltip";
+import { StepSequencePanel } from "@/ui/panels/StepSequencePanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
@@ -87,6 +88,8 @@ function OverlayContent({
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
   const openCostumeSelector = useGameUIStore((s) => s.openCostumeSelector);
   const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
+  const openStepSequence = useGameUIStore((s) => s.openStepSequence);
+  const stepSequenceOpen = useGameUIStore((s) => s.stepSequenceOpen);
   const evidenceBoardOpen = useGameUIStore((s) => s.evidenceBoardOpen);
   const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const creditsOpen = useGameUIStore((s) => s.creditsOpen);
@@ -144,6 +147,13 @@ function OverlayContent({
       },
     );
 
+    const unsubStepSequenceOpen = EventBus.on(
+      "ui:step-sequence-open",
+      (data) => {
+        openStepSequence(data);
+      },
+    );
+
     const unsubCostumeSelectorOpen = EventBus.on(
       "ui:costume-selector-open",
       (data) => {
@@ -198,6 +208,7 @@ function OverlayContent({
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
       unsubCostumeSelectorOpen();
+      unsubStepSequenceOpen();
       unsubMapMarker();
       unsubAutoStartTick();
       unsubAutoStartCanceled();
@@ -214,6 +225,7 @@ function OverlayContent({
     addUnlockedBadge,
     openChunkSelector,
     openCostumeSelector,
+    openStepSequence,
     setActiveMapMarker,
     setAutoStartProgress,
     setCreditsOpen,
@@ -221,7 +233,7 @@ function OverlayContent({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (chunkSelectorOpen || costumeSelectorOpen) {
+      if (chunkSelectorOpen || costumeSelectorOpen || stepSequenceOpen) {
         return;
       }
 
@@ -278,6 +290,7 @@ function OverlayContent({
     setBadgeGalleryOpen,
     chunkSelectorOpen,
     costumeSelectorOpen,
+    stepSequenceOpen,
     evidenceBoardOpen,
     setEvidenceBoardOpen,
   ]);
@@ -348,6 +361,7 @@ function OverlayContent({
       <Sidebar />
       <ChunkSelectorPanel />
       <CostumeSelectorPanel />
+      <StepSequencePanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />

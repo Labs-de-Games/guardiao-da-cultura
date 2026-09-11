@@ -1,3 +1,33 @@
 {
-  "npcs": []
+  "_comment": "PLACEHOLDER COPY. Provisional dialogue so the level_03 curator spawns and the intermediate quiz can trigger. Replace with the final script.",
+  "npcs": {
+    "professor_curador": {
+      "name": "Inspetora Cremilda Jarbas",
+      "missionId": "missao_curador_l3",
+      "dialogues": {
+        "intro": [
+          "Chegou em boa hora! A quadrilha vai subir no arraial e ninguém lembra mais a ordem dos passos.",
+          "Assiste o vídeo com atenção e remonta a sequência do jeitinho certo.",
+          "Vou ficar ali perto da fogueira. Me chama quando terminar."
+        ],
+        "ready": [
+          "A sequência já está de pé? Muito bem.",
+          "Agora me diz se você entendeu o porquê de cada passo."
+        ],
+        "completed": [
+          "Olha só que beleza. A quadrilha inteira na ordem, como manda a tradição."
+        ],
+        "success": [
+          "É isso mesmo! Você aprendeu direitinho, pode dançar com a gente."
+        ],
+        "failure": [
+          "Ainda não foi dessa vez. Assiste o vídeo de novo com calma e tenta outra vez."
+        ],
+        "start_quiz_question": ["Podemos começar o teste?"],
+        "intermediateQuiz": [
+          "Quero ver se você prestou atenção mesmo na sequência que acabou de montar."
+        ]
+      }
+    }
+  }
 }
