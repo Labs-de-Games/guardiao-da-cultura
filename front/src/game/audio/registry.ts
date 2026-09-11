@@ -83,6 +83,7 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   { key: "sfx.object.drop", path: "sound/sfx/object.drop_5.mp3" },
   // Switches
   { key: "sfx.switch", path: "sound/sfx/switch.ogg" },
+  { key: "sfx.light_bar.fix", path: "sound/sfx/light_bar_fix.ogg" },
 ];
 
 /**

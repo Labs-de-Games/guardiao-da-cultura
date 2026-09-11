@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "../audio";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import {
   canUseLighting,
@@ -264,6 +265,7 @@ export class LightBarSystem {
   public fix(instanceId: string): void {
     const lb = this.getByInstanceId(instanceId);
     if (!lb?.isBroken) return;
+    AudioManager.playSfx("sfx.light_bar.fix");
     lb.sparkTimer?.remove();
     lb.sparkTimer = undefined;
     lb.sprite.clearTint();
