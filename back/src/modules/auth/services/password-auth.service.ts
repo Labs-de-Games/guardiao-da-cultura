@@ -160,7 +160,10 @@ export class PasswordAuthService {
       MagicLinkTokenType.PasswordReset,
     );
 
-    const resetUrl = `${this.configService.frontendUrl}/institution/reset-password?token=${rawToken}`;
+    // Outside the /institution/* layout deliberately: that layout's
+    // InstitutionGuard requires an authenticated session, but whoever
+    // clicks this link is, by definition, not signed in yet.
+    const resetUrl = `${this.configService.frontendUrl}/reset-institution-password?token=${rawToken}`;
     await this.emailService.sendMagicLinkEmail(user.email, resetUrl);
 
     this.logger.info({ userId: user.id }, "Password reset link sent");
