@@ -479,6 +479,11 @@ export class PlaceholderSystem {
     return this.placeholders.find((p) => p.instanceId === instanceId) || null;
   }
 
+  public unlockByInstanceId(instanceId: string): void {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (p) p.isLocked = false;
+  }
+
   public updatePhotoCell(
     instanceId: string,
     slotIndex: number,

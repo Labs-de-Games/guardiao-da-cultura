@@ -16,6 +16,7 @@ export interface LightBarInstance {
   light?: Phaser.GameObjects.Light;
   targetIntensity: number;
   isOn: boolean;
+  isBroken: boolean;
   sparkTimer?: Phaser.Time.TimerEvent;
 }
 
@@ -120,6 +121,7 @@ export class LightBarSystem {
       light,
       targetIntensity,
       isOn,
+      isBroken: !!config.isBroken,
     };
 
     if (config.isBroken) {
@@ -251,6 +253,21 @@ export class LightBarSystem {
   // Gets all registered light bars.
   public getAll(): LightBarInstance[] {
     return this.lightBars;
+  }
+
+  public getByInstanceId(instanceId: string): LightBarInstance | undefined {
+    return this.lightBars.find((lb) => lb.instanceId === instanceId);
+  }
+
+  // Clears the broken/malfunctioning state: stops the spark loop and
+  // restores the original tint. No-op if already fixed.
+  public fix(instanceId: string): void {
+    const lb = this.getByInstanceId(instanceId);
+    if (!lb?.isBroken) return;
+    lb.sparkTimer?.remove();
+    lb.sparkTimer = undefined;
+    lb.sprite.clearTint();
+    lb.isBroken = false;
   }
 
   // Destroys all light bars and cleans up.
