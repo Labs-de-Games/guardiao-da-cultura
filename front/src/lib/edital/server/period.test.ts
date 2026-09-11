@@ -80,3 +80,58 @@ describe("resolveDateRange — São Paulo civil-day boundaries", () => {
     expect(to.toISOString()).toBe("2026-03-11T02:59:59.999Z");
   });
 });
+
+describe("EDITAL_PERIOD_START — sourced from env, not a hardcoded date", () => {
+  const ORIGINAL_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...ORIGINAL_ENV };
+    process.env.RESPONSIVEVOICE_API_KEY = "test-key";
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it("has no clamp when EDITAL_PERIOD_START is unset in the environment", async () => {
+    process.env.EDITAL_PERIOD_START = undefined;
+
+    const { resolveDateRange: resolve } = await import("./period");
+    const { from } = resolve(
+      { type: "all-time" },
+      new Date("2026-03-10T12:00:00.000Z"),
+    );
+
+    expect(from.getTime()).toBe(0);
+  });
+
+  it("clamps 'all-time' to EDITAL_PERIOD_START read from the environment", async () => {
+    process.env.EDITAL_PERIOD_START = "2026-04-01";
+
+    const { resolveDateRange: resolve } = await import("./period");
+    const { from } = resolve(
+      { type: "all-time" },
+      new Date("2026-06-01T12:00:00.000Z"),
+    );
+
+    expect(from.toISOString()).toBe("2026-04-01T00:00:00.000Z");
+  });
+
+  it("a test override takes precedence over the environment value", async () => {
+    process.env.EDITAL_PERIOD_START = "2026-04-01";
+
+    const {
+      resolveDateRange: resolve,
+      __setEditalPeriodStartForTests: setOverride,
+    } = await import("./period");
+    setOverride(new Date("2026-05-01T00:00:00.000Z"));
+
+    const { from } = resolve(
+      { type: "all-time" },
+      new Date("2026-06-01T12:00:00.000Z"),
+    );
+
+    expect(from.toISOString()).toBe("2026-05-01T00:00:00.000Z");
+  });
+});
