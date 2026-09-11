@@ -257,6 +257,10 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         url: "https://www.flaticon.com/free-icon/rat_12634989",
       },
       {
+        name: "Rat Sprites por Carysaurus",
+        url: "https://carysaurus.itch.io/rat-sprites",
+      },
+      {
         name: "arrow keys por b farias do Noun Project",
         url: "https://thenounproject.com/icon/arrow-keys-1100214/",
         license: "CC BY 3.0",
