@@ -13,6 +13,29 @@ import type { PostHogStub } from "../posthogStub";
 export const CAMPAIGN_SOURCE_PROPERTY = "campaign_source";
 export const INSTITUTION_UTM_PARAM = "utm_institution";
 
+/**
+ * Mirrors the slug format later formalized as ORIGIN_SLUG_PATTERN in
+ * lib/edital/origins.ts (#746) — lowercase letters, digits, single
+ * hyphens, no leading/trailing/double hyphen. Duplicated here (not
+ * imported) because that module doesn't exist yet at this point in the
+ * epic; keep both patterns in sync if either changes.
+ *
+ * Required by issue #740: "Sanitizar todo slug contra ORIGIN_SLUG_PATTERN,
+ * para um link envenenado não injetar cardinalidade alta em
+ * campaign_source." Without this, `?utm_institution=<anything>` gets
+ * written verbatim and permanently (first-touch) onto every event.
+ */
+const CAMPAIGN_SOURCE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const CAMPAIGN_SOURCE_MAX_LENGTH = 100;
+
+function isValidCampaignSourceSlug(value: string): boolean {
+  return (
+    value.length > 0 &&
+    value.length <= CAMPAIGN_SOURCE_MAX_LENGTH &&
+    CAMPAIGN_SOURCE_SLUG_PATTERN.test(value)
+  );
+}
+
 type PostHogLike = Pick<
   typeof posthog | PostHogStub,
   "get_property" | "register"
@@ -38,7 +61,7 @@ export function applyFirstTouchCampaignSource(
   }
 
   const utmInstitution = searchParams.get(INSTITUTION_UTM_PARAM);
-  if (!utmInstitution) {
+  if (!utmInstitution || !isValidCampaignSourceSlug(utmInstitution)) {
     return;
   }
 
