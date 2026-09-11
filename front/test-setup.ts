@@ -38,6 +38,14 @@ if (typeof window !== "undefined") {
   });
 }
 
+// jsdom does not implement HTMLMediaElement playback — the step-sequence panel
+// calls play() on its choreography video.
+if (typeof window !== "undefined") {
+  window.HTMLMediaElement.prototype.play = jest
+    .fn()
+    .mockResolvedValue(undefined);
+}
+
 class MockEventEmitter {
   on = jest.fn();
   off = jest.fn();
