@@ -1,5 +1,6 @@
 import "server-only";
 import { serverEnv } from "../../env-server";
+import { safeRate } from "../rate";
 import type { Rate } from "../types";
 import { runHogQLQuery } from "./hogql";
 import type { ResolvedDateRange } from "./period";
@@ -14,27 +15,10 @@ import {
 } from "./queries";
 import type { Scope } from "./scope";
 
-/**
- * `{value, numerator, denominator}` for every rate the dashboard shows —
- * never an unqualified number (discovery §7's "the number is not
- * defensible to an auditor" mitigation, and issue #742's own rule).
- * `safeRate(0, 0)` is `0`, not `NaN`; `value` is always clamped to
- * `[0, 1]` — the entry rate specifically *will* exceed 100% because
- * `landing_page_viewed` only fires on `/` while `/game` is linkable
- * direct, per #742's own note, so the clamp is load-bearing, not
- * defensive-only.
- */
-export function safeRate(numerator: number, denominator: number): Rate {
-  if (denominator <= 0) {
-    return { value: 0, numerator, denominator };
-  }
-  const raw = numerator / denominator;
-  return {
-    value: Math.max(0, Math.min(1, raw)),
-    numerator,
-    denominator,
-  };
-}
+// safeRate moved to ../rate.ts (client-safe — Screen 1's client-computed
+// entry-rate/chapter-1-completion-rate cards need it without importing
+// anything under server/). Re-exported here for existing call sites.
+export { safeRate };
 
 /**
  * Enforces that a funnel's step counts are monotonically non-increasing —
