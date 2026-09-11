@@ -1224,6 +1224,11 @@
                          "value":"zabumba"
                         }, 
                         {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"options",
                          "type":"list",
                          "value":[
@@ -1278,6 +1283,11 @@
                          "name":"id",
                          "type":"string",
                          "value":"accordion"
+                        }, 
+                        {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
                          "name":"options",
@@ -1336,6 +1346,11 @@
                          "value":"triangle"
                         }, 
                         {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"options",
                          "type":"list",
                          "value":[
@@ -1390,6 +1405,11 @@
                          "name":"id",
                          "type":"string",
                          "value":"jam_block"
+                        }, 
+                        {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
                          "name":"options",
@@ -1462,7 +1482,7 @@
                  "type":"SwitchLight",
                  "visible":true,
                  "width":0,
-                 "x":448,
+                 "x":592,
                  "y":512
                 }, 
                 {
@@ -1486,7 +1506,7 @@
                  "type":"SwitchLight",
                  "visible":true,
                  "width":0,
-                 "x":496,
+                 "x":688,
                  "y":512
                 }, 
                 {
@@ -1510,8 +1530,8 @@
                  "type":"SwitchLight",
                  "visible":true,
                  "width":0,
-                 "x":544,
-                 "y":512
+                 "x":688,
+                 "y":384
                 }, 
                 {
                  "height":0,
@@ -1535,7 +1555,7 @@
                  "visible":true,
                  "width":0,
                  "x":592,
-                 "y":512
+                 "y":384
                 }],
          "opacity":1,
          "type":"objectgroup",
