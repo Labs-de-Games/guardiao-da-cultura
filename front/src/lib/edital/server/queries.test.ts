@@ -124,4 +124,17 @@ describe("HogQL query builders — non-negotiable rules (issue #742)", () => {
     const { query } = buildQuizPassRateQuery(scope, range);
     expect(query).toContain("toBool(properties.passed)");
   });
+
+  it("buildCampaignsQuery groups by utm_source (a real breakdown, not a single total)", () => {
+    const { query } = buildCampaignsQuery(scope, range);
+    expect(query).toContain("GROUP BY source");
+    expect(query).toContain("properties.utm_source");
+  });
+
+  it("buildCampaignsQuery labels a missing utm_source as 'direto'", () => {
+    const { query } = buildCampaignsQuery(scope, range);
+    expect(query).toContain(
+      "coalesce(nullIf(properties.utm_source, ''), 'direto')",
+    );
+  });
 });
