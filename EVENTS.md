@@ -1,5 +1,24 @@
 # Eventos de Analytics — Dashboard
 
+> **Existem quatro stacks de analytics neste repositório** (registrado
+> aqui por #748 para que nenhuma delas seja confundida com "o" analytics
+> do produto):
+> 1. **PostHog** (`front/src/components/PostHogProvider.tsx`,
+>    `back/src/modules/posthog/*`) — **fonte de verdade do dashboard do
+>    edital** (épico #738). Todo número reportado à instituição vem daqui.
+> 2. **Pipeline Postgres** (`game_event` + `analytics.service.ts` +
+>    `dashboard.service.ts`, `GET /metrics`) — dashboard interno legado,
+>    mantido como fallback até as telas do edital (#745) rodarem um ciclo
+>    completo de apuração em produção (#748). Não é a fonte de verdade do
+>    edital.
+> 3. **Contentsquare** (`front/src/app/layout.tsx`, script `t.contentsquare.net`)
+>    — sessão/heatmap de terceiros, fora do escopo deste documento.
+> 4. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
+>    conversão de anúncios, fora do escopo deste documento.
+>
+> Um print de qualquer uma das stacks 2–4 **não** representa o número do
+> edital — só a stack 1 (PostHog) faz isso.
+
 Este documento descreve:
 - **Métricas do dashboard** e quais eventos alimentam cada card/visão.
 - **Eventos já emitidos** no front e consumidos pelo back.
@@ -245,3 +264,63 @@ autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`
 # Observações
 - Após alterações no formato de metadata, **recomenda-se limpar eventos antigos** no banco de desenvolvimento (para evitar taxas > 100%).
 - O backend aceita múltiplas chaves para identificar capítulo/sessão 1, mas `levelNumber` é o caminho mais seguro.
+
+---
+
+# Funil canônico do edital (épico #738)
+
+Sete passos, nesta ordem, é o que `FUNNEL_EVENTS` em
+`front/src/lib/edital/server/queries.ts` usa nas queries HogQL Q1 e Q4
+(summary e funnel). Nomes e ordem são interinos até o onepager real
+substituir `docs/specs/edital-onepager.md` (discovery §1.1) — mas já são
+os nomes de evento reais emitidos em produção.
+
+| # | Evento | Propriedades obrigatórias | Onde é emitido |
+|---|---|---|---|
+| 1 | `landing_page_viewed` | — | `PlayLanding.tsx` |
+| 2 | `play_clicked` | — | `PlayLanding.tsx` |
+| 3 | `gameplay_started` | `level_id`, `level_number` | `Game.ts` (via `captureOncePerSession`) |
+| 4 | `chapter_1_started` | `level_id` | `Game.ts` (só quando `levelDef.levelNumber === 1`) |
+| 5 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
+| 6 | `quiz_completed` | `level_id`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
+| 7 | `chapter_1_completed` | `level_id` | `QuizManager.ts` (só no capítulo 1) |
+
+Todo passo carrega `properties.anonymous_player_id` (identidade durável,
+issue #740) e `properties.campaign_source` (attribution, issue #740) —
+`COMMON_PREDICATE` em `queries.ts` filtra por ambos; sem eles a linha não
+entra em nenhuma métrica do edital.
+
+## Mapa de dual-emit
+
+Cada passo canônico é emitido **ao lado**, não **no lugar**, de um evento
+legado já consumido por outra coisa (dashboard Postgres, `game_event`).
+Um site de código pode disparar os dois na mesma chamada:
+
+| Canônico (funil do edital) | Legado (mantido, outro consumidor) | Diferença de disparo |
+|---|---|---|
+| `gameplay_started` | `game_started` | Legado dispara 1x por nível (a cena `Game` reinicia a cada nível); canônico dispara **1x por sessão**, via `captureOncePerSession` — ver `docs/specs/discovery-738-dashboard-edital.md` §8 step 3 ("gameplay_started fires exactly once under StrictMode") |
+| `chapter_1_started` | `level.started` (→ `game_event`, dashboard Postgres) | Canônico só dispara quando `levelDef.levelNumber === 1`; legado dispara para todo nível |
+| `chapter_1_completed` | `level.completed` (→ `game_event`) | Mesma restrição a capítulo 1 |
+| `play_clicked` | `landing_page_play_clicked` | Nomes distintos, mesmo disparo — mantido por compatibilidade com dashboards PostHog já existentes que consultam `landing_page_play_clicked` |
+| `quiz_started` / `quiz_completed` | — | Sem par legado; já eram PostHog-nativos antes do épico #738 |
+
+## Decisão: quizzes intermediários fora do denominador
+
+`intermediate_quiz_started`/`intermediate_quiz_completed` (quizzes no meio
+de um nível, ver seção anterior) **não entram** em `FUNNEL_EVENTS` nem em
+nenhuma query do edital. Só o quiz de fim de nível (`quiz_started`/
+`quiz_completed`) conta para o funil. Motivo: o edital audita conclusão de
+capítulo, não engajamento por sub-etapa — incluir os intermediários infla
+o numerador de "iniciou quiz" sem representar um marco que o edital
+reconhece, e um jogador pode completar vários quizzes intermediários sem
+nunca chegar ao quiz de fim de nível. Decisão tomada implicitamente no
+código desde a issue #742; registrada aqui explicitamente por #748.
+
+## Correção: `game_load_failed` não cobre falha de asset
+
+`game_load_failed` só cobre as três etapas do try/catch de `initGame`
+(`player_id_resolution`/`module_import`/`phaser_init`) — nunca cobriu
+falha de asset via `loaderror`, apesar do texto antigo deste documento
+afirmar o contrário. `critical_error_occurred` é o evento correto para
+isso (ver a tabela de eventos PostHog acima); `handleLoadingError` foi
+implementado para emiti-lo na issue #741.
