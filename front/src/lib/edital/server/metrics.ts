@@ -7,6 +7,7 @@ import {
   buildCampaignsQuery,
   buildCriticalErrorsQuery,
   buildFunnelQuery,
+  buildQuizPassRateQuery,
   buildSessionDurationQuery,
   buildSummaryQuery,
   FUNNEL_EVENTS,
@@ -203,20 +204,45 @@ export async function fetchFunnel(
   });
 }
 
-/** Q2 orchestration: average and median session duration in seconds. */
+/**
+ * Q2 orchestration: average/median session duration in seconds, plus
+ * `sessionsStarted` — issue #745's card 2, a session count (not a
+ * unique-player count, unlike card 1).
+ */
 export async function fetchSessionDuration(
   scope: Scope,
   range: ResolvedDateRange,
-): Promise<{ avgSeconds: number; medianSeconds: number }> {
+): Promise<{
+  avgSeconds: number;
+  medianSeconds: number;
+  sessionsStarted: number;
+}> {
   const key = `session-duration:${scope.slug}:${rangeKey(range)}`;
   return withCache(key, async () => {
     const { query, values } = buildSessionDurationQuery(scope, range);
     const result = await runHogQLQuery(query, values);
-    const [avgSeconds, medianSeconds] = result.results[0] ?? [0, 0];
+    const [avgSeconds, medianSeconds, sessionsStarted] = result.results[0] ?? [
+      0, 0, 0,
+    ];
     return {
       avgSeconds: Number(avgSeconds ?? 0),
       medianSeconds: Number(medianSeconds ?? 0),
+      sessionsStarted: Number(sessionsStarted ?? 0),
     };
+  });
+}
+
+/** Card 7 orchestration: per-attempt quiz pass rate as {value, numerator, denominator}. */
+export async function fetchQuizPassRate(
+  scope: Scope,
+  range: ResolvedDateRange,
+): Promise<Rate> {
+  const key = `quiz-pass-rate:${scope.slug}:${rangeKey(range)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildQuizPassRateQuery(scope, range);
+    const result = await runHogQLQuery(query, values);
+    const [passed, total] = result.results[0] ?? [0, 0];
+    return safeRate(Number(passed ?? 0), Number(total ?? 0));
   });
 }
 

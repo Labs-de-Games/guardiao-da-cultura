@@ -11,6 +11,7 @@ import {
   fetchCampaigns,
   fetchCriticalErrors,
   fetchFunnel,
+  fetchQuizPassRate,
   fetchSessionDuration,
   fetchSummary,
   MAX_CACHE_ENTRIES,
@@ -243,15 +244,19 @@ describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration
     }
   });
 
-  it("fetchSessionDuration returns avg and median seconds", async () => {
+  it("fetchSessionDuration returns avg, median seconds, and sessionsStarted", async () => {
     mockRunHogQLQuery.mockResolvedValue({
-      columns: ["avg_seconds", "median_seconds"],
-      results: [[320.5, 280]],
+      columns: ["avg_seconds", "median_seconds", "sessions_started"],
+      results: [[320.5, 280, 150]],
     });
 
     const result = await fetchSessionDuration(scope, range);
 
-    expect(result).toEqual({ avgSeconds: 320.5, medianSeconds: 280 });
+    expect(result).toEqual({
+      avgSeconds: 320.5,
+      medianSeconds: 280,
+      sessionsStarted: 150,
+    });
   });
 
   it("fetchSessionDuration defaults to zero when there are no rows", async () => {
@@ -259,7 +264,33 @@ describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration
 
     const result = await fetchSessionDuration(scope, range);
 
-    expect(result).toEqual({ avgSeconds: 0, medianSeconds: 0 });
+    expect(result).toEqual({
+      avgSeconds: 0,
+      medianSeconds: 0,
+      sessionsStarted: 0,
+    });
+  });
+
+  it("fetchQuizPassRate returns a safeRate of passed/total attempts", async () => {
+    mockRunHogQLQuery.mockResolvedValue({
+      columns: ["passed", "total"],
+      results: [[30, 40]],
+    });
+
+    const result = await fetchQuizPassRate(scope, range);
+
+    expect(result).toEqual({ value: 0.75, numerator: 30, denominator: 40 });
+  });
+
+  it("fetchQuizPassRate returns 0, not NaN, when there are no attempts", async () => {
+    mockRunHogQLQuery.mockResolvedValue({
+      columns: ["passed", "total"],
+      results: [[0, 0]],
+    });
+
+    const result = await fetchQuizPassRate(scope, range);
+
+    expect(result.value).toBe(0);
   });
 
   it("fetchCriticalErrors sums the total and keeps the per-error_code breakdown", async () => {
