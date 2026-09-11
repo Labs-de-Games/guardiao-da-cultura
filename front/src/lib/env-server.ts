@@ -26,6 +26,15 @@ const serverSchema = z.object({
    * (5 minutes), explicitly pending #739(b)'s rate-limit answer.
    */
   editalQueryCacheTtlMs: z.coerce.number().int().positive().default(300000),
+  /**
+   * The reportable window's start — an ISO date string (e.g.
+   * "2026-04-01"), set once #740's actual deploy date is known (see
+   * implementation-plan step 5). Config, not a code constant: the date
+   * can only be known after #740 ships, and ops setting an env var on
+   * deploy day is safer than a PR racing to hardcode a guess. Unset
+   * means "no clamp yet" — the only honest value before that day.
+   */
+  editalPeriodStart: z.coerce.date().optional(),
 });
 
 let _serverEnv: z.infer<typeof serverSchema> | null = null;
@@ -39,6 +48,7 @@ function getServerEnv() {
       editalPosthogProjectId: process.env.POSTHOG_PROJECT_ID,
       editalPosthogAppHost: process.env.POSTHOG_APP_HOST,
       editalQueryCacheTtlMs: process.env.EDITAL_QUERY_CACHE_TTL_MS,
+      editalPeriodStart: process.env.EDITAL_PERIOD_START,
     });
   }
   return _serverEnv;
