@@ -48,9 +48,6 @@ function InstitutionLinksContent() {
   const [campaign, setCampaign] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const registryEntry = CAMPAIGN_ORIGINS.find(
-    (entry) => entry.slug === selectedRegistrySlug,
-  );
   const effectiveSlug =
     selectedRegistrySlug === CUSTOM_SLUG_VALUE
       ? customSlug
