@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { sendGameEvent } from "../../lib/analyticsApi";
 import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import {
@@ -89,6 +90,30 @@ export class QuizManager {
           .emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
             "[Erro de Sistema] Não há perguntas cadastradas para esta missão.",
           ]);
+
+        // Issue #741's third critical_error_occurred hook: without quiz
+        // data the player is stuck on this mission and can't progress —
+        // always blocking.
+        {
+          const criticalMetadata = {
+            error_code: "quiz_data_missing",
+            is_blocking: true,
+            mission_id: missionId,
+            level_id: this.context.getLevelId(),
+          };
+          posthog.capture("critical_error_occurred", criticalMetadata);
+          sendGameEvent({
+            userId: this.context.getRegistry().get("userId"),
+            type: GameEventType.EVENT_LOGGED,
+            timestamp: new Date().toISOString(),
+            metadata: { severity: "critical", ...criticalMetadata },
+          }).catch((err) => {
+            console.error(
+              "[QuizManager] Failed to log critical_error_occurred:",
+              err,
+            );
+          });
+        }
         return;
       }
 
@@ -185,9 +210,17 @@ export class QuizManager {
 
                 // Canonical funnel step — only chapter 1 has one; see the
                 // 7-step funnel in docs/specs/edital-onepager.md.
+                // score/stars/duration_seconds per issue #741's dual-emit
+                // table ("+ score, stars, duration_seconds").
                 if (levelDef.levelNumber === 1) {
                   posthog.capture("chapter_1_completed", {
                     level_id: levelId,
+                    score: payload.totalQuarters,
+                    stars: payload.totalStars,
+                    duration_seconds: Math.round(
+                      (Date.now() - new Date(payload.startedAt).getTime()) /
+                        1000,
+                    ),
                   });
                 }
 

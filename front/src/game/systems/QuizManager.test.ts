@@ -10,6 +10,9 @@ jest.mock("posthog-js", () => ({
   __esModule: true,
   default: { capture: jest.fn() },
 }));
+jest.mock("../../lib/analyticsApi", () => ({
+  sendGameEvent: jest.fn().mockResolvedValue(undefined),
+}));
 // QuizManager.ts does not actually import "../../lib/env" — this mock was
 // long inert (and using a stale flat shape besides). Kept only as a guard:
 // if QuizManager ever starts importing env, the shape below must match the
@@ -198,6 +201,17 @@ describe("QuizManager", () => {
     expect(events.emit).toHaveBeenCalledWith(GameEvents.SHOW_DIALOGUE_REQUEST, [
       "[Erro de Sistema] Não há perguntas cadastradas para esta missão.",
     ]);
+
+    // Issue #741's third critical_error_occurred hook: missing quiz data
+    // blocks the player on this mission.
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "critical_error_occurred",
+      expect.objectContaining({
+        error_code: "quiz_data_missing",
+        is_blocking: true,
+        mission_id: "empty",
+      }),
+    );
   });
 
   it("should show confirmation when NPC exists and quiz has questions", () => {
@@ -668,7 +682,12 @@ describe("QuizManager", () => {
 
     expect(posthog.capture).toHaveBeenCalledWith(
       "chapter_1_completed",
-      expect.objectContaining({ level_id: context.getLevelId() }),
+      expect.objectContaining({
+        level_id: context.getLevelId(),
+        score: expect.any(Number),
+        stars: expect.any(Number),
+        duration_seconds: expect.any(Number),
+      }),
     );
   });
 
