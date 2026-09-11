@@ -1903,6 +1903,9 @@ export class Game extends Scene implements GameDataAccessor {
               id: String(band.id),
               options: band.options ?? [],
             });
+            posthog.capture("band_interacted", {
+              level_id: this.levelId,
+            });
           },
         });
       }
