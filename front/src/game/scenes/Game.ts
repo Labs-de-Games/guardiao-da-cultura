@@ -57,6 +57,7 @@ import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { captureOncePerSession } from "../systems/captureOncePerSession";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
@@ -702,7 +703,17 @@ export class Game extends Scene implements GameDataAccessor {
       );
     });
 
+    // Legacy — unchanged, still fires once per level (scene restart per
+    // LevelCinematic.ts).
     posthog.capture("game_started", {
+      level_id: this.levelId,
+      level_number: this.levelDef.levelNumber,
+    });
+
+    // Canonical funnel step — must fire exactly once per session, unlike
+    // the legacy event above. See docs/specs/discovery-738-dashboard-edital.md
+    // §8 step 3 ("gameplay_started fires exactly once under StrictMode").
+    captureOncePerSession("gameplay_started", {
       level_id: this.levelId,
       level_number: this.levelDef.levelNumber,
     });
@@ -995,6 +1006,13 @@ export class Game extends Scene implements GameDataAccessor {
           levelNumber: this.levelDef.levelNumber,
         },
       );
+
+      // Canonical funnel step — only chapter 1 has one; other levels have
+      // no corresponding canonical step (see the 7-step funnel in
+      // docs/specs/edital-onepager.md).
+      if (this.levelDef.levelNumber === 1) {
+        posthog.capture("chapter_1_started", { level_id: this.levelId });
+      }
     }
     this.setupCameras(map);
 
