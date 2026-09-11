@@ -53,6 +53,16 @@ export class User {
   @Column({ type: "varchar", nullable: true })
   institutionSlug!: string | null;
 
+  /**
+   * argon2id hash, nullable — `User` is 100% passwordless (magic link)
+   * otherwise. `null` means "no password set" (a Google-only institution
+   * account, or a magic-link player account). New credential surface for
+   * institution accounts specifically (issue #747), not a general player
+   * feature. Never select this column into an API response.
+   */
+  @Column({ type: "varchar", nullable: true, select: false })
+  passwordHash!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
