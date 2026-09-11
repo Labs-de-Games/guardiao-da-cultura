@@ -78,12 +78,14 @@ export interface EditalReportResponse {
   } | null;
 }
 
+export interface CampaignOriginBreakdown {
+  /** utm_source within the caller's own institution slug; "direto" if absent. */
+  source: string;
+  uniquePlayers: number;
+}
+
 export interface EditalCampaignsResponse {
   linked: boolean;
-  /**
-   * Total unique players attributed to the caller's own slug. Not yet
-   * the full per-origin breakdown #746 wants — see
-   * server/queries.ts's buildCampaignsQuery for why.
-   */
-  data: { uniquePlayers: number } | null;
+  /** Per-utm_source breakdown for the caller's own institution slug (issue #746). */
+  data: CampaignOriginBreakdown[] | null;
 }

@@ -297,15 +297,29 @@ describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration
     expect(result.byErrorCode.unknown).toBe(3);
   });
 
-  it("fetchCampaigns returns the unique player count", async () => {
+  it("fetchCampaigns returns a per-source breakdown, not a single total", async () => {
     mockRunHogQLQuery.mockResolvedValue({
-      columns: ["unique_players"],
-      results: [[42]],
+      columns: ["source", "unique_players"],
+      results: [
+        ["instagram", 30],
+        ["direto", 12],
+      ],
     });
 
     const result = await fetchCampaigns(scope, range);
 
-    expect(result).toEqual({ uniquePlayers: 42 });
+    expect(result).toEqual([
+      { source: "instagram", uniquePlayers: 30 },
+      { source: "direto", uniquePlayers: 12 },
+    ]);
+  });
+
+  it("fetchCampaigns returns an empty array when there is no traffic", async () => {
+    mockRunHogQLQuery.mockResolvedValue({ columns: [], results: [] });
+
+    const result = await fetchCampaigns(scope, range);
+
+    expect(result).toEqual([]);
   });
 
   it("different slugs never share a cache entry", async () => {

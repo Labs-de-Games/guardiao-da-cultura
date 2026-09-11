@@ -252,16 +252,28 @@ export async function fetchCriticalErrors(
   });
 }
 
-/** Campaigns orchestration (#746) — see queries.ts's buildCampaignsQuery. */
+export interface CampaignOriginBreakdown {
+  source: string;
+  uniquePlayers: number;
+}
+
+/**
+ * Campaigns orchestration (#746) — a real per-utm_source breakdown for
+ * the caller's own institution slug, not a single total. See
+ * queries.ts's buildCampaignsQuery for why utm_source is the right
+ * sub-origin dimension.
+ */
 export async function fetchCampaigns(
   scope: Scope,
   range: ResolvedDateRange,
-): Promise<{ uniquePlayers: number }> {
+): Promise<CampaignOriginBreakdown[]> {
   const key = `campaigns:${scope.slug}:${rangeKey(range)}`;
   return withCache(key, async () => {
     const { query, values } = buildCampaignsQuery(scope, range);
     const result = await runHogQLQuery(query, values);
-    const [uniquePlayers] = result.results[0] ?? [0];
-    return { uniquePlayers: Number(uniquePlayers ?? 0) };
+    return result.results.map((row) => {
+      const [source, uniquePlayers] = row as [string, number];
+      return { source, uniquePlayers: Number(uniquePlayers ?? 0) };
+    });
   });
 }

@@ -65,7 +65,9 @@ describe("GET /api/edital/campaigns", () => {
       scope,
       range,
     });
-    mockFetchCampaigns.mockResolvedValue({ uniquePlayers: 10 });
+    mockFetchCampaigns.mockResolvedValue([
+      { source: "direto", uniquePlayers: 10 },
+    ]);
 
     await GET(makeRequest("?slug=escola-b"));
 
@@ -74,7 +76,7 @@ describe("GET /api/edital/campaigns", () => {
     expect(mockFetchCampaigns).toHaveBeenCalledWith(scope, range);
   });
 
-  it("returns the unique player count on success", async () => {
+  it("returns the per-source breakdown on success", async () => {
     const scope = __createScopeForTests("escola-teste");
     const range = { from: new Date(0), to: new Date() };
     mockResolveEditalRequestContext.mockResolvedValue({
@@ -82,11 +84,20 @@ describe("GET /api/edital/campaigns", () => {
       scope,
       range,
     });
-    mockFetchCampaigns.mockResolvedValue({ uniquePlayers: 42 });
+    mockFetchCampaigns.mockResolvedValue([
+      { source: "instagram", uniquePlayers: 30 },
+      { source: "direto", uniquePlayers: 12 },
+    ]);
 
     const response = await GET(makeRequest());
     const data = await response.json();
 
-    expect(data).toEqual({ linked: true, data: { uniquePlayers: 42 } });
+    expect(data).toEqual({
+      linked: true,
+      data: [
+        { source: "instagram", uniquePlayers: 30 },
+        { source: "direto", uniquePlayers: 12 },
+      ],
+    });
   });
 });
