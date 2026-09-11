@@ -35,6 +35,14 @@ const serverSchema = z.object({
    * means "no clamp yet" — the only honest value before that day.
    */
   editalPeriodStart: z.coerce.date().optional(),
+
+  /**
+   * Shared secret for POST /auth/oauth/upsert (epic #738, #744) — sent as
+   * the x-oauth-upsert-token header from auth.ts's signIn callback.
+   * Optional so the app boots without it; signIn refuses institution
+   * sign-in when unset rather than calling the backend with no token.
+   */
+  authOauthUpsertToken: z.string().optional(),
 });
 
 let _serverEnv: z.infer<typeof serverSchema> | null = null;
@@ -49,6 +57,7 @@ function getServerEnv() {
       editalPosthogAppHost: process.env.POSTHOG_APP_HOST,
       editalQueryCacheTtlMs: process.env.EDITAL_QUERY_CACHE_TTL_MS,
       editalPeriodStart: process.env.EDITAL_PERIOD_START,
+      authOauthUpsertToken: process.env.AUTH_OAUTH_UPSERT_TOKEN,
     });
   }
   return _serverEnv;
