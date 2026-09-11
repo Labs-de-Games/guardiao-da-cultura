@@ -161,9 +161,11 @@ describe("PasswordAuthService", () => {
         buildService();
       userService.findByEmailWithPasswordHash.mockResolvedValue({
         id: "inst-id",
+        email: "i@example.com",
         role: Role.Institution,
         isActive: true,
         passwordHash: "hashed",
+        institutionSlug: "escola-teste",
       } as User);
       passwordService.verify.mockResolvedValue(true);
 
@@ -176,7 +178,15 @@ describe("PasswordAuthService", () => {
         res,
         "refresh-token",
       );
-      expect(result).toEqual({ redirectTo: "/institution" });
+      expect(result).toEqual({
+        redirectTo: "/institution",
+        user: {
+          id: "inst-id",
+          email: "i@example.com",
+          role: Role.Institution,
+          institutionSlug: "escola-teste",
+        },
+      });
     });
   });
 

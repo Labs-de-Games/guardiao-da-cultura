@@ -91,7 +91,15 @@ export class PasswordAuthService {
   async login(
     dto: PasswordLoginDto,
     res: Response,
-  ): Promise<{ redirectTo: string }> {
+  ): Promise<{
+    redirectTo: string;
+    user: {
+      id: string;
+      email: string;
+      role: Role;
+      institutionSlug: string | null;
+    };
+  }> {
     const genericError = () =>
       new UnauthorizedException("Invalid email or password");
 
@@ -129,7 +137,15 @@ export class PasswordAuthService {
     });
     this.logger.info({ userId: user.id }, "User logged in via password");
 
-    return { redirectTo: "/institution" };
+    return {
+      redirectTo: "/institution",
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        institutionSlug: user.institutionSlug,
+      },
+    };
   }
 
   async requestPasswordReset(email: string): Promise<{ message: string }> {
