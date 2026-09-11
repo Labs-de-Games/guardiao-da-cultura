@@ -1,6 +1,8 @@
 "use client";
 
+import { SessionProvider } from "next-auth/react";
 import { useEffect } from "react";
+import InstitutionSignIn from "@/components/auth/InstitutionSignIn";
 import LoginForm from "@/components/auth/LoginForm";
 import { useToast } from "@/components/ToastProvider";
 import { useRedirectIfAuth } from "@/lib/auth/useRedirectIfAuth";
@@ -35,5 +37,12 @@ export default function LoginPage() {
     if (parsed?.message) showToast(parsed.message, parsed.severity ?? "info");
   }, [showToast]);
 
-  return <LoginForm />;
+  return (
+    <>
+      <LoginForm />
+      <SessionProvider>
+        <InstitutionSignIn />
+      </SessionProvider>
+    </>
+  );
 }
