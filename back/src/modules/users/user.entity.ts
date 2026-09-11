@@ -43,6 +43,16 @@ export class User {
   @Column({ type: "timestamp", nullable: true })
   lastLoginAt!: Date | null;
 
+  /**
+   * Nullable — no Institution entity, no per-student data (epic #738,
+   * #744). `null` means "not yet linked"; assignment is by admin
+   * seed/update script, a known manual step, not a screen. Format
+   * validated at the application layer, not here — see
+   * ORIGIN_SLUG_PATTERN in the oauth-upsert DTO.
+   */
+  @Column({ type: "varchar", nullable: true })
+  institutionSlug!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
