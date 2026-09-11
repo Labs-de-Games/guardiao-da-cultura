@@ -80,7 +80,6 @@ export const MissionRegistry: Record<string, MissionDef> = {
       },
     ],
   },
-  // Mock: single placeholder step, not yet reachable in the map.
   [MissionIds.CURATOR_L3]: {
     id: MissionIds.CURATOR_L3,
     title: "Festa de São João",
@@ -89,6 +88,11 @@ export const MissionRegistry: Record<string, MissionDef> = {
         infoKey: MissionKeys.DANCE_DONE,
         text: "Remontar a sequência de passos da quadrilha",
         categoryType: InteractiveType.STEP_SEQUENCE,
+      },
+      {
+        infoKey: MissionKeys.STAGE_DONE,
+        text: "Montar a banda de forró no palco",
+        categoryType: InteractiveType.BAND,
       },
     ],
   },

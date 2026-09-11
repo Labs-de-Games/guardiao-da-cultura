@@ -130,6 +130,7 @@ export class Game extends Scene implements GameDataAccessor {
     posters: 3,
     spotlights: 0,
     dance: 0,
+    band: 0,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -1105,8 +1106,10 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.events.on(
       GameEvents.INFO_COLLECTED,
-      (payload: string | { infoKey: string }) => {
+      (payload: string | { infoKey: string; missionId?: string }) => {
         const infoKey = typeof payload === "string" ? payload : payload.infoKey;
+        const missionId =
+          typeof payload === "string" ? undefined : payload.missionId;
         this.questManager.collectInfo(infoKey);
 
         if (
@@ -1150,7 +1153,10 @@ export class Game extends Scene implements GameDataAccessor {
           !this.questManager.isIntermediateQuizDone(infoKey) &&
           this.quizManager.getQuizMode() === "none"
         ) {
-          if (infoKey === MissionKeys.STAGE_DONE) {
+          if (
+            infoKey === MissionKeys.STAGE_DONE &&
+            missionId === MissionIds.CURATOR_L2
+          ) {
             const collected = this.questManager.getCollectedInfos(
               MissionIds.CURATOR_L2,
             );
@@ -1884,6 +1890,12 @@ export class Game extends Scene implements GameDataAccessor {
         candidates.push({
           dist: bandDist,
           open: () => {
+            if (this.markFloorStarted(this.scoringFloors.band)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.band + 1,
+                level_id: this.levelId,
+              });
+            }
             this.isBandPanelOpen = true;
             this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
             EventBus.emit("ui:band-panel-open", {
@@ -2103,6 +2115,7 @@ export class Game extends Scene implements GameDataAccessor {
     });
     this.onEventBus("ui:band-choice-rejected", () => {
       this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.band);
     });
     this.onEventBus("ui:band-confirm", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
@@ -2123,6 +2136,21 @@ export class Game extends Scene implements GameDataAccessor {
       AudioManager.unlockMusicLayer(layerKey, 400);
       if (AudioManager.isPlaying("music.level_3.main" as AudioKey)) {
         AudioManager.fadeOutMusic(400);
+      }
+
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
+      if (
+        this.placeholderSystem.checkCategoryCompletion(InteractiveType.BAND)
+      ) {
+        this.completeFloor(this.scoringFloors.band);
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L3,
+            infoKey: MissionKeys.STAGE_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        });
       }
     });
     this.onEventBus("ui:costume-part-selected", (data) => {
