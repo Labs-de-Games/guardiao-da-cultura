@@ -214,55 +214,6 @@
                  "width":0,
                  "x":384,
                  "y":448
-                }, 
-                {
-                 "height":0,
-                 "id":80,
-                 "name":"LB_4",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"angle",
-                         "type":"float",
-                         "value":30
-                        }, 
-                        {
-                         "name":"color",
-                         "type":"string",
-                         "value":"#ffff99"
-                        }, 
-                        {
-                         "name":"intensity",
-                         "type":"float",
-                         "value":4
-                        }, 
-                        {
-                         "name":"is_broken",
-                         "type":"bool",
-                         "value":true
-                        }, 
-                        {
-                         "name":"placeholderId",
-                         "type":"string",
-                         "value":"PH_4"
-                        }, 
-                        {
-                         "name":"radius",
-                         "type":"int",
-                         "value":500
-                        }, 
-                        {
-                         "name":"scale",
-                         "type":"float",
-                         "value":4.5
-                        }],
-                 "rotation":0,
-                 "type":"LightBar",
-                 "visible":true,
-                 "width":0,
-                 "x":416,
-                 "y":448
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1388,67 +1339,6 @@
                  "width":0,
                  "x":384,
                  "y":512
-                }, 
-                {
-                 "height":0,
-                 "id":84,
-                 "name":"PH_4",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"alpha",
-                         "type":"float",
-                         "value":1
-                        }, 
-                        {
-                         "name":"id",
-                         "type":"string",
-                         "value":"jam_block"
-                        }, 
-                        {
-                         "name":"is_locked",
-                         "type":"bool",
-                         "value":true
-                        }, 
-                        {
-                         "name":"options",
-                         "type":"list",
-                         "value":[
-                                {
-                                 "type":"string",
-                                 "value":"trumpet"
-                                }, 
-                                {
-                                 "type":"string",
-                                 "value":"flute"
-                                }, 
-                                {
-                                 "type":"string",
-                                 "value":"jam_block"
-                                }]
-                        }, 
-                        {
-                         "name":"scale",
-                         "type":"float",
-                         "value":3.5
-                        }, 
-                        {
-                         "name":"texture",
-                         "type":"string",
-                         "value":"stage-band-ph"
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"band"
-                        }],
-                 "rotation":0,
-                 "type":"PlaceholderInstance",
-                 "visible":true,
-                 "width":0,
-                 "x":416,
-                 "y":512
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1531,30 +1421,6 @@
                  "visible":true,
                  "width":0,
                  "x":688,
-                 "y":384
-                }, 
-                {
-                 "height":0,
-                 "id":91,
-                 "name":"SL_4",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"light_bar",
-                         "type":"string",
-                         "value":"LB_4"
-                        }, 
-                        {
-                         "name":"scale",
-                         "type":"float",
-                         "value":3.5
-                        }],
-                 "rotation":0,
-                 "type":"SwitchLight",
-                 "visible":true,
-                 "width":0,
-                 "x":592,
                  "y":384
                 }],
          "opacity":1,
