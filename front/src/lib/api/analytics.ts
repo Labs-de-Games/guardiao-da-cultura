@@ -1,38 +1,5 @@
 import { apiClient } from "./client";
 
-export interface RecentActivity {
-  id: string;
-  nickname: string;
-  action: string;
-  detail: string;
-  timestamp: Date;
-}
-
-export interface StudentWithDifficulty {
-  nickname: string;
-  levelName: string;
-  attempts: number;
-  status: "failed" | "struggling";
-}
-
-export interface AggregatedMetrics {
-  totalStudents: number;
-  activeStudents: number;
-  averageCompletionRate: number;
-  totalStarsCollected: number;
-  averageQuizAccuracy: number;
-  recentActivity: RecentActivity[];
-  studentsWithDifficulty: StudentWithDifficulty[];
-}
-
-export interface ClassMetrics {
-  id: string;
-  name: string;
-  studentsCount: number;
-  completionRate: number;
-  averageStars: number;
-}
-
 export interface DashboardFunnelMetrics {
   loginCompletionRate: number;
   chapter1StartRate: number;
@@ -68,18 +35,6 @@ export interface DashboardMetrics {
   pedagogical: DashboardPedagogicalMetrics;
   badges: DashboardBadgeMetrics;
   technical: DashboardTechnicalMetrics;
-}
-
-export async function getAggregatedMetrics(): Promise<AggregatedMetrics> {
-  const response = await apiClient.get<AggregatedMetrics>(
-    "/analytics/aggregated",
-  );
-  return response.data;
-}
-
-export async function getClassesMetrics(): Promise<ClassMetrics[]> {
-  const response = await apiClient.get<ClassMetrics[]>("/analytics/classes");
-  return response.data;
 }
 
 export async function getDashboardMetrics(params?: {
