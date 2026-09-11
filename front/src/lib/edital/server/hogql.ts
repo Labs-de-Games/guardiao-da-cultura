@@ -62,10 +62,10 @@ export async function runHogQLQuery(
   const {
     editalPosthogPersonalApiKey,
     editalPosthogProjectId,
-    editalPosthogAppHost,
+    editalPosthogQueryHost,
   } = serverEnv.server;
 
-  const url = `${editalPosthogAppHost}/api/projects/${editalPosthogProjectId}/query/`;
+  const url = `${editalPosthogQueryHost}/api/projects/${editalPosthogProjectId}/query/`;
   const doFetch = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? DEFAULT_HOGQL_TIMEOUT_MS;

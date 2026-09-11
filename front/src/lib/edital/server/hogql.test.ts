@@ -19,7 +19,7 @@ function setConfiguredEnv() {
   process.env.RESPONSIVEVOICE_API_KEY = "test-key";
   process.env.POSTHOG_PERSONAL_API_KEY = TEST_KEY;
   process.env.POSTHOG_PROJECT_ID = "12345";
-  process.env.POSTHOG_APP_HOST = "https://us.posthog.com";
+  process.env.POSTHOG_QUERY_HOST = "https://us.posthog.com";
   resetServerEnv();
 }
 
