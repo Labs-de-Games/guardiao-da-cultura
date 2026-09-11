@@ -2,8 +2,9 @@
 
 import {
   Dashboard as DashboardIcon,
+  FilterAlt as FunnelIcon,
   Logout as LogoutIcon,
-  Settings as SettingsIcon,
+  Assessment as ReportIcon,
 } from "@mui/icons-material";
 import {
   Avatar,
@@ -20,19 +21,26 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SessionProvider, signOut, useSession } from "next-auth/react";
 import InstitutionGuard from "@/components/auth/InstitutionGuard";
-import { useAuth } from "@/lib/auth/useAuth";
 
 const DRAWER_WIDTH = 280;
 
+// #settings/page.tsx (69-line inoperative placeholder) is removed per
+// issue #745 — this issue owns that deletion, not #748 (discovery §2.7).
+// Issue text says "4 entradas"; only 3 real screens exist as of this
+// step (#746's campaign-links screen is the likely 4th, not built yet)
+// — 3 entries here, not a fabricated 4th destination.
 const NAV_ITEMS = [
-  { label: "Visão Geral", href: "/institution", icon: DashboardIcon },
-  { label: "Configurações", href: "/institution/settings", icon: SettingsIcon },
+  { label: "Resumo Executivo", href: "/institution", icon: DashboardIcon },
+  { label: "Funil", href: "/institution/funnel", icon: FunnelIcon },
+  { label: "Relatório", href: "/institution/report", icon: ReportIcon },
 ];
 
 function SidebarContent() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   return (
     <>
@@ -110,7 +118,7 @@ function SidebarContent() {
               fontWeight: 600,
             }}
           >
-            {user?.firstName?.charAt(0) ?? user?.nickname?.charAt(0) ?? "U"}
+            {user?.name?.charAt(0) ?? user?.email?.charAt(0) ?? "U"}
           </Avatar>
           <Box sx={{ minWidth: 0 }}>
             <Typography
@@ -122,14 +130,17 @@ function SidebarContent() {
                 textOverflow: "ellipsis",
               }}
             >
-              {user?.firstName ?? user?.nickname ?? "Usuário"}
+              {user?.name ?? user?.email ?? "Usuário"}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {user?.role === "institution"
-                ? "Instituição"
-                : user?.role === "admin"
-                  ? "Administrador"
-                  : "Usuário"}
+            {/* Static institution chip — issue #745: no campaign selector,
+                scope comes from the session, so the slug is always visible
+                and the user knows exactly what they're looking at. */}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block" }}
+            >
+              {user?.institutionSlug ?? "Instituição não vinculada"}
             </Typography>
           </Box>
         </Box>
@@ -139,7 +150,7 @@ function SidebarContent() {
           color="inherit"
           size="small"
           startIcon={<LogoutIcon fontSize="small" />}
-          onClick={logout}
+          onClick={() => signOut({ callbackUrl: "/login" })}
           sx={{
             textTransform: "none",
             borderColor: "rgba(148,163,184,0.24)",
@@ -162,38 +173,40 @@ export default function InstitutionLayout({
   children: React.ReactNode;
 }) {
   return (
-    <InstitutionGuard>
-      <Box sx={{ display: "flex", minHeight: "100vh", height: "100vh" }}>
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: DRAWER_WIDTH,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
+    <SessionProvider>
+      <InstitutionGuard>
+        <Box sx={{ display: "flex", minHeight: "100vh", height: "100vh" }}>
+          <Drawer
+            variant="permanent"
+            sx={{
               width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-              backgroundColor: "#0f172a",
-              borderRight: "1px solid rgba(148,163,184,0.12)",
-            },
-          }}
-        >
-          <SidebarContent />
-        </Drawer>
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 4,
-            backgroundColor: "background.default",
-            minHeight: "100vh",
-            height: "100vh",
-            overflowY: "auto",
-            overflowX: "hidden",
-          }}
-        >
-          {children}
+              flexShrink: 0,
+              "& .MuiDrawer-paper": {
+                width: DRAWER_WIDTH,
+                boxSizing: "border-box",
+                backgroundColor: "#0f172a",
+                borderRight: "1px solid rgba(148,163,184,0.12)",
+              },
+            }}
+          >
+            <SidebarContent />
+          </Drawer>
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              p: 4,
+              backgroundColor: "background.default",
+              minHeight: "100vh",
+              height: "100vh",
+              overflowY: "auto",
+              overflowX: "hidden",
+            }}
+          >
+            {children}
+          </Box>
         </Box>
-      </Box>
-    </InstitutionGuard>
+      </InstitutionGuard>
+    </SessionProvider>
   );
 }
