@@ -183,6 +183,14 @@ export class QuizManager {
                   attempts: registry.get("has_failed_quiz") || 0,
                 });
 
+                // Canonical funnel step — only chapter 1 has one; see the
+                // 7-step funnel in docs/specs/edital-onepager.md.
+                if (levelDef.levelNumber === 1) {
+                  posthog.capture("chapter_1_completed", {
+                    level_id: levelId,
+                  });
+                }
+
                 void this.persistenceBridge.submitScore();
               } else {
                 registry.set("has_failed_quiz", 1);
