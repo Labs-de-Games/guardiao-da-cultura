@@ -252,6 +252,11 @@ export class PlaceholderSystem {
 
       instance.hintSprite = placeholder;
     }
+
+    if (instance.isLocked) {
+      this.setHintSpriteVisible(instance.hintSprite, false);
+    }
+
     this.placeholders.push(instance);
   }
 
@@ -481,7 +486,22 @@ export class PlaceholderSystem {
 
   public unlockByInstanceId(instanceId: string): void {
     const p = this.getPlaceholderByInstanceId(instanceId);
-    if (p) p.isLocked = false;
+    if (!p) return;
+    p.isLocked = false;
+    this.setHintSpriteVisible(p.hintSprite, true);
+  }
+
+  private setHintSpriteVisible(
+    hintSprite: Phaser.GameObjects.GameObject | undefined,
+    visible: boolean,
+  ): void {
+    if (
+      hintSprite instanceof Phaser.GameObjects.Sprite ||
+      hintSprite instanceof Phaser.GameObjects.Image ||
+      hintSprite instanceof Phaser.GameObjects.Container
+    ) {
+      hintSprite.setVisible(visible);
+    }
   }
 
   public updatePhotoCell(
