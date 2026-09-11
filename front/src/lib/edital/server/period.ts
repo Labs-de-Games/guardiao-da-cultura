@@ -1,4 +1,5 @@
 import "server-only";
+import { serverEnv } from "../../env-server";
 import type { DateRange } from "../types";
 
 export const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";
@@ -9,18 +10,39 @@ export const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";
 // §3.2); Intl does the timezone-aware part, this constant does the rest.
 const SAO_PAULO_UTC_OFFSET_HOURS = 3;
 
-/**
- * The reportable window's start — set once #740's deploy date is known
- * (see #739(d) / implementation-plan step 5). `null` means "no clamp yet",
- * which is only correct before that step ships; `all-time` and an
- * unbounded `custom` range must never resolve to before this once it is
- * set. See docs/specs/discovery-738-dashboard-edital.md §2.4, §7.
- */
-export let EDITAL_PERIOD_START: Date | null = null;
+const NO_OVERRIDE = Symbol("no-period-start-override");
+let periodStartOverrideForTests: Date | null | typeof NO_OVERRIDE = NO_OVERRIDE;
 
-/** Test-only: step 5 will replace this pattern with the real constant. */
+/**
+ * The reportable window's start is genuinely unknowable at commit time —
+ * it can only honestly be #740's deploy date (discovery §2.4), and #740
+ * has not shipped anywhere yet as of this step. Hardcoding a guessed date
+ * here would be worse than not having one: a wrong constant silently
+ * mis-scopes every "all-time" query and every unbounded custom range
+ * forever, with no signal that anything is wrong.
+ *
+ * So this is config, not a code constant: EDITAL_PERIOD_START is read from
+ * the environment (ISO date string, e.g. "2026-04-01"). Ops sets it once
+ * on #740's actual deploy day — no code change, no redeploy of this file,
+ * no risk of the date drifting from whatever got typed into a PR. Until
+ * set, `null` means "no clamp yet", which is the only honest value before
+ * that day.
+ */
+function getEditalPeriodStart(): Date | null {
+  if (periodStartOverrideForTests !== NO_OVERRIDE) {
+    return periodStartOverrideForTests;
+  }
+  return serverEnv.server.editalPeriodStart ?? null;
+}
+
+/** Test-only: overrides the env-derived value; pass `null` to clear the clamp. */
 export function __setEditalPeriodStartForTests(date: Date | null): void {
-  EDITAL_PERIOD_START = date;
+  periodStartOverrideForTests = date;
+}
+
+/** Test-only: removes the override entirely, reverting to the env value. */
+export function __clearEditalPeriodStartOverrideForTests(): void {
+  periodStartOverrideForTests = NO_OVERRIDE;
 }
 
 function saoPauloDateParts(date: Date): {
@@ -98,8 +120,9 @@ export interface ResolvedDateRange {
 }
 
 function clampToPeriodStart(from: Date): Date {
-  if (EDITAL_PERIOD_START && from < EDITAL_PERIOD_START) {
-    return EDITAL_PERIOD_START;
+  const periodStart = getEditalPeriodStart();
+  if (periodStart && from < periodStart) {
+    return periodStart;
   }
   return from;
 }
@@ -135,7 +158,7 @@ export function resolveDateRange(
     }
     case "all-time":
       return {
-        from: EDITAL_PERIOD_START ?? new Date(0),
+        from: getEditalPeriodStart() ?? new Date(0),
         to: saoPauloCivilDayEnd(now),
       };
     case "custom": {
