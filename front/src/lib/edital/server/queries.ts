@@ -204,22 +204,28 @@ ORDER BY critical_count DESC`.trim();
  * the caller's own slug only, with the breakdown in the response body
  * and no parameter in the request" (discovery §2.6).
  *
- * This returns the caller's own total unique-player count. The full
- * per-link/per-origin breakdown #746 wants depends on that issue's
- * origins.ts taxonomy, which is not committed yet (discovery §4's
- * CAMPAIGN_ORIGINS open question) — grouping by a `campaign_source`
- * already equal to the caller's own slug for every row is a single-row,
- * degenerate breakdown, not a real one. Flagged here rather than
- * fabricated; #746 revisits this query once origins.ts exists.
+ * Groups by `properties.utm_source` — the sub-origin *within* the
+ * caller's own institution slug (e.g. an Instagram-tagged link vs a
+ * WhatsApp-tagged link, both carrying the same `utm_institution` but
+ * different `utm_source`, per `buildTrackingUrl`'s optional `source`
+ * param). posthog-js auto-captures standard `utm_*` params (discovery
+ * §3.1's "three findings the issues miss"), so no new instrumentation
+ * was needed to make this real instead of the single-row placeholder it
+ * was before origins.ts existed. Rows with no `utm_source` at all (a
+ * bare link with only `utm_institution`) group under `'direto'`.
  */
 export function buildCampaignsQuery(
   scope: Scope,
   range: ResolvedDateRange,
 ): HogQLQueryPlan {
   const query = `
-SELECT uniqExactIf(properties.anonymous_player_id, event = 'landing_page_viewed') AS unique_players
+SELECT
+  coalesce(nullIf(properties.utm_source, ''), 'direto') AS source,
+  uniqExactIf(properties.anonymous_player_id, event = 'landing_page_viewed') AS unique_players
 FROM events
-WHERE ${COMMON_PREDICATE}`.trim();
+WHERE ${COMMON_PREDICATE}
+GROUP BY source
+ORDER BY unique_players DESC`.trim();
 
   return { query, values: baseValues(scope, range) };
 }
