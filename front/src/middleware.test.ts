@@ -2,7 +2,10 @@
  * @jest-environment node
  */
 import { NextRequest } from "next/server";
-import { ANONYMOUS_PLAYER_COOKIE_NAME } from "./lib/edital/anonymousPlayer";
+import {
+  ANONYMOUS_PLAYER_COOKIE_NAME,
+  ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME,
+} from "./lib/edital/anonymousPlayer";
 import { middleware } from "./middleware";
 
 function makeRequest(
@@ -36,6 +39,24 @@ describe("middleware — durable anonymous-player cookie", () => {
     // NextResponse.next() only carries a Set-Cookie header for cookies we
     // explicitly set — an untouched valid cookie means no rewrite happened.
     expect(cookie).toBeUndefined();
+  });
+
+  it("does not set the freshly-seeded marker when the cookie already existed", () => {
+    const existingId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+    const response = middleware(
+      makeRequest("/", { [ANONYMOUS_PLAYER_COOKIE_NAME]: existingId }),
+    );
+    expect(
+      response.cookies.get(ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME),
+    ).toBeUndefined();
+  });
+
+  it("sets the freshly-seeded marker when it mints a new cookie", () => {
+    const response = middleware(makeRequest("/"));
+    const marker = response.cookies.get(
+      ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME,
+    );
+    expect(marker?.value).toBe("1");
   });
 
   it("replaces an invalid/malformed cookie value", () => {

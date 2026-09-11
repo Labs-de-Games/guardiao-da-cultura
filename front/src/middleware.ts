@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import {
   ANONYMOUS_PLAYER_COOKIE_MAX_AGE_SECONDS,
   ANONYMOUS_PLAYER_COOKIE_NAME,
+  ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME,
+  ANONYMOUS_PLAYER_SEEDED_MARKER_MAX_AGE_SECONDS,
   generateAnonymousPlayerId,
   isValidAnonymousPlayerId,
 } from "./lib/edital/anonymousPlayer";
@@ -63,6 +65,14 @@ function withAnonymousPlayerCookie(
       sameSite: "lax",
     },
   );
+  // Signals to client JS, for one request only, that the cookie above was
+  // just minted — not a returning value — so the legacy-guest-id migration
+  // (lib/edital/anonymousPlayer.ts) knows it's safe to act.
+  response.cookies.set(ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME, "1", {
+    maxAge: ANONYMOUS_PLAYER_SEEDED_MARKER_MAX_AGE_SECONDS,
+    path: "/",
+    sameSite: "lax",
+  });
   return response;
 }
 
