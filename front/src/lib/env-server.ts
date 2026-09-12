@@ -16,14 +16,17 @@ const serverSchema = z.object({
   editalPosthogPersonalApiKey: z.string().optional(),
   editalPosthogProjectId: z.string().optional(),
   /**
-   * The Query API's app host (e.g. https://us.posthog.com) — distinct from
-   * the ingestion host (NEXT_PUBLIC_POSTHOG_HOST, e.g. us.i.posthog.com)
-   * already used for capture.
+   * The Query API's host (e.g. https://us.posthog.com) — distinct from
+   * POSTHOG_HOST, the *ingestion* host (e.g. us.i.posthog.com) already
+   * used for capture, which does not serve /api/projects/*. Named
+   * POSTHOG_QUERY_HOST per issue #742, not POSTHOG_APP_HOST.
    */
-  editalPosthogAppHost: z.string().url().default("https://us.posthog.com"),
+  editalPosthogQueryHost: z.string().url().default("https://us.posthog.com"),
   /**
-   * Module-cache TTL for query results. Default is discovery's placeholder
-   * (5 minutes), explicitly pending #739(b)'s rate-limit answer.
+   * Module-cache TTL for query results. Default is discovery's/issue #742's
+   * stated default (5 minutes), explicitly pending #739(b)'s rate-limit
+   * answer. Named POSTHOG_QUERY_CACHE_TTL_MS per that issue, not
+   * EDITAL_QUERY_CACHE_TTL_MS.
    */
   editalQueryCacheTtlMs: z.coerce.number().int().positive().default(300000),
   /**
@@ -46,8 +49,8 @@ function getServerEnv() {
       responsivevoiceApiUrl: process.env.RESPONSIVEVOICE_API_URL,
       editalPosthogPersonalApiKey: process.env.POSTHOG_PERSONAL_API_KEY,
       editalPosthogProjectId: process.env.POSTHOG_PROJECT_ID,
-      editalPosthogAppHost: process.env.POSTHOG_APP_HOST,
-      editalQueryCacheTtlMs: process.env.EDITAL_QUERY_CACHE_TTL_MS,
+      editalPosthogQueryHost: process.env.POSTHOG_QUERY_HOST,
+      editalQueryCacheTtlMs: process.env.POSTHOG_QUERY_CACHE_TTL_MS,
       editalPeriodStart: process.env.EDITAL_PERIOD_START,
     });
   }
