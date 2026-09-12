@@ -21,8 +21,18 @@ interface PasswordLoginResponse {
   };
 }
 
+/**
+ * Server-to-server backend URL for calls made from this file's own
+ * signIn/authorize callbacks — which run in Next.js server code, not the
+ * browser. Deliberately NOT the same as the client-facing NEXT_PUBLIC_API_URL
+ * (used everywhere else in the codebase for browser-side calls): in Docker
+ * Compose, this code runs inside the front container, where "localhost"
+ * resolves to the front container itself, not the back one. See
+ * BACKEND_INTERNAL_URL's own doc comment in lib/env-server.ts.
+ */
 function backendUrl(path: string): string {
-  const apiUrl = serverEnv.client.apiUrl || "";
+  const apiUrl =
+    serverEnv.server.backendInternalUrl || serverEnv.client.apiUrl || "";
   return apiUrl ? `${apiUrl}${path}` : path;
 }
 
