@@ -46,6 +46,20 @@ const serverSchema = z.object({
    * sign-in when unset rather than calling the backend with no token.
    */
   authOauthUpsertToken: z.string().optional(),
+
+  /**
+   * Server-to-server backend URL — deliberately separate from
+   * NEXT_PUBLIC_API_URL. That variable is baked for the *browser*
+   * (e.g. http://localhost:3001, reachable from the host machine); this
+   * one is for calls made from Next.js server-side code (auth.ts's
+   * signIn/authorize callbacks), which run inside the front container
+   * and need the Docker Compose service name (http://back:3001) instead
+   * — "localhost" inside that container means the front container
+   * itself, not the back one. Falls back to NEXT_PUBLIC_API_URL so
+   * bare `npm run dev` (front and back both genuinely on localhost, no
+   * Docker) keeps working without this var set.
+   */
+  backendInternalUrl: z.string().url().optional(),
 });
 
 let _serverEnv: z.infer<typeof serverSchema> | null = null;
@@ -61,6 +75,7 @@ function getServerEnv() {
       editalQueryCacheTtlMs: process.env.POSTHOG_QUERY_CACHE_TTL_MS,
       editalPeriodStart: process.env.EDITAL_PERIOD_START,
       authOauthUpsertToken: process.env.AUTH_OAUTH_UPSERT_TOKEN,
+      backendInternalUrl: process.env.BACKEND_INTERNAL_URL,
     });
   }
   return _serverEnv;

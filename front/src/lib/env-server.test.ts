@@ -69,6 +69,24 @@ describe("env-server — edital fields", () => {
     expect(serverEnv.server.editalQueryCacheTtlMs).toBe(60000);
   });
 
+  it("backendInternalUrl is undefined when unset (bare npm run dev, no Docker)", async () => {
+    process.env.RESPONSIVEVOICE_API_KEY = "test-key";
+    process.env.BACKEND_INTERNAL_URL = undefined;
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.backendInternalUrl).toBeUndefined();
+  });
+
+  it("reads BACKEND_INTERNAL_URL when set (Docker Compose)", async () => {
+    process.env.RESPONSIVEVOICE_API_KEY = "test-key";
+    process.env.BACKEND_INTERNAL_URL = "http://back:3001";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.backendInternalUrl).toBe("http://back:3001");
+  });
+
   it("resetServerEnv() forces a re-parse", async () => {
     process.env.RESPONSIVEVOICE_API_KEY = "test-key";
     process.env.POSTHOG_PROJECT_ID = "first";
