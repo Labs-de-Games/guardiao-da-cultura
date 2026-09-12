@@ -674,6 +674,33 @@ describe("QuizManager", () => {
     );
   });
 
+  it("captures quiz_completed with quiz_result and duration_seconds on success (#741)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(3);
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "quiz_completed",
+      expect.objectContaining({
+        quiz_result: "passed",
+        duration_seconds: expect.any(Number),
+      }),
+    );
+  });
+
+  it("captures quiz_completed with quiz_result: failed on a failing score (#741)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(1);
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "quiz_completed",
+      expect.objectContaining({ quiz_result: "failed" }),
+    );
+  });
+
   it("captures the canonical chapter_1_completed on a level-1 success (getLevelDef fixture is levelNumber: 1)", () => {
     const { quizManager: qm } = setupFiveQuestionQuiz();
     const onComplete = acceptQuizAndGetCallback(qm);
