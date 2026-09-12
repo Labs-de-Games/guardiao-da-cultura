@@ -238,6 +238,10 @@ export class QuizManager {
               }
 
               const scoringPayload = this.scoreManager.getPayload();
+              // quiz_result/duration_seconds per issue #741's dual-emit
+              // table ("+ quiz_result, duration_seconds") — this row is
+              // separate from chapter_1_completed above and was missed in
+              // the first pass at this fix.
               posthog.capture("quiz_completed", {
                 level_id: levelId,
                 mission_id: missionId,
@@ -246,6 +250,11 @@ export class QuizManager {
                 total_questions: shuffledQuestions.length,
                 accuracy_percent: scoringPayload.quiz.accuracyPercent,
                 passed: isSuccess,
+                quiz_result: isSuccess ? "passed" : "failed",
+                duration_seconds:
+                  this.quizStartedAt !== null
+                    ? Math.round((Date.now() - this.quizStartedAt) / 1000)
+                    : null,
               });
 
               void this.persistenceBridge.sendQuizOutcome({
