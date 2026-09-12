@@ -1,6 +1,7 @@
 import type { Scene } from "phaser";
 import posthog from "posthog-js";
 import type { GamePersistence } from "@/lib/persistence/gamePersistence";
+import { getEventContext } from "../../lib/posthog/eventContext";
 import { EventBus } from "../../shared/events/event-bus";
 import { GameEvents } from "../constants/GameEvents";
 import type { BadgeConfig } from "../types/BadgeTypes";
@@ -97,6 +98,11 @@ export class BadgeSystem {
       badge_name: badge.name,
       level_id: this.scene.registry.get("currentLevelId"),
       is_guest: this.persistence.mode === "guest",
+      // Issue #741's dual-emit table ("+ chapter_id"). before_send also
+      // backstops this from the same singleton, but set explicitly here
+      // too so it's true at the call site, not just after the network
+      // boundary.
+      chapter_id: getEventContext().chapterId,
     });
   }
 

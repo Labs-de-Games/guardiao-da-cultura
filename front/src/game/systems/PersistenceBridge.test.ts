@@ -163,6 +163,15 @@ describe("PersistenceBridge", () => {
       );
     });
 
+    it("dual-emits the canonical score_calculated event (#741)", async () => {
+      await bridge.submitScore();
+
+      expect(posthog.capture).toHaveBeenCalledWith(
+        "score_calculated",
+        expect.objectContaining({ level_id: "level_01" }),
+      );
+    });
+
     it("handles errors gracefully", async () => {
       jest.spyOn(console, "error").mockImplementation();
       mocks.persistence.saveScore.mockRejectedValue(new Error("fail"));

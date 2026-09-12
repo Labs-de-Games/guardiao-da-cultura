@@ -10,6 +10,9 @@ jest.mock("posthog-js", () => ({
   __esModule: true,
   default: { capture: jest.fn() },
 }));
+jest.mock("../../lib/analyticsApi", () => ({
+  sendGameEvent: jest.fn().mockResolvedValue(undefined),
+}));
 // QuizManager.ts does not actually import "../../lib/env" — this mock was
 // long inert (and using a stale flat shape besides). Kept only as a guard:
 // if QuizManager ever starts importing env, the shape below must match the
@@ -198,6 +201,17 @@ describe("QuizManager", () => {
     expect(events.emit).toHaveBeenCalledWith(GameEvents.SHOW_DIALOGUE_REQUEST, [
       "[Erro de Sistema] Não há perguntas cadastradas para esta missão.",
     ]);
+
+    // Issue #741's third critical_error_occurred hook: missing quiz data
+    // blocks the player on this mission.
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "critical_error_occurred",
+      expect.objectContaining({
+        error_code: "quiz_data_missing",
+        is_blocking: true,
+        mission_id: "empty",
+      }),
+    );
   });
 
   it("should show confirmation when NPC exists and quiz has questions", () => {
@@ -660,6 +674,49 @@ describe("QuizManager", () => {
     );
   });
 
+  it("emits quiz_completed before chapter_1_completed, matching the acceptance-criteria funnel order (#741)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(3);
+
+    const calls = (posthog.capture as jest.Mock).mock.calls.map(
+      ([eventName]) => eventName,
+    );
+    const quizCompletedIndex = calls.indexOf("quiz_completed");
+    const chapter1CompletedIndex = calls.indexOf("chapter_1_completed");
+
+    expect(quizCompletedIndex).toBeGreaterThanOrEqual(0);
+    expect(chapter1CompletedIndex).toBeGreaterThan(quizCompletedIndex);
+  });
+
+  it("captures quiz_completed with quiz_result and duration_seconds on success (#741)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(3);
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "quiz_completed",
+      expect.objectContaining({
+        quiz_result: "passed",
+        duration_seconds: expect.any(Number),
+      }),
+    );
+  });
+
+  it("captures quiz_completed with quiz_result: failed on a failing score (#741)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(1);
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "quiz_completed",
+      expect.objectContaining({ quiz_result: "failed" }),
+    );
+  });
+
   it("captures the canonical chapter_1_completed on a level-1 success (getLevelDef fixture is levelNumber: 1)", () => {
     const { quizManager: qm } = setupFiveQuestionQuiz();
     const onComplete = acceptQuizAndGetCallback(qm);
@@ -668,7 +725,12 @@ describe("QuizManager", () => {
 
     expect(posthog.capture).toHaveBeenCalledWith(
       "chapter_1_completed",
-      expect.objectContaining({ level_id: context.getLevelId() }),
+      expect.objectContaining({
+        level_id: context.getLevelId(),
+        score: expect.any(Number),
+        stars: expect.any(Number),
+        duration_seconds: expect.any(Number),
+      }),
     );
   });
 
