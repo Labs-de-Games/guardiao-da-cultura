@@ -46,9 +46,13 @@ export class User {
   /**
    * Nullable — no Institution entity, no per-student data (epic #738,
    * #744). `null` means "not yet linked"; assignment is by admin
-   * seed/update script, a known manual step, not a screen. Format
-   * validated at the application layer, not here — see
-   * ORIGIN_SLUG_PATTERN in the oauth-upsert DTO.
+   * seed/update script, a known manual step, not a screen. Format is
+   * NOT validated at write time here or in any DTO (there is no
+   * institutionSlug field on the oauth-upsert DTO — the admin script is
+   * the only writer, and does not exist yet as of #744). The one real
+   * enforcement point is front/src/lib/edital/server/scope.ts's
+   * `resolveScope`, which validates the slug format defensively on every
+   * read before it ever becomes a query `Scope`.
    */
   @Column({ type: "varchar", nullable: true })
   institutionSlug!: string | null;
