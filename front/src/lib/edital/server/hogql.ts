@@ -35,6 +35,15 @@ export interface HogQLQueryResult {
   results: unknown[][];
 }
 
+/**
+ * Bound HogQL query parameters — string/number/boolean only, matching
+ * what a HogQL `{name}` placeholder can bind. Every query builder must
+ * pass caller-supplied variability (slug, date range) through here, never
+ * string-interpolated into `query` — issue #742's own non-negotiable
+ * rule: "toda variabilidade passa por `values` bindados."
+ */
+export type HogQLValues = Record<string, string | number | boolean>;
+
 export interface RunHogQLQueryOptions {
   timeoutMs?: number;
   /** Test-only hook to inject a fetch implementation. */
@@ -49,10 +58,11 @@ export interface RunHogQLQueryOptions {
  *
  * `refresh: "blocking"` is what actually sustains load on the single
  * 0.5-cpu/512-M replica, per discovery §5.4 — paired with the module
- * cache + single-flight in queries.ts.
+ * cache + single-flight in metrics.ts.
  */
 export async function runHogQLQuery(
   query: string,
+  values: HogQLValues = {},
   options: RunHogQLQueryOptions = {},
 ): Promise<HogQLQueryResult> {
   if (!isEditalPosthogConfigured()) {
@@ -62,10 +72,10 @@ export async function runHogQLQuery(
   const {
     editalPosthogPersonalApiKey,
     editalPosthogProjectId,
-    editalPosthogAppHost,
+    editalPosthogQueryHost,
   } = serverEnv.server;
 
-  const url = `${editalPosthogAppHost}/api/projects/${editalPosthogProjectId}/query/`;
+  const url = `${editalPosthogQueryHost}/api/projects/${editalPosthogProjectId}/query/`;
   const doFetch = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? DEFAULT_HOGQL_TIMEOUT_MS;
@@ -79,7 +89,7 @@ export async function runHogQLQuery(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: { kind: "HogQLQuery", query },
+        query: { kind: "HogQLQuery", query, values },
         refresh: "blocking",
       }),
       signal: controller.signal,

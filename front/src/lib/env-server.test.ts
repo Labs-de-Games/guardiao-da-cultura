@@ -25,8 +25,8 @@ describe("env-server — edital fields", () => {
   it("boots with all four edital fields unset", async () => {
     process.env.POSTHOG_PERSONAL_API_KEY = undefined;
     process.env.POSTHOG_PROJECT_ID = undefined;
-    process.env.POSTHOG_APP_HOST = undefined;
-    process.env.EDITAL_QUERY_CACHE_TTL_MS = undefined;
+    process.env.POSTHOG_QUERY_HOST = undefined;
+    process.env.POSTHOG_QUERY_CACHE_TTL_MS = undefined;
     process.env.RESPONSIVEVOICE_API_KEY = "test-key";
 
     const { serverEnv } = await import("./env-server");
@@ -34,7 +34,7 @@ describe("env-server — edital fields", () => {
     expect(() => serverEnv.server).not.toThrow();
     expect(serverEnv.server.editalPosthogPersonalApiKey).toBeUndefined();
     expect(serverEnv.server.editalPosthogProjectId).toBeUndefined();
-    expect(serverEnv.server.editalPosthogAppHost).toBe(
+    expect(serverEnv.server.editalPosthogQueryHost).toBe(
       "https://us.posthog.com",
     );
     expect(serverEnv.server.editalQueryCacheTtlMs).toBe(300000);
@@ -62,7 +62,7 @@ describe("env-server — edital fields", () => {
 
   it("reads a custom cache TTL when set", async () => {
     process.env.RESPONSIVEVOICE_API_KEY = "test-key";
-    process.env.EDITAL_QUERY_CACHE_TTL_MS = "60000";
+    process.env.POSTHOG_QUERY_CACHE_TTL_MS = "60000";
 
     const { serverEnv } = await import("./env-server");
 
