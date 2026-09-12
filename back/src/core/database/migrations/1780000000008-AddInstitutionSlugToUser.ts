@@ -9,9 +9,11 @@ import type { MigrationInterface, QueryRunner } from "typeorm";
  * text is explicit that this is a known manual step, not a screen to
  * pretend exists.
  *
- * Format validated at the application layer (ORIGIN_SLUG_PATTERN in
- * dto/oauth-upsert.dto.ts), not a DB constraint — keeps this migration
- * purely additive and reversible.
+ * Format is NOT validated at write time (no DTO field, no DB
+ * constraint — keeps this migration purely additive and reversible);
+ * front/src/lib/edital/server/scope.ts's `resolveScope` validates it
+ * defensively on every read instead, the one real chokepoint before a
+ * Scope reaches a query.
  *
  * Migration timestamp reserved after 1780000000007 (game_event index,
  * landing separately in #741's branch) to avoid a collision once both
