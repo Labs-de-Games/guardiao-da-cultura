@@ -38,7 +38,7 @@ describe("runHogQLQuery", () => {
     process.env.POSTHOG_PROJECT_ID = undefined;
     resetServerEnv();
 
-    await expect(runHogQLQuery("SELECT 1")).rejects.toThrow(
+    await expect(runHogQLQuery("SELECT 1", {})).rejects.toThrow(
       HogQLNotConfiguredError,
     );
   });
