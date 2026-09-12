@@ -30,8 +30,28 @@ provided. Do not guess a card list here; #745 cannot be objectively marked done 
 
 ## `EDITAL_PERIOD_START`
 
-Not answered here — deliberately deferred to implementation-plan step 5, because it can only be
-honestly set to issue #740's deploy date (see `docs/specs/discovery-738-dashboard-edital.md` §2.4).
+**Mechanism landed (step 5); actual date still not recorded.** `front/src/lib/edital/server/period.ts`
+reads `EDITAL_PERIOD_START` from the environment (`front/src/lib/env-server.ts`) as an ISO date
+string (e.g. `2026-04-01`), and clamps every date range — `today`/`7d`/`30d`/`custom`'s `from`, and
+`all-time`'s lower bound — to never resolve earlier than it. This is deliberately **config, not a
+code constant**: the value can only be honestly known once issue #740 (identity foundation) has
+actually deployed to production, since every event before that date is analytically unusable
+(churned anonymous ids, no attribution, no reliable step 1 — see
+`docs/specs/discovery-738-dashboard-edital.md` §2.4).
+
+**Until that deploy date is recorded, the variable stays unset, which means:**
+- `today`/`7d`/`30d`/`custom` ranges are unclamped (no lower bound enforced).
+- `all-time` falls back to the Unix epoch (`new Date(0)`) — the exact "full scan" risk this
+  constant exists to prevent. **This is a known, live gap, not a hypothetical:** as long as
+  `EDITAL_PERIOD_START` is unset in the deployed environment, an `all-time` request has no
+  ClickHouse-side lower bound at all.
+
+**Action required before production launch:** once #740 ships, record its actual deploy date as
+`EDITAL_PERIOD_START` in the Coolify/`.env` runtime for both staging and production, and update this
+section with that date and the rationale for it (e.g. "set to 2026-XX-XX, #740's deploy date, per
+deploy log / release tag"). Do not guess or backdate this value — an honest "not set yet" is safer
+than a wrong constant that silently mis-scopes every all-time query with no signal anything is
+wrong.
 
 ## Attribution model
 
@@ -87,8 +107,9 @@ outstanding.**
 
 ### (d) What is `EDITAL_PERIOD_START`?
 
-Deliberately not answered here — see implementation-plan step 5. It is circular with #740 and can
-only be set once #740's deploy date is known.
+See the dedicated section above — the mechanism (env-driven clamp in `period.ts`) landed in
+implementation-plan step 5. The actual date value is still not recorded: it is circular with #740
+and can only be set once #740's deploy date is known.
 
 ---
 
