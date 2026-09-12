@@ -60,7 +60,7 @@ export type HogQLValues = Record<string, string | number | boolean>;
  *
  * `refresh: "blocking"` is what actually sustains load on the single
  * 0.5-cpu/512-M replica, per discovery §5.4 — paired with the module
- * cache + single-flight in queries.ts.
+ * cache + single-flight in metrics.ts.
  */
 export async function runHogQLQuery(
   query: string,
