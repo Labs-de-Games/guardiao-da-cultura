@@ -6,6 +6,7 @@ jest.mock("server-only", () => ({}));
 import { resetServerEnv } from "../../env-server";
 import { runHogQLQuery } from "./hogql";
 import {
+  __getQueryCacheSizeForTests,
   __resetQueryCacheForTests,
   clampMonotonicFunnel,
   fetchCampaigns,
@@ -22,6 +23,12 @@ import { __createScopeForTests } from "./scope";
 jest.mock("./hogql", () => ({
   runHogQLQuery: jest.fn(),
 }));
+
+beforeEach(() => {
+  process.env.RESPONSIVEVOICE_API_KEY = "test-key";
+  resetServerEnv();
+  __resetQueryCacheForTests();
+});
 
 describe("safeRate", () => {
   it("returns 0 for safeRate(0, 0), not NaN", () => {
@@ -72,12 +79,6 @@ describe("clampMonotonicFunnel", () => {
 });
 
 describe("withCache", () => {
-  beforeEach(() => {
-    process.env.RESPONSIVEVOICE_API_KEY = "test-key";
-    resetServerEnv();
-    __resetQueryCacheForTests();
-  });
-
   it("calls fn once for two concurrent identical calls (single-flight)", async () => {
     const fn = jest
       .fn()

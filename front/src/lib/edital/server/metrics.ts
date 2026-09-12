@@ -142,6 +142,11 @@ export function __resetQueryCacheForTests(): void {
   cache.clear();
 }
 
+/** Test-only: reads the current cache size. */
+export function __getQueryCacheSizeForTests(): number {
+  return cache.size;
+}
+
 function rangeKey(range: ResolvedDateRange): string {
   return `${range.from.toISOString()}:${range.to.toISOString()}`;
 }
