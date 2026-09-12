@@ -203,36 +203,6 @@ minigames, quizzes e carregamento do jogo.
 
 ---
 
-# Funil canônico do Edital (epic #738)
-
-7 passos definidos em `docs/specs/edital-onepager.md` (interino até o onepager real ser
-commitado — ver §1.1 de `docs/specs/discovery-738-dashboard-edital.md`). Cada evento é
-**dual-emit**: existe ao lado do evento legado equivalente, nunca o substitui — ver
-`docs/specs/discovery-738-dashboard-edital.md` §5.3 para por que `before_send` não é usado
-para renomear/fundir eventos.
-
-| # | Evento canônico | Propriedades | Onde é emitido | Guarda de disparo único |
-|---|---|---|---|---|
-| 1 | `landing_page_viewed` | — | `PlayLanding.tsx` | nenhuma (uma vez por mount da landing) |
-| 2 | `play_clicked` | — | `PlayLanding.tsx` (`handlePlay`) | nenhuma |
-| 3 | `gameplay_started` | `level_id`, `level_number` | `Game.ts` (`create()`) | `captureOncePerSession` (sessionStorage) — o legado `game_started` continua disparando 1x por nível |
-| 4 | `chapter_1_started` | `level_id` | `Game.ts` (junto ao `LEVEL_STARTED`, `levelNumber === 1`) | nenhuma além da condição de nível |
-| 5 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` | nenhuma (já existente, exclui quizzes intermediários) |
-| 6 | `quiz_completed` | `level_id`, `mission_id`, `score`, `correct_answers`, `total_questions`, `accuracy_percent`, `passed` | `QuizManager.ts` | nenhuma (já existente) |
-| 7 | `chapter_1_completed` | `level_id` | `QuizManager.ts` (junto ao `level_completed`, `levelNumber === 1`) | nenhuma além da condição de nível |
-
-Eventos de suporte ao funil, fora da sequência de 7 passos mas necessários para
-identidade/qualidade dos dados (epic #740/#741):
-
-| Evento | Propriedades | Onde é emitido | Guarda de disparo único |
-|---|---|---|---|
-| `anonymous_player_created` | — | `PostHogProvider.tsx` | localStorage, condicionado ao marcador "recém-semeado" do middleware (#740) |
-| `session_finished` | `reason` (`pagehide`/`visibilitychange`/`browser_close`), `duration_seconds`, `last_level_id` | `AnalyticsSystem.ts` (`setupAbandonmentTracking`) | sessionStorage — substitui a inflação por nível do `session.end` legado |
-| `critical_error_occurred` | `error_code`, `is_blocking`, `loading_stage`, `asset_key`, `level_id` | `PhaserGame.tsx` (`handleLoadingError`) | nenhuma (cada asset falho é um erro distinto) |
-
-**Ainda não definido** (ver §4/§7 da discovery): a taxonomia `CAMPAIGN_ORIGINS`, o enum
-completo de `error_code`, e o que a tela mostra para jogadores sem `utm_institution` algum.
-
 ## Nudge — regras de disparo
 
 Necessário para interpretar os eventos `nudge_*`:
@@ -277,20 +247,32 @@ os nomes de evento reais emitidos em produção.
 
 | # | Evento | Propriedades obrigatórias | Onde é emitido |
 |---|---|---|---|
-| 1 | `landing_page_viewed` | — | `PlayLanding.tsx` |
-| 2 | `play_clicked` | — | `PlayLanding.tsx` |
-| 3 | `gameplay_started` | `level_id`, `level_number` | `Game.ts` (via `captureOncePerSession`) |
-| 4 | `chapter_1_started` | `level_id` | `Game.ts` (só quando `levelDef.levelNumber === 1`) |
+| 1 | `landing_page_viewed` | `referrer` | `PlayLanding.tsx` |
+| 2 | `play_clicked` | `dwell_ms` | `PlayLanding.tsx` (`handlePlay`) |
+| 3 | `gameplay_started` | `level_id`, `level_number` | `Game.ts` (`create()`, via `captureOncePerSession`) |
+| 4 | `chapter_1_started` | `level_id` | `Game.ts` (só quando `levelDef.levelNumber === 1`; também chama `setChapterId`) |
 | 5 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
-| 6 | `quiz_completed` | `level_id`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
-| 7 | `chapter_1_completed` | `level_id` | `QuizManager.ts` (só no capítulo 1) |
+| 6 | `quiz_completed` | `level_id`, `mission_id`, `score`, `correct_answers`, `total_questions`, `accuracy_percent`, `passed`, `quiz_result`, `duration_seconds` | `QuizManager.ts` — emitido **antes** de `chapter_1_completed` (ordem exigida pelo funil) |
+| 7 | `chapter_1_completed` | `level_id`, `score`, `stars`, `duration_seconds` | `QuizManager.ts` (só no capítulo 1, após `quiz_completed`) |
 
 Todo passo carrega `properties.anonymous_player_id` (identidade durável,
 issue #740) e `properties.campaign_source` (attribution, issue #740) —
 `COMMON_PREDICATE` em `queries.ts` filtra por ambos; sem eles a linha não
-entra em nenhuma métrica do edital.
+entra em nenhuma métrica do edital. Todo evento após a entrada no nível 1
+carrega também `chapter_id` (`before_send`, a partir do singleton em
+`lib/posthog/eventContext.ts`, setado por `setChapterId` em
+`chapter_1_started` e limpo no `SHUTDOWN` da cena).
 
-## Mapa de dual-emit
+Eventos adicionais, fora dos 7 passos mas dual-emitidos pelo mesmo
+mecanismo (issue #741):
+
+| Evento canônico | Legado (mantido, outro consumidor) | Onde é emitido |
+|---|---|---|
+| `quiz_answered` | `quiz_answer_submitted` | `game-ui-store.ts` — `+ quiz_result` ("correct"/"incorrect") |
+| `score_calculated` | `score_updated` | `PersistenceBridge.ts` — alto volume, não é denominador de card |
+| `badge_earned` | *(já canônico)* | `BadgeSystem.ts` — `+ chapter_id` |
+
+## Mapa de dual-emit (funil de 7 passos)
 
 Cada passo canônico é emitido **ao lado**, não **no lugar**, de um evento
 legado já consumido por outra coisa (dashboard Postgres, `game_event`).
@@ -302,7 +284,21 @@ Um site de código pode disparar os dois na mesma chamada:
 | `chapter_1_started` | `level.started` (→ `game_event`, dashboard Postgres) | Canônico só dispara quando `levelDef.levelNumber === 1`; legado dispara para todo nível |
 | `chapter_1_completed` | `level.completed` (→ `game_event`) | Mesma restrição a capítulo 1 |
 | `play_clicked` | `landing_page_play_clicked` | Nomes distintos, mesmo disparo — mantido por compatibilidade com dashboards PostHog já existentes que consultam `landing_page_play_clicked` |
-| `quiz_started` / `quiz_completed` | — | Sem par legado; já eram PostHog-nativos antes do épico #738 |
+| `quiz_started` | — | Sem par legado; já era PostHog-nativo antes do épico #738 |
+
+## `critical_error_occurred` — hooks (issue #741)
+
+Quatro hooks, todos carregando `error_code` + `is_blocking`; o dashboard
+conta apenas `is_blocking = true`. Bloqueantes são espelhados em
+`game_event` com `severity: "critical"` (exceto os hooks de error
+boundary React, que não têm um `userId` de sessão de jogo disponível):
+
+| Hook | Local | `error_code` | `is_blocking` |
+|---|---|---|---|
+| Falha no boot do Phaser | `PhaserGame.tsx` (catch do `initGame`) | `game_boot_failed:${stage}` | `true` |
+| Falha em asset obrigatório | `PhaserGame.tsx` (`handleLoadingError`, via `Game.ts`'s `loaderror`) | `asset_load_failed` | `true` |
+| Dados de quiz ausentes | `QuizManager.ts` (`startQuiz`) | `quiz_data_missing` | `true` |
+| Error boundary do React | `app/error.tsx`, `app/global-error.tsx`, `app/(auth)/error.tsx` | `react_error_boundary` | `true` / `true` / `false` |
 
 ## Decisão: quizzes intermediários fora do denominador
 
