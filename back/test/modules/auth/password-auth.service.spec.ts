@@ -66,6 +66,8 @@ function buildService() {
     magicLinkService,
     authService,
     emailService,
+    posthog,
+    logger,
   };
 }
 
@@ -246,6 +248,96 @@ describe("PasswordAuthService", () => {
         "hashed",
       );
       expect(result).toEqual({ message: "Password updated" });
+    });
+  });
+
+  describe("password never leaks (issue #747 acceptance criterion)", () => {
+    const RAW_PASSWORD = "super-secret-raw-password-12345";
+
+    function assertNoLeak(mocks: {
+      logger: PinoLogger;
+      posthog: { capture: jest.Mock };
+    }) {
+      const loggerMock = mocks.logger as unknown as {
+        info: jest.Mock;
+        warn: jest.Mock;
+        error: jest.Mock;
+      };
+      const allCallArgs = [
+        ...loggerMock.info.mock.calls,
+        ...loggerMock.warn.mock.calls,
+        ...loggerMock.error.mock.calls,
+        ...mocks.posthog.capture.mock.calls,
+      ].flat();
+
+      for (const arg of allCallArgs) {
+        expect(JSON.stringify(arg)).not.toContain(RAW_PASSWORD);
+      }
+    }
+
+    it("never logs or captures the raw password on a failed login", async () => {
+      const { service, userService, passwordService, logger, posthog } =
+        buildService();
+      userService.findByEmailWithPasswordHash.mockResolvedValue({
+        id: "inst-id",
+        role: Role.Institution,
+        isActive: true,
+        passwordHash: "hashed",
+      } as User);
+      passwordService.verify.mockResolvedValue(false);
+
+      await expect(
+        service.login({ email: "i@example.com", password: RAW_PASSWORD }, res),
+      ).rejects.toThrow(UnauthorizedException);
+
+      assertNoLeak({ logger, posthog });
+    });
+
+    it("never logs or captures the raw password on a successful login", async () => {
+      const { service, userService, passwordService, logger, posthog } =
+        buildService();
+      userService.findByEmailWithPasswordHash.mockResolvedValue({
+        id: "inst-id",
+        email: "i@example.com",
+        role: Role.Institution,
+        isActive: true,
+        passwordHash: "hashed",
+        institutionSlug: "escola-teste",
+      } as User);
+      passwordService.verify.mockResolvedValue(true);
+
+      await service.login(
+        { email: "i@example.com", password: RAW_PASSWORD },
+        res,
+      );
+
+      assertNoLeak({ logger, posthog });
+    });
+
+    it("never logs or captures the raw password on registration", async () => {
+      const { service, userService, logger, posthog } = buildService();
+      userService.findByEmail.mockResolvedValue(null);
+      userService.create.mockResolvedValue({ id: "new-id" } as User);
+
+      await service.register({
+        email: "nova@example.com",
+        password: RAW_PASSWORD,
+        institutionSlug: "escola-nova",
+        nickname: "Escola Nova",
+      });
+
+      assertNoLeak({ logger, posthog });
+    });
+
+    it("never logs or captures the raw new password on reset confirmation", async () => {
+      const { service, magicLinkService, logger, posthog } = buildService();
+      magicLinkService.validateTokenConsumption.mockResolvedValue({
+        user: { id: "inst-id" },
+      } as never);
+
+      await service.confirmPasswordReset("good-token", RAW_PASSWORD);
+
+      assertNoLeak({ logger, posthog });
     });
   });
 });
