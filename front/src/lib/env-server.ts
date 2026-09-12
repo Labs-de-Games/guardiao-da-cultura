@@ -24,8 +24,9 @@ const serverSchema = z.object({
   editalPosthogQueryHost: z.string().url().default("https://us.posthog.com"),
   /**
    * Module-cache TTL for query results. Default is issue #742's own
-   * stated default (5 minutes). Named POSTHOG_QUERY_CACHE_TTL_MS per that
-   * issue, not EDITAL_QUERY_CACHE_TTL_MS.
+   * stated default (5 minutes), explicitly pending #739(b)'s rate-limit
+   * answer. Named POSTHOG_QUERY_CACHE_TTL_MS per that issue, not
+   * EDITAL_QUERY_CACHE_TTL_MS.
    */
   editalQueryCacheTtlMs: z.coerce.number().int().positive().default(300000),
   /**
