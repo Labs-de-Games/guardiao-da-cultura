@@ -674,6 +674,22 @@ describe("QuizManager", () => {
     );
   });
 
+  it("emits quiz_completed before chapter_1_completed, matching the acceptance-criteria funnel order (#741)", () => {
+    const { quizManager: qm } = setupFiveQuestionQuiz();
+    const onComplete = acceptQuizAndGetCallback(qm);
+
+    onComplete(3);
+
+    const calls = (posthog.capture as jest.Mock).mock.calls.map(
+      ([eventName]) => eventName,
+    );
+    const quizCompletedIndex = calls.indexOf("quiz_completed");
+    const chapter1CompletedIndex = calls.indexOf("chapter_1_completed");
+
+    expect(quizCompletedIndex).toBeGreaterThanOrEqual(0);
+    expect(chapter1CompletedIndex).toBeGreaterThan(quizCompletedIndex);
+  });
+
   it("captures quiz_completed with quiz_result and duration_seconds on success (#741)", () => {
     const { quizManager: qm } = setupFiveQuestionQuiz();
     const onComplete = acceptQuizAndGetCallback(qm);
