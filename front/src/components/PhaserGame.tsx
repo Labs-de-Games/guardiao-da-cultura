@@ -10,7 +10,6 @@ import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
 import { useAuth } from "../lib/auth/useAuth";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
-import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
 import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import { EventBus } from "../shared/events/event-bus";
 import LoadingGameScreen from "./LoadingGameScreen";
@@ -28,7 +27,6 @@ const MIN_LEVEL_LOADING_MS = 5000;
 
 export default function PhaserGame() {
   const { user } = useAuth();
-  const posthogDistinctId = usePostHogDistinctId();
   const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -161,9 +159,7 @@ export default function PhaserGame() {
       try {
         const activeUserId = user?.id ?? null;
         const isGuest = !activeUserId;
-        const guestSessionId = isGuest
-          ? getOrCreateGuestSessionId(posthogDistinctId ?? null)
-          : null;
+        const guestSessionId = isGuest ? getOrCreateGuestSessionId() : null;
         const playerId = activeUserId ?? guestSessionId;
 
         if (!playerId) {
@@ -232,6 +228,27 @@ export default function PhaserGame() {
             error_type: err instanceof Error ? err.name : "unknown",
             loading_stage: stage,
           });
+
+          // Issue #741's first critical_error_occurred hook: a boot
+          // failure means the player can't reach chapter_1_completed
+          // without reloading — always blocking.
+          const criticalMetadata = {
+            error_code: `game_boot_failed:${stage}`,
+            is_blocking: true,
+            loading_stage: stage,
+          };
+          posthog.capture("critical_error_occurred", criticalMetadata);
+          sendGameEvent({
+            userId: playerIdRef.current ?? undefined,
+            type: GameEventType.EVENT_LOGGED,
+            timestamp: new Date().toISOString(),
+            metadata: { severity: "critical", ...criticalMetadata },
+          }).catch((mirrorErr) => {
+            console.error(
+              "[PhaserGame] Failed to log critical_error_occurred:",
+              mirrorErr,
+            );
+          });
         }
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
@@ -272,7 +289,14 @@ export default function PhaserGame() {
         gameLoadFailedSentRef.current = false;
       }
     };
-  }, [entryFlow, isFlowLoading, user?.id, posthogDistinctId]);
+    // posthogDistinctId deliberately excluded (#740): it transitions from
+    // null to a real value once the async bootstrap fetch resolves,
+    // causing a second, spurious run of this effect. It has been dead as
+    // an input to getOrCreateGuestSessionId since this same issue made
+    // player identity a synchronous, middleware-set durable cookie —
+    // getOrCreateGuestSessionId already prefers the existing persisted
+    // guest id over any argument.
+  }, [entryFlow, isFlowLoading, user?.id]);
 
   return (
     <div

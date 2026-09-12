@@ -46,6 +46,7 @@ describe("AnalyticsSystem.setupAbandonmentTracking", () => {
         reason: "pagehide",
         last_level_id: "level_01",
       }),
+      { transport: "sendBeacon" },
     );
   });
 

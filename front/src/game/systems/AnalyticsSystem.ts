@@ -100,11 +100,18 @@ export class AnalyticsSystem {
         // destroyed by the time this fires — non-fatal, just omit it.
       }
 
-      posthog.capture("session_finished", {
-        reason,
-        duration_seconds: Math.round((Date.now() - enteredAt) / 1000),
-        last_level_id: levelId,
-      });
+      // transport: "sendBeacon" per issue #741 — a regular fetch/XHR can
+      // be cancelled mid-flight when the tab is actually closing, which is
+      // exactly when this fires (pagehide/beforeunload/hidden).
+      posthog.capture(
+        "session_finished",
+        {
+          reason,
+          duration_seconds: Math.round((Date.now() - enteredAt) / 1000),
+          last_level_id: levelId,
+        },
+        { transport: "sendBeacon" },
+      );
 
       this.track(GameEventType.SESSION_END, { reason, lastLevelId: levelId });
     };
