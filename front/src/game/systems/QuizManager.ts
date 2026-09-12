@@ -208,22 +208,6 @@ export class QuizManager {
                   attempts: registry.get("has_failed_quiz") || 0,
                 });
 
-                // Canonical funnel step — only chapter 1 has one; see the
-                // 7-step funnel in docs/specs/edital-onepager.md.
-                // score/stars/duration_seconds per issue #741's dual-emit
-                // table ("+ score, stars, duration_seconds").
-                if (levelDef.levelNumber === 1) {
-                  posthog.capture("chapter_1_completed", {
-                    level_id: levelId,
-                    score: payload.totalQuarters,
-                    stars: payload.totalStars,
-                    duration_seconds: Math.round(
-                      (Date.now() - new Date(payload.startedAt).getTime()) /
-                        1000,
-                    ),
-                  });
-                }
-
                 void this.persistenceBridge.submitScore();
               } else {
                 registry.set("has_failed_quiz", 1);
@@ -240,7 +224,7 @@ export class QuizManager {
               const scoringPayload = this.scoreManager.getPayload();
               // quiz_result/duration_seconds per issue #741's dual-emit
               // table ("+ quiz_result, duration_seconds") — this row is
-              // separate from chapter_1_completed above and was missed in
+              // separate from chapter_1_completed below and was missed in
               // the first pass at this fix.
               posthog.capture("quiz_completed", {
                 level_id: levelId,
@@ -256,6 +240,28 @@ export class QuizManager {
                     ? Math.round((Date.now() - this.quizStartedAt) / 1000)
                     : null,
               });
+
+              // Canonical funnel step — only chapter 1 has one; see the
+              // 7-step funnel in docs/specs/edital-onepager.md. Emitted
+              // after quiz_completed above, never before: the issue's own
+              // acceptance criterion orders the funnel
+              // "...quiz_completed → chapter_1_completed", and this used
+              // to fire earlier (inside the isSuccess branch, before
+              // quiz_completed was even captured), silently breaking that
+              // order.
+              if (isSuccess && levelDef.levelNumber === 1) {
+                const chapter1Payload = this.scoreManager.getPayload();
+                posthog.capture("chapter_1_completed", {
+                  level_id: levelId,
+                  score: chapter1Payload.totalQuarters,
+                  stars: chapter1Payload.totalStars,
+                  duration_seconds: Math.round(
+                    (Date.now() -
+                      new Date(chapter1Payload.startedAt).getTime()) /
+                      1000,
+                  ),
+                });
+              }
 
               void this.persistenceBridge.sendQuizOutcome({
                 type: isSuccess ? "quiz.completed" : "quiz.failed",
