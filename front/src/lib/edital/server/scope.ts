@@ -21,6 +21,20 @@ export interface Scope {
 }
 
 /**
+ * Mirrors the slug format later formalized as ORIGIN_SLUG_PATTERN in
+ * lib/edital/origins.ts (#746) — lowercase letters, digits, single
+ * hyphens, no leading/trailing/double hyphen. Issue #744 says this
+ * column is "Validada contra ORIGIN_SLUG_PATTERN," but nothing actually
+ * validated it anywhere: not the entity, not a DTO (institutionSlug is
+ * only ever set by a not-yet-written admin script, never through a
+ * validated request body), not here. `resolveScope` is the one real
+ * chokepoint every Scope must pass through, so it validates defensively
+ * — a malformed value in the database (fat-fingered by whoever runs the
+ * admin script) fails closed to "not linked" instead of reaching HogQL.
+ */
+const INSTITUTION_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
  * The one real way to obtain a `Scope`. Only this function ever sees the
  * `scopeBrand` symbol, so a `Scope` cannot be forged from a plain object
  * literal anywhere else in the codebase.
@@ -39,6 +53,9 @@ export function resolveScope(session: Session | null): Scope | null {
   if (!session?.user) return null;
   if (session.user.role !== "institution") return null;
   if (!session.user.institutionSlug) return null;
+  if (!INSTITUTION_SLUG_PATTERN.test(session.user.institutionSlug)) {
+    return null;
+  }
   return { slug: session.user.institutionSlug } as Scope;
 }
 
