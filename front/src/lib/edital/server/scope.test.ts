@@ -57,8 +57,28 @@ describe("resolveScope", () => {
     ).toBeNull();
   });
 
+  it("returns null for a malformed institutionSlug instead of trusting it (#744)", () => {
+    for (const bad of [
+      "Escola-Teste",
+      "escola_teste",
+      "escola--teste",
+      "-escola",
+      "escola-",
+      "<script>alert(1)</script>",
+    ]) {
+      expect(resolveScope(makeSession({ institutionSlug: bad }))).toBeNull();
+    }
+  });
+
   it("returns a Scope for a well-formed institutionSlug", () => {
     const scope = resolveScope(makeSession({ institutionSlug: "escola-42" }));
     expect(scope?.slug).toBe("escola-42");
+  });
+
+  it("accepts a well-formed institutionSlug", () => {
+    const scope = resolveScope(
+      makeSession({ institutionSlug: "escola-municipal-centro-2" }),
+    );
+    expect(scope?.slug).toBe("escola-municipal-centro-2");
   });
 });

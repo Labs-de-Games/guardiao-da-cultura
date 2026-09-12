@@ -15,17 +15,24 @@
 export const LANDING_BASE_URL = "https://guardiaodacultura.42.rio/";
 
 /**
- * Institution slugs are lowercase alphanumeric with hyphens — the same
- * shape a URL path segment and a `?utm_institution=` value both tolerate
- * without encoding. Used to validate free-text slug entry here, and to
- * revalidate `session.user.institutionSlug` before it reaches HogQL
- * (server/scope.ts) — the backend needs no copy of this file, only this
- * one pattern, bound as a HogQL value.
+ * Institution slugs are lowercase alphanumeric with single internal
+ * hyphens — the same shape a URL path segment and a `?utm_institution=`
+ * value both tolerate without encoding. No leading/trailing/double
+ * hyphens: `/^[a-z0-9-]{1,64}$/` alone would accept `"--"`,
+ * `"-escola-"`, or `"escola--teste"`, which are not real slugs, just
+ * strings drawn from the same charset. Used to validate free-text slug
+ * entry here, and to revalidate `session.user.institutionSlug` before it
+ * reaches HogQL (server/scope.ts) — the backend needs no copy of this
+ * file, only this one pattern, bound as a HogQL value.
  */
-export const ORIGIN_SLUG_PATTERN = /^[a-z0-9-]{1,64}$/;
+export const ORIGIN_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+const ORIGIN_SLUG_MAX_LENGTH = 64;
 
 export function isValidOriginSlug(value: string): boolean {
-  return ORIGIN_SLUG_PATTERN.test(value);
+  return (
+    value.length <= ORIGIN_SLUG_MAX_LENGTH && ORIGIN_SLUG_PATTERN.test(value)
+  );
 }
 
 export interface CampaignOrigin {
