@@ -25,6 +25,31 @@ export const authConfig = {
     // session cookie. See discovery §5.5 / issue #744.
     strategy: "jwt",
   },
+  callbacks: {
+    // Mirror the jwt/session callbacks from auth.ts so the Edge-side
+    // middleware can read `role` and `institutionSlug` from the session.
+    // auth.ts has the full version that also sets these on first sign-in;
+    // here we only need to pass them through from the already-signed JWT.
+    jwt({ token, user }) {
+      if (user) {
+        const enriched = user as typeof user & {
+          backendId?: string;
+          backendRole?: "player" | "institution" | "admin";
+          institutionSlug?: string | null;
+        };
+        token.userId = enriched.backendId;
+        token.role = enriched.backendRole;
+        token.institutionSlug = enriched.institutionSlug ?? null;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (token.userId) session.user.id = token.userId;
+      if (token.role) session.user.role = token.role;
+      session.user.institutionSlug = token.institutionSlug ?? null;
+      return session;
+    },
+  },
 } satisfies NextAuthConfig;
 
 /**
