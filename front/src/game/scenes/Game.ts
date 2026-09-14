@@ -47,16 +47,19 @@ import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import type { MovingPlatform } from "../objects/MovingPlatform";
 import { Npc } from "../objects/Npc";
+import { Phase3Parallax } from "../objects/Phase3Parallax";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
 import type { Portal } from "../objects/Portal";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
+import { Trampoline } from "../objects/Trampoline";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { DisappearingPlatformTracker } from "../systems/DisappearingPlatformTracker";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
@@ -69,7 +72,12 @@ import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
-import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
+import {
+  type DisappearingPlatformLayer,
+  type MapData,
+  TiledMapLoader,
+} from "../systems/TiledMapLoader";
+import { TrampolineSystem } from "../systems/TrampolineSystem";
 import { TutorialSystem } from "../systems/TutorialSystem";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { GameDataAccessor } from "../types/GameDataAccessor";
@@ -142,6 +150,7 @@ export class Game extends Scene implements GameDataAccessor {
   public lightBarSystem!: LightBarSystem;
   public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
+  public trampolineSystem!: TrampolineSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
   private nudgeManager!: NudgeManager;
@@ -154,11 +163,17 @@ export class Game extends Scene implements GameDataAccessor {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private movingPlatforms: MovingPlatform[] = [];
+  private trampolines: Trampoline[] = [];
+  private disappearingPlatforms: {
+    layer: Phaser.Tilemaps.TilemapLayer;
+    tracker: DisappearingPlatformTracker;
+  }[] = [];
   private itemsInteracted: Set<string> = new Set();
   private eventBusUnsubs: Array<() => void> = [];
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
+  private phase3Parallax?: Phase3Parallax;
   public contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
     quizzes: {},
@@ -244,6 +259,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
+    Trampoline.preload(this);
     EffectsManager.preload(this);
 
     // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
@@ -251,6 +267,10 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
+
+    if (this.levelDef.levelNumber === Phase3Parallax.LEVEL_NUMBER) {
+      Phase3Parallax.preload(this);
+    }
 
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
       (asset) => {
@@ -728,7 +748,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
-      this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
+      this.setupCollisions(
+        mapData.colliders,
+        mapData.oneWayColliders,
+        mapData.disappearingLayers,
+      );
 
       const placeholderLayer =
         mapData.objectLayers.PlaceHolder ||
@@ -997,6 +1021,18 @@ export class Game extends Scene implements GameDataAccessor {
       );
     }
     this.setupCameras(map);
+
+    // Level 3 gets a night-sky backdrop behind the Tiled world. Created after
+    // the camera bounds are set, since the parallax reads them.
+    if (this.levelDef.levelNumber === Phase3Parallax.LEVEL_NUMBER) {
+      this.phase3Parallax = new Phase3Parallax(this);
+      this.phase3Parallax.create();
+
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.phase3Parallax?.destroy();
+        this.phase3Parallax = undefined;
+      });
+    }
 
     this.events.on(
       GameEvents.INFO_COLLECTED,
@@ -1284,6 +1320,12 @@ export class Game extends Scene implements GameDataAccessor {
     this.spotlightSystem?.getAll().forEach(({ sprite, light }) => {
       if (light) sprite.setLighting(false);
     });
+
+    // The parallax backdrop is atmospheric set dressing, not part of the
+    // physically lit world — and its layers are viewport-sized with no
+    // camera culling, so leaving lighting on them would run the multi-light
+    // shader over the full screen every frame.
+    this.phase3Parallax?.setLighting(false);
   }
 
   private setupEvents() {
@@ -1361,6 +1403,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.createAnims(this);
     Npc.createAnims(this);
     Enemy.createAnims(this);
+    Trampoline.createAnims(this);
 
     if (!this.anims.exists("placeholder_hint_anim")) {
       this.anims.create({
@@ -1400,6 +1443,16 @@ export class Game extends Scene implements GameDataAccessor {
       mapData,
       this.mapScale,
     );
+
+    const trampolineLayer = mapData.objectLayers.Trampoline;
+    if (trampolineLayer) {
+      this.trampolineSystem = new TrampolineSystem(this);
+      this.trampolineSystem.registerAllFromLayer(
+        trampolineLayer,
+        this.mapScale,
+      );
+      this.trampolines = this.trampolineSystem.getAll();
+    }
 
     this.rat = new Enemy(this, 2000, 315, 1);
 
@@ -2048,9 +2101,23 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
+  private updateDisappearingPlatforms(time: number) {
+    for (const { layer, tracker } of this.disappearingPlatforms) {
+      for (const update of tracker.update(time)) {
+        const [x, y] = update.key.split(",").map(Number);
+        const tile = layer.getTileAt(x, y);
+        if (!tile) continue;
+
+        tile.alpha = update.alpha;
+        tile.collideUp = update.collidable;
+      }
+    }
+  }
+
   private setupCollisions(
     colliders: Phaser.Tilemaps.TilemapLayer[],
     oneWayColliders: Phaser.Tilemaps.TilemapLayer[] = [],
+    disappearingLayers: DisappearingPlatformLayer[] = [],
   ) {
     this.colliders = colliders;
     colliders.forEach((layer) => {
@@ -2098,6 +2165,48 @@ export class Game extends Scene implements GameDataAccessor {
       }
     });
 
+    this.disappearingPlatforms = disappearingLayers.map(
+      ({ layer, config }) => ({
+        layer,
+        tracker: new DisappearingPlatformTracker(config),
+      }),
+    );
+
+    this.disappearingPlatforms.forEach(({ layer, tracker }) => {
+      this.physics.add.collider(
+        this.player,
+        layer,
+        // Collision callback: a tile the player is resting on top of starts its timer
+        (player, tile) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            const t = tile as Phaser.Tilemaps.Tile;
+            tracker.onStand(`${t.x},${t.y}`, this.time.now);
+          }
+        },
+        // Process callback: same one-way behavior as oneWay platforms
+        () => {
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+          return true;
+        },
+        this,
+      );
+
+      this.physics.add.collider(this.rat, layer);
+      for (const npc of this.npcs) {
+        this.physics.add.collider(npc, layer);
+      }
+      for (const item of this.draggableItems) {
+        this.physics.add.collider(item, layer);
+      }
+      for (const item of this.carryableItems) {
+        this.physics.add.collider(item, layer);
+      }
+    });
+
     // Moving platforms — one-way collision (player can jump through from below)
     for (const platform of this.movingPlatforms) {
       this.physics.add.collider(
@@ -2141,27 +2250,58 @@ export class Game extends Scene implements GameDataAccessor {
         this,
       );
     }
+
+    // Trampolines — launch the player upward on contact from above.
+    for (const trampoline of this.trampolines) {
+      this.physics.add.collider(
+        this.player,
+        trampoline,
+        (player, _trampoline) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down && playerBody.velocity.y >= 0) {
+            (player as Player).launch(
+              PLAYER_MOVEMENT.JUMP_VELOCITY_Y * trampoline.power,
+            );
+            trampoline.bounce();
+          }
+        },
+        () => {
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+          return true;
+        },
+        this,
+      );
+    }
   }
 
   private setupCameras(map?: Phaser.Tilemaps.Tilemap) {
     this.cameras.main.setZoom(1.0);
     if (map) {
-      this.cameras.main.setBounds(
-        0,
-        0,
-        map.widthInPixels * this.mapScale,
-        map.heightInPixels * this.mapScale,
-      );
+      const worldWidth = map.widthInPixels * this.mapScale;
+      const worldHeight = map.heightInPixels * this.mapScale;
+      this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+      // Arcade Physics defaults world bounds to the base canvas size
+      // (LayoutConfig.GAME.WIDTH/HEIGHT) unless set explicitly, which is far
+      // smaller than the scaled level — sync it so setCollideWorldBounds
+      // actually clamps against the full level instead of a tiny top-left box.
+      this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     }
     this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, delta: number) {
+  update(time: number, delta: number) {
+    this.updateDisappearingPlatforms(time);
+
     const NOMINAL_DT = 1000 / 60;
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    this.phase3Parallax?.update(this.cameras.main);
 
     if (this.isDialogueOpen) {
       const cam = this.cameras.main;
