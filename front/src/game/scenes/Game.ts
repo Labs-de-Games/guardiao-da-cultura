@@ -108,6 +108,7 @@ const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
   [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
   [InteractiveType.STEP_SEQUENCE]: "nudge_hint_shown_step_sequence",
   [InteractiveType.BAND]: "nudge_hint_shown_band",
+  [InteractiveType.GENIUS_SEQUENCE]: "nudge_hint_shown_genius_sequence",
 };
 
 export class Game extends Scene implements GameDataAccessor {
@@ -144,6 +145,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isCostumeSelectorOpen: boolean = false;
   private isStepSequenceOpen: boolean = false;
   private isBandPanelOpen: boolean = false;
+  private isGeniusSequenceOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -226,6 +228,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.isCostumeSelectorOpen = false;
     this.isStepSequenceOpen = false;
     this.isBandPanelOpen = false;
+    this.isGeniusSequenceOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -1679,7 +1682,8 @@ export class Game extends Scene implements GameDataAccessor {
         (this.isDialogueOpen && !this.player?.isTutorialActive) ||
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen ||
-        this.isBandPanelOpen
+        this.isBandPanelOpen ||
+        this.isGeniusSequenceOpen
       )
         return;
 
@@ -1927,6 +1931,35 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
 
+      // Genius sequence placeholder candidate
+      const geniusSequence = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        INTERACT_RANGE,
+        InteractiveType.GENIUS_SEQUENCE,
+      );
+      if (geniusSequence && !geniusSequence.isFilled) {
+        const geniusDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          geniusSequence.area.centerX,
+          geniusSequence.area.centerY,
+        );
+        candidates.push({
+          dist: geniusDist,
+          open: () => {
+            this.isGeniusSequenceOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED);
+            EventBus.emit("ui:genius-sequence-open", {
+              instanceId: geniusSequence.instanceId,
+            });
+            posthog.capture("genius_sequence_interacted", {
+              level_id: this.levelId,
+            });
+          },
+        });
+      }
+
       // Spotlight candidate
       if (this.spotlightSystem) {
         const spotlight = this.spotlightSystem.getNearbySpotlight(
@@ -2065,6 +2098,33 @@ export class Game extends Scene implements GameDataAccessor {
     });
     this.onEventBus("ui:step-sequence-close", () => {
       this.closeStepSequence();
+    });
+    this.onEventBus("ui:genius-sequence-close", () => {
+      this.closeGeniusSequence();
+    });
+    this.onEventBus("ui:genius-sequence-complete", (data) => {
+      this.closeGeniusSequence();
+      this.sound.play("sfx.puzzle.success", { volume: 0.7 });
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (p) {
+        this.showSpotlightBeam();
+        this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      }
+
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
+      this.time.delayedCall(500, () => {
+        this.events.emit(GameEvents.INFO_COLLECTED, {
+          missionId: MissionIds.CURATOR_L3,
+          infoKey: MissionKeys.GENIUS_DONE,
+        });
+        this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      });
     });
     // Persist each locked slot on the placeholder, so partial progress
     // survives closing and reopening the panel.
@@ -2306,6 +2366,13 @@ export class Game extends Scene implements GameDataAccessor {
     this.checkDialogState();
   }
 
+  private closeGeniusSequence() {
+    if (!this.isGeniusSequenceOpen) return;
+    this.isGeniusSequenceOpen = false;
+    this.events.emit(GameEvents.DIALOGUE_ENDED);
+    this.checkDialogState();
+  }
+
   private checkDialogState() {
     if (
       !this.isDialogueOpen &&
@@ -2314,6 +2381,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isCostumeSelectorOpen &&
       !this.isStepSequenceOpen &&
       !this.isBandPanelOpen &&
+      !this.isGeniusSequenceOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -2546,6 +2614,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isCostumeSelectorOpen ||
         this.isStepSequenceOpen ||
         this.isBandPanelOpen ||
+        this.isGeniusSequenceOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
@@ -2691,6 +2760,10 @@ export class Game extends Scene implements GameDataAccessor {
     },
     [InteractiveType.STEP_SEQUENCE]: {
       infoKey: MissionKeys.DANCE_DONE,
+      missionId: MissionIds.CURATOR_L3,
+    },
+    [InteractiveType.GENIUS_SEQUENCE]: {
+      infoKey: MissionKeys.GENIUS_DONE,
       missionId: MissionIds.CURATOR_L3,
     },
   };
