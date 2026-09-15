@@ -4,7 +4,15 @@ import type { ReactNode } from "react";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 
-export function InventoryDropZone({ children }: { children: ReactNode }) {
+export function InventoryDropZone({
+  children,
+  minHeight = 360,
+  centerContent = false,
+}: {
+  children: ReactNode;
+  minHeight?: number | string;
+  centerContent?: boolean;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: "inventory" });
 
   return (
@@ -17,9 +25,10 @@ export function InventoryDropZone({ children }: { children: ReactNode }) {
         p: 1.5,
         display: "flex",
         flexDirection: "column",
+        justifyContent: centerContent ? "center" : "flex-start",
         gap: 1,
         height: "100%",
-        minHeight: 360,
+        minHeight,
         overflowY: "auto",
         outline: isOver
           ? `2px solid ${LayoutConfig.COLORS.INFO_TITLE}`
