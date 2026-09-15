@@ -4,7 +4,6 @@ import { PassportModule } from "@nestjs/passport";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { EmailModule } from "../../core/email/email.module";
 import { UsersModule } from "../users/users.module";
-import { AuthController } from "./controllers/auth.controller";
 import { OAuthUpsertController } from "./controllers/oauth-upsert.controller";
 import { PasswordAuthController } from "./controllers/password-auth.controller";
 import { MagicLinkToken } from "./entities/magic-link-token.entity";
@@ -25,7 +24,7 @@ import { JwtAccessStrategy } from "./strategies/jwt-access.strategy";
     UsersModule,
     EmailModule,
   ],
-  controllers: [AuthController, OAuthUpsertController, PasswordAuthController],
+  controllers: [OAuthUpsertController, PasswordAuthController],
   providers: [
     AuthService,
     TokenService,
