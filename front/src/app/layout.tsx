@@ -4,7 +4,6 @@ import PostHogPageView from "@/components/PostHogPageView";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
 import { ToastProvider } from "@/components/ToastProvider";
-import { AuthProvider } from "@/lib/auth/AuthContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -26,12 +25,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <PostHogProvider>
           <ThemeRegistry>
-            <AuthProvider>
-              <ToastProvider>
-                <PostHogPageView />
-                {children}
-              </ToastProvider>
-            </AuthProvider>
+            <ToastProvider>
+              <PostHogPageView />
+              {children}
+            </ToastProvider>
           </ThemeRegistry>
         </PostHogProvider>
         <Script
