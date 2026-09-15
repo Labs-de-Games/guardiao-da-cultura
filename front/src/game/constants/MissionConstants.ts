@@ -15,6 +15,7 @@ export const MissionKeys = {
   STAGE_DONE: "stage_done",
   DANCE_DONE: "dance_done",
   SWITCHES_DONE: "switches_done",
+  GENIUS_DONE: "genius_done",
 } as const;
 
 export const NPC_FLOOR_3_POSITION = { x: 2100, y: 400 } as const;
@@ -28,6 +29,7 @@ export const FLOOR_COMPLETE_KEYS: Set<string> = new Set([
   MissionKeys.SPOTLIGHTS_DONE,
   MissionKeys.STAGE_DONE,
   MissionKeys.DANCE_DONE,
+  MissionKeys.GENIUS_DONE,
 ]);
 
 export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
