@@ -224,6 +224,20 @@ export interface AutoStartTickData {
   totalMs: number;
 }
 
+export type GeniusColor = "green" | "red" | "yellow" | "blue";
+
+export interface GeniusSequenceOpenData {
+  instanceId: string;
+}
+
+export interface GeniusSequenceCompleteData {
+  instanceId: string;
+}
+
+export interface GeniusSoundNoteData {
+  color: GeniusColor;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -276,6 +290,10 @@ export interface GameEventMap {
   "ui:step-placed": StepSlotData;
   "ui:step-rejected": StepSlotData;
   "ui:step-sequence-rejected": StepSequenceRejectedData;
+  "ui:genius-sequence-open": GeniusSequenceOpenData;
+  "ui:genius-sequence-close": undefined;
+  "ui:genius-sequence-complete": GeniusSequenceCompleteData;
+  "ui:sound-genius-note": GeniusSoundNoteData;
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
