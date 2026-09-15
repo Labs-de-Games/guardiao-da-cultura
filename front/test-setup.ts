@@ -39,11 +39,13 @@ if (typeof window !== "undefined") {
 }
 
 // jsdom does not implement HTMLMediaElement playback — the step-sequence panel
-// calls play() on its choreography video.
+// calls play() on its choreography video, and the song-sequence panel calls
+// pause() on cached note audio when cancelling playback.
 if (typeof window !== "undefined") {
   window.HTMLMediaElement.prototype.play = jest
     .fn()
     .mockResolvedValue(undefined);
+  window.HTMLMediaElement.prototype.pause = jest.fn();
 }
 
 class MockEventEmitter {
