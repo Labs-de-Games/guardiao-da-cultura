@@ -24,7 +24,11 @@ export type SfxKey =
   | "sfx.ladder.drop"
   | "sfx.camera.click"
   | "sfx.switch"
-  | "sfx.light_bar.fix";
+  | "sfx.light_bar.fix"
+  | "sfx.genius.green"
+  | "sfx.genius.red"
+  | "sfx.genius.yellow"
+  | "sfx.genius.blue";
 
 /** Semantic keys for music tracks.
  * Level-specific music follows pattern: "music.level_{id}.main" */
