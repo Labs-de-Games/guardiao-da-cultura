@@ -18,7 +18,10 @@ import { EventBus } from "@/shared/events/event-bus";
 import { useNotePlayback } from "@/ui/hooks/useNotePlayback";
 import { useSound } from "@/ui/hooks/useSound";
 import { DraggableNoteItem } from "@/ui/panels/DraggableNoteItem";
-import { DroppableSequenceSlot } from "@/ui/panels/DroppableSequenceSlot";
+import {
+  DroppableSequenceSlot,
+  SEQUENCE_SLOT_BASE_SX,
+} from "@/ui/panels/DroppableSequenceSlot";
 import { InventoryDropZone } from "@/ui/panels/InventoryDropZone";
 import {
   buildInitialState,
@@ -488,20 +491,12 @@ export function SongSequencePanel() {
                   <Box
                     key={`slot-${idx}`}
                     sx={{
-                      aspectRatio: "1",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: "10px",
+                      ...SEQUENCE_SLOT_BASE_SX,
                       bgcolor: GAME_UI_TOKENS.colors.bgTertiary,
                       border:
                         idx === playingIndex
                           ? `2px solid ${GAME_UI_TOKENS.colors.accentGold}`
                           : "2px solid transparent",
-                      color: GAME_UI_TOKENS.colors.textPrimary,
-                      fontFamily: GAME_UI_TOKENS.fonts.body,
-                      fontWeight: 700,
-                      fontSize: "11px",
                     }}
                   >
                     {slot.note ?? (

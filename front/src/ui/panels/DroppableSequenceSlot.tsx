@@ -14,6 +14,21 @@ const shake = keyframes`
   80%       { transform: translateX(4px); }
 `;
 
+// Shared box shell between blank (droppable) slots here and the fixed
+// slots rendered inline in SongSequencePanel, so the two stay visually
+// consistent.
+export const SEQUENCE_SLOT_BASE_SX = {
+  aspectRatio: "1",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: "10px",
+  color: GAME_UI_TOKENS.colors.textPrimary,
+  fontFamily: GAME_UI_TOKENS.fonts.body,
+  fontWeight: 700,
+  fontSize: "11px",
+} as const;
+
 export function DroppableSequenceSlot({
   slotIndex,
   note,
@@ -80,19 +95,11 @@ export function DroppableSequenceSlot({
       {...(isDraggable ? attributes : {})}
       onClick={onActivate}
       sx={{
-        aspectRatio: "1",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "10px",
+        ...SEQUENCE_SLOT_BASE_SX,
         bgcolor: note
           ? GAME_UI_TOKENS.colors.bgTertiary
           : GAME_UI_TOKENS.colors.bgPrimary,
         border: `${borderWidth}px solid ${borderColor}`,
-        color: GAME_UI_TOKENS.colors.textPrimary,
-        fontFamily: GAME_UI_TOKENS.fonts.body,
-        fontWeight: 700,
-        fontSize: "11px",
         position: "relative",
         cursor: isLocked ? "default" : "pointer",
         opacity: isDragging ? 0.3 : 1,
