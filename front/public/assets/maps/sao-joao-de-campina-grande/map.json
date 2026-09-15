@@ -214,6 +214,50 @@
                  "width":0,
                  "x":578,
                  "y":560
+                }, 
+                {
+                 "height":0,
+                 "id":129,
+                 "name":"LB_5",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":30
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":10
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_5"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":700
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":551.515625,
+                 "y":87.625
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1324,6 +1368,45 @@
                  "width":0,
                  "x":578,
                  "y":618
+                }, 
+                {
+                 "height":0,
+                 "id":128,
+                 "name":"PH_5",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"accordion_frame001"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"genius_sequence"
+                        }, 
+                        {
+                         "name":"yOffset",
+                         "type":"int",
+                         "value":-120
+                        }],
+                 "rotation":0,
+                 "type":"PlaceholderInstance",
+                 "visible":true,
+                 "width":0,
+                 "x":551.694429207,
+                 "y":170.196583516
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1405,8 +1488,8 @@
                  "type":"SwitchLight",
                  "visible":true,
                  "width":0,
-                 "x":560,
-                 "y":176
+                 "x":65.3333333333334,
+                 "y":255.333333333333
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1415,7 +1498,7 @@
          "y":0
         }],
  "nextlayerid":25,
- "nextobjectid":128,
+ "nextobjectid":130,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.2",
