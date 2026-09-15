@@ -386,12 +386,28 @@
                  "name":"PH_1",
                  "opacity":1,
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"song_sequence_ph"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"song_sequence"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
                  "x":320,
-                 "y":480
+                 "y":496
                 }, 
                 {
                  "height":0,

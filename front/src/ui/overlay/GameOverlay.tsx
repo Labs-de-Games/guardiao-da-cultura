@@ -23,6 +23,7 @@ import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { MapInfoBox } from "@/ui/panels/MapInfoBox";
 import { MapPinTooltip } from "@/ui/panels/MapPinTooltip";
+import { SongSequencePanel } from "@/ui/panels/SongSequencePanel";
 import { StepSequencePanel } from "@/ui/panels/StepSequencePanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
@@ -90,6 +91,8 @@ function OverlayContent({
   const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
   const openStepSequence = useGameUIStore((s) => s.openStepSequence);
   const stepSequenceOpen = useGameUIStore((s) => s.stepSequenceOpen);
+  const openSongSequence = useGameUIStore((s) => s.openSongSequence);
+  const songSequenceOpen = useGameUIStore((s) => s.songSequenceOpen);
   const evidenceBoardOpen = useGameUIStore((s) => s.evidenceBoardOpen);
   const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const creditsOpen = useGameUIStore((s) => s.creditsOpen);
@@ -154,6 +157,13 @@ function OverlayContent({
       },
     );
 
+    const unsubSongSequenceOpen = EventBus.on(
+      "ui:song-sequence-open",
+      (data) => {
+        openSongSequence(data);
+      },
+    );
+
     const unsubCostumeSelectorOpen = EventBus.on(
       "ui:costume-selector-open",
       (data) => {
@@ -209,6 +219,7 @@ function OverlayContent({
       unsubChunkSelectorOpen();
       unsubCostumeSelectorOpen();
       unsubStepSequenceOpen();
+      unsubSongSequenceOpen();
       unsubMapMarker();
       unsubAutoStartTick();
       unsubAutoStartCanceled();
@@ -226,6 +237,7 @@ function OverlayContent({
     openChunkSelector,
     openCostumeSelector,
     openStepSequence,
+    openSongSequence,
     setActiveMapMarker,
     setAutoStartProgress,
     setCreditsOpen,
@@ -233,7 +245,12 @@ function OverlayContent({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (chunkSelectorOpen || costumeSelectorOpen || stepSequenceOpen) {
+      if (
+        chunkSelectorOpen ||
+        costumeSelectorOpen ||
+        stepSequenceOpen ||
+        songSequenceOpen
+      ) {
         return;
       }
 
@@ -291,6 +308,7 @@ function OverlayContent({
     chunkSelectorOpen,
     costumeSelectorOpen,
     stepSequenceOpen,
+    songSequenceOpen,
     evidenceBoardOpen,
     setEvidenceBoardOpen,
   ]);
@@ -362,6 +380,7 @@ function OverlayContent({
       <ChunkSelectorPanel />
       <CostumeSelectorPanel />
       <StepSequencePanel />
+      <SongSequencePanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />

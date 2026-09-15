@@ -325,6 +325,10 @@ export const LEVEL_ASSETS = {
         key: "light_bar",
         path: "misc/spotlights/light_bar.png",
       },
+      {
+        key: "song_sequence_ph",
+        path: "misc/stage-placeholder.png",
+      },
     ],
     COLLECTIBLES: [],
     CONTENT: {

@@ -27,6 +27,7 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
+import { buildSongSequenceData } from "../data/songSequenceContent";
 import { buildStepSequenceData } from "../data/stepSequenceContent";
 import {
   CostumeMechanicHandler,
@@ -96,6 +97,7 @@ const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
   [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
   [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
   [InteractiveType.STEP_SEQUENCE]: "nudge_hint_shown_step_sequence",
+  [InteractiveType.SONG_SEQUENCE]: "nudge_hint_shown_song_sequence",
 };
 
 export class Game extends Scene implements GameDataAccessor {
@@ -130,6 +132,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
   private isStepSequenceOpen: boolean = false;
+  private isSongSequenceOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -202,6 +205,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.isChunkSelectorOpen = false;
     this.isCostumeSelectorOpen = false;
     this.isStepSequenceOpen = false;
+    this.isSongSequenceOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -1702,6 +1706,35 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
 
+      // Song sequence placeholder candidate
+      const songSequence = this.placeholderSystem.getNearbyInteractable(
+        px,
+        py,
+        InteractiveType.SONG_SEQUENCE,
+      );
+      if (songSequence) {
+        const songSequencePoint =
+          this.placeholderSystem.getInteractionPoint(songSequence);
+        const songSequenceDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          songSequencePoint.x,
+          songSequencePoint.y,
+        );
+        candidates.push({
+          dist: songSequenceDist,
+          open: () => {
+            const data = buildSongSequenceData(songSequence.instanceId);
+            this.isSongSequenceOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED);
+            EventBus.emit("ui:song-sequence-open", data);
+            posthog.capture("song_sequence_interacted", {
+              level_id: this.levelId,
+            });
+          },
+        });
+      }
+
       // Spotlight candidate
       if (this.spotlightSystem) {
         const spotlight = this.spotlightSystem.getNearbySpotlight(
@@ -1840,6 +1873,12 @@ export class Game extends Scene implements GameDataAccessor {
     });
     this.onEventBus("ui:step-sequence-close", () => {
       this.closeStepSequence();
+    });
+    this.onEventBus("ui:song-sequence-close", () => {
+      if (!this.isSongSequenceOpen) return;
+      this.isSongSequenceOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED);
+      this.checkDialogState();
     });
     // Persist each locked slot on the placeholder, so partial progress
     // survives closing and reopening the panel.
@@ -2041,6 +2080,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isChunkSelectorOpen &&
       !this.isCostumeSelectorOpen &&
       !this.isStepSequenceOpen &&
+      !this.isSongSequenceOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -2185,6 +2225,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen ||
         this.isStepSequenceOpen ||
+        this.isSongSequenceOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
