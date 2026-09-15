@@ -209,10 +209,50 @@ export function SongSequencePanel() {
     [isPlaying, state.grippedId, state.lockedSlots, state.board],
   );
 
+  // Keyboard handler reads through this ref (kept fresh every render)
+  // instead of closing over `state`/callbacks directly, so the window
+  // listener is registered once per panel open instead of on every
+  // dispatch.
+  const latestRef = useRef({
+    state,
+    isPlaying,
+    songSequenceData,
+    handleClose,
+    handleConfirm,
+    playSequence,
+    cancel,
+    activateSequenceSlot,
+    activateTrayItem,
+  });
+  latestRef.current = {
+    state,
+    isPlaying,
+    songSequenceData,
+    handleClose,
+    handleConfirm,
+    playSequence,
+    cancel,
+    activateSequenceSlot,
+    activateTrayItem,
+  };
+
   useEffect(() => {
-    if (!songSequenceOpen || !songSequenceData) return;
+    if (!songSequenceOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const {
+        state,
+        isPlaying,
+        songSequenceData,
+        handleClose,
+        handleConfirm,
+        playSequence,
+        cancel,
+        activateSequenceSlot,
+        activateTrayItem,
+      } = latestRef.current;
+      if (!songSequenceData) return;
+
       const key = e.key.toLowerCase();
 
       if (key === "escape") {
@@ -272,18 +312,7 @@ export function SongSequencePanel() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    songSequenceOpen,
-    songSequenceData,
-    handleClose,
-    handleConfirm,
-    isPlaying,
-    playSequence,
-    cancel,
-    state,
-    activateSequenceSlot,
-    activateTrayItem,
-  ]);
+  }, [songSequenceOpen]);
 
   // A plain click has zero pointer movement — require a small drag distance
   // before a drag activates, so click handlers (note preview) still fire.
