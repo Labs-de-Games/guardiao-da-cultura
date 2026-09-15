@@ -25,27 +25,10 @@ jest.mock("../game/main", () => ({
   default: () => ({ destroy: () => {} }),
 }));
 
-jest.mock("../lib/auth/useAuth", () => ({
-  useAuth: () => ({
-    user: {
-      id: "test-user-id",
-      email: "",
-      nickname: "Test",
-      firstName: "",
-      lastName: "",
-      role: "player",
-      isEmailVerified: false,
-    },
-    isAuthenticated: true,
-    isLoading: false,
-    accessToken: "test-token",
-    login: async () => {},
-    confirmLogin: async () => {},
-    register: async () => {},
-    confirmVerifyEmail: async () => {},
-    logout: async () => {},
-    logoutAll: async () => {},
-  }),
+// Players never authenticate (#738: no player login/registration) —
+// PhaserGame always resolves playerId from the guest session id.
+jest.mock("../lib/guestSession", () => ({
+  getOrCreateGuestSessionId: () => "test-user-id",
 }));
 
 jest.mock("@/ui/overlay/GameOverlay", () => ({
