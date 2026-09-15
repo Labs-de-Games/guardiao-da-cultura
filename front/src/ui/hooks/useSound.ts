@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { EventBus } from "@/shared/events/event-bus";
+import type { GeniusColor } from "@/shared/events/game-events";
 
 /**
  * Hook for playing UI sounds from React components.
@@ -32,6 +33,10 @@ export function useSound() {
     EventBus.emit("ui:sound-level-complete", undefined);
   }, []);
 
+  const playGeniusNote = useCallback((color: GeniusColor) => {
+    EventBus.emit("ui:sound-genius-note", { color });
+  }, []);
+
   return {
     playClick,
     playHover,
@@ -39,5 +44,6 @@ export function useSound() {
     playModalClose,
     playBadgeUnlock,
     playLevelComplete,
+    playGeniusNote,
   };
 }
