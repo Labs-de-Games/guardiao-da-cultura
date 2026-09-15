@@ -90,6 +90,7 @@ export interface BandPanelData {
   options: string[];
 }
 
+import type { GeniusSequenceOpenData } from "@/shared/events/game-events";
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
 import type { StepSequenceData } from "../panels/step-sequence-types";
 
@@ -115,6 +116,8 @@ export interface GameUIState {
   stepSequenceData: StepSequenceData | null;
   bandPanelOpen: boolean;
   bandPanelData: BandPanelData | null;
+  geniusSequenceOpen: boolean;
+  geniusSequenceData: GeniusSequenceOpenData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -187,6 +190,8 @@ export interface GameUIState {
   closeStepSequence: () => void;
   openBandPanel: (data: BandPanelData) => void;
   closeBandPanel: () => void;
+  openGeniusSequence: (data: GeniusSequenceOpenData) => void;
+  closeGeniusSequence: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -300,6 +305,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     stepSequenceData: null,
     bandPanelOpen: false,
     bandPanelData: null,
+    geniusSequenceOpen: false,
+    geniusSequenceData: null,
     toasts: [],
     labelData: null,
     badgeGalleryOpen: false,
@@ -373,6 +380,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           stepSequenceData: null,
           bandPanelOpen: false,
           bandPanelData: null,
+          geniusSequenceOpen: false,
+          geniusSequenceData: null,
           labelData: null,
           levelInfo: null,
           evidenceBoardOpen: false,
@@ -479,6 +488,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
       set({
         bandPanelOpen: false,
         bandPanelData: null,
+      }),
+    openGeniusSequence: (data) =>
+      set({
+        geniusSequenceOpen: true,
+        geniusSequenceData: data,
+      }),
+    closeGeniusSequence: () =>
+      set({
+        geniusSequenceOpen: false,
+        geniusSequenceData: null,
       }),
     addToast: (message, duration, iconSrc) =>
       set((s) => {
