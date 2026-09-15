@@ -19,6 +19,7 @@ interface AsyncDataState<T> {
 export function useAsyncData<T>(
   fetcher: () => Promise<T>,
   deps: React.DependencyList,
+  enabled = true,
 ): AsyncDataState<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,12 @@ export function useAsyncData<T>(
   const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -47,7 +54,7 @@ export function useAsyncData<T>(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, retryToken]);
+  }, [...deps, retryToken, enabled]);
 
   const retry = useCallback(() => setRetryToken((t) => t + 1), []);
 
