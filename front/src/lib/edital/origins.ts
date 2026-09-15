@@ -39,11 +39,6 @@ export interface CampaignOrigin {
   slug: string;
   label: string;
   kind: "school" | "partner" | "other";
-  defaultUtm?: {
-    source?: string;
-    medium?: string;
-    campaign?: string;
-  };
   notes?: string;
 }
 
@@ -71,9 +66,6 @@ export function resolveOriginLabel(slug: string): string {
 
 export interface BuildTrackingUrlParams {
   slug: string;
-  source?: string;
-  medium?: string;
-  campaign?: string;
 }
 
 /**
@@ -84,8 +76,5 @@ export interface BuildTrackingUrlParams {
 export function buildTrackingUrl(params: BuildTrackingUrlParams): string {
   const url = new URL(LANDING_BASE_URL);
   url.searchParams.set("utm_institution", params.slug);
-  if (params.source) url.searchParams.set("utm_source", params.source);
-  if (params.medium) url.searchParams.set("utm_medium", params.medium);
-  if (params.campaign) url.searchParams.set("utm_campaign", params.campaign);
   return url.toString();
 }
