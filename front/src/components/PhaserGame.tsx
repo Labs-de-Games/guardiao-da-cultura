@@ -8,7 +8,6 @@ import { GameEventType } from "../game/types/AnalyticsTypes";
 import { sendGameEvent } from "../lib/analyticsApi";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
-import { useAuth } from "../lib/auth/useAuth";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import { EventBus } from "../shared/events/event-bus";
@@ -26,7 +25,6 @@ const GameOverlay = dynamic(
 const MIN_LEVEL_LOADING_MS = 5000;
 
 export default function PhaserGame() {
-  const { user } = useAuth();
   const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -157,17 +155,17 @@ export default function PhaserGame() {
       let stage: "player_id_resolution" | "module_import" | "phaser_init" =
         "player_id_resolution";
       try {
-        const activeUserId = user?.id ?? null;
-        const isGuest = !activeUserId;
-        const guestSessionId = isGuest ? getOrCreateGuestSessionId() : null;
-        const playerId = activeUserId ?? guestSessionId;
+        // Players never authenticate (#738: no player login/registration)
+        // — always a guest, identified by the persisted guest session id.
+        const guestSessionId = getOrCreateGuestSessionId();
+        const playerId = guestSessionId;
 
         if (!playerId) {
           throw new Error("Player ID is required to start the game.");
         }
         playerIdRef.current = playerId;
 
-        if (isGuest && guestSessionId) {
+        if (guestSessionId) {
           setGuestId(guestSessionId);
         }
 
@@ -175,7 +173,7 @@ export default function PhaserGame() {
         const { default: StartGame } = await import("../game/main");
 
         stage = "phaser_init";
-        const game = StartGame("game-container", playerId, isGuest, entryFlow);
+        const game = StartGame("game-container", playerId, true, entryFlow);
         gameRef.current = game;
 
         const emitCanvasViewport = () => {
@@ -296,7 +294,7 @@ export default function PhaserGame() {
     // player identity a synchronous, middleware-set durable cookie —
     // getOrCreateGuestSessionId already prefers the existing persisted
     // guest id over any argument.
-  }, [entryFlow, isFlowLoading, user?.id]);
+  }, [entryFlow, isFlowLoading]);
 
   return (
     <div
