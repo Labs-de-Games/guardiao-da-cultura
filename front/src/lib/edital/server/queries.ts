@@ -86,6 +86,12 @@ export function buildSummaryQuery(
  * function's body is what needs replacing with `buildFunnelFallbackQuery`
  * using `uniqExactIf` per step instead (weaker guarantee: "steps
  * reached", not strict order).
+ *
+ * #739(a) is answered: `windowFunnel` is available — but only over
+ * `DateTime`, not the `events.timestamp` column's native
+ * `DateTime64(6, 'UTC')` ("Illegal type DateTime64(6, 'UTC') of first
+ * argument", confirmed directly against the PostHog Query API). Hence
+ * the explicit `toDateTime(timestamp)` cast below; dropping it 400s.
  */
 export function buildFunnelQuery(
   scope: Scope,
@@ -101,7 +107,7 @@ FROM (
   SELECT
     properties.anonymous_player_id AS anonymous_player_id,
     windowFunnel(604800)(
-      timestamp,
+      toDateTime(timestamp),
       ${stepConditions}
     ) AS depth
   FROM events
