@@ -25,7 +25,7 @@ const PLAYBACK_GAP_MS = 350;
 const PLAYBACK_FLASH_MS = 450;
 const ROUND_ADVANCE_DELAY_MS = INITIAL_DELAY_MS;
 const SUCCESS_LABEL_DURATION_MS = 1000;
-const RETRY_DELAY_MS = 900;
+const RETRY_DELAY_MS = 1500;
 const COMPLETE_CLOSE_DELAY_MS = 1300;
 
 const COLORS: GeniusColor[] = ["green", "red", "yellow", "blue"];
