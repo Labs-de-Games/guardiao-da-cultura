@@ -43,9 +43,6 @@ function InstitutionLinksContent() {
   const [selectedRegistrySlug, setSelectedRegistrySlug] =
     useState<string>(CUSTOM_SLUG_VALUE);
   const [customSlug, setCustomSlug] = useState("");
-  const [source, setSource] = useState("");
-  const [medium, setMedium] = useState("");
-  const [campaign, setCampaign] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const effectiveSlug =
@@ -56,21 +53,14 @@ function InstitutionLinksContent() {
 
   function handleSelectOrigin(value: string) {
     setSelectedRegistrySlug(value);
-    const entry = CAMPAIGN_ORIGINS.find((o) => o.slug === value);
-    setSource(entry?.defaultUtm?.source ?? "");
-    setMedium(entry?.defaultUtm?.medium ?? "");
-    setCampaign(entry?.defaultUtm?.campaign ?? "");
   }
 
   const trackingUrl = useMemo(() => {
     if (!slugIsValid) return "";
     return buildTrackingUrl({
       slug: effectiveSlug,
-      source: source || undefined,
-      medium: medium || undefined,
-      campaign: campaign || undefined,
     });
-  }, [slugIsValid, effectiveSlug, source, medium, campaign]);
+  }, [slugIsValid, effectiveSlug]);
 
   async function handleCopy() {
     if (!trackingUrl) return;
@@ -129,27 +119,6 @@ function InstitutionLinksContent() {
                 }
               />
             ) : null}
-
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <TextField
-                size="small"
-                label="utm_source (opcional)"
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-              />
-              <TextField
-                size="small"
-                label="utm_medium (opcional)"
-                value={medium}
-                onChange={(e) => setMedium(e.target.value)}
-              />
-              <TextField
-                size="small"
-                label="utm_campaign (opcional)"
-                value={campaign}
-                onChange={(e) => setCampaign(e.target.value)}
-              />
-            </Box>
 
             <TextField
               size="small"
