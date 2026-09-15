@@ -188,8 +188,10 @@ export function GeniusSequencePanel() {
       if (inputIndexRef.current === round) {
         if (round === TOTAL_ROUNDS) {
           setPhase("complete");
+          // Fire immediately: closing the panel during the celebration
+          // delay must not be able to cancel a completion already earned.
+          EventBus.emit("ui:genius-sequence-complete", { instanceId });
           schedule(() => {
-            EventBus.emit("ui:genius-sequence-complete", { instanceId });
             closeGeniusSequence();
           }, COMPLETE_CLOSE_DELAY_MS);
         } else {
