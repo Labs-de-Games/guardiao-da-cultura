@@ -40,10 +40,14 @@ describe("useEditalFilters", () => {
     });
   });
 
-  it("falls back to 30d for a malformed custom range (missing from/to)", () => {
+  it("accepts a custom range even when from/to are missing (user will fill them in)", () => {
     mockSearchParams = new URLSearchParams({ dateRange: "custom" });
     const { result } = renderHook(() => useEditalFilters());
-    expect(result.current.dateRange).toEqual({ type: "30d" });
+    expect(result.current.dateRange).toEqual({
+      type: "custom",
+      start: "",
+      end: "",
+    });
   });
 
   it("falls back to 30d for an unknown dateRange value", () => {

@@ -22,13 +22,9 @@ export function useEditalFilters(): {
   const dateRange = useMemo<DateRange>(() => {
     const type = searchParams.get("dateRange");
     if (type === "custom") {
-      const start = searchParams.get("from");
-      const end = searchParams.get("to");
-      if (start && end) {
-        return { type: "custom", start, end };
-      }
-      // Malformed custom range in the URL — fall back rather than crash.
-      return { type: "30d" };
+      const start = searchParams.get("from") ?? "";
+      const end = searchParams.get("to") ?? "";
+      return { type: "custom", start, end };
     }
     if (type === "today" || type === "7d" || type === "all-time") {
       return { type };

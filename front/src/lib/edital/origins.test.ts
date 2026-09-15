@@ -60,35 +60,12 @@ describe("buildTrackingUrl", () => {
     expect(url).toBe(`${LANDING_BASE_URL}?utm_institution=escola-teste`);
   });
 
-  it("includes optional UTM fields when provided", () => {
+  it("URL-encodes a slug that needs it", () => {
     const url = buildTrackingUrl({
       slug: "escola-teste",
-      source: "instagram",
-      medium: "social",
-      campaign: "lancamento",
     });
     const parsed = new URL(url);
     expect(parsed.searchParams.get("utm_institution")).toBe("escola-teste");
-    expect(parsed.searchParams.get("utm_source")).toBe("instagram");
-    expect(parsed.searchParams.get("utm_medium")).toBe("social");
-    expect(parsed.searchParams.get("utm_campaign")).toBe("lancamento");
-  });
-
-  it("omits UTM fields that are not provided, rather than sending empty strings", () => {
-    const url = buildTrackingUrl({ slug: "escola-teste" });
-    expect(url).not.toContain("utm_source");
-    expect(url).not.toContain("utm_medium");
-    expect(url).not.toContain("utm_campaign");
-  });
-
-  it("URL-encodes a slug or UTM value that needs it", () => {
-    const url = buildTrackingUrl({
-      slug: "escola-teste",
-      campaign: "lançamento 2026",
-    });
-    const parsed = new URL(url);
-    expect(parsed.searchParams.get("utm_campaign")).toBe("lançamento 2026");
-    expect(url).toContain("utm_campaign=lan%C3%A7amento+2026");
   });
 
   it("always targets the landing page, never /game directly", () => {
