@@ -17,17 +17,24 @@ describe("missao_curador_l3", () => {
   );
   const mission = MissionRegistry[MissionIds.CURATOR_L3];
 
-  it("requires the dance objective", () => {
-    expect(requirement?.requiredInfos).toEqual([MissionKeys.DANCE_DONE]);
+  it("requires the dance and stage objectives", () => {
+    expect(requirement?.requiredInfos).toEqual([
+      MissionKeys.DANCE_DONE,
+      MissionKeys.STAGE_DONE,
+    ]);
   });
 
-  it("exposes a single step for that same key", () => {
-    expect(mission.steps).toHaveLength(1);
-    expect(mission.steps[0].infoKey).toBe(MissionKeys.DANCE_DONE);
+  it("exposes a step for each of those keys", () => {
+    expect(mission.steps).toHaveLength(2);
+    expect(mission.steps.map((s) => s.infoKey)).toEqual([
+      MissionKeys.DANCE_DONE,
+      MissionKeys.STAGE_DONE,
+    ]);
   });
 
   it("counts as a floor completion, so the curator relocates after the quiz", () => {
     expect(FLOOR_COMPLETE_KEYS.has(MissionKeys.DANCE_DONE)).toBe(true);
+    expect(FLOOR_COMPLETE_KEYS.has(MissionKeys.STAGE_DONE)).toBe(true);
   });
 });
 
