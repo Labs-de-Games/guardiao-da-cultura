@@ -1938,7 +1938,7 @@ export class Game extends Scene implements GameDataAccessor {
         INTERACT_RANGE,
         InteractiveType.GENIUS_SEQUENCE,
       );
-      if (geniusSequence && !geniusSequence.isFilled) {
+      if (geniusSequence) {
         const geniusDist = Phaser.Math.Distance.Between(
           px,
           py,
@@ -2662,8 +2662,21 @@ export class Game extends Scene implements GameDataAccessor {
             500,
             InteractiveType.STEP_SEQUENCE,
           );
+        const nearbyGeniusSequence =
+          !this.isCategoryComplete(InteractiveType.GENIUS_SEQUENCE) &&
+          this.placeholderSystem.getNearbyPlaceholder(
+            this.player.x,
+            this.player.y,
+            500,
+            InteractiveType.GENIUS_SEQUENCE,
+          );
 
-        if (nearbyCostume || nearbySpotlight || nearbyStepSequence) {
+        if (
+          nearbyCostume ||
+          nearbySpotlight ||
+          nearbyStepSequence ||
+          nearbyGeniusSequence
+        ) {
           if (nearbyCostume) {
             this.placeholderSystem.pulseNearestPlaceholder(
               this.player.x,
@@ -2695,6 +2708,18 @@ export class Game extends Scene implements GameDataAccessor {
               InteractiveType.STEP_SEQUENCE,
             );
             posthog.capture("nudge_pulse_shown_step_sequence", {
+              level_id: this.levelId,
+              mission_id: this.nudgeManager.getCurrentMissionId(),
+            });
+          }
+          if (nearbyGeniusSequence) {
+            this.placeholderSystem.pulseNearestPlaceholder(
+              this.player.x,
+              this.player.y,
+              500,
+              InteractiveType.GENIUS_SEQUENCE,
+            );
+            posthog.capture("nudge_pulse_shown_genius_sequence", {
               level_id: this.levelId,
               mission_id: this.nudgeManager.getCurrentMissionId(),
             });
