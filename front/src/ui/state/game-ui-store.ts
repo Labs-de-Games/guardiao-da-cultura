@@ -84,6 +84,7 @@ export interface CostumeSelectorData {
   lockedParts: { head: boolean; torso: boolean; feet: boolean };
 }
 
+import type { SongSequenceOpenData } from "@/shared/events/game-events";
 import type { QuizQuestion } from "../../game/types/GameDataTypes";
 import type { StepSequenceData } from "../panels/step-sequence-types";
 
@@ -107,6 +108,8 @@ export interface GameUIState {
   costumeSelectorData: CostumeSelectorData | null;
   stepSequenceOpen: boolean;
   stepSequenceData: StepSequenceData | null;
+  songSequenceOpen: boolean;
+  songSequenceData: SongSequenceOpenData | null;
   toasts: ToastEntry[];
   labelData: LabelInfoData | null;
   badgeGalleryOpen: boolean;
@@ -177,6 +180,8 @@ export interface GameUIState {
   closeCostumeSelector: () => void;
   openStepSequence: (data: StepSequenceData) => void;
   closeStepSequence: () => void;
+  openSongSequence: (data: SongSequenceOpenData) => void;
+  closeSongSequence: () => void;
   addToast: (message: string, duration: number, iconSrc?: string) => void;
   dismissToast: (id: string) => void;
   removeToast: (id: string) => void;
@@ -288,6 +293,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     costumeSelectorData: null,
     stepSequenceOpen: false,
     stepSequenceData: null,
+    songSequenceOpen: false,
+    songSequenceData: null,
     toasts: [],
     labelData: null,
     badgeGalleryOpen: false,
@@ -359,6 +366,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           chunkSelectorData: null,
           stepSequenceOpen: false,
           stepSequenceData: null,
+          songSequenceOpen: false,
+          songSequenceData: null,
           labelData: null,
           levelInfo: null,
           evidenceBoardOpen: false,
@@ -455,6 +464,16 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
       set({
         stepSequenceOpen: false,
         stepSequenceData: null,
+      }),
+    openSongSequence: (data) =>
+      set({
+        songSequenceOpen: true,
+        songSequenceData: data,
+      }),
+    closeSongSequence: () =>
+      set({
+        songSequenceOpen: false,
+        songSequenceData: null,
       }),
     addToast: (message, duration, iconSrc) =>
       set((s) => {
