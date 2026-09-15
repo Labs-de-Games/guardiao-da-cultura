@@ -11,25 +11,15 @@ import { Section } from "@/components/dashboard/Section";
 import { getReport, getSummary } from "@/lib/api/edital";
 import { safeRate } from "@/lib/edital/rate";
 import type {
-  DateRange,
   EditalReportResponse,
   EditalSummaryResponse,
 } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
-
-/**
- * FilterBar keeps its original 3-option string interface for backward
- * compatibility (issue #745); these two functions are the only place
- * that translates between it and the typed DateRange the API layer uses.
- */
-function dateRangeToFilterBarValue(range: DateRange): string {
-  if (range.type === "7d") return "last-7-days";
-  if (range.type === "30d") return "last-30-days";
-  if (range.type === "all-time") return "all-time";
-  if (range.type === "custom") return "custom";
-  return "last-30-days";
-}
+import {
+  isDateRangeComplete,
+  useFilterBarProps,
+} from "@/lib/edital/useFilterBarProps";
 
 function formatMinutes(seconds: number): string {
   return `${(seconds / 60).toFixed(1).replace(".", ",")} min`;
@@ -42,19 +32,23 @@ interface OverviewData {
 
 function InstitutionOverviewContent() {
   const { dateRange, setDateRange } = useEditalFilters();
+  const filterBarProps = useFilterBarProps(dateRange, setDateRange);
 
-  const { data, loading, error, retry } =
-    useAsyncData<OverviewData>(async () => {
+  const { data, loading, error, retry } = useAsyncData<OverviewData>(
+    async () => {
       const [summary, report] = await Promise.all([
         getSummary(dateRange),
         getReport(dateRange),
       ]);
       return { summary, report };
-    }, [
+    },
+    [
       dateRange.type,
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
-    ]);
+    ],
+    isDateRangeComplete(dateRange),
+  );
 
   const linked = data?.summary.linked ?? true;
 
@@ -78,29 +72,7 @@ function InstitutionOverviewContent() {
         Números de gameplay atribuídos à sua instituição, direto do PostHog.
       </Typography>
 
-      <FilterBar
-        dateRange={dateRangeToFilterBarValue(dateRange)}
-        onDateRangeChange={(value) => {
-          if (value === "last-7-days") setDateRange({ type: "7d" });
-          else if (value === "last-30-days") setDateRange({ type: "30d" });
-          else if (value === "all-time") setDateRange({ type: "all-time" });
-          else if (value === "custom") {
-            setDateRange({ type: "custom", start: "", end: "" });
-          }
-        }}
-        customFrom={dateRange.type === "custom" ? dateRange.start : ""}
-        customTo={dateRange.type === "custom" ? dateRange.end : ""}
-        onCustomFromChange={(value) => {
-          if (dateRange.type === "custom") {
-            setDateRange({ ...dateRange, start: value });
-          }
-        }}
-        onCustomToChange={(value) => {
-          if (dateRange.type === "custom") {
-            setDateRange({ ...dateRange, end: value });
-          }
-        }}
-      />
+      <FilterBar {...filterBarProps} />
 
       <DashboardState
         loading={loading}

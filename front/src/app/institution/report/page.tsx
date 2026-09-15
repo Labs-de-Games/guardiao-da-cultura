@@ -9,18 +9,13 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { RateCard } from "@/components/dashboard/RateCard";
 import { Section } from "@/components/dashboard/Section";
 import { getReport } from "@/lib/api/edital";
-import type { DateRange, EditalReportResponse } from "@/lib/edital/types";
+import type { EditalReportResponse } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
-
-/** Same bridge as institution/page.tsx — FilterBar's string interface. */
-function dateRangeToFilterBarValue(range: DateRange): string {
-  if (range.type === "7d") return "last-7-days";
-  if (range.type === "30d") return "last-30-days";
-  if (range.type === "all-time") return "all-time";
-  if (range.type === "custom") return "custom";
-  return "last-30-days";
-}
+import {
+  isDateRangeComplete,
+  useFilterBarProps,
+} from "@/lib/edital/useFilterBarProps";
 
 function formatMinutes(seconds: number): string {
   return `${(seconds / 60).toFixed(1).replace(".", ",")} min`;
@@ -28,6 +23,7 @@ function formatMinutes(seconds: number): string {
 
 function InstitutionReportContent() {
   const { dateRange, setDateRange } = useEditalFilters();
+  const filterBarProps = useFilterBarProps(dateRange, setDateRange);
   const [csvError, setCsvError] = useState<string | null>(null);
 
   const { data, loading, error, retry } = useAsyncData<EditalReportResponse>(
@@ -37,6 +33,7 @@ function InstitutionReportContent() {
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
     ],
+    isDateRangeComplete(dateRange),
   );
 
   return (
@@ -68,29 +65,7 @@ function InstitutionReportContent() {
         </Typography>
       ) : null}
 
-      <FilterBar
-        dateRange={dateRangeToFilterBarValue(dateRange)}
-        onDateRangeChange={(value) => {
-          if (value === "last-7-days") setDateRange({ type: "7d" });
-          else if (value === "last-30-days") setDateRange({ type: "30d" });
-          else if (value === "all-time") setDateRange({ type: "all-time" });
-          else if (value === "custom") {
-            setDateRange({ type: "custom", start: "", end: "" });
-          }
-        }}
-        customFrom={dateRange.type === "custom" ? dateRange.start : ""}
-        customTo={dateRange.type === "custom" ? dateRange.end : ""}
-        onCustomFromChange={(value) => {
-          if (dateRange.type === "custom") {
-            setDateRange({ ...dateRange, start: value });
-          }
-        }}
-        onCustomToChange={(value) => {
-          if (dateRange.type === "custom") {
-            setDateRange({ ...dateRange, end: value });
-          }
-        }}
-      />
+      <FilterBar {...filterBarProps} />
 
       <DashboardState
         loading={loading}
