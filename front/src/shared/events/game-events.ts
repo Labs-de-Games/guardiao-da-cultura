@@ -140,7 +140,20 @@ export interface StepSequenceRejectedData {
 export interface SongSequenceOpenData {
   instanceId: string;
   slots: { bar: number; note: string | null }[];
-  tray: string[];
+  tray: { id: string; note: string }[];
+  blankIndices: number[];
+  board: Record<number, string | null>;
+  lockedSlots: number[];
+}
+
+export interface SongSequenceSubmitData {
+  instanceId: string;
+}
+
+export interface SongSequenceCloseData {
+  instanceId: string;
+  board: Record<number, string | null>;
+  lockedSlots: number[];
 }
 
 export interface ToastShowData {
@@ -279,7 +292,8 @@ export interface GameEventMap {
   "ui:step-rejected": StepSlotData;
   "ui:step-sequence-rejected": StepSequenceRejectedData;
   "ui:song-sequence-open": SongSequenceOpenData;
-  "ui:song-sequence-close": undefined;
+  "ui:song-sequence-close": SongSequenceCloseData;
+  "ui:song-sequence-submit": SongSequenceSubmitData;
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
