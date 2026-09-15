@@ -175,11 +175,15 @@ export function GeniusSequencePanel() {
 
       if (color !== expected) {
         setWrongColor(color);
-        setPhase("fail");
+        // Wait for the wrong note's sound/flash to finish before showing
+        // the message, same as the success path.
         schedule(() => {
-          setWrongColor(null);
-          setPhase("playback");
-        }, RETRY_DELAY_MS);
+          setPhase("fail");
+          schedule(() => {
+            setWrongColor(null);
+            setPhase("playback");
+          }, RETRY_DELAY_MS);
+        }, PLAYBACK_FLASH_MS);
         return;
       }
 
