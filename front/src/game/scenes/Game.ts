@@ -27,7 +27,10 @@ import {
   type LevelDefinition,
 } from "../data/LevelConfig";
 import { MissionRegistry, MissionRequirements } from "../data/MissionRegistry";
-import { buildSongSequenceData } from "../data/songSequenceContent";
+import {
+  buildSongSequenceData,
+  type SongSequenceSessionState,
+} from "../data/songSequenceContent";
 import { buildStepSequenceData } from "../data/stepSequenceContent";
 import {
   CostumeMechanicHandler,
@@ -1724,7 +1727,27 @@ export class Game extends Scene implements GameDataAccessor {
         candidates.push({
           dist: songSequenceDist,
           open: () => {
-            const data = buildSongSequenceData(songSequence.instanceId);
+            const session = songSequence.state?.songSequence as
+              | SongSequenceSessionState
+              | undefined;
+            const data = buildSongSequenceData(
+              songSequence.instanceId,
+              session,
+            );
+            if (!session) {
+              // First interaction this session: freeze which notes are
+              // blanked and the tray order, so reopening the panel later
+              // shows the same puzzle instead of re-rolling it.
+              songSequence.state = {
+                ...songSequence.state,
+                songSequence: {
+                  blankIndices: data.blankIndices,
+                  trayOrder: data.tray.map((item) => item.id),
+                  board: data.board,
+                  lockedSlots: data.lockedSlots,
+                },
+              };
+            }
             this.isSongSequenceOpen = true;
             this.events.emit(GameEvents.DIALOGUE_STARTED);
             EventBus.emit("ui:song-sequence-open", data);
@@ -1874,11 +1897,32 @@ export class Game extends Scene implements GameDataAccessor {
     this.onEventBus("ui:step-sequence-close", () => {
       this.closeStepSequence();
     });
-    this.onEventBus("ui:song-sequence-close", () => {
+    this.onEventBus("ui:song-sequence-close", (data) => {
+      const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (placeholder) {
+        const session = placeholder.state?.songSequence as
+          | SongSequenceSessionState
+          | undefined;
+        if (session) {
+          placeholder.state = {
+            ...placeholder.state,
+            songSequence: {
+              ...session,
+              board: data.board,
+              lockedSlots: data.lockedSlots,
+            },
+          };
+        }
+      }
       if (!this.isSongSequenceOpen) return;
       this.isSongSequenceOpen = false;
       this.events.emit(GameEvents.DIALOGUE_ENDED);
       this.checkDialogState();
+    });
+    this.onEventBus("ui:song-sequence-submit", () => {
+      posthog.capture("song_sequence_submitted", { level_id: this.levelId });
     });
     // Persist each locked slot on the placeholder, so partial progress
     // survives closing and reopening the panel.
