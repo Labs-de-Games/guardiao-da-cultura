@@ -16,7 +16,6 @@ class NotePlaybackServiceImpl {
   private static instance: NotePlaybackServiceImpl;
   private audioByNote = new Map<string, HTMLAudioElement>();
   private sequenceRequestId = 0;
-  private playingSequence = false;
 
   private constructor() {}
 
@@ -52,7 +51,6 @@ class NotePlaybackServiceImpl {
   ): Promise<void> {
     this.cancel();
     const requestId = ++this.sequenceRequestId;
-    this.playingSequence = true;
 
     for (let i = 0; i < slots.length; i++) {
       if (requestId !== this.sequenceRequestId) return;
@@ -62,22 +60,14 @@ class NotePlaybackServiceImpl {
       await delay(STEP_INTERVAL_MS);
     }
 
-    if (requestId === this.sequenceRequestId) {
-      this.playingSequence = false;
-    }
     onStep?.(null);
   }
 
   cancel(): void {
     this.sequenceRequestId++;
-    this.playingSequence = false;
     for (const audio of this.audioByNote.values()) {
       audio.pause();
     }
-  }
-
-  isPlayingSequence(): boolean {
-    return this.playingSequence;
   }
 }
 
