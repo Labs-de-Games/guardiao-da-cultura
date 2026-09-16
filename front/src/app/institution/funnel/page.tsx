@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import { Suspense } from "react";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { FilterBar } from "@/components/dashboard/FilterBar";
@@ -8,13 +8,12 @@ import {
   FunnelChart,
   type FunnelStep,
 } from "@/components/dashboard/FunnelChart";
-import { Section } from "@/components/dashboard/Section";
 import { getFunnel } from "@/lib/api/edital";
 import type { EditalFunnelResponse } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
 import {
-  isDateRangeComplete,
+  isDateRangeValid,
   useFilterBarProps,
 } from "@/lib/edital/useFilterBarProps";
 
@@ -51,6 +50,35 @@ function toFunnelSteps(data: EditalFunnelResponse["data"]): FunnelStep[] {
   });
 }
 
+function FunnelHeader() {
+  return (
+    <>
+      <Typography
+        variant="h4"
+        sx={{
+          mb: 1,
+          fontWeight: 700,
+          color: "text.primary",
+          fontFamily: "'Jockey One', sans-serif",
+        }}
+      >
+        Funil
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
+        As 7 etapas do onepager, monotonicamente não-crescentes.
+      </Typography>
+    </>
+  );
+}
+
+const FUNNEL_SKELETON = (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    {Array.from({ length: 7 }).map((_, index) => (
+      <Skeleton key={index} variant="rounded" height={40} />
+    ))}
+  </Box>
+);
+
 function InstitutionFunnelContent() {
   const { dateRange, setDateRange } = useEditalFilters();
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
@@ -62,17 +90,12 @@ function InstitutionFunnelContent() {
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
     ],
-    isDateRangeComplete(dateRange),
+    isDateRangeValid(dateRange),
   );
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
-        Funil
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        As 7 etapas do onepager, monotonicamente não-crescentes.
-      </Typography>
+      <FunnelHeader />
 
       <FilterBar {...filterBarProps} />
 
@@ -81,12 +104,9 @@ function InstitutionFunnelContent() {
         error={error}
         onRetry={retry}
         linked={data?.linked ?? true}
+        skeleton={FUNNEL_SKELETON}
       >
-        {data ? (
-          <Section title="Funil de 7 etapas">
-            <FunnelChart steps={toFunnelSteps(data.data)} />
-          </Section>
-        ) : null}
+        {data ? <FunnelChart steps={toFunnelSteps(data.data)} /> : null}
       </DashboardState>
     </Box>
   );
@@ -94,7 +114,14 @@ function InstitutionFunnelContent() {
 
 export default function InstitutionFunnelPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <Box>
+          <FunnelHeader />
+          {FUNNEL_SKELETON}
+        </Box>
+      }
+    >
       <InstitutionFunnelContent />
     </Suspense>
   );
