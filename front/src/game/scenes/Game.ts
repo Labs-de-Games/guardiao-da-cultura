@@ -579,6 +579,16 @@ export class Game extends Scene implements GameDataAccessor {
               }),
             };
           }
+          if (step.infoKey === MissionKeys.SWITCHES_DONE) {
+            return {
+              ...step,
+              progressGetter: () =>
+                this.switchLightSystem?.getProgress() ?? {
+                  filled: 0,
+                  total: 0,
+                },
+            };
+          }
           return step;
         }),
       };
@@ -1413,6 +1423,13 @@ export class Game extends Scene implements GameDataAccessor {
           this.lightBarSystem?.fix(payload.lightBarName);
           if (lb.placeholderId) {
             this.placeholderSystem.unlockByInstanceId(lb.placeholderId);
+          }
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+          if (this.switchLightSystem?.allActivated()) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR_L3,
+              infoKey: MissionKeys.SWITCHES_DONE,
+            });
           }
         });
       },
@@ -2825,6 +2842,9 @@ export class Game extends Scene implements GameDataAccessor {
           filled: this.photoChunksCollected,
           total: this.totalPhotoChunks,
         };
+      }
+      if (step.infoKey === MissionKeys.SWITCHES_DONE) {
+        return this.switchLightSystem?.getProgress() || { filled: 0, total: 0 };
       }
       if (step.categoryType === InteractiveType.SPOTLIGHT) {
         return (

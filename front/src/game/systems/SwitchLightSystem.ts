@@ -107,6 +107,19 @@ export class SwitchLightSystem {
     return this.switches;
   }
 
+  public getProgress(): { filled: number; total: number } {
+    return {
+      filled: this.switches.filter((s) => s.isActivated).length,
+      total: this.switches.length,
+    };
+  }
+
+  public allActivated(): boolean {
+    return (
+      this.switches.length > 0 && this.switches.every((s) => s.isActivated)
+    );
+  }
+
   // Destroys all switches and cleans up.
   public destroy(): void {
     this.switches.forEach(({ sprite, interaction }) => {
