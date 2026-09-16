@@ -22,16 +22,25 @@ export type SfxKey =
   | "sfx.level.complete"
   | "sfx.star.earned"
   | "sfx.ladder.drop"
-  | "sfx.camera.click";
+  | "sfx.camera.click"
+  | "sfx.switch"
+  | "sfx.light_bar.fix";
 
 /** Semantic keys for music tracks.
  * Level-specific music follows pattern: "music.level_{id}.main" */
 export type MusicKey = `music.level_${string}.main` | "music.menu";
 export type MusicIntroKey = `music.level_${string}.intro`;
 export type MusicLoopKey = `music.level_${string}.loop`;
+/** Layer tracks that start muted and are unlocked individually (e.g. per-instrument band stems). */
+export type MusicLayerKey = `music.level_${string}.layer.${string}`;
 
 // Combined audio key type.
-export type AudioKey = SfxKey | MusicKey | MusicIntroKey | MusicLoopKey;
+export type AudioKey =
+  | SfxKey
+  | MusicKey
+  | MusicIntroKey
+  | MusicLoopKey
+  | MusicLayerKey;
 
 export interface AudioAssetConfig {
   key: AudioKey;
@@ -68,6 +77,8 @@ export interface LevelAudioManifest {
     intro: AudioAssetConfig; // Intro track played once
     loop: AudioAssetConfig; // Loop track played after intro, repeats forever
   };
+  /** Muted-by-default music layers, unlocked individually via AudioManager.unlockMusicLayer. */
+  musicLayers?: AudioAssetConfig[];
   sfx?: AudioAssetDefinition[]; // Level-specific SFX (extends global SFX)
 }
 
@@ -109,4 +120,6 @@ export interface SoundInstance {
   category: AudioCategory;
   /** For intro+loop music: the loop key to play after intro completes */
   loopKey?: string;
+  /** True while intentionally silent (volume forced to 0) until explicitly unlocked. */
+  locked?: boolean;
 }

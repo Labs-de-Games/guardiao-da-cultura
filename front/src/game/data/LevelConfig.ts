@@ -310,7 +310,8 @@ export const LEVEL_ASSETS = {
       path: "data/content.json",
     },
   },
-  // Mock level: no artwork of its own yet, only the tilemap.
+  // Mock level: no artwork/collectibles of its own yet, only the tilemap
+  // plus the LightBars/PlaceHolder layers.
   level_03: {
     MAP: LEVEL_REGISTRY.level_03.map,
     SCULPTURES: [],
@@ -324,6 +325,37 @@ export const LEVEL_ASSETS = {
       {
         key: "light_bar",
         path: "misc/spotlights/light_bar.png",
+      },
+      {
+        key: "switch_light",
+        path: "misc/switch_light.png",
+        frameWidth: 32,
+        frameHeight: 20,
+      },
+      { key: "stage-band-ph", path: "misc/stage-band-placeholder.png" },
+      {
+        key: "band_accordion",
+        path: "band/animations/accordion.png",
+        frameWidth: 68,
+        frameHeight: 47,
+      },
+      {
+        key: "band_jam_block",
+        path: "band/animations/jam_block.png",
+        frameWidth: 68,
+        frameHeight: 47,
+      },
+      {
+        key: "band_triangle",
+        path: "band/animations/triangle.png",
+        frameWidth: 68,
+        frameHeight: 47,
+      },
+      {
+        key: "band_zabumba",
+        path: "band/animations/zabumba.png",
+        frameWidth: 68,
+        frameHeight: 46,
       },
     ],
     COLLECTIBLES: [],
