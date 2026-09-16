@@ -65,30 +65,178 @@
         }, 
         {
          "draworder":"topdown",
+         "id":23,
+         "name":"LightBars",
+         "objects":[
+                {
+                 "height":0,
+                 "id":74,
+                 "name":"LB_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":30
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":4
+                        }, 
+                        {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_1"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":528,
+                 "y":560
+                }, 
+                {
+                 "height":0,
+                 "id":78,
+                 "name":"LB_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":30
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":4
+                        }, 
+                        {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_2"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":553,
+                 "y":560
+                }, 
+                {
+                 "height":0,
+                 "id":79,
+                 "name":"LB_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"angle",
+                         "type":"float",
+                         "value":30
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"string",
+                         "value":"#ffff99"
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":4
+                        }, 
+                        {
+                         "name":"is_broken",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placeholderId",
+                         "type":"string",
+                         "value":"PH_3"
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"int",
+                         "value":500
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"LightBar",
+                 "visible":true,
+                 "width":0,
+                 "x":578,
+                 "y":560
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":10,
          "name":"NPCS",
          "objects":[
                 {
                  "height":0,
-                 "id":21,
-                 "name":"NPC1",
+                 "id":92,
+                 "name":"NPC_1",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"contentId",
                          "type":"string",
-                         "value":"professor_curador"
-                        }, 
-                        {
-                         "name":"finalPositionX",
-                         "type":"int",
-                         "value":280
-                        }, 
-                        {
-                         "name":"finalPositionY",
-                         "type":"int",
-                         "value":69
+                         "value":"professor_curador_l3"
                         }, 
                         {
                          "name":"flipX",
@@ -98,14 +246,14 @@
                         {
                          "name":"missionId",
                          "type":"string",
-                         "value":"obras_famosas"
+                         "value":"missao_curador_l3"
                         }],
                  "rotation":0,
                  "type":"Npc",
                  "visible":true,
                  "width":0,
-                 "x":85.6231085256554,
-                 "y":653.332593843812
+                 "x":64,
+                 "y":656
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -128,8 +276,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":40.0119330268394,
-                 "y":660.993492726105
+                 "x":32,
+                 "y":656
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -688,61 +836,6 @@
          "y":0
         }, 
         {
-         "draworder":"topdown",
-         "id":29,
-         "name":"LightBars",
-         "objects":[
-                {
-                 "height":0,
-                 "id":126,
-                 "name":"LB_1",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"angle",
-                         "type":"float",
-                         "value":50
-                        }, 
-                        {
-                         "name":"color",
-                         "type":"string",
-                         "value":"#ffff99"
-                        }, 
-                        {
-                         "name":"intensity",
-                         "type":"float",
-                         "value":4
-                        }, 
-                        {
-                         "name":"placeholderId",
-                         "type":"string",
-                         "value":"PH_1"
-                        }, 
-                        {
-                         "name":"radius",
-                         "type":"int",
-                         "value":600
-                        }, 
-                        {
-                         "name":"scale",
-                         "type":"float",
-                         "value":4.5
-                        }],
-                 "rotation":0,
-                 "type":"LightBar",
-                 "visible":true,
-                 "width":0,
-                 "x":975.575151366035,
-                 "y":572.824156305506
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
          "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -996,8 +1089,8 @@
          "objects":[
                 {
                  "height":0,
-                 "id":125,
-                 "name":"PH_1",
+                 "id":126,
+                 "name":"PH_4",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -1048,6 +1141,272 @@
                  "width":0,
                  "x":976.207204397441,
                  "y":629.596540189636
+                }, 
+                {
+                 "height":0,
+                 "id":125,
+                 "name":"PH_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"zabumba"
+                        }, 
+                        {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"bass"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"guitar"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"zabumba"
+                                }]
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":3.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"band"
+                        }],
+                 "rotation":0,
+                 "type":"PlaceholderInstance",
+                 "visible":true,
+                 "width":0,
+                 "x":528,
+                 "y":618
+                }, 
+                {
+                 "height":0,
+                 "id":82,
+                 "name":"PH_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"accordion"
+                        }, 
+                        {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"rapper"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"saxophone"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"accordion"
+                                }]
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":3.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"band"
+                        }],
+                 "rotation":0,
+                 "type":"PlaceholderInstance",
+                 "visible":true,
+                 "width":0,
+                 "x":553,
+                 "y":618
+                }, 
+                {
+                 "height":0,
+                 "id":83,
+                 "name":"PH_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"alpha",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"string",
+                         "value":"triangle"
+                        }, 
+                        {
+                         "name":"is_locked",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"list",
+                         "value":[
+                                {
+                                 "type":"string",
+                                 "value":"violin"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"guitar"
+                                }, 
+                                {
+                                 "type":"string",
+                                 "value":"triangle"
+                                }]
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":3.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"stage-band-ph"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"band"
+                        }],
+                 "rotation":0,
+                 "type":"PlaceholderInstance",
+                 "visible":true,
+                 "width":0,
+                 "x":578,
+                 "y":618
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":24,
+         "name":"SwitchLight",
+         "objects":[
+                {
+                 "height":0,
+                 "id":85,
+                 "name":"SL_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"light_bar",
+                         "type":"string",
+                         "value":"LB_1"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":3.5
+                        }],
+                 "rotation":0,
+                 "type":"SwitchLight",
+                 "visible":true,
+                 "width":0,
+                 "x":544,
+                 "y":416
+                }, 
+                {
+                 "height":0,
+                 "id":89,
+                 "name":"SL_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"light_bar",
+                         "type":"string",
+                         "value":"LB_2"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":3.5
+                        }],
+                 "rotation":0,
+                 "type":"SwitchLight",
+                 "visible":true,
+                 "width":0,
+                 "x":1056,
+                 "y":336
+                }, 
+                {
+                 "height":0,
+                 "id":90,
+                 "name":"SL_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"light_bar",
+                         "type":"string",
+                         "value":"LB_3"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":3.5
+                        }],
+                 "rotation":0,
+                 "type":"SwitchLight",
+                 "visible":true,
+                 "width":0,
+                 "x":560,
+                 "y":176
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1055,11 +1414,11 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":30,
- "nextobjectid":127,
+ "nextlayerid":25,
+ "nextobjectid":128,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {

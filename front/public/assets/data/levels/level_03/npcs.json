@@ -1,31 +1,35 @@
 {
-  "_comment": "PLACEHOLDER COPY. Provisional dialogue so the level_03 curator spawns and the intermediate quiz can trigger. Replace with the final script.",
   "npcs": {
-    "professor_curador": {
+    "professor_curador_l3": {
       "name": "Inspetora Cremilda Jarbas",
       "missionId": "missao_curador_l3",
       "dialogues": {
         "intro": [
-          "Chegou em boa hora! A quadrilha vai subir no arraial e ninguém lembra mais a ordem dos passos.",
-          "Assiste o vídeo com atenção e remonta a sequência do jeitinho certo.",
-          "Vou ficar ali perto da fogueira. Me chama quando terminar."
+          "Ei, moço! Chegou bem na hora. Olha só esse forró: sanfona, zabumba e triângulo tudo fora do lugar, ninguém arrumou o palco pro São João.",
+          "Sem o trio arrumado direito, a festa nem começa. Bota cada instrumento no músico certo lá no palco.",
+          "Acende o holofote de cada um pra ver se acertou. Se não bater, o bicho vai reclamar bonito.",
+          "Vai lá organizar essa zoada, que eu fico de olho na fogueira."
+        ],
+        "collecting": [
+          "Ainda falta gente no palco! Olha os holofotes: os que tão apagados ainda esperam o instrumento certo.",
+          "Sanfona, zabumba e triângulo, cada um no seu canto. Erra e o povo vaia, viu?"
         ],
         "ready": [
-          "A sequência já está de pé? Muito bem.",
-          "Agora me diz se você entendeu o porquê de cada passo."
+          "Rapaz, acho que já é só conferir se ficou tudo nos trinques.",
+          "Bora ver se o trio tá completo antes de soltar o forró."
         ],
         "completed": [
-          "Olha só que beleza. A quadrilha inteira na ordem, como manda a tradição."
+          "Aí sim! Palco pronto, trio completo, agora é só o São João estourar."
         ],
-        "success": [
-          "É isso mesmo! Você aprendeu direitinho, pode dançar com a gente."
-        ],
+        "success": ["Show de bola! Você entende mesmo de forró de raiz."],
         "failure": [
-          "Ainda não foi dessa vez. Assiste o vídeo de novo com calma e tenta outra vez."
+          "Ainda não foi dessa vez, não. Presta atenção nos instrumentos e tenta de novo."
         ],
-        "start_quiz_question": ["Podemos começar o teste?"],
+        "start_quiz_question": [
+          "Bora testar o que você aprendeu sobre o trio?"
+        ],
         "intermediateQuiz": [
-          "Quero ver se você prestou atenção mesmo na sequência que acabou de montar."
+          "Antes de acender de vez a festa, me diz: você prestou atenção no trio que montou?"
         ]
       }
     }

@@ -6,6 +6,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import type { GameEventMap } from "../../shared/events/game-events";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import type { AudioKey } from "../audio";
 import { AudioManager, loadGlobalAudio } from "../audio";
 import { getLevelAudioManifest } from "../audio/registry";
 import { GameEvents } from "../constants/GameEvents";
@@ -72,6 +73,8 @@ import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
+import { SwitchLightCinematicSystem } from "../systems/SwitchLightCinematicSystem";
+import { SwitchLightSystem } from "../systems/SwitchLightSystem";
 import {
   type DisappearingPlatformLayer,
   type MapData,
@@ -104,6 +107,7 @@ const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
   [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
   [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
   [InteractiveType.STEP_SEQUENCE]: "nudge_hint_shown_step_sequence",
+  [InteractiveType.BAND]: "nudge_hint_shown_band",
 };
 
 export class Game extends Scene implements GameDataAccessor {
@@ -126,6 +130,7 @@ export class Game extends Scene implements GameDataAccessor {
     posters: 3,
     spotlights: 0,
     dance: 0,
+    band: 0,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -138,6 +143,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
   private isStepSequenceOpen: boolean = false;
+  private isBandPanelOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -145,12 +151,14 @@ export class Game extends Scene implements GameDataAccessor {
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   private ladderCinematicSystem!: LadderCinematicSystem;
+  private switchLightCinematicSystem!: SwitchLightCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   public lightBarSystem!: LightBarSystem;
   public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
   public trampolineSystem!: TrampolineSystem;
+  public switchLightSystem!: SwitchLightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
   private nudgeManager!: NudgeManager;
@@ -217,6 +225,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.isChunkSelectorOpen = false;
     this.isCostumeSelectorOpen = false;
     this.isStepSequenceOpen = false;
+    this.isBandPanelOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -274,7 +283,14 @@ export class Game extends Scene implements GameDataAccessor {
 
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
       (asset) => {
-        this.load.image(asset.key, asset.path);
+        if ("frameWidth" in asset && "frameHeight" in asset) {
+          this.load.spritesheet(asset.key, asset.path, {
+            frameWidth: asset.frameWidth as number,
+            frameHeight: asset.frameHeight as number,
+          });
+        } else {
+          this.load.image(asset.key, asset.path);
+        }
       },
     );
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].SCULPTURES.forEach(
@@ -369,6 +385,10 @@ export class Game extends Scene implements GameDataAccessor {
       this.effects,
       this.mapScale,
     );
+    this.switchLightCinematicSystem = new SwitchLightCinematicSystem(
+      this,
+      this.effects,
+    );
     this.createAnimations();
 
     // Initialize audio manager with this scene
@@ -385,6 +405,9 @@ export class Game extends Scene implements GameDataAccessor {
         AudioManager.playMusic(musicKey);
         this.registry.set(musicStartedKey, true);
       }
+      manifest?.musicLayers?.forEach((layer) => {
+        AudioManager.playMusicLayer(layer.key);
+      });
     }
 
     const map = this.make.tilemap({
@@ -554,6 +577,16 @@ export class Game extends Scene implements GameDataAccessor {
                 filled: this.photoChunksCollected,
                 total: this.totalPhotoChunks,
               }),
+            };
+          }
+          if (step.infoKey === MissionKeys.SWITCHES_DONE) {
+            return {
+              ...step,
+              progressGetter: () =>
+                this.switchLightSystem?.getProgress() ?? {
+                  filled: 0,
+                  total: 0,
+                },
             };
           }
           return step;
@@ -783,6 +816,13 @@ export class Game extends Scene implements GameDataAccessor {
         this.chandelierLightSystem.registerAllFromLayer(chandelierLayer);
       }
 
+      const switchLightLayer = mapData.objectLayers.SwitchLight;
+      if (switchLightLayer) {
+        this.switchLightSystem = new SwitchLightSystem(this);
+        this.switchLightSystem.registerAllFromLayer(switchLightLayer);
+        this.switchLightSystem.setPlayerTracking(this.player);
+      }
+
       this.hintKeySystem = new HintKeySystem(this);
 
       this.tutorialSystem = new TutorialSystem(this);
@@ -913,7 +953,7 @@ export class Game extends Scene implements GameDataAccessor {
         })),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.PHOTO && !p.isFilled)
+          .filter((p) => p.type === InteractiveType.PHOTO)
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -931,13 +971,13 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.COSTUME && !p.isFilled)
+          .filter((p) => p.type === InteractiveType.COSTUME)
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -955,15 +995,13 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top - 115;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter(
-            (p) => p.type === InteractiveType.STEP_SEQUENCE && !p.isFilled,
-          )
+          .filter((p) => p.type === InteractiveType.STEP_SEQUENCE)
           .map((p) => {
             const placeholderSystem = this.placeholderSystem;
             const config = getInteractionConfig(p.type);
@@ -987,11 +1025,35 @@ export class Game extends Scene implements GameDataAccessor {
                 );
               },
               get active() {
-                return !p.isFilled;
+                return !p.isFilled && !p.isLocked;
               },
               interactionDistance: config.range,
             };
           }),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.BAND)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top;
+            },
+            get active() {
+              return !p.isFilled && !p.isLocked;
+            },
+            interactionDistance: 120,
+          })),
         ...(this.spotlightSystem?.getAll().map((s) => ({
           get x() {
             return s.sprite.x;
@@ -1009,6 +1071,24 @@ export class Game extends Scene implements GameDataAccessor {
             return !s.isLocked;
           },
           interactionDistance: 170,
+        })) || []),
+        ...(this.switchLightSystem?.getAll().map((sw) => ({
+          get x() {
+            return sw.sprite.x;
+          },
+          get y() {
+            return sw.sprite.y;
+          },
+          get interactionY() {
+            return sw.sprite.y;
+          },
+          get displayHeight() {
+            return sw.sprite.displayHeight;
+          },
+          get active() {
+            return !sw.isActivated;
+          },
+          interactionDistance: 130,
         })) || []),
       ]);
 
@@ -1036,8 +1116,10 @@ export class Game extends Scene implements GameDataAccessor {
 
     this.events.on(
       GameEvents.INFO_COLLECTED,
-      (payload: string | { infoKey: string }) => {
+      (payload: string | { infoKey: string; missionId?: string }) => {
         const infoKey = typeof payload === "string" ? payload : payload.infoKey;
+        const missionId =
+          typeof payload === "string" ? undefined : payload.missionId;
         this.questManager.collectInfo(infoKey);
 
         if (
@@ -1081,7 +1163,10 @@ export class Game extends Scene implements GameDataAccessor {
           !this.questManager.isIntermediateQuizDone(infoKey) &&
           this.quizManager.getQuizMode() === "none"
         ) {
-          if (infoKey === MissionKeys.STAGE_DONE) {
+          if (
+            infoKey === MissionKeys.STAGE_DONE &&
+            missionId === MissionIds.CURATOR_L2
+          ) {
             const collected = this.questManager.getCollectedInfos(
               MissionIds.CURATOR_L2,
             );
@@ -1329,6 +1414,27 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   private setupEvents() {
+    this.events.on(
+      GameEvents.SWITCH_LIGHT_ACTIVATED,
+      (payload: { lightBarName: string }) => {
+        const lb = this.lightBarSystem?.getByInstanceId(payload.lightBarName);
+        if (!lb) return;
+        this.switchLightCinematicSystem.playCinematic(lb.x, lb.y, () => {
+          this.lightBarSystem?.fix(payload.lightBarName);
+          if (lb.placeholderId) {
+            this.placeholderSystem.unlockByInstanceId(lb.placeholderId);
+          }
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+          if (this.switchLightSystem?.allActivated()) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR_L3,
+              infoKey: MissionKeys.SWITCHES_DONE,
+            });
+          }
+        });
+      },
+    );
+
     this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
       this.tutorialSetDialogueOpen = false;
@@ -1417,6 +1523,18 @@ export class Game extends Scene implements GameDataAccessor {
       });
     }
 
+    if (!this.anims.exists("switch_light_anim")) {
+      this.anims.create({
+        key: "switch_light_anim",
+        frames: this.anims.generateFrameNumbers("switch_light", {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 8,
+        repeat: 0,
+      });
+    }
+
     if (!this.anims.exists("star_anim")) {
       this.anims.create({
         key: "star_anim",
@@ -1427,6 +1545,22 @@ export class Game extends Scene implements GameDataAccessor {
         frameRate: 10,
         repeat: -1,
       });
+    }
+
+    const bandMusicians = ["accordion", "jam_block", "triangle", "zabumba"];
+    for (const musician of bandMusicians) {
+      const animKey = `band_${musician}_anim`;
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key: animKey,
+          frames: this.anims.generateFrameNumbers(`band_${musician}`, {
+            start: 0,
+            end: 8,
+          }),
+          frameRate: 10,
+          repeat: -1,
+        });
+      }
     }
   }
 
@@ -1544,7 +1678,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (
         (this.isDialogueOpen && !this.player?.isTutorialActive) ||
         this.isChunkSelectorOpen ||
-        this.isCostumeSelectorOpen
+        this.isCostumeSelectorOpen ||
+        this.isBandPanelOpen
       )
         return;
 
@@ -1755,6 +1890,43 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
 
+      // Band placeholder candidate
+      const band = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        INTERACT_RANGE,
+        InteractiveType.BAND,
+      );
+      if (band) {
+        const bandDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          band.area.centerX,
+          band.area.centerY,
+        );
+        candidates.push({
+          dist: bandDist,
+          open: () => {
+            if (this.markFloorStarted(this.scoringFloors.band)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.band + 1,
+                level_id: this.levelId,
+              });
+            }
+            this.isBandPanelOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
+            EventBus.emit("ui:band-panel-open", {
+              instanceId: band.instanceId,
+              id: String(band.id),
+              options: band.options ?? [],
+            });
+            posthog.capture("band_interacted", {
+              level_id: this.levelId,
+            });
+          },
+        });
+      }
+
       // Spotlight candidate
       if (this.spotlightSystem) {
         const spotlight = this.spotlightSystem.getNearbySpotlight(
@@ -1955,6 +2127,52 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
     });
+    this.onEventBus("ui:band-panel-close", () => {
+      if (!this.isBandPanelOpen) return;
+      this.isBandPanelOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
+      this.checkDialogState();
+    });
+    this.onEventBus("ui:band-choice-rejected", () => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.band);
+    });
+    this.onEventBus("ui:band-confirm", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      this.placeholderSystem.updateBandMember(
+        data.instanceId,
+        `band_${data.musicianId}`,
+      );
+      this.showSpotlightBeam();
+      this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
+
+      const layerKey = `music.level_3.layer.${data.musicianId}` as AudioKey;
+      AudioManager.unlockMusicLayer(layerKey, 400);
+      if (AudioManager.isPlaying("music.level_3.main" as AudioKey)) {
+        AudioManager.fadeOutMusic(400);
+      }
+
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
+      if (
+        this.placeholderSystem.checkCategoryCompletion(InteractiveType.BAND)
+      ) {
+        this.completeFloor(this.scoringFloors.band);
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L3,
+            infoKey: MissionKeys.STAGE_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        });
+      }
+    });
     this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
@@ -2016,6 +2234,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
+      this.switchLightSystem?.destroy();
       this.hintKeySystem?.destroy();
       this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
@@ -2094,6 +2313,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isChunkSelectorOpen &&
       !this.isCostumeSelectorOpen &&
       !this.isStepSequenceOpen &&
+      !this.isBandPanelOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -2325,6 +2545,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen ||
         this.isStepSequenceOpen ||
+        this.isBandPanelOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
@@ -2341,6 +2562,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.tutorialSystem) {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
+
+      this.switchLightSystem?.update();
 
       this.nudgeManager?.notifyActivity(this.player.getLastInputTime());
 
@@ -2619,6 +2842,9 @@ export class Game extends Scene implements GameDataAccessor {
           filled: this.photoChunksCollected,
           total: this.totalPhotoChunks,
         };
+      }
+      if (step.infoKey === MissionKeys.SWITCHES_DONE) {
+        return this.switchLightSystem?.getProgress() || { filled: 0, total: 0 };
       }
       if (step.categoryType === InteractiveType.SPOTLIGHT) {
         return (
