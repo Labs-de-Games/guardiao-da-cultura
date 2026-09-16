@@ -10,48 +10,67 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
-  Divider,
   Paper,
   TextField,
   Typography,
 } from "@mui/material";
-import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
+import { AuthDivider } from "@/components/auth/AuthDivider";
+import { AuthLink } from "@/components/auth/AuthLink";
+import { AuthPageShell } from "@/components/auth/AuthPageShell";
+import { AuthSubmitButton } from "@/components/auth/AuthSubmitButton";
+import { AuthSubtitle, AuthTitle } from "@/components/auth/AuthTitle";
+import {
+  fieldErrorSx,
+  fieldSx,
+  fieldValidSx,
+  iconSx,
+} from "@/components/auth/authStyles";
 import { apiClient } from "@/lib/api/client";
 
-const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#1a1a1a" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#1a1a1a" },
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "8px",
-    background: "#faf6ef",
-    "& fieldset": { borderColor: "#c4c0b8" },
-    "&:hover fieldset": { borderColor: "#1a1a1a" },
-    "&.Mui-focused fieldset": { borderColor: "#1a1a1a" },
-  },
-  "& .MuiInputBase-input": { color: "#1a1a1a" },
-  "& .MuiFormHelperText-root": { color: "#666" },
-} as const;
-
-const iconSx = { color: "#1a1a1a", mr: 1, fontSize: 20 } as const;
+const PASSWORD_MIN_LENGTH = 12;
+const PASSWORD_MAX_LENGTH = 128;
+const NICKNAME_MAX_LENGTH = 200;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Mirrors back's INSTITUTION_SLUG_PATTERN / front's ORIGIN_SLUG_PATTERN — duplicated on purpose (no shared package). */
+const INSTITUTION_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const INSTITUTION_SLUG_MAX_LENGTH = 64;
 
 /**
- * Institution registration page — redesigned to match the Figma design
- * system (Login component style). Moved out of (auth) group to have its
- * own full-viewport split layout without affecting login/reset-password.
- *
+ * Institution registration page — split layout (mascot + form card + footer).
  * Backend fields: email, password, institutionSlug, nickname.
  */
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [institutionSlug, setInstitutionSlug] = useState("");
   const [nickname, setNickname] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  const nicknameValid =
+    nickname.length > 0 && nickname.length <= NICKNAME_MAX_LENGTH;
+  const emailInvalid = email.length > 0 && !EMAIL_PATTERN.test(email);
+  const emailValid = EMAIL_PATTERN.test(email);
+  const institutionSlugInvalid =
+    institutionSlug.length > 0 &&
+    (!INSTITUTION_SLUG_PATTERN.test(institutionSlug) ||
+      institutionSlug.length > INSTITUTION_SLUG_MAX_LENGTH);
+  const institutionSlugValid =
+    INSTITUTION_SLUG_PATTERN.test(institutionSlug) &&
+    institutionSlug.length <= INSTITUTION_SLUG_MAX_LENGTH;
+  const passwordTooShort =
+    password.length > 0 && password.length < PASSWORD_MIN_LENGTH;
+  const passwordValid =
+    password.length >= PASSWORD_MIN_LENGTH &&
+    password.length <= PASSWORD_MAX_LENGTH;
+  const confirmMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword;
+  const confirmValid =
+    confirmPassword.length > 0 && !confirmMismatch && passwordValid;
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -61,8 +80,12 @@ export default function RegisterPage() {
     };
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
     try {
@@ -106,302 +129,136 @@ export default function RegisterPage() {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Main content: split layout */}
+    <AuthPageShell>
+      <AuthTitle>Cadastre-se</AuthTitle>
+      <AuthSubtitle>
+        Preencha os campos abaixo para começar a jogar.
+      </AuthSubtitle>
+
+      <AuthDivider />
+
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          alignItems: "safe center",
-          justifyContent: "center",
-          gap: { xs: 4, md: 10 },
-          px: { xs: 3, md: 8 },
-          py: { xs: 4, md: 6 },
-          background: "#f5f0e8",
-        }}
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{ display: "flex", flexDirection: "column", gap: 3 }}
       >
-        {/* Left side — mascot illustration */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-            width: { xs: "100%", md: "50%" },
-            maxWidth: 520,
-            flexShrink: 0,
+        <TextField
+          size="small"
+          label="Nome da instituição"
+          placeholder="Escreva o nome da instituição"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          required
+          slotProps={{
+            htmlInput: { maxLength: NICKNAME_MAX_LENGTH },
+            input: { startAdornment: <PersonOutlined sx={iconSx} /> },
           }}
-        >
-          {/* Brazil map background */}
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: 0.8,
-              pointerEvents: "none",
-            }}
-          >
-            <Image
-              src="/images/auth/mapa-br.png"
-              alt=""
-              width={480}
-              height={480}
-              style={{ objectFit: "contain" }}
-            />
-          </Box>
-          {/* Mascot */}
-          <Box sx={{ position: "relative", zIndex: 1 }}>
-            <Image
-              src="/images/auth/logo-jogo.png"
-              alt="Guardião das Culturas"
-              width={400}
-              height={400}
-              style={{ objectFit: "contain" }}
-              priority
-            />
-          </Box>
-        </Box>
-
-        {/* Right side — form card */}
-        <Paper
-          elevation={0}
-          sx={{
-            width: "100%",
-            maxWidth: 480,
-            background: "#faf6ef",
-            border: "4px solid #1a1a1a",
-            borderRadius: "16px",
-            p: { xs: 3, sm: 5 },
-            flexShrink: 0,
-          }}
-        >
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              mb: 1,
-              fontWeight: 700,
-              fontFamily: "'Jockey One', sans-serif",
-              textAlign: "center",
-              color: "#1a1a1a",
-            }}
-          >
-            Cadastre-se
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{ mb: 2, textAlign: "center", color: "#4a4a4a" }}
-          >
-            Preencha os campos abaixo para começar a jogar.
-          </Typography>
-
-          {/* Divider with diamond */}
-          <Divider
-            sx={{
-              mb: 3,
-              "&::before, &::after": {
-                borderColor: "#1a1a1a",
-              },
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "#1a1a1a", fontSize: "0.7rem", px: 1 }}
-            >
-              ◆
-            </Typography>
-          </Divider>
-
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-          >
-            <TextField
-              size="small"
-              label="Nome da instituição"
-              placeholder="Escreva o nome da instituição"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              required
-              slotProps={{
-                input: {
-                  startAdornment: <PersonOutlined sx={iconSx} />,
-                },
-              }}
-              sx={fieldSx}
-            />
-
-            <TextField
-              size="small"
-              type="email"
-              label="E-mail"
-              placeholder="exemplo@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              slotProps={{
-                input: {
-                  startAdornment: <EmailOutlined sx={iconSx} />,
-                },
-              }}
-              sx={fieldSx}
-            />
-
-            <TextField
-              size="small"
-              label="Slug da instituição"
-              placeholder="escola-municipal-centro"
-              value={institutionSlug}
-              onChange={(e) => setInstitutionSlug(e.target.value)}
-              helperText="Apenas letras minúsculas, números e hífens."
-              required
-              slotProps={{
-                input: {
-                  startAdornment: <AlternateEmail sx={iconSx} />,
-                },
-              }}
-              sx={fieldSx}
-            />
-
-            <TextField
-              size="small"
-              type="password"
-              label="Senha"
-              placeholder="Mínimo de 12 caracteres"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              helperText="Mínimo de 12 caracteres."
-              required
-              slotProps={{
-                htmlInput: { minLength: 12 },
-                input: {
-                  startAdornment: <LockOutlined sx={iconSx} />,
-                },
-              }}
-              sx={fieldSx}
-            />
-
-            {error ? (
-              <Alert severity="error" sx={{ borderRadius: "8px" }}>
-                {error}
-              </Alert>
-            ) : null}
-
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              disabled={isSubmitting}
-              sx={{
-                mt: 1,
-                py: 1.5,
-                borderRadius: "8px",
-                fontWeight: 600,
-                textTransform: "none",
-                fontSize: "1rem",
-                background: "#1a1a1a",
-                "&:hover": { background: "#333" },
-                "&.Mui-disabled": { background: "#9e9e9e", color: "#fff" },
-              }}
-            >
-              {isSubmitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Cadastrar"
-              )}
-            </Button>
-          </Box>
-
-          <Typography
-            variant="body2"
-            sx={{ mt: 3, textAlign: "center", color: "#666" }}
-          >
-            Já tem uma conta?{" "}
-            <Link
-              href="/login"
-              style={{ color: "#6366f1", textDecoration: "none" }}
-            >
-              Entrar
-            </Link>
-          </Typography>
-        </Paper>
-      </Box>
-
-      {/* Footer */}
-      <Box
-        component="footer"
-        sx={{
-          background: "#1a1a1a",
-          py: 2,
-          px: { xs: 3, md: 8 },
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-        }}
-      >
-        <Image
-          src="/images/auth/logo-lei-rouanet.png"
-          alt="Lei Rouanet"
-          width={260}
-          height={65}
-          style={{ objectFit: "contain" }}
+          sx={[fieldSx, nicknameValid && fieldValidSx]}
         />
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
+        <TextField
+          size="small"
+          type="email"
+          label="E-mail"
+          placeholder="exemplo@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          error={emailInvalid}
+          helperText={emailInvalid ? "E-mail inválido." : " "}
+          slotProps={{
+            input: { startAdornment: <EmailOutlined sx={iconSx} /> },
           }}
-        >
-          <Typography
-            variant="body1"
-            sx={{ color: "rgba(255,255,255,0.6)", mb: 0.5, ml: 3.5 }}
-          >
-            Parceiro
-          </Typography>
-          <Image
-            src="/images/auth/logo-galp.png"
-            alt="Galp"
-            width={180}
-            height={60}
-            style={{ objectFit: "contain", display: "block" }}
-          />
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
+          sx={[
+            fieldSx,
+            emailInvalid && fieldErrorSx,
+            emailValid && fieldValidSx,
+          ]}
+        />
+        <TextField
+          size="small"
+          label="Slug da instituição"
+          placeholder="escola-municipal-centro"
+          value={institutionSlug}
+          onChange={(e) => setInstitutionSlug(e.target.value)}
+          error={institutionSlugInvalid}
+          helperText={
+            institutionSlugInvalid
+              ? "Apenas letras minúsculas, números e hífens (máx. 64 caracteres)."
+              : "Apenas letras minúsculas, números e hífens."
+          }
+          required
+          slotProps={{
+            htmlInput: { maxLength: INSTITUTION_SLUG_MAX_LENGTH },
+            input: { startAdornment: <AlternateEmail sx={iconSx} /> },
           }}
-        >
-          <Typography
-            variant="body1"
-            sx={{ color: "rgba(255,255,255,0.6)", mb: 0.5, ml: 4 }}
-          >
-            Realização
-          </Typography>
-          <Image
-            src="/images/auth/logo-minc.png"
-            alt="Ministério da Cultura / Governo do Brasil"
-            width={300}
-            height={75}
-            style={{ objectFit: "contain", display: "block" }}
-          />
-        </Box>
+          sx={[
+            fieldSx,
+            institutionSlugInvalid && fieldErrorSx,
+            institutionSlugValid && fieldValidSx,
+          ]}
+        />
+        <TextField
+          size="small"
+          type="password"
+          label="Senha"
+          placeholder="Mínimo de 12 caracteres"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={passwordTooShort}
+          helperText={
+            passwordTooShort
+              ? "A senha deve ter ao menos 12 caracteres."
+              : "Use entre 12 e 128 caracteres."
+          }
+          required
+          slotProps={{
+            htmlInput: { minLength: 12, maxLength: 128 },
+            input: { startAdornment: <LockOutlined sx={iconSx} /> },
+          }}
+          sx={[
+            fieldSx,
+            passwordTooShort && fieldErrorSx,
+            passwordValid && fieldValidSx,
+          ]}
+        />
+        <TextField
+          size="small"
+          type="password"
+          label="Confirmar senha"
+          placeholder="Repita a senha"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          error={confirmMismatch}
+          helperText={
+            confirmMismatch
+              ? "As senhas não coincidem."
+              : "Repita a senha digitada acima."
+          }
+          required
+          slotProps={{
+            htmlInput: { minLength: 12, maxLength: 128 },
+            input: { startAdornment: <LockOutlined sx={iconSx} /> },
+          }}
+          sx={[
+            fieldSx,
+            confirmMismatch && fieldErrorSx,
+            confirmValid && fieldValidSx,
+          ]}
+        />
+        {error ? (
+          <Alert severity="error" sx={{ borderRadius: "8px" }}>
+            {error}
+          </Alert>
+        ) : null}
+        <AuthSubmitButton loading={isSubmitting}>Cadastrar</AuthSubmitButton>
       </Box>
-    </Box>
+
+      <Typography
+        variant="body2"
+        sx={{ mt: 3, textAlign: "center", color: "#666" }}
+      >
+        Já tem uma conta? <AuthLink href="/login">Entrar</AuthLink>
+      </Typography>
+    </AuthPageShell>
   );
 }
