@@ -7,8 +7,8 @@
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
-      "title": "VANDALISMO TOTAL",
-      "caption": "Na madrugada de ontem, vândalos invadiram o Inhotim e atacaram as obras."
+      "title": "FESTA DO INTERIOR",
+      "caption": "O tradicional São João de Campina Grande é festejado com alegria na Paraíba."
     },
     {
       "src": "comic_L3P2.png",
@@ -17,8 +17,8 @@
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
-      "title": "A INVESTIGAÇÃO COMEÇA",
-      "caption": "A polícia chamou detetives da região para ajudar a investigar."
+      "title": "CAMINHO DA ROÇA",
+      "caption": "De repente, algo assusta o povo, que corre em disparada e esvazia o lugar."
     },
     {
       "src": "comic_L3P3.png",
@@ -27,18 +27,8 @@
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
-      "title": "MISSÃO: BUSCAR PISTAS",
-      "caption": "A inspetora-chefe pediu que você a acompanhasse no caso."
-    },
-    {
-      "src": "comic_L3P4.png",
-      "sliceWidth": 350,
-      "sliceStart": 170,
-      "revealMs": 1000,
-      "holdMs": 5000,
-      "shrinkMs": 1200,
-      "title": "DISFARCE PERFEITO",
-      "caption": "Com roupas de zelador, sua missão é procurar pistas enquanto organiza o lugar."
+      "title": "OLHA A PISTA!",
+      "caption": "Acionados outra vez, tentem descobrir o que liga esses ataques à cultura."
     }
   ],
   "revealIconMask": "reveal_icon_mask_L3.png",
