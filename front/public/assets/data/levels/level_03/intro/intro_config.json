@@ -3,7 +3,7 @@
     {
       "src": "comic_L3P1.png",
       "sliceWidth": 350,
-      "sliceStart": 50,
+      "sliceStart": 200,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
@@ -13,7 +13,7 @@
     {
       "src": "comic_L3P2.png",
       "sliceWidth": 350,
-      "sliceStart": 300,
+      "sliceStart": 635,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
@@ -23,7 +23,7 @@
     {
       "src": "comic_L3P3.png",
       "sliceWidth": 350,
-      "sliceStart": 345,
+      "sliceStart": 395,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
