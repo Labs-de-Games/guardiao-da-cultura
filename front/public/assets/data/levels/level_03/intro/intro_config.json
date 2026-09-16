@@ -8,7 +8,7 @@
       "holdMs": 5000,
       "shrinkMs": 1200,
       "title": "FESTA DO INTERIOR",
-      "caption": "O tradicional São João de Campina Grande é festejado com alegria na Paraíba."
+      "caption": "O tradicional São João de Campina Grande é celebrado com música, dança e alegria."
     },
     {
       "src": "comic_L3P2.png",
@@ -18,7 +18,7 @@
       "holdMs": 5000,
       "shrinkMs": 1200,
       "title": "CAMINHO DA ROÇA",
-      "caption": "De repente, algo assusta o povo, que corre em disparada e esvazia o lugar."
+      "caption": "De repente, algo assusta todo o povo, que corre em disparada e esvazia a festa."
     },
     {
       "src": "comic_L3P3.png",
@@ -28,7 +28,7 @@
       "holdMs": 5000,
       "shrinkMs": 1200,
       "title": "OLHA A PISTA!",
-      "caption": "Acionados outra vez, tentem descobrir o que liga esses ataques à cultura."
+      "caption": "Chamado outra vez, tente descobrir o que está por trás desses ataques à cultura."
     }
   ],
   "revealIconMask": "reveal_icon_mask_L3.png",
