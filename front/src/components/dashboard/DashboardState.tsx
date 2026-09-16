@@ -8,6 +8,8 @@ interface DashboardStateProps {
   onRetry: () => void;
   /** false when the account has no institutionSlug — the "awaiting linkage" state. */
   linked: boolean;
+  /** Optional content-shaped placeholder shown instead of the generic spinner while loading. */
+  skeleton?: ReactNode;
   children: ReactNode;
 }
 
@@ -24,9 +26,11 @@ export function DashboardState({
   error,
   onRetry,
   linked,
+  skeleton,
   children,
 }: DashboardStateProps) {
   if (loading) {
+    if (skeleton) return <>{skeleton}</>;
     return (
       <Box
         sx={{
@@ -44,13 +48,16 @@ export function DashboardState({
   if (error) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
-        <Typography color="error" sx={{ mb: 2 }}>
-          {error}
-        </Typography>
+        <Typography sx={{ mb: 2, color: "error.main" }}>{error}</Typography>
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
           onClick={onRetry}
+          sx={{
+            color: "text.primary",
+            borderColor: "divider",
+            "&:hover": { borderColor: "text.secondary" },
+          }}
         >
           Tentar novamente
         </Button>
@@ -61,10 +68,13 @@ export function DashboardState({
   if (!linked) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
-        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, fontWeight: 700, color: "text.primary" }}
+        >
           Instituição ainda não vinculada
         </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 480, mx: "auto" }}>
+        <Typography sx={{ maxWidth: 480, mx: "auto", color: "text.secondary" }}>
           Sua conta ainda não está associada a um link de campanha. Fale com a
           organização do edital para vincular sua instituição — assim que isso
           acontecer, os dados aparecem aqui automaticamente.

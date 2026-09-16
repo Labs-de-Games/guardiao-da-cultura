@@ -9,9 +9,15 @@ import type { DateRange } from "@/lib/edital/types";
 interface CsvExportButtonProps {
   dateRange: DateRange;
   onError?: (message: string) => void;
+  /** Disable when the current dateRange isn't safe to send (e.g. invalid custom range). */
+  disabled?: boolean;
 }
 
-export function CsvExportButton({ dateRange, onError }: CsvExportButtonProps) {
+export function CsvExportButton({
+  dateRange,
+  onError,
+  disabled,
+}: CsvExportButtonProps) {
   const [downloading, setDownloading] = useState(false);
 
   async function handleClick() {
@@ -30,7 +36,7 @@ export function CsvExportButton({ dateRange, onError }: CsvExportButtonProps) {
       variant="contained"
       startIcon={<DownloadIcon />}
       onClick={handleClick}
-      disabled={downloading}
+      disabled={downloading || disabled}
     >
       {downloading ? "Exportando..." : "Exportar CSV"}
     </Button>
