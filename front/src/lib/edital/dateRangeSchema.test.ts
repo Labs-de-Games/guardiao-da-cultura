@@ -42,4 +42,24 @@ describe("parseDateRangeParams", () => {
       }),
     ).toThrow();
   });
+
+  it("throws when from is after to", () => {
+    expect(() =>
+      parseDateRangeParams({
+        dateRange: "custom",
+        from: "2026-02-01",
+        to: "2026-01-01",
+      }),
+    ).toThrow();
+  });
+
+  it("accepts from equal to to", () => {
+    expect(
+      parseDateRangeParams({
+        dateRange: "custom",
+        from: "2026-01-15",
+        to: "2026-01-15",
+      }),
+    ).toEqual({ type: "custom", start: "2026-01-15", end: "2026-01-15" });
+  });
 });

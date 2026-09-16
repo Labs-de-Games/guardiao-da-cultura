@@ -10,6 +10,18 @@ export function isDateRangeComplete(range: DateRange): boolean {
   return range.type !== "custom" || (range.start !== "" && range.end !== "");
 }
 
+/**
+ * `isDateRangeComplete` plus ordering: a `custom` range with `start` after
+ * `end` is "complete" (both fields filled) but not safe to fetch — the
+ * server has no way to resolve an inverted window. Use this, not
+ * `isDateRangeComplete`, to gate `useAsyncData`/CSV export.
+ */
+export function isDateRangeValid(range: DateRange): boolean {
+  if (!isDateRangeComplete(range)) return false;
+  if (range.type !== "custom") return true;
+  return range.start <= range.end;
+}
+
 /** FilterBar's string interface (issue #745, kept for backward compat). */
 function dateRangeToFilterBarValue(range: DateRange): string {
   if (range.type === "7d") return "last-7-days";
@@ -40,6 +52,12 @@ export function useFilterBarProps(
     },
     customFrom: dateRange.type === "custom" ? dateRange.start : "",
     customTo: dateRange.type === "custom" ? dateRange.end : "",
+    customRangeError:
+      dateRange.type === "custom" &&
+      isDateRangeComplete(dateRange) &&
+      !isDateRangeValid(dateRange)
+        ? "A data “De” deve ser anterior ou igual à data “Até”."
+        : undefined,
     onCustomFromChange: (value: string) => {
       if (dateRange.type === "custom") {
         setDateRange({ ...dateRange, start: value });

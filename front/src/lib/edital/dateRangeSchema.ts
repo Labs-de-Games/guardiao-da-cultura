@@ -20,7 +20,15 @@ const rawQuerySchema = z
   })
   .refine((data) => data.dateRange !== "custom" || (data.from && data.to), {
     message: "from and to are required when dateRange is 'custom'",
-  });
+  })
+  .refine(
+    (data) =>
+      data.dateRange !== "custom" ||
+      !data.from ||
+      !data.to ||
+      data.from <= data.to,
+    { message: "from must not be after to" },
+  );
 
 export type EditalQueryParamsInput = z.input<typeof rawQuerySchema>;
 
