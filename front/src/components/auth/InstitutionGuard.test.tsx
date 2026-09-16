@@ -11,9 +11,8 @@ jest.mock("next-auth/react", () => ({
   useSession: jest.fn(),
 }));
 
-jest.mock("@/components/LoadingScreen", () => ({
-  __esModule: true,
-  default: () => <div>loading-screen</div>,
+jest.mock("@/components/dashboard/DashboardLoadingScreen", () => ({
+  DashboardLoadingScreen: () => <div>loading-screen</div>,
 }));
 
 describe("InstitutionGuard", () => {
