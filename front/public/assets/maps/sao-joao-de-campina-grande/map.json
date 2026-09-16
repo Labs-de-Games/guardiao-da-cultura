@@ -114,7 +114,7 @@
                  "type":"LightBar",
                  "visible":true,
                  "width":0,
-                 "x":512,
+                 "x":528,
                  "y":560
                 }, 
                 {
@@ -163,7 +163,7 @@
                  "type":"LightBar",
                  "visible":true,
                  "width":0,
-                 "x":544,
+                 "x":553,
                  "y":560
                 }, 
                 {
@@ -212,7 +212,7 @@
                  "type":"LightBar",
                  "visible":true,
                  "width":0,
-                 "x":576,
+                 "x":578,
                  "y":560
                 }],
          "opacity":1,
@@ -1200,8 +1200,8 @@
                  "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":512,
-                 "y":624
+                 "x":528,
+                 "y":618
                 }, 
                 {
                  "height":0,
@@ -1261,8 +1261,8 @@
                  "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":544,
-                 "y":624
+                 "x":553,
+                 "y":618
                 }, 
                 {
                  "height":0,
@@ -1322,8 +1322,8 @@
                  "type":"PlaceholderInstance",
                  "visible":true,
                  "width":0,
-                 "x":576,
-                 "y":624
+                 "x":578,
+                 "y":618
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1415,7 +1415,7 @@
          "y":0
         }],
  "nextlayerid":25,
- "nextobjectid":127,
+ "nextobjectid":128,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.2",

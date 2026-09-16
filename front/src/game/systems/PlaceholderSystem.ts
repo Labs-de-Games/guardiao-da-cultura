@@ -11,7 +11,7 @@ import {
   resolveInteractionPoint,
 } from "./placeholderInteraction";
 
-const BAND_CONFIRM_Y_OFFSET = 85;
+const BAND_CONFIRM_Y_OFFSET = 65;
 
 export interface PlaceholderInstance {
   area: Phaser.Geom.Rectangle;
