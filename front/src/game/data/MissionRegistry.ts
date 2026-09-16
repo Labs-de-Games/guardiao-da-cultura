@@ -24,7 +24,11 @@ export const MissionRequirements = [
   },
   {
     id: MissionIds.CURATOR_L3,
-    requiredInfos: [MissionKeys.DANCE_DONE, MissionKeys.STAGE_DONE],
+    requiredInfos: [
+      MissionKeys.DANCE_DONE,
+      MissionKeys.SWITCHES_DONE,
+      MissionKeys.STAGE_DONE,
+    ],
   },
 ];
 
@@ -88,6 +92,10 @@ export const MissionRegistry: Record<string, MissionDef> = {
         infoKey: MissionKeys.DANCE_DONE,
         text: "Remontar a sequência de passos da quadrilha",
         categoryType: InteractiveType.STEP_SEQUENCE,
+      },
+      {
+        infoKey: MissionKeys.SWITCHES_DONE,
+        text: "Consertar as luzes do palco",
       },
       {
         infoKey: MissionKeys.STAGE_DONE,
