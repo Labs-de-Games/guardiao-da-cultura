@@ -26,6 +26,14 @@ export function FunnelChart({
   steps,
   highlightIndex = steps.length - 1,
 }: FunnelChartProps) {
+  if (steps.length === 0) {
+    return (
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        Sem dados de funil para o período selecionado.
+      </Typography>
+    );
+  }
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {steps.map((step, index) => {
@@ -37,15 +45,17 @@ export function FunnelChart({
             >
               <Typography
                 variant="body2"
-                sx={{ fontWeight: isHighlight ? 700 : 500 }}
+                sx={{
+                  fontWeight: isHighlight ? 700 : 500,
+                  color: "text.primary",
+                }}
               >
                 {step.label}
                 {typeof step.count === "number" ? (
                   <Typography
                     component="span"
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ ml: 1 }}
+                    sx={{ ml: 1, color: "text.secondary" }}
                   >
                     ({formatCount(step.count)})
                   </Typography>
@@ -63,8 +73,7 @@ export function FunnelChart({
                   <Typography
                     component="span"
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ ml: 1 }}
+                    sx={{ ml: 1, color: "text.secondary" }}
                   >
                     ({Math.round(step.stepConversion * 100)}% do anterior)
                   </Typography>
@@ -77,12 +86,11 @@ export function FunnelChart({
               sx={{
                 height: 10,
                 borderRadius: 6,
-                backgroundColor: "rgba(148,163,184,0.12)",
+                backgroundColor: "rgba(0,0,0,0.08)",
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 6,
-                  backgroundColor: isHighlight
-                    ? "primary.main"
-                    : "success.main",
+                  backgroundColor: "primary.main",
+                  opacity: isHighlight ? 1 : 0.55,
                 },
               }}
             />

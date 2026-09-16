@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import { Card, CardContent, Typography } from "@mui/material";
 
 interface HeroMetricProps {
   /** Unique gameplay users for THIS institution — no 5,000 goal bar. */
@@ -22,20 +22,17 @@ export function HeroMetric({
       <CardContent sx={{ p: 4, textAlign: "center" }}>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ fontWeight: 600, mb: 1 }}
+          sx={{ fontWeight: 600, mb: 1, color: "text.secondary" }}
         >
           {label}
         </Typography>
-        <Box>
-          <Typography
-            variant="h2"
-            component="p"
-            sx={{ fontWeight: 800, lineHeight: 1 }}
-          >
-            {value.toLocaleString("pt-BR")}
-          </Typography>
-        </Box>
+        <Typography
+          variant="h2"
+          component="p"
+          sx={{ fontWeight: 800, lineHeight: 1, color: "text.primary" }}
+        >
+          {value.toLocaleString("pt-BR")}
+        </Typography>
       </CardContent>
     </Card>
   );
