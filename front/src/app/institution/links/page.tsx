@@ -12,6 +12,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -75,10 +76,18 @@ function InstitutionLinksContent() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
+      <Typography
+        variant="h4"
+        sx={{
+          mb: 1,
+          fontWeight: 700,
+          color: "text.primary",
+          fontFamily: "'Jockey One', sans-serif",
+        }}
+      >
         Links de Campanha
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
         Gere e copie links rastreados para sua instituição. Esta página não
         emite nenhum evento de analytics — atividade da equipe aqui não toca o
         dataset do edital.
@@ -94,6 +103,7 @@ function InstitutionLinksContent() {
               onChange={(e) => handleSelectOrigin(e.target.value)}
               size="small"
               displayEmpty
+              sx={{ color: "text.primary" }}
             >
               {CAMPAIGN_ORIGINS.map((entry) => (
                 <MenuItem key={entry.slug} value={entry.slug}>
@@ -117,6 +127,10 @@ function InstitutionLinksContent() {
                     ? "Apenas letras minúsculas, números e hífens."
                     : " "
                 }
+                sx={{
+                  "& .MuiInputBase-input": { color: "text.primary" },
+                  "& .MuiInputLabel-root": { color: "text.secondary" },
+                }}
               />
             ) : null}
 
@@ -126,6 +140,10 @@ function InstitutionLinksContent() {
               value={trackingUrl}
               slotProps={{ input: { readOnly: true } }}
               placeholder="Selecione ou digite um slug válido"
+              sx={{
+                "& .MuiInputBase-input": { color: "text.primary" },
+                "& .MuiInputLabel-root": { color: "text.secondary" },
+              }}
             />
 
             <Button
@@ -149,24 +167,43 @@ function InstitutionLinksContent() {
           linked={data?.linked ?? true}
         >
           {data?.data ? (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Origem</TableCell>
-                  <TableCell align="right">Usuários únicos</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.data.map((row) => (
-                  <TableRow key={row.source}>
-                    <TableCell>{resolveOriginLabel(row.source)}</TableCell>
-                    <TableCell align="right">
-                      {row.uniquePlayers.toLocaleString("pt-BR")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            data.data.length === 0 ? (
+              <Typography sx={{ color: "text.secondary" }}>
+                Nenhuma origem registrada nos últimos 30 dias.
+              </Typography>
+            ) : (
+              <TableContainer sx={{ overflowX: "auto" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        sx={{ color: "text.primary", fontWeight: 600 }}
+                      >
+                        Origem
+                      </TableCell>
+                      <TableCell
+                        align="right"
+                        sx={{ color: "text.primary", fontWeight: 600 }}
+                      >
+                        Usuários únicos
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {data.data.map((row) => (
+                      <TableRow key={row.source}>
+                        <TableCell sx={{ color: "text.primary" }}>
+                          {resolveOriginLabel(row.source)}
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: "text.primary" }}>
+                          {row.uniquePlayers.toLocaleString("pt-BR")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )
           ) : null}
         </DashboardState>
       </Section>

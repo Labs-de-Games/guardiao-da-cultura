@@ -50,7 +50,7 @@ describe("InstitutionOverviewPage", () => {
 
     const { container } = render(<InstitutionOverviewPage />);
 
-    expect(container.querySelector(".MuiCircularProgress-root")).toBeTruthy();
+    expect(container.querySelector(".MuiSkeleton-root")).toBeTruthy();
   });
 
   it("renders all 8 card titles with pt-BR formatted numbers", async () => {

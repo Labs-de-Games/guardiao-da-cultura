@@ -1,25 +1,55 @@
 "use client";
 
-import { Box, Grid, Typography } from "@mui/material";
+import { Box, Grid, Skeleton, Typography } from "@mui/material";
 import { Suspense, useState } from "react";
 import { CsvExportButton } from "@/components/dashboard/CsvExportButton";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { RateCard } from "@/components/dashboard/RateCard";
-import { Section } from "@/components/dashboard/Section";
 import { getReport } from "@/lib/api/edital";
 import type { EditalReportResponse } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
 import {
-  isDateRangeComplete,
+  isDateRangeValid,
   useFilterBarProps,
 } from "@/lib/edital/useFilterBarProps";
 
 function formatMinutes(seconds: number): string {
   return `${(seconds / 60).toFixed(1).replace(".", ",")} min`;
 }
+
+function ReportHeader() {
+  return (
+    <>
+      <Typography
+        variant="h4"
+        sx={{
+          mb: 1,
+          fontWeight: 700,
+          color: "text.primary",
+          fontFamily: "'Jockey One', sans-serif",
+        }}
+      >
+        Relatório
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
+        O CSV vem do mesmo caminho de código que calculou esta tela.
+      </Typography>
+    </>
+  );
+}
+
+const REPORT_SKELETON = (
+  <Grid container spacing={3}>
+    {Array.from({ length: 4 }).map((_, index) => (
+      <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
+        <Skeleton variant="rounded" height={120} />
+      </Grid>
+    ))}
+  </Grid>
+);
 
 function InstitutionReportContent() {
   const { dateRange, setDateRange } = useEditalFilters();
@@ -33,7 +63,7 @@ function InstitutionReportContent() {
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
     ],
-    isDateRangeComplete(dateRange),
+    isDateRangeValid(dateRange),
   );
 
   return (
@@ -48,14 +78,25 @@ function InstitutionReportContent() {
           mb: 1,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "text.primary",
+            fontFamily: "'Jockey One', sans-serif",
+          }}
+        >
           Relatório
         </Typography>
         {data?.linked ? (
-          <CsvExportButton dateRange={dateRange} onError={setCsvError} />
+          <CsvExportButton
+            dateRange={dateRange}
+            onError={setCsvError}
+            disabled={!isDateRangeValid(dateRange)}
+          />
         ) : null}
       </Box>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
         O CSV vem do mesmo caminho de código que calculou esta tela.
       </Typography>
 
@@ -72,42 +113,41 @@ function InstitutionReportContent() {
         error={error}
         onRetry={retry}
         linked={data?.linked ?? true}
+        skeleton={REPORT_SKELETON}
       >
         {data?.data ? (
-          <Section title="Sessões e Erros Críticos">
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <KPICard
-                  title="Sessões iniciadas"
-                  value={data.data.sessionDuration.sessionsStarted.toLocaleString(
-                    "pt-BR",
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <KPICard
-                  title="Tempo médio de sessão"
-                  value={formatMinutes(data.data.sessionDuration.avgSeconds)}
-                  subtitle={`Mediana: ${formatMinutes(data.data.sessionDuration.medianSeconds)}`}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <RateCard
-                  title="Taxa de aprovação no quiz"
-                  rate={data.data.quizPassRate}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <KPICard
-                  title="Erros críticos"
-                  value={data.data.criticalErrors.total.toLocaleString("pt-BR")}
-                  subtitle={Object.entries(data.data.criticalErrors.byErrorCode)
-                    .map(([code, count]) => `${code}: ${count}`)
-                    .join(", ")}
-                />
-              </Grid>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Sessões iniciadas"
+                value={data.data.sessionDuration.sessionsStarted.toLocaleString(
+                  "pt-BR",
+                )}
+              />
             </Grid>
-          </Section>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Tempo médio de sessão"
+                value={formatMinutes(data.data.sessionDuration.avgSeconds)}
+                subtitle={`Mediana: ${formatMinutes(data.data.sessionDuration.medianSeconds)}`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <RateCard
+                title="Taxa de aprovação no quiz"
+                rate={data.data.quizPassRate}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Erros críticos"
+                value={data.data.criticalErrors.total.toLocaleString("pt-BR")}
+                subtitle={Object.entries(data.data.criticalErrors.byErrorCode)
+                  .map(([code, count]) => `${code}: ${count}`)
+                  .join(", ")}
+              />
+            </Grid>
+          </Grid>
         ) : null}
       </DashboardState>
     </Box>
@@ -116,7 +156,14 @@ function InstitutionReportContent() {
 
 export default function InstitutionReportPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <Box>
+          <ReportHeader />
+          {REPORT_SKELETON}
+        </Box>
+      }
+    >
       <InstitutionReportContent />
     </Suspense>
   );
