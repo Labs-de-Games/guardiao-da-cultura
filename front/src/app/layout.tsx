@@ -1,5 +1,6 @@
 import Script from "next/script";
 import type { ReactNode } from "react";
+import { OfflineGate } from "@/components/OfflineGate";
 import PostHogPageView from "@/components/PostHogPageView";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <ThemeRegistry>
             <ToastProvider>
               <PostHogPageView />
-              {children}
+              <OfflineGate>{children}</OfflineGate>
             </ToastProvider>
           </ThemeRegistry>
         </PostHogProvider>
