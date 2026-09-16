@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import LoadingScreen from "@/components/LoadingScreen";
+import { DashboardLoadingScreen } from "@/components/dashboard/DashboardLoadingScreen";
 
 interface InstitutionGuardProps {
   children: ReactNode;
@@ -34,7 +34,7 @@ export default function InstitutionGuard({ children }: InstitutionGuardProps) {
   }, [isLoading, status, isAuthorized, router]);
 
   if (isLoading || !isAuthorized) {
-    return <LoadingScreen />;
+    return <DashboardLoadingScreen />;
   }
 
   return <>{children}</>;
