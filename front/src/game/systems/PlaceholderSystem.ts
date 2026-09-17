@@ -557,6 +557,12 @@ export class PlaceholderSystem {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
       if (
+        p.type === InteractiveType.GENIUS_SEQUENCE &&
+        p.hintSprite instanceof Phaser.GameObjects.Sprite
+      ) {
+        p.hintSprite.setAlpha(1);
+        p.hintSprite.play("accordion_open_anim", true);
+      } else if (
         p.type !== InteractiveType.PHOTO &&
         p.type !== InteractiveType.COSTUME &&
         p.type !== InteractiveType.STEP_SEQUENCE &&

@@ -1565,6 +1565,16 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
     }
+    if (!this.anims.exists("accordion_open_anim")) {
+      this.anims.create({
+        key: "accordion_open_anim",
+        frames: Array.from({ length: 9 }, (_, i) => ({
+          key: `accordion_frame${String(i + 1).padStart(3, "0")}`,
+        })),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
   }
 
   private createEntities(mapData: MapData, contentJson?: ContentJson) {
