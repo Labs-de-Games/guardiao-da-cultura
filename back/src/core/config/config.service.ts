@@ -41,6 +41,15 @@ const schema = z
       message:
         "GMAIL_USER and GMAIL_APP_PASSWORD are required when EMAIL_PROVIDER is 'nodemailer'",
     },
+  )
+  .refine(
+    (data) =>
+      data.NODE_ENV !== "production" || Boolean(data.AUTH_OAUTH_UPSERT_TOKEN),
+    {
+      message:
+        "AUTH_OAUTH_UPSERT_TOKEN is required in production — Google/institution sign-in silently fails without it",
+      path: ["AUTH_OAUTH_UPSERT_TOKEN"],
+    },
   );
 
 @Injectable()
