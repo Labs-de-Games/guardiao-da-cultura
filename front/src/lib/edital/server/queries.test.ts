@@ -138,3 +138,30 @@ describe("HogQL query builders — non-negotiable rules (issue #742)", () => {
     );
   });
 });
+
+describe("cross-institution isolation (issue #744 acceptance: A only sees A's data)", () => {
+  const scopeA = __createScopeForTests("escola-a");
+  const scopeB = __createScopeForTests("escola-b");
+
+  it.each(
+    ALL_BUILDERS,
+  )("%s: binds each institution's own slug, never the other's", (_name, build) => {
+    const planA = build(scopeA, range);
+    const planB = build(scopeB, range);
+
+    expect(planA.values.slug).toBe("escola-a");
+    expect(planB.values.slug).toBe("escola-b");
+    expect(planA.values.slug).not.toBe(planB.values.slug);
+  });
+
+  it.each(
+    ALL_BUILDERS,
+  )("%s: query text is identical for both scopes — isolation lives entirely in the bound value, not the query shape", (_name, build) => {
+    const planA = build(scopeA, range);
+    const planB = build(scopeB, range);
+
+    expect(planA.query).toBe(planB.query);
+    expect(planA.query).not.toContain("escola-a");
+    expect(planA.query).not.toContain("escola-b");
+  });
+});
