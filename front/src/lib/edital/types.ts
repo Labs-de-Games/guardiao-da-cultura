@@ -40,6 +40,28 @@ export interface EditalHealthResponse {
   configured: boolean;
 }
 
+/** One row of #807's per-phase breakdowns — always ordered by levelNumber. */
+export interface PhaseRow {
+  levelId: string;
+  levelNumber: number;
+  label: string;
+}
+
+export interface PhaseProgressRow extends PhaseRow {
+  /** Unique players who entered this level (game_started). */
+  reached: number;
+  /** Unique players who finished this level (level_completed). */
+  completed: number;
+}
+
+export interface PhaseQuizPassRateRow extends PhaseRow {
+  rate: Rate;
+}
+
+export interface PhaseClueUsageRow extends PhaseRow {
+  clueUses: number;
+}
+
 /**
  * `linked: false` on every response below means the caller's account has
  * no `institutionSlug` yet (or isn't an institution session at all) —
@@ -47,11 +69,27 @@ export interface EditalHealthResponse {
  * acceptance criteria. `data` is always `null` in that case; #745 must
  * render the "awaiting linkage" empty state, not mistake it for zero
  * players.
+ *
+ * `completionRate`/`phaseProgress`/`quizPassRate`/`clueUsage` (issue
+ * #807) are institution-wide by default and turma-scoped whenever the
+ * caller passes a valid `?turma=` — the same response shape either way,
+ * so #745's Resumo Executivo screen doesn't need a second response type.
  */
 export interface EditalSummaryResponse {
   linked: boolean;
   /** Unique-player count per canonical funnel event name. */
   data: Record<string, number> | null;
+  completionRate?: Rate;
+  /**
+   * "Progresso médio" (issue #807's card list) — fraction of all levels
+   * completed, averaged across players who started. `value` in [0,1];
+   * `numerator`/`denominator` are level-completions, not players, so the
+   * usual "never present an unqualified number" subtitle still applies.
+   */
+  averageProgress?: Rate;
+  phaseProgress?: PhaseProgressRow[];
+  quizPassRate?: PhaseQuizPassRateRow[];
+  clueUsage?: PhaseClueUsageRow[];
 }
 
 export interface FunnelStepCount {
@@ -73,7 +111,6 @@ export interface EditalReportResponse {
       medianSeconds: number;
       sessionsStarted: number;
     };
-    criticalErrors: { total: number; byErrorCode: Record<string, number> };
     quizPassRate: Rate;
   } | null;
 }

@@ -27,17 +27,25 @@ class EditalApiError extends Error {
   }
 }
 
-function dateRangeToSearchParams(dateRange: DateRange): URLSearchParams {
+function dateRangeToSearchParams(
+  dateRange: DateRange,
+  turma?: string,
+): URLSearchParams {
   const params = new URLSearchParams({ dateRange: dateRange.type });
   if (dateRange.type === "custom") {
     params.set("from", dateRange.start);
     params.set("to", dateRange.end);
   }
+  if (turma) params.set("turma", turma);
   return params;
 }
 
-async function getJson<T>(path: string, dateRange: DateRange): Promise<T> {
-  const params = dateRangeToSearchParams(dateRange);
+async function getJson<T>(
+  path: string,
+  dateRange: DateRange,
+  turma?: string,
+): Promise<T> {
+  const params = dateRangeToSearchParams(dateRange, turma);
   const response = await fetch(`${path}?${params.toString()}`, {
     credentials: "include",
   });
@@ -57,16 +65,27 @@ async function getJson<T>(path: string, dateRange: DateRange): Promise<T> {
 
 export function getSummary(
   dateRange: DateRange,
+  turma?: string,
 ): Promise<EditalSummaryResponse> {
-  return getJson<EditalSummaryResponse>("/api/edital/summary", dateRange);
+  return getJson<EditalSummaryResponse>(
+    "/api/edital/summary",
+    dateRange,
+    turma,
+  );
 }
 
-export function getFunnel(dateRange: DateRange): Promise<EditalFunnelResponse> {
-  return getJson<EditalFunnelResponse>("/api/edital/funnel", dateRange);
+export function getFunnel(
+  dateRange: DateRange,
+  turma?: string,
+): Promise<EditalFunnelResponse> {
+  return getJson<EditalFunnelResponse>("/api/edital/funnel", dateRange, turma);
 }
 
-export function getReport(dateRange: DateRange): Promise<EditalReportResponse> {
-  return getJson<EditalReportResponse>("/api/edital/report", dateRange);
+export function getReport(
+  dateRange: DateRange,
+  turma?: string,
+): Promise<EditalReportResponse> {
+  return getJson<EditalReportResponse>("/api/edital/report", dateRange, turma);
 }
 
 export function getCampaigns(
@@ -82,8 +101,11 @@ export function getCampaigns(
  * routes computed the on-screen numbers from — no separate CSV-only
  * calculation to drift from what the screen showed.
  */
-export async function downloadReportCsv(dateRange: DateRange): Promise<void> {
-  const params = dateRangeToSearchParams(dateRange);
+export async function downloadReportCsv(
+  dateRange: DateRange,
+  turma?: string,
+): Promise<void> {
+  const params = dateRangeToSearchParams(dateRange, turma);
   const response = await fetch(`/api/edital/report.csv?${params.toString()}`, {
     credentials: "include",
   });

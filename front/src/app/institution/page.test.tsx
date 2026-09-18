@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { getReport, getSummary } from "@/lib/api/edital";
+import { getReport, getSummary, listCampaignLinks } from "@/lib/api/edital";
 import InstitutionOverviewPage from "./page";
 
 jest.mock("@/lib/api/edital", () => ({
   getSummary: jest.fn(),
   getReport: jest.fn(),
+  listCampaignLinks: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -23,6 +24,28 @@ const SUMMARY_DATA = {
     quiz_completed: 380,
     chapter_1_completed: 300,
   },
+  completionRate: { value: 0.4, numerator: 240, denominator: 600 },
+  averageProgress: { value: 0.83, numerator: 500, denominator: 600 },
+  phaseProgress: [
+    {
+      levelId: "level_01",
+      levelNumber: 1,
+      label: "Museu",
+      reached: 600,
+      completed: 500,
+    },
+  ],
+  quizPassRate: [
+    {
+      levelId: "level_01",
+      levelNumber: 1,
+      label: "Museu",
+      rate: { value: 0.9, numerator: 450, denominator: 500 },
+    },
+  ],
+  clueUsage: [
+    { levelId: "level_01", levelNumber: 1, label: "Museu", clueUses: 42 },
+  ],
 };
 
 const REPORT_DATA = {
@@ -33,7 +56,6 @@ const REPORT_DATA = {
       medianSeconds: 250,
       sessionsStarted: 700,
     },
-    criticalErrors: { total: 5, byErrorCode: { asset_load_failed: 5 } },
     quizPassRate: { value: 0.75, numerator: 285, denominator: 380 },
   },
 };
@@ -42,6 +64,11 @@ describe("InstitutionOverviewPage", () => {
   beforeEach(() => {
     (getSummary as jest.Mock).mockReset();
     (getReport as jest.Mock).mockReset();
+    (listCampaignLinks as jest.Mock).mockReset();
+    (listCampaignLinks as jest.Mock).mockResolvedValue({
+      linked: true,
+      data: [],
+    });
   });
 
   it("shows a loading state before data resolves", () => {
@@ -53,7 +80,7 @@ describe("InstitutionOverviewPage", () => {
     expect(container.querySelector(".MuiSkeleton-root")).toBeTruthy();
   });
 
-  it("renders all 8 card titles with pt-BR formatted numbers", async () => {
+  it("renders the overview cards, the turma filter, and the per-phase table", async () => {
     (getSummary as jest.Mock).mockResolvedValue(SUMMARY_DATA);
     (getReport as jest.Mock).mockResolvedValue(REPORT_DATA);
 
@@ -67,17 +94,31 @@ describe("InstitutionOverviewPage", () => {
 
     expect(screen.getByText("Sessões iniciadas")).toBeInTheDocument();
     expect(screen.getByText("Taxa de entrada na gameplay")).toBeInTheDocument();
-    expect(screen.getByText("Conclusões do Capítulo 1")).toBeInTheDocument();
-    expect(
-      screen.getByText("Taxa de conclusão do Capítulo 1"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Taxa de conclusão")).toBeInTheDocument();
     expect(screen.getByText("Tempo médio de sessão")).toBeInTheDocument();
-    expect(screen.getByText("Taxa de aprovação no quiz")).toBeInTheDocument();
-    expect(screen.getByText("Erros críticos")).toBeInTheDocument();
+    expect(screen.getByText("Progresso médio")).toBeInTheDocument();
 
     // pt-BR thousands separator.
     expect(screen.getByText("617")).toBeInTheDocument();
     expect(screen.getByText("700")).toBeInTheDocument();
+
+    // Turma filter, present on every screen (issue #807).
+    expect(screen.getByText("Toda a instituição")).toBeInTheDocument();
+
+    // Per-phase quiz pass-rate bar chart, one bar per level. The
+    // reached→completed funnel now lives on the Funil page instead.
+    expect(screen.getAllByText("Fase 1 — Museu").length).toBeGreaterThan(0);
+  });
+
+  it("passes the selected turma through to getSummary/getReport", async () => {
+    (getSummary as jest.Mock).mockResolvedValue(SUMMARY_DATA);
+    (getReport as jest.Mock).mockResolvedValue(REPORT_DATA);
+
+    render(<InstitutionOverviewPage />);
+
+    await waitFor(() =>
+      expect(getSummary).toHaveBeenCalledWith(expect.anything(), ""),
+    );
   });
 
   it("shows an error state with a retry button that clears the error and re-fetches", async () => {
