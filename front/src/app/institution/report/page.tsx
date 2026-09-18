@@ -6,7 +6,7 @@ import { CsvExportButton } from "@/components/dashboard/CsvExportButton";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { RateCard } from "@/components/dashboard/RateCard";
+import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
 import { getReport } from "@/lib/api/edital";
 import type { EditalReportResponse } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
@@ -15,6 +15,7 @@ import {
   isDateRangeValid,
   useFilterBarProps,
 } from "@/lib/edital/useFilterBarProps";
+import { useTurmaFilter } from "@/lib/edital/useTurmaFilter";
 
 function formatMinutes(seconds: number): string {
   return `${(seconds / 60).toFixed(1).replace(".", ",")} min`;
@@ -35,7 +36,8 @@ function ReportHeader() {
         Relatório
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        O CSV vem do mesmo caminho de código que calculou esta tela.
+        O CSV inclui o detalhamento por fase, além destes números — não apenas o
+        que está na tela.
       </Typography>
     </>
   );
@@ -54,11 +56,13 @@ const REPORT_SKELETON = (
 function InstitutionReportContent() {
   const { dateRange, setDateRange } = useEditalFilters();
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
+  const { turma, setTurma } = useTurmaFilter();
   const [csvError, setCsvError] = useState<string | null>(null);
 
   const { data, loading, error, retry } = useAsyncData<EditalReportResponse>(
-    () => getReport(dateRange),
+    () => getReport(dateRange, turma),
     [
+      turma,
       dateRange.type,
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
@@ -91,13 +95,15 @@ function InstitutionReportContent() {
         {data?.linked ? (
           <CsvExportButton
             dateRange={dateRange}
+            turma={turma}
             onError={setCsvError}
             disabled={!isDateRangeValid(dateRange)}
           />
         ) : null}
       </Box>
       <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        O CSV vem do mesmo caminho de código que calculou esta tela.
+        O CSV inclui o detalhamento por fase, além destes números — não apenas o
+        que está na tela.
       </Typography>
 
       {csvError ? (
@@ -105,6 +111,8 @@ function InstitutionReportContent() {
           {csvError}
         </Typography>
       ) : null}
+
+      <TurmaSelect value={turma} onChange={setTurma} />
 
       <FilterBar {...filterBarProps} />
 
@@ -130,21 +138,6 @@ function InstitutionReportContent() {
                 title="Tempo médio de sessão"
                 value={formatMinutes(data.data.sessionDuration.avgSeconds)}
                 subtitle={`Mediana: ${formatMinutes(data.data.sessionDuration.medianSeconds)}`}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <RateCard
-                title="Taxa de aprovação no quiz"
-                rate={data.data.quizPassRate}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <KPICard
-                title="Erros críticos"
-                value={data.data.criticalErrors.total.toLocaleString("pt-BR")}
-                subtitle={Object.entries(data.data.criticalErrors.byErrorCode)
-                  .map(([code, count]) => `${code}: ${count}`)
-                  .join(", ")}
               />
             </Grid>
           </Grid>

@@ -1,10 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { downloadReportCsv, getReport } from "@/lib/api/edital";
+import {
+  downloadReportCsv,
+  getReport,
+  listCampaignLinks,
+} from "@/lib/api/edital";
 import InstitutionReportPage from "./page";
 
 jest.mock("@/lib/api/edital", () => ({
   getReport: jest.fn(),
   downloadReportCsv: jest.fn(),
+  listCampaignLinks: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -20,7 +25,6 @@ const REPORT_DATA = {
       medianSeconds: 250,
       sessionsStarted: 700,
     },
-    criticalErrors: { total: 5, byErrorCode: { asset_load_failed: 5 } },
     quizPassRate: { value: 0.75, numerator: 285, denominator: 380 },
   },
 };
@@ -29,9 +33,14 @@ describe("InstitutionReportPage", () => {
   beforeEach(() => {
     (getReport as jest.Mock).mockReset();
     (downloadReportCsv as jest.Mock).mockReset();
+    (listCampaignLinks as jest.Mock).mockReset();
+    (listCampaignLinks as jest.Mock).mockResolvedValue({
+      linked: true,
+      data: [],
+    });
   });
 
-  it("renders session, critical error, and quiz pass rate cards", async () => {
+  it("renders session cards — the aggregate quiz pass rate card was retired, now superseded by the per-phase breakdown in the exported CSV", async () => {
     (getReport as jest.Mock).mockResolvedValue(REPORT_DATA);
 
     render(<InstitutionReportPage />);
@@ -40,8 +49,7 @@ describe("InstitutionReportPage", () => {
       expect(screen.getByText("Sessões iniciadas")).toBeInTheDocument(),
     );
     expect(screen.getByText("700")).toBeInTheDocument();
-    expect(screen.getByText("Taxa de aprovação no quiz")).toBeInTheDocument();
-    expect(screen.getByText("Erros críticos")).toBeInTheDocument();
+    expect(screen.queryByText("Taxa de aprovação no quiz")).toBeNull();
   });
 
   it("shows the CSV export button only when linked", async () => {
@@ -79,7 +87,7 @@ describe("InstitutionReportPage", () => {
     fireEvent.click(screen.getByText("Exportar CSV"));
 
     await waitFor(() =>
-      expect(downloadReportCsv).toHaveBeenCalledWith({ type: "30d" }),
+      expect(downloadReportCsv).toHaveBeenCalledWith({ type: "30d" }, ""),
     );
   });
 });
