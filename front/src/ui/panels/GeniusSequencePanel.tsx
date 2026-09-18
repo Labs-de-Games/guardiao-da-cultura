@@ -86,6 +86,7 @@ export function GeniusSequencePanel() {
   const [wrongColor, setWrongColor] = useState<GeniusColor | null>(null);
   const [focusedColor, setFocusedColor] = useState<GeniusColor>("green");
   const inputIndexRef = useRef(0);
+  const attemptCountRef = useRef(0);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const clearTimeouts = useCallback(() => {
@@ -110,6 +111,7 @@ export function GeniusSequencePanel() {
     setWrongColor(null);
     setFocusedColor("green");
     inputIndexRef.current = 0;
+    attemptCountRef.current = 0;
     playModalOpen();
     schedule(() => setPhase("playback"), INITIAL_DELAY_MS);
     return () => {
@@ -175,6 +177,14 @@ export function GeniusSequencePanel() {
 
       if (color !== expected) {
         setWrongColor(color);
+        attemptCountRef.current += 1;
+        EventBus.emit("ui:genius-sequence-rejected", {
+          instanceId,
+          attemptNumber: attemptCountRef.current,
+          wrongCount: 1,
+          correctCount: inputIndexRef.current,
+          totalRounds: TOTAL_ROUNDS,
+        });
         // Wait for the wrong note's sound/flash to finish before showing
         // the message, same as the success path.
         schedule(() => {
