@@ -197,6 +197,10 @@ minigames, quizzes e carregamento do jogo.
 | `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
+| `clue_used` | `level_id`, `clue_index` | `InteractionComponent.ts` — distinct from `clue_collected` above (collectible pickup vs. hint usage). No `level_number`; per-phase breakdowns (issue #807) resolve it via `level_id` → `LevelConfig.ts`'s `LEVEL_REGISTRY`, not a property on the event itself |
+| `level_completed` | `level_id`, `level_number`, `score`, `stars`, `rating`, `mission_id`, `time_spent_ms`, `attempts` | `QuizManager.ts` — general-purpose, all levels (unlike `chapter_1_completed` below, which only fires for level 1) |
+| `level_failed` | `level_id`, `level_number`, `mission_id`, `score`, `total_questions` | `QuizManager.ts` |
+| `progress_updated` | `level_id`, `level_number`, `current_level`, `total_stars`, `completed_levels_count`, `mission_id`, `passed`, `score`, `total_questions` | `QuizManager.ts` |
 | `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
 | `nudge_pulse_shown_{costume,spotlight,step_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
 | `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
@@ -258,7 +262,13 @@ os nomes de evento reais emitidos em produção.
 Todo passo carrega `properties.anonymous_player_id` (identidade durável,
 issue #740) e `properties.campaign_source` (attribution, issue #740) —
 `COMMON_PREDICATE` em `queries.ts` filtra por ambos; sem eles a linha não
-entra em nenhuma métrica do edital. Todo evento após a entrada no nível 1
+entra em nenhuma métrica do edital. Desde a issue #807, eventos também
+carregam `properties.turma_source` — mesmo mecanismo de first-touch de
+`campaign_source` (`campaign.ts`'s `applyFirstTouchTurmaSource`), a partir
+do `utm_source` do link de turma (`origins.ts`'s `buildTrackingUrl`), e é
+o que as queries de turma em `queries.ts` (`TURMA_PREDICATE`) usam — nunca
+o `utm_source` bruto autocapturado pelo posthog-js, que é last-touch e
+sobrescrito a cada visita. Todo evento após a entrada no nível 1
 carrega também `chapter_id` (`before_send`, a partir do singleton em
 `lib/posthog/eventContext.ts`, setado por `setChapterId` em
 `chapter_1_started` e limpo no `SHUTDOWN` da cena).
