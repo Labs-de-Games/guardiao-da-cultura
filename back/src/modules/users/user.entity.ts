@@ -45,17 +45,26 @@ export class User {
 
   /**
    * Nullable — no Institution entity, no per-student data (epic #738,
-   * #744). `null` means "not yet linked"; assignment is by admin
-   * seed/update script, a known manual step, not a screen. Format is
-   * NOT validated at write time here or in any DTO (there is no
-   * institutionSlug field on the oauth-upsert DTO — the admin script is
-   * the only writer, and does not exist yet as of #744). The one real
-   * enforcement point is front/src/lib/edital/server/scope.ts's
-   * `resolveScope`, which validates the slug format defensively on every
-   * read before it ever becomes a query `Scope`.
+   * #744). `null` means "not yet linked". #744 originally assumed an
+   * admin seed/update script would set this; this project has no admin
+   * role/workflow, so it's instead set once by the self-serve onboarding
+   * endpoint (POST /auth/oauth/onboarding), server-derived from
+   * `institutionName` — never taken as raw client input. The one real
+   * *read-time* enforcement point is
+   * front/src/lib/edital/server/scope.ts's `resolveScope`, which validates
+   * the slug format defensively on every read before it ever becomes a
+   * query `Scope`.
    */
   @Column({ type: "varchar", nullable: true })
   institutionSlug!: string | null;
+
+  /**
+   * Display name entered by the institution during onboarding
+   * (POST /auth/oauth/onboarding), set together with `institutionSlug` in
+   * the same request. Null until then, same as `institutionSlug`.
+   */
+  @Column({ type: "varchar", nullable: true })
+  institutionName!: string | null;
 
   /**
    * argon2id hash, nullable — `User` is 100% passwordless (magic link)
