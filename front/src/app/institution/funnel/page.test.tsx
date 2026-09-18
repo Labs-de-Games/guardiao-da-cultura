@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { getFunnel } from "@/lib/api/edital";
+import { getFunnel, listCampaignLinks } from "@/lib/api/edital";
 import InstitutionFunnelPage from "./page";
 
 jest.mock("@/lib/api/edital", () => ({
   getFunnel: jest.fn(),
+  listCampaignLinks: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -14,6 +15,11 @@ jest.mock("next/navigation", () => ({
 describe("InstitutionFunnelPage", () => {
   beforeEach(() => {
     (getFunnel as jest.Mock).mockReset();
+    (listCampaignLinks as jest.Mock).mockReset();
+    (listCampaignLinks as jest.Mock).mockResolvedValue({
+      linked: true,
+      data: [],
+    });
   });
 
   it("renders a monotonically non-increasing funnel", async () => {

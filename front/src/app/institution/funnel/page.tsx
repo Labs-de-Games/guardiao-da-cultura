@@ -8,6 +8,7 @@ import {
   FunnelChart,
   type FunnelStep,
 } from "@/components/dashboard/FunnelChart";
+import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
 import { getFunnel } from "@/lib/api/edital";
 import type { EditalFunnelResponse } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
@@ -16,16 +17,19 @@ import {
   isDateRangeValid,
   useFilterBarProps,
 } from "@/lib/edital/useFilterBarProps";
+import { useTurmaFilter } from "@/lib/edital/useTurmaFilter";
 
-/** Human-readable pt-BR labels for the canonical funnel event names. */
+/**
+ * Human-readable pt-BR labels for the 3 acquisition steps (raw event
+ * names). The level-completion steps that follow don't need an entry
+ * here — the server already sends the level's own title as `label`
+ * (queries.ts's `getFunnelSteps`), so `toFunnelSteps` below just passes
+ * those through unchanged.
+ */
 const STEP_LABELS: Record<string, string> = {
   landing_page_viewed: "Visualizou a landing page",
   play_clicked: "Clicou em jogar",
   gameplay_started: "Iniciou a gameplay",
-  chapter_1_started: "Iniciou o Capítulo 1",
-  quiz_started: "Iniciou o quiz",
-  quiz_completed: "Concluiu o quiz",
-  chapter_1_completed: "Concluiu o Capítulo 1",
 };
 
 /**
@@ -65,15 +69,21 @@ function FunnelHeader() {
         Funil
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: "text.secondary" }}>
-        As 7 etapas do onepager, monotonicamente não-crescentes.
+        Da landing page até a conclusão de cada fase, monotonicamente
+        não-crescente.
       </Typography>
     </>
   );
 }
 
+/**
+ * 3 acquisition steps + one per real level. Not derived from
+ * LEVEL_REGISTRY here — the skeleton only needs to look roughly right
+ * before data arrives, not match the exact step count.
+ */
 const FUNNEL_SKELETON = (
   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-    {Array.from({ length: 7 }).map((_, index) => (
+    {Array.from({ length: 6 }).map((_, index) => (
       <Skeleton key={index} variant="rounded" height={40} />
     ))}
   </Box>
@@ -82,10 +92,12 @@ const FUNNEL_SKELETON = (
 function InstitutionFunnelContent() {
   const { dateRange, setDateRange } = useEditalFilters();
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
+  const { turma, setTurma } = useTurmaFilter();
 
   const { data, loading, error, retry } = useAsyncData<EditalFunnelResponse>(
-    () => getFunnel(dateRange),
+    () => getFunnel(dateRange, turma),
     [
+      turma,
       dateRange.type,
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
@@ -96,6 +108,8 @@ function InstitutionFunnelContent() {
   return (
     <Box>
       <FunnelHeader />
+
+      <TurmaSelect value={turma} onChange={setTurma} />
 
       <FilterBar {...filterBarProps} />
 
