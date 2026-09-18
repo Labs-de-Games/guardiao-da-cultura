@@ -18,7 +18,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const data = await fetchFunnel(ctx.scope, ctx.range);
+  const data = await fetchFunnel(ctx.scope, ctx.range, ctx.turmaSource);
   const body: EditalFunnelResponse = { linked: true, data };
   return NextResponse.json(body);
 }

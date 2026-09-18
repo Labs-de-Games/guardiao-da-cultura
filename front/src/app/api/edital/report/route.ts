@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
-  fetchCriticalErrors,
   fetchQuizPassRate,
   fetchSessionDuration,
 } from "@/lib/edital/server/metrics";
@@ -22,15 +21,14 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const [sessionDuration, criticalErrors, quizPassRate] = await Promise.all([
-    fetchSessionDuration(ctx.scope, ctx.range),
-    fetchCriticalErrors(ctx.scope, ctx.range),
-    fetchQuizPassRate(ctx.scope, ctx.range),
+  const [sessionDuration, quizPassRate] = await Promise.all([
+    fetchSessionDuration(ctx.scope, ctx.range, ctx.turmaSource),
+    fetchQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
   ]);
 
   const body: EditalReportResponse = {
     linked: true,
-    data: { sessionDuration, criticalErrors, quizPassRate },
+    data: { sessionDuration, quizPassRate },
   };
   return NextResponse.json(body);
 }
