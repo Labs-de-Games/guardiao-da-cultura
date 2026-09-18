@@ -1,6 +1,7 @@
 import { AUTO, Game, Scale, type Types } from "phaser";
 import { LayoutConfig } from "./constants/LayoutConfig";
 import { Game as MainGame } from "./scenes/Game";
+import { InvestigationScene } from "./scenes/InvestigationScene";
 import { LevelCinematic } from "./scenes/LevelCinematic";
 import { MapIntroScene } from "./scenes/MapIntroScene";
 import { UIScene } from "./scenes/UIScene";
@@ -37,8 +38,8 @@ const baseConfig: Types.Core.GameConfig = {
 
 function getScenes(entryFlow: EntryFlow) {
   return entryFlow === "direct"
-    ? [LevelCinematic, MainGame, UIScene, MapIntroScene]
-    : [MapIntroScene, LevelCinematic, MainGame, UIScene];
+    ? [LevelCinematic, MainGame, UIScene, MapIntroScene, InvestigationScene]
+    : [MapIntroScene, LevelCinematic, MainGame, UIScene, InvestigationScene];
 }
 
 const StartGame = (

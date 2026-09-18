@@ -7,6 +7,10 @@ import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager } from "../audio";
 import { isLevelEnabled } from "../constants/FeatureFlags";
 import { GameEvents } from "../constants/GameEvents";
+import {
+  INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_PREREQUISITE_LEVEL_ID,
+} from "../constants/Investigation";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
@@ -338,6 +342,42 @@ export class UIScene extends Scene {
       const nextLevelId = currentLevelId
         ? getNextLevelId(currentLevelId)
         : undefined;
+
+      // Out of playable levels, but the investigation is the real ending:
+      // finishing the last phase hands straight off to the identification
+      // screen (through the cinematic, like any other phase).
+      if (
+        !nextLevelId &&
+        currentLevelId === INVESTIGATION_PREREQUISITE_LEVEL_ID &&
+        isLevelEnabled(INVESTIGATION_LEVEL_ID)
+      ) {
+        posthog.capture("level_next_started", {
+          from_level_id: currentLevelId,
+          to_level_id: INVESTIGATION_LEVEL_ID,
+        });
+
+        useGameUIStore.getState().closeQuiz();
+        EventBus.emit("game:ended", undefined);
+
+        const investigationMarker = MAP_MARKERS.find(
+          (m) => m.levelId === INVESTIGATION_LEVEL_ID,
+        );
+        if (investigationMarker) {
+          useGameUIStore.getState().setLevelInfo({
+            title: investigationMarker.title,
+            location: investigationMarker.location,
+            shortlocation: investigationMarker.shortlocation,
+          });
+        }
+        useGameUIStore.getState().setActiveMapMarker(null);
+
+        AudioManager.fadeOutMusic(350);
+        this.scene.stop(SceneNames.GAME);
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, {
+          levelId: INVESTIGATION_LEVEL_ID,
+        });
+        return;
+      }
 
       // No next playable level: keep the quiz open and invite the player to
       // register interest in what comes next.
