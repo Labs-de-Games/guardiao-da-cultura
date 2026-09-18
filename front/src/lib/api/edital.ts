@@ -2,6 +2,8 @@ import type {
   DateRange,
   EditalCampaignsResponse,
   EditalFunnelResponse,
+  EditalLinksCreateResponse,
+  EditalLinksListResponse,
   EditalReportResponse,
   EditalSummaryResponse,
 } from "@/lib/edital/types";
@@ -105,6 +107,46 @@ export async function downloadReportCsv(dateRange: DateRange): Promise<void> {
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+async function jsonRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, { credentials: "include", ...init });
+
+  if (response.status === 401) {
+    throw new EditalApiError("Sessão expirada — faça login novamente.", 401);
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new EditalApiError(
+      body?.error ?? `Falha na requisição (status ${response.status}).`,
+      response.status,
+    );
+  }
+
+  return (await response.json()) as T;
+}
+
+export function listCampaignLinks(): Promise<EditalLinksListResponse> {
+  return jsonRequest<EditalLinksListResponse>("/api/edital/links");
+}
+
+export function createCampaignLink(
+  source: string,
+): Promise<EditalLinksCreateResponse> {
+  return jsonRequest<EditalLinksCreateResponse>("/api/edital/links", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source }),
+  });
+}
+
+export function deleteCampaignLink(id: string): Promise<void> {
+  return jsonRequest<{ success: true }>(
+    `/api/edital/links/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  ).then(() => undefined);
 }
 
 export { EditalApiError };

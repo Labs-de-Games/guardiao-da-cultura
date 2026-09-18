@@ -73,4 +73,17 @@ describe("buildTrackingUrl", () => {
     expect(url.startsWith(LANDING_BASE_URL)).toBe(true);
     expect(url).not.toContain("/game");
   });
+
+  it("omits utm_source when no source is given", () => {
+    const url = buildTrackingUrl({ slug: "escola-teste" });
+    const parsed = new URL(url);
+    expect(parsed.searchParams.has("utm_source")).toBe(false);
+  });
+
+  it("includes utm_source alongside utm_institution when a source is given", () => {
+    const url = buildTrackingUrl({ slug: "escola-teste", source: "group-a" });
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get("utm_institution")).toBe("escola-teste");
+    expect(parsed.searchParams.get("utm_source")).toBe("group-a");
+  });
 });

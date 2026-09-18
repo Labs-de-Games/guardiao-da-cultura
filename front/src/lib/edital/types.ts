@@ -89,3 +89,22 @@ export interface EditalCampaignsResponse {
   /** Per-utm_source breakdown for the caller's own institution slug (issue #746). */
   data: CampaignOriginBreakdown[] | null;
 }
+
+/** A persisted campaign link — one group/class label under the caller's own institution slug. */
+export interface CampaignLink {
+  id: string;
+  source: string;
+  /** Full tracking URL, e.g. https://guardiaodacultura.42.rio/?utm_institution=<slug>&utm_source=<source> */
+  url: string;
+  createdAt: string;
+}
+
+export interface EditalLinksListResponse {
+  linked: boolean;
+  data: CampaignLink[] | null;
+}
+
+export interface EditalLinksCreateResponse {
+  linked: boolean;
+  data: CampaignLink | null;
+}
