@@ -91,4 +91,47 @@ describe("resolveEditalRequestContext", () => {
       expect(ctx.range.to).toBeInstanceOf(Date);
     }
   });
+
+  it("resolves turmaSource from a valid ?turma= (issue #807)", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: "escola-teste" },
+    });
+
+    const ctx = await resolveEditalRequestContext(
+      makeRequest("?turma=group-a"),
+    );
+
+    expect(ctx.kind).toBe("ok");
+    if (ctx.kind === "ok") {
+      expect(ctx.turmaSource).toBe("group-a");
+    }
+  });
+
+  it("leaves turmaSource undefined (institution-wide) when ?turma= is absent", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: "escola-teste" },
+    });
+
+    const ctx = await resolveEditalRequestContext(makeRequest());
+
+    expect(ctx.kind).toBe("ok");
+    if (ctx.kind === "ok") {
+      expect(ctx.turmaSource).toBeUndefined();
+    }
+  });
+
+  it("silently falls back to institution-wide for a malformed ?turma= instead of a 400", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: "escola-teste" },
+    });
+
+    const ctx = await resolveEditalRequestContext(
+      makeRequest("?turma=Group%20A!"),
+    );
+
+    expect(ctx.kind).toBe("ok");
+    if (ctx.kind === "ok") {
+      expect(ctx.turmaSource).toBeUndefined();
+    }
+  });
 });
