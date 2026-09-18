@@ -341,7 +341,7 @@ export function GeniusSequencePanel() {
             color: GAME_UI_TOKENS.colors.accentGold,
           }}
         >
-          Jogo da Memória
+          Afine o acordeon
         </Typography>
 
         <Typography
@@ -353,7 +353,7 @@ export function GeniusSequencePanel() {
             color: GAME_UI_TOKENS.colors.textSecondary,
           }}
         >
-          Repita a sequência de cores. Use o mouse ou WASD/setas + Enter.
+          Repita a sequência de sons. Use o mouse ou WASD/setas + Enter.
         </Typography>
 
         <Box
