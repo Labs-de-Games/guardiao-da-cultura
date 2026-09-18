@@ -1,8 +1,11 @@
 import { PostHogStub } from "../posthogStub";
 import {
   applyFirstTouchCampaignSource,
+  applyFirstTouchTurmaSource,
   CAMPAIGN_SOURCE_PROPERTY,
   INSTITUTION_UTM_PARAM,
+  TURMA_SOURCE_PROPERTY,
+  TURMA_UTM_PARAM,
 } from "./campaign";
 
 describe("applyFirstTouchCampaignSource", () => {
@@ -92,5 +95,60 @@ describe("applyFirstTouchCampaignSource", () => {
     expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBe(
       "escola-municipal-centro-2",
     );
+  });
+});
+
+describe("applyFirstTouchTurmaSource (#807)", () => {
+  it("registers turma_source when utm_source is present and none is set yet", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({ [TURMA_UTM_PARAM]: "group-a" });
+
+    applyFirstTouchTurmaSource(client, params);
+
+    expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBe("group-a");
+  });
+
+  it("does nothing when utm_source is absent", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams();
+
+    applyFirstTouchTurmaSource(client, params);
+
+    expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBeUndefined();
+  });
+
+  it("does not overwrite an already-registered turma_source (first-touch)", () => {
+    const client = new PostHogStub();
+    client.register({ [TURMA_SOURCE_PROPERTY]: "group-a" });
+    const params = new URLSearchParams({ [TURMA_UTM_PARAM]: "group-b" });
+
+    applyFirstTouchTurmaSource(client, params);
+
+    expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBe("group-a");
+  });
+
+  it("rejects a poisoned utm_source value instead of registering it", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [TURMA_UTM_PARAM]: "<script>alert(1)</script>",
+    });
+
+    applyFirstTouchTurmaSource(client, params);
+
+    expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBeUndefined();
+  });
+
+  it("is independent of campaign_source — both can be first-touch registered separately", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "escola-teste",
+      [TURMA_UTM_PARAM]: "group-a",
+    });
+
+    applyFirstTouchCampaignSource(client, params);
+    applyFirstTouchTurmaSource(client, params);
+
+    expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBe("escola-teste");
+    expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBe("group-a");
   });
 });

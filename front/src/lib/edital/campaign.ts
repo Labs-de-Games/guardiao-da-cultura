@@ -14,6 +14,20 @@ export const CAMPAIGN_SOURCE_PROPERTY = "campaign_source";
 export const INSTITUTION_UTM_PARAM = "utm_institution";
 
 /**
+ * Turma (class) attribution — issue #807. `utm_source` is already
+ * auto-captured by posthog-js as a last-touch super property (overwritten
+ * on every visit with a different value), which is the wrong guarantee
+ * for "which turma this player belongs to": a student who reopens the
+ * class link later, or arrives via a different/organic link after their
+ * first visit, would silently fall out of their turma's numbers. This
+ * mirrors `applyFirstTouchCampaignSource` below to give turma attribution
+ * the same first-touch, sticky guarantee institution attribution already
+ * has — required before #807's per-turma metrics can be trusted.
+ */
+export const TURMA_SOURCE_PROPERTY = "turma_source";
+export const TURMA_UTM_PARAM = "utm_source";
+
+/**
  * Mirrors the slug format later formalized as ORIGIN_SLUG_PATTERN in
  * lib/edital/origins.ts (#746) — lowercase letters, digits, single
  * hyphens, no leading/trailing/double hyphen. Duplicated here (not
@@ -66,4 +80,30 @@ export function applyFirstTouchCampaignSource(
   }
 
   client.register({ [CAMPAIGN_SOURCE_PROPERTY]: utmInstitution });
+}
+
+/**
+ * Same first-touch rule as `applyFirstTouchCampaignSource`, for the
+ * turma/class dimension: once `turma_source` is registered on this
+ * device, a later visit with a different or absent `utm_source` never
+ * overwrites it. Independent of `campaign_source` — a player can be
+ * first-touch attributed to an institution and a turma on different
+ * visits (e.g. institution link first, class link later), each locking
+ * in separately.
+ */
+export function applyFirstTouchTurmaSource(
+  client: PostHogLike,
+  searchParams: URLSearchParams,
+): void {
+  const existing = client.get_property(TURMA_SOURCE_PROPERTY);
+  if (typeof existing === "string" && existing.length > 0) {
+    return;
+  }
+
+  const utmSource = searchParams.get(TURMA_UTM_PARAM);
+  if (!utmSource || !isValidCampaignSourceSlug(utmSource)) {
+    return;
+  }
+
+  client.register({ [TURMA_SOURCE_PROPERTY]: utmSource });
 }

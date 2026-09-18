@@ -1,5 +1,8 @@
 import type posthog from "posthog-js";
-import { applyFirstTouchCampaignSource } from "../edital/campaign";
+import {
+  applyFirstTouchCampaignSource,
+  applyFirstTouchTurmaSource,
+} from "../edital/campaign";
 import type { PostHogStub } from "../posthogStub";
 
 type PostHogLike = Pick<
@@ -63,6 +66,7 @@ export function registerEventContext(
 ): void {
   client.register({ environment: options.environment });
   applyFirstTouchCampaignSource(client, options.searchParams);
+  applyFirstTouchTurmaSource(client, options.searchParams);
 
   const campaignSource = client.get_property("campaign_source");
   const resolvedCampaignSource =
