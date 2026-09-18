@@ -2,9 +2,9 @@
 
 import { EmailOutlined, LockOutlined } from "@mui/icons-material";
 import { Alert, Box, Button, TextField, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SessionProvider, signIn } from "next-auth/react";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, Suspense, useEffect, useState } from "react";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthLink } from "@/components/auth/AuthLink";
 import { AuthPageShell } from "@/components/auth/AuthPageShell";
@@ -237,8 +237,14 @@ function ForgotSentView({ onBackClick }: { onBackClick: () => void }) {
   );
 }
 
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  EmailConflict:
+    "Este e-mail já está cadastrado como conta de jogador. Use outro e-mail para entrar como instituição.",
+};
+
 function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [view, setView] = useState<View>("login");
   const [email, setEmail] = useState("");
@@ -255,6 +261,17 @@ function LoginForm() {
       document.body.style.overflow = prevOverflow;
     };
   }, [showToast]);
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError) {
+      setError(
+        OAUTH_ERROR_MESSAGES[oauthError] ??
+          "Não foi possível entrar com o Google.",
+      );
+      router.replace("/login");
+    }
+  }, [searchParams, router]);
 
   function goToView(next: View) {
     setView(next);
@@ -331,7 +348,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <SessionProvider>
-      <LoginForm />
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
     </SessionProvider>
   );
 }
