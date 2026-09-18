@@ -243,6 +243,10 @@ export class PlaceholderSystem {
         placeholder.setOrigin(0.5, 1);
       }
 
+      if (config.type === InteractiveType.GENIUS_SEQUENCE) {
+        placeholder.setTint(0x4d4d4d);
+      }
+
       if (
         textureKey === "placeholder" &&
         this.scene.anims.exists("placeholder_hint_anim")
@@ -561,6 +565,7 @@ export class PlaceholderSystem {
         p.hintSprite instanceof Phaser.GameObjects.Sprite
       ) {
         p.hintSprite.setAlpha(1);
+        p.hintSprite.clearTint();
         p.hintSprite.play("accordion_open_anim", true);
       } else if (
         p.type !== InteractiveType.PHOTO &&

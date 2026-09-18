@@ -295,9 +295,14 @@ export class EffectsManager {
   }
 
   /** Kicks off 3 independently-looping music note animations, side by side above the given point. */
-  public playMusicNotesLoop(centerX: number, centerY: number) {
+  public playMusicNotesLoop(
+    centerX: number,
+    centerY: number,
+    verticalOffset: number = 160,
+  ) {
+    const spawnY = centerY - verticalOffset;
     EffectsManager.MUSIC_NOTE_OFFSETS_X.forEach((offsetX) => {
-      this.spawnMusicNote(centerX + offsetX, centerY);
+      this.spawnMusicNote(centerX + offsetX, spawnY);
     });
   }
 }
