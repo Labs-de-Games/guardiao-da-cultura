@@ -1,4 +1,5 @@
 import "server-only";
+import { LEVEL_REGISTRY } from "../../../game/data/LevelConfig";
 import { serverEnv } from "../../env-server";
 import { safeRate } from "../rate";
 import type { Rate } from "../types";
@@ -6,14 +7,31 @@ import { runHogQLQuery } from "./hogql";
 import type { ResolvedDateRange } from "./period";
 import {
   buildCampaignsQuery,
-  buildCriticalErrorsQuery,
+  buildCompletionRateQuery,
   buildFunnelQuery,
+  buildPhaseClueUsageQuery,
+  buildPhaseCompletionQuery,
+  buildPhaseQuizPassRateQuery,
+  buildPhaseReachedQuery,
   buildQuizPassRateQuery,
   buildSessionDurationQuery,
   buildSummaryQuery,
-  FUNNEL_EVENTS,
+  getFunnelSteps,
 } from "./queries";
 import type { Scope } from "./scope";
+
+/**
+ * Level ids sorted by `levelNumber`, with their number/title — the one
+ * place phase queries (grouped by raw `level_id`, since HogQL can't join
+ * LEVEL_REGISTRY) get mapped back to something orderable/human-readable.
+ * Client-safe data (LevelConfig.ts has no "server-only"), so importing it
+ * here doesn't create a new server/client boundary issue.
+ */
+const ORDERED_LEVELS = Object.values(LEVEL_REGISTRY).sort(
+  (a, b) => a.levelNumber - b.levelNumber,
+);
+const FINAL_LEVEL_NUMBER =
+  ORDERED_LEVELS[ORDERED_LEVELS.length - 1]?.levelNumber ?? 1;
 
 // safeRate moved to ../rate.ts (client-safe — Screen 1's client-computed
 // entry-rate/chapter-1-completion-rate cards need it without importing
@@ -57,8 +75,7 @@ interface CacheEntry<T> {
   inflight?: Promise<T>;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: a heterogeneous cache keyed
-// by caller-chosen strings necessarily holds values of different types.
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous cache
 const cache = new Map<string, CacheEntry<any>>();
 
 /**
@@ -136,14 +153,28 @@ function rangeKey(range: ResolvedDateRange): string {
   return `${range.from.toISOString()}:${range.to.toISOString()}`;
 }
 
+/**
+ * Cache key suffix shared by every fetch* below — includes `turmaSource`
+ * (issue #807) so an institution-wide result and a turma-scoped result
+ * for the same institution/range never collide in the module cache.
+ */
+function scopeKey(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): string {
+  return `${scope.slug}:${turmaSource ?? "*"}:${rangeKey(range)}`;
+}
+
 /** Q1 orchestration: unique-player count per canonical funnel event. */
 export async function fetchSummary(
   scope: Scope,
   range: ResolvedDateRange,
+  turmaSource?: string,
 ): Promise<Record<string, number>> {
-  const key = `summary:${scope.slug}:${rangeKey(range)}`;
+  const key = `summary:${scopeKey(scope, range, turmaSource)}`;
   return withCache(key, async () => {
-    const { query, values } = buildSummaryQuery(scope, range);
+    const { query, values } = buildSummaryQuery(scope, range, turmaSource);
     const result = await runHogQLQuery(query, values);
     const row = result.results[0] ?? [];
     const record: Record<string, number> = {};
@@ -164,10 +195,11 @@ export async function fetchSummary(
 export async function fetchFunnel(
   scope: Scope,
   range: ResolvedDateRange,
+  turmaSource?: string,
 ): Promise<Array<{ label: string; value: number }>> {
-  const key = `funnel:${scope.slug}:${rangeKey(range)}`;
+  const key = `funnel:${scopeKey(scope, range, turmaSource)}`;
   return withCache(key, async () => {
-    const { query, values } = buildFunnelQuery(scope, range);
+    const { query, values } = buildFunnelQuery(scope, range, turmaSource);
     const result = await runHogQLQuery(query, values);
 
     const playersByDepth = new Map<number, number>();
@@ -176,7 +208,8 @@ export async function fetchFunnel(
       playersByDepth.set(depth, players);
     }
 
-    const rawCounts = FUNNEL_EVENTS.map((_label, index) => {
+    const steps = getFunnelSteps();
+    const rawCounts = steps.map((_step, index) => {
       const stepNumber = index + 1;
       let reached = 0;
       for (const [depth, players] of playersByDepth) {
@@ -186,8 +219,8 @@ export async function fetchFunnel(
     });
 
     const clamped = clampMonotonicFunnel(rawCounts);
-    return FUNNEL_EVENTS.map((label, index) => ({
-      label,
+    return steps.map((step, index) => ({
+      label: step.label,
       value: clamped[index],
     }));
   });
@@ -201,14 +234,19 @@ export async function fetchFunnel(
 export async function fetchSessionDuration(
   scope: Scope,
   range: ResolvedDateRange,
+  turmaSource?: string,
 ): Promise<{
   avgSeconds: number;
   medianSeconds: number;
   sessionsStarted: number;
 }> {
-  const key = `session-duration:${scope.slug}:${rangeKey(range)}`;
+  const key = `session-duration:${scopeKey(scope, range, turmaSource)}`;
   return withCache(key, async () => {
-    const { query, values } = buildSessionDurationQuery(scope, range);
+    const { query, values } = buildSessionDurationQuery(
+      scope,
+      range,
+      turmaSource,
+    );
     const result = await runHogQLQuery(query, values);
     const [avgSeconds, medianSeconds, sessionsStarted] = result.results[0] ?? [
       0, 0, 0,
@@ -225,35 +263,14 @@ export async function fetchSessionDuration(
 export async function fetchQuizPassRate(
   scope: Scope,
   range: ResolvedDateRange,
+  turmaSource?: string,
 ): Promise<Rate> {
-  const key = `quiz-pass-rate:${scope.slug}:${rangeKey(range)}`;
+  const key = `quiz-pass-rate:${scopeKey(scope, range, turmaSource)}`;
   return withCache(key, async () => {
-    const { query, values } = buildQuizPassRateQuery(scope, range);
+    const { query, values } = buildQuizPassRateQuery(scope, range, turmaSource);
     const result = await runHogQLQuery(query, values);
     const [passed, total] = result.results[0] ?? [0, 0];
     return safeRate(Number(passed ?? 0), Number(total ?? 0));
-  });
-}
-
-/** Q3 orchestration: total critical errors + breakdown by error_code. */
-export async function fetchCriticalErrors(
-  scope: Scope,
-  range: ResolvedDateRange,
-): Promise<{ total: number; byErrorCode: Record<string, number> }> {
-  const key = `critical-errors:${scope.slug}:${rangeKey(range)}`;
-  return withCache(key, async () => {
-    const { query, values } = buildCriticalErrorsQuery(scope, range);
-    const result = await runHogQLQuery(query, values);
-    const byErrorCode: Record<string, number> = {};
-    let total = 0;
-    for (const row of result.results) {
-      const [errorCode, count] = row as [string | null, number];
-      const codeKey = errorCode ?? "unknown";
-      const value = Number(count ?? 0);
-      byErrorCode[codeKey] = value;
-      total += value;
-    }
-    return { total, byErrorCode };
   });
 }
 
@@ -264,9 +281,8 @@ export interface CampaignOriginBreakdown {
 
 /**
  * Campaigns orchestration (#746) — a real per-utm_source breakdown for
- * the caller's own institution slug, not a single total. See
- * queries.ts's buildCampaignsQuery for why utm_source is the right
- * sub-origin dimension.
+ * the caller's own institution slug, not a single total. Not
+ * turma-filtered — see buildCampaignsQuery's doc comment.
  */
 export async function fetchCampaigns(
   scope: Scope,
@@ -280,5 +296,181 @@ export async function fetchCampaigns(
       const [source, uniquePlayers] = row as [string, number];
       return { source, uniquePlayers: Number(uniquePlayers ?? 0) };
     });
+  });
+}
+
+/** #807 completion rate — institution-wide when `turmaSource` is absent, turma-scoped otherwise. */
+export async function fetchCompletionRate(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): Promise<Rate> {
+  const key = `completion-rate:${scopeKey(scope, range, turmaSource)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildCompletionRateQuery(
+      scope,
+      range,
+      FINAL_LEVEL_NUMBER,
+      turmaSource,
+    );
+    const result = await runHogQLQuery(query, values);
+    const [started, completed] = result.results[0] ?? [0, 0];
+    return safeRate(Number(completed ?? 0), Number(started ?? 0));
+  });
+}
+
+export interface PhaseBreakdown {
+  levelId: string;
+  levelNumber: number;
+  label: string;
+  /** Unique players who entered this level (`game_started`). */
+  reached: number;
+  /** Unique players who finished this level (`level_completed`). */
+  completed: number;
+}
+
+export interface PhaseQuizPassRateBreakdown {
+  levelId: string;
+  levelNumber: number;
+  label: string;
+  rate: Rate;
+}
+
+export interface PhaseClueUsageBreakdown {
+  levelId: string;
+  levelNumber: number;
+  label: string;
+  clueUses: number;
+}
+
+/**
+ * Every level in LEVEL_REGISTRY (1, 2, 3 today), in order — the base
+ * every phase breakdown starts from, so a level with zero events for the
+ * selected period still shows up as a zero row instead of silently
+ * disappearing from a `GROUP BY` result that only returns levels with at
+ * least one matching event.
+ */
+function allLevelsBase(): Array<{
+  levelId: string;
+  levelNumber: number;
+  label: string;
+}> {
+  return ORDERED_LEVELS.map((level) => ({
+    levelId: level.id,
+    levelNumber: level.levelNumber,
+    label: level.title,
+  }));
+}
+
+/**
+ * #807 "progresso por fase" — reached (`game_started`) and completed
+ * (`level_completed`) per level, one row per level in LEVEL_REGISTRY
+ * (1, 2, 3 today) always present, even at zero, ordered by level number.
+ * Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ */
+export async function fetchPhaseProgress(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): Promise<PhaseBreakdown[]> {
+  const key = `phase-progress:${scopeKey(scope, range, turmaSource)}`;
+  return withCache(key, async () => {
+    const reachedPlan = buildPhaseReachedQuery(scope, range, turmaSource);
+    const completedPlan = buildPhaseCompletionQuery(scope, range, turmaSource);
+    const [reachedResult, completedResult] = await Promise.all([
+      runHogQLQuery(reachedPlan.query, reachedPlan.values),
+      runHogQLQuery(completedPlan.query, completedPlan.values),
+    ]);
+
+    const reachedByLevel = new Map<string, number>();
+    for (const row of reachedResult.results) {
+      const [levelId, players] = row as [string, number];
+      reachedByLevel.set(levelId, Number(players ?? 0));
+    }
+    const completedByLevel = new Map<string, number>();
+    for (const row of completedResult.results) {
+      const [levelId, players] = row as [string, number];
+      completedByLevel.set(levelId, Number(players ?? 0));
+    }
+
+    return allLevelsBase()
+      .map((level) => ({
+        ...level,
+        reached: reachedByLevel.get(level.levelId) ?? 0,
+        completed: completedByLevel.get(level.levelId) ?? 0,
+      }))
+      .sort((a, b) => a.levelNumber - b.levelNumber);
+  });
+}
+
+/**
+ * #807 "taxa de aprovação nos quizzes por fase" — per-level pass rate,
+ * one row per level in LEVEL_REGISTRY always present, ordered by level
+ * number. Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ */
+export async function fetchPhaseQuizPassRate(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): Promise<PhaseQuizPassRateBreakdown[]> {
+  const key = `phase-quiz-pass-rate:${scopeKey(scope, range, turmaSource)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildPhaseQuizPassRateQuery(
+      scope,
+      range,
+      turmaSource,
+    );
+    const result = await runHogQLQuery(query, values);
+    const byLevel = new Map<string, { passed: number; total: number }>();
+    for (const row of result.results) {
+      const [levelId, passed, total] = row as [string, number, number];
+      byLevel.set(levelId, {
+        passed: Number(passed ?? 0),
+        total: Number(total ?? 0),
+      });
+    }
+
+    return allLevelsBase()
+      .map((level) => {
+        const entry = byLevel.get(level.levelId);
+        return {
+          ...level,
+          rate: safeRate(entry?.passed ?? 0, entry?.total ?? 0),
+        };
+      })
+      .sort((a, b) => a.levelNumber - b.levelNumber);
+  });
+}
+
+/**
+ * #807 P1 "uso de pistas por fase" — raw clue_used count per level, one
+ * row per level in LEVEL_REGISTRY always present, ordered by level
+ * number. Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ */
+export async function fetchPhaseClueUsage(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): Promise<PhaseClueUsageBreakdown[]> {
+  const key = `phase-clue-usage:${scopeKey(scope, range, turmaSource)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildPhaseClueUsageQuery(
+      scope,
+      range,
+      turmaSource,
+    );
+    const result = await runHogQLQuery(query, values);
+    const byLevel = new Map<string, number>();
+    for (const row of result.results) {
+      const [levelId, clueUses] = row as [string, number];
+      byLevel.set(levelId, Number(clueUses ?? 0));
+    }
+
+    return allLevelsBase()
+      .map((level) => ({
+        ...level,
+        clueUses: byLevel.get(level.levelId) ?? 0,
+      }))
+      .sort((a, b) => a.levelNumber - b.levelNumber);
   });
 }

@@ -6,12 +6,14 @@ jest.mock("server-only", () => ({}));
 import { resetServerEnv } from "../../env-server";
 import { runHogQLQuery } from "./hogql";
 import {
-  __getQueryCacheSizeForTests,
   __resetQueryCacheForTests,
   clampMonotonicFunnel,
   fetchCampaigns,
-  fetchCriticalErrors,
+  fetchCompletionRate,
   fetchFunnel,
+  fetchPhaseClueUsage,
+  fetchPhaseProgress,
+  fetchPhaseQuizPassRate,
   fetchQuizPassRate,
   fetchSessionDuration,
   fetchSummary,
@@ -150,7 +152,7 @@ describe("withCache", () => {
   });
 });
 
-describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration/fetchCriticalErrors/fetchCampaigns)", () => {
+describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration/fetchQuizPassRate/fetchCampaigns)", () => {
   const scope = __createScopeForTests("escola-teste");
   const range = {
     from: new Date("2026-01-01T00:00:00Z"),
@@ -270,34 +272,6 @@ describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration
     expect(result.value).toBe(0);
   });
 
-  it("fetchCriticalErrors sums the total and keeps the per-error_code breakdown", async () => {
-    mockRunHogQLQuery.mockResolvedValue({
-      columns: ["error_code", "critical_count"],
-      results: [
-        ["asset_load_failed", 5],
-        ["quiz_data_failed", 2],
-      ],
-    });
-
-    const result = await fetchCriticalErrors(scope, range);
-
-    expect(result).toEqual({
-      total: 7,
-      byErrorCode: { asset_load_failed: 5, quiz_data_failed: 2 },
-    });
-  });
-
-  it("fetchCriticalErrors labels a null error_code as unknown", async () => {
-    mockRunHogQLQuery.mockResolvedValue({
-      columns: ["error_code", "critical_count"],
-      results: [[null, 3]],
-    });
-
-    const result = await fetchCriticalErrors(scope, range);
-
-    expect(result.byErrorCode.unknown).toBe(3);
-  });
-
   it("fetchCampaigns returns a per-source breakdown, not a single total", async () => {
     mockRunHogQLQuery.mockResolvedValue({
       columns: ["source", "unique_players"],
@@ -337,5 +311,95 @@ describe("orchestration functions (fetchSummary/fetchFunnel/fetchSessionDuration
     expect(a).toEqual({ a: 1 });
     expect(b).toEqual({ a: 2 });
     expect(mockRunHogQLQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it("an institution-wide call and a turma-scoped call for the same institution never share a cache entry", async () => {
+    mockRunHogQLQuery
+      .mockResolvedValueOnce({ columns: ["a"], results: [[1]] })
+      .mockResolvedValueOnce({ columns: ["a"], results: [[2]] });
+
+    const wide = await fetchSummary(scope, range);
+    const turmaScoped = await fetchSummary(scope, range, "group-a");
+
+    expect(wide).toEqual({ a: 1 });
+    expect(turmaScoped).toEqual({ a: 2 });
+    expect(mockRunHogQLQuery).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("#807 orchestration functions (fetchCompletionRate/fetchPhaseProgress/fetchPhaseQuizPassRate/fetchPhaseClueUsage)", () => {
+  const scope = __createScopeForTests("escola-teste");
+  const range = {
+    from: new Date("2026-01-01T00:00:00Z"),
+    to: new Date("2026-01-31T23:59:59Z"),
+  };
+  const mockRunHogQLQuery = runHogQLQuery as jest.Mock;
+
+  beforeEach(() => {
+    __resetQueryCacheForTests();
+    mockRunHogQLQuery.mockReset();
+  });
+
+  it("fetchCompletionRate returns a safeRate of completed/started", async () => {
+    mockRunHogQLQuery.mockResolvedValue({
+      columns: ["started", "completed"],
+      results: [[100, 40]],
+    });
+
+    const result = await fetchCompletionRate(scope, range);
+
+    expect(result).toEqual({ value: 0.4, numerator: 40, denominator: 100 });
+  });
+
+  it("fetchPhaseProgress fills every level with zeros when there is no data at all", async () => {
+    mockRunHogQLQuery.mockResolvedValue({ columns: [], results: [] });
+
+    const result = await fetchPhaseProgress(scope, range);
+
+    expect(result.length).toBeGreaterThanOrEqual(3);
+    for (const row of result) {
+      expect(row.reached).toBe(0);
+      expect(row.completed).toBe(0);
+    }
+  });
+
+  it("fetchPhaseProgress merges reached (game_started) and completed (level_completed) by level_id", async () => {
+    mockRunHogQLQuery
+      .mockResolvedValueOnce({
+        columns: ["level_id", "players"],
+        results: [["level_01", 50]],
+      })
+      .mockResolvedValueOnce({
+        columns: ["level_id", "players"],
+        results: [["level_01", 30]],
+      });
+
+    const result = await fetchPhaseProgress(scope, range);
+    const level1 = result.find((row) => row.levelId === "level_01");
+
+    expect(level1?.reached).toBe(50);
+    expect(level1?.completed).toBe(30);
+  });
+
+  it("fetchPhaseQuizPassRate fills every level, defaulting to a zero rate when absent", async () => {
+    mockRunHogQLQuery.mockResolvedValue({ columns: [], results: [] });
+
+    const result = await fetchPhaseQuizPassRate(scope, range);
+
+    expect(result.length).toBeGreaterThanOrEqual(3);
+    for (const row of result) {
+      expect(row.rate).toEqual({ value: 0, numerator: 0, denominator: 0 });
+    }
+  });
+
+  it("fetchPhaseClueUsage fills every level, defaulting to zero uses when absent", async () => {
+    mockRunHogQLQuery.mockResolvedValue({ columns: [], results: [] });
+
+    const result = await fetchPhaseClueUsage(scope, range);
+
+    expect(result.length).toBeGreaterThanOrEqual(3);
+    for (const row of result) {
+      expect(row.clueUses).toBe(0);
+    }
   });
 });
