@@ -61,3 +61,19 @@ export function resolveScope(session: Session | null): Scope | null {
 export function __createScopeForTests(slug: string): Scope {
   return { slug } as Scope;
 }
+
+/**
+ * Optional turma (class) filter — issue #807, folded into every existing
+ * dashboard screen rather than a standalone page. `source` is a data
+ * dimension, not a tenancy boundary: it only ever narrows an already
+ * `resolveScope`'d institution's own event set, so a wrong/unknown value
+ * just yields fewer rows — never another institution's data. That's why,
+ * unlike `institutionSlug`, it's allowed to come from a request query
+ * parameter. Returns `undefined` (not `null`) for a missing/malformed
+ * `?turma=` — the honest "no filter" default, not an error — so a typo'd
+ * turma silently falls back to institution-wide instead of a 400.
+ */
+export function resolveTurmaSource(raw: string | null): string | undefined {
+  if (!raw || !isValidOriginSlug(raw)) return undefined;
+  return raw;
+}

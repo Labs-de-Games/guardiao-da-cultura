@@ -4,7 +4,7 @@
 jest.mock("server-only", () => ({}));
 
 import type { Session } from "next-auth";
-import { resolveScope } from "./scope";
+import { resolveScope, resolveTurmaSource } from "./scope";
 
 function makeSession(overrides: Partial<Session["user"]> = {}): Session {
   return {
@@ -80,5 +80,21 @@ describe("resolveScope", () => {
       makeSession({ institutionSlug: "escola-municipal-centro-2" }),
     );
     expect(scope?.slug).toBe("escola-municipal-centro-2");
+  });
+});
+
+describe("resolveTurmaSource (#807)", () => {
+  it("returns the raw source when well-formed", () => {
+    expect(resolveTurmaSource("group-a")).toBe("group-a");
+  });
+
+  it("returns undefined for a missing source — the honest 'no filter' default", () => {
+    expect(resolveTurmaSource(null)).toBeUndefined();
+    expect(resolveTurmaSource("")).toBeUndefined();
+  });
+
+  it("returns undefined for a malformed source instead of trusting it", () => {
+    expect(resolveTurmaSource("Group A!")).toBeUndefined();
+    expect(resolveTurmaSource("<script>alert(1)</script>")).toBeUndefined();
   });
 });
