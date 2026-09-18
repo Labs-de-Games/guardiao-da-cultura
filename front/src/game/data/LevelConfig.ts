@@ -176,8 +176,6 @@ export const LEVEL_ASSETS = {
       { key: "light_bar", path: "misc/spotlights/light_bar.png" },
     ],
     COLLECTIBLES: [
-      { key: "cachimbo", path: "collectibles/cachimbo.png" },
-      { key: "message", path: "collectibles/message.png" },
       { key: "paper", path: "collectibles/paper.png" },
       { key: "varnish", path: "collectibles/varnish.png" },
     ],
@@ -302,8 +300,7 @@ export const LEVEL_ASSETS = {
     ],
     COLLECTIBLES: [
       { key: "document", path: "collectibles/document.png" },
-      { key: "notes", path: "collectibles/notes.png" },
-      { key: "signature", path: "collectibles/signature.png" },
+      { key: "cachimbo", path: "collectibles/cachimbo.png" },
     ],
     CONTENT: {
       key: "content",
@@ -402,7 +399,12 @@ export const LEVEL_ASSETS = {
         path: "misc/note02.png",
       },
     ],
-    COLLECTIBLES: [],
+    // TODO(art): `itinerary` reuses the level_02 notes sprite as a placeholder.
+    // Swap in dedicated artwork when available.
+    COLLECTIBLES: [
+      { key: "signature", path: "collectibles/signature.png" },
+      { key: "itinerary", path: "collectibles/itinerary.png" },
+    ],
     CONTENT: {
       key: "content",
       path: "data/content.json",

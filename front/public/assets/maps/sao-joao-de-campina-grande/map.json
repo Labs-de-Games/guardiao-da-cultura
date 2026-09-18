@@ -1460,6 +1460,65 @@
         }, 
         {
          "draworder":"topdown",
+         "id":25,
+         "name":"collectibles",
+         "objects":[
+                {
+                 "height":0,
+                 "id":132,
+                 "name":"I2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"itinerary"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":883.390695267,
+                 "y":602.382626053
+                }, 
+                {
+                 "height":0,
+                 "id":133,
+                 "name":"I1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"collectible_id",
+                         "type":"string",
+                         "value":"signature"
+                        }, 
+                        {
+                         "name":"collectible_type",
+                         "type":"string",
+                         "value":"clue_villain"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":1072.538781373,
+                 "y":651.893981518
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":24,
          "name":"SwitchLight",
          "objects":[
@@ -1541,11 +1600,11 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":25,
- "nextobjectid":131,
+ "nextlayerid":26,
+ "nextobjectid":134,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.2",
+ "tiledversion":"1.12.1",
  "tileheight":16,
  "tilesets":[
         {
