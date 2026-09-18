@@ -49,10 +49,35 @@ describe("middleware — institution routes gated by NextAuth session", () => {
     expect(response.headers.get("location")).toContain("/login");
   });
 
-  it("allows the request through with a valid institution session", async () => {
-    mockAuth.mockResolvedValue({ user: { role: "institution" } });
+  it("allows the request through with a valid, linked institution session", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: "escola-exemplo" },
+    });
 
     const response = await middleware(makeRequest("/institution"));
+
+    expect(response.status).toBe(200);
+  });
+
+  it("redirects to onboarding when the institution session has no slug yet", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: null },
+    });
+
+    const response = await middleware(makeRequest("/institution"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain(
+      "/institution/onboarding",
+    );
+  });
+
+  it("lets an unlinked institution session reach the onboarding page itself", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: null },
+    });
+
+    const response = await middleware(makeRequest("/institution/onboarding"));
 
     expect(response.status).toBe(200);
   });

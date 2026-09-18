@@ -138,7 +138,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!response.ok) {
           console.error(`[auth] oauth upsert failed: ${response.status}`);
-          return false;
+          // 409: email already belongs to a non-institution account — send
+          // a distinguishable code so the login page can explain why,
+          // instead of the generic AccessDenied page.
+          return response.status === 409 ? "/login?error=EmailConflict" : false;
         }
 
         const upserted = (await response.json()) as OAuthUpsertResponse;
@@ -156,7 +159,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return false;
       }
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         const enriched = user as typeof user & {
           backendId?: string;
@@ -166,6 +169,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.userId = enriched.backendId;
         token.role = enriched.backendRole;
         token.institutionSlug = enriched.institutionSlug ?? null;
+      }
+      // Triggered by the client's `update({ institutionSlug })` call right
+      // after onboarding — lets the just-set slug land in the session
+      // without forcing a full re-login.
+      if (trigger === "update" && session?.institutionSlug) {
+        token.institutionSlug = session.institutionSlug;
       }
       return token;
     },

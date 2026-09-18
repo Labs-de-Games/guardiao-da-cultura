@@ -74,6 +74,14 @@ const serverSchema = z
     authSecret: z.string().optional(),
     authGoogleId: z.string().optional(),
     authGoogleSecret: z.string().optional(),
+
+    /**
+     * Required behind the nginx reverse proxy so NextAuth trusts the
+     * X-Forwarded-Proto/Host headers instead of inferring the wrong origin.
+     * NextAuth reads this from process.env by its own convention, same as
+     * the three vars above; declared here purely for the boot-time guard.
+     */
+    authTrustHost: z.string().optional(),
   })
   .refine(
     (data) => env.client.env === "development" || Boolean(data.authSecret),
@@ -96,6 +104,13 @@ const serverSchema = z
       message: "AUTH_GOOGLE_SECRET is required outside development",
       path: ["authGoogleSecret"],
     },
+  )
+  .refine(
+    (data) => env.client.env === "development" || Boolean(data.authTrustHost),
+    {
+      message: "AUTH_TRUST_HOST is required outside development",
+      path: ["authTrustHost"],
+    },
   );
 
 let _serverEnv: z.infer<typeof serverSchema> | null = null;
@@ -115,6 +130,7 @@ function getServerEnv() {
       authSecret: process.env.AUTH_SECRET,
       authGoogleId: process.env.AUTH_GOOGLE_ID,
       authGoogleSecret: process.env.AUTH_GOOGLE_SECRET,
+      authTrustHost: process.env.AUTH_TRUST_HOST,
     });
   }
   return _serverEnv;
