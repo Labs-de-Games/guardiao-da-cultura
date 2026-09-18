@@ -4,15 +4,21 @@ import { Box, Grid, Skeleton, Typography } from "@mui/material";
 import { Suspense } from "react";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { FilterBar } from "@/components/dashboard/FilterBar";
+import {
+  FunnelChart,
+  type FunnelStep,
+} from "@/components/dashboard/FunnelChart";
 import { HeroMetric } from "@/components/dashboard/HeroMetric";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { RateCard } from "@/components/dashboard/RateCard";
 import { Section } from "@/components/dashboard/Section";
+import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
 import { getReport, getSummary } from "@/lib/api/edital";
 import { safeRate } from "@/lib/edital/rate";
 import type {
   EditalReportResponse,
   EditalSummaryResponse,
+  PhaseQuizPassRateRow,
 } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
@@ -20,9 +26,26 @@ import {
   isDateRangeValid,
   useFilterBarProps,
 } from "@/lib/edital/useFilterBarProps";
+import { useTurmaFilter } from "@/lib/edital/useTurmaFilter";
 
 function formatMinutes(seconds: number): string {
   return `${(seconds / 60).toFixed(1).replace(".", ",")} min`;
+}
+
+/**
+ * #807's "Desempenho por fase": a bar per level with its quiz pass rate.
+ * The reached→completed cascading funnel now lives on the Funil page
+ * (which covers the whole acquisition-through-every-level journey in
+ * one place) — this page no longer duplicates it.
+ */
+function toQuizPassRateBarSteps(
+  quizPassRate: PhaseQuizPassRateRow[],
+): FunnelStep[] {
+  return quizPassRate.map((row) => ({
+    label: `Fase ${row.levelNumber} — ${row.label}`,
+    value: row.rate.value,
+    count: row.rate.denominator,
+  }));
 }
 
 interface OverviewData {
@@ -67,16 +90,18 @@ const OVERVIEW_SKELETON = (
 function InstitutionOverviewContent() {
   const { dateRange, setDateRange } = useEditalFilters();
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
+  const { turma, setTurma } = useTurmaFilter();
 
   const { data, loading, error, retry } = useAsyncData<OverviewData>(
     async () => {
       const [summary, report] = await Promise.all([
-        getSummary(dateRange),
-        getReport(dateRange),
+        getSummary(dateRange, turma),
+        getReport(dateRange, turma),
       ]);
       return { summary, report };
     },
     [
+      turma,
       dateRange.type,
       dateRange.type === "custom" ? dateRange.start : "",
       dateRange.type === "custom" ? dateRange.end : "",
@@ -89,6 +114,8 @@ function InstitutionOverviewContent() {
   return (
     <Box>
       <OverviewHeader />
+
+      <TurmaSelect value={turma} onChange={setTurma} />
 
       <FilterBar {...filterBarProps} />
 
@@ -124,20 +151,15 @@ function InstitutionOverviewContent() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <KPICard
-                    title="Conclusões do Capítulo 1"
-                    value={(
-                      data.summary.data?.chapter_1_completed ?? 0
-                    ).toLocaleString("pt-BR")}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <RateCard
-                    title="Taxa de conclusão do Capítulo 1"
-                    rate={safeRate(
-                      data.summary.data?.chapter_1_completed ?? 0,
-                      data.summary.data?.chapter_1_started ?? 0,
-                    )}
+                    title="Taxa de conclusão"
+                    rate={
+                      data.summary.completionRate ?? {
+                        value: 0,
+                        numerator: 0,
+                        denominator: 0,
+                      }
+                    }
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -150,9 +172,9 @@ function InstitutionOverviewContent() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <RateCard
-                    title="Taxa de aprovação no quiz"
+                    title="Progresso médio"
                     rate={
-                      data.report.data?.quizPassRate ?? {
+                      data.summary.averageProgress ?? {
                         value: 0,
                         numerator: 0,
                         denominator: 0,
@@ -162,18 +184,28 @@ function InstitutionOverviewContent() {
                 </Grid>
               </Grid>
             </Section>
-            <Section>
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <KPICard
-                    title="Erros críticos"
-                    value={(
-                      data.report.data?.criticalErrors.total ?? 0
-                    ).toLocaleString("pt-BR")}
-                  />
-                </Grid>
-              </Grid>
+
+            <Section title="Desempenho por fase (aprovação no quiz)">
+              <FunnelChart
+                steps={toQuizPassRateBarSteps(data.summary.quizPassRate ?? [])}
+                highlightIndex={-1}
+              />
             </Section>
+
+            {(data.summary.clueUsage ?? []).length > 0 ? (
+              <Section title="Uso de pistas por fase">
+                <Grid container spacing={3}>
+                  {(data.summary.clueUsage ?? []).map((row) => (
+                    <Grid key={row.levelId} size={{ xs: 12, sm: 6, md: 3 }}>
+                      <KPICard
+                        title={`Fase ${row.levelNumber} — ${row.label}`}
+                        value={row.clueUses.toLocaleString("pt-BR")}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Section>
+            ) : null}
           </>
         ) : null}
       </DashboardState>
