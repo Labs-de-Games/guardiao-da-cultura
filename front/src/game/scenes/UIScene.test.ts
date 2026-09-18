@@ -158,23 +158,32 @@ describe("UIScene quiz navigation", () => {
   });
 
   it("hands off to the identification phase after the last level", () => {
-    const { scene, sceneStart, sceneStop } = buildScene("level_03");
-    track(scene);
+    // The phase ships gated, so this turns it on the way a release would
+    // rather than assuming the shipped value.
+    const previous = LEVEL_ENABLED.level_04;
+    LEVEL_ENABLED.level_04 = true;
 
-    EventBus.emit("quiz:next-level", undefined);
+    try {
+      const { scene, sceneStart, sceneStop } = buildScene("level_03");
+      track(scene);
 
-    // It routes through the cinematic like any other phase, so the player gets
-    // the same comic intro before the investigation screen.
-    expect(sceneStop).toHaveBeenCalledWith(SceneNames.GAME);
-    expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
-      levelId: "level_04",
-    });
-    expect(useGameUIStore.getState().isInterestDialogOpen).toBe(false);
-    expect(useGameUIStore.getState().levelInfo).toEqual({
-      title: "Identificação do Suspeito",
-      location: "Sala de Investigação",
-      shortlocation: "Sala de Investigação",
-    });
+      EventBus.emit("quiz:next-level", undefined);
+
+      // It routes through the cinematic like any other phase, so the player
+      // gets the same comic intro before the investigation screen.
+      expect(sceneStop).toHaveBeenCalledWith(SceneNames.GAME);
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
+        levelId: "level_04",
+      });
+      expect(useGameUIStore.getState().isInterestDialogOpen).toBe(false);
+      expect(useGameUIStore.getState().levelInfo).toEqual({
+        title: "Identificação do Suspeito",
+        location: "Sala de Investigação",
+        shortlocation: "Sala de Investigação",
+      });
+    } finally {
+      LEVEL_ENABLED.level_04 = previous;
+    }
   });
 
   it("always returns to the map on quiz:close", () => {
