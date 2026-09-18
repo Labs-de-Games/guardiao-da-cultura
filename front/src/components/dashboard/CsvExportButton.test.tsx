@@ -18,7 +18,10 @@ describe("CsvExportButton", () => {
     fireEvent.click(screen.getByText("Exportar CSV"));
 
     await waitFor(() =>
-      expect(downloadReportCsv).toHaveBeenCalledWith({ type: "30d" }),
+      expect(downloadReportCsv).toHaveBeenCalledWith(
+        { type: "30d" },
+        undefined,
+      ),
     );
   });
 
