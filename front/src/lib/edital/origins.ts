@@ -66,6 +66,8 @@ export function resolveOriginLabel(slug: string): string {
 
 export interface BuildTrackingUrlParams {
   slug: string;
+  /** Group/class label within the institution — emitted as utm_source. */
+  source?: string;
 }
 
 /**
@@ -76,5 +78,8 @@ export interface BuildTrackingUrlParams {
 export function buildTrackingUrl(params: BuildTrackingUrlParams): string {
   const url = new URL(LANDING_BASE_URL);
   url.searchParams.set("utm_institution", params.slug);
+  if (params.source) {
+    url.searchParams.set("utm_source", params.source);
+  }
   return url.toString();
 }
