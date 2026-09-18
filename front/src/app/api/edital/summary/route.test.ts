@@ -18,8 +18,17 @@ jest.mock("@/lib/edital/server/routeGuard", () => ({
 }));
 
 const mockFetchSummary = jest.fn();
+const mockFetchCompletionRate = jest.fn();
+const mockFetchPhaseProgress = jest.fn();
+const mockFetchPhaseQuizPassRate = jest.fn();
+const mockFetchPhaseClueUsage = jest.fn();
 jest.mock("@/lib/edital/server/metrics", () => ({
   fetchSummary: (...args: unknown[]) => mockFetchSummary(...args),
+  fetchCompletionRate: (...args: unknown[]) => mockFetchCompletionRate(...args),
+  fetchPhaseProgress: (...args: unknown[]) => mockFetchPhaseProgress(...args),
+  fetchPhaseQuizPassRate: (...args: unknown[]) =>
+    mockFetchPhaseQuizPassRate(...args),
+  fetchPhaseClueUsage: (...args: unknown[]) => mockFetchPhaseClueUsage(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -34,6 +43,18 @@ describe("GET /api/edital/summary", () => {
   beforeEach(() => {
     mockResolveEditalRequestContext.mockReset();
     mockFetchSummary.mockReset();
+    mockFetchCompletionRate.mockReset();
+    mockFetchPhaseProgress.mockReset();
+    mockFetchPhaseQuizPassRate.mockReset();
+    mockFetchPhaseClueUsage.mockReset();
+    mockFetchCompletionRate.mockResolvedValue({
+      value: 0,
+      numerator: 0,
+      denominator: 0,
+    });
+    mockFetchPhaseProgress.mockResolvedValue([]);
+    mockFetchPhaseQuizPassRate.mockResolvedValue([]);
+    mockFetchPhaseClueUsage.mockResolvedValue([]);
   });
 
   it("returns 401 when there is no session", async () => {
@@ -87,7 +108,82 @@ describe("GET /api/edital/summary", () => {
     expect(data).toEqual({
       linked: true,
       data: { landing_page_viewed: 100 },
+      completionRate: { value: 0, numerator: 0, denominator: 0 },
+      averageProgress: { value: 0, numerator: 0, denominator: 0 },
+      phaseProgress: [],
+      quizPassRate: [],
+      clueUsage: [],
     });
-    expect(mockFetchSummary).toHaveBeenCalledWith(scope, range);
+    expect(mockFetchSummary).toHaveBeenCalledWith(scope, range, undefined);
+  });
+
+  it("passes ctx.turmaSource through to every fetch call (issue #807)", async () => {
+    const scope = __createScopeForTests("escola-teste");
+    const range = { from: new Date(0), to: new Date() };
+    mockResolveEditalRequestContext.mockResolvedValue({
+      kind: "ok",
+      scope,
+      range,
+      turmaSource: "group-a",
+    });
+    mockFetchSummary.mockResolvedValue({});
+
+    await GET(makeRequest());
+
+    expect(mockFetchSummary).toHaveBeenCalledWith(scope, range, "group-a");
+    expect(mockFetchCompletionRate).toHaveBeenCalledWith(
+      scope,
+      range,
+      "group-a",
+    );
+    expect(mockFetchPhaseProgress).toHaveBeenCalledWith(
+      scope,
+      range,
+      "group-a",
+    );
+  });
+
+  it("computes averageProgress as total level-completions over players*levelCount", async () => {
+    const scope = __createScopeForTests("escola-teste");
+    const range = { from: new Date(0), to: new Date() };
+    mockResolveEditalRequestContext.mockResolvedValue({
+      kind: "ok",
+      scope,
+      range,
+    });
+    mockFetchSummary.mockResolvedValue({ gameplay_started: 100 });
+    mockFetchPhaseProgress.mockResolvedValue([
+      {
+        levelId: "level_01",
+        levelNumber: 1,
+        label: "L1",
+        reached: 100,
+        completed: 80,
+      },
+      {
+        levelId: "level_02",
+        levelNumber: 2,
+        label: "L2",
+        reached: 80,
+        completed: 40,
+      },
+      {
+        levelId: "level_03",
+        levelNumber: 3,
+        label: "L3",
+        reached: 40,
+        completed: 20,
+      },
+    ]);
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    // (80+40+20) completions over 100 players * 3 levels = 140/300.
+    expect(data.averageProgress).toEqual({
+      value: 140 / 300,
+      numerator: 140,
+      denominator: 300,
+    });
   });
 });
