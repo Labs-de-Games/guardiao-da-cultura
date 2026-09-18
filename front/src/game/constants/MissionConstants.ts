@@ -38,6 +38,7 @@ export const INTERMEDIATE_QUIZ_NUMBERS: Record<string, number> = {
   [MissionKeys.PHOTO_DONE]: 3,
   [MissionKeys.COSTUMES_DONE]: 4,
   [MissionKeys.DANCE_DONE]: 5,
+  [MissionKeys.GENIUS_DONE]: 6,
 };
 
 export type MissionId = (typeof MissionIds)[keyof typeof MissionIds];

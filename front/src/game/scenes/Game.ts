@@ -132,6 +132,7 @@ export class Game extends Scene implements GameDataAccessor {
     spotlights: 0,
     dance: 0,
     band: 0,
+    genius: 1,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -1984,6 +1985,13 @@ export class Game extends Scene implements GameDataAccessor {
         candidates.push({
           dist: geniusDist,
           open: () => {
+            if (this.markFloorStarted(this.scoringFloors.genius)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.genius + 1,
+                level_id: this.levelId,
+              });
+            }
+
             this.isGeniusSequenceOpen = true;
             this.events.emit(GameEvents.DIALOGUE_STARTED);
             EventBus.emit("ui:genius-sequence-open", {
@@ -2155,6 +2163,14 @@ export class Game extends Scene implements GameDataAccessor {
       this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
       this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
 
+      if (
+        this.placeholderSystem.checkCategoryCompletion(
+          InteractiveType.GENIUS_SEQUENCE,
+        )
+      ) {
+        this.completeFloor(this.scoringFloors.genius);
+      }
+
       this.time.delayedCall(500, () => {
         this.events.emit(GameEvents.INFO_COLLECTED, {
           missionId: MissionIds.CURATOR_L3,
@@ -2189,6 +2205,18 @@ export class Game extends Scene implements GameDataAccessor {
         wrong_count: data.wrongCount,
         correct_count: data.correctCount,
         total_slots: data.totalSlots,
+      });
+    });
+    this.onEventBus("ui:genius-sequence-rejected", (data) => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.genius);
+      posthog.capture("genius_sequence_failed_attempt", {
+        level_id: this.levelId,
+        instance_id: data.instanceId,
+        attempt_number: data.attemptNumber,
+        wrong_count: data.wrongCount,
+        correct_count: data.correctCount,
+        total_rounds: data.totalRounds,
       });
     });
     this.onEventBus("ui:step-sequence-submit", (data) => {

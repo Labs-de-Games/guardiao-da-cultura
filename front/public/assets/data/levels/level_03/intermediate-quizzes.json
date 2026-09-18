@@ -51,5 +51,24 @@
         "Apresentações teatrais"
       ]
     }
+  ],
+  "genius_done": [
+    {
+      "question": "Qual instrumento é o protagonista dos trios de forró na Festa de São João de Campina Grande?",
+      "options": ["Sanfona (acordeon)", "Violão", "Cavaquinho", "Berimbau"]
+    },
+    {
+      "question": "A sanfona de oito baixos é mais associada a qual estilo tocado nas festas de São João?",
+      "options": ["Forró pé-de-serra", "Piano", "Chorinho", "Bossa nova"]
+    },
+    {
+      "question": "Além da sanfona, quais instrumentos completam o trio tradicional de forró na festa?",
+      "options": [
+        "Zabumba e triângulo",
+        "Bateria e baixo",
+        "Flauta e violino",
+        "Teclado e guitarra"
+      ]
+    }
   ]
 }

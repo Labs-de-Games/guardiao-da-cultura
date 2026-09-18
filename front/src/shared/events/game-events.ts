@@ -234,6 +234,14 @@ export interface GeniusSequenceCompleteData {
   instanceId: string;
 }
 
+export interface GeniusSequenceRejectedData {
+  instanceId: string;
+  attemptNumber: number;
+  wrongCount: number;
+  correctCount: number;
+  totalRounds: number;
+}
+
 export interface GeniusSoundNoteData {
   color: GeniusColor;
 }
@@ -293,6 +301,7 @@ export interface GameEventMap {
   "ui:genius-sequence-open": GeniusSequenceOpenData;
   "ui:genius-sequence-close": undefined;
   "ui:genius-sequence-complete": GeniusSequenceCompleteData;
+  "ui:genius-sequence-rejected": GeniusSequenceRejectedData;
   "ui:sound-genius-note": GeniusSoundNoteData;
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
