@@ -1,0 +1,58 @@
+{
+  "traits": [
+    {
+      "id": "conservation_technique",
+      "label": "Domínio técnico de conservação",
+      "question": "Sabe tratar e manusear as peças com as próprias mãos?"
+    },
+    {
+      "id": "authorized_access",
+      "label": "Acesso autorizado ao acervo",
+      "question": "Podia circular pelas áreas técnicas sem levantar suspeita?"
+    },
+    {
+      "id": "knows_collection_layout",
+      "label": "Conhece a disposição das obras",
+      "question": "Sabia exatamente onde cada peça deveria estar?"
+    },
+    {
+      "id": "smokes",
+      "label": "Fuma cachimbo",
+      "question": "Tem o hábito de fumar cachimbo?"
+    },
+    {
+      "id": "initials_av",
+      "label": "Iniciais A.V.",
+      "question": "Assina com as iniciais A.V.?"
+    },
+    {
+      "id": "traveled_all_three",
+      "label": "Esteve nas três cidades",
+      "question": "Estava em Brumadinho, Manaus e Campina Grande?"
+    }
+  ],
+  "clues": [
+    {
+      "levelId": "level_01",
+      "clueId": "paper",
+      "traitId": "knows_collection_layout"
+    },
+    {
+      "levelId": "level_01",
+      "clueId": "varnish",
+      "traitId": "conservation_technique"
+    },
+    {
+      "levelId": "level_02",
+      "clueId": "document",
+      "traitId": "authorized_access"
+    },
+    { "levelId": "level_02", "clueId": "cachimbo", "traitId": "smokes" },
+    { "levelId": "level_03", "clueId": "signature", "traitId": "initials_av" },
+    {
+      "levelId": "level_03",
+      "clueId": "itinerary",
+      "traitId": "traveled_all_three"
+    }
+  ]
+}
