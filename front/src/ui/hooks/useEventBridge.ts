@@ -27,6 +27,7 @@ export function useEventBridge({
   const setEvidenceBoardSelectedClueId = useGameUIStore(
     (s) => s.setEvidenceBoardSelectedClueId,
   );
+  const openInvestigation = useGameUIStore((s) => s.openInvestigation);
 
   useEffect(() => {
     const currentStatus = useGameUIStore.getState().gameStarted;
@@ -106,6 +107,13 @@ export function useEventBridge({
       },
     );
 
+    const unsubInvestigationStart = safeSubscribe(
+      "investigation:start",
+      (data) => {
+        openInvestigation(data);
+      },
+    );
+
     return () => {
       unsubStarted();
       unsubEnded();
@@ -116,6 +124,7 @@ export function useEventBridge({
       unsubCollectItem();
       unsubProgression();
       unsubEvidenceBoardClue();
+      unsubInvestigationStart();
     };
   }, [
     entryFlow,
@@ -131,5 +140,6 @@ export function useEventBridge({
     setProgression,
     setEvidenceBoardOpen,
     setEvidenceBoardSelectedClueId,
+    openInvestigation,
   ]);
 }
