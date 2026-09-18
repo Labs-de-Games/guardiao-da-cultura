@@ -393,6 +393,14 @@ export const LEVEL_ASSETS = {
         key: "accordion_frame009",
         path: "artworks/accordion_animation/accordion_frame009.png",
       },
+      {
+        key: "note01",
+        path: "misc/note01.png",
+      },
+      {
+        key: "note02",
+        path: "misc/note02.png",
+      },
     ],
     COLLECTIBLES: [],
     CONTENT: {

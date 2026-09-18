@@ -2123,6 +2123,7 @@ export class Game extends Scene implements GameDataAccessor {
       if (p) {
         this.showSpotlightBeam();
         this.playConfettiBurst(p.area.centerX, p.area.centerY);
+        this.effects.playMusicNotesLoop(p.area.centerX, p.area.centerY);
       }
 
       this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
