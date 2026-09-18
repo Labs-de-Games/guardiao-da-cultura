@@ -37,6 +37,21 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
 
+  async findByInstitutionSlug(institutionSlug: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { institutionSlug } });
+  }
+
+  async setInstitutionOnboarding(
+    userId: string,
+    institutionName: string,
+    institutionSlug: string,
+  ): Promise<void> {
+    await this.userRepository.update(
+      { id: userId },
+      { institutionName, institutionSlug },
+    );
+  }
+
   async findByNickname(nickname: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { nickname } });
   }
