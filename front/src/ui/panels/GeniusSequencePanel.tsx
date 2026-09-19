@@ -289,6 +289,7 @@ export function GeniusSequencePanel() {
         key={color}
         component="button"
         type="button"
+        data-testid={`genius-color-${color}`}
         onClick={() => handlePress(color)}
         sx={{
           gridArea,
