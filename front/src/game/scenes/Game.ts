@@ -1843,12 +1843,7 @@ export class Game extends Scene implements GameDataAccessor {
         candidates.push({
           dist: costumeDist,
           open: () => {
-            if (this.markFloorStarted(this.scoringFloors.costumes)) {
-              posthog.capture("minigame_started", {
-                minigame_number: this.scoringFloors.costumes + 1,
-                level_id: this.levelId,
-              });
-            }
+            this.captureMinigameStarted(this.scoringFloors.costumes);
 
             const ids = Array.isArray(costume.id)
               ? (costume.id as string[])
@@ -1915,12 +1910,7 @@ export class Game extends Scene implements GameDataAccessor {
             // cannot freeze the player behind a panel that never opens.
             if (!data) return;
 
-            if (this.markFloorStarted(this.scoringFloors.dance)) {
-              posthog.capture("minigame_started", {
-                minigame_number: this.scoringFloors.dance + 1,
-                level_id: this.levelId,
-              });
-            }
+            this.captureMinigameStarted(this.scoringFloors.dance);
 
             this.isStepSequenceOpen = true;
             this.events.emit(GameEvents.DIALOGUE_STARTED);
@@ -1970,28 +1960,24 @@ export class Game extends Scene implements GameDataAccessor {
       }
 
       // Genius sequence placeholder candidate
-      const geniusSequence = this.placeholderSystem.getNearbyPlaceholder(
-        this.player.x,
-        this.player.y,
-        INTERACT_RANGE,
+      const geniusSequence = this.placeholderSystem.getNearbyInteractable(
+        px,
+        py,
         InteractiveType.GENIUS_SEQUENCE,
       );
       if (geniusSequence) {
+        const geniusPoint =
+          this.placeholderSystem.getInteractionPoint(geniusSequence);
         const geniusDist = Phaser.Math.Distance.Between(
           px,
           py,
-          geniusSequence.area.centerX,
-          geniusSequence.area.centerY,
+          geniusPoint.x,
+          geniusPoint.y,
         );
         candidates.push({
           dist: geniusDist,
           open: () => {
-            if (this.markFloorStarted(this.scoringFloors.genius)) {
-              posthog.capture("minigame_started", {
-                minigame_number: this.scoringFloors.genius + 1,
-                level_id: this.levelId,
-              });
-            }
+            this.captureMinigameStarted(this.scoringFloors.genius);
 
             this.isGeniusSequenceOpen = true;
             this.events.emit(GameEvents.DIALOGUE_STARTED);
@@ -2055,11 +2041,8 @@ export class Game extends Scene implements GameDataAccessor {
         [InteractiveType.PHOTO_CHUNK]: this.scoringFloors.photo,
       };
       const floorIndex = floorForType[item.interactiveType];
-      if (floorIndex !== undefined && this.markFloorStarted(floorIndex)) {
-        posthog.capture("minigame_started", {
-          minigame_number: floorIndex + 1,
-          level_id: this.levelId,
-        });
+      if (floorIndex !== undefined) {
+        this.captureMinigameStarted(floorIndex);
       }
 
       if (!this.itemsInteracted.has(item.itemId)) {
@@ -2153,16 +2136,7 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.pendingGeniusSequenceReward) {
         const instanceId = this.pendingGeniusSequenceReward;
         this.pendingGeniusSequenceReward = null;
-
-        this.sound.play("sfx.puzzle.success", { volume: 0.7 });
-        const p = this.placeholderSystem.getPlaceholderByInstanceId(instanceId);
-        if (p) {
-          this.showSpotlightBeam();
-          this.playConfettiBurst(p.area.centerX, p.area.centerY);
-          this.effects.playMusicNotesLoop(p.area.centerX, p.area.centerY);
-        }
-        this.lightBarSystem?.turnOnByPlaceholder(instanceId);
-        this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        this.playPlaceholderReward(instanceId, { musicNotes: true });
       }
     });
     this.onEventBus("ui:genius-sequence-complete", (data) => {
@@ -2178,13 +2152,16 @@ export class Game extends Scene implements GameDataAccessor {
         this.completeFloor(this.scoringFloors.genius);
       }
 
-      this.time.delayedCall(500, () => {
-        this.events.emit(GameEvents.INFO_COLLECTED, {
-          missionId: MissionIds.CURATOR_L3,
-          infoKey: MissionKeys.GENIUS_DONE,
+      const doneKey = Game.TYPE_TO_DONE_KEY[InteractiveType.GENIUS_SEQUENCE];
+      if (doneKey) {
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: doneKey.missionId,
+            infoKey: doneKey.infoKey,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
         });
-        this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-      });
+      }
     });
     // Persist each locked slot on the placeholder, so partial progress
     // survives closing and reopening the panel.
@@ -2229,19 +2206,8 @@ export class Game extends Scene implements GameDataAccessor {
     this.onEventBus("ui:step-sequence-submit", (data) => {
       this.closeStepSequence();
 
-      this.sound.play("sfx.puzzle.success", { volume: 0.7 });
       this.placeholderSystem.lockPlaceholder(data.instanceId);
-
-      const p = this.placeholderSystem.getPlaceholderByInstanceId(
-        data.instanceId,
-      );
-      if (p) {
-        this.showSpotlightBeam();
-        this.playConfettiBurst(p.area.centerX, p.area.centerY);
-      }
-
-      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
-      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      this.playPlaceholderReward(data.instanceId);
 
       if (
         this.placeholderSystem.checkCategoryCompletion(
@@ -2250,13 +2216,16 @@ export class Game extends Scene implements GameDataAccessor {
       ) {
         this.completeFloor(this.scoringFloors.dance);
         // Let the panel finish closing before the curator opens the quiz.
-        this.time.delayedCall(500, () => {
-          this.events.emit(GameEvents.INFO_COLLECTED, {
-            missionId: MissionIds.CURATOR_L3,
-            infoKey: MissionKeys.DANCE_DONE,
+        const doneKey = Game.TYPE_TO_DONE_KEY[InteractiveType.STEP_SEQUENCE];
+        if (doneKey) {
+          this.time.delayedCall(500, () => {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: doneKey.missionId,
+              infoKey: doneKey.infoKey,
+            });
+            this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
           });
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-        });
+        }
       }
     });
     this.onEventBus("ui:band-panel-close", () => {
@@ -2980,6 +2949,32 @@ export class Game extends Scene implements GameDataAccessor {
 
   public playConfettiBurst(px: number, py: number) {
     this.effects.playConfettiBurst(px, py);
+  }
+
+  private playPlaceholderReward(
+    instanceId: string,
+    options: { musicNotes?: boolean } = {},
+  ) {
+    this.sound.play("sfx.puzzle.success", { volume: 0.7 });
+    const p = this.placeholderSystem.getPlaceholderByInstanceId(instanceId);
+    if (p) {
+      this.showSpotlightBeam();
+      this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      if (options.musicNotes) {
+        this.effects.playMusicNotesLoop(p.area.centerX, p.area.centerY);
+      }
+    }
+    this.lightBarSystem?.turnOnByPlaceholder(instanceId);
+    this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+  }
+
+  private captureMinigameStarted(floorIndex: number) {
+    if (this.markFloorStarted(floorIndex)) {
+      posthog.capture("minigame_started", {
+        minigame_number: floorIndex + 1,
+        level_id: this.levelId,
+      });
+    }
   }
 
   public handleSpotlightInteraction(
