@@ -208,6 +208,7 @@ export function GeniusSequencePanel() {
           schedule(() => {
             EventBus.emit("ui:genius-sequence-close", undefined);
             closeGeniusSequence();
+            playModalClose();
           }, COMPLETE_CLOSE_DELAY_MS);
         } else {
           // Wait for the last note's sound/flash to finish before
@@ -225,7 +226,15 @@ export function GeniusSequencePanel() {
         }
       }
     },
-    [phase, sequence, round, schedule, instanceId, closeGeniusSequence],
+    [
+      phase,
+      sequence,
+      round,
+      schedule,
+      instanceId,
+      closeGeniusSequence,
+      playModalClose,
+    ],
   );
 
   // Keyboard navigation: WASD/arrows move focus, Enter/Space presses, Esc closes.
