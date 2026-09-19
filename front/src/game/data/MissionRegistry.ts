@@ -105,7 +105,7 @@ export const MissionRegistry: Record<string, MissionDef> = {
       },
       {
         infoKey: MissionKeys.GENIUS_DONE,
-        text: "Repetir a sequência de cores do jogo da memória",
+        text: "Afinar o acordeon",
         categoryType: InteractiveType.GENIUS_SEQUENCE,
       },
     ],
