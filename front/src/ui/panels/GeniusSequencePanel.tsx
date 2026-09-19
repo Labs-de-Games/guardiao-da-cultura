@@ -206,6 +206,7 @@ export function GeniusSequencePanel() {
           // delay must not be able to cancel a completion already earned.
           EventBus.emit("ui:genius-sequence-complete", { instanceId });
           schedule(() => {
+            EventBus.emit("ui:genius-sequence-close", undefined);
             closeGeniusSequence();
           }, COMPLETE_CLOSE_DELAY_MS);
         } else {

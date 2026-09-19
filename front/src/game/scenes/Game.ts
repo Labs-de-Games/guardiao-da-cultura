@@ -147,6 +147,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isStepSequenceOpen: boolean = false;
   private isBandPanelOpen: boolean = false;
   private isGeniusSequenceOpen: boolean = false;
+  private pendingGeniusSequenceReward: string | null = null;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -2145,23 +2146,29 @@ export class Game extends Scene implements GameDataAccessor {
     });
     this.onEventBus("ui:genius-sequence-close", () => {
       this.closeGeniusSequence();
+
+      // Sensory reward (sound/spotlight/confetti/light bar) waits for the
+      // panel to actually close, not the moment the last press lands, so it
+      // doesn't fire underneath the still-open celebration screen.
+      if (this.pendingGeniusSequenceReward) {
+        const instanceId = this.pendingGeniusSequenceReward;
+        this.pendingGeniusSequenceReward = null;
+
+        this.sound.play("sfx.puzzle.success", { volume: 0.7 });
+        const p = this.placeholderSystem.getPlaceholderByInstanceId(instanceId);
+        if (p) {
+          this.showSpotlightBeam();
+          this.playConfettiBurst(p.area.centerX, p.area.centerY);
+          this.effects.playMusicNotesLoop(p.area.centerX, p.area.centerY);
+        }
+        this.lightBarSystem?.turnOnByPlaceholder(instanceId);
+        this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      }
     });
     this.onEventBus("ui:genius-sequence-complete", (data) => {
       this.closeGeniusSequence();
-      this.sound.play("sfx.puzzle.success", { volume: 0.7 });
       this.placeholderSystem.lockPlaceholder(data.instanceId);
-
-      const p = this.placeholderSystem.getPlaceholderByInstanceId(
-        data.instanceId,
-      );
-      if (p) {
-        this.showSpotlightBeam();
-        this.playConfettiBurst(p.area.centerX, p.area.centerY);
-        this.effects.playMusicNotesLoop(p.area.centerX, p.area.centerY);
-      }
-
-      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
-      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+      this.pendingGeniusSequenceReward = data.instanceId;
 
       if (
         this.placeholderSystem.checkCategoryCompletion(
