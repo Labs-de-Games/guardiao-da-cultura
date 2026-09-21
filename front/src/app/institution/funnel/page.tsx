@@ -8,6 +8,8 @@ import {
   FunnelChart,
   type FunnelStep,
 } from "@/components/dashboard/FunnelChart";
+import { FunnelInsights } from "@/components/dashboard/FunnelInsights";
+import { Section } from "@/components/dashboard/Section";
 import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
 import { getFunnel } from "@/lib/api/edital";
 import type { EditalFunnelResponse } from "@/lib/edital/types";
@@ -57,6 +59,18 @@ function toFunnelSteps(data: EditalFunnelResponse["data"]): FunnelStep[] {
 function FunnelHeader() {
   return (
     <>
+      <Typography
+        variant="caption"
+        sx={{
+          display: "block",
+          mb: 1,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          color: "custom.highlight",
+        }}
+      >
+        Painel institucional
+      </Typography>
       <Typography
         variant="h4"
         sx={{
@@ -109,9 +123,18 @@ function InstitutionFunnelContent() {
     <Box>
       <FunnelHeader />
 
-      <TurmaSelect value={turma} onChange={setTurma} />
-
-      <FilterBar {...filterBarProps} />
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <FilterBar {...filterBarProps} />
+        <TurmaSelect value={turma} onChange={setTurma} />
+      </Box>
 
       <DashboardState
         loading={loading}
@@ -120,7 +143,31 @@ function InstitutionFunnelContent() {
         linked={data?.linked ?? true}
         skeleton={FUNNEL_SKELETON}
       >
-        {data ? <FunnelChart steps={toFunnelSteps(data.data)} /> : null}
+        {data
+          ? (() => {
+              const steps = toFunnelSteps(data.data);
+              return (
+                <>
+                  <Section
+                    variant="split"
+                    eyebrow={`${steps.length} etapas da experiência`}
+                    title="Progressão da jornada"
+                    sx={{ borderTop: 1, borderColor: "divider", pt: 3.5 }}
+                  >
+                    <FunnelChart steps={steps} />
+                  </Section>
+
+                  <Section
+                    variant="split"
+                    eyebrow="Sinais do período"
+                    title="Insights do funil"
+                  >
+                    <FunnelInsights steps={steps} />
+                  </Section>
+                </>
+              );
+            })()
+          : null}
       </DashboardState>
     </Box>
   );
