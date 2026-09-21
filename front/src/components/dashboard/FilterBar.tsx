@@ -39,7 +39,7 @@ export function FilterBar({
     dateRange === "custom" && onCustomFromChange && onCustomToChange;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 4 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
         <FormControl sx={{ minWidth: 180 }} size="small">
           <InputLabel
