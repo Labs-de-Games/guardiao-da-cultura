@@ -14,18 +14,13 @@ import {
   DialogTitle,
   IconButton,
   Snackbar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
 import Button from "@mui/material/Button";
 import { useState } from "react";
 import { DashboardState } from "@/components/dashboard/DashboardState";
+import { DataTable } from "@/components/dashboard/DataTable";
 import { Section } from "@/components/dashboard/Section";
 import {
   createCampaignLink,
@@ -96,6 +91,18 @@ function InstitutionLinksContent() {
   return (
     <Box>
       <Typography
+        variant="caption"
+        sx={{
+          display: "block",
+          mb: 1,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          color: "custom.highlight",
+        }}
+      >
+        Painel institucional
+      </Typography>
+      <Typography
         variant="h4"
         sx={{
           mb: 1,
@@ -112,7 +119,7 @@ function InstitutionLinksContent() {
         dataset do edital.
       </Typography>
 
-      <Section title="Criar link">
+      <Section variant="split" eyebrow="Campanhas e turmas" title="Criar link">
         <Card>
           <CardContent
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -148,71 +155,53 @@ function InstitutionLinksContent() {
         </Card>
       </Section>
 
-      <Section title="Meus links">
+      <Section variant="split" eyebrow="Gerenciamento" title="Meus links">
         <DashboardState
           loading={linksLoading}
           error={linksError}
           onRetry={retryLinks}
           linked={linksData?.linked ?? true}
         >
-          {links.length === 0 ? (
-            <Typography sx={{ color: "text.secondary" }}>
-              Nenhum link criado ainda.
-            </Typography>
-          ) : (
-            <TableContainer sx={{ overflowX: "auto" }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
-                      Grupo/turma
-                    </TableCell>
-                    <TableCell sx={{ color: "text.primary", fontWeight: 600 }}>
-                      Link
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{ color: "text.primary", fontWeight: 600 }}
-                    >
-                      Ações
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {links.map((link: CampaignLink) => (
-                    <TableRow key={link.id}>
-                      <TableCell sx={{ color: "text.primary" }}>
-                        {link.source}
-                      </TableCell>
-                      <TableCell sx={{ color: "text.primary" }}>
-                        {link.url}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          aria-label={`Copiar link de ${link.source}`}
-                          onClick={() => handleCopy(link.url)}
-                          size="small"
-                        >
-                          <ContentCopyIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          aria-label={`Excluir link de ${link.source}`}
-                          onClick={() => setPendingDelete(link)}
-                          size="small"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+          <DataTable
+            label="Meus links"
+            emptyMessage="Nenhum link criado ainda."
+            columns={[
+              { header: "Grupo/turma" },
+              { header: "Link" },
+              { header: "Ações", align: "right" },
+            ]}
+            rows={links.map((link: CampaignLink) => [
+              link.source,
+              link.url,
+              <Box
+                key="actions"
+                sx={{ display: "flex", justifyContent: "flex-end" }}
+              >
+                <IconButton
+                  aria-label={`Copiar link de ${link.source}`}
+                  onClick={() => handleCopy(link.url)}
+                  size="small"
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  aria-label={`Excluir link de ${link.source}`}
+                  onClick={() => setPendingDelete(link)}
+                  size="small"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>,
+            ])}
+          />
         </DashboardState>
       </Section>
 
-      <Section title="Origens (últimos 30 dias)">
+      <Section
+        variant="split"
+        eyebrow="Distribuição de acessos"
+        title="Origens (últimos 30 dias)"
+      >
         <DashboardState
           loading={loading}
           error={error}
@@ -220,43 +209,18 @@ function InstitutionLinksContent() {
           linked={data?.linked ?? true}
         >
           {data?.data ? (
-            data.data.length === 0 ? (
-              <Typography sx={{ color: "text.secondary" }}>
-                Nenhuma origem registrada nos últimos 30 dias.
-              </Typography>
-            ) : (
-              <TableContainer sx={{ overflowX: "auto" }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell
-                        sx={{ color: "text.primary", fontWeight: 600 }}
-                      >
-                        Origem
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{ color: "text.primary", fontWeight: 600 }}
-                      >
-                        Usuários únicos
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {data.data.map((row) => (
-                      <TableRow key={row.source}>
-                        <TableCell sx={{ color: "text.primary" }}>
-                          {resolveOriginLabel(row.source)}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: "text.primary" }}>
-                          {row.uniquePlayers.toLocaleString("pt-BR")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )
+            <DataTable
+              label="Origens dos acessos"
+              emptyMessage="Nenhuma origem registrada nos últimos 30 dias."
+              columns={[
+                { header: "Origem" },
+                { header: "Usuários únicos", align: "right" },
+              ]}
+              rows={data.data.map((row) => [
+                resolveOriginLabel(row.source),
+                row.uniquePlayers.toLocaleString("pt-BR"),
+              ])}
+            />
           ) : null}
         </DashboardState>
       </Section>
