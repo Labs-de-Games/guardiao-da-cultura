@@ -1,10 +1,12 @@
 import {
+  type SxProps,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  type Theme,
   Typography,
 } from "@mui/material";
 import type { ReactNode } from "react";
@@ -20,6 +22,8 @@ interface DataTableProps {
   /** Accessible label for the table (screen-reader caption). */
   label: string;
   emptyMessage?: string;
+  /** Extra styles merged onto the outer container, e.g. to flatten borderRadius. */
+  sx?: SxProps<Theme>;
 }
 
 /**
@@ -33,6 +37,7 @@ export function DataTable({
   rows,
   label,
   emptyMessage,
+  sx,
 }: DataTableProps) {
   if (rows.length === 0 && emptyMessage) {
     return (
@@ -47,6 +52,7 @@ export function DataTable({
         borderColor: "divider",
         borderRadius: 2,
         overflowX: "auto",
+        ...sx,
       }}
     >
       <Table size="small">
