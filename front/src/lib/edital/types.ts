@@ -147,3 +147,35 @@ export interface EditalLinksCreateResponse {
   linked: boolean;
   data: CampaignLink | null;
 }
+/**
+ * Issue #808 — the public dashboard's response shape. Unlike every other
+ * response in this file, there's no `linked` flag: this endpoint has no
+ * session/institution to be linked or not, it's always cross-institution
+ * aggregate data, always public.
+ */
+export interface PublicDashboardResponse {
+  playersUnique: number;
+  institutionsActive: number;
+  turmasActive: number;
+  /** Progress toward EDITAL_ANNUAL_PLAYER_GOAL — {value, numerator: playersUnique, denominator: 5000}. */
+  annualGoalProgress: Rate;
+  completionRate: Rate;
+  entryRate: Rate;
+  phaseProgression: Array<{ label: string; players: number }>;
+  /** Per-level detail for the level-switcher panel — reached/completed counts plus quiz pass rate. */
+  phaseDetail: Array<{
+    levelId: string;
+    levelNumber: number;
+    label: string;
+    reached: number;
+    completed: number;
+    quizPassRate: Rate;
+  }>;
+  originSplit: { institutional: number; spontaneous: number };
+  playerTrend: Array<{ month: string; players: number }>;
+  sessionDuration: {
+    avgSeconds: number;
+    medianSeconds: number;
+    sessionsStarted: number;
+  };
+}
