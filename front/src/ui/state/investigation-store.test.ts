@@ -1,5 +1,7 @@
+import posthog from "posthog-js";
 import {
   INVESTIGATION_CLUE_HEARTS,
+  INVESTIGATION_LEVEL_ID,
   INVESTIGATION_SLOTS,
 } from "@/game/constants/Investigation";
 import type {
@@ -339,6 +341,160 @@ describe("investigation store", () => {
         useGameUIStore.getState().accuseSuspect("helena_marques"),
       ).toBeNull();
       expect(investigation().result).toEqual({ stars: 5, correct: true });
+    });
+  });
+
+  describe("analytics", () => {
+    const captured = (event: string) =>
+      (posthog.capture as jest.Mock).mock.calls
+        .filter(([name]) => name === event)
+        .map(([, props]) => props);
+
+    beforeEach(() => {
+      (posthog.capture as jest.Mock).mockClear();
+    });
+
+    it("reports each drop with its verdict and what it cost", () => {
+      place("augusto_vale", 1, VARNISH.key);
+
+      expect(captured("investigation_clue_placed")).toEqual([
+        {
+          level_id: INVESTIGATION_LEVEL_ID,
+          clue_key: VARNISH.key,
+          clue_source: "player",
+          trait_id: "conservation_technique",
+          suspect_id: "augusto_vale",
+          slot_index: 1,
+          verdict: "quente",
+          hearts_left: INVESTIGATION_CLUE_HEARTS - 1,
+          replaced_clue_key: null,
+          attempt_number: 1,
+          is_tutorial: false,
+        },
+      ]);
+    });
+
+    it("names the clue a drop pushed out of the slot", () => {
+      place("helena_marques", 0, VARNISH.key);
+      useGameUIStore.getState().clearSlot("helena_marques", 0);
+      place("helena_marques", 0, CACHIMBO.key);
+
+      expect(captured("investigation_clue_placed")[1]).toMatchObject({
+        clue_key: CACHIMBO.key,
+        verdict: "frio",
+        replaced_clue_key: null,
+      });
+
+      place("helena_marques", 1, PAPER.key);
+      useGameUIStore.getState().clearSlot("helena_marques", 1);
+      place("helena_marques", 0, PAPER.key);
+
+      expect(captured("investigation_clue_placed")[3]).toMatchObject({
+        clue_key: PAPER.key,
+        verdict: "morno",
+        replaced_clue_key: CACHIMBO.key,
+      });
+    });
+
+    it("says nothing on a refused drop", () => {
+      place("augusto_vale", 0, "level_01:nao_existe");
+      expect(captured("investigation_clue_placed")).toEqual([]);
+    });
+
+    it("marks the walkthrough's demonstration drop as a tutorial drop", () => {
+      useGameUIStore.getState().startTutorial();
+      place("augusto_vale", 0, VARNISH.key);
+
+      expect(captured("investigation_clue_placed")[0]).toMatchObject({
+        is_tutorial: true,
+      });
+    });
+
+    it("counts the run a drop belongs to", () => {
+      place("helena_marques", 0, VARNISH.key);
+      useGameUIStore.getState().accuseSuspect("helena_marques");
+      place("bruno_tavares", 0, VARNISH.key);
+
+      expect(captured("investigation_clue_placed")[1]).toMatchObject({
+        attempt_number: 2,
+      });
+    });
+
+    it("reports a wrong accusation with no stars yet", () => {
+      place("helena_marques", 0, VARNISH.key);
+      useGameUIStore.getState().accuseSuspect("helena_marques");
+
+      expect(captured("investigation_suspect_accused")).toEqual([
+        {
+          level_id: INVESTIGATION_LEVEL_ID,
+          suspect_id: "helena_marques",
+          attempt_number: 1,
+          clues_on_suspect: 1,
+          hot_clues: 0,
+          cold_clues: 1,
+          is_correct: false,
+          wrong_attempts: 1,
+          stars: null,
+          revealed: false,
+        },
+      ]);
+      expect(captured("investigation_suspect_identified")).toEqual([]);
+    });
+
+    it("reports the accusation that reveals the culprit as resolved", () => {
+      for (const id of WRONG_IDS) {
+        place(id, 0, VARNISH.key);
+        useGameUIStore.getState().accuseSuspect(id);
+      }
+
+      const accusations = captured("investigation_suspect_accused");
+      expect(accusations).toHaveLength(4);
+      expect(accusations[3]).toMatchObject({
+        attempt_number: 4,
+        is_correct: false,
+        wrong_attempts: 4,
+        stars: 1,
+        revealed: true,
+      });
+      expect(captured("investigation_suspect_identified")).toEqual([]);
+    });
+
+    it("reports the winning accusation twice: as an accusation and as a win", () => {
+      place("helena_marques", 0, VARNISH.key);
+      useGameUIStore.getState().accuseSuspect("helena_marques");
+
+      place("augusto_vale", 0, VARNISH.key);
+      place("augusto_vale", 1, PAPER.key);
+      useGameUIStore.getState().accuseSuspect("augusto_vale");
+
+      expect(captured("investigation_suspect_accused")[1]).toMatchObject({
+        suspect_id: "augusto_vale",
+        attempt_number: 2,
+        is_correct: true,
+        wrong_attempts: 1,
+        stars: 4,
+        revealed: false,
+      });
+
+      expect(captured("investigation_suspect_identified")).toEqual([
+        {
+          level_id: INVESTIGATION_LEVEL_ID,
+          suspect_id: "augusto_vale",
+          stars: 4,
+          wrong_attempts: 1,
+          attempt_number: 2,
+          clues_on_suspect: 2,
+          hot_clues: 2,
+          cold_clues: 0,
+          clues_collected: 4,
+          clues_available: 4,
+        },
+      ]);
+    });
+
+    it("says nothing when an accusation is refused", () => {
+      useGameUIStore.getState().accuseSuspect("augusto_vale");
+      expect(captured("investigation_suspect_accused")).toEqual([]);
     });
   });
 
