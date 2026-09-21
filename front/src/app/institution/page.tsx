@@ -10,6 +10,7 @@ import {
 } from "@/components/dashboard/FunnelChart";
 import { HeroMetric } from "@/components/dashboard/HeroMetric";
 import { KPICard } from "@/components/dashboard/KPICard";
+import { QuickRead } from "@/components/dashboard/QuickRead";
 import { RateCard } from "@/components/dashboard/RateCard";
 import { Section } from "@/components/dashboard/Section";
 import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
@@ -56,6 +57,18 @@ interface OverviewData {
 function OverviewHeader() {
   return (
     <>
+      <Typography
+        variant="caption"
+        sx={{
+          display: "block",
+          mb: 1,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          color: "custom.highlight",
+        }}
+      >
+        Painel institucional
+      </Typography>
       <Typography
         variant="h4"
         sx={{
@@ -115,9 +128,18 @@ function InstitutionOverviewContent() {
     <Box>
       <OverviewHeader />
 
-      <TurmaSelect value={turma} onChange={setTurma} />
-
-      <FilterBar {...filterBarProps} />
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <FilterBar {...filterBarProps} />
+        <TurmaSelect value={turma} onChange={setTurma} />
+      </Box>
 
       <DashboardState
         loading={loading}
@@ -131,7 +153,11 @@ function InstitutionOverviewContent() {
             <Box sx={{ mb: 3 }}>
               <HeroMetric value={data.summary.data?.gameplay_started ?? 0} />
             </Box>
-            <Section title="Métricas do Edital">
+            <Section
+              variant="split"
+              eyebrow="Desempenho agregado"
+              title="Métricas do Edital"
+            >
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <KPICard
@@ -185,27 +211,18 @@ function InstitutionOverviewContent() {
               </Grid>
             </Section>
 
-            <Section title="Desempenho por fase (aprovação no quiz)">
+            <Section
+              variant="split"
+              eyebrow="Aprovação por fase"
+              title="Desempenho por fase (aprovação no quiz)"
+            >
               <FunnelChart
                 steps={toQuizPassRateBarSteps(data.summary.quizPassRate ?? [])}
                 highlightIndex={-1}
               />
             </Section>
 
-            {(data.summary.clueUsage ?? []).length > 0 ? (
-              <Section title="Uso de pistas por fase">
-                <Grid container spacing={3}>
-                  {(data.summary.clueUsage ?? []).map((row) => (
-                    <Grid key={row.levelId} size={{ xs: 12, sm: 6, md: 3 }}>
-                      <KPICard
-                        title={`Fase ${row.levelNumber} — ${row.label}`}
-                        value={row.clueUses.toLocaleString("pt-BR")}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </Section>
-            ) : null}
+            <QuickRead quizPassRate={data.summary.quizPassRate ?? []} />
           </>
         ) : null}
       </DashboardState>
