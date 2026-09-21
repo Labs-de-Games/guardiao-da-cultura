@@ -313,7 +313,7 @@ function LoginForm() {
   }
 
   return (
-    <AuthPageShell fillHeight={view !== "login"}>
+    <AuthPageShell fillHeight>
       {view === "login" ? (
         <LoginView
           email={email}
