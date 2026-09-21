@@ -14,6 +14,16 @@ import type { Rate } from "./types";
  * `landing_page_viewed` only fires on `/` while `/game` is linkable
  * direct (issue #742's own note), so the clamp is load-bearing.
  */
+/**
+ * The institution-wide player goal, per issue #745's HeroMetric comment:
+ * a real, known target, deliberately never shown per-institution there
+ * ("a per-institution bar against a global target would misrepresent
+ * what a single institution's number means"). Issue #808's public
+ * dashboard is the one place this target legitimately applies — it's
+ * about the whole program, not one institution.
+ */
+export const EDITAL_ANNUAL_PLAYER_GOAL = 5000;
+
 export function safeRate(numerator: number, denominator: number): Rate {
   if (denominator <= 0) {
     return { value: 0, numerator, denominator };
