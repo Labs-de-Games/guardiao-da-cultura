@@ -5,12 +5,18 @@ declare module "@mui/material/styles" {
     custom: {
       sidebarBg: string;
       footerMutedText: string;
+      highlight: string;
+      sidebarAccent: string;
+      sidebarAccentText: string;
     };
   }
   interface PaletteOptions {
     custom: {
       sidebarBg: string;
       footerMutedText: string;
+      highlight: string;
+      sidebarAccent: string;
+      sidebarAccentText: string;
     };
   }
 }
@@ -59,6 +65,16 @@ export const theme = createTheme({
     custom: {
       sidebarBg: "#f5f0e8",
       footerMutedText: "rgba(255,255,255,0.6)",
+      // Lovable reference's accent (oklch(0.68 0.11 61), a warm amber)
+      // for kickers/eyebrows and featured-card accents.
+      highlight: "#c17f3e",
+      // Lovable reference's --sidebar-accent/--sidebar-accent-foreground
+      // (oklch(0.88 0.035 325) / oklch(0.23 0.025 325)) — low-chroma
+      // (0.035), so it reads as a neutral warm grey, not pink. A
+      // *different* token from `highlight`, used only for the active
+      // sidebar nav item.
+      sidebarAccent: "#e4dfd6",
+      sidebarAccentText: "#2b2b2b",
     },
   },
   typography: {
