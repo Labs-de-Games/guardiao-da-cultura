@@ -19,10 +19,12 @@ jest.mock("@/lib/edital/server/routeGuard", () => ({
 
 const mockFetchSessionDuration = jest.fn();
 const mockFetchQuizPassRate = jest.fn();
+const mockFetchCompletionRate = jest.fn();
 jest.mock("@/lib/edital/server/metrics", () => ({
   fetchSessionDuration: (...args: unknown[]) =>
     mockFetchSessionDuration(...args),
   fetchQuizPassRate: (...args: unknown[]) => mockFetchQuizPassRate(...args),
+  fetchCompletionRate: (...args: unknown[]) => mockFetchCompletionRate(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -38,6 +40,12 @@ describe("GET /api/edital/report", () => {
     mockResolveEditalRequestContext.mockReset();
     mockFetchSessionDuration.mockReset();
     mockFetchQuizPassRate.mockReset();
+    mockFetchCompletionRate.mockReset();
+    mockFetchCompletionRate.mockResolvedValue({
+      value: 0,
+      numerator: 0,
+      denominator: 0,
+    });
   });
 
   it("returns 401 when there is no session", async () => {
@@ -63,7 +71,7 @@ describe("GET /api/edital/report", () => {
     expect(mockFetchQuizPassRate).not.toHaveBeenCalled();
   });
 
-  it("combines session duration and quiz pass rate on success", async () => {
+  it("combines session duration, quiz pass rate, and completion rate on success", async () => {
     const scope = __createScopeForTests("escola-teste");
     const range = { from: new Date(0), to: new Date() };
     mockResolveEditalRequestContext.mockResolvedValue({
@@ -81,6 +89,11 @@ describe("GET /api/edital/report", () => {
       numerator: 40,
       denominator: 50,
     });
+    mockFetchCompletionRate.mockResolvedValue({
+      value: 0.4,
+      numerator: 40,
+      denominator: 100,
+    });
 
     const response = await GET(makeRequest());
     const data = await response.json();
@@ -94,6 +107,7 @@ describe("GET /api/edital/report", () => {
           sessionsStarted: 120,
         },
         quizPassRate: { value: 0.8, numerator: 40, denominator: 50 },
+        completionRate: { value: 0.4, numerator: 40, denominator: 100 },
       },
     });
   });

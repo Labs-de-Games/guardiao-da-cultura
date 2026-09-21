@@ -26,6 +26,7 @@ const REPORT_DATA = {
       sessionsStarted: 700,
     },
     quizPassRate: { value: 0.75, numerator: 285, denominator: 380 },
+    completionRate: { value: 0.4, numerator: 40, denominator: 100 },
   },
 };
 
@@ -49,6 +50,8 @@ describe("InstitutionReportPage", () => {
       expect(screen.getByText("Sessões iniciadas")).toBeInTheDocument(),
     );
     expect(screen.getByText("700")).toBeInTheDocument();
+    expect(screen.getByText("Taxa de conclusão")).toBeInTheDocument();
+    expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.queryByText("Taxa de aprovação no quiz")).toBeNull();
   });
 
