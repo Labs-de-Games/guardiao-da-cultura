@@ -156,6 +156,13 @@ export function resolveDateRange(
         to: saoPauloCivilDayEnd(now),
       };
     }
+    case "90d": {
+      const from = new Date(now.getTime() - 89 * 24 * 60 * 60 * 1000);
+      return {
+        from: clampToPeriodStart(saoPauloCivilDayStart(from)),
+        to: saoPauloCivilDayEnd(now),
+      };
+    }
     case "all-time":
       return {
         from: getEditalPeriodStart() ?? new Date(0),

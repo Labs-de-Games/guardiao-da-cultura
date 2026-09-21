@@ -13,7 +13,7 @@ const DATE_STRING_PATTERN = /^\d{4}-\d{2}-\d{2}/;
 const rawQuerySchema = z
   .object({
     dateRange: z
-      .enum(["today", "7d", "30d", "all-time", "custom"])
+      .enum(["today", "7d", "30d", "90d", "all-time", "custom"])
       .default("30d"),
     from: z.string().regex(DATE_STRING_PATTERN).optional(),
     to: z.string().regex(DATE_STRING_PATTERN).optional(),

@@ -20,6 +20,7 @@ export type DateRange =
   | { type: "today" }
   | { type: "7d" }
   | { type: "30d" }
+  | { type: "90d" }
   | { type: "all-time" }
   | { type: "custom"; start: string; end: string };
 
