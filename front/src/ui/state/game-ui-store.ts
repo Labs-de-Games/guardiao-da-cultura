@@ -2,6 +2,7 @@ import posthog from "posthog-js";
 import { create } from "zustand";
 import {
   INVESTIGATION_CLUE_HEARTS,
+  INVESTIGATION_LEVEL_ID,
   INVESTIGATION_MAX_WRONG_ATTEMPTS,
   INVESTIGATION_SLOTS,
   starsForWrongAttempts,
@@ -771,61 +772,81 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         investigation: { ...s.investigation, hoveredClueKey: key },
       })),
 
-    placeClueInSlot: (suspectId, slotIndex, clueKey) =>
-      set((s) => {
-        const { payload, clueHearts, wrongSuspectIds } = s.investigation;
-        const suspect = payload?.suspects.find((x) => x.id === suspectId);
-        const clue = payload?.clues.find((c) => c.key === clueKey);
-        if (!suspect || !clue) return s;
+    // Reads through `get()` rather than inside the `set()` updater so the
+    // analytics call is a side effect of the action, not of the reducer.
+    placeClueInSlot: (suspectId, slotIndex, clueKey) => {
+      const { investigation } = get();
+      const { payload, clueHearts, wrongSuspectIds, tutorial, boards } =
+        investigation;
+      const suspect = payload?.suspects.find((x) => x.id === suspectId);
+      const clue = payload?.clues.find((c) => c.key === clueKey);
+      if (!suspect || !clue) return;
 
-        // A cleared suspect is out of the game, and a clue with no hearts left
-        // has already been committed somewhere it can never leave.
-        if (wrongSuspectIds.includes(suspectId)) return s;
-        if ((clueHearts[clueKey] ?? 0) <= 0) return s;
+      // A cleared suspect is out of the game, and a clue with no hearts left
+      // has already been committed somewhere it can never leave.
+      if (wrongSuspectIds.includes(suspectId)) return;
+      if ((clueHearts[clueKey] ?? 0) <= 0) return;
 
-        // The walkthrough asks for exactly one drop and then stops taking them.
-        const { tutorial } = s.investigation;
-        if (tutorial.active && tutorial.demoPlaced) return s;
+      // The walkthrough asks for exactly one drop and then stops taking them.
+      if (tutorial.active && tutorial.demoPlaced) return;
 
-        // Already pinned to a suspect: it has to come off that seat first.
-        if (holderOf(s.investigation.boards, clueKey)) return s;
+      // Already pinned to a suspect: it has to come off that seat first.
+      if (holderOf(boards, clueKey)) return;
 
-        const boards = s.investigation.boards;
-        const board = boardFor(boards, suspectId);
+      const board = boardFor(boards, suspectId);
 
-        // The slot may already hold a clue. It gives way — unless it is out of
-        // hearts, in which case it owns that slot for the rest of the run.
-        const occupant = board.slots[slotIndex];
-        if (occupant && (clueHearts[occupant] ?? 0) <= 0) return s;
+      // The slot may already hold a clue. It gives way — unless it is out of
+      // hearts, in which case it owns that slot for the rest of the run.
+      const occupant = board.slots[slotIndex];
+      if (occupant && (clueHearts[occupant] ?? 0) <= 0) return;
 
-        const slots = [...board.slots];
-        slots[slotIndex] = clueKey;
+      const slots = [...board.slots];
+      slots[slotIndex] = clueKey;
 
-        const verdicts = { ...board.verdicts };
-        if (occupant) delete verdicts[occupant];
-        verdicts[clueKey] = verdictFor(suspect.traits[clue.traitId]);
+      const verdicts = { ...board.verdicts };
+      if (occupant) delete verdicts[occupant];
+      const verdict = verdictFor(suspect.traits[clue.traitId]);
+      verdicts[clueKey] = verdict;
 
-        return {
-          investigation: {
-            ...s.investigation,
-            boards: { ...boards, [suspectId]: { slots, verdicts } },
-            clueHearts: {
-              ...clueHearts,
-              [clueKey]: clueHearts[clueKey] - 1,
-            },
-            // The walkthrough's later steps explain this very drop, so they
-            // follow the seat and the clue the player actually chose.
-            tutorial: tutorial.active
-              ? {
-                  ...tutorial,
-                  focusSuspectId: suspectId,
-                  focusClueKey: clueKey,
-                  demoPlaced: true,
-                }
-              : tutorial,
-          },
-        };
-      }),
+      const heartsLeft = clueHearts[clueKey] - 1;
+
+      set((s) => ({
+        investigation: {
+          ...s.investigation,
+          boards: { ...boards, [suspectId]: { slots, verdicts } },
+          clueHearts: { ...clueHearts, [clueKey]: heartsLeft },
+          // The walkthrough's later steps explain this very drop, so they
+          // follow the seat and the clue the player actually chose.
+          tutorial: tutorial.active
+            ? {
+                ...tutorial,
+                focusSuspectId: suspectId,
+                focusClueKey: clueKey,
+                demoPlaced: true,
+              }
+            : tutorial,
+        },
+      }));
+
+      posthog.capture("investigation_clue_placed", {
+        level_id: INVESTIGATION_LEVEL_ID,
+        clue_key: clueKey,
+        clue_source: clue.source,
+        trait_id: clue.traitId,
+        suspect_id: suspectId,
+        slot_index: slotIndex,
+        verdict,
+        hearts_left: heartsLeft,
+        // The clue this drop pushed out of the slot, when it landed on a full
+        // one — `null` on an empty slot.
+        replaced_clue_key: occupant,
+        // Which run at the board this is; a wrong accusation starts a new one.
+        attempt_number: investigation.wrongAttempts + 1,
+        // The walkthrough scripts exactly one drop. Without this flag it would
+        // read as ordinary play and inflate every placement metric.
+        is_tutorial: tutorial.active,
+      });
+    },
 
     clearSlot: (suspectId, slotIndex) =>
       set((s) => {
@@ -944,6 +965,34 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
       // Nobody is accused on a hunch: the seat has to carry evidence.
       if (!hasSlottedClue(investigation.boards, suspectId)) return null;
 
+      // What the player was looking at when they committed. `hot` is the part
+      // worth watching: an accusation made against cold evidence is a guess,
+      // and that reads very differently from one the board actually supports.
+      const board = investigation.boards[suspectId];
+      const slotted = board?.slots.filter((k): k is string => k !== null) ?? [];
+      const evidence = {
+        clues_on_suspect: slotted.length,
+        hot_clues: slotted.filter((k) => board?.verdicts[k] === "quente")
+          .length,
+        cold_clues: slotted.filter((k) => board?.verdicts[k] === "frio").length,
+      };
+
+      /** Every accusation reports, resolved or not. `stars` is null mid-run. */
+      const captureAccusation = (props: {
+        is_correct: boolean;
+        wrong_attempts: number;
+        stars: number | null;
+        revealed: boolean;
+      }) =>
+        posthog.capture("investigation_suspect_accused", {
+          level_id: INVESTIGATION_LEVEL_ID,
+          suspect_id: suspectId,
+          // 1-based: the first accusation of this run is attempt 1.
+          attempt_number: investigation.wrongAttempts + 1,
+          ...evidence,
+          ...props,
+        });
+
       if (accused.isCulprit) {
         const stars = starsForWrongAttempts(investigation.wrongAttempts);
         set((s) => ({
@@ -953,6 +1002,28 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
             result: { stars, correct: true },
           },
         }));
+
+        captureAccusation({
+          is_correct: true,
+          wrong_attempts: investigation.wrongAttempts,
+          stars,
+          revealed: false,
+        });
+        // A dedicated success event: the phase is won here, and the funnel
+        // should not have to filter the accusation stream to find that out.
+        posthog.capture("investigation_suspect_identified", {
+          level_id: INVESTIGATION_LEVEL_ID,
+          suspect_id: suspectId,
+          stars,
+          wrong_attempts: investigation.wrongAttempts,
+          attempt_number: investigation.wrongAttempts + 1,
+          ...evidence,
+          // How much evidence the player actually brought in from the levels,
+          // before the curator topped it up.
+          clues_collected: investigation.payload?.collectedCount ?? 0,
+          clues_available: investigation.payload?.clues.length ?? 0,
+        });
+
         return {
           stars,
           correct: true,
@@ -978,6 +1049,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
             result: { stars, correct: false },
           },
         }));
+
+        captureAccusation({
+          is_correct: false,
+          wrong_attempts: wrongAttempts,
+          stars,
+          revealed: true,
+        });
         return { stars, correct: false, wrongAttempts };
       }
 
@@ -996,6 +1074,13 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           lastWrongSuspectId: suspectId,
         },
       }));
+
+      captureAccusation({
+        is_correct: false,
+        wrong_attempts: wrongAttempts,
+        stars: null,
+        revealed: false,
+      });
       return null;
     },
 
