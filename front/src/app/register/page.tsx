@@ -129,7 +129,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthPageShell>
+    <AuthPageShell fillHeight>
       <AuthTitle>Cadastre-se</AuthTitle>
       <AuthSubtitle>
         Preencha os campos abaixo para começar a jogar.
