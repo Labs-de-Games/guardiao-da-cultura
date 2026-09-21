@@ -25,6 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
@@ -51,7 +52,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <Toolbar sx={{ px: 3, py: 2, justifyContent: "center" }}>
+      <Toolbar
+        sx={{
+          px: 3,
+          py: 2,
+          justifyContent: "center",
+          gap: 1,
+        }}
+      >
+        <Image
+          src="/images/auth/logo-jogo.png"
+          alt="Guardião da Cultura"
+          width={48}
+          height={48}
+          style={{ objectFit: "contain" }}
+        />
         <Typography
           variant="h6"
           component="div"
@@ -224,6 +239,13 @@ export default function InstitutionLayout({
                   >
                     <MenuIcon />
                   </IconButton>
+                  <Image
+                    src="/images/auth/logo-jogo.png"
+                    alt="Guardião da Cultura"
+                    width={40}
+                    height={40}
+                    style={{ objectFit: "contain", marginLeft: 8 }}
+                  />
                   <Typography
                     variant="h6"
                     sx={{
