@@ -46,10 +46,21 @@ export function FunnelChart({
               <Typography
                 variant="body2"
                 sx={{
-                  fontWeight: isHighlight ? 700 : 500,
+                  fontWeight: 700,
                   color: "text.primary",
                 }}
               >
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{
+                    display: "inline-block",
+                    width: 24,
+                    color: "text.secondary",
+                  }}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </Typography>
                 {step.label}
                 {typeof step.count === "number" ? (
                   <Typography
@@ -64,8 +75,8 @@ export function FunnelChart({
               <Typography
                 variant="body2"
                 sx={{
-                  fontWeight: isHighlight ? 700 : 500,
-                  color: isHighlight ? "primary.main" : "text.secondary",
+                  fontWeight: 700,
+                  color: "text.primary",
                 }}
               >
                 {Math.round(step.value * 100)}%
@@ -89,8 +100,9 @@ export function FunnelChart({
                 backgroundColor: "rgba(0,0,0,0.08)",
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 6,
-                  backgroundColor: "primary.main",
-                  opacity: isHighlight ? 1 : 0.55,
+                  backgroundColor: isHighlight
+                    ? "custom.highlight"
+                    : "primary.main",
                 },
               }}
             />

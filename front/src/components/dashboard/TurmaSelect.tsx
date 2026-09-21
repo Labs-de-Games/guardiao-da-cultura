@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, MenuItem, Select } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { listCampaignLinks } from "@/lib/api/edital";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 
@@ -20,24 +20,31 @@ export function TurmaSelect({ value, onChange }: TurmaSelectProps) {
   const links = data?.data ?? [];
 
   return (
-    <Box sx={{ mb: 3, maxWidth: 320 }}>
-      <Select
-        fullWidth
-        size="small"
-        displayEmpty
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        sx={{ color: "text.primary" }}
-      >
-        <MenuItem value="">
-          <em>Toda a instituição</em>
-        </MenuItem>
-        {links.map((link) => (
-          <MenuItem key={link.id} value={link.source}>
-            {link.source}
-          </MenuItem>
-        ))}
-      </Select>
+    <Box sx={{ minWidth: 220, maxWidth: 320 }}>
+      <FormControl fullWidth size="small">
+        <InputLabel
+          id="turma-filter-label"
+          shrink
+          sx={{ color: "text.secondary" }}
+        >
+          Turma ou origem
+        </InputLabel>
+        <Select
+          labelId="turma-filter-label"
+          label="Turma ou origem"
+          displayEmpty
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          sx={{ color: "text.primary" }}
+        >
+          <MenuItem value="">Toda a instituição</MenuItem>
+          {links.map((link) => (
+            <MenuItem key={link.id} value={link.source}>
+              {link.source}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </Box>
   );
 }

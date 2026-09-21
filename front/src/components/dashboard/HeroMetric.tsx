@@ -18,7 +18,22 @@ export function HeroMetric({
   label = "Usuários únicos em gameplay",
 }: HeroMetricProps) {
   return (
-    <Card sx={{ height: "100%" }}>
+    <Card
+      sx={{
+        height: "100%",
+        position: "relative",
+        overflow: "hidden",
+        borderColor: "custom.highlight",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          insetBlock: 0,
+          insetInlineStart: 0,
+          width: 5,
+          backgroundColor: "custom.highlight",
+        },
+      }}
+    >
       <CardContent sx={{ p: 4, textAlign: "center" }}>
         <Typography
           variant="body2"

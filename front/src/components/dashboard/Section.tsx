@@ -1,19 +1,92 @@
-import { Box, Typography } from "@mui/material";
+import { Box, type SxProps, type Theme, Typography } from "@mui/material";
 import type { PropsWithChildren } from "react";
 
 interface SectionProps {
   /** Omit when the page's own heading already identifies this content — avoids a redundant nested title. */
   title?: string;
+  /** Small uppercase label above the title, e.g. "Desempenho agregado". */
+  eyebrow?: string;
   description?: string;
+  /**
+   * "stacked" (default): eyebrow above title, both left-aligned.
+   * "split": eyebrow left / title right on the same row, matching the
+   * Lovable reference's .section-heading (dashboard-ui.tsx SectionHeading).
+   */
+  variant?: "stacked" | "split";
+  /** Extra styles merged onto the outer container, e.g. a top divider. */
+  sx?: SxProps<Theme>;
 }
 
 export function Section({
   title,
+  eyebrow,
   description,
+  variant = "stacked",
+  sx,
   children,
 }: PropsWithChildren<SectionProps>) {
+  if (variant === "split") {
+    return (
+      <Box sx={{ mb: 4, ...sx }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 2,
+            mb: 1.5,
+          }}
+        >
+          {eyebrow ? (
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "custom.highlight",
+              }}
+            >
+              {eyebrow}
+            </Typography>
+          ) : null}
+          {title ? (
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                color: "text.primary",
+                fontFamily: "'Jockey One', sans-serif",
+              }}
+            >
+              {title}
+            </Typography>
+          ) : null}
+        </Box>
+        {description ? (
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            {description}
+          </Typography>
+        ) : null}
+        {children}
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ mb: 4, ...sx }}>
+      {eyebrow ? (
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            color: "custom.highlight",
+          }}
+        >
+          {eyebrow}
+        </Typography>
+      ) : null}
       {title ? (
         <Typography
           variant="h6"
