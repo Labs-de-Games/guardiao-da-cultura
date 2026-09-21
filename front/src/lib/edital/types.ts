@@ -112,6 +112,7 @@ export interface EditalReportResponse {
       sessionsStarted: number;
     };
     quizPassRate: Rate;
+    completionRate: Rate;
   } | null;
 }
 
