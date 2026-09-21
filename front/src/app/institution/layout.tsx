@@ -80,10 +80,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 sx={{
                   borderRadius: 2,
                   backgroundColor: isActive
-                    ? "rgba(99,102,241,0.12)"
+                    ? "custom.sidebarAccent"
                     : "transparent",
                   "&:hover": {
-                    backgroundColor: "rgba(99,102,241,0.08)",
+                    backgroundColor: isActive
+                      ? "custom.sidebarAccent"
+                      : "rgba(228,223,214,0.55)",
                   },
                   transition: "background-color 0.2s ease",
                 }}
@@ -91,7 +93,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 <ListItemIcon
                   sx={{
                     minWidth: 40,
-                    color: isActive ? "primary.main" : "text.secondary",
+                    color: isActive
+                      ? "custom.sidebarAccentText"
+                      : "text.secondary",
                   }}
                 >
                   <Icon fontSize="small" />
@@ -100,7 +104,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   sx={{
                     fontWeight: isActive ? 600 : 500,
                     fontSize: "0.9375rem",
-                    color: isActive ? "primary.main" : "text.primary",
+                    color: isActive
+                      ? "custom.sidebarAccentText"
+                      : "text.primary",
                   }}
                 >
                   {item.label}
