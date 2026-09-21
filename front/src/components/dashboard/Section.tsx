@@ -15,6 +15,8 @@ interface SectionProps {
   variant?: "stacked" | "split";
   /** Extra styles merged onto the outer container, e.g. a top divider. */
   sx?: SxProps<Theme>;
+  /** DOM id on the outer container, e.g. for an anchor-nav target. */
+  id?: string;
 }
 
 export function Section({
@@ -23,11 +25,12 @@ export function Section({
   description,
   variant = "stacked",
   sx,
+  id,
   children,
 }: PropsWithChildren<SectionProps>) {
   if (variant === "split") {
     return (
-      <Box sx={{ mb: 4, ...sx }}>
+      <Box id={id} sx={{ mb: 4, ...sx }}>
         <Box
           sx={{
             display: "flex",
@@ -73,7 +76,7 @@ export function Section({
   }
 
   return (
-    <Box sx={{ mb: 4, ...sx }}>
+    <Box id={id} sx={{ mb: 4, ...sx }}>
       {eyebrow ? (
         <Typography
           variant="caption"
