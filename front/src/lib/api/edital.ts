@@ -6,6 +6,7 @@ import type {
   EditalLinksListResponse,
   EditalReportResponse,
   EditalSummaryResponse,
+  PublicDashboardResponse,
 } from "@/lib/edital/types";
 
 /**
@@ -92,6 +93,29 @@ export function getCampaigns(
   dateRange: DateRange,
 ): Promise<EditalCampaignsResponse> {
   return getJson<EditalCampaignsResponse>("/api/edital/campaigns", dateRange);
+}
+
+/**
+ * Issue #808 — no `credentials: "include"` needed (no session, no cookie
+ * to send) and no 401 branch (this route never requires auth), unlike
+ * `getJson` above. Deliberately its own small fetcher, not a reuse of
+ * `getJson`, so a future change to the institution-scoped error handling
+ * there can't silently start assuming a session exists here too.
+ */
+export async function getPublicDashboard(
+  dateRange: DateRange,
+): Promise<PublicDashboardResponse> {
+  const params = dateRangeToSearchParams(dateRange);
+  const response = await fetch(`/api/public/dashboard?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new EditalApiError(
+      `Falha ao carregar dados (status ${response.status}).`,
+      response.status,
+    );
+  }
+
+  return (await response.json()) as PublicDashboardResponse;
 }
 
 /**
