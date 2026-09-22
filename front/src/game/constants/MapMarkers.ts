@@ -48,11 +48,11 @@ export const MAP_MARKERS: MapMarker[] = [
     // location and artwork for the curator's investigation room.
     id: "sala-de-investigacao",
     shortlocation: "Sala de Investigação",
-    x: 0.58,
+    x: 0.62,
     y: 0.52,
     title: "Identificação do Suspeito",
     location: "Sala de Investigação",
-    image: "/assets/ui/map-cards/inhotim.png",
+    image: "/assets/ui/map-cards/investigation-room.png",
     levelId: INVESTIGATION_LEVEL_ID,
   },
 ];
