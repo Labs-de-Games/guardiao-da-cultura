@@ -29,7 +29,15 @@ jest.mock("phaser", () => ({
 }));
 
 jest.mock("@/game/audio/AudioManager", () => ({
-  AudioManager: { playSfx: jest.fn() },
+  AudioManager: {
+    playSfx: jest.fn(),
+    getSettings: jest.fn(() => ({
+      musicVolume: 0.4,
+      sfxVolume: 0.7,
+      muted: false,
+    })),
+    setMusicVolume: jest.fn(),
+  },
 }));
 
 jest.mock("posthog-js", () => ({
@@ -167,6 +175,12 @@ describe("InvestigationScreen", () => {
     // sit on top of every one of these assertions; it has its own block below.
     markInvestigationTutorialSeen();
     (AudioManager.playSfx as jest.Mock).mockClear();
+    (AudioManager.setMusicVolume as jest.Mock).mockClear();
+    (AudioManager.getSettings as jest.Mock).mockReturnValue({
+      musicVolume: 0.4,
+      sfxVolume: 0.7,
+      muted: false,
+    });
     useGameUIStore.getState().closeInvestigation();
     useGameUIStore.getState().openInvestigation(buildPayload());
   });
@@ -547,6 +561,40 @@ describe("InvestigationScreen", () => {
 
       expect(screen.getByText("Investigação encerrada")).toBeInTheDocument();
       expect(investigation().revealed).toBe(true);
+    });
+  });
+
+  describe("the music toggle", () => {
+    it("silences the music and remembers the volume to bring back", () => {
+      render(<InvestigationScreen />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Silenciar música" }));
+      expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(0);
+
+      fireEvent.click(screen.getByRole("button", { name: "Ativar música" }));
+      expect(AudioManager.setMusicVolume).toHaveBeenLastCalledWith(0.4);
+    });
+
+    it("opens already muted when the game is", () => {
+      (AudioManager.getSettings as jest.Mock).mockReturnValue({
+        musicVolume: 0,
+        sfxVolume: 0.7,
+        muted: false,
+      });
+      render(<InvestigationScreen />);
+
+      expect(
+        screen.getByRole("button", { name: "Ativar música" }),
+      ).toBeInTheDocument();
+    });
+
+    it("leaves the error sound alone", () => {
+      render(<InvestigationScreen />);
+      fireEvent.click(screen.getByRole("button", { name: "Silenciar música" }));
+
+      accuse("helena_marques", "Helena Marques");
+
+      expect(AudioManager.playSfx).toHaveBeenCalledWith("sfx.puzzle.failure");
     });
   });
 
