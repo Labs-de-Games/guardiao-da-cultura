@@ -67,7 +67,9 @@ export function InvestigationResult() {
             lineHeight: 1.1,
           }}
         >
-          {result.correct ? "Caso encerrado" : "Investigação encerrada"}
+          {result.correct
+            ? "Mandado de prisão emitido"
+            : "Investigação encerrada"}
         </Typography>
 
         <Box sx={{ display: "flex", gap: 0.75 }}>
@@ -154,7 +156,7 @@ export function InvestigationResult() {
         <Box
           component="button"
           type="button"
-          onClick={() => EventBus.emit("investigation:exit", undefined)}
+          onClick={() => EventBus.emit("investigation:outro", undefined)}
           sx={{
             mt: 1,
             px: 3,
@@ -169,7 +171,7 @@ export function InvestigationResult() {
             "&:hover": { bgcolor: colors.accentGoldHover },
           }}
         >
-          Voltar ao mapa
+          VER DESFECHO
         </Box>
       </Box>
     </Box>

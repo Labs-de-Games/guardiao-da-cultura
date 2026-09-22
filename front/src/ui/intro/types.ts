@@ -10,8 +10,18 @@ export interface PanelConfig {
 }
 
 export interface IntroConfig {
-  revealIconMask: string;
-  loadingImage: string;
+  /**
+   * Folder under `assets/data/levels/<levelId>/` holding this cinematic's art.
+   *
+   * Defaults to `"intro"`. The suspect identification phase also plays a
+   * closing cinematic out of its own folder, so the sequence is not tied to a
+   * single directory per level.
+   */
+  assetDir?: string;
+  /** Currently unread by any component; kept for configs that declare it. */
+  revealIconMask?: string;
+  /** Currently unread by any component; kept for configs that declare it. */
+  loadingImage?: string;
   captionImage?: string;
   skipEnabled: boolean;
   panels: PanelConfig[];

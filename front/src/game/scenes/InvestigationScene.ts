@@ -8,6 +8,7 @@ import {
   type PersistedCollectible,
 } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "@/shared/events/event-bus";
+import type { IntroConfig } from "@/ui/intro/types";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio } from "../audio";
 import {
@@ -29,6 +30,9 @@ import type { UserProgressState } from "../types/ProgressionTypes";
 
 const SUSPECTS_KEY = "investigation_suspects";
 const CLUES_KEY = "investigation_clues";
+const OUTRO_KEY = "investigation_outro_config";
+/** The arrest cinematic keeps its art and its config in its own folder. */
+const OUTRO_DIR = "suspect-arrested";
 const collectiblesCacheKey = (levelId: string) =>
   `investigation_collectibles:${levelId}`;
 
@@ -48,6 +52,20 @@ export class InvestigationScene extends Scene {
   private progressionManager = new ProgressionManager();
   private unsubCompleted?: () => void;
   private unsubExit?: () => void;
+  private unsubOutro?: () => void;
+  private unsubOutroDone?: () => void;
+  private unsubCreditsDone?: () => void;
+  /**
+   * Whether the credits are owed at the end of this run.
+   *
+   * Only a first completion earns them: the phase is replayable for a better
+   * star score, and a player grinding for five stars should not have to sit
+   * through the credits on every attempt. Read from the dossier rather than
+   * from progression, because the result is written the moment the accusation
+   * resolves — by the time the ending plays, progression already says the
+   * phase is complete.
+   */
+  private creditsPending = false;
 
   constructor() {
     super(SceneNames.INVESTIGATION);
@@ -62,6 +80,10 @@ export class InvestigationScene extends Scene {
 
     this.load.json(SUSPECTS_KEY, "data/investigation/suspects.json");
     this.load.json(CLUES_KEY, "data/investigation/clues.json");
+    this.load.json(
+      OUTRO_KEY,
+      `data/levels/${INVESTIGATION_LEVEL_ID}/${OUTRO_DIR}/outro_config.json`,
+    );
 
     // Every playable level's clue content, so the dossier can show clues from
     // all three phases regardless of which one the player came from.
@@ -97,6 +119,17 @@ export class InvestigationScene extends Scene {
 
     this.unsubExit = EventBus.on("investigation:exit", () => {
       this.scene.start(SceneNames.INTRO);
+    });
+
+    this.unsubOutro = EventBus.on("investigation:outro", () => {
+      this.playOutro();
+    });
+
+    // Both endings — the culprit named, or the curator naming him after four
+    // misses — close on the same arrest cinematic.
+    this.unsubOutroDone = EventBus.on("intro:complete", (data) => {
+      if (data.levelId !== INVESTIGATION_LEVEL_ID) return;
+      this.finishOutro();
     });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
@@ -184,6 +217,8 @@ export class InvestigationScene extends Scene {
         progressSnapshot?.completedLevels?.[INVESTIGATION_LEVEL_ID]?.stars ?? 0,
     };
 
+    this.creditsPending = payload.previousStars === 0;
+
     posthog.capture("investigation_opened", {
       collected_clues: collectedClues.length,
       shown_clues: clues.length,
@@ -191,6 +226,46 @@ export class InvestigationScene extends Scene {
     });
 
     EventBus.emit("investigation:start", payload);
+  }
+
+  /**
+   * Hand the arrest cinematic to React.
+   *
+   * It is the same machinery every phase opens with — `intro:start` and the
+   * `IntroSequence` that listens for it — pointed at this phase's own folder,
+   * so the ending reads as a bookend to the opening rather than a new device.
+   * A missing or broken config must not strand the player on the result panel,
+   * so it falls through to whatever comes after the cinematic.
+   */
+  private playOutro() {
+    const config = this.cache.json.get(OUTRO_KEY) as IntroConfig | null;
+    if (!config?.panels?.length) {
+      console.warn("[InvestigationScene] No outro config; skipping cinematic");
+      this.finishOutro();
+      return;
+    }
+
+    EventBus.emit("intro:start", {
+      levelId: INVESTIGATION_LEVEL_ID,
+      config,
+    });
+  }
+
+  /** Credits on a first completion, then the map — which is where every run ends. */
+  private finishOutro() {
+    if (!this.creditsPending) {
+      this.scene.start(SceneNames.INTRO);
+      return;
+    }
+    this.creditsPending = false;
+
+    // The credits screen closes itself; the map is what should be behind it.
+    this.unsubCreditsDone = EventBus.on("credits:close", () => {
+      this.unsubCreditsDone?.();
+      this.unsubCreditsDone = undefined;
+      this.scene.start(SceneNames.INTRO);
+    });
+    EventBus.emit("credits:open", undefined);
   }
 
   /**
@@ -261,12 +336,19 @@ export class InvestigationScene extends Scene {
     this.unsubCompleted = undefined;
     this.unsubExit?.();
     this.unsubExit = undefined;
+    this.unsubOutro?.();
+    this.unsubOutro = undefined;
+    this.unsubOutroDone?.();
+    this.unsubOutroDone = undefined;
+    this.unsubCreditsDone?.();
+    this.unsubCreditsDone = undefined;
 
     useGameUIStore.getState().closeInvestigation();
 
     for (const key of [
       SUSPECTS_KEY,
       CLUES_KEY,
+      OUTRO_KEY,
       ...getOrderedLevelIds().map(collectiblesCacheKey),
     ]) {
       if (this.cache.json.exists(key)) {

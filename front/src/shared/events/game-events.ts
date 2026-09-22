@@ -354,4 +354,10 @@ export interface GameEventMap {
   "investigation:completed": { stars: number; wrongAttempts: number };
   /** React → InvestigationScene: leave the identification screen for the map. */
   "investigation:exit": undefined;
+  /**
+   * React → InvestigationScene: the player read their result and wants the
+   * ending. Starts the closing cinematic, which is followed by the credits on
+   * a first completion and by the map either way.
+   */
+  "investigation:outro": undefined;
 }
