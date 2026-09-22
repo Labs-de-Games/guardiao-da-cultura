@@ -783,7 +783,11 @@ function PublicDashboardContent() {
 
   const { data, loading, error, retry } = useAsyncData<PublicDashboardResponse>(
     () => getPublicDashboard(dateRange),
-    [dateRange.type],
+    [
+      dateRange.type,
+      dateRange.type === "custom" ? dateRange.start : "",
+      dateRange.type === "custom" ? dateRange.end : "",
+    ],
   );
 
   return (
