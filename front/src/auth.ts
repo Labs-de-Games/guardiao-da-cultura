@@ -93,6 +93,55 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       },
     }),
+    /**
+     * Registration email confirmation (#747 follow-up): clicking the
+     * confirmation link both verifies the account and logs it in, in one
+     * request — same "identity travels back in the JSON body" shape as
+     * the password provider above, fed by a magic-link token instead of a
+     * password. A second Credentials provider (its own `id`, so it never
+     * collides with the "credentials" one) rather than a new auth
+     * mechanism, since this reuses every jwt/session callback as-is.
+     */
+    Credentials({
+      id: "email-verification",
+      name: "Email verification",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (typeof token !== "string") {
+          return null;
+        }
+
+        try {
+          const response = await fetch(
+            backendUrl("/api/v1/auth/password/verify-email/confirm"),
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token }),
+            },
+          );
+          if (!response.ok) return null;
+
+          const data = (await response.json()) as PasswordLoginResponse;
+          return {
+            id: data.user.id,
+            email: data.user.email,
+            backendId: data.user.id,
+            backendRole: data.user.role,
+            institutionSlug: data.user.institutionSlug,
+          };
+        } catch (err) {
+          console.error(
+            "[auth] email verification confirm request failed:",
+            err,
+          );
+          return null;
+        }
+      },
+    }),
   ],
   callbacks: {
     /**
@@ -103,11 +152,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      * worse failure mode than a rejected login.
      */
     async signIn({ user, account }) {
-      // Credentials already fully authenticated the user against the
-      // backend inside authorize() above — the OAuth upsert dance below is
-      // Google-only, would send garbage (no real Google identity) for a
-      // credentials sign-in, and must not run for it.
-      if (account?.provider === "credentials") {
+      // Both Credentials providers already fully authenticated the user
+      // against the backend inside their own authorize() above — the
+      // OAuth upsert dance below is Google-only, would send garbage (no
+      // real Google identity) for either one, and must not run for them.
+      if (
+        account?.provider === "credentials" ||
+        account?.provider === "email-verification"
+      ) {
         return true;
       }
 
