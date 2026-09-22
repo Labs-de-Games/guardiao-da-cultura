@@ -70,7 +70,11 @@ export class PasswordAuthService {
       role: Role.Institution,
       institutionSlug: dto.institutionSlug,
       passwordHash,
-      isEmailVerified: true,
+      // Unverified until the confirmation email is clicked — see
+      // confirmVerifyEmail below. Password login also refuses an
+      // unverified account (same reasoning as the old player magic-link
+      // flow this mirrors).
+      isEmailVerified: false,
       isActive: true,
     });
 
@@ -78,6 +82,13 @@ export class PasswordAuthService {
       { userId: user.id },
       "Institution password account created",
     );
+
+    const { rawToken } = await this.magicLinkService.createMagicLink(
+      user.id,
+      MagicLinkTokenType.Verification,
+    );
+    const verificationUrl = `${this.configService.frontendUrl}/confirm-verification?token=${rawToken}`;
+    await this.emailService.sendVerificationEmail(user.email, verificationUrl);
 
     this.posthog.capture({
       event: "user_registered",
@@ -108,11 +119,12 @@ export class PasswordAuthService {
     if (
       !user?.isActive ||
       user.role !== Role.Institution ||
-      !user.passwordHash
+      !user.passwordHash ||
+      !user.isEmailVerified
     ) {
       this.logger.warn(
         { email: dto.email },
-        "Password login attempted for non-institution or passwordless account",
+        "Password login attempted for non-institution, unverified, or passwordless account",
       );
       throw genericError();
     }
@@ -136,6 +148,57 @@ export class PasswordAuthService {
       properties: { method: "password" },
     });
     this.logger.info({ userId: user.id }, "User logged in via password");
+
+    return {
+      redirectTo: "/institution",
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        institutionSlug: user.institutionSlug,
+      },
+    };
+  }
+
+  /**
+   * Confirms the registration email link and logs the institution in, in
+   * one request — mirrors the old player magic-link verification flow
+   * (AuthService.confirmVerifyEmail on develop), but returns the same
+   * `{redirectTo, user}` shape `login` does instead of setting cookies
+   * directly: identity travels back to the caller (auth.ts's own
+   * "email-verification" NextAuth Credentials provider) in the JSON body,
+   * same pattern password login already uses, since this is a
+   * server-to-server call with no browser Set-Cookie to piggyback on.
+   */
+  async confirmVerifyEmail(rawToken: string): Promise<{
+    redirectTo: string;
+    user: {
+      id: string;
+      email: string;
+      role: Role;
+      institutionSlug: string | null;
+    };
+  }> {
+    const token = await this.magicLinkService.validateTokenConsumption(
+      rawToken,
+      MagicLinkTokenType.Verification,
+    );
+    if (!token) {
+      throw new UnauthorizedException("Invalid or expired verification link");
+    }
+
+    const user = token.user;
+    user.isEmailVerified = true;
+    await this.userService.save(user);
+    await this.userService.updateLastLoginAt(user.id);
+    await this.emailService.sendWelcomeEmail(user.email, user.nickname);
+
+    this.posthog.capture({
+      event: "user_verified",
+      distinctId: user.id,
+      properties: { method: "password" },
+    });
+    this.logger.info({ userId: user.id }, "Institution email verified");
 
     return {
       redirectTo: "/institution",
