@@ -1,9 +1,10 @@
 import "server-only";
-import { LEVEL_REGISTRY } from "../../../game/data/LevelConfig";
 import { serverEnv } from "../../env-server";
 import { safeRate } from "../rate";
 import type { Rate } from "../types";
 import { runHogQLQuery } from "./hogql";
+import { FINAL_LEVEL_NUMBER, ORDERED_LEVELS } from "./levels";
+import { toNumber } from "./numeric";
 import type { ResolvedDateRange } from "./period";
 import {
   buildCampaignsQuery,
@@ -18,20 +19,8 @@ import {
   buildSummaryQuery,
   getFunnelSteps,
 } from "./queries";
+import { rowsToLevelMap } from "./rows";
 import type { Scope } from "./scope";
-
-/**
- * Level ids sorted by `levelNumber`, with their number/title — the one
- * place phase queries (grouped by raw `level_id`, since HogQL can't join
- * LEVEL_REGISTRY) get mapped back to something orderable/human-readable.
- * Client-safe data (LevelConfig.ts has no "server-only"), so importing it
- * here doesn't create a new server/client boundary issue.
- */
-const ORDERED_LEVELS = Object.values(LEVEL_REGISTRY).sort(
-  (a, b) => a.levelNumber - b.levelNumber,
-);
-const FINAL_LEVEL_NUMBER =
-  ORDERED_LEVELS[ORDERED_LEVELS.length - 1]?.levelNumber ?? 1;
 
 // safeRate moved to ../rate.ts (client-safe — Screen 1's client-computed
 // entry-rate/chapter-1-completion-rate cards need it without importing
@@ -179,7 +168,7 @@ export async function fetchSummary(
     const row = result.results[0] ?? [];
     const record: Record<string, number> = {};
     result.columns.forEach((column, index) => {
-      record[column] = Number(row[index] ?? 0);
+      record[column] = toNumber(row[index]);
     });
     return record;
   });
@@ -252,9 +241,9 @@ export async function fetchSessionDuration(
       0, 0, 0,
     ];
     return {
-      avgSeconds: Number(avgSeconds ?? 0),
-      medianSeconds: Number(medianSeconds ?? 0),
-      sessionsStarted: Number(sessionsStarted ?? 0),
+      avgSeconds: toNumber(avgSeconds),
+      medianSeconds: toNumber(medianSeconds),
+      sessionsStarted: toNumber(sessionsStarted),
     };
   });
 }
@@ -270,7 +259,7 @@ export async function fetchQuizPassRate(
     const { query, values } = buildQuizPassRateQuery(scope, range, turmaSource);
     const result = await runHogQLQuery(query, values);
     const [passed, total] = result.results[0] ?? [0, 0];
-    return safeRate(Number(passed ?? 0), Number(total ?? 0));
+    return safeRate(toNumber(passed), toNumber(total));
   });
 }
 
@@ -294,7 +283,7 @@ export async function fetchCampaigns(
     const result = await runHogQLQuery(query, values);
     return result.results.map((row) => {
       const [source, uniquePlayers] = row as [string, number];
-      return { source, uniquePlayers: Number(uniquePlayers ?? 0) };
+      return { source, uniquePlayers: toNumber(uniquePlayers) };
     });
   });
 }
@@ -315,7 +304,7 @@ export async function fetchCompletionRate(
     );
     const result = await runHogQLQuery(query, values);
     const [started, completed] = result.results[0] ?? [0, 0];
-    return safeRate(Number(completed ?? 0), Number(started ?? 0));
+    return safeRate(toNumber(completed), toNumber(started));
   });
 }
 
@@ -382,16 +371,12 @@ export async function fetchPhaseProgress(
       runHogQLQuery(completedPlan.query, completedPlan.values),
     ]);
 
-    const reachedByLevel = new Map<string, number>();
-    for (const row of reachedResult.results) {
-      const [levelId, players] = row as [string, number];
-      reachedByLevel.set(levelId, Number(players ?? 0));
-    }
-    const completedByLevel = new Map<string, number>();
-    for (const row of completedResult.results) {
-      const [levelId, players] = row as [string, number];
-      completedByLevel.set(levelId, Number(players ?? 0));
-    }
+    const reachedByLevel = rowsToLevelMap(reachedResult.results, (row) =>
+      toNumber(row[1]),
+    );
+    const completedByLevel = rowsToLevelMap(completedResult.results, (row) =>
+      toNumber(row[1]),
+    );
 
     return allLevelsBase()
       .map((level) => ({
@@ -421,14 +406,10 @@ export async function fetchPhaseQuizPassRate(
       turmaSource,
     );
     const result = await runHogQLQuery(query, values);
-    const byLevel = new Map<string, { passed: number; total: number }>();
-    for (const row of result.results) {
-      const [levelId, passed, total] = row as [string, number, number];
-      byLevel.set(levelId, {
-        passed: Number(passed ?? 0),
-        total: Number(total ?? 0),
-      });
-    }
+    const byLevel = rowsToLevelMap(result.results, (row) => ({
+      passed: toNumber(row[1]),
+      total: toNumber(row[2]),
+    }));
 
     return allLevelsBase()
       .map((level) => {
@@ -460,11 +441,7 @@ export async function fetchPhaseClueUsage(
       turmaSource,
     );
     const result = await runHogQLQuery(query, values);
-    const byLevel = new Map<string, number>();
-    for (const row of result.results) {
-      const [levelId, clueUses] = row as [string, number];
-      byLevel.set(levelId, Number(clueUses ?? 0));
-    }
+    const byLevel = rowsToLevelMap(result.results, (row) => toNumber(row[1]));
 
     return allLevelsBase()
       .map((level) => ({
