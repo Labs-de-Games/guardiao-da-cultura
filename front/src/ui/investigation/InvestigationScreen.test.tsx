@@ -408,8 +408,39 @@ describe("InvestigationScreen", () => {
       accuse("augusto_vale", "Augusto Vale");
 
       expect(completed).toHaveBeenCalledWith({ stars: 5, wrongAttempts: 0 });
-      expect(screen.getByText("Caso encerrado")).toBeInTheDocument();
+      expect(screen.getByText("Mandado de prisão emitido")).toBeInTheDocument();
       EventBus.off("investigation:completed", completed);
+    });
+
+    it("hands off to the ending instead of straight to the map", () => {
+      const outro = jest.fn();
+      const exit = jest.fn();
+      EventBus.on("investigation:outro", outro);
+      EventBus.on("investigation:exit", exit);
+      render(<InvestigationScreen />);
+
+      accuse("augusto_vale", "Augusto Vale");
+      fireEvent.click(screen.getByText("VER DESFECHO"));
+
+      expect(outro).toHaveBeenCalled();
+      expect(exit).not.toHaveBeenCalled();
+      EventBus.off("investigation:outro", outro);
+      EventBus.off("investigation:exit", exit);
+    });
+
+    it("offers the same ending after four misses", () => {
+      const outro = jest.fn();
+      EventBus.on("investigation:outro", outro);
+      render(<InvestigationScreen />);
+
+      accuse("helena_marques", "Helena Marques");
+      accuse("bruno_tavares", "Bruno Tavares");
+      accuse("renata_vilas", "Renata Vilas");
+      accuse("anselmo_veiga", "Anselmo Veiga");
+      fireEvent.click(screen.getByText("VER DESFECHO"));
+
+      expect(outro).toHaveBeenCalled();
+      EventBus.off("investigation:outro", outro);
     });
 
     it("shadows a wrongly accused suspect and returns their clues", () => {

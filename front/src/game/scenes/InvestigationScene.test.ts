@@ -103,9 +103,16 @@ function collectibleContent(ids: string[]) {
   };
 }
 
+const OUTRO_CONFIG = {
+  assetDir: "suspect-arrested",
+  skipEnabled: true,
+  panels: [{ src: "arrested.png" }, { src: "on-jail.png" }],
+};
+
 const CONTENT: Record<string, unknown> = {
   investigation_suspects: SUSPECTS,
   investigation_clues: CLUE_LINKS,
+  investigation_outro_config: OUTRO_CONFIG,
   "investigation_collectibles:level_01": collectibleContent([
     "paper",
     "varnish",
@@ -357,5 +364,92 @@ describe("InvestigationScene", () => {
     EventBus.emit("investigation:exit", undefined);
 
     expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
+  });
+
+  describe("the ending", () => {
+    /** A run that has been completed before, so the credits are already spent. */
+    const replayed: UserProgressState = {
+      currentLevel: 4,
+      totalStars: 3,
+      completedLevels: {
+        [INVESTIGATION_LEVEL_ID]: {
+          completedAt: "2026-01-01T00:00:00.000Z",
+          score: 0,
+          stars: 3,
+        },
+      },
+      clues: {},
+      quizResults: {},
+      intermediateQuizResults: {},
+    };
+
+    it("plays the arrest cinematic out of its own folder", async () => {
+      const { scene } = buildScene();
+      await captureStartPayload(() => scene.create());
+
+      const started = jest.fn();
+      EventBus.on("intro:start", started);
+      EventBus.emit("investigation:outro", undefined);
+      EventBus.off("intro:start", started);
+
+      expect(started).toHaveBeenCalledWith({
+        levelId: INVESTIGATION_LEVEL_ID,
+        config: OUTRO_CONFIG,
+      });
+    });
+
+    it("rolls the credits before the map on a first completion", async () => {
+      const { scene, sceneStart } = buildScene();
+      await captureStartPayload(() => scene.create());
+
+      const creditsOpened = jest.fn();
+      EventBus.on("credits:open", creditsOpened);
+      EventBus.emit("intro:complete", { levelId: INVESTIGATION_LEVEL_ID });
+      EventBus.off("credits:open", creditsOpened);
+
+      expect(creditsOpened).toHaveBeenCalled();
+      // The map waits for the crawl, rather than yanking it away.
+      expect(sceneStart).not.toHaveBeenCalled();
+
+      EventBus.emit("credits:close", undefined);
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
+    });
+
+    it("skips the credits when the phase has been beaten before", async () => {
+      const { scene, sceneStart } = buildScene({ progress: replayed });
+      await captureStartPayload(() => scene.create());
+
+      const creditsOpened = jest.fn();
+      EventBus.on("credits:open", creditsOpened);
+      EventBus.emit("intro:complete", { levelId: INVESTIGATION_LEVEL_ID });
+      EventBus.off("credits:open", creditsOpened);
+
+      expect(creditsOpened).not.toHaveBeenCalled();
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
+    });
+
+    it("ignores an intro that belongs to another level", async () => {
+      const { scene, sceneStart } = buildScene();
+      await captureStartPayload(() => scene.create());
+
+      EventBus.emit("intro:complete", { levelId: "level_02" });
+
+      expect(sceneStart).not.toHaveBeenCalled();
+    });
+
+    it("still reaches the ending when the cinematic config is missing", async () => {
+      const { scene, sceneStart } = buildScene({ progress: replayed });
+      await captureStartPayload(() => scene.create());
+      jest.spyOn(console, "warn").mockImplementation(() => {});
+
+      delete CONTENT.investigation_outro_config;
+      try {
+        EventBus.emit("investigation:outro", undefined);
+      } finally {
+        CONTENT.investigation_outro_config = OUTRO_CONFIG;
+      }
+
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
+    });
   });
 });

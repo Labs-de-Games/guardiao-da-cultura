@@ -363,7 +363,14 @@ function OverlayContent({
           pointerEvents: "auto",
         }}
       >
-        <CreditsScreen onClose={() => setCreditsOpen(false)} />
+        <CreditsScreen
+          onClose={() => {
+            setCreditsOpen(false);
+            // Announced, not just applied: the investigation's ending waits on
+            // this to know the crawl is done and the map should come back.
+            EventBus.emit("credits:close", undefined);
+          }}
+        />
       </div>
     );
   }
