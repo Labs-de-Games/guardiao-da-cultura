@@ -1,6 +1,7 @@
 {
-  "name": "template-clone",
+  "name": "guardiao-da-cultura",
   "private": true,
+  "license": "MIT",
   "workspaces": [
     "front",
     "back"
