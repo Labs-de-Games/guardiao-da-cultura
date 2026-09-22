@@ -82,6 +82,7 @@ function suspect(
     name,
     role: `Função de ${name}`,
     summary: `Resumo de ${name}.`,
+    alibi: `${name} jura que não foi.`,
     relationWithCulture: "rel",
     profile: "profile",
     isCulprit,
@@ -147,6 +148,10 @@ function accuse(suspectId: string, name: string) {
   place(suspectId, 0, VARNISH.key);
   fireEvent.click(screen.getByRole("button", { name: `Acusar ${name}` }));
   fireEvent.click(screen.getByText("Sim, acusar"));
+  // A wrong name is answered with that suspect's alibi, and reading it is what
+  // hands the clues back — so the run only moves on once it is dismissed.
+  const continuar = screen.queryByText("CONTINUAR");
+  if (continuar) fireEvent.click(continuar);
 }
 
 const investigation = () => useGameUIStore.getState().investigation;
@@ -430,6 +435,98 @@ describe("InvestigationScreen", () => {
       expect(completed).toHaveBeenCalledWith({ stars: 1, wrongAttempts: 4 });
       expect(investigation().revealed).toBe(true);
       EventBus.off("investigation:completed", completed);
+    });
+  });
+
+  describe("a wrong accusation", () => {
+    /** Accuse without dismissing, so the alibi panel is left standing. */
+    const accuseOnly = (suspectId: string, name: string) => {
+      place(suspectId, 0, VARNISH.key);
+      fireEvent.click(screen.getByRole("button", { name: `Acusar ${name}` }));
+      fireEvent.click(screen.getByText("Sim, acusar"));
+    };
+
+    it("lets the suspect answer back in their own words", () => {
+      render(<InvestigationScreen />);
+      accuseOnly("helena_marques", "Helena Marques");
+
+      expect(
+        screen.getByRole("dialog", {
+          name: "Helena Marques responde à acusação",
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Helena Marques jura que não foi\./),
+      ).toBeInTheDocument();
+    });
+
+    it("names the cost and what is left", () => {
+      render(<InvestigationScreen />);
+      accuseOnly("helena_marques", "Helena Marques");
+
+      expect(screen.getByText(/−1 estrela · 3 tentativas/)).toBeInTheDocument();
+    });
+
+    it("holds the board still until the alibi is dismissed", () => {
+      render(<InvestigationScreen />);
+      accuseOnly("helena_marques", "Helena Marques");
+
+      expect(investigation().boards.helena_marques.slots[0]).toBe(VARNISH.key);
+
+      fireEvent.click(screen.getByText("CONTINUAR"));
+
+      expect(investigation().boards).toEqual({});
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.getAllByLabelText("Espaço 1, vazio")).toHaveLength(5);
+    });
+
+    it("is dismissed by ESC before ESC would leave the phase", () => {
+      const exit = jest.fn();
+      EventBus.on("investigation:exit", exit);
+      render(<InvestigationScreen />);
+      accuseOnly("helena_marques", "Helena Marques");
+
+      fireEvent.keyDown(window, { key: "Escape" });
+
+      expect(exit).not.toHaveBeenCalled();
+      expect(investigation().lastWrongSuspectId).toBeNull();
+      EventBus.off("investigation:exit", exit);
+    });
+
+    it("says it is the last chance on the third miss", () => {
+      render(<InvestigationScreen />);
+      accuse("helena_marques", "Helena Marques");
+      accuse("bruno_tavares", "Bruno Tavares");
+      accuseOnly("renata_vilas", "Renata Vilas");
+
+      expect(
+        screen.getByText(/−1 estrela · última tentativa/),
+      ).toBeInTheDocument();
+    });
+
+    it("answers the fourth miss before the result names the culprit", () => {
+      render(<InvestigationScreen />);
+      accuse("helena_marques", "Helena Marques");
+      accuse("bruno_tavares", "Bruno Tavares");
+      accuse("renata_vilas", "Renata Vilas");
+      accuseOnly("anselmo_veiga", "Anselmo Veiga");
+
+      expect(
+        screen.getByText(/Anselmo Veiga jura que não foi\./),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/−1 estrela · sem tentativas/),
+      ).toBeInTheDocument();
+      // The reveal is still holding: naming the culprit over the top of the
+      // suspect's own answer is the bug this ordering exists to prevent.
+      expect(
+        screen.queryByText("Investigação encerrada"),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("CONTINUAR"));
+
+      expect(screen.getByText("Investigação encerrada")).toBeInTheDocument();
+      expect(investigation().revealed).toBe(true);
     });
   });
 

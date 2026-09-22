@@ -242,7 +242,11 @@ export interface GameUIState {
     hoveredClueKey: string | null;
     /** Suspect awaiting "tem certeza?" confirmation. */
     pendingAccusationId: string | null;
-    /** Drives the shake/error feedback after a failed accusation. */
+    /**
+     * The suspect just accused by mistake. Holds their alibi panel open, and
+     * holds the board still behind it: the clues only go home once the player
+     * dismisses the panel, so the reset is something they watch happen.
+     */
     lastWrongSuspectId: string | null;
     wrongAttempts: number;
     wrongSuspectIds: string[];
@@ -366,7 +370,12 @@ export interface GameUIState {
   /** Pulls a clue back to the rail. Refused once its last heart is spent. */
   clearSlot: (suspectId: string, slotIndex: number) => void;
   requestAccusation: (suspectId: string | null) => void;
-  dismissWrongFeedback: () => void;
+  /**
+   * Closes the alibi panel and settles the cost of the wrong accusation: the
+   * board empties and every clue comes back at full hearts, so the next try is
+   * a real second run rather than the leftovers of the first.
+   */
+  dismissWrongAccusation: () => void;
   /** Opens the walkthrough at its first step. */
   startTutorial: () => void;
   advanceTutorial: () => void;
@@ -886,10 +895,25 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         };
       }),
 
-    dismissWrongFeedback: () =>
-      set((s) => ({
-        investigation: { ...s.investigation, lastWrongSuspectId: null },
-      })),
+    dismissWrongAccusation: () =>
+      set((s) => {
+        if (!s.investigation.lastWrongSuspectId) return s;
+        // On the last miss there is no next round to clear the board for —
+        // dismissing just hands the screen over to the result panel.
+        if (s.investigation.result) {
+          return {
+            investigation: { ...s.investigation, lastWrongSuspectId: null },
+          };
+        }
+        return {
+          investigation: {
+            ...s.investigation,
+            lastWrongSuspectId: null,
+            boards: {},
+            clueHearts: fullHearts(s.investigation.payload?.clues ?? []),
+          },
+        };
+      }),
 
     startTutorial: () =>
       set((s) => ({
@@ -1045,7 +1069,9 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
             wrongSuspectIds,
             revealed: true,
             pendingAccusationId: null,
-            lastWrongSuspectId: null,
+            // The last miss is still a miss: the suspect answers back before
+            // the result panel takes over and names the real culprit.
+            lastWrongSuspectId: suspectId,
             result: { stars, correct: false },
           },
         }));
@@ -1059,17 +1085,14 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         return { stars, correct: false, wrongAttempts };
       }
 
-      // A wrong name costs a star and shadows that seat, but the evidence goes
-      // back in the box: every clue is handed back at full hearts so the next
-      // attempt is a real second run at the board rather than the leftovers of
-      // the first.
+      // A wrong name costs a star and shadows that seat. The board is left
+      // exactly as the player arranged it — `dismissWrongAccusation` clears it
+      // once they have read the alibi, so the clues can be seen going home.
       set((s) => ({
         investigation: {
           ...s.investigation,
           wrongAttempts,
           wrongSuspectIds,
-          boards: {},
-          clueHearts: fullHearts(s.investigation.payload?.clues ?? []),
           pendingAccusationId: null,
           lastWrongSuspectId: suspectId,
         },

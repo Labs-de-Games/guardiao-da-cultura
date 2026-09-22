@@ -46,6 +46,7 @@ function suspect(
     name: id,
     role: "role",
     summary: "summary",
+    alibi: `${id} nega`,
     relationWithCulture: "rel",
     profile: "profile",
     isCulprit,
@@ -98,6 +99,12 @@ const board = (id: string) => investigation().boards[id];
 const hearts = (clueKey: string) => investigation().clueHearts[clueKey];
 const place = (suspectId: string, slot: number, clueKey: string) =>
   useGameUIStore.getState().placeClueInSlot(suspectId, slot, clueKey);
+/** Accuse, then dismiss the alibi panel — which is what clears the board. */
+const accuseWrong = (suspectId: string) => {
+  const outcome = useGameUIStore.getState().accuseSuspect(suspectId);
+  useGameUIStore.getState().dismissWrongAccusation();
+  return outcome;
+};
 
 describe("investigation store", () => {
   beforeEach(() => {
@@ -210,7 +217,7 @@ describe("investigation store", () => {
 
     it("refuses a suspect who has already been cleared", () => {
       place("helena_marques", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("helena_marques");
+      accuseWrong("helena_marques");
 
       place("helena_marques", 0, CACHIMBO.key);
       expect(board("helena_marques")).toBeUndefined();
@@ -273,7 +280,7 @@ describe("investigation store", () => {
       expect(investigation().result).toEqual({ stars: 5, correct: true });
     });
 
-    it("shadows the wrong suspect and wipes the board back to full hearts", () => {
+    it("shadows the wrong suspect but leaves the board standing", () => {
       place("helena_marques", 0, VARNISH.key);
       place("bruno_tavares", 0, CACHIMBO.key);
 
@@ -284,6 +291,20 @@ describe("investigation store", () => {
       expect(investigation().wrongAttempts).toBe(1);
       expect(investigation().wrongSuspectIds).toEqual(["helena_marques"]);
       expect(investigation().lastWrongSuspectId).toBe("helena_marques");
+      // Still exactly as the player arranged it: the clues are shown going
+      // home once the alibi is dismissed, so they cannot vanish before that.
+      expect(board("helena_marques").slots[0]).toBe(VARNISH.key);
+      expect(hearts(VARNISH.key)).toBe(INVESTIGATION_CLUE_HEARTS - 1);
+    });
+
+    it("wipes the board back to full hearts once the alibi is dismissed", () => {
+      place("helena_marques", 0, VARNISH.key);
+      place("bruno_tavares", 0, CACHIMBO.key);
+      useGameUIStore.getState().accuseSuspect("helena_marques");
+
+      useGameUIStore.getState().dismissWrongAccusation();
+
+      expect(investigation().lastWrongSuspectId).toBeNull();
       expect(investigation().boards).toEqual({});
       expect(hearts(VARNISH.key)).toBe(INVESTIGATION_CLUE_HEARTS);
       expect(hearts(CACHIMBO.key)).toBe(INVESTIGATION_CLUE_HEARTS);
@@ -291,7 +312,7 @@ describe("investigation store", () => {
 
     it("refuses to accuse the same suspect twice", () => {
       place("helena_marques", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("helena_marques");
+      accuseWrong("helena_marques");
 
       place("helena_marques", 0, CACHIMBO.key);
       expect(
@@ -300,10 +321,9 @@ describe("investigation store", () => {
       expect(investigation().wrongAttempts).toBe(1);
     });
 
-    it("drops the shake feedback once it has played", () => {
+    it("keeps the shadowed suspect after the alibi is dismissed", () => {
       place("helena_marques", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("helena_marques");
-      useGameUIStore.getState().dismissWrongFeedback();
+      accuseWrong("helena_marques");
 
       expect(investigation().lastWrongSuspectId).toBeNull();
       expect(investigation().wrongSuspectIds).toEqual(["helena_marques"]);
@@ -311,9 +331,9 @@ describe("investigation store", () => {
 
     it("costs a star per wrong attempt", () => {
       place("helena_marques", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("helena_marques");
+      accuseWrong("helena_marques");
       place("bruno_tavares", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("bruno_tavares");
+      accuseWrong("bruno_tavares");
       place("augusto_vale", 0, VARNISH.key);
 
       expect(useGameUIStore.getState().accuseSuspect("augusto_vale")).toEqual({
@@ -326,7 +346,7 @@ describe("investigation store", () => {
     it("reveals the culprit and awards 1 star after four wrong attempts", () => {
       for (const id of WRONG_IDS) {
         place(id, 0, VARNISH.key);
-        useGameUIStore.getState().accuseSuspect(id);
+        accuseWrong(id);
       }
 
       expect(investigation().revealed).toBe(true);
@@ -412,7 +432,7 @@ describe("investigation store", () => {
 
     it("counts the run a drop belongs to", () => {
       place("helena_marques", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("helena_marques");
+      accuseWrong("helena_marques");
       place("bruno_tavares", 0, VARNISH.key);
 
       expect(captured("investigation_clue_placed")[1]).toMatchObject({
@@ -444,7 +464,7 @@ describe("investigation store", () => {
     it("reports the accusation that reveals the culprit as resolved", () => {
       for (const id of WRONG_IDS) {
         place(id, 0, VARNISH.key);
-        useGameUIStore.getState().accuseSuspect(id);
+        accuseWrong(id);
       }
 
       const accusations = captured("investigation_suspect_accused");
@@ -461,7 +481,7 @@ describe("investigation store", () => {
 
     it("reports the winning accusation twice: as an accusation and as a win", () => {
       place("helena_marques", 0, VARNISH.key);
-      useGameUIStore.getState().accuseSuspect("helena_marques");
+      accuseWrong("helena_marques");
 
       place("augusto_vale", 0, VARNISH.key);
       place("augusto_vale", 1, PAPER.key);
@@ -500,7 +520,7 @@ describe("investigation store", () => {
 
   it("resets boards, hearts and attempts on every entry", () => {
     place("helena_marques", 0, VARNISH.key);
-    useGameUIStore.getState().accuseSuspect("helena_marques");
+    accuseWrong("helena_marques");
 
     useGameUIStore.getState().openInvestigation(buildPayload(4));
 

@@ -67,6 +67,8 @@ export function ClueSlot({
     >
       <Box
         ref={setNodeRef}
+        data-clue-slot={index}
+        data-clue-key={clue?.key}
         aria-label={
           clue
             ? `Espaço ${index + 1}: ${clue.title}${verdict ? `, ${VERDICT_STYLE[verdict].label}` : ""}`

@@ -100,6 +100,7 @@ function ClueChip({ clue, index }: { clue: InvestigationClue; index: number }) {
         }}
       >
         <Box
+          data-clue-thumb={clue.key}
           sx={{
             position: "relative",
             width: 68,

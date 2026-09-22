@@ -18,8 +18,13 @@ export function InvestigationResult() {
   const result = useGameUIStore((s) => s.investigation.result);
   const revealed = useGameUIStore((s) => s.investigation.revealed);
   const wrongAttempts = useGameUIStore((s) => s.investigation.wrongAttempts);
+  const lastWrongSuspectId = useGameUIStore(
+    (s) => s.investigation.lastWrongSuspectId,
+  );
 
-  if (!result) return null;
+  // A run that ended on a wrong name owes the player that suspect's answer
+  // first; this panel would otherwise name the real culprit over the top of it.
+  if (!result || lastWrongSuspectId) return null;
 
   const culprit = payload?.suspects.find((s) => s.isCulprit);
   const previousStars = payload?.previousStars ?? 0;

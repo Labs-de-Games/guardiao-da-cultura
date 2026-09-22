@@ -42,6 +42,14 @@ export interface Suspect {
    * for — never a checklist, because the clue drops are what confirm them.
    */
   summary: string;
+  /**
+   * What the suspect says when they are accused by mistake.
+   *
+   * Written in their own voice and always restating a trait their dossier marks
+   * `"nao"`, so a wrong accusation hands back the contradiction that clears
+   * them instead of a bare "not this one".
+   */
+  alibi: string;
   relationWithCulture: string;
   profile: string;
   /** File name under `/assets/investigation/portraits/`; falls back to initials. */
