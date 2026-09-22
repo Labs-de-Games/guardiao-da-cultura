@@ -7,7 +7,13 @@ import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 import { AccuseConfirm } from "./AccuseConfirm";
+import { AccuseFeedback } from "./AccuseFeedback";
 import { ClueRail } from "./ClueRail";
+import {
+  type ClueFlight,
+  ClueReturnFlight,
+  measureClueReturn,
+} from "./ClueReturnFlight";
 import { InvestigationResult } from "./InvestigationResult";
 import { InvestigationTutorial } from "./InvestigationTutorial";
 import {
@@ -60,9 +66,36 @@ export function InvestigationScreen() {
   const setHoveredClue = useGameUIStore((s) => s.setHoveredClue);
   const tutorialActive = useGameUIStore((s) => s.investigation.tutorial.active);
   const startTutorial = useGameUIStore((s) => s.startTutorial);
+  const lastWrongSuspectId = useGameUIStore(
+    (s) => s.investigation.lastWrongSuspectId,
+  );
+  const dismissWrongAccusation = useGameUIStore(
+    (s) => s.dismissWrongAccusation,
+  );
 
   const [draggingClueKey, setDraggingClueKey] = useState<string | null>(null);
+  const [flights, setFlights] = useState<ClueFlight[]>([]);
   const autoTaught = useRef(false);
+
+  // Measured first, cleared second: once the board empties there is nothing
+  // left on screen to fly home.
+  const returnCluesHome = useCallback(() => {
+    const { payload, result: resolved } =
+      useGameUIStore.getState().investigation;
+    const clues = payload?.clues ?? [];
+    // A resolved run keeps its board: the result panel is next, not a retry.
+    if (resolved) {
+      dismissWrongAccusation();
+      return;
+    }
+    setFlights(
+      measureClueReturn((key) => {
+        const clue = clues.find((c) => c.key === key);
+        return clue ? clueImageSrc(clue) : null;
+      }),
+    );
+    dismissWrongAccusation();
+  }, [dismissWrongAccusation]);
 
   // First visit only: the walkthrough runs itself once, and COMO JOGAR is how
   // anyone gets it back afterwards.
@@ -81,6 +114,11 @@ export function InvestigationScreen() {
       // not out of the phase.
       if (e.key !== "Escape" || result || tutorialActive) return;
       e.preventDefault();
+      // The alibi is the outermost thing on screen, so it backs out first.
+      if (lastWrongSuspectId) {
+        returnCluesHome();
+        return;
+      }
       if (pendingAccusationId) {
         requestAccusation(null);
         return;
@@ -89,7 +127,14 @@ export function InvestigationScreen() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [result, pendingAccusationId, requestAccusation, tutorialActive]);
+  }, [
+    result,
+    pendingAccusationId,
+    requestAccusation,
+    tutorialActive,
+    lastWrongSuspectId,
+    returnCluesHome,
+  ]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -182,9 +227,12 @@ export function InvestigationScreen() {
         </Box>
 
         <AccuseConfirm />
+        <AccuseFeedback onDismiss={returnCluesHome} />
         <InvestigationResult />
         <InvestigationTutorial />
       </Box>
+
+      <ClueReturnFlight flights={flights} onDone={() => setFlights([])} />
 
       {/* The overlay is sized to the art rather than to the rail row it came
           from, so the modifier has a square to centre on the cursor. */}

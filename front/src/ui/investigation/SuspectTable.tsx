@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { INVESTIGATION_SLOTS } from "@/game/constants/Investigation";
 import type { Suspect } from "@/game/types/InvestigationTypes";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
@@ -96,10 +96,6 @@ function SuspectSeat({
   const wrongSuspectIds = useGameUIStore(
     (s) => s.investigation.wrongSuspectIds,
   );
-  const lastWrongSuspectId = useGameUIStore(
-    (s) => s.investigation.lastWrongSuspectId,
-  );
-  const dismissWrongFeedback = useGameUIStore((s) => s.dismissWrongFeedback);
   const clearSlot = useGameUIStore((s) => s.clearSlot);
   const requestAccusation = useGameUIStore((s) => s.requestAccusation);
   const tutorialActive = useGameUIStore((s) => s.investigation.tutorial.active);
@@ -114,14 +110,6 @@ function SuspectSeat({
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
 
   const cleared = wrongSuspectIds.includes(suspect.id);
-  const justCleared = lastWrongSuspectId === suspect.id;
-
-  // The shake is a one-shot reaction, not a state — drop it once it has played.
-  useEffect(() => {
-    if (!justCleared) return;
-    const timer = window.setTimeout(dismissWrongFeedback, 900);
-    return () => window.clearTimeout(timer);
-  }, [justCleared, dismissWrongFeedback]);
 
   const seat = SEATS[seatIndex % SEATS.length];
   const slots =
@@ -143,9 +131,6 @@ function SuspectSeat({
         transform: "translateX(-50%)",
       }}
     >
-      {/* The shake lives on its own element: sharing one with the seat's
-          centring transform would make the animation override it and snap the
-          whole column sideways. */}
       <Box
         sx={{
           pt: 2,
@@ -153,16 +138,6 @@ function SuspectSeat({
           flexDirection: "column",
           alignItems: "center",
           gap: 0.6,
-          animation: justCleared
-            ? "investigation-shake 420ms ease-in-out"
-            : "none",
-          "@keyframes investigation-shake": {
-            "0%, 100%": { transform: "translateX(0)" },
-            "20%": { transform: "translateX(-9px)" },
-            "40%": { transform: "translateX(9px)" },
-            "60%": { transform: "translateX(-6px)" },
-            "80%": { transform: "translateX(6px)" },
-          },
         }}
       >
         <Box
