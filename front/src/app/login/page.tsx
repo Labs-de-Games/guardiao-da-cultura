@@ -44,6 +44,7 @@ interface LoginViewProps {
   isSubmitting: boolean;
   onSubmit: (e: FormEvent) => void;
   onForgotClick: () => void;
+  callbackUrl: string;
 }
 
 function LoginView({
@@ -55,6 +56,7 @@ function LoginView({
   isSubmitting,
   onSubmit,
   onForgotClick,
+  callbackUrl,
 }: LoginViewProps) {
   return (
     <>
@@ -66,7 +68,7 @@ function LoginView({
       <Button
         fullWidth
         variant="outlined"
-        onClick={() => signIn("google", { callbackUrl: "/institution" })}
+        onClick={() => signIn("google", { callbackUrl })}
         sx={{
           mb: 2,
           py: 1.5,
@@ -242,6 +244,20 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
     "Este e-mail já está cadastrado como conta de jogador. Use outro e-mail para entrar como instituição.",
 };
 
+/**
+ * middleware.ts sets `?redirect=` to the institution route it bounced the
+ * user from. Only accept it back as a same-origin path under
+ * `/institution` — the one thing this app gates — never an absolute URL
+ * or protocol-relative `//host` value, which would turn this into an
+ * open redirect.
+ */
+function safeRedirectTarget(raw: string | null): string {
+  if (!raw?.startsWith("/institution") || raw.startsWith("//")) {
+    return "/institution";
+  }
+  return raw;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -292,7 +308,7 @@ function LoginForm() {
         setError("E-mail ou senha inválidos.");
         return;
       }
-      router.push("/institution");
+      router.push(safeRedirectTarget(searchParams.get("redirect")));
     } finally {
       setIsSubmitting(false);
     }
@@ -324,6 +340,7 @@ function LoginForm() {
           isSubmitting={isSubmitting}
           onSubmit={handleSubmit}
           onForgotClick={() => goToView("forgot")}
+          callbackUrl={safeRedirectTarget(searchParams.get("redirect"))}
         />
       ) : view === "forgot" ? (
         <ForgotView
