@@ -18,7 +18,7 @@
       "holdMs": 5000,
       "shrinkMs": 1200,
       "title": "CINCO SUSPEITOS",
-      "caption": "Nem todos podem ser o responsável. Compare o que descobrimos com o que sabemos sobre cada um."
+      "caption": "Compare o que descobrimos com o que sabemos sobre cada um."
     },
     {
       "src": "comic_L4P3.png",
@@ -33,6 +33,6 @@
   ],
   "revealIconMask": "reveal_icon_mask_L4.png",
   "loadingImage": "loading_L4.png",
-  "captionImage": "caption_L4.png",
+  "captionImage": "caption_L4_investigation.png",
   "skipEnabled": true
 }
