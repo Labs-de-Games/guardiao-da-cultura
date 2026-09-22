@@ -58,7 +58,9 @@ describe("RegisterPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
 
     expect(
-      await screen.findByText("Cadastro realizado. Verifique seu e-mail."),
+      await screen.findByText(
+        "Cadastro realizado. Verifique seu e-mail para confirmar sua conta.",
+      ),
     ).toBeInTheDocument();
     expect(postMock).toHaveBeenCalledWith("/auth/password/register", {
       email: "contato@escola.com",

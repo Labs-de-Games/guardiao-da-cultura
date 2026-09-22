@@ -6,15 +6,7 @@ import {
   LockOutlined,
   PersonOutlined,
 } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Button,
-  Paper,
-  TextField,
-  Typography,
-} from "@mui/material";
-import Link from "next/link";
+import { Alert, Box, TextField, Typography } from "@mui/material";
 import { type FormEvent, useEffect, useState } from "react";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthLink } from "@/components/auth/AuthLink";
@@ -28,7 +20,6 @@ import {
   iconSx,
 } from "@/components/auth/authStyles";
 import { apiClient } from "@/lib/api/client";
-
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -110,24 +101,15 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f5f0e8",
-        }}
-      >
-        <Paper sx={{ p: 4, maxWidth: 400, textAlign: "center" }}>
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Cadastro realizado. Verifique seu e-mail.
-          </Alert>
-          <Button component={Link} href="/login" variant="contained">
-            Ir para o login
-          </Button>
-        </Paper>
-      </Box>
+      <AuthPageShell fillHeight>
+        <AuthTitle>Cadastro realizado</AuthTitle>
+        <Alert severity="success" sx={{ borderRadius: "8px", mb: 3 }}>
+          Cadastro realizado. Verifique seu e-mail para confirmar sua conta.
+        </Alert>
+        <Typography variant="body2" sx={{ textAlign: "center", color: "#666" }}>
+          <AuthLink href="/login">Ir para o login</AuthLink>
+        </Typography>
+      </AuthPageShell>
     );
   }
 
