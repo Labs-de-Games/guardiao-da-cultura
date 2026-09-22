@@ -18,7 +18,14 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const data = await fetchFunnel(ctx.scope, ctx.range, ctx.turmaSource);
-  const body: EditalFunnelResponse = { linked: true, data };
-  return NextResponse.json(body);
+  try {
+    const data = await fetchFunnel(ctx.scope, ctx.range, ctx.turmaSource);
+    const body: EditalFunnelResponse = { linked: true, data };
+    return NextResponse.json(body);
+  } catch {
+    return NextResponse.json(
+      { error: "Erro ao carregar funil" },
+      { status: 502 },
+    );
+  }
 }

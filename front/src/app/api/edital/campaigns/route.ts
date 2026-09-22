@@ -24,7 +24,14 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const data = await fetchCampaigns(ctx.scope, ctx.range);
-  const body: EditalCampaignsResponse = { linked: true, data };
-  return NextResponse.json(body);
+  try {
+    const data = await fetchCampaigns(ctx.scope, ctx.range);
+    const body: EditalCampaignsResponse = { linked: true, data };
+    return NextResponse.json(body);
+  } catch {
+    return NextResponse.json(
+      { error: "Erro ao carregar campanhas" },
+      { status: 502 },
+    );
+  }
 }

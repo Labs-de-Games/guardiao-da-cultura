@@ -25,40 +25,47 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const [funnelData, completionRate, phaseProgress, quizPassRate, clueUsage] =
-    await Promise.all([
-      fetchSummary(ctx.scope, ctx.range, ctx.turmaSource),
-      fetchCompletionRate(ctx.scope, ctx.range, ctx.turmaSource),
-      fetchPhaseProgress(ctx.scope, ctx.range, ctx.turmaSource),
-      fetchPhaseQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
-      fetchPhaseClueUsage(ctx.scope, ctx.range, ctx.turmaSource),
-    ]);
+  try {
+    const [funnelData, completionRate, phaseProgress, quizPassRate, clueUsage] =
+      await Promise.all([
+        fetchSummary(ctx.scope, ctx.range, ctx.turmaSource),
+        fetchCompletionRate(ctx.scope, ctx.range, ctx.turmaSource),
+        fetchPhaseProgress(ctx.scope, ctx.range, ctx.turmaSource),
+        fetchPhaseQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
+        fetchPhaseClueUsage(ctx.scope, ctx.range, ctx.turmaSource),
+      ]);
 
-  /**
-   * "Progresso médio" (issue #807) — total level-completions across all
-   * players who started, over the maximum possible (players * level
-   * count). Derived from `phaseProgress` rather than a new HogQL query:
-   * the data's already fetched, and this is just an aggregate over it.
-   */
-  const playersStarted = funnelData.gameplay_started ?? 0;
-  const totalLevels = phaseProgress.length;
-  const totalCompleted = phaseProgress.reduce(
-    (sum, phase) => sum + phase.completed,
-    0,
-  );
-  const averageProgress = safeRate(
-    totalCompleted,
-    playersStarted * totalLevels,
-  );
+    /**
+     * "Progresso médio" (issue #807) — total level-completions across all
+     * players who started, over the maximum possible (players * level
+     * count). Derived from `phaseProgress` rather than a new HogQL query:
+     * the data's already fetched, and this is just an aggregate over it.
+     */
+    const playersStarted = funnelData.gameplay_started ?? 0;
+    const totalLevels = phaseProgress.length;
+    const totalCompleted = phaseProgress.reduce(
+      (sum, phase) => sum + phase.completed,
+      0,
+    );
+    const averageProgress = safeRate(
+      totalCompleted,
+      playersStarted * totalLevels,
+    );
 
-  const body: EditalSummaryResponse = {
-    linked: true,
-    data: funnelData,
-    completionRate,
-    averageProgress,
-    phaseProgress,
-    quizPassRate,
-    clueUsage,
-  };
-  return NextResponse.json(body);
+    const body: EditalSummaryResponse = {
+      linked: true,
+      data: funnelData,
+      completionRate,
+      averageProgress,
+      phaseProgress,
+      quizPassRate,
+      clueUsage,
+    };
+    return NextResponse.json(body);
+  } catch {
+    return NextResponse.json(
+      { error: "Erro ao carregar resumo" },
+      { status: 502 },
+    );
+  }
 }

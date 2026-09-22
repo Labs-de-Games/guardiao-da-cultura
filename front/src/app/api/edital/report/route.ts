@@ -22,15 +22,22 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(body);
   }
 
-  const [sessionDuration, quizPassRate, completionRate] = await Promise.all([
-    fetchSessionDuration(ctx.scope, ctx.range, ctx.turmaSource),
-    fetchQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
-    fetchCompletionRate(ctx.scope, ctx.range, ctx.turmaSource),
-  ]);
+  try {
+    const [sessionDuration, quizPassRate, completionRate] = await Promise.all([
+      fetchSessionDuration(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchCompletionRate(ctx.scope, ctx.range, ctx.turmaSource),
+    ]);
 
-  const body: EditalReportResponse = {
-    linked: true,
-    data: { sessionDuration, quizPassRate, completionRate },
-  };
-  return NextResponse.json(body);
+    const body: EditalReportResponse = {
+      linked: true,
+      data: { sessionDuration, quizPassRate, completionRate },
+    };
+    return NextResponse.json(body);
+  } catch {
+    return NextResponse.json(
+      { error: "Erro ao carregar relatório" },
+      { status: 502 },
+    );
+  }
 }
