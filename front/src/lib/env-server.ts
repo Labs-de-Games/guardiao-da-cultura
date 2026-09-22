@@ -4,7 +4,7 @@ import { env } from "./env";
 
 const serverSchema = z
   .object({
-    responsivevoiceApiKey: z.string().min(1),
+    responsivevoiceApiKey: z.string().min(1).optional(),
     responsivevoiceApiUrl: z
       .string()
       .url()

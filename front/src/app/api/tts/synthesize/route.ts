@@ -12,6 +12,12 @@ const synthesizeSchema = z.object({
   pitch: z.number().min(0).max(2).optional(),
 });
 
+/** Status returned when no ResponsiveVoice key is configured. */
+export const TTS_UNAVAILABLE_STATUS = 503;
+
+/** Upper bound on how long the upstream synthesis call may take. */
+const UPSTREAM_TIMEOUT_MS = 10_000;
+
 const VOICE_TO_LANGUAGE: Record<string, string> = {
   "Brazilian Portuguese Female": "pt-BR",
   "Brazilian Portuguese Male": "pt-BR",
@@ -31,13 +37,29 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
   const body = parseResult.data;
 
+  const apiKey = serverEnv.server.responsivevoiceApiKey;
+  if (!apiKey) {
+    // Expected on any install without a ResponsiveVoice key. This is a
+    // documented state, not an error: the client falls back to the browser's
+    // built-in speech synthesis, so narration stays audible.
+    return NextResponse.json(
+      {
+        error:
+          "TTS unavailable: RESPONSIVEVOICE_API_KEY is not configured. " +
+          "The client should fall back to browser speech synthesis.",
+        code: "tts_unavailable",
+      },
+      { status: TTS_UNAVAILABLE_STATUS },
+    );
+  }
+
   const languageCode =
     VOICE_TO_LANGUAGE[body.voice ?? ""] ?? body.voice ?? "pt-BR";
 
   const params = new URLSearchParams({
     text: body.text,
     tl: languageCode,
-    key: serverEnv.server.responsivevoiceApiKey,
+    key: apiKey,
   });
 
   if (body.rate !== undefined) params.set("rate", String(body.rate));
@@ -45,7 +67,21 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const url = `${serverEnv.server.responsivevoiceApiUrl}?${params.toString()}`;
 
-  const upstream = await fetch(url);
+  let upstream: Response;
+  try {
+    upstream = await fetch(url, {
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === "TimeoutError";
+    console.error(
+      `[TTS] ResponsiveVoice request ${timedOut ? "timed out" : "failed"}`,
+    );
+    return NextResponse.json(
+      { error: "TTS synthesis failed: upstream unreachable" },
+      { status: 502 },
+    );
+  }
 
   if (!upstream.ok) {
     console.error(`[TTS] ResponsiveVoice returned ${upstream.status}`);
