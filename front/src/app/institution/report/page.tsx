@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Grid, Skeleton, Typography } from "@mui/material";
-import { type ReactNode, Suspense, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useState } from "react";
 import { CsvExportButton } from "@/components/dashboard/CsvExportButton";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { DataTable } from "@/components/dashboard/DataTable";
@@ -146,6 +146,15 @@ function InstitutionReportContent() {
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
   const { turma, setTurma } = useTurmaFilter();
   const [csvError, setCsvError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCsvError(null);
+  }, [
+    turma,
+    dateRange.type,
+    dateRange.type === "custom" ? dateRange.start : "",
+    dateRange.type === "custom" ? dateRange.end : "",
+  ]);
 
   const { data, loading, error, retry } = useAsyncData<ReportData>(
     async () => {
