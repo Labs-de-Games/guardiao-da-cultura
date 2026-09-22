@@ -113,7 +113,7 @@ Already verified by path scan: **no `.env`, keyfile, dump, or credential file ha
 
 ### Internal infrastructure disclosure — confirmed, must be fixed
 
-The Coolify admin panel hostname `coolify.guardiaodacultura.42.rio` appears in `docs/VERSIONING.md:51` and repeatedly in `docs/handoff/05-deploy.md` (lines 11, 199–218 also enumerate the secret names held there). No secret values leak, but publishing an internal admin panel hostname hands over attack surface for free. Redact from HEAD; a hostname in history is low severity and does not on its own justify a rewrite.
+The Coolify admin panel hostname appears in `docs/VERSIONING.md:51` and repeatedly in `docs/handoff/05-deploy.md` (lines 11, 199–218 also enumerate the secret names held there). No secret values leak, but publishing an internal admin panel hostname hands over attack surface for free. Redact from HEAD; a hostname in history is low severity and does not on its own justify a rewrite.
 
 ### `docs/handoff/` decision
 
