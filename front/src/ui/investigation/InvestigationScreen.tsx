@@ -26,6 +26,7 @@ import {
   snapClueToCursor,
 } from "./investigation-dnd";
 import { hasSeenInvestigationTutorial } from "./investigation-tutorial-storage";
+import { MusicToggle } from "./MusicToggle";
 import { StarTracker } from "./StarTracker";
 import { SuspectTable } from "./SuspectTable";
 
@@ -209,6 +210,8 @@ export function InvestigationScreen() {
           <ClueRail />
           <SuspectTable />
         </Box>
+
+        <MusicToggle />
 
         <Box
           sx={{
