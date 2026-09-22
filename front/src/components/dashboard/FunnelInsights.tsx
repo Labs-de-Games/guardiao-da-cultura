@@ -62,11 +62,21 @@ function InsightCard({ icon, label, value, detail }: InsightCardProps) {
  * first step) are excluded from the drop-off/retention comparisons since
  * there's no "previous step" to compare against.
  */
+interface StepWithConversion extends FunnelStep {
+  stepConversion: number;
+}
+
+interface EntryWithPrevious {
+  step: StepWithConversion;
+  index: number;
+  previous: FunnelStep;
+}
+
 export function FunnelInsights({ steps }: FunnelInsightsProps) {
   const withPrevious = steps
     .map((step, index) => ({ step, index, previous: steps[index - 1] }))
     .filter(
-      (entry): entry is typeof entry & { previous: FunnelStep } =>
+      (entry): entry is EntryWithPrevious =>
         entry.index > 0 && typeof entry.step.stepConversion === "number",
     );
 
@@ -75,10 +85,10 @@ export function FunnelInsights({ steps }: FunnelInsightsProps) {
   }
 
   const biggestDropoff = withPrevious.reduce((worst, entry) =>
-    entry.step.stepConversion! < worst.step.stepConversion! ? entry : worst,
+    entry.step.stepConversion < worst.step.stepConversion ? entry : worst,
   );
   const bestRetention = withPrevious.reduce((best, entry) =>
-    entry.step.stepConversion! > best.step.stepConversion! ? entry : best,
+    entry.step.stepConversion > best.step.stepConversion ? entry : best,
   );
   const lowestConversion = steps.reduce((worst, step) =>
     step.value < worst.value ? step : worst,
@@ -100,7 +110,7 @@ export function FunnelInsights({ steps }: FunnelInsightsProps) {
           detail={
             dropoffLost !== null
               ? `${dropoffLost.toLocaleString("pt-BR")} jogadores`
-              : `${Math.round(biggestDropoff.step.stepConversion! * 100)}% do anterior`
+              : `${Math.round(biggestDropoff.step.stepConversion * 100)}% do anterior`
           }
         />
       </Grid>
@@ -109,7 +119,7 @@ export function FunnelInsights({ steps }: FunnelInsightsProps) {
           icon={<RetentionIcon />}
           label="Maior retenção"
           value={bestRetention.step.label}
-          detail={`${Math.round(bestRetention.step.stepConversion! * 100)}% da etapa anterior`}
+          detail={`${Math.round(bestRetention.step.stepConversion * 100)}% da etapa anterior`}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 4 }}>
