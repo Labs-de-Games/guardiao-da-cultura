@@ -47,7 +47,11 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
   }
 
   async sendMagicLinkEmail(email: string, magicLinkUrl: string): Promise<void> {
-    const template = emailTemplates.magicLink(email, magicLinkUrl);
+    const template = emailTemplates.passwordReset(
+      email,
+      magicLinkUrl,
+      this.config.frontendUrl,
+    );
     await this.send(email, template.subject, template.html);
   }
 
@@ -55,7 +59,11 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
     email: string,
     verificationUrl: string,
   ): Promise<void> {
-    const template = emailTemplates.verification(email, verificationUrl);
+    const template = emailTemplates.verification(
+      email,
+      verificationUrl,
+      this.config.frontendUrl,
+    );
     await this.send(email, template.subject, template.html);
   }
 
