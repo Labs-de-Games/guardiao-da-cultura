@@ -2,8 +2,7 @@
  * Durable anonymous-player identity.
  *
  * Replaces the session-scoped `gp_distinct_id` cookie (client-written, no
- * Max-Age, dies on browser close — the churn amplifier identified in
- * docs/specs/discovery-738-dashboard-edital.md §3.1/§5.1) with a
+ * Max-Age, dies on browser close — the churn amplifier) with a
  * server-set cookie carrying an explicit Max-Age. "Server-set" here means
  * set by Next.js middleware (front's own origin), not written by client JS
  * via `document.cookie` on every render.

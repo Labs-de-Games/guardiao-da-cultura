@@ -9,9 +9,8 @@ type PostHogLike = Pick<
 >;
 
 /**
- * The total, never-throwing backstop half of the property-injection design
- * (docs/specs/discovery-738-dashboard-edital.md §5.3). `register()` covers
- * the common path for stable properties; this stamps the per-event
+ * The total, never-throwing backstop half of the property-injection design.
+ * `register()` covers the common path for stable properties; this stamps the per-event
  * properties (issue #740's own table: `session_id`, `event_name`,
  * `event_timestamp`, `chapter_id`) plus a backstop for `anonymous_player_id`
  * and `campaign_source` onto ANY event that reaches send — including the

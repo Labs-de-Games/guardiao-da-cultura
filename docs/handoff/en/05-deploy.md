@@ -194,8 +194,7 @@ are the Google OAuth client credentials for institution sign-in.
 `AUTH_OAUTH_UPSERT_TOKEN` is a shared secret **required on both the front and
 back services** for the institution-account upsert endpoint — the front
 sends it, the back verifies it with a constant-time compare. See
-`docs/specs/discovery-738-dashboard-edital.md` §3.2 and
-`docs/specs/implementation-plan-738-dashboard-edital.md` step 1 for the full
+`docs/specs/dashboard-edital-implementation-plan.md` step 1 for the full
 rationale.
 
 **Open question, not yet answered:** how many front replicas does Coolify run

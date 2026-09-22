@@ -133,7 +133,7 @@ O backend identifica “Sessão 1” via:
   captures `critical_error_occurred` to PostHog and mirrors an `event.logged` row with
   `severity: "critical"` on asset-load failures (Phaser `loaderror`). Closes the same
   pendency `docs/EPIC-analytics-dashboard.md` tracked ("emit `event.logged` for critical
-  errors") — see `docs/specs/discovery-738-dashboard-edital.md` §3.6.
+  errors").
 
 ### Metadados de erro críticos aceitos pelo backend
 Qualquer um dos campos abaixo:
@@ -192,7 +192,7 @@ minigames, quizzes e carregamento do jogo.
 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
 | `quiz_answer_submitted` | `quiz_number` (null for regular end-of-level quizzes), `question_id`, `selected_answer`, `is_correct`, `attempt_number` | `game-ui-store.ts` (`selectOption`) |
 | `game_load_success` | `level_id`, `loading_time_ms` | `PhaserGame.tsx` |
-| `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`) | `PhaserGame.tsx` (module import / Phaser init failures only — **not** asset `loaderror`; that is `critical_error_occurred` below. This row previously and incorrectly claimed asset-load coverage too — `handleLoadingError` was a no-op until #741, see docs/specs/discovery-738-dashboard-edital.md §3.6) |
+| `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`) | `PhaserGame.tsx` (module import / Phaser init failures only — **not** asset `loaderror`; that is `critical_error_occurred` below. This row previously and incorrectly claimed asset-load coverage too — `handleLoadingError` was a no-op until #741) |
 | `critical_error_occurred` | `error_code` (e.g. `asset_load_failed`), `is_blocking`, `loading_stage`, `asset_key`, `level_id` | `PhaserGame.tsx` (`phaser-loading-error` — asset `loaderror`, dispatched from `Game.ts`'s `preload()`). Also mirrored into `game_event` with `severity: "critical"` via the `EVENT_LOGGED` type |
 | `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
@@ -243,21 +243,34 @@ autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`
 
 # Funil canônico do edital (épico #738)
 
-Sete passos, nesta ordem, é o que `FUNNEL_EVENTS` em
-`front/src/lib/edital/server/queries.ts` usa nas queries HogQL Q1 e Q4
-(summary e funnel). Nomes e ordem são interinos até o onepager real
-substituir `docs/specs/edital-onepager.md` (discovery §1.1) — mas já são
-os nomes de evento reais emitidos em produção.
+Seis passos hoje (3 de aquisição + 1 por fase em `LEVEL_REGISTRY`, hoje 3
+fases), é o que `getFunnelSteps()` em `front/src/lib/edital/server/queries.ts`
+usa nas queries HogQL Q1 e Q4 (summary e funnel). Este funil é **dinâmico**:
+uma 4ª fase adicionada a `LEVEL_REGISTRY` ganha um 7º passo automaticamente,
+sem precisar de código novo.
 
-| # | Evento | Propriedades obrigatórias | Onde é emitido |
+> **Correção (issue #807):** este funil já foi hardcoded em torno de
+> `chapter_1_started`/`chapter_1_completed`, mas esse par só cobre a fase 1
+> — a issue #807 substituiu isso por um passo `level_completed` genérico
+> por fase, com aviso explícito no código: "não utilizar
+> chapter_1_started/chapter_1_completed como base geral". `chapter_1_started`
+> e `chapter_1_completed` continuam sendo emitidos de verdade (ver tabela de
+> dual-emit abaixo), só não alimentam mais a query do funil.
+
+| # | Passo | Condição usada por `queries.ts` | Onde é emitido |
 |---|---|---|---|
-| 1 | `landing_page_viewed` | `referrer` | `PlayLanding.tsx` |
-| 2 | `play_clicked` | `dwell_ms` | `PlayLanding.tsx` (`handlePlay`) |
-| 3 | `gameplay_started` | `level_id`, `level_number` | `Game.ts` (`create()`, via `captureOncePerSession`) |
-| 4 | `chapter_1_started` | `level_id` | `Game.ts` (só quando `levelDef.levelNumber === 1`; também chama `setChapterId`) |
-| 5 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
-| 6 | `quiz_completed` | `level_id`, `mission_id`, `score`, `correct_answers`, `total_questions`, `accuracy_percent`, `passed`, `quiz_result`, `duration_seconds` | `QuizManager.ts` — emitido **antes** de `chapter_1_completed` (ordem exigida pelo funil) |
-| 7 | `chapter_1_completed` | `level_id`, `score`, `stars`, `duration_seconds` | `QuizManager.ts` (só no capítulo 1, após `quiz_completed`) |
+| 1 | `landing_page_viewed` | `event = 'landing_page_viewed'` | `PlayLanding.tsx` |
+| 2 | `play_clicked` | `event = 'play_clicked'` | `PlayLanding.tsx` (`handlePlay`) |
+| 3 | `gameplay_started` | `event = 'gameplay_started'` | `Game.ts` (`create()`, via `captureOncePerSession`) |
+| 4 | "Concluiu Fase 1" | `event = 'level_completed' AND level_number = 1` | `QuizManager.ts`, quiz de fim de fase 1 aprovado |
+| 5 | "Concluiu Fase 2" | `event = 'level_completed' AND level_number = 2` | `QuizManager.ts`, quiz de fim de fase 2 aprovado |
+| 6 | "Concluiu Fase 3" | `event = 'level_completed' AND level_number = 3` | `QuizManager.ts`, quiz de fim de fase 3 aprovado |
+
+`quiz_started`/`quiz_completed` são eventos reais (ver `QuizManager.ts`),
+mas **não são passos do funil** — o funil usa apenas `level_completed`
+(que já carrega o resultado do quiz) para marcar a conclusão de cada fase.
+Um quiz reprovado emite `level_failed` em vez de `level_completed` e não
+avança o funil.
 
 Todo passo carrega `properties.anonymous_player_id` (identidade durável,
 issue #740) e `properties.campaign_source` (attribution, issue #740) —
@@ -268,12 +281,12 @@ carregam `properties.turma_source` — mesmo mecanismo de first-touch de
 do `utm_source` do link de turma (`origins.ts`'s `buildTrackingUrl`), e é
 o que as queries de turma em `queries.ts` (`TURMA_PREDICATE`) usam — nunca
 o `utm_source` bruto autocapturado pelo posthog-js, que é last-touch e
-sobrescrito a cada visita. Todo evento após a entrada no nível 1
+sobrescrito a cada visita. Todo evento após a entrada na fase 1
 carrega também `chapter_id` (`before_send`, a partir do singleton em
 `lib/posthog/eventContext.ts`, setado por `setChapterId` em
 `chapter_1_started` e limpo no `SHUTDOWN` da cena).
 
-Eventos adicionais, fora dos 7 passos mas dual-emitidos pelo mesmo
+Eventos adicionais, fora dos passos do funil mas dual-emitidos pelo mesmo
 mecanismo (issue #741):
 
 | Evento canônico | Legado (mantido, outro consumidor) | Onde é emitido |
@@ -282,19 +295,19 @@ mecanismo (issue #741):
 | `score_calculated` | `score_updated` | `PersistenceBridge.ts` — alto volume, não é denominador de card |
 | `badge_earned` | *(já canônico)* | `BadgeSystem.ts` — `+ chapter_id` |
 
-## Mapa de dual-emit (funil de 7 passos)
+## Mapa de dual-emit
 
 Cada passo canônico é emitido **ao lado**, não **no lugar**, de um evento
 legado já consumido por outra coisa (dashboard Postgres, `game_event`).
 Um site de código pode disparar os dois na mesma chamada:
 
-| Canônico (funil do edital) | Legado (mantido, outro consumidor) | Diferença de disparo |
+| Evento PostHog | Legado (mantido, outro consumidor) | Diferença de disparo |
 |---|---|---|
-| `gameplay_started` | `game_started` | Legado dispara 1x por nível (a cena `Game` reinicia a cada nível); canônico dispara **1x por sessão**, via `captureOncePerSession` — ver `docs/specs/discovery-738-dashboard-edital.md` §8 step 3 ("gameplay_started fires exactly once under StrictMode") |
-| `chapter_1_started` | `level.started` (→ `game_event`, dashboard Postgres) | Canônico só dispara quando `levelDef.levelNumber === 1`; legado dispara para todo nível |
-| `chapter_1_completed` | `level.completed` (→ `game_event`) | Mesma restrição a capítulo 1 |
+| `gameplay_started` | `game_started` | Legado dispara 1x por nível (a cena `Game` reinicia a cada nível); canônico dispara **1x por sessão**, via `captureOncePerSession` (gameplay_started fires exactly once under StrictMode) |
+| `chapter_1_started` | `level.started` (→ `game_event`, dashboard Postgres) | Só dispara para fase 1; legado dispara para toda fase. **Não é passo do funil do edital** (ver correção acima) — usado apenas para o dashboard Postgres legado e para setar `chapter_id` |
+| `chapter_1_completed` | `level.completed` (→ `game_event`) | Mesma restrição a fase 1; mesma nota — não é passo do funil do edital |
 | `play_clicked` | `landing_page_play_clicked` | Nomes distintos, mesmo disparo — mantido por compatibilidade com dashboards PostHog já existentes que consultam `landing_page_play_clicked` |
-| `quiz_started` | — | Sem par legado; já era PostHog-nativo antes do épico #738 |
+| `quiz_started` | — | Sem par legado; já era PostHog-nativo antes do épico #738; não é passo do funil (ver acima) |
 
 ## `critical_error_occurred` — hooks (issue #741)
 
@@ -313,10 +326,12 @@ boundary React, que não têm um `userId` de sessão de jogo disponível):
 ## Decisão: quizzes intermediários fora do denominador
 
 `intermediate_quiz_started`/`intermediate_quiz_completed` (quizzes no meio
-de um nível, ver seção anterior) **não entram** em `FUNNEL_EVENTS` nem em
-nenhuma query do edital. Só o quiz de fim de nível (`quiz_started`/
-`quiz_completed`) conta para o funil. Motivo: o edital audita conclusão de
-capítulo, não engajamento por sub-etapa — incluir os intermediários infla
+de uma fase, ver seção anterior) **não entram** em `getFunnelSteps()` nem
+em nenhuma query do edital. Só o quiz de fim de fase — que dispara
+`level_completed` (o evento que o funil de fato usa, não `quiz_started`/
+`quiz_completed` diretamente) — conta para o funil. Motivo: o edital
+audita conclusão de capítulo, não engajamento por sub-etapa — incluir os
+intermediários infla
 o numerador de "iniciou quiz" sem representar um marco que o edital
 reconhece, e um jogador pode completar vários quizzes intermediários sem
 nunca chegar ao quiz de fim de nível. Decisão tomada implicitamente no

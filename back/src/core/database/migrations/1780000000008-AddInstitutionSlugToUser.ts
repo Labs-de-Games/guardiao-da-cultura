@@ -17,9 +17,8 @@ import type { MigrationInterface, QueryRunner } from "typeorm";
  *
  * Migration timestamp reserved after 1780000000007 (game_event index,
  * landing separately in #741's branch) to avoid a collision once both
- * merge — see docs/specs/discovery-738-dashboard-edital.md §7. Reserve
- * 1780000000009 for #747's password-hash migration, the next one to land
- * in this epic.
+ * merge. Reserve 1780000000009 for #747's password-hash migration, the
+ * next one to land in this epic.
  */
 export class AddInstitutionSlugToUser1780000000008
   implements MigrationInterface

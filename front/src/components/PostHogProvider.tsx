@@ -42,7 +42,7 @@ async function fetchBootstrap(
     // The cookie alone is not enough: it doesn't cross the cross-origin
     // local-dev gap (localhost:3000 -> :3001), so the same id also goes as
     // a query parameter the backend validates and only prefers after the
-    // cookie. See docs/specs/discovery-738-dashboard-edital.md §5.1.
+    // cookie.
     const url = distinctId
       ? `${base}?distinct_id=${encodeURIComponent(distinctId)}`
       : base;

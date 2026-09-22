@@ -96,8 +96,7 @@ export default function PhaserGame() {
     // Previously a no-op: Game.ts's `loaderror` handler (scenes/Game.ts)
     // dispatched this DOM event straight into nothing, so asset-load
     // failures during actual gameplay (not just module import/init, which
-    // game_load_failed above already covers) were captured nowhere. See
-    // docs/specs/discovery-738-dashboard-edital.md §3.1, §8 step 3.
+    // game_load_failed above already covers) were captured nowhere.
     const handleLoadingError = (event: Event) => {
       const customEvent = event as CustomEvent<{
         stage?: string;

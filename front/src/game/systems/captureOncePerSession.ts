@@ -9,8 +9,7 @@ const SESSION_ONCE_PREFIX = "gp_session_once_";
  * whose underlying legacy event fires more often than once per session —
  * e.g. `game_started` fires once per level (scene restart per
  * `LevelCinematic.ts`), but the canonical `gameplay_started` funnel step
- * must fire exactly once. See
- * docs/specs/discovery-738-dashboard-edital.md §3.1, §8 step 3.
+ * must fire exactly once.
  *
  * Falls back to firing unconditionally if sessionStorage is unavailable
  * (e.g. private-browsing edge cases) rather than silently dropping the

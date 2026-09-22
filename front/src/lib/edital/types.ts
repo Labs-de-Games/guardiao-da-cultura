@@ -3,11 +3,6 @@
  * imports "server-only" or env-server — #745's client components can import
  * this module directly. Server internals (query builders, the Scope type,
  * HogQL client) live under lib/edital/server/ instead.
- *
- * See docs/specs/discovery-738-dashboard-edital.md §5.4: "Ship a
- * client-safe front/src/lib/edital/types.ts (DTOs plus the dateRange union
- * shared with the zod schema) and keep only internals under server/. As
- * written, #745 would duplicate the types or break the build."
  */
 
 /**

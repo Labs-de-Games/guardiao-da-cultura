@@ -11,8 +11,7 @@ const serverSchema = z
       .default("https://texttospeech.responsivevoice.org/v1/text:synthesize"),
 
     // --- Edital dashboard (epic #738) — all four optional, so the app boots
-    // unconfigured and /api/edital/health reports configured:false. See
-    // docs/specs/discovery-738-dashboard-edital.md §5.4.
+    // unconfigured and /api/edital/health reports configured:false.
     /** Personal `phx_` PostHog key — Query API, never NEXT_PUBLIC_*. */
     editalPosthogPersonalApiKey: z.string().optional(),
     editalPosthogProjectId: z.string().optional(),

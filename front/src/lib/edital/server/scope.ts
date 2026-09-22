@@ -8,8 +8,7 @@ import { isValidOriginSlug } from "../origins";
  * builder in this directory takes a `Scope` as its first parameter, so a
  * handler that tries to pass `searchParams.get("slug")` fails to compile
  * instead of merely failing review. Strictly stronger than "required
- * non-optional param". See
- * docs/specs/discovery-738-dashboard-edital.md §5.4.
+ * non-optional param".
  *
  * The brand is a private, module-unexported symbol: no other module can
  * construct a value of this type by object-shape alone, TypeScript's

@@ -3,8 +3,7 @@
 **Status: interim.** The real onepager document was not found in the repository
 (`grep -ril onepager` returns nothing) and was not otherwise available at the time this file was
 committed. This file exists so the funnel definition — the artifact an auditor judges — is
-versioned next to the code that computes it, per
-`docs/specs/discovery-738-dashboard-edital.md` §1.1, instead of living only in a chat history.
+versioned next to the code that computes it, instead of living only in a chat history.
 
 **Action required:** replace the interim funnel list below with the source onepager's actual
 wording as soon as it is available, and remove this status note.
@@ -22,6 +21,16 @@ Derived from issue #741's own ordered acceptance list, internally consistent wit
 6. `quiz_completed`
 7. `chapter_1_completed`
 
+> **Superseded (issue #807):** the shipped funnel does not use this exact
+> list. `chapter_1_started`/`chapter_1_completed` only ever covered
+> level 1, so #807 replaced steps 4–7 with one dynamic `level_completed`
+> step per level in `LEVEL_REGISTRY` (currently 3 levels, so 6 steps
+> total today). See `EVENTS.md`'s "Funil canônico do edital" section and
+> `front/src/lib/edital/server/queries.ts`'s `getFunnelSteps()` for the
+> actual, current list. This section is left as-is below since it's the
+> historical assumption this epic started from, not a description of
+> what shipped.
+
 ## 8 cards, in order
 
 Not derivable from repository evidence — the onepager's exact card list and order is the single
@@ -36,8 +45,7 @@ string (e.g. `2026-04-01`), and clamps every date range — `today`/`7d`/`30d`/`
 `all-time`'s lower bound — to never resolve earlier than it. This is deliberately **config, not a
 code constant**: the value can only be honestly known once issue #740 (identity foundation) has
 actually deployed to production, since every event before that date is analytically unusable
-(churned anonymous ids, no attribution, no reliable step 1 — see
-`docs/specs/discovery-738-dashboard-edital.md` §2.4).
+(churned anonymous ids, no attribution, no reliable step 1).
 
 **Until that deploy date is recorded, the variable stays unset, which means:**
 - `today`/`7d`/`30d`/`custom` ranges are unclamped (no lower bound enforced).

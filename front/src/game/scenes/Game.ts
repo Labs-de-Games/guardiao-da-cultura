@@ -717,8 +717,8 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     // Canonical funnel step — must fire exactly once per session, unlike
-    // the legacy event above. See docs/specs/discovery-738-dashboard-edital.md
-    // §8 step 3 ("gameplay_started fires exactly once under StrictMode").
+    // the legacy event above ("gameplay_started fires exactly once under
+    // StrictMode").
     captureOncePerSession("gameplay_started", {
       level_id: this.levelId,
       level_number: this.levelDef.levelNumber,
