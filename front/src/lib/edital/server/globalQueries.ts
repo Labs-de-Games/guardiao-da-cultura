@@ -1,5 +1,5 @@
 import "server-only";
-import { LEVEL_REGISTRY } from "../../../game/data/LevelConfig";
+import { ORDERED_LEVELS } from "./levels";
 import type { ResolvedDateRange } from "./period";
 import type { HogQLQueryPlan } from "./queries";
 
@@ -13,10 +13,6 @@ import type { HogQLQueryPlan } from "./queries";
  * `Scope` or a `turmaSource` — #808's whole point is aggregate-across-
  * everyone, no institution/turma filter, ever.
  */
-
-const ORDERED_LEVELS = Object.values(LEVEL_REGISTRY).sort(
-  (a, b) => a.levelNumber - b.levelNumber,
-);
 
 /** Same shape as queries.ts's commonPredicate, minus the institution filter. */
 function commonGlobalPredicate(): string {

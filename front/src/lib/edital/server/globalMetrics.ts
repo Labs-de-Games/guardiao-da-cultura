@@ -1,5 +1,4 @@
 import "server-only";
-import { LEVEL_REGISTRY } from "../../../game/data/LevelConfig";
 import { safeRate } from "../rate";
 import type { Rate } from "../types";
 import {
@@ -17,8 +16,11 @@ import {
   buildTurmaCountQuery,
 } from "./globalQueries";
 import { runHogQLQuery } from "./hogql";
+import { FINAL_LEVEL_NUMBER, ORDERED_LEVELS } from "./levels";
 import { withCache } from "./metrics";
+import { toNumber } from "./numeric";
 import type { ResolvedDateRange } from "./period";
+import { rowsToLevelMap } from "./rows";
 
 /**
  * Issue #808 — global (cross-institution) metric orchestration, sibling
@@ -29,12 +31,6 @@ import type { ResolvedDateRange } from "./period";
  * but every cache key here is prefixed `global:` so it can never collide
  * with an institution-scoped entry.
  */
-
-const ORDERED_LEVELS = Object.values(LEVEL_REGISTRY).sort(
-  (a, b) => a.levelNumber - b.levelNumber,
-);
-const FINAL_LEVEL_NUMBER =
-  ORDERED_LEVELS[ORDERED_LEVELS.length - 1]?.levelNumber ?? 1;
 
 function rangeKey(range: ResolvedDateRange): string {
   return `${range.from.toISOString()}:${range.to.toISOString()}`;
@@ -49,7 +45,7 @@ export async function fetchGlobalPlayers(
     const { query, values } = buildGlobalPlayersQuery(range);
     const result = await runHogQLQuery(query, values);
     const [players] = result.results[0] ?? [0];
-    return Number(players ?? 0);
+    return toNumber(players);
   });
 }
 
@@ -62,7 +58,7 @@ export async function fetchInstitutionCount(
     const { query, values } = buildInstitutionCountQuery(range);
     const result = await runHogQLQuery(query, values);
     const [institutions] = result.results[0] ?? [0];
-    return Number(institutions ?? 0);
+    return toNumber(institutions);
   });
 }
 
@@ -75,7 +71,7 @@ export async function fetchTurmaCount(
     const { query, values } = buildTurmaCountQuery(range);
     const result = await runHogQLQuery(query, values);
     const [turmas] = result.results[0] ?? [0];
-    return Number(turmas ?? 0);
+    return toNumber(turmas);
   });
 }
 
@@ -91,7 +87,7 @@ export async function fetchGlobalCompletionRate(
     );
     const result = await runHogQLQuery(query, values);
     const [started, completed] = result.results[0] ?? [0, 0];
-    return safeRate(Number(completed ?? 0), Number(started ?? 0));
+    return safeRate(toNumber(completed), toNumber(started));
   });
 }
 
@@ -104,10 +100,7 @@ export async function fetchGlobalEntryRate(
     const { query, values } = buildGlobalEntryRateQuery(range);
     const result = await runHogQLQuery(query, values);
     const [landingPageViewed, gameplayStarted] = result.results[0] ?? [0, 0];
-    return safeRate(
-      Number(gameplayStarted ?? 0),
-      Number(landingPageViewed ?? 0),
-    );
+    return safeRate(toNumber(gameplayStarted), toNumber(landingPageViewed));
   });
 }
 
@@ -127,7 +120,7 @@ export async function fetchGlobalPhaseProgression(
     const row = result.results[0] ?? [];
     const values_: Record<string, number> = {};
     result.columns.forEach((column, index) => {
-      values_[column] = Number(row[index] ?? 0);
+      values_[column] = toNumber(row[index]);
     });
 
     return [
@@ -137,42 +130,6 @@ export async function fetchGlobalPhaseProgression(
         players: values_[`level_${level.levelNumber}_completed`] ?? 0,
       })),
     ];
-  });
-}
-
-export interface GlobalPhaseQuizPassRate {
-  levelId: string;
-  levelNumber: number;
-  label: string;
-  rate: Rate;
-}
-
-/** #808 P0 — aprovação agregada nos quizzes, por fase. */
-export async function fetchGlobalPhaseQuizPassRate(
-  range: ResolvedDateRange,
-): Promise<GlobalPhaseQuizPassRate[]> {
-  const key = `global:phase-quiz-pass-rate:${rangeKey(range)}`;
-  return withCache(key, async () => {
-    const { query, values } = buildGlobalPhaseQuizPassRateQuery(range);
-    const result = await runHogQLQuery(query, values);
-    const byLevel = new Map<string, { passed: number; total: number }>();
-    for (const row of result.results) {
-      const [levelId, passed, total] = row as [string, number, number];
-      byLevel.set(levelId, {
-        passed: Number(passed ?? 0),
-        total: Number(total ?? 0),
-      });
-    }
-
-    return ORDERED_LEVELS.map((level) => {
-      const entry = byLevel.get(level.id);
-      return {
-        levelId: level.id,
-        levelNumber: level.levelNumber,
-        label: level.title,
-        rate: safeRate(entry?.passed ?? 0, entry?.total ?? 0),
-      };
-    });
   });
 }
 
@@ -208,24 +165,16 @@ export async function fetchGlobalPhaseDetail(
       runHogQLQuery(quizPlan.query, quizPlan.values),
     ]);
 
-    const reachedByLevel = new Map<string, number>();
-    for (const row of reachedResult.results) {
-      const [levelId, players] = row as [string, number];
-      reachedByLevel.set(levelId, Number(players ?? 0));
-    }
-    const completedByLevel = new Map<string, number>();
-    for (const row of completedResult.results) {
-      const [levelId, players] = row as [string, number];
-      completedByLevel.set(levelId, Number(players ?? 0));
-    }
-    const quizByLevel = new Map<string, { passed: number; total: number }>();
-    for (const row of quizResult.results) {
-      const [levelId, passed, total] = row as [string, number, number];
-      quizByLevel.set(levelId, {
-        passed: Number(passed ?? 0),
-        total: Number(total ?? 0),
-      });
-    }
+    const reachedByLevel = rowsToLevelMap(reachedResult.results, (row) =>
+      toNumber(row[1]),
+    );
+    const completedByLevel = rowsToLevelMap(completedResult.results, (row) =>
+      toNumber(row[1]),
+    );
+    const quizByLevel = rowsToLevelMap(quizResult.results, (row) => ({
+      passed: toNumber(row[1]),
+      total: toNumber(row[2]),
+    }));
 
     return ORDERED_LEVELS.map((level) => {
       const quiz = quizByLevel.get(level.id);
@@ -256,8 +205,8 @@ export async function fetchGlobalOriginSplit(
     const result = await runHogQLQuery(query, values);
     const [institutional, spontaneous] = result.results[0] ?? [0, 0];
     return {
-      institutional: Number(institutional ?? 0),
-      spontaneous: Number(spontaneous ?? 0),
+      institutional: toNumber(institutional),
+      spontaneous: toNumber(spontaneous),
     };
   });
 }
@@ -277,7 +226,7 @@ export async function fetchGlobalPlayerTrend(
     const result = await runHogQLQuery(query, values);
     return result.results.map((row) => {
       const [month, players] = row as [string, number];
-      return { month, players: Number(players ?? 0) };
+      return { month, players: toNumber(players) };
     });
   });
 }
@@ -300,9 +249,9 @@ export async function fetchGlobalSessionDuration(
       0, 0, 0,
     ];
     return {
-      avgSeconds: Number(avgSeconds ?? 0),
-      medianSeconds: Number(medianSeconds ?? 0),
-      sessionsStarted: Number(sessionsStarted ?? 0),
+      avgSeconds: toNumber(avgSeconds),
+      medianSeconds: toNumber(medianSeconds),
+      sessionsStarted: toNumber(sessionsStarted),
     };
   });
 }
