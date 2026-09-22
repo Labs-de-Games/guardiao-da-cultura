@@ -40,10 +40,15 @@ import { useAsyncData } from "@/lib/edital/useAsyncData";
  */
 function InstitutionLinksContent() {
   const [groupLabel, setGroupLabel] = useState("");
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    message: string;
+    severity: "success" | "error";
+  } | null>(null);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CampaignLink | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const labelIsValid = isValidOriginSlug(groupLabel);
 
@@ -73,14 +78,34 @@ function InstitutionLinksContent() {
 
   async function handleConfirmDelete() {
     if (!pendingDelete) return;
-    await deleteCampaignLink(pendingDelete.id);
-    setPendingDelete(null);
-    retryLinks();
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteCampaignLink(pendingDelete.id);
+      setPendingDelete(null);
+      retryLinks();
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Erro ao excluir link",
+      );
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function handleCopy(url: string) {
-    await navigator.clipboard.writeText(url);
-    setSnackbarOpen(true);
+    try {
+      await navigator.clipboard.writeText(url);
+      setSnackbar({
+        message: "Link copiado para a área de transferência!",
+        severity: "success",
+      });
+    } catch {
+      setSnackbar({
+        message: "Não foi possível copiar o link.",
+        severity: "error",
+      });
+    }
   }
 
   const { data, loading, error, retry } = useAsyncData<EditalCampaignsResponse>(
@@ -226,18 +251,23 @@ function InstitutionLinksContent() {
       </Section>
 
       <Snackbar
-        open={snackbarOpen}
+        open={snackbar !== null}
         autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
+        onClose={() => setSnackbar(null)}
       >
-        <Alert severity="success" onClose={() => setSnackbarOpen(false)}>
-          Link copiado para a área de transferência!
-        </Alert>
+        {snackbar ? (
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)}>
+            {snackbar.message}
+          </Alert>
+        ) : undefined}
       </Snackbar>
 
       <Dialog
         open={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
+        onClose={() => {
+          setPendingDelete(null);
+          setDeleteError(null);
+        }}
       >
         <DialogTitle>Excluir link?</DialogTitle>
         <DialogContent>
@@ -245,10 +275,27 @@ function InstitutionLinksContent() {
             O link do grupo/turma <strong>{pendingDelete?.source}</strong> será
             removido. Esta ação não pode ser desfeita.
           </DialogContentText>
+          {deleteError ? (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {deleteError}
+            </Alert>
+          ) : null}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPendingDelete(null)}>Cancelar</Button>
-          <Button color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button
+            onClick={() => {
+              setPendingDelete(null);
+              setDeleteError(null);
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            onClick={handleConfirmDelete}
+            disabled={deleting}
+            autoFocus
+          >
             Excluir
           </Button>
         </DialogActions>
