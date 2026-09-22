@@ -11,9 +11,7 @@ const SESSION_FINISHED_SENT_KEY = "gp_session_finished_sent";
  * `create()`. Before this guard, `setupAbandonmentTracking()` ran (and
  * attached a `beforeunload` listener) once per level, and the listener was
  * never removed — so listeners accumulated and SESSION_END fired once per
- * level, not once per session. See
- * docs/specs/discovery-738-dashboard-edital.md §3.1, §7
- * "session_finished inflation" risk.
+ * level, not once per session.
  */
 let abandonmentTrackingInstalled = false;
 
@@ -38,8 +36,6 @@ export class AnalyticsSystem {
       timestamp: new Date().toISOString(),
       metadata: metadata ?? {},
     };
-
-    console.log(`[AnalyticsSystem] Tracking event: ${type}`, payload);
 
     sendGameEvent(payload).catch((err) => {
       console.error(`[AnalyticsSystem] Failed to send event ${type}:`, err);
