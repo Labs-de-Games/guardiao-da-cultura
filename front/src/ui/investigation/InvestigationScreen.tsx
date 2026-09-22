@@ -25,6 +25,7 @@ import {
   snapClueToCursor,
 } from "./investigation-dnd";
 import { hasSeenInvestigationTutorial } from "./investigation-tutorial-storage";
+import { StarTracker } from "./StarTracker";
 import { SuspectTable } from "./SuspectTable";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
@@ -199,6 +200,8 @@ export function InvestigationScreen() {
             {payload.previousStars > 0 &&
               ` · melhor resultado: ${payload.previousStars} ⭐`}
           </Typography>
+
+          <StarTracker />
 
           <Box sx={{ display: "flex", gap: 1.5, flexShrink: 0 }}>
             <Box

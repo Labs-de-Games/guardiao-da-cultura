@@ -530,6 +530,29 @@ describe("InvestigationScreen", () => {
     });
   });
 
+  describe("the star tracker", () => {
+    it("starts with every star in play", () => {
+      render(<InvestigationScreen />);
+      expect(
+        screen.getByLabelText("5 de 5 estrelas em jogo"),
+      ).toBeInTheDocument();
+    });
+
+    it("loses one per wrong accusation", () => {
+      render(<InvestigationScreen />);
+
+      accuse("helena_marques", "Helena Marques");
+      expect(
+        screen.getByLabelText("4 de 5 estrelas em jogo"),
+      ).toBeInTheDocument();
+
+      accuse("bruno_tavares", "Bruno Tavares");
+      expect(
+        screen.getByLabelText("3 de 5 estrelas em jogo"),
+      ).toBeInTheDocument();
+    });
+  });
+
   describe("leaving", () => {
     it("cancels a pending accusation on ESC before leaving the phase", () => {
       const exit = jest.fn();
