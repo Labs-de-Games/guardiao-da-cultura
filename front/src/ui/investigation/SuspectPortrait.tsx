@@ -14,12 +14,16 @@ function initialsOf(name: string): string {
     .join("");
 }
 
+/** Where suspect artwork lives; `portrait` in the dossier names the file. */
+const PORTRAIT_DIR = "/assets/ui/suspects";
+
 /**
  * Suspect portrait with a graceful fallback.
  *
- * No portrait artwork exists yet, so a suspect without a `portrait` — or whose
- * image fails to load — renders as monogrammed initials in the same palette.
- * Dropping real PNGs into `/assets/investigation/portraits/` is all it takes.
+ * Artwork is still arriving one suspect at a time, so anyone without a
+ * `portrait` — or whose image is not on disk yet — renders as monogrammed
+ * initials in the same palette. Dropping a PNG into `PORTRAIT_DIR` under the
+ * name the dossier already gives is all it takes to replace one.
  */
 export function SuspectPortrait({
   suspect,
@@ -32,9 +36,7 @@ export function SuspectPortrait({
   dimmed?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const src = suspect.portrait
-    ? `/assets/investigation/portraits/${suspect.portrait}`
-    : null;
+  const src = suspect.portrait ? `${PORTRAIT_DIR}/${suspect.portrait}` : null;
 
   return (
     <Box
@@ -63,7 +65,13 @@ export function SuspectPortrait({
           src={src}
           alt={suspect.name}
           onError={() => setFailed(true)}
-          sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            // The art is pixel art at 106px and the seats scale well past it.
+            imageRendering: "pixelated",
+          }}
         />
       ) : (
         <Typography

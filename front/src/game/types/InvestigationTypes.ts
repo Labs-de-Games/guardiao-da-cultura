@@ -52,7 +52,7 @@ export interface Suspect {
   alibi: string;
   relationWithCulture: string;
   profile: string;
-  /** File name under `/assets/investigation/portraits/`; falls back to initials. */
+  /** File name under `/assets/ui/suspects/`; falls back to initials. */
   portrait?: string;
   isCulprit: boolean;
   traits: Record<string, TraitValue>;
