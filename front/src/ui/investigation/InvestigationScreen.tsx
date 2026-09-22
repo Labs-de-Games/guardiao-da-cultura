@@ -3,6 +3,7 @@
 import { DndContext, type DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AudioManager } from "@/game/audio/AudioManager";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
@@ -29,6 +30,9 @@ import { StarTracker } from "./StarTracker";
 import { SuspectTable } from "./SuspectTable";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
+
+/** Long enough to register as a refusal, short enough not to delay the alibi. */
+const SHAKE_MS = 420;
 
 const BOTTOM_BUTTON = {
   px: 3,
@@ -76,7 +80,20 @@ export function InvestigationScreen() {
 
   const [draggingClueKey, setDraggingClueKey] = useState<string | null>(null);
   const [flights, setFlights] = useState<ClueFlight[]>([]);
+  const [shaking, setShaking] = useState(false);
   const autoTaught = useRef(false);
+
+  // The same refusal the platforming uses for a wrong move, so a wrong name
+  // lands the way every other mistake in the game does. The canvas is hidden
+  // under this screen, so the shake has to be the DOM's rather than the
+  // camera's — but the sound is the game's own.
+  useEffect(() => {
+    if (!lastWrongSuspectId) return;
+    AudioManager.playSfx("sfx.puzzle.failure");
+    setShaking(true);
+    const timer = window.setTimeout(() => setShaking(false), SHAKE_MS);
+    return () => window.clearTimeout(timer);
+  }, [lastWrongSuspectId]);
 
   // Measured first, cleared second: once the board empties there is nothing
   // left on screen to fly home.
@@ -174,6 +191,18 @@ export function InvestigationScreen() {
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
+          animation: shaking
+            ? `investigation-shake ${SHAKE_MS}ms ease-in-out`
+            : "none",
+          "@keyframes investigation-shake": {
+            "0%, 100%": { transform: "translateX(0)" },
+            "15%": { transform: "translateX(-12px)" },
+            "32%": { transform: "translateX(12px)" },
+            "50%": { transform: "translateX(-8px)" },
+            "68%": { transform: "translateX(8px)" },
+            "85%": { transform: "translateX(-4px)" },
+          },
+          "@media (prefers-reduced-motion: reduce)": { animation: "none" },
         }}
       >
         <Box sx={{ flex: 1, minHeight: 0, display: "flex" }}>

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { AudioManager } from "@/game/audio/AudioManager";
 import { INVESTIGATION_CLUE_HEARTS } from "@/game/constants/Investigation";
 import type {
   InvestigationClue,
@@ -25,6 +26,10 @@ jest.mock("phaser", () => ({
   Scenes: { Events: { SHUTDOWN: "shutdown" } },
   Events: { EventEmitter: jest.requireActual("eventemitter3") },
   Sound: { Events: { COMPLETE: "complete" } },
+}));
+
+jest.mock("@/game/audio/AudioManager", () => ({
+  AudioManager: { playSfx: jest.fn() },
 }));
 
 jest.mock("posthog-js", () => ({
@@ -161,6 +166,7 @@ describe("InvestigationScreen", () => {
     // The walkthrough auto-runs for a player who has never seen it and would
     // sit on top of every one of these assertions; it has its own block below.
     markInvestigationTutorialSeen();
+    (AudioManager.playSfx as jest.Mock).mockClear();
     useGameUIStore.getState().closeInvestigation();
     useGameUIStore.getState().openInvestigation(buildPayload());
   });
@@ -445,6 +451,20 @@ describe("InvestigationScreen", () => {
       fireEvent.click(screen.getByRole("button", { name: `Acusar ${name}` }));
       fireEvent.click(screen.getByText("Sim, acusar"));
     };
+
+    it("plays the game's error sound", () => {
+      render(<InvestigationScreen />);
+      accuseOnly("helena_marques", "Helena Marques");
+
+      expect(AudioManager.playSfx).toHaveBeenCalledWith("sfx.puzzle.failure");
+    });
+
+    it("stays quiet when the accusation is right", () => {
+      render(<InvestigationScreen />);
+      accuse("augusto_vale", "Augusto Vale");
+
+      expect(AudioManager.playSfx).not.toHaveBeenCalled();
+    });
 
     it("lets the suspect answer back in their own words", () => {
       render(<InvestigationScreen />);

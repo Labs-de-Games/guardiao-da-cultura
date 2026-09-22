@@ -9,6 +9,7 @@ import {
 } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
+import { AudioManager, loadGlobalAudio } from "../audio";
 import {
   INVESTIGATION_LEVEL_ID,
   INVESTIGATION_LEVEL_NUMBER,
@@ -55,6 +56,10 @@ export class InvestigationScene extends Scene {
   preload() {
     this.load.setPath("assets/");
 
+    // Already cached by the cinematic that leads here; loading again is a cache
+    // hit and keeps the scene standing on its own if it is ever entered direct.
+    loadGlobalAudio(this);
+
     this.load.json(SUSPECTS_KEY, "data/investigation/suspects.json");
     this.load.json(CLUES_KEY, "data/investigation/clues.json");
 
@@ -74,6 +79,10 @@ export class InvestigationScene extends Scene {
     useGameUIStore.getState().setLevelTransitionActive(false);
 
     this.cameras.main.setBackgroundColor("#000000");
+
+    // The React screen covers the canvas, but it still plays the game's sound
+    // effects — the singleton has to point at a live scene for that to work.
+    AudioManager.init(this);
 
     const userId = this.game.registry.get("userId") as string | null;
     const isGuest = this.game.registry.get("isGuest") as boolean;
