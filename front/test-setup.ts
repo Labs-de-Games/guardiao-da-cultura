@@ -18,6 +18,16 @@ config({ path: resolve(__dirname, "../.env") });
  */
 process.env.NEXT_PUBLIC_ENV = "development";
 
+/**
+ * Same class of problem: `env-server.ts:7` requires RESPONSIVEVOICE_API_KEY
+ * unconditionally (`z.string().min(1)`). No test suite asserts a missing key
+ * (they set their own), but any test that reaches the real `serverEnv.server`
+ * without setting it threw a ZodError on CI — which has no .env — while
+ * passing locally only because a developer's .env supplied the key. Default it
+ * here so the whole suite is deterministic with zero env vars, like CI.
+ */
+process.env.RESPONSIVEVOICE_API_KEY ??= "test-key";
+
 import "@testing-library/jest-dom";
 
 // embla-carousel relies on ResizeObserver / IntersectionObserver / matchMedia,
