@@ -8,7 +8,7 @@ import type { DateRange } from "@/lib/edital/types";
 
 interface CsvExportButtonProps {
   dateRange: DateRange;
-  onError?: (message: string) => void;
+  onError?: (message: string | null) => void;
   /** Disable when the current dateRange isn't safe to send (e.g. invalid custom range). */
   disabled?: boolean;
   /** Issue #807 — omit for an institution-wide export. */
@@ -25,6 +25,7 @@ export function CsvExportButton({
 
   async function handleClick() {
     setDownloading(true);
+    onError?.(null);
     try {
       await downloadReportCsv(dateRange, turma);
     } catch (err) {
