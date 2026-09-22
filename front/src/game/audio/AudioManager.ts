@@ -121,6 +121,24 @@ export class AudioManager {
     AudioManager.getInstance().stopMusicInternal(durationMs);
   }
 
+  /**
+   * Start a music layer muted (volume 0), looping indefinitely.
+   * Use this for tracks that must play in sync from the start but stay
+   * silent until unlocked (e.g. per-instrument stems of one synced song).
+   * Unaffected by stopMusic/fadeOutMusic — it isn't tracked as currentMusic.
+   */
+  public static playMusicLayer(key: AudioKey): void {
+    AudioManager.getInstance().playMusicLayerInternal(key);
+  }
+
+  /**
+   * Unlock a previously-started music layer, bringing it up to the current
+   * music volume (optionally fading in over fadeInMs).
+   */
+  public static unlockMusicLayer(key: AudioKey, fadeInMs?: number): void {
+    AudioManager.getInstance().unlockMusicLayerInternal(key, fadeInMs);
+  }
+
   // Set the music volume (0-1).
   public static setMusicVolume(volume: number): void {
     AudioManager.getInstance().setVolume("music", volume);
@@ -414,6 +432,57 @@ export class AudioManager {
     this.activeSounds.set(loopKey, this.currentMusic);
   }
 
+  private playMusicLayerInternal(key: AudioKey): void {
+    if (!this.scene) {
+      console.warn(
+        `[AudioManager] Cannot play layer "${key}": no scene set. Call AudioManager.init(scene) first.`,
+      );
+      return;
+    }
+
+    if (this.activeSounds.has(key)) {
+      return;
+    }
+
+    if (!this.scene.game.cache.audio.has(key)) {
+      console.warn(
+        `[AudioManager] Music layer "${key}" not loaded. Make sure to preload it.`,
+      );
+      return;
+    }
+
+    const sound = this.scene.sound.add(key, { volume: 0, loop: true }) as Sound;
+    if (this.settings.muted) {
+      sound.mute = true;
+    }
+    sound.play();
+
+    this.activeSounds.set(key, {
+      sound,
+      key,
+      category: "music",
+      locked: true,
+    });
+  }
+
+  private unlockMusicLayerInternal(key: AudioKey, fadeInMs?: number): void {
+    const instance = this.activeSounds.get(key);
+    if (!instance) return;
+
+    instance.locked = false;
+    const targetVolume = this.settings.musicVolume;
+
+    if (fadeInMs && fadeInMs > 0 && this.scene) {
+      this.scene.tweens.add({
+        targets: instance.sound,
+        volume: targetVolume,
+        duration: fadeInMs,
+      });
+    } else {
+      instance.sound.setVolume(targetVolume);
+    }
+  }
+
   private stopMusicInternal(fadeOutMs?: number): void {
     if (!this.currentMusic || !this.scene) {
       return;
@@ -450,9 +519,15 @@ export class AudioManager {
 
     if (category === "music") {
       this.settings.musicVolume = clampedVolume;
-      // Update current music volume
-      if (this.currentMusic && !this.settings.muted) {
-        this.currentMusic.sound.setVolume(clampedVolume);
+      // Update every unlocked music-category sound (currentMusic included,
+      // since it's always tracked in activeSounds too). Locked layers stay
+      // silent until explicitly unlocked.
+      if (!this.settings.muted) {
+        this.activeSounds.forEach((instance) => {
+          if (instance.category === "music" && !instance.locked) {
+            instance.sound.setVolume(clampedVolume);
+          }
+        });
       }
     } else {
       this.settings.sfxVolume = clampedVolume;
@@ -471,14 +546,15 @@ export class AudioManager {
       });
     } else {
       // Unmute all active sounds
-      this.activeSounds.forEach(({ sound, category }) => {
+      this.activeSounds.forEach(({ sound, category, locked }) => {
         sound.mute = false;
-        // Restore volume based on category
-        const volume =
-          category === "music"
+        // Locked layers stay silent until explicitly unlocked; otherwise
+        // restore volume based on category
+        sound.volume = locked
+          ? 0
+          : category === "music"
             ? this.settings.musicVolume
             : this.settings.sfxVolume;
-        sound.volume = volume;
       });
     }
 

@@ -81,6 +81,9 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.star.earned", path: "sound/sfx/star_sound.mp3" },
   { key: "sfx.object.drop", path: "sound/sfx/object.drop_5.mp3" },
+  // Switches
+  { key: "sfx.switch", path: "sound/sfx/switch.ogg" },
+  { key: "sfx.light_bar.fix", path: "sound/sfx/light_bar_fix.ogg" },
 ];
 
 /**
@@ -119,6 +122,39 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
       loop: true,
     },
   },
+  level_03: {
+    levelId: "level_03",
+    music: {
+      key: "music.level_3.main",
+      path: "sound/music/level_3_cricket.ogg",
+      loop: true,
+    },
+    // Instrument stems for the band mechanic. All start muted at level load
+    // and are unlocked in place as each band member is confirmed, so they
+    // stay phase-locked to the same shared timeline.
+    musicLayers: [
+      {
+        key: "music.level_3.layer.zabumba",
+        path: "sound/music/level_3_zabumba.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.accordion",
+        path: "sound/music/level_3_accordion.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.triangle",
+        path: "sound/music/level_3_triangle.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.jam_block",
+        path: "sound/music/level_3_jam_block.ogg",
+        loop: true,
+      },
+    ],
+  },
 };
 
 /**
@@ -151,6 +187,9 @@ export function getLevelAudioAssets(levelId: string): AudioAssetDefinition[] {
   const assets: AudioAssetDefinition[] = [];
   if (manifest.music) {
     assets.push(manifest.music);
+  }
+  if (manifest.musicLayers) {
+    assets.push(...manifest.musicLayers);
   }
   if (manifest.sfx) {
     assets.push(...manifest.sfx);

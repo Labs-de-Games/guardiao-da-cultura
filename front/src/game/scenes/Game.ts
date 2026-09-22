@@ -8,6 +8,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import type { GameEventMap } from "../../shared/events/game-events";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
+import type { AudioKey } from "../audio";
 import { AudioManager, loadGlobalAudio } from "../audio";
 import { getLevelAudioManifest } from "../audio/registry";
 import { GameEvents } from "../constants/GameEvents";
@@ -49,17 +50,20 @@ import { LevelManager } from "../objects/LevelManager";
 import { MapManager } from "../objects/MapManager";
 import type { MovingPlatform } from "../objects/MovingPlatform";
 import { Npc } from "../objects/Npc";
+import { Phase3Parallax } from "../objects/Phase3Parallax";
 import { Player } from "../objects/Player";
 import { PLAYER_MOVEMENT, PLAYER_SPAWN } from "../objects/PlayerConfig";
 import type { Portal } from "../objects/Portal";
 import { ProgressionManager } from "../objects/ProgressionManager";
 import { QuestManager, QuestStatus } from "../objects/QuestManager";
 import { ScoreManager } from "../objects/ScoreManager";
+import { Trampoline } from "../objects/Trampoline";
 import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { captureOncePerSession } from "../systems/captureOncePerSession";
+import { DisappearingPlatformTracker } from "../systems/DisappearingPlatformTracker";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
 import { LabelSystem } from "../systems/LabelSystem";
@@ -72,7 +76,14 @@ import { PlaceholderSystem } from "../systems/PlaceholderSystem";
 import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
-import { type MapData, TiledMapLoader } from "../systems/TiledMapLoader";
+import { SwitchLightCinematicSystem } from "../systems/SwitchLightCinematicSystem";
+import { SwitchLightSystem } from "../systems/SwitchLightSystem";
+import {
+  type DisappearingPlatformLayer,
+  type MapData,
+  TiledMapLoader,
+} from "../systems/TiledMapLoader";
+import { TrampolineSystem } from "../systems/TrampolineSystem";
 import { TutorialSystem } from "../systems/TutorialSystem";
 import { GameEventType } from "../types/AnalyticsTypes";
 import type { GameDataAccessor } from "../types/GameDataAccessor";
@@ -99,6 +110,7 @@ const NUDGE_HINT_EVENT_BY_TYPE: Record<InteractiveType, string> = {
   [InteractiveType.COSTUME]: "nudge_hint_shown_costume",
   [InteractiveType.SPOTLIGHT]: "nudge_hint_shown_spotlight",
   [InteractiveType.STEP_SEQUENCE]: "nudge_hint_shown_step_sequence",
+  [InteractiveType.BAND]: "nudge_hint_shown_band",
 };
 
 export class Game extends Scene implements GameDataAccessor {
@@ -121,6 +133,7 @@ export class Game extends Scene implements GameDataAccessor {
     posters: 3,
     spotlights: 0,
     dance: 0,
+    band: 0,
   } as const;
   private startedFloors: Set<number> = new Set();
   stairsLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -133,6 +146,7 @@ export class Game extends Scene implements GameDataAccessor {
   private isChunkSelectorOpen: boolean = false;
   private isCostumeSelectorOpen: boolean = false;
   private isStepSequenceOpen: boolean = false;
+  private isBandPanelOpen: boolean = false;
   private isDialogueOpen: boolean = false;
   private tutorialSetDialogueOpen: boolean = false;
   private photoChunksCollected: number = 0;
@@ -140,11 +154,14 @@ export class Game extends Scene implements GameDataAccessor {
   private objectLayerProcessor!: ObjectLayerProcessor;
   private collectibleSystem!: CollectibleSystem;
   private ladderCinematicSystem!: LadderCinematicSystem;
+  private switchLightCinematicSystem!: SwitchLightCinematicSystem;
   public placeholderSystem!: PlaceholderSystem;
   public labelSystem!: LabelSystem;
   public lightBarSystem!: LightBarSystem;
   public chandelierLightSystem!: ChandelierLightSystem;
   public spotlightSystem!: SpotlightSystem;
+  public trampolineSystem!: TrampolineSystem;
+  public switchLightSystem!: SwitchLightSystem;
   private hintKeySystem!: HintKeySystem;
   private tutorialSystem!: TutorialSystem;
   private nudgeManager!: NudgeManager;
@@ -157,11 +174,17 @@ export class Game extends Scene implements GameDataAccessor {
   private draggableItems: DraggableItem[] = [];
   private carryableItems: CarryableItem[] = [];
   private movingPlatforms: MovingPlatform[] = [];
+  private trampolines: Trampoline[] = [];
+  private disappearingPlatforms: {
+    layer: Phaser.Tilemaps.TilemapLayer;
+    tracker: DisappearingPlatformTracker;
+  }[] = [];
   private itemsInteracted: Set<string> = new Set();
   private eventBusUnsubs: Array<() => void> = [];
 
   private levelId: string = "level_01";
   private levelDef!: LevelDefinition;
+  private phase3Parallax?: Phase3Parallax;
   public contentData: ContentJson = {
     works: { PAINTINGS: {}, SCULPTURES: {}, PHOTOS: {}, POSTERS: {} },
     quizzes: {},
@@ -205,6 +228,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.isChunkSelectorOpen = false;
     this.isCostumeSelectorOpen = false;
     this.isStepSequenceOpen = false;
+    this.isBandPanelOpen = false;
     this.isDialogueOpen = false;
     this.photoChunksCollected = 0;
     this.totalPhotoChunks = 0;
@@ -247,6 +271,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.preload(this);
     Npc.preload(this);
     Enemy.preload(this);
+    Trampoline.preload(this);
     EffectsManager.preload(this);
 
     // Preload global SFX assets (footsteps, climb, jump, drag, etc.)
@@ -255,9 +280,20 @@ export class Game extends Scene implements GameDataAccessor {
     this.load.tilemapTiledJSON(this.levelDef.map.key, this.levelDef.map.json);
     this.load.image(this.levelDef.map.tileset, this.levelDef.map.tilesetImg);
 
+    if (this.levelDef.levelNumber === Phase3Parallax.LEVEL_NUMBER) {
+      Phase3Parallax.preload(this);
+    }
+
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].OTHERS.forEach(
       (asset) => {
-        this.load.image(asset.key, asset.path);
+        if ("frameWidth" in asset && "frameHeight" in asset) {
+          this.load.spritesheet(asset.key, asset.path, {
+            frameWidth: asset.frameWidth as number,
+            frameHeight: asset.frameHeight as number,
+          });
+        } else {
+          this.load.image(asset.key, asset.path);
+        }
       },
     );
     LEVEL_ASSETS[this.levelId as keyof typeof LEVEL_ASSETS].SCULPTURES.forEach(
@@ -352,6 +388,10 @@ export class Game extends Scene implements GameDataAccessor {
       this.effects,
       this.mapScale,
     );
+    this.switchLightCinematicSystem = new SwitchLightCinematicSystem(
+      this,
+      this.effects,
+    );
     this.createAnimations();
 
     // Initialize audio manager with this scene
@@ -368,6 +408,9 @@ export class Game extends Scene implements GameDataAccessor {
         AudioManager.playMusic(musicKey);
         this.registry.set(musicStartedKey, true);
       }
+      manifest?.musicLayers?.forEach((layer) => {
+        AudioManager.playMusicLayer(layer.key);
+      });
     }
 
     const map = this.make.tilemap({
@@ -537,6 +580,16 @@ export class Game extends Scene implements GameDataAccessor {
                 filled: this.photoChunksCollected,
                 total: this.totalPhotoChunks,
               }),
+            };
+          }
+          if (step.infoKey === MissionKeys.SWITCHES_DONE) {
+            return {
+              ...step,
+              progressGetter: () =>
+                this.switchLightSystem?.getProgress() ?? {
+                  filled: 0,
+                  total: 0,
+                },
             };
           }
           return step;
@@ -745,7 +798,11 @@ export class Game extends Scene implements GameDataAccessor {
 
     if (mapData) {
       this.createEntities(mapData, this.contentData);
-      this.setupCollisions(mapData.colliders, mapData.oneWayColliders);
+      this.setupCollisions(
+        mapData.colliders,
+        mapData.oneWayColliders,
+        mapData.disappearingLayers,
+      );
 
       const placeholderLayer =
         mapData.objectLayers.PlaceHolder ||
@@ -774,6 +831,13 @@ export class Game extends Scene implements GameDataAccessor {
       if (chandelierLayer) {
         this.chandelierLightSystem = new ChandelierLightSystem(this);
         this.chandelierLightSystem.registerAllFromLayer(chandelierLayer);
+      }
+
+      const switchLightLayer = mapData.objectLayers.SwitchLight;
+      if (switchLightLayer) {
+        this.switchLightSystem = new SwitchLightSystem(this);
+        this.switchLightSystem.registerAllFromLayer(switchLightLayer);
+        this.switchLightSystem.setPlayerTracking(this.player);
       }
 
       this.hintKeySystem = new HintKeySystem(this);
@@ -906,7 +970,7 @@ export class Game extends Scene implements GameDataAccessor {
         })),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.PHOTO && !p.isFilled)
+          .filter((p) => p.type === InteractiveType.PHOTO)
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -924,13 +988,13 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter((p) => p.type === InteractiveType.COSTUME && !p.isFilled)
+          .filter((p) => p.type === InteractiveType.COSTUME)
           .map((p) => ({
             get x() {
               return p.area.centerX;
@@ -948,15 +1012,13 @@ export class Game extends Scene implements GameDataAccessor {
               return p.area.top - 115;
             },
             get active() {
-              return !p.isFilled;
+              return !p.isFilled && !p.isLocked;
             },
             interactionDistance: 120,
           })),
         ...this.placeholderSystem
           .getAll()
-          .filter(
-            (p) => p.type === InteractiveType.STEP_SEQUENCE && !p.isFilled,
-          )
+          .filter((p) => p.type === InteractiveType.STEP_SEQUENCE)
           .map((p) => {
             const placeholderSystem = this.placeholderSystem;
             const config = getInteractionConfig(p.type);
@@ -980,11 +1042,35 @@ export class Game extends Scene implements GameDataAccessor {
                 );
               },
               get active() {
-                return !p.isFilled;
+                return !p.isFilled && !p.isLocked;
               },
               interactionDistance: config.range,
             };
           }),
+        ...this.placeholderSystem
+          .getAll()
+          .filter((p) => p.type === InteractiveType.BAND)
+          .map((p) => ({
+            get x() {
+              return p.area.centerX;
+            },
+            get y() {
+              return p.area.centerY;
+            },
+            get interactionY() {
+              return p.area.centerY;
+            },
+            get displayHeight() {
+              return p.area.height;
+            },
+            get hintY() {
+              return p.area.top;
+            },
+            get active() {
+              return !p.isFilled && !p.isLocked;
+            },
+            interactionDistance: 120,
+          })),
         ...(this.spotlightSystem?.getAll().map((s) => ({
           get x() {
             return s.sprite.x;
@@ -1002,6 +1088,24 @@ export class Game extends Scene implements GameDataAccessor {
             return !s.isLocked;
           },
           interactionDistance: 170,
+        })) || []),
+        ...(this.switchLightSystem?.getAll().map((sw) => ({
+          get x() {
+            return sw.sprite.x;
+          },
+          get y() {
+            return sw.sprite.y;
+          },
+          get interactionY() {
+            return sw.sprite.y;
+          },
+          get displayHeight() {
+            return sw.sprite.displayHeight;
+          },
+          get active() {
+            return !sw.isActivated;
+          },
+          interactionDistance: 130,
         })) || []),
       ]);
 
@@ -1026,10 +1130,24 @@ export class Game extends Scene implements GameDataAccessor {
     }
     this.setupCameras(map);
 
+    // Level 3 gets a night-sky backdrop behind the Tiled world. Created after
+    // the camera bounds are set, since the parallax reads them.
+    if (this.levelDef.levelNumber === Phase3Parallax.LEVEL_NUMBER) {
+      this.phase3Parallax = new Phase3Parallax(this);
+      this.phase3Parallax.create();
+
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.phase3Parallax?.destroy();
+        this.phase3Parallax = undefined;
+      });
+    }
+
     this.events.on(
       GameEvents.INFO_COLLECTED,
-      (payload: string | { infoKey: string }) => {
+      (payload: string | { infoKey: string; missionId?: string }) => {
         const infoKey = typeof payload === "string" ? payload : payload.infoKey;
+        const missionId =
+          typeof payload === "string" ? undefined : payload.missionId;
         this.questManager.collectInfo(infoKey);
 
         if (
@@ -1073,7 +1191,10 @@ export class Game extends Scene implements GameDataAccessor {
           !this.questManager.isIntermediateQuizDone(infoKey) &&
           this.quizManager.getQuizMode() === "none"
         ) {
-          if (infoKey === MissionKeys.STAGE_DONE) {
+          if (
+            infoKey === MissionKeys.STAGE_DONE &&
+            missionId === MissionIds.CURATOR_L2
+          ) {
             const collected = this.questManager.getCollectedInfos(
               MissionIds.CURATOR_L2,
             );
@@ -1312,9 +1433,36 @@ export class Game extends Scene implements GameDataAccessor {
     this.spotlightSystem?.getAll().forEach(({ sprite, light }) => {
       if (light) sprite.setLighting(false);
     });
+
+    // The parallax backdrop is atmospheric set dressing, not part of the
+    // physically lit world — and its layers are viewport-sized with no
+    // camera culling, so leaving lighting on them would run the multi-light
+    // shader over the full screen every frame.
+    this.phase3Parallax?.setLighting(false);
   }
 
   private setupEvents() {
+    this.events.on(
+      GameEvents.SWITCH_LIGHT_ACTIVATED,
+      (payload: { lightBarName: string }) => {
+        const lb = this.lightBarSystem?.getByInstanceId(payload.lightBarName);
+        if (!lb) return;
+        this.switchLightCinematicSystem.playCinematic(lb.x, lb.y, () => {
+          this.lightBarSystem?.fix(payload.lightBarName);
+          if (lb.placeholderId) {
+            this.placeholderSystem.unlockByInstanceId(lb.placeholderId);
+          }
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+          if (this.switchLightSystem?.allActivated()) {
+            this.events.emit(GameEvents.INFO_COLLECTED, {
+              missionId: MissionIds.CURATOR_L3,
+              infoKey: MissionKeys.SWITCHES_DONE,
+            });
+          }
+        });
+      },
+    );
+
     this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
       this.isDialogueOpen = true;
       this.tutorialSetDialogueOpen = false;
@@ -1389,6 +1537,7 @@ export class Game extends Scene implements GameDataAccessor {
     Player.createAnims(this);
     Npc.createAnims(this);
     Enemy.createAnims(this);
+    Trampoline.createAnims(this);
 
     if (!this.anims.exists("placeholder_hint_anim")) {
       this.anims.create({
@@ -1402,6 +1551,18 @@ export class Game extends Scene implements GameDataAccessor {
       });
     }
 
+    if (!this.anims.exists("switch_light_anim")) {
+      this.anims.create({
+        key: "switch_light_anim",
+        frames: this.anims.generateFrameNumbers("switch_light", {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 8,
+        repeat: 0,
+      });
+    }
+
     if (!this.anims.exists("star_anim")) {
       this.anims.create({
         key: "star_anim",
@@ -1412,6 +1573,22 @@ export class Game extends Scene implements GameDataAccessor {
         frameRate: 10,
         repeat: -1,
       });
+    }
+
+    const bandMusicians = ["accordion", "jam_block", "triangle", "zabumba"];
+    for (const musician of bandMusicians) {
+      const animKey = `band_${musician}_anim`;
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key: animKey,
+          frames: this.anims.generateFrameNumbers(`band_${musician}`, {
+            start: 0,
+            end: 8,
+          }),
+          frameRate: 10,
+          repeat: -1,
+        });
+      }
     }
   }
 
@@ -1428,6 +1605,16 @@ export class Game extends Scene implements GameDataAccessor {
       mapData,
       this.mapScale,
     );
+
+    const trampolineLayer = mapData.objectLayers.Trampoline;
+    if (trampolineLayer) {
+      this.trampolineSystem = new TrampolineSystem(this);
+      this.trampolineSystem.registerAllFromLayer(
+        trampolineLayer,
+        this.mapScale,
+      );
+      this.trampolines = this.trampolineSystem.getAll();
+    }
 
     this.rat = new Enemy(this, 2000, 315, 1);
 
@@ -1519,7 +1706,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (
         (this.isDialogueOpen && !this.player?.isTutorialActive) ||
         this.isChunkSelectorOpen ||
-        this.isCostumeSelectorOpen
+        this.isCostumeSelectorOpen ||
+        this.isBandPanelOpen
       )
         return;
 
@@ -1730,6 +1918,43 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
 
+      // Band placeholder candidate
+      const band = this.placeholderSystem.getNearbyPlaceholder(
+        this.player.x,
+        this.player.y,
+        INTERACT_RANGE,
+        InteractiveType.BAND,
+      );
+      if (band) {
+        const bandDist = Phaser.Math.Distance.Between(
+          px,
+          py,
+          band.area.centerX,
+          band.area.centerY,
+        );
+        candidates.push({
+          dist: bandDist,
+          open: () => {
+            if (this.markFloorStarted(this.scoringFloors.band)) {
+              posthog.capture("minigame_started", {
+                minigame_number: this.scoringFloors.band + 1,
+                level_id: this.levelId,
+              });
+            }
+            this.isBandPanelOpen = true;
+            this.events.emit(GameEvents.DIALOGUE_STARTED, "puzzle");
+            EventBus.emit("ui:band-panel-open", {
+              instanceId: band.instanceId,
+              id: String(band.id),
+              options: band.options ?? [],
+            });
+            posthog.capture("band_interacted", {
+              level_id: this.levelId,
+            });
+          },
+        });
+      }
+
       // Spotlight candidate
       if (this.spotlightSystem) {
         const spotlight = this.spotlightSystem.getNearbySpotlight(
@@ -1930,6 +2155,52 @@ export class Game extends Scene implements GameDataAccessor {
         });
       }
     });
+    this.onEventBus("ui:band-panel-close", () => {
+      if (!this.isBandPanelOpen) return;
+      this.isBandPanelOpen = false;
+      this.events.emit(GameEvents.DIALOGUE_ENDED, { source: "puzzle" });
+      this.checkDialogState();
+    });
+    this.onEventBus("ui:band-choice-rejected", () => {
+      this.sound.play("sfx.puzzle.failure", { volume: 0.5 });
+      this.recordFloorError(this.scoringFloors.band);
+    });
+    this.onEventBus("ui:band-confirm", (data) => {
+      const p = this.placeholderSystem.getPlaceholderByInstanceId(
+        data.instanceId,
+      );
+      if (!p) return;
+
+      this.placeholderSystem.updateBandMember(
+        data.instanceId,
+        `band_${data.musicianId}`,
+      );
+      this.showSpotlightBeam();
+      this.playConfettiBurst(p.area.centerX, p.area.centerY);
+      this.placeholderSystem.lockPlaceholder(data.instanceId);
+      this.lightBarSystem?.turnOnByPlaceholder(data.instanceId);
+
+      const layerKey = `music.level_3.layer.${data.musicianId}` as AudioKey;
+      AudioManager.unlockMusicLayer(layerKey, 400);
+      if (AudioManager.isPlaying("music.level_3.main" as AudioKey)) {
+        AudioManager.fadeOutMusic(400);
+      }
+
+      this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+
+      if (
+        this.placeholderSystem.checkCategoryCompletion(InteractiveType.BAND)
+      ) {
+        this.completeFloor(this.scoringFloors.band);
+        this.time.delayedCall(500, () => {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L3,
+            infoKey: MissionKeys.STAGE_DONE,
+          });
+          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        });
+      }
+    });
     this.onEventBus("ui:costume-part-selected", (data) => {
       const p = this.placeholderSystem.getPlaceholderByInstanceId(
         data.instanceId,
@@ -1991,6 +2262,7 @@ export class Game extends Scene implements GameDataAccessor {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.events.off("item-dropped", this.handleItemDropped, this);
       this.collectibleSystem?.destroy();
+      this.switchLightSystem?.destroy();
       this.hintKeySystem?.destroy();
       this.tutorialSystem?.destroy();
       this.badgeSystem.destroy();
@@ -2069,6 +2341,7 @@ export class Game extends Scene implements GameDataAccessor {
       !this.isChunkSelectorOpen &&
       !this.isCostumeSelectorOpen &&
       !this.isStepSequenceOpen &&
+      !this.isBandPanelOpen &&
       this.quizManager.getQuizMode() === "none" &&
       !this.quizManager.getIsQuizActive()
     ) {
@@ -2076,9 +2349,23 @@ export class Game extends Scene implements GameDataAccessor {
     }
   }
 
+  private updateDisappearingPlatforms(time: number) {
+    for (const { layer, tracker } of this.disappearingPlatforms) {
+      for (const update of tracker.update(time)) {
+        const [x, y] = update.key.split(",").map(Number);
+        const tile = layer.getTileAt(x, y);
+        if (!tile) continue;
+
+        tile.alpha = update.alpha;
+        tile.collideUp = update.collidable;
+      }
+    }
+  }
+
   private setupCollisions(
     colliders: Phaser.Tilemaps.TilemapLayer[],
     oneWayColliders: Phaser.Tilemaps.TilemapLayer[] = [],
+    disappearingLayers: DisappearingPlatformLayer[] = [],
   ) {
     this.colliders = colliders;
     colliders.forEach((layer) => {
@@ -2126,6 +2413,48 @@ export class Game extends Scene implements GameDataAccessor {
       }
     });
 
+    this.disappearingPlatforms = disappearingLayers.map(
+      ({ layer, config }) => ({
+        layer,
+        tracker: new DisappearingPlatformTracker(config),
+      }),
+    );
+
+    this.disappearingPlatforms.forEach(({ layer, tracker }) => {
+      this.physics.add.collider(
+        this.player,
+        layer,
+        // Collision callback: a tile the player is resting on top of starts its timer
+        (player, tile) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down) {
+            const t = tile as Phaser.Tilemaps.Tile;
+            tracker.onStand(`${t.x},${t.y}`, this.time.now);
+          }
+        },
+        // Process callback: same one-way behavior as oneWay platforms
+        () => {
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+          return true;
+        },
+        this,
+      );
+
+      this.physics.add.collider(this.rat, layer);
+      for (const npc of this.npcs) {
+        this.physics.add.collider(npc, layer);
+      }
+      for (const item of this.draggableItems) {
+        this.physics.add.collider(item, layer);
+      }
+      for (const item of this.carryableItems) {
+        this.physics.add.collider(item, layer);
+      }
+    });
+
     // Moving platforms — one-way collision (player can jump through from below)
     for (const platform of this.movingPlatforms) {
       this.physics.add.collider(
@@ -2169,27 +2498,58 @@ export class Game extends Scene implements GameDataAccessor {
         this,
       );
     }
+
+    // Trampolines — launch the player upward on contact from above.
+    for (const trampoline of this.trampolines) {
+      this.physics.add.collider(
+        this.player,
+        trampoline,
+        (player, _trampoline) => {
+          const playerBody = (player as Player)
+            .body as Phaser.Physics.Arcade.Body;
+          if (playerBody.blocked.down && playerBody.velocity.y >= 0) {
+            (player as Player).launch(
+              PLAYER_MOVEMENT.JUMP_VELOCITY_Y * trampoline.power,
+            );
+            trampoline.bounce();
+          }
+        },
+        () => {
+          if (this.player.isClimbingStairs) {
+            return false;
+          }
+          return true;
+        },
+        this,
+      );
+    }
   }
 
   private setupCameras(map?: Phaser.Tilemaps.Tilemap) {
     this.cameras.main.setZoom(1.0);
     if (map) {
-      this.cameras.main.setBounds(
-        0,
-        0,
-        map.widthInPixels * this.mapScale,
-        map.heightInPixels * this.mapScale,
-      );
+      const worldWidth = map.widthInPixels * this.mapScale;
+      const worldHeight = map.heightInPixels * this.mapScale;
+      this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+      // Arcade Physics defaults world bounds to the base canvas size
+      // (LayoutConfig.GAME.WIDTH/HEIGHT) unless set explicitly, which is far
+      // smaller than the scaled level — sync it so setCollideWorldBounds
+      // actually clamps against the full level instead of a tiny top-left box.
+      this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     }
     this.cameras.main.startFollow(this.player, true, 0.2, 0.2, 0, 140);
     this.levelManager.updateProgress();
   }
 
-  update(_time: number, delta: number) {
+  update(time: number, delta: number) {
+    this.updateDisappearingPlatforms(time);
+
     const NOMINAL_DT = 1000 / 60;
     const dtClamped = Math.min(delta, 50);
     const adjusted = 1 - (1 - 0.2) ** (dtClamped / NOMINAL_DT);
     this.cameras.main.lerp.set(adjusted, adjusted);
+
+    this.phase3Parallax?.update(this.cameras.main);
 
     if (this.isDialogueOpen) {
       const cam = this.cameras.main;
@@ -2213,6 +2573,7 @@ export class Game extends Scene implements GameDataAccessor {
         this.isChunkSelectorOpen ||
         this.isCostumeSelectorOpen ||
         this.isStepSequenceOpen ||
+        this.isBandPanelOpen ||
         this.quizManager.getIsQuizActive() ||
         useGameUIStore.getState().labelData !== null;
 
@@ -2229,6 +2590,8 @@ export class Game extends Scene implements GameDataAccessor {
       if (this.tutorialSystem) {
         this.tutorialSystem.update(this.player.x, this.player.y, isPlayerBusy);
       }
+
+      this.switchLightSystem?.update();
 
       this.nudgeManager?.notifyActivity(this.player.getLastInputTime());
 
@@ -2507,6 +2870,9 @@ export class Game extends Scene implements GameDataAccessor {
           filled: this.photoChunksCollected,
           total: this.totalPhotoChunks,
         };
+      }
+      if (step.infoKey === MissionKeys.SWITCHES_DONE) {
+        return this.switchLightSystem?.getProgress() || { filled: 0, total: 0 };
       }
       if (step.categoryType === InteractiveType.SPOTLIGHT) {
         return (

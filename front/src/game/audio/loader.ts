@@ -66,6 +66,11 @@ export function loadLevelAudio(scene: Phaser.Scene, levelId: string): void {
     assets.push(manifest.musicIntroLoop.loop);
   }
 
+  // Handle muted-by-default music layers
+  if (manifest.musicLayers) {
+    assets.push(...manifest.musicLayers);
+  }
+
   // Handle level-specific SFX
   if (manifest.sfx) {
     assets.push(...manifest.sfx);

@@ -27,5 +27,29 @@
         "Entrada dos pares"
       ]
     }
+  ],
+  "stage_done": [
+    {
+      "question": "Quais instrumentos formam o trio tradicional de forró?",
+      "options": [
+        "Sanfona, zabumba e triângulo",
+        "Guitarra, bateria e teclado",
+        "Violão, pandeiro e saxofone",
+        "Piano, bateria e baixo"
+      ]
+    },
+    {
+      "question": "Qual destes instrumentos não pertence ao trio tradicional apresentado na fase?",
+      "options": ["Guitarra elétrica", "Sanfona", "Zabumba", "Triângulo"]
+    },
+    {
+      "question": "O que os instrumentos ajudam a construir dentro do forró?",
+      "options": [
+        "Estrutura musical e rítmica",
+        "Decoração da festa",
+        "O cenário",
+        "Apresentações teatrais"
+      ]
+    }
   ]
 }

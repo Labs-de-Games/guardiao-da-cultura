@@ -11,14 +11,18 @@ import {
   resolveInteractionPoint,
 } from "./placeholderInteraction";
 
+const BAND_CONFIRM_Y_OFFSET = 65;
+
 export interface PlaceholderInstance {
   area: Phaser.Geom.Rectangle;
   instanceId: string;
   type: InteractiveType;
   id: string | string[];
+  options?: string[];
   state?: Record<string, unknown>;
   hintSprite?: Phaser.GameObjects.GameObject;
   isFilled?: boolean;
+  isLocked?: boolean;
   filledTexture?: string;
   filledScale?: number;
   yOffset?: number;
@@ -32,10 +36,12 @@ export interface PlaceholderConfig {
   instanceId: string;
   type: InteractiveType;
   id: string | string[];
+  options?: string[];
   state?: Record<string, unknown>;
   scale?: number;
   texture?: string;
   alpha?: number;
+  isLocked?: boolean;
   filledTexture?: string;
   filledScale?: number;
   yOffset?: number;
@@ -67,7 +73,13 @@ export class PlaceholderSystem {
       const filledTexture = TiledUtils.getProperty(obj, "filledTexture");
       const rawFilledScale = TiledUtils.getProperty(obj, "filledScale");
       const rawYOffset = TiledUtils.getProperty(obj, "yOffset");
+      const isLocked = TiledUtils.getBoolProperty(obj, "is_locked");
       const targetId = TiledUtils.parseTargetIds(rawProp);
+      const rawOptions = TiledUtils.getProperty(obj, "options");
+      const parsedOptions = rawOptions
+        ? TiledUtils.parseTargetIds(rawOptions)
+        : undefined;
+      const options = Array.isArray(parsedOptions) ? parsedOptions : undefined;
       const scaled = TiledUtils.scaleCoords(obj, scale);
 
       this.registerPlaceholder({
@@ -78,6 +90,7 @@ export class PlaceholderSystem {
         instanceId: obj.name || Phaser.Math.RND.uuid(),
         type: typeStr as InteractiveType,
         id: targetId,
+        options,
         state:
           typeStr === InteractiveType.PHOTO
             ? { filledSlots: [null, null, null, null] }
@@ -91,6 +104,7 @@ export class PlaceholderSystem {
         filledScale:
           rawFilledScale !== undefined ? Number(rawFilledScale) : undefined,
         yOffset: rawYOffset !== undefined ? Number(rawYOffset) : undefined,
+        isLocked,
       });
     });
   }
@@ -112,8 +126,10 @@ export class PlaceholderSystem {
       instanceId: config.instanceId,
       type: config.type,
       id: config.id,
+      options: config.options,
       state: config.state || {},
       isFilled: false,
+      isLocked: config.isLocked ?? false,
       filledTexture: config.filledTexture,
       filledScale: config.filledScale,
       yOffset: config.yOffset,
@@ -236,6 +252,11 @@ export class PlaceholderSystem {
 
       instance.hintSprite = placeholder;
     }
+
+    if (instance.isLocked) {
+      this.setHintSpriteVisible(instance.hintSprite, false);
+    }
+
     this.placeholders.push(instance);
   }
 
@@ -261,6 +282,7 @@ export class PlaceholderSystem {
 
       if (isInside || isCloseEnough) {
         if (p.isFilled) continue;
+        if (p.isLocked) continue;
         if (item.interactiveType !== p.type) continue;
 
         const isMatch = Array.isArray(p.id)
@@ -388,6 +410,7 @@ export class PlaceholderSystem {
 
     for (const p of this.placeholders) {
       if (p.isFilled) continue;
+      if (p.isLocked) continue;
       if (type && p.type !== type) continue;
 
       const dist = Phaser.Math.Distance.Between(
@@ -461,6 +484,26 @@ export class PlaceholderSystem {
     return this.placeholders.find((p) => p.instanceId === instanceId) || null;
   }
 
+  public unlockByInstanceId(instanceId: string): void {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (!p) return;
+    p.isLocked = false;
+    this.setHintSpriteVisible(p.hintSprite, true);
+  }
+
+  private setHintSpriteVisible(
+    hintSprite: Phaser.GameObjects.GameObject | undefined,
+    visible: boolean,
+  ): void {
+    if (
+      hintSprite instanceof Phaser.GameObjects.Sprite ||
+      hintSprite instanceof Phaser.GameObjects.Image ||
+      hintSprite instanceof Phaser.GameObjects.Container
+    ) {
+      hintSprite.setVisible(visible);
+    }
+  }
+
   public updatePhotoCell(
     instanceId: string,
     slotIndex: number,
@@ -502,6 +545,14 @@ export class PlaceholderSystem {
     cell.setDisplaySize(cell.width * scale, cell.height * scale);
   }
 
+  public updateBandMember(instanceId: string, textureKey: string) {
+    const p = this.getPlaceholderByInstanceId(instanceId);
+    if (!p || !(p.hintSprite instanceof Phaser.GameObjects.Sprite)) return;
+    p.hintSprite.play(`${textureKey}_anim`, true);
+    p.hintSprite.setAlpha(1);
+    p.hintSprite.y -= BAND_CONFIRM_Y_OFFSET;
+  }
+
   public lockPlaceholder(instanceId: string) {
     const p = this.getPlaceholderByInstanceId(instanceId);
     if (p) {
@@ -509,6 +560,7 @@ export class PlaceholderSystem {
         p.type !== InteractiveType.PHOTO &&
         p.type !== InteractiveType.COSTUME &&
         p.type !== InteractiveType.STEP_SEQUENCE &&
+        p.type !== InteractiveType.BAND &&
         p.hintSprite
       ) {
         if (p.hintSprite instanceof Phaser.GameObjects.Sprite) {
