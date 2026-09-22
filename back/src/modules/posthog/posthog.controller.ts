@@ -31,7 +31,6 @@ export class PostHogController {
     // the validated query parameter (needed for the cross-origin local-dev
     // gap the cookie can't cross, and for sendBeacon calls that can't set
     // headers but do send cookies) > a fresh random id as the last resort.
-    // See docs/specs/discovery-738-dashboard-edital.md §5.1.
     const cookieDistinctId = readAnonymousPlayerCookie(request);
     const distinctId =
       user?.id ?? cookieDistinctId ?? query.distinct_id ?? randomUUID();

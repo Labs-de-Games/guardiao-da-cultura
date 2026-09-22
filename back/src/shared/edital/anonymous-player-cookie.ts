@@ -5,8 +5,7 @@ import type { Request } from "express";
  * ANONYMOUS_PLAYER_COOKIE_NAME / ANONYMOUS_PLAYER_ID_MAX_LENGTH. The same
  * durable, server-set id travels as this cookie and (where the cookie
  * can't reach — cross-origin local dev, sendBeacon calls) a validated
- * query parameter or header. See
- * docs/specs/discovery-738-dashboard-edital.md §5.1.
+ * query parameter or header.
  */
 export const ANONYMOUS_PLAYER_COOKIE_NAME = "gp_distinct_id";
 const ANONYMOUS_PLAYER_ID_PATTERN = /^[A-Za-z0-9_-]{1,200}$/;

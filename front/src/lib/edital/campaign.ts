@@ -3,9 +3,9 @@ import type { PostHogStub } from "../posthogStub";
 
 /**
  * The non-standard UTM key #746's campaign links use
- * (`?utm_institution=<slug>`), per docs/specs/discovery-738-dashboard-edital.md
- * §3.1. posthog-js already auto-captures the standard `utm_*` params as
- * super properties (last-touch, overwritten on every visit); this module
+ * (`?utm_institution=<slug>`). posthog-js already auto-captures the
+ * standard `utm_*` params as super properties (last-touch, overwritten on
+ * every visit); this module
  * only handles the *first-touch* rule for the non-standard key, which
  * posthog-js's own `custom_campaign_params` config does NOT make
  * first-touch by itself — it only tells posthog-js to also read this key.

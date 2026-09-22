@@ -24,8 +24,7 @@ function isInstitutionRoute(path: string): boolean {
  * request produces, unless it already carries a valid one. Runs in
  * middleware (this app's own origin, ahead of any client JS) so the id is
  * a server-set cookie with an explicit Max-Age, not a client
- * `document.cookie` write on a session-scoped cookie — see
- * docs/specs/discovery-738-dashboard-edital.md §5.1.
+ * `document.cookie` write on a session-scoped cookie.
  */
 function withAnonymousPlayerCookie(
   request: NextRequest,

@@ -13,8 +13,7 @@ const HEADER_NAME = "x-oauth-upsert-token";
 /**
  * Constant-time comparison against AUTH_OAUTH_UPSERT_TOKEN. This endpoint
  * creates institution-role users, so a timing side-channel on the token
- * check is a real privilege-escalation path, not a theoretical one — see
- * docs/specs/discovery-738-dashboard-edital.md §5.5.
+ * check is a real privilege-escalation path, not a theoretical one.
  *
  * Refuses every request (never falls back to an insecure default) when
  * the token isn't configured at all.

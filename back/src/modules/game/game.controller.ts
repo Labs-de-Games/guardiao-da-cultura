@@ -25,7 +25,7 @@ export class GameController {
     // event used to fall straight to a fresh randomUUID(), corrupting
     // attribution and the legacy averageSessionTime metric. The durable
     // cookie (also sent by sendBeacon) is now a required fallback, not a
-    // "cheap bonus" — see docs/specs/discovery-738-dashboard-edital.md §5.1.
+    // "cheap bonus".
     const playerId =
       user?.id ?? guestId ?? readAnonymousPlayerCookie(request) ?? randomUUID();
     await this.gameService.processEvent(payload, playerId);
