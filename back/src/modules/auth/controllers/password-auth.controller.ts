@@ -15,6 +15,7 @@ import { PasswordLoginDto } from "../dto/password-login.dto";
 import { PasswordRegisterDto } from "../dto/password-register.dto";
 import { PasswordResetConfirmDto } from "../dto/password-reset-confirm.dto";
 import { PasswordResetRequestDto } from "../dto/password-reset-request.dto";
+import { VerifyEmailConfirmDto } from "../dto/verify-email-confirm.dto";
 import { PasswordAuthService } from "../services/password-auth.service";
 
 /**
@@ -65,6 +66,26 @@ export class PasswordAuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ redirectTo: string }> {
     return this.passwordAuthService.login(dto, res);
+  }
+
+  @Public()
+  @Post("verify-email/confirm")
+  @ApiOperation({
+    summary: "Confirm a registration email link and log the institution in",
+  })
+  @ApiBody({ type: VerifyEmailConfirmDto })
+  @ApiOkResponse({
+    description:
+      "Email verified; returns the institution's identity so the caller can establish a session",
+    schema: { example: { redirectTo: "/institution" } },
+  })
+  @ApiUnauthorizedResponse({
+    description: "Invalid or expired verification link",
+  })
+  async confirmVerifyEmail(
+    @Body() dto: VerifyEmailConfirmDto,
+  ): Promise<{ redirectTo: string }> {
+    return this.passwordAuthService.confirmVerifyEmail(dto.token);
   }
 
   @Public()

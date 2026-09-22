@@ -15,6 +15,7 @@ function buildService() {
     findByEmail: jest.fn(),
     findByEmailWithPasswordHash: jest.fn(),
     create: jest.fn(),
+    save: jest.fn((user) => Promise.resolve(user)),
     setPasswordHash: jest.fn(),
     updateLastLoginAt: jest.fn(),
   } as unknown as jest.Mocked<UserService>;
@@ -39,7 +40,11 @@ function buildService() {
 
   const configService = { frontendUrl: "https://front.example.com" } as never;
   const posthog = { capture: jest.fn() } as never;
-  const emailService = { sendMagicLinkEmail: jest.fn() } as never;
+  const emailService = {
+    sendMagicLinkEmail: jest.fn(),
+    sendVerificationEmail: jest.fn(),
+    sendWelcomeEmail: jest.fn(),
+  } as never;
   const logger = {
     info: jest.fn(),
     warn: jest.fn(),
@@ -90,10 +95,13 @@ describe("PasswordAuthService", () => {
       expect(userService.create).not.toHaveBeenCalled();
     });
 
-    it("creates an institution account with a hashed password for a new email", async () => {
+    it("creates an unverified institution account with a hashed password for a new email", async () => {
       const { service, userService, passwordService } = buildService();
       userService.findByEmail.mockResolvedValue(null);
-      userService.create.mockResolvedValue({ id: "new-id" } as User);
+      userService.create.mockResolvedValue({
+        id: "new-id",
+        email: "nova@example.com",
+      } as User);
 
       await service.register({
         email: "nova@example.com",
@@ -109,7 +117,34 @@ describe("PasswordAuthService", () => {
           role: Role.Institution,
           institutionSlug: "escola-nova",
           passwordHash: "hashed",
+          isEmailVerified: false,
         }),
+      );
+    });
+
+    it("sends a verification email on registration", async () => {
+      const { service, userService, magicLinkService, emailService } =
+        buildService();
+      userService.findByEmail.mockResolvedValue(null);
+      userService.create.mockResolvedValue({
+        id: "new-id",
+        email: "nova@example.com",
+      } as User);
+
+      await service.register({
+        email: "nova@example.com",
+        password: "password123456",
+        institutionSlug: "escola-nova",
+        nickname: "Escola Nova",
+      });
+
+      expect(magicLinkService.createMagicLink).toHaveBeenCalledWith(
+        "new-id",
+        MagicLinkTokenType.Verification,
+      );
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
+        "nova@example.com",
+        expect.stringContaining("/confirm-verification?token=raw-token"),
       );
     });
   });
@@ -135,11 +170,28 @@ describe("PasswordAuthService", () => {
         id: "inst-id",
         role: Role.Institution,
         isActive: true,
+        isEmailVerified: true,
         passwordHash: null,
       } as User);
 
       await expect(
         service.login({ email: "i@example.com", password: "x" }, res),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it("rejects an unverified institution account, even with the right password", async () => {
+      const { service, userService, passwordService } = buildService();
+      userService.findByEmailWithPasswordHash.mockResolvedValue({
+        id: "inst-id",
+        role: Role.Institution,
+        isActive: true,
+        isEmailVerified: false,
+        passwordHash: "hashed",
+      } as User);
+      passwordService.verify.mockResolvedValue(true);
+
+      await expect(
+        service.login({ email: "i@example.com", password: "correct" }, res),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -149,6 +201,7 @@ describe("PasswordAuthService", () => {
         id: "inst-id",
         role: Role.Institution,
         isActive: true,
+        isEmailVerified: true,
         passwordHash: "hashed",
       } as User);
       passwordService.verify.mockResolvedValue(false);
@@ -166,6 +219,7 @@ describe("PasswordAuthService", () => {
         email: "i@example.com",
         role: Role.Institution,
         isActive: true,
+        isEmailVerified: true,
         passwordHash: "hashed",
         institutionSlug: "escola-teste",
       } as User);
@@ -179,6 +233,58 @@ describe("PasswordAuthService", () => {
       expect(authService.setAuthCookies).toHaveBeenCalledWith(
         res,
         "refresh-token",
+      );
+      expect(result).toEqual({
+        redirectTo: "/institution",
+        user: {
+          id: "inst-id",
+          email: "i@example.com",
+          role: Role.Institution,
+          institutionSlug: "escola-teste",
+        },
+      });
+    });
+  });
+
+  describe("confirmVerifyEmail", () => {
+    it("rejects an invalid or expired verification token", async () => {
+      const { service, magicLinkService } = buildService();
+      magicLinkService.validateTokenConsumption.mockResolvedValue(null);
+
+      await expect(service.confirmVerifyEmail("bad-token")).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it("marks the account verified and returns /institution on a valid token", async () => {
+      const { service, userService, magicLinkService, emailService, posthog } =
+        buildService();
+      const user = {
+        id: "inst-id",
+        email: "i@example.com",
+        role: Role.Institution,
+        institutionSlug: "escola-teste",
+        nickname: "Escola Teste",
+        isEmailVerified: false,
+      } as User;
+      magicLinkService.validateTokenConsumption.mockResolvedValue({
+        user,
+      } as never);
+
+      const result = await service.confirmVerifyEmail("good-token");
+
+      expect(magicLinkService.validateTokenConsumption).toHaveBeenCalledWith(
+        "good-token",
+        MagicLinkTokenType.Verification,
+      );
+      expect(user.isEmailVerified).toBe(true);
+      expect(userService.save).toHaveBeenCalledWith(user);
+      expect(emailService.sendWelcomeEmail).toHaveBeenCalledWith(
+        "i@example.com",
+        "Escola Teste",
+      );
+      expect(posthog.capture).toHaveBeenCalledWith(
+        expect.objectContaining({ event: "user_verified" }),
       );
       expect(result).toEqual({
         redirectTo: "/institution",
@@ -282,6 +388,7 @@ describe("PasswordAuthService", () => {
         id: "inst-id",
         role: Role.Institution,
         isActive: true,
+        isEmailVerified: true,
         passwordHash: "hashed",
       } as User);
       passwordService.verify.mockResolvedValue(false);
@@ -301,6 +408,7 @@ describe("PasswordAuthService", () => {
         email: "i@example.com",
         role: Role.Institution,
         isActive: true,
+        isEmailVerified: true,
         passwordHash: "hashed",
         institutionSlug: "escola-teste",
       } as User);
