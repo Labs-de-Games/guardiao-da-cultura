@@ -1,10 +1,14 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { AudioManager } from "@/game/audio/AudioManager";
+import type { Sound } from "@/game/audio/types";
 import { INVESTIGATION_STARS_BY_WRONG_ATTEMPTS } from "@/game/constants/Investigation";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
+import { SirenLights } from "./SirenLights";
 import { SuspectPortrait } from "./SuspectPortrait";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
@@ -24,7 +28,20 @@ export function InvestigationResult() {
 
   // A run that ended on a wrong name owes the player that suspect's answer
   // first; this panel would otherwise name the real culprit over the top of it.
-  if (!result || lastWrongSuspectId) return null;
+  const visible = Boolean(result) && !lastWrongSuspectId;
+
+  // Once, as the panel arrives — which on a run that ended in four misses is
+  // after the last alibi, not on top of it. Cut short if the player moves on
+  // before the siren has run its course.
+  useEffect(() => {
+    if (!visible) return;
+    const siren: Sound | null = AudioManager.playSfx("sfx.police.siren", 0.6);
+    return () => {
+      siren?.stop();
+    };
+  }, [visible]);
+
+  if (!result || !visible) return null;
 
   const culprit = payload?.suspects.find((s) => s.isCulprit);
   const previousStars = payload?.previousStars ?? 0;
@@ -43,8 +60,11 @@ export function InvestigationResult() {
         zIndex: 2,
       }}
     >
+      <SirenLights />
+
       <Box
         sx={{
+          position: "relative",
           width: "min(560px, 100%)",
           maxHeight: "100%",
           overflowY: "auto",
