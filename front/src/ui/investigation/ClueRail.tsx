@@ -237,14 +237,14 @@ export function ClueRail() {
       </Typography>
       <Typography
         sx={{
-          fontSize: "0.82rem",
+          fontSize: "0.84rem",
           color: colors.textSecondary,
           lineHeight: 1.4,
           mb: 1.5,
         }}
       >
         Cada pista tem três usos. Soltá-la sobre um suspeito gasta um — e o
-        último a prende ali para sempre.
+        último prende a pista no suspeito.
       </Typography>
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 0.5 }}>
