@@ -8,8 +8,13 @@ import type { DefaultSession } from "next-auth";
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string;
-      role: "player" | "institution" | "admin";
+      /**
+       * Optional, not `string`: the session callback (auth.ts) only sets
+       * this `if (token.userId)` — a token missing it is a real runtime
+       * state, not just a type-level formality.
+       */
+      id?: string;
+      role?: "player" | "institution" | "admin";
       institutionSlug: string | null;
     } & DefaultSession["user"];
   }
