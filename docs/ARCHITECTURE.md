@@ -47,7 +47,7 @@ The scope of the project is a web-based educational game. Core features include:
 ### Non-Functional Requirements
 - **Accessibility:** Native compliance in UI and content design.
 - **Performance:** Fast loading times on mobile networks and compatibility with modern browsers.
-- **Privacy & Security:** Minimal personal data collection, strict LGPD compliance.
+- **Privacy & Security:** Minimal personal data collection — an email address, gameplay progress and badge state. LGPD compliance is a design goal, not an audited or certified state; treat it as a requirement being worked towards rather than a claim the code already supports.
 - **Scale:** Moderate complexity, targeting ~5,000 users in the first year without the immediate need for heavy distributed systems.
 - **Open-Source Readiness:** The codebase structure must be clean and modular enough to support a future open-source release.
 
@@ -118,6 +118,8 @@ flowchart TB
 7. **Analytics:** Stores raw game event logs (append-only) for funnel metrics and dashboards.
 8. **PostHog Integration:** Server-side event forwarding to PostHog for product analytics and error tracking.
 9. **Admin:** Admin-only endpoints for user management (list, role updates, status toggle).
+10. **Dashboard:** Aggregated metrics for educators and administrators, restricted to the `institution` and `admin` roles.
+11. **User Interested:** Public sign-up capturing interest in levels that do not exist yet.
 
 ## 3. Technology Stack
 
@@ -160,15 +162,21 @@ The codebase is structured as a **Modular Monolith**.
 gameplate/
 ├── front/
 │   ├── src/
-│   │   ├── app/              # Next.js App Router (UI, Auth Pages, Game Shell)
+│   │   ├── app/              # Next.js App Router (UI, Auth Pages, Game Shell, API routes)
 │   │   ├── components/       # React Components (UI outside the game)
-│   │   ├── lib/                # Utilities, API clients, auth logic
+│   │   ├── ui/               # HUD, panels and overlays layered over the game canvas
+│   │   ├── shared/           # Types and helpers used by both the game and the UI
+│   │   ├── lib/              # Utilities, API clients, env parsing, audio services
+│   │   ├── middleware.ts     # Route protection for authenticated pages
 │   │   └── game/             # Game Domain (Phaser 3)
 │   │       ├── scenes/
 │   │       ├── objects/
 │   │       ├── mechanics/
 │   │       ├── systems/      # Cross-cutting gameplay systems (nudges, placeholders, spotlights)
+│   │       ├── data/         # Level registry and static content wiring
 │   │       └── constants/
+│   │
+│   └── public/assets/        # Game assets — separate licence, see ASSETS-LICENSE.md
 │
 └── back/
     ├── src/
@@ -185,10 +193,12 @@ gameplate/
     │   │   ├── analytics/    # Game event ingestion
     │   │   ├── auth/         # Authentication & Authorization
     │   │   ├── badges/       # Badge definitions & user badges
+    │   │   ├── dashboard/    # Aggregated metrics for educators and admins
     │   │   ├── game/         # Gameplay event ingestion
     │   │   ├── posthog/      # PostHog server-side integration
     │   │   ├── progression/  # Player progression tracking
     │   │   ├── scoring/      # Score & leaderboard management
+    │   │   ├── user-interested/ # Interest sign-up for upcoming levels
     │   │   └── users/        # User profiles & roles
     │   │
     │   ├── app.module.ts
@@ -324,13 +334,30 @@ Admin-only endpoints guarded by `RolesGuard`.
 |--------|------|------|-------------|
 | `GET` | `/posthog/bootstrap` | JWT | Get PostHog feature flags and distinct ID for bootstrapping. |
 
-### TTS Route Handler (`/api/tts/synthesize`)
+### Dashboard Module (`/dashboard`, `/metrics`)
 
-Server-side proxy for ResponsiveVoice text-to-speech, implemented as a Next.js Route Handler. The API key is stored server-only (`RESPONSIVEVOICE_API_KEY`). Reads the key from `process.env` server-side, calls ResponsiveVoice v1 REST API, and streams audio back.
+Restricted to the `institution` and `admin` roles. Both paths serve the same aggregated metrics; `/metrics` is an alias kept for the dashboard frontend.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `POST` | `/api/tts/synthesize` | Public | Convert text to speech. Body: `{ text: string, voice?: string, rate?: number, pitch?: number }`. Returns binary `audio/mpeg`. |
+| `GET` | `/dashboard/metrics` | JWT + role | Aggregated metrics for a date range. |
+| `GET` | `/metrics` | JWT + role | Same payload, alias route. |
+
+### User Interested Module (`/user-interested`)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/user-interested` | Public | Register an email address as interested in levels that are not released yet. |
+
+### TTS Route Handler (`/api/tts/synthesize`)
+
+Server-side proxy for ResponsiveVoice text-to-speech, implemented as a Next.js Route Handler. The API key is stored server-only (`RESPONSIVEVOICE_API_KEY`), read from `process.env`, and never exposed to the browser.
+
+**The key is optional.** ResponsiveVoice is a paid, NonCommercial service, so the game must run without it: with no key the route answers `503` with `code: "tts_unavailable"` and the client narrates with the browser's own `SpeechSynthesis` instead, remembering the answer so it stops re-requesting.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/tts/synthesize` | Public | Convert text to speech. Body: `{ text: string, voice?: string, rate?: number, pitch?: number }`. Returns binary `audio/mpeg`, `503` when no key is configured, or `502` when the upstream service fails or times out. |
 
 The key is optional, and an empty value counts as unset. Without it, the route answers `503` with `code: "tts_unavailable"`, and the client (`AudioAccessibilityService`) switches to the browser's `window.speechSynthesis` for the rest of the session. If ResponsiveVoice fails (invalid key, outage, 10s timeout), the route answers `502`, and the client uses the browser voice for that line only. The browser voice depends on the operating system and may need a speech engine installed or enabled (see [CONTRIBUTING.md](./CONTRIBUTING.md#narration-text-to-speech)).
 
@@ -339,7 +366,7 @@ The key is optional, and an empty value counts as unset. Without it, the route a
 | Module | Status | Description |
 |--------|--------|-------------|
 | Quiz Final | Not implemented | End-of-journey knowledge validation. |
-| Institutional Dashboard | Not implemented | Educator-facing analytics dashboard. |
+| Institutional Dashboard | Partially implemented | The `dashboard` module serves aggregated metrics to the `institution` and `admin` roles; the educator-facing frontend is still in progress. |
 
 ### Technical Notes
 
