@@ -245,6 +245,10 @@ export interface GameEventMap {
   "ui:chunk-selector-submit": ChunkSelectorSubmitData;
   "ui:costume-selector-open": CostumeSelectorOpenData;
   "ui:costume-selector-close": undefined;
+  "ui:band-panel-open": { instanceId: string; id: string; options: string[] };
+  "ui:band-panel-close": undefined;
+  "ui:band-choice-rejected": { instanceId: string; musicianId: string };
+  "ui:band-confirm": { instanceId: string; musicianId: string };
   "ui:costume-part-rejected": {
     instanceId: string;
     partType: string;

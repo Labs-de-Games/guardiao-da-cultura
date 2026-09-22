@@ -14,6 +14,7 @@ export const MissionKeys = {
   SPOTLIGHTS_DONE: "spotlights_done",
   STAGE_DONE: "stage_done",
   DANCE_DONE: "dance_done",
+  SWITCHES_DONE: "switches_done",
 } as const;
 
 export const NPC_FLOOR_3_POSITION = { x: 2100, y: 400 } as const;
