@@ -1,35 +1,63 @@
-# Gameplate
+# Guardião da Cultura
 
-> **Note:** "Gameplate" is a placeholder name (gameplay + template) until the game is officially named.
+A 2D browser game about Brazilian art and culture. You play an investigator who
+walks through cultural spaces — Inhotim, the Teatro Amazonas, the São João
+festival in Campina Grande — restoring works that have been damaged or
+misplaced, talking to the people who work there, and answering quizzes about
+what you find.
 
-A 2D web game built with Next.js, NestJS, and Phaser.
+It was produced with public incentive funding under the Brazilian **Lei
+Rouanet**, and it is published as open source so developers and educators can
+run it, study it, adapt it and reuse its content.
+
+> ### Using the game's assets? You must keep the credits.
+>
+> The source code is MIT. The **assets are not**. The artworks reproduced in this
+> game — works by Abdias Nascimento, Claudia Andujar, Edgard de Souza and others
+> — were cleared for publication on the binding condition that **credit is
+> always given**, and the original assets produced by the team are CC BY 4.0,
+> which carries the same obligation.
+>
+> If your fork, build or extraction includes anything from
+> `front/public/assets/`, carry the credits from [`CREDITS.md`](./CREDITS.md)
+> somewhere your users can reach. Shipping `LICENSE` alone does not satisfy it.
+> The full terms are in [`ASSETS-LICENSE.md`](./ASSETS-LICENSE.md), and the
+> sponsor logos are not licensed at all — see [`NOTICE`](./NOTICE).
+
+**Maintainer:** [@anacarla-42](https://github.com/anacarla-42) reviews and merges
+contributions, and is the responder for security reports.
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Docker Setup](#docker-setup)
-  - [Database Setup](#database-setup)
+- [Optional Integrations](#optional-integrations)
+- [Known Limitations](#known-limitations)
 - [Available Commands](#available-commands)
 - [Architecture](#architecture)
-- [Development Workflow](#development-workflow)
-- [CI/CD](#cicd)
-- [Environment Variables](#environment-variables)
+- [Reusing the Content](#reusing-the-content)
 - [Contributing](#contributing)
+- [Security](#security)
 - [Working with AI Agents](#working-with-ai-agents)
 - [Documentation](#documentation)
 - [License](#license)
 
 ## Overview
 
-This repository contains the complete development environment for our browser-based game, featuring:
+- **Three levels** — a museum (Inhotim), the Teatro Amazonas, and the São João
+  festival in Campina Grande — each with its own map, narrative, puzzles and
+  quiz content. The first two are complete; the third is still being built out.
+- **Exploration and puzzles** — restore damaged works, find collectibles, move
+  objects, solve the light and band minigames.
+- **Progression** — badges, stars and per-level scoring, persisted per player.
+- **Accessibility** — narrated dialogue and labels, with a browser speech
+  fallback that needs no API key.
+- **Passwordless login** — magic-link authentication; locally the link is
+  printed to the console, so no email provider is needed.
 
-- **Frontend**: Next.js with React and Phaser 3 for game rendering
-- **Backend**: NestJS API with PostgreSQL database
-- **Tooling**: Node.js runtime, Biome for linting/formatting, Docker for local development
-- **CI/CD**: GitHub Actions for automated testing and deployment
+Technically it is a Next.js frontend with the game itself rendered by Phaser 3,
+a NestJS API over PostgreSQL, and a React HUD layered over the game canvas.
 
 ## Tech Stack
 
@@ -42,9 +70,7 @@ This repository contains the complete development environment for our browser-ba
 | Backend | [NestJS](https://nestjs.com/) | 10+ | [NestJS Docs](https://docs.nestjs.com/) |
 | Database | [PostgreSQL](https://www.postgresql.org/) | 16 | [PostgreSQL Docs](https://www.postgresql.org/docs/) |
 | Linting | [Biome](https://biomejs.dev/) | latest | [Biome Docs](https://biomejs.dev/) |
-| Registry | [GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) | - | - |
 | CI/CD | [GitHub Actions](https://github.com/features/actions) | - | [Actions Docs](https://docs.github.com/en/actions) |
-| Deployment | [Coolify](https://coolify.io/) | - | [Coolify Docs](https://coolify.io/docs/) |
 
 ## Quick Start
 
@@ -54,57 +80,83 @@ This repository contains the complete development environment for our browser-ba
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - Git
 
-### Docker Setup
+### Cold start
 
-The fastest way to get the full stack running locally is via Docker Compose:
+Nothing below needs an API key, an email account or a paid service.
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+git clone https://github.com/Labs-de-Games/gameplate.git
 cd gameplate
 
-# Install dependencies
-npm ci
-
-# Set up environment variables
+# The defaults in .env.example are a working local configuration
 cp .env.example .env
-# Edit .env with your local configuration (optional for first run)
 
-# Set up developer tooling
-npm run prepare  # Installs pre-commit hooks
+# Install dependencies and set up the pre-commit hooks
+make setup
 
-# Start the full development stack
-make up
+# Start the full stack in Docker
+make development-up
+
+# Create the database schema and seed the badges
+make db-migrate
 ```
 
-This starts all services in detached mode:
+Then open <http://localhost:3000>.
+
+Services:
 
 - **Frontend** (Next.js): <http://localhost:3000>
 - **Backend** (NestJS): <http://localhost:3001>
 - **PostgreSQL**: localhost:5432
 - **nginx** (reverse proxy): <http://localhost:80>
 
-View logs:
+### Logging in
+
+Authentication is passwordless. With `EMAIL_PROVIDER=mock` — the default in
+`.env.example` — no mail is sent; the magic link is printed to the backend
+container's log instead:
 
 ```bash
 make development-logs
 ```
 
-Stop the stack:
+Enter any email address on the login screen, copy the link from the log, and
+open it.
+
+### Useful while developing
 
 ```bash
-make down
+make development-logs   # follow container logs
+make down               # stop the stack
+make clean              # stop and remove volumes
 ```
 
-### Database Setup
+Level content lives in static JSON, so `make db-migrate` is all the database
+setup a playable install needs. See [Reusing the Content](#reusing-the-content).
 
-```bash
-# Run pending TypeORM migrations
-make db-migrate
+## Optional Integrations
 
-# Generate a new migration (run inside Docker back container)
-make db-migrate-generate NAME=MigrationName
-```
+Both are off by default in `.env.example` and the game runs fully without them.
+
+| Integration | Variable | Without it |
+|---|---|---|
+| **ResponsiveVoice** (text-to-speech) | `RESPONSIVEVOICE_API_KEY` | `/api/tts/synthesize` reports itself unavailable and narration uses the browser's own `SpeechSynthesis`, in `pt-BR`. ResponsiveVoice is a paid, NonCommercial (CC BY-NC-ND) service, so the game deliberately does not depend on it. |
+| **PostHog** (product analytics) | `NEXT_PUBLIC_POSTHOG_KEY`, `POSTHOG_API_KEY` | The frontend swaps in a console-logging stub and the backend skips event capture. No data leaves the machine. |
+
+## Known Limitations
+
+- **Portuguese only.** All narrative, quiz and UI copy is `pt-BR`. There is no
+  localisation layer yet.
+- **Desktop-first.** The game targets a keyboard and a reasonably wide viewport;
+  touch controls are not implemented.
+- **Level 3 is still in development** and levels 4 and 5 do not exist beyond a
+  loading screen. See `LEVEL_REGISTRY` in
+  `front/src/game/data/LevelConfig.ts` for the current state of each.
+- **A few bundled sound and image assets are not free for commercial reuse.**
+  They are listed individually in [`ASSETS-LICENSE.md`](./ASSETS-LICENSE.md) §5.
+- **Browser speech quality varies.** Without a ResponsiveVoice key, narration
+  uses whatever `pt-BR` voice the visitor's browser and operating system
+  provide.
 
 ## Available Commands
 
@@ -112,7 +164,8 @@ make db-migrate-generate NAME=MigrationName
 
 | Command | Description |
 |---------|-------------|
-| `make up` | Start local development environment with hot reload (Docker) |
+| `make setup` | Install dependencies and developer tooling |
+| `make development-up` (alias `make up`) | Start the development stack with hot reload (Docker) |
 | `make local-all` | Start front and back locally via Turbo (no Docker) |
 | `make down` | Stop development containers |
 | `make clean` | Stop containers and remove volumes |
@@ -124,14 +177,8 @@ make db-migrate-generate NAME=MigrationName
 |---------|-------------|
 | `make lint` | Run Biome linting and formatting checks |
 | `make test` | Run test suites |
+| `make check` | Lint and test in one go |
 | `npm run lint:fix` | Fix auto-fixable linting issues |
-
-### Build
-
-| Command | Description |
-|---------|-------------|
-| `make development-build` | Build all development Docker images |
-| `make production-build` | Build production nginx image |
 
 ### Database
 
@@ -144,10 +191,10 @@ make db-migrate-generate NAME=MigrationName
 
 | Command | Description |
 |---------|-------------|
-| `make logs` | View container logs |
-| `make development-logs` | View development container logs |
-| `make development-shell-front` | Shell into front container |
-| `make development-shell-back` | Shell into back container |
+| `make development-logs` | Follow development container logs |
+| `make development-ps` | List development containers |
+| `make development-shell-front` | Shell into the front container |
+| `make development-shell-back` | Shell into the back container |
 
 ## Architecture
 
@@ -159,8 +206,8 @@ flowchart LR
     nginx --> Front["Next.js (Frontend)"]
     Front --> Back["NestJS (Backend API)"]
     Back --> DB["PostgreSQL (Database)"]
-    Front -.->|"Analytics"| PostHog["PostHog"]
-    Back -.->|"Analytics"| PostHog
+    Front -.->|"Optional"| PostHog["PostHog"]
+    Back -.->|"Optional"| PostHog
 
     style Client fill:#e1f5fe
     style nginx fill:#fff3e0
@@ -170,98 +217,69 @@ flowchart LR
     style PostHog fill:#fff9c4
 ```
 
-### Frontend Architecture
+### Frontend
 
-- **Next.js App Router**: File-based routing with React Server Components
-- **Phaser Integration**: Game scenes rendered via Phaser 3 canvas, encapsulated in `src/game/`
-- **UI Overlay Layer**: HUD and modal panels rendered in React over the canvas, synchronized via shared EventBus
-- **State Management**: React hooks plus Zustand for game UI state (sidebar and modal panels)
-- **Styling**: Material UI (MUI) v9 with Emotion for CSS-in-JS
-- **Analytics**: PostHog for product analytics and session replay
+- **Next.js App Router**: file-based routing with React Server Components
+- **Phaser integration**: game scenes rendered on a Phaser 3 canvas under `src/game/`
+- **UI overlay layer**: HUD and modal panels rendered in React over the canvas, synchronised through a shared EventBus
+- **State**: React hooks plus Zustand for game UI state
+- **Styling**: Material UI with Emotion
 
-### Backend Architecture
+### Backend
 
-- **NestJS Modules**: Feature-based module organization (9 domains)
-- **API Design**: RESTful endpoints with DTO validation using `class-validator`
-- **Database**: TypeORM with PostgreSQL; migrations managed via TypeORM CLI
-- **Authentication**: Passwordless magic-link authentication with JWT access tokens and opaque refresh tokens
-- **Observability**: PostHog for backend event tracking and error monitoring
+- **NestJS modules**: feature-based organisation
+- **API**: REST endpoints with DTO validation via `class-validator`
+- **Database**: TypeORM over PostgreSQL, migrations through the TypeORM CLI
+- **Authentication**: passwordless magic link, JWT access tokens plus opaque refresh tokens
 
-## Development Workflow
+## Reusing the Content
 
-1. **Create a branch** from `master`:
+The levels are data, not code. Quizzes, dialogue, collectibles and the works on
+display live in JSON under `front/public/assets/data/levels/`, and the level
+wiring lives in `front/src/game/data/LevelConfig.ts`. An educator can rewrite a
+quiz or a museum's narrative without touching the game engine.
 
-   ```bash
-   git checkout -b feat/42-game-scene
-   ```
-
-2. **Make changes** following the code standards
-
-3. **Commit** using [Conventional Commits](https://www.conventionalcommits.org/):
-
-   ```bash
-   git commit -m "feat(front): add player movement system"
-   ```
-
-4. **Push and open PR** to `master`
-
-5. **Merge** after CI passes and review approval
-
-See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for detailed guidelines.
-
-## CI/CD
-
-This project uses GitHub Actions for continuous integration and Coolify for deployment.
-
-- **CI**: Every Pull Request triggers typecheck, lint, build, and test checks via `.github/workflows/ci.yml`
-- **CD Staging**: Pushes to the `develop` branch automatically build and push images to GitHub Container Registry (GHCR), then trigger staging deployment via Coolify webhook (`.github/workflows/cd-staging.yml`)
-- **CD Production**: Production deployment is **manual** via `workflow_dispatch` on `.github/workflows/cd-production.yml`. Images are built from `master` and deployed to production Coolify.
-
-See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for detailed CI/CD pipeline information.
-
-## Environment Variables
-
-### Development
-
-Development environment variables are pre-configured in `compose.development.yaml`. Copy `.env.example` to `.env` for any local overrides.
-
-### Production
-
-Configure these in your deployment platform:
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `JWT_SECRET` | Secret for JWT signing | Yes |
-| `POSTGRES_USER` | Database username | Yes |
-| `POSTGRES_PASSWORD` | Database password | Yes |
-| `POSTGRES_DB` | Database name | Yes |
+See [`docs/CONTENT-REUSE.md`](./docs/CONTENT-REUSE.md) for what each file does
+and how to adapt it — including the part that is not optional: an adapted
+version must keep the credits.
 
 ## Contributing
 
-We welcome contributions from all squad members! Please read our [Contributing Guide](./docs/CONTRIBUTING.md) for:
+Contributions are welcome. Read [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+for the fork-and-branch flow, the conventional-commit requirement enforced by
+`commitlint`, what CI runs, and what review looks like.
 
-- Detailed setup instructions
-- Branch naming conventions
-- Commit message standards
-- Code review process
-- Troubleshooting common issues
+In short: branch from `develop`, open your pull request against `develop`, and
+make sure typecheck, lint, build and test are green.
+
+## Security
+
+Report vulnerabilities through GitHub's private vulnerability reporting, not in
+a public issue. See [`SECURITY.md`](./SECURITY.md).
 
 ## Working with AI Agents
 
-This project uses AI agents to accelerate development. See [AGENTS.md](./AGENTS.md) for:
-
-- What agents can and cannot do
-- Guidelines for AI-assisted development
-- Quality checks for AI-generated code
-- Escalation paths
+This project uses AI agents in development. See [AGENTS.md](./AGENTS.md) for
+what they may and may not do, and the quality checks applied to their output.
 
 ## Documentation
 
-- [CONTRIBUTING.md](./docs/CONTRIBUTING.md) — Development workflow and standards
-- [AGENTS.md](./AGENTS.md) — AI agent collaboration guidelines
-- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) — System architecture, domain model, and API contracts
+- [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md) — contributor workflow and standards
+- [`docs/CONTENT-REUSE.md`](./docs/CONTENT-REUSE.md) — adapting the levels, quizzes and narrative
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — system architecture, domain model and API contracts
+- [`SECURITY.md`](./SECURITY.md) — reporting a vulnerability
+- [`AGENTS.md`](./AGENTS.md) — AI agent collaboration guidelines
+- [`CREDITS.md`](./CREDITS.md) — credits, mirroring the in-game screen
+- [`ASSETS-LICENSE.md`](./ASSETS-LICENSE.md) — asset terms, per group
+- [`NOTICE`](./NOTICE) — trademark carve-out and the obligations that travel with the assets
 
 ## License
 
-Private - All rights reserved.
+**Source code: [MIT](./LICENSE).**
+
+**Assets: not MIT.** Everything under `front/public/assets/` is governed by
+[`ASSETS-LICENSE.md`](./ASSETS-LICENSE.md). Most of it requires attribution; a
+few files are not free for commercial use. The institutional names and logos
+(Governo Federal, Lei Rouanet, Ministério da Cultura, Galp, Bemobi, 42 Rio) are
+trademarks and are not licensed — a fork must remove them. See
+[`NOTICE`](./NOTICE).
