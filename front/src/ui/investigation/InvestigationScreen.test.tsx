@@ -508,7 +508,9 @@ describe("InvestigationScreen", () => {
       render(<InvestigationScreen />);
       accuse("augusto_vale", "Augusto Vale");
 
-      expect(AudioManager.playSfx).not.toHaveBeenCalled();
+      expect(AudioManager.playSfx).not.toHaveBeenCalledWith(
+        "sfx.puzzle.failure",
+      );
     });
 
     it("lets the suspect answer back in their own words", () => {
@@ -592,6 +594,46 @@ describe("InvestigationScreen", () => {
 
       expect(screen.getByText("Investigação encerrada")).toBeInTheDocument();
       expect(investigation().revealed).toBe(true);
+    });
+  });
+
+  describe("closing the case", () => {
+    it("sounds the siren once as the result lands", () => {
+      render(<InvestigationScreen />);
+      accuse("augusto_vale", "Augusto Vale");
+
+      expect(
+        (AudioManager.playSfx as jest.Mock).mock.calls.filter(
+          ([key]) => key === "sfx.police.siren",
+        ),
+      ).toHaveLength(1);
+    });
+
+    it("waits for the last alibi before sounding it", () => {
+      render(<InvestigationScreen />);
+      accuse("helena_marques", "Helena Marques");
+      accuse("bruno_tavares", "Bruno Tavares");
+      accuse("renata_vilas", "Renata Vilas");
+
+      // Fourth miss: the suspect answers first, and the panel — with its
+      // siren — only arrives once that answer is dismissed.
+      place("anselmo_veiga", 0, VARNISH.key);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Acusar Anselmo Veiga" }),
+      );
+      fireEvent.click(screen.getByText("Sim, acusar"));
+
+      expect(AudioManager.playSfx).not.toHaveBeenCalledWith(
+        "sfx.police.siren",
+        expect.anything(),
+      );
+
+      fireEvent.click(screen.getByText("CONTINUAR"));
+
+      expect(AudioManager.playSfx).toHaveBeenCalledWith(
+        "sfx.police.siren",
+        expect.anything(),
+      );
     });
   });
 
