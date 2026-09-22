@@ -3,6 +3,21 @@ import { config } from "dotenv";
 
 config({ path: resolve(__dirname, "../.env") });
 
+/**
+ * Force the test suite into "development" mode, after the optional .env
+ * load above so it wins regardless of what a developer has locally.
+ *
+ * `env.ts`'s client schema defaults `NEXT_PUBLIC_ENV` to "production" when
+ * unset, and `env-server.ts` then requires AUTH_SECRET/AUTH_GOOGLE_ID/
+ * AUTH_GOOGLE_SECRET/AUTH_TRUST_HOST outside development (a deliberate
+ * boot-time guard for staging/production). CI checks out the repo with no
+ * .env file and sets no env vars, so every test that reaches `serverEnv`
+ * — even one only reading the query cache TTL — threw a ZodError instead
+ * of running. Setting this here keeps that production guard intact while
+ * making test runs deterministic across CI and local machines.
+ */
+process.env.NEXT_PUBLIC_ENV = "development";
+
 import "@testing-library/jest-dom";
 
 // embla-carousel relies on ResizeObserver / IntersectionObserver / matchMedia,
