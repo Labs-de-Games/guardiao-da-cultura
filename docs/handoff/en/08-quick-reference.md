@@ -69,3 +69,7 @@ in `AGENTS.md`, which takes precedence.
 Precedence order: nearest `AGENTS.md`, then `docs/CONTRIBUTING.md` and
 `docs/ARCHITECTURE.md`, then skills.
 
+`.github/workflows/daily-team-status.md` is an agentic workflow compiled by
+`gh-aw`. It runs weekdays at 13:00 UTC, has read only permissions plus a
+constrained `create-issue` output, and stops automatically four months after
+creation.
