@@ -216,7 +216,13 @@ function SuspectSeat({
         <Box
           data-tutorial="suspect-slots"
           data-suspect={suspect.id}
-          sx={{ display: "flex", gap: "4%" }}
+          // Sized off the slot rather than as a percentage of this row. A
+          // percentage gap resolves to zero while the row is being measured —
+          // the seat is shrink-to-fit — and is then applied anyway, so the row
+          // overflowed its own box by two gaps. Nothing looked wrong until the
+          // walkthrough cut a hole from `getBoundingClientRect()`, which
+          // returns the box and so fell short of the last slot.
+          sx={{ display: "flex", gap: "calc(var(--slot) * 0.12)" }}
         >
           {slots.map((clueKey, i) => {
             const focused =
