@@ -86,12 +86,22 @@ function SuspectSeat({
   const clearSlot = useGameUIStore((s) => s.clearSlot);
   const requestAccusation = useGameUIStore((s) => s.requestAccusation);
   const tutorialActive = useGameUIStore((s) => s.investigation.tutorial.active);
-  // Once the walkthrough has its one drop, the board stops taking input until
-  // the lesson ends: no second clue, no taking the first one back.
-  const frozen = useGameUIStore(
-    (s) =>
-      s.investigation.tutorial.active && s.investigation.tutorial.demoPlaced,
-  );
+  /**
+   * Held still by the walkthrough.
+   *
+   * Two ways to be: this is not the seat it is demonstrating on, or its one
+   * drop has already landed. Either way the slots stop taking input — the
+   * lesson is a single rehearsed move on one suspect, not an open board.
+   */
+  const frozen = useGameUIStore((s) => {
+    const tutorial = s.investigation.tutorial;
+    if (!tutorial.active) return false;
+    return (
+      tutorial.demoPlaced ||
+      (tutorial.focusSuspectId !== null &&
+        tutorial.focusSuspectId !== suspect.id)
+    );
+  });
 
   const portraitRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
@@ -213,7 +223,8 @@ function SuspectSeat({
               onThisSeat && cursor?.zone === "slot" && cursor.slotIndex === i;
             // A clue in hand can only land on an empty slot of a live seat:
             // nothing it lands on is ever displaced.
-            const targetable = Boolean(heldClue) && !cleared && !clueKey;
+            const targetable =
+              Boolean(heldClue) && !cleared && !frozen && !clueKey;
 
             return (
               <ClueSlot

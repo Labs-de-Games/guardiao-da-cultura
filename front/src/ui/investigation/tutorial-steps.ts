@@ -52,7 +52,7 @@ function seat(selector: string, suspectId: string | null): string {
 export const INVESTIGATION_TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "drop",
-    text: "Arraste uma pista até um espaço do suspeito.",
+    text: "Arraste uma pista até um espaço do suspeito, ou use as setas e ENTER.",
     anchors: (ctx) => [
       seat(TUTORIAL_ANCHOR.slots, ctx.suspectId),
       TUTORIAL_ANCHOR.rail,
