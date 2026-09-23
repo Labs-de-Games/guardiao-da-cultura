@@ -8,8 +8,8 @@
 | Staging | automático a cada merge em `develop` | GHCR `:develop` | Coolify |
 | Produção | manual, pelo botão Run workflow | GHCR `:master` | Coolify |
 
-O painel do Coolify guarda o histórico de versões. O endereço é interno e não
-fica registrado aqui — peça a um mantenedor.
+O painel do Coolify fica em http://coolify.guardiaodacultura.42.rio/ e guarda o
+histórico de versões.
 
 Produção tem dois serviços a mais que staging: **nginx** como proxy reverso e
 **cloudflared** para o túnel Cloudflare. O banco roda como serviço do compose em

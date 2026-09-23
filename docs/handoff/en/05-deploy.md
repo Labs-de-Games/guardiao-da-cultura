@@ -8,8 +8,7 @@
 | Staging | every merge into `develop`, automatic | GHCR `:develop` | Coolify |
 | Production | manual, Run workflow on CD Production | GHCR `:master` | Coolify |
 
-The Coolify dashboard holds the deployment history. Its address is internal and
-is not recorded here — ask a maintainer.
+Coolify dashboard: http://coolify.guardiaodacultura.42.rio/
 
 Production adds two services over staging: nginx as reverse proxy and
 cloudflared for the Cloudflare tunnel. PostgreSQL runs as a compose service in

@@ -59,7 +59,7 @@ gh issue list --search "termo" --state all --repo Labs-de-Games/gameplate
 | Board | https://github.com/orgs/Labs-de-Games/projects/1 |
 | Actions | https://github.com/Labs-de-Games/gameplate/actions |
 | CD Production | https://github.com/Labs-de-Games/gameplate/actions/workflows/cd-production.yml |
-| Coolify | endereço interno, peça a um mantenedor |
+| Coolify | http://coolify.guardiaodacultura.42.rio/ |
 
 ## Glossário
 

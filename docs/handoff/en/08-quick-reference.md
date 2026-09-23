@@ -52,7 +52,7 @@ gh auth refresh -s read:project -s project
 | Repository | https://github.com/Labs-de-Games/gameplate |
 | Board | https://github.com/orgs/Labs-de-Games/projects/1 |
 | Actions | https://github.com/Labs-de-Games/gameplate/actions |
-| Coolify | internal address, ask a maintainer |
+| Coolify | http://coolify.guardiaodacultura.42.rio/ |
 
 ## Versioned AI skills
 
