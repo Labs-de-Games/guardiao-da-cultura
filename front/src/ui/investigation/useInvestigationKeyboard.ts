@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { EventBus } from "@/shared/events/event-bus";
 import type { GameUIState } from "@/ui/state/game-ui-store";
 import { holderOf, useGameUIStore } from "@/ui/state/game-ui-store";
 import {
   type CursorContext,
   type CursorDirection,
+  FOOTER_BUTTONS,
   firstCursor,
   type InvestigationCursor,
   isCursorValid,
@@ -69,6 +69,9 @@ export function cursorContext(
     canTargetSlot: (suspectIndex, slotIndex) =>
       canTargetSlot(investigation, suspectIndex, slotIndex),
     railIndex,
+    // Neither footer button is somewhere a clue goes, so they leave the cursor
+    // the moment one is picked up.
+    footer: !held,
     restrictToSuspectIndex: tutorialSeatIndex(investigation),
   };
 }
@@ -89,6 +92,12 @@ function cursorElement(
           `[data-tutorial="clue-chip"][data-clue-key="${clue.key}"]`,
         )
       : null;
+  }
+
+  if (cursor.zone === "footer") {
+    return document.querySelector(
+      `[data-footer-button="${FOOTER_BUTTONS[cursor.index]}"]`,
+    );
   }
 
   const suspect = payload.suspects[cursor.suspectIndex];
@@ -133,7 +142,8 @@ export function useInvestigationKeyboard({
     (s) =>
       Boolean(s.investigation.pendingAccusationId) ||
       Boolean(s.investigation.lastWrongSuspectId) ||
-      Boolean(s.investigation.result),
+      Boolean(s.investigation.result) ||
+      s.investigation.exitConfirmOpen,
   );
 
   useEffect(() => {
@@ -166,11 +176,16 @@ export function useInvestigationKeyboard({
       if (
         investigation.pendingAccusationId ||
         investigation.lastWrongSuspectId ||
-        investigation.result
+        investigation.result ||
+        investigation.exitConfirmOpen
       ) {
         if (!isCancel) return;
         if (investigation.result) return;
         event.preventDefault();
+        if (investigation.exitConfirmOpen) {
+          state.setExitConfirmOpen(false);
+          return;
+        }
         if (investigation.lastWrongSuspectId) {
           onDismissWrongAccusation();
           return;
@@ -194,7 +209,9 @@ export function useInvestigationKeyboard({
           state.setCursor({ zone: "rail", clueIndex: railIndex });
           return;
         }
-        EventBus.emit("investigation:exit", undefined);
+        // Leaving throws the board away, so ESC opens the gate rather than
+        // the door. The panel's own keys take it from here.
+        state.setExitConfirmOpen(true);
         return;
       }
 
@@ -273,6 +290,16 @@ function activate(
       cursorContext({ ...investigation, heldClueKey: clue.key }, railIndex),
     );
     if (target) state.setCursor(target);
+    return;
+  }
+
+  if (cursor.zone === "footer") {
+    if (FOOTER_BUTTONS[cursor.index] === "tutorial") {
+      state.startTutorial();
+      return;
+    }
+    // Never straight out: leaving forfeits the board, so it asks first.
+    state.setExitConfirmOpen(true);
     return;
   }
 

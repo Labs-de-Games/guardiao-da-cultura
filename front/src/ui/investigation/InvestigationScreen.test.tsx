@@ -708,18 +708,53 @@ describe("InvestigationScreen", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(exit).not.toHaveBeenCalled();
 
+      // ESC on a clear board asks rather than leaves: the run does not
+      // survive the trip back to the map.
       fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.getByText("Sair da investigação?")).toBeInTheDocument();
+      expect(exit).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByText("Sair"));
       expect(exit).toHaveBeenCalled();
       EventBus.off("investigation:exit", exit);
     });
 
-    it("leaves from the VOLTAR button", () => {
+    it("asks before leaving from the VOLTAR button", () => {
       const exit = jest.fn();
       EventBus.on("investigation:exit", exit);
       render(<InvestigationScreen />);
 
       fireEvent.click(screen.getByText("VOLTAR"));
+
+      expect(screen.getByText("Sair da investigação?")).toBeInTheDocument();
+      expect(exit).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByText("Sair"));
       expect(exit).toHaveBeenCalled();
+      EventBus.off("investigation:exit", exit);
+    });
+
+    it("stays put when the gate is dismissed", () => {
+      const exit = jest.fn();
+      EventBus.on("investigation:exit", exit);
+      render(<InvestigationScreen />);
+
+      fireEvent.click(screen.getByText("VOLTAR"));
+      fireEvent.click(screen.getByText("Continuar aqui"));
+
+      expect(
+        screen.queryByText("Sair da investigação?"),
+      ).not.toBeInTheDocument();
+      expect(exit).not.toHaveBeenCalled();
+
+      // And ESC backs out of the gate rather than through it.
+      fireEvent.click(screen.getByText("VOLTAR"));
+      fireEvent.keyDown(window, { key: "Escape" });
+
+      expect(
+        screen.queryByText("Sair da investigação?"),
+      ).not.toBeInTheDocument();
+      expect(exit).not.toHaveBeenCalled();
       EventBus.off("investigation:exit", exit);
     });
 
@@ -1168,11 +1203,82 @@ describe("InvestigationScreen", () => {
       expect(investigation().clueHearts[VARNISH.key]).toBe(
         INVESTIGATION_CLUE_HEARTS,
       );
+      expect(
+        screen.queryByText("Sair da investigação?"),
+      ).not.toBeInTheDocument();
+
+      // Empty-handed, the same key asks about leaving instead.
+      press("Escape");
+      expect(screen.getByText("Sair da investigação?")).toBeInTheDocument();
       expect(exited).not.toHaveBeenCalled();
 
-      press("Escape");
+      press("ArrowRight");
+      press("Enter");
       expect(exited).toHaveBeenCalled();
       off();
+    });
+
+    it("reaches the bar under the board off the end of the rail", () => {
+      render(<InvestigationScreen />);
+
+      // Down the whole clue list, and then out of it.
+      press("ArrowDown");
+      press("ArrowDown");
+      press("ArrowDown");
+
+      expect(cursor()).toEqual({ zone: "footer", index: 0 });
+
+      // And back up the way it came.
+      press("ArrowUp");
+      expect(cursor()).toEqual({ zone: "rail", clueIndex: 1 });
+    });
+
+    it("opens the walkthrough from COMO JOGAR", () => {
+      markInvestigationTutorialSeen();
+      render(<InvestigationScreen />);
+
+      press("ArrowDown");
+      press("ArrowDown");
+      press("ArrowDown");
+      press("Enter");
+
+      expect(investigation().tutorial.active).toBe(true);
+    });
+
+    it("asks before leaving from VOLTAR", () => {
+      const exited = jest.fn();
+      const off = EventBus.on("investigation:exit", exited);
+      render(<InvestigationScreen />);
+
+      press("ArrowDown");
+      press("ArrowDown");
+      press("ArrowDown");
+      press("ArrowRight");
+      expect(cursor()).toEqual({ zone: "footer", index: 1 });
+
+      press("Enter");
+
+      expect(screen.getByText("Sair da investigação?")).toBeInTheDocument();
+      expect(exited).not.toHaveBeenCalled();
+      off();
+    });
+
+    /** Neither button is somewhere a clue goes. */
+    it("drops the bar from the cursor while a clue is in hand", () => {
+      render(<InvestigationScreen />);
+      press("ArrowDown");
+      press("Enter");
+
+      // Down to the bottom row of seats and along to its last slot, where the
+      // board runs out — and the bar below it is not there to fall into.
+      press("ArrowDown");
+      for (let i = 0; i < 10; i++) press("ArrowRight");
+      const last = cursor();
+      expect(last).toEqual({ zone: "slot", suspectIndex: 4, slotIndex: 2 });
+
+      press("ArrowDown");
+
+      expect(cursor()).toEqual(last);
     });
 
     it("accuses from the board, starting on the safe half of the gate", () => {

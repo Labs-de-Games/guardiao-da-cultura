@@ -160,6 +160,57 @@ describe("investigation keyboard cursor", () => {
     });
   });
 
+  describe("the bar under the board", () => {
+    const withFooter: CursorContext = { ...BROWSE, footer: true };
+
+    it("catches the cursor off the end of the clue list", () => {
+      expect(
+        moveCursor({ zone: "rail", clueIndex: 1 }, "down", withFooter),
+      ).toEqual({ zone: "footer", index: 0 });
+      expect(
+        moveCursor({ zone: "footer", index: 0 }, "up", withFooter),
+      ).toEqual({ zone: "rail", clueIndex: 1 });
+    });
+
+    it("sits below the accusations", () => {
+      expect(
+        moveCursor({ zone: "accuse", suspectIndex: 4 }, "down", withFooter),
+      ).toEqual({ zone: "footer", index: 0 });
+      expect(
+        moveCursor({ zone: "footer", index: 1 }, "up", withFooter),
+      ).toEqual({ zone: "accuse", suspectIndex: 4 });
+    });
+
+    it("holds two buttons and stops at them", () => {
+      expect(
+        moveCursor({ zone: "footer", index: 0 }, "right", withFooter),
+      ).toEqual({ zone: "footer", index: 1 });
+      expect(
+        moveCursor({ zone: "footer", index: 1 }, "right", withFooter),
+      ).toEqual({ zone: "footer", index: 1 });
+      expect(
+        moveCursor({ zone: "footer", index: 1 }, "down", withFooter),
+      ).toEqual({ zone: "footer", index: 1 });
+    });
+
+    it("is gone while a clue is in hand", () => {
+      const carrying: CursorContext = {
+        ...withFooter,
+        mode: "placing",
+        footer: false,
+        canTargetSlot: () => true,
+      };
+      expect(isCursorValid({ zone: "footer", index: 0 }, carrying)).toBe(false);
+      expect(
+        moveCursor(
+          { zone: "slot", suspectIndex: 4, slotIndex: 2 },
+          "down",
+          carrying,
+        ),
+      ).toEqual({ zone: "slot", suspectIndex: 4, slotIndex: 2 });
+    });
+  });
+
   describe("validity", () => {
     it("summons the cursor onto the rail first", () => {
       expect(firstCursor(BROWSE)).toEqual({ zone: "rail", clueIndex: 0 });

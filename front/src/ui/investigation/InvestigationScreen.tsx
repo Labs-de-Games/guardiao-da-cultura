@@ -4,7 +4,6 @@ import { DndContext, type DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Box, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioManager } from "@/game/audio/AudioManager";
-import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 import { AccuseConfirm } from "./AccuseConfirm";
@@ -15,6 +14,7 @@ import {
   ClueReturnFlight,
   measureClueReturn,
 } from "./ClueReturnFlight";
+import { ExitConfirm } from "./ExitConfirm";
 import { InvestigationResult } from "./InvestigationResult";
 import { InvestigationTutorial } from "./InvestigationTutorial";
 import {
@@ -53,6 +53,17 @@ const BOTTOM_BUTTON = {
   },
 } as const;
 
+/** The keyboard cursor resting on a footer button. */
+const cursorRing = (focused: boolean) =>
+  focused
+    ? {
+        outline: "none",
+        color: colors.textPrimary,
+        borderColor: colors.accentGold,
+        boxShadow: `0 0 0 2px ${colors.accentGoldMuted}`,
+      }
+    : { outline: "none" };
+
 /**
  * The suspect identification phase.
  *
@@ -73,6 +84,12 @@ export function InvestigationScreen() {
   );
   const dismissWrongAccusation = useGameUIStore(
     (s) => s.dismissWrongAccusation,
+  );
+  const setExitConfirmOpen = useGameUIStore((s) => s.setExitConfirmOpen);
+  const footerCursorIndex = useGameUIStore((s) =>
+    s.investigation.cursor?.zone === "footer"
+      ? s.investigation.cursor.index
+      : null,
   );
 
   const [draggingClueKey, setDraggingClueKey] = useState<string | null>(null);
@@ -218,10 +235,12 @@ export function InvestigationScreen() {
             <Box
               component="button"
               type="button"
+              data-footer-button="tutorial"
               onClick={startTutorial}
               disabled={tutorialActive}
               sx={{
                 ...BOTTOM_BUTTON,
+                ...cursorRing(footerCursorIndex === 0),
                 cursor: tutorialActive ? "default" : "pointer",
                 opacity: tutorialActive ? 0.4 : 1,
               }}
@@ -232,14 +251,18 @@ export function InvestigationScreen() {
             <Box
               component="button"
               type="button"
-              onClick={() => EventBus.emit("investigation:exit", undefined)}
-              sx={BOTTOM_BUTTON}
+              data-footer-button="exit"
+              // Never straight out: the board does not survive the trip, so
+              // both ways of leaving go through the same gate.
+              onClick={() => setExitConfirmOpen(true)}
+              sx={{ ...BOTTOM_BUTTON, ...cursorRing(footerCursorIndex === 1) }}
             >
               VOLTAR
             </Box>
           </Box>
         </Box>
 
+        <ExitConfirm />
         <AccuseConfirm />
         <AccuseFeedback onDismiss={returnCluesHome} />
         <InvestigationResult />
