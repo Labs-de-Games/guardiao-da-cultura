@@ -32,6 +32,9 @@ export function ClueSlot({
   locked,
   disabled,
   frozen,
+  focused,
+  targetable,
+  heldPreview,
   onClear,
 }: {
   suspectId: string;
@@ -48,6 +51,12 @@ export function ClueSlot({
    * the walkthrough is pointing straight at it.
    */
   frozen: boolean;
+  /** The keyboard cursor is sitting on this slot. */
+  focused: boolean;
+  /** A clue is in hand and this slot will take it. */
+  targetable: boolean;
+  /** Art of the clue in hand, previewed here while the cursor is on it. */
+  heldPreview: string | null;
   onClear: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -55,11 +64,12 @@ export function ClueSlot({
     disabled: disabled || locked || frozen,
   });
 
-  const borderColor = verdict
-    ? VERDICT_STYLE[verdict].color
-    : isOver
+  const borderColor =
+    isOver || focused || targetable
       ? colors.accentGold
-      : colors.accentGoldMuted;
+      : verdict
+        ? VERDICT_STYLE[verdict].color
+        : colors.accentGoldMuted;
 
   return (
     <Box
@@ -69,6 +79,9 @@ export function ClueSlot({
         ref={setNodeRef}
         data-clue-slot={index}
         data-clue-key={clue?.key}
+        // Reachable by the keyboard cursor, which focuses it directly; Tab
+        // still walks the buttons rather than the slots.
+        tabIndex={-1}
         aria-label={
           clue
             ? `Espaço ${index + 1}: ${clue.title}${verdict ? `, ${VERDICT_STYLE[verdict].label}` : ""}`
@@ -81,10 +94,16 @@ export function ClueSlot({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: isOver ? colors.bgTertiary : colors.bgPrimary,
+          bgcolor:
+            isOver || focused || targetable
+              ? colors.bgTertiary
+              : colors.bgPrimary,
           border: `2px ${clue ? "solid" : "dashed"} ${borderColor}`,
           borderRadius: `${radius.small}px`,
           opacity: disabled ? 0.5 : 1,
+          outline: "none",
+          // The cursor's ring, distinct from the border a verdict paints.
+          boxShadow: focused ? `0 0 0 3px ${colors.accentGoldMuted}` : "none",
           transition:
             "border-color 120ms linear, background-color 120ms linear",
         }}
@@ -159,12 +178,28 @@ export function ClueSlot({
               </Box>
             )}
           </>
+        ) : heldPreview ? (
+          // Where the clue in hand would land, so confirming is never a guess.
+          <Box
+            component="img"
+            src={heldPreview}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            sx={{
+              width: "64%",
+              height: "64%",
+              objectFit: "contain",
+              imageRendering: "pixelated",
+              opacity: 0.45,
+            }}
+          />
         ) : (
           <Typography
             sx={{
               fontFamily: fonts.display,
               fontSize: "calc(var(--slot) * 0.5)",
-              color: colors.bgTertiary,
+              color: targetable ? colors.accentGold : colors.bgTertiary,
               userSelect: "none",
             }}
           >

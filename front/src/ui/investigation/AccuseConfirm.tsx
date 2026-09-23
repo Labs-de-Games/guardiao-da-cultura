@@ -1,20 +1,26 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
 
+type Choice = "cancel" | "confirm";
+
 function ConfirmButton({
   label,
   onClick,
   tone,
+  selected,
 }: {
   label: string;
   onClick: () => void;
   tone: "neutral" | "danger";
+  /** The keyboard is resting on this one. */
+  selected: boolean;
 }) {
   return (
     <Box
@@ -29,10 +35,15 @@ function ConfirmButton({
         border: tone === "neutral" ? `1px solid ${colors.bgTertiary}` : "none",
         borderRadius: `${radius.small}px`,
         bgcolor: tone === "neutral" ? "transparent" : "#8c3b3b",
-        color: tone === "neutral" ? colors.textSecondary : colors.textPrimary,
+        color:
+          tone === "neutral" && !selected
+            ? colors.textSecondary
+            : colors.textPrimary,
         fontFamily: fonts.display,
         fontSize: "1.15rem",
         letterSpacing: "0.03em",
+        outline: "none",
+        boxShadow: selected ? `0 0 0 2px ${colors.accentGold}` : "none",
         "&:hover": { filter: "brightness(1.15)", color: colors.textPrimary },
       }}
     >
@@ -45,7 +56,9 @@ function ConfirmButton({
  * The "tem certeza?" gate.
  *
  * An accusation is the only irreversible move in the phase — it burns a star
- * and wipes the board — so it never fires straight off the seat button.
+ * and wipes the board — so it never fires straight off the seat button. The
+ * keyboard lands on Cancelar rather than on the accusation, for the same
+ * reason: the dangerous half should take a deliberate press to reach.
  */
 export function AccuseConfirm() {
   const payload = useGameUIStore((s) => s.investigation.payload);
@@ -56,9 +69,15 @@ export function AccuseConfirm() {
   const accuseSuspect = useGameUIStore((s) => s.accuseSuspect);
 
   const suspect = payload?.suspects.find((s) => s.id === pendingAccusationId);
-  if (!suspect) return null;
+  const [choice, setChoice] = useState<Choice>("cancel");
 
-  const confirm = () => {
+  // Every fresh accusation starts on Cancelar, never on the one that costs a star.
+  useEffect(() => {
+    setChoice("cancel");
+  }, [pendingAccusationId]);
+
+  const confirm = useCallback(() => {
+    if (!suspect) return;
     const outcome = accuseSuspect(suspect.id);
     if (outcome) {
       EventBus.emit("investigation:completed", {
@@ -66,7 +85,37 @@ export function AccuseConfirm() {
         wrongAttempts: outcome.wrongAttempts,
       });
     }
-  };
+  }, [accuseSuspect, suspect]);
+
+  // ESC is the screen's own — it cancels the pending accusation from out there.
+  useEffect(() => {
+    if (!suspect) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+
+      if (key === "ArrowLeft" || key === "a") {
+        event.preventDefault();
+        setChoice("cancel");
+        return;
+      }
+      if (key === "ArrowRight" || key === "d") {
+        event.preventDefault();
+        setChoice("confirm");
+        return;
+      }
+      if (key === "Enter" || key === " ") {
+        event.preventDefault();
+        if (choice === "confirm") confirm();
+        else requestAccusation(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [suspect, choice, confirm, requestAccusation]);
+
+  if (!suspect) return null;
 
   return (
     <Box
@@ -121,9 +170,15 @@ export function AccuseConfirm() {
           <ConfirmButton
             label="Cancelar"
             tone="neutral"
+            selected={choice === "cancel"}
             onClick={() => requestAccusation(null)}
           />
-          <ConfirmButton label="Sim, acusar" tone="danger" onClick={confirm} />
+          <ConfirmButton
+            label="Sim, acusar"
+            tone="danger"
+            selected={choice === "confirm"}
+            onClick={confirm}
+          />
         </Box>
       </Box>
     </Box>

@@ -52,3 +52,22 @@ export const ROOM_LIFT = `translateY(calc(0px - clamp(50cqh, ${CORK_CENTRE_Y}, 1
 
 /** The evidence rail's width. It takes this from the stage, so the room fits what is left. */
 export const RAIL_WIDTH = { xs: 220, md: 280, lg: 320 };
+
+/**
+ * Where each suspect is pinned on the corkboard, as a percentage of the cork.
+ *
+ * Three across the top, two below, all inset from the frame. The seats size
+ * themselves off the board too (see `--portrait` and friends in `SuspectTable`),
+ * so a suspect never drifts off the cork no matter how large the room is drawn.
+ *
+ * The keyboard cursor reads the same numbers: with three seats above and two
+ * below, "the seat below this one" only means anything in terms of where the
+ * seats actually sit.
+ */
+export const SEATS = [
+  { left: 17, edge: "top" },
+  { left: 50, edge: "top" },
+  { left: 83, edge: "top" },
+  { left: 32, edge: "bottom" },
+  { left: 68, edge: "bottom" },
+] as const;

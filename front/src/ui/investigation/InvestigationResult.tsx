@@ -176,6 +176,9 @@ export function InvestigationResult() {
         <Box
           component="button"
           type="button"
+          // The one thing left to do on this panel, so ENTER finds it without
+          // the player hunting for it.
+          autoFocus
           onClick={() => EventBus.emit("investigation:outro", undefined)}
           sx={{
             mt: 1,
