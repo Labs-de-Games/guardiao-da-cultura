@@ -72,13 +72,22 @@
 
 ## Environment Setup
 
+> **Note:** the repo has no default `compose.yaml` — the dev stack lives in
+> `compose.development.yaml`. Plain `docker compose …` commands fail with
+> `no configuration file provided: not found` unless you pass
+> `-f compose.development.yaml` (the `make` targets already do this). To
+> avoid repeating the flag, run `export COMPOSE_FILE=compose.development.yaml`
+> once per shell.
+
 ```bash
-make up
-docker compose ps          # expect: front, back, db, nginx (at least)
-make db-migrate
-docker compose logs -f back    # tail for OAuth/password auth requests
-docker compose logs -f front   # tail for edital route handler errors
+make up                                                    # builds and starts the dev stack (detached)
+docker compose -f compose.development.yaml ps              # expect: nginx, front, back, postgres
+make db-migrate                                            # runs inside the back container — stack must be up
+docker compose -f compose.development.yaml logs -f back    # tail for OAuth/password auth requests
+docker compose -f compose.development.yaml logs -f front   # tail for edital route handler errors
 ```
+
+`make development-ps` and `make logs` (all services) are equivalent shortcuts.
 
 Confirm `/api/edital/health` responds before testing anything else:
 
@@ -538,7 +547,7 @@ server-only key, distinct from the client-side `POSTHOG_API_KEY`.
 ### Confirmation email never arrives
 
 Check `EMAIL_PROVIDER` — if `mock`, the link is logged to the backend
-console (`docker compose logs back`), not actually emailed.
+console (`docker compose -f compose.development.yaml logs back`), not actually emailed.
 
 ### CSV opens with garbled accents in Excel
 
