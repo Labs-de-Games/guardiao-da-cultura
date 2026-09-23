@@ -207,8 +207,13 @@ export function InvestigationTutorial() {
         finish();
         return;
       }
-      // Enter walks the script forward, but never past the hands-on step.
-      if (event.key === "Enter" && step?.advance === "click") {
+      // ENTER and SPACE walk the script forward — the same two keys that act on
+      // the board — but never past the hands-on step, which only a real drop
+      // gets through.
+      if (
+        (event.key === "Enter" || event.key === " ") &&
+        step?.advance === "click"
+      ) {
         event.preventDefault();
         next();
       }

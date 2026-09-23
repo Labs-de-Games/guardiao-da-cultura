@@ -39,7 +39,22 @@ export function canTargetSlot(
   const suspect = investigation.payload?.suspects[suspectIndex];
   if (!suspect) return false;
   if (investigation.wrongSuspectIds.includes(suspect.id)) return false;
+  // Mid-walkthrough the only seat that takes a clue is the one being
+  // demonstrated on; the store refuses the rest outright.
+  const { active, focusSuspectId } = investigation.tutorial;
+  if (active && focusSuspectId && suspect.id !== focusSuspectId) return false;
   return (investigation.boards[suspect.id]?.slots[slotIndex] ?? null) === null;
+}
+
+/** The seat index the walkthrough confines the cursor to, if it is running. */
+export function tutorialSeatIndex(investigation: Investigation): number | null {
+  const { active, focusSuspectId } = investigation.tutorial;
+  if (!active || !focusSuspectId) return null;
+  const index =
+    investigation.payload?.suspects.findIndex(
+      (suspect) => suspect.id === focusSuspectId,
+    ) ?? -1;
+  return index === -1 ? null : index;
 }
 
 export function cursorContext(
@@ -54,6 +69,7 @@ export function cursorContext(
     canTargetSlot: (suspectIndex, slotIndex) =>
       canTargetSlot(investigation, suspectIndex, slotIndex),
     railIndex,
+    restrictToSuspectIndex: tutorialSeatIndex(investigation),
   };
 }
 
@@ -129,9 +145,15 @@ export function useInvestigationKeyboard({
       const state = useGameUIStore.getState();
       const investigation = state.investigation;
 
-      // The walkthrough owns ESC and ENTER while it is up, and its listener is
-      // downstream of this one — so this must not swallow them.
-      if (investigation.tutorial.active || !investigation.payload) return;
+      if (!investigation.payload) return;
+
+      // The walkthrough asks for one drop and holds the board still from the
+      // moment it lands. Up to then the cursor works normally — the rehearsed
+      // move is rehearsed with whichever input the player is using — and after
+      // it, every key belongs to the walkthrough, whose listener is downstream
+      // of this one and must not be swallowed.
+      const tutorial = investigation.tutorial;
+      if (tutorial.active && tutorial.demoPlaced) return;
 
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
       const direction = DIRECTION_KEYS[key];
@@ -156,6 +178,11 @@ export function useInvestigationKeyboard({
         state.requestAccusation(null);
         return;
       }
+
+      // Mid-walkthrough, ESC skips the lesson rather than leaving the phase —
+      // that is the walkthrough's own key. A clue in hand comes first, though:
+      // putting it back down is the more immediate thing ESC could mean.
+      if (isCancel && tutorial.active && !investigation.heldClueKey) return;
 
       event.preventDefault();
       event.stopPropagation();

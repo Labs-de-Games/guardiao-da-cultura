@@ -33,6 +33,12 @@ export interface CursorContext {
   canTargetSlot?: (suspectIndex: number, slotIndex: number) => boolean;
   /** Which clue Left off the board's first column goes back to. */
   railIndex?: number;
+  /**
+   * The walkthrough narrows the board to one seat — the one its highlight is
+   * on — so the cursor cannot wander off the lesson. The rail stays reachable,
+   * since picking a clue up is half of the move being rehearsed.
+   */
+  restrictToSuspectIndex?: number | null;
 }
 
 /**
@@ -92,6 +98,14 @@ function slotCells(seats: number[], ctx: CursorContext): Cell[] {
  */
 export function buildRows(ctx: CursorContext): Cell[][] {
   const rows: Cell[][] = [];
+
+  // Narrowed to a single seat's slots: no portraits, no accusations, no other
+  // suspects — one row, and it is the row the walkthrough is pointing at.
+  const only = ctx.restrictToSuspectIndex;
+  if (only !== undefined && only !== null) {
+    const cells = slotCells([only], ctx);
+    return cells.length > 0 ? [cells] : [];
+  }
 
   for (const seats of seatRows(ctx.suspectCount)) {
     if (ctx.mode === "browse") {

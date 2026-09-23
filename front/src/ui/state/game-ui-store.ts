@@ -110,6 +110,28 @@ export function holderOf(
   return null;
 }
 
+/**
+ * The seat the walkthrough demonstrates on.
+ *
+ * The first suspect, which is the one its highlight points at. The exception is
+ * a seat with no room left, which only a player replaying the lesson mid-run can
+ * arrive at: the rehearsed drop has to be possible, because nothing but doing it
+ * gets past that step.
+ */
+function tutorialSeatId(
+  suspects: InvestigationPayload["suspects"],
+  boards: Record<string, SuspectBoard>,
+  wrongSuspectIds: string[],
+): string | null {
+  const open = suspects.find(
+    (suspect) =>
+      !wrongSuspectIds.includes(suspect.id) &&
+      (boards[suspect.id]?.slots ?? []).filter((k) => k !== null).length <
+        INVESTIGATION_SLOTS,
+  );
+  return open?.id ?? suspects[0]?.id ?? null;
+}
+
 /** The dossier's answer for a trait, turned into check feedback. */
 function verdictFor(value: TraitValue | undefined): ClueVerdict {
   if (value === "sim") return "quente";
@@ -827,6 +849,17 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
       // The walkthrough asks for exactly one drop and then stops taking them.
       if (tutorial.active && tutorial.demoPlaced) return;
 
+      // And it asks for that drop on one seat: the one it is pointing at. A
+      // clue cannot land where the highlight is not, whether it was dragged
+      // there or carried there.
+      if (
+        tutorial.active &&
+        tutorial.focusSuspectId &&
+        suspectId !== tutorial.focusSuspectId
+      ) {
+        return;
+      }
+
       // Already pinned to a suspect: it has to come off that seat first.
       if (holderOf(boards, clueKey)) return;
 
@@ -953,7 +986,11 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           tutorial: {
             active: true,
             stepIndex: 0,
-            focusSuspectId: s.investigation.payload?.suspects[0]?.id ?? null,
+            focusSuspectId: tutorialSeatId(
+              s.investigation.payload?.suspects ?? [],
+              s.investigation.boards,
+              s.investigation.wrongSuspectIds,
+            ),
             focusClueKey: s.investigation.payload?.clues[0]?.key ?? null,
             // Nothing has been spent yet, so the lesson can be given back.
             restoresBoard: Object.values(s.investigation.clueHearts).every(

@@ -736,6 +736,8 @@ describe("InvestigationScreen", () => {
   });
 
   describe("tutorial", () => {
+    /** suspects[0] — the seat the walkthrough demonstrates on. */
+    const DEMO_SEAT = "augusto_vale";
     const DROP_STEP = /Arraste uma pista/;
     const VERDICT_STEP = /contradiz/;
     const HEARTS_STEP = /usos por pista/;
@@ -766,14 +768,14 @@ describe("InvestigationScreen", () => {
 
       expect(screen.queryByText("PR\u00d3XIMO")).not.toBeInTheDocument();
 
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
 
       expect(screen.getByText(VERDICT_STEP)).toBeInTheDocument();
     });
 
     it("walks the rest through on PR\u00d3XIMO", () => {
       render(<InvestigationScreen />);
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
 
       fireEvent.click(screen.getByText("PR\u00d3XIMO"));
       expect(screen.getByText(HEARTS_STEP)).toBeInTheDocument();
@@ -784,28 +786,28 @@ describe("InvestigationScreen", () => {
 
     it("takes one drop and then holds the board still", () => {
       render(<InvestigationScreen />);
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
 
-      // No second clue anywhere, on any seat.
+      // No second clue anywhere, on any seat — not even the demonstrated one.
       place("bruno_tavares", 0, CACHIMBO.key);
-      place("helena_marques", 1, CACHIMBO.key);
+      place(DEMO_SEAT, 1, CACHIMBO.key);
 
       expect(investigation().boards.bruno_tavares).toBeUndefined();
-      expect(investigation().boards.helena_marques.slots[1]).toBeNull();
+      expect(investigation().boards[DEMO_SEAT].slots[1]).toBeNull();
       expect(investigation().clueHearts[CACHIMBO.key]).toBe(
         INVESTIGATION_CLUE_HEARTS,
       );
 
       // And the demonstration itself cannot be taken back.
       act(() => {
-        useGameUIStore.getState().clearSlot("helena_marques", 0);
+        useGameUIStore.getState().clearSlot(DEMO_SEAT, 0);
       });
-      expect(investigation().boards.helena_marques.slots[0]).toBe(VARNISH.key);
+      expect(investigation().boards[DEMO_SEAT].slots[0]).toBe(VARNISH.key);
     });
 
     it("offers no way to remove the demonstration clue", () => {
       render(<InvestigationScreen />);
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
 
       expect(
         screen.queryByLabelText(`Remover ${VARNISH.title} do espaço 1`),
@@ -814,7 +816,7 @@ describe("InvestigationScreen", () => {
 
     it("hands the board back the moment the lesson ends", () => {
       render(<InvestigationScreen />);
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
       fireEvent.click(screen.getByText("PR\u00d3XIMO"));
       fireEvent.click(screen.getByText("PR\u00d3XIMO"));
       fireEvent.click(screen.getByText("COME\u00c7AR"));
@@ -829,14 +831,14 @@ describe("InvestigationScreen", () => {
 
     it("will not let the walkthrough's ACUSAR button be used", () => {
       render(<InvestigationScreen />);
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
       fireEvent.click(screen.getByText("PR\u00d3XIMO"));
       fireEvent.click(screen.getByText("PR\u00d3XIMO"));
 
       // The last step points at a lit button; pressing it must stay a no-op.
       expect(screen.getByText(ACCUSE_STEP)).toBeInTheDocument();
       fireEvent.click(
-        screen.getByRole("button", { name: "Acusar Helena Marques" }),
+        screen.getByRole("button", { name: "Acusar Augusto Vale" }),
       );
 
       expect(investigation().pendingAccusationId).toBeNull();
@@ -844,25 +846,35 @@ describe("InvestigationScreen", () => {
 
       // And works again the moment the lesson is over.
       fireEvent.click(screen.getByText("COME\u00c7AR"));
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
       fireEvent.click(
-        screen.getByRole("button", { name: "Acusar Helena Marques" }),
+        screen.getByRole("button", { name: "Acusar Augusto Vale" }),
       );
 
       expect(screen.getByText("Sim, acusar")).toBeInTheDocument();
     });
 
-    it("follows the seat the player actually used", () => {
+    it("keeps its one drop on the seat it is pointing at", () => {
       render(<InvestigationScreen />);
+
+      // Any other seat refuses the clue, however it was aimed there.
       place("bruno_tavares", 0, CACHIMBO.key);
 
-      expect(investigation().tutorial.focusSuspectId).toBe("bruno_tavares");
+      expect(investigation().boards.bruno_tavares).toBeUndefined();
+      expect(screen.getByText(DROP_STEP)).toBeInTheDocument();
+
+      place(DEMO_SEAT, 0, CACHIMBO.key);
+
+      expect(investigation().boards[DEMO_SEAT].slots[0]).toBe(CACHIMBO.key);
+      // Which clue to rehearse with is still the player's own call, so the
+      // steps that explain the drop point at the one they used.
+      expect(investigation().tutorial.focusSuspectId).toBe(DEMO_SEAT);
       expect(investigation().tutorial.focusClueKey).toBe(CACHIMBO.key);
     });
 
     it("gives the demonstration back when it ends", () => {
       render(<InvestigationScreen />);
-      place("helena_marques", 0, VARNISH.key);
+      place(DEMO_SEAT, 0, VARNISH.key);
 
       expect(investigation().clueHearts[VARNISH.key]).toBe(
         INVESTIGATION_CLUE_HEARTS - 1,
@@ -934,9 +946,118 @@ describe("InvestigationScreen", () => {
       // Already-placed clues must not count as having done the exercise.
       expect(screen.getByText(DROP_STEP)).toBeInTheDocument();
 
-      place("bruno_tavares", 0, CACHIMBO.key);
+      place(DEMO_SEAT, 0, CACHIMBO.key);
 
       expect(screen.getByText(VERDICT_STEP)).toBeInTheDocument();
+    });
+
+    describe("from the keyboard", () => {
+      const press = (key: string) => fireEvent.keyDown(window, { key });
+
+      /** The rehearsed move is rehearsed with whatever the player is using. */
+      it("takes its one drop from the keyboard", () => {
+        render(<InvestigationScreen />);
+
+        press("ArrowDown");
+        press("Enter");
+        expect(investigation().heldClueKey).toBe(VARNISH.key);
+
+        press("Enter");
+
+        expect(investigation().boards.augusto_vale.slots[0]).toBe(VARNISH.key);
+        expect(investigation().tutorial.demoPlaced).toBe(true);
+        expect(screen.getByText(VERDICT_STEP)).toBeInTheDocument();
+      });
+
+      /** The lesson is one seat's worth of board, and so is the cursor. */
+      it("confines the cursor to the demonstrated seat", () => {
+        render(<InvestigationScreen />);
+
+        press("ArrowDown");
+        press("ArrowRight");
+
+        // Straight onto the demonstrated seat, with no portraits or accuse
+        // buttons above and below it to wander into.
+        expect(investigation().cursor).toEqual({
+          zone: "slot",
+          suspectIndex: 0,
+          slotIndex: 0,
+        });
+        press("ArrowUp");
+        press("ArrowDown");
+        expect(investigation().cursor).toEqual({
+          zone: "slot",
+          suspectIndex: 0,
+          slotIndex: 0,
+        });
+
+        // Its three slots, and then the board runs out — the next suspect is
+        // not somewhere this lesson goes.
+        press("ArrowRight");
+        press("ArrowRight");
+        press("ArrowRight");
+        expect(investigation().cursor).toEqual({
+          zone: "slot",
+          suspectIndex: 0,
+          slotIndex: 2,
+        });
+
+        // The rail is still reachable: picking a clue up is half the move.
+        press("ArrowLeft");
+        press("ArrowLeft");
+        press("ArrowLeft");
+        press("ArrowLeft");
+        expect(investigation().cursor).toEqual({ zone: "rail", clueIndex: 0 });
+      });
+
+      it("hands the keys back to the script once that drop lands", () => {
+        render(<InvestigationScreen />);
+        press("ArrowDown");
+        press("Enter");
+        press("Enter");
+
+        press("Enter");
+        expect(screen.getByText(HEARTS_STEP)).toBeInTheDocument();
+
+        press(" ");
+        expect(screen.getByText(ACCUSE_STEP)).toBeInTheDocument();
+      });
+
+      it("leaves the board alone while the script is talking", () => {
+        render(<InvestigationScreen />);
+        press("ArrowDown");
+        press("Enter");
+        press("Enter");
+
+        // The cursor is frozen with the board: nothing moves, nothing lifts.
+        const cursor = investigation().cursor;
+        press("ArrowRight");
+        expect(investigation().cursor).toEqual(cursor);
+        expect(investigation().heldClueKey).toBeNull();
+      });
+
+      it("lets ESC skip the lesson rather than leave the phase", () => {
+        const exited = jest.fn();
+        const off = EventBus.on("investigation:exit", exited);
+        render(<InvestigationScreen />);
+
+        press("Escape");
+
+        expect(investigation().tutorial.active).toBe(false);
+        expect(exited).not.toHaveBeenCalled();
+        off();
+      });
+
+      it("puts a carried clue down before it considers skipping", () => {
+        render(<InvestigationScreen />);
+        press("ArrowDown");
+        press("Enter");
+
+        press("Escape");
+
+        expect(investigation().heldClueKey).toBeNull();
+        expect(investigation().tutorial.active).toBe(true);
+      });
     });
 
     it("steps aside once the run is decided", () => {
