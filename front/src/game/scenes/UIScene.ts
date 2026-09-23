@@ -265,6 +265,13 @@ export class UIScene extends Scene {
       },
     );
 
+    const unsubSoundGeniusNote = EventBus.on(
+      "ui:sound-genius-note",
+      ({ color }) => {
+        AudioManager.playSfx(`sfx.genius.${color}`);
+      },
+    );
+
     // Badge unlock sound (triggered by BadgeSystem)
     const unsubBadgeUnlocked = EventBus.on("badge:unlocked", () => {
       AudioManager.playSfx("sfx.badge.unlock");
@@ -285,6 +292,7 @@ export class UIScene extends Scene {
       unsubSoundModalClose();
       unsubSoundBadgeUnlock();
       unsubSoundLevelComplete();
+      unsubSoundGeniusNote();
       unsubBadgeUnlocked();
       this.unsubQuizClose?.();
       this.unsubQuizRetry?.();

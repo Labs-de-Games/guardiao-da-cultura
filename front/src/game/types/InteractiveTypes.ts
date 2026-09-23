@@ -11,4 +11,5 @@ export enum InteractiveType {
   SPOTLIGHT = "spotlight",
   STEP_SEQUENCE = "step_sequence",
   BAND = "band",
+  GENIUS_SEQUENCE = "genius_sequence",
 }

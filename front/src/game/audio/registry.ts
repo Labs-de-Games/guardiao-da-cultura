@@ -84,6 +84,11 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   // Switches
   { key: "sfx.switch", path: "sound/sfx/switch.ogg" },
   { key: "sfx.light_bar.fix", path: "sound/sfx/light_bar_fix.ogg" },
+  // Genius sequence minigame notes
+  { key: "sfx.genius.green", path: "sound/notes/C3.wav" },
+  { key: "sfx.genius.red", path: "sound/notes/D3.wav" },
+  { key: "sfx.genius.yellow", path: "sound/notes/E3.wav" },
+  { key: "sfx.genius.blue", path: "sound/notes/F3.wav" },
 ];
 
 /**
