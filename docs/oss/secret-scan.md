@@ -62,8 +62,12 @@ in some older guidance.
 
 - Publishing the history makes every past pull request and issue body readable,
   and puts `docs/handoff/` into the public record. That is a disclosure
-  question, not a credential one, and is handled by the handoff split.
-- The Coolify admin panel hostname was present at HEAD in five files. Neither
-  scanner flags a hostname. It is redacted in the commit that carries this
-  document. It remains in history, which is low severity and does not on its own
-  justify a rewrite.
+  question, not a credential one. `docs/handoff/` and `docs/screenshots/` are
+  deleted at HEAD by #818; because no history rewrite is planned, both remain
+  readable in old commits. That residual exposure is accepted — the directories
+  hold squad process documentation, not credentials.
+- The Coolify admin panel hostname was present at HEAD in five files, four of
+  them inside `docs/handoff/`. Neither scanner flags a hostname. With that
+  directory deleted, `docs/VERSIONING.md` is the only remaining occurrence, and
+  it is redacted in the commit that carries this document. The hostname remains
+  in history, which is low severity and does not on its own justify a rewrite.
