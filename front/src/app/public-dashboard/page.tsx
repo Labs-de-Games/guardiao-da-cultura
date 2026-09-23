@@ -21,7 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { DataTable } from "@/components/dashboard/DataTable";
@@ -122,6 +122,12 @@ function toFunnelSteps(
     };
   });
 }
+
+/**
+ * Keeps anchored sections clear of the sticky PublicHeader when a nav link
+ * scrolls them to the top (logo row + nav row ≈ 140px).
+ */
+const SECTION_SX = { mb: 5, scrollMarginTop: 144 };
 
 const NAV_LINKS = [
   { href: "#resumo", label: "Resumo" },
@@ -905,7 +911,7 @@ function PublicDashboardContent() {
       >
         {data ? (
           <>
-            <Box id="resumo" sx={{ mb: 5 }}>
+            <Box id="resumo" sx={SECTION_SX}>
               <PublicSectionHeading
                 eyebrow="01 · Resumo executivo"
                 title="Impacto em números"
@@ -1042,7 +1048,7 @@ function PublicDashboardContent() {
             </Box>
 
             {data.playerTrend.length > 0 ? (
-              <Box id="alcance" sx={{ mb: 5 }}>
+              <Box id="alcance" sx={SECTION_SX}>
                 <PublicSectionHeading
                   eyebrow="02 · Alcance"
                   title="Evolução de jogadores únicos"
@@ -1114,7 +1120,7 @@ function PublicDashboardContent() {
               </Box>
             ) : null}
 
-            <Box id="progressao" sx={{ mb: 5 }}>
+            <Box id="progressao" sx={SECTION_SX}>
               <PublicSectionHeading
                 eyebrow="03 · Progressão"
                 title="Jornada agregada"
@@ -1123,7 +1129,7 @@ function PublicDashboardContent() {
               <FunnelChart steps={toFunnelSteps(data.phaseProgression)} />
             </Box>
 
-            <Box id="desempenho" sx={{ mb: 5 }}>
+            <Box id="desempenho" sx={SECTION_SX}>
               <PublicSectionHeading
                 eyebrow="04 · Desempenho"
                 title="Efetividade da experiência"
@@ -1158,7 +1164,7 @@ function PublicDashboardContent() {
               ) : null}
             </Box>
 
-            <Box id="origens" sx={{ mb: 5 }}>
+            <Box id="origens" sx={SECTION_SX}>
               <PublicSectionHeading
                 eyebrow="05 · Origem dos acessos"
                 title="Como o público chega ao jogo"
@@ -1174,8 +1180,23 @@ function PublicDashboardContent() {
 }
 
 export default function PublicDashboardPage() {
+  // The root layout locks the body (100vh, overflow hidden) for the game.
+  // This page scrolls the window instead of an inner 100vh container, so
+  // "#section" anchor jumps can't scroll the locked body and push the sticky
+  // header off-screen.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevHeight = document.body.style.height;
+    document.body.style.overflow = "auto";
+    document.body.style.height = "auto";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.height = prevHeight;
+    };
+  }, []);
+
   return (
-    <Box sx={{ height: "100vh", overflowY: "auto" }}>
+    <Box>
       <PublicDashboardContent />
       <DashboardFooter />
     </Box>
