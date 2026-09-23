@@ -113,7 +113,10 @@ function SuspectSeat({
     return s.investigation.payload?.clues.find((c) => c.key === key) ?? null;
   });
   const onThisSeat =
-    cursor?.zone !== "rail" && cursor?.suspectIndex === seatIndex;
+    cursor !== null &&
+    cursor.zone !== "rail" &&
+    cursor.zone !== "footer" &&
+    cursor.suspectIndex === seatIndex;
 
   const cleared = wrongSuspectIds.includes(suspect.id);
 

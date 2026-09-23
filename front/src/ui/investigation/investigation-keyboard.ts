@@ -12,7 +12,12 @@ export type InvestigationCursor =
   | { zone: "rail"; clueIndex: number }
   | { zone: "portrait"; suspectIndex: number }
   | { zone: "slot"; suspectIndex: number; slotIndex: number }
-  | { zone: "accuse"; suspectIndex: number };
+  | { zone: "accuse"; suspectIndex: number }
+  | { zone: "footer"; index: number };
+
+/** The bar under the board, in the order it is drawn. */
+export const FOOTER_BUTTONS = ["tutorial", "exit"] as const;
+export type FooterButton = (typeof FOOTER_BUTTONS)[number];
 
 export type CursorDirection = "up" | "down" | "left" | "right";
 
@@ -34,6 +39,11 @@ export interface CursorContext {
   /** Which clue Left off the board's first column goes back to. */
   railIndex?: number;
   /**
+   * Whether the bar under the board — COMO JOGAR and VOLTAR — is in play. It
+   * is not while a clue is in hand: neither button is somewhere a clue goes.
+   */
+  footer?: boolean;
+  /**
    * The walkthrough narrows the board to one seat — the one its highlight is
    * on — so the cursor cannot wander off the lesson. The rail stays reachable,
    * since picking a clue up is half of the move being rehearsed.
@@ -54,6 +64,9 @@ interface Cell {
   /** Position across the corkboard, used to hold a column while moving rows. */
   x: number;
 }
+
+/** Where the footer buttons sit across the screen, in the same units as `SEATS`. */
+const FOOTER_X = [80, 95];
 
 function seatX(suspectIndex: number): number {
   return SEATS[suspectIndex]?.left ?? 50;
@@ -130,12 +143,22 @@ export function buildRows(ctx: CursorContext): Cell[][] {
     }
   }
 
+  if (ctx.footer && ctx.mode === "browse") {
+    rows.push(
+      FOOTER_BUTTONS.map((_button, index) => ({
+        cursor: { zone: "footer" as const, index },
+        x: FOOTER_X[index] ?? 95,
+      })),
+    );
+  }
+
   return rows;
 }
 
 function sameCursor(a: InvestigationCursor, b: InvestigationCursor): boolean {
   if (a.zone !== b.zone) return false;
   if (a.zone === "rail") return a.clueIndex === (b as typeof a).clueIndex;
+  if (a.zone === "footer") return a.index === (b as typeof a).index;
   if (a.zone === "slot") {
     const other = b as typeof a;
     return (
@@ -216,10 +239,12 @@ export function moveCursor(
       return { zone: "rail", clueIndex: Math.max(0, cursor.clueIndex - 1) };
     }
     if (direction === "down") {
-      return {
-        zone: "rail",
-        clueIndex: clamp(cursor.clueIndex + 1, ctx.clueCount - 1),
-      };
+      if (cursor.clueIndex < ctx.clueCount - 1) {
+        return { zone: "rail", clueIndex: cursor.clueIndex + 1 };
+      }
+      // Off the bottom of the list is the bar drawn under it.
+      const footerRow = rows.find((row) => row[0]?.cursor.zone === "footer");
+      return footerRow?.[0]?.cursor ?? cursor;
     }
     if (direction === "left") return cursor;
 
@@ -227,6 +252,17 @@ export function moveCursor(
     // rail's whole purpose is to send a clue to a seat.
     const slotRow = rows.find((row) => row[0]?.cursor.zone === "slot");
     return (slotRow ?? rows[0])?.[0]?.cursor ?? cursor;
+  }
+
+  // The bar's first button is where the rail's last clue leads, so going back
+  // up from it returns there rather than to the board.
+  if (
+    cursor.zone === "footer" &&
+    cursor.index === 0 &&
+    direction === "up" &&
+    ctx.clueCount > 0
+  ) {
+    return { zone: "rail", clueIndex: ctx.clueCount - 1 };
   }
 
   const at = locate(rows, cursor);

@@ -47,6 +47,7 @@ const EMPTY_INVESTIGATION = {
   hoveredClueKey: null,
   cursor: null,
   heldClueKey: null,
+  exitConfirmOpen: false,
   pendingAccusationId: null,
   lastWrongSuspectId: null,
   wrongAttempts: 0,
@@ -278,6 +279,11 @@ export interface GameUIState {
      * it on a seat spends a heart, exactly as a drag does.
      */
     heldClueKey: string | null;
+    /**
+     * The "quer mesmo sair?" gate. Leaving forfeits the board as it stands —
+     * a fresh entry starts from an empty one — so VOLTAR and ESC ask first.
+     */
+    exitConfirmOpen: boolean;
     /** Suspect awaiting "tem certeza?" confirmation. */
     pendingAccusationId: string | null;
     /**
@@ -399,6 +405,8 @@ export interface GameUIState {
   setCursor: (cursor: InvestigationCursor | null) => void;
   /** Picks a clue up off the rail, or puts down whatever is in hand. */
   holdClue: (clueKey: string | null) => void;
+  /** Opens or dismisses the "quer mesmo sair?" gate. */
+  setExitConfirmOpen: (open: boolean) => void;
   /**
    * Drops a clue onto a suspect: costs a heart, grades it on the spot, and
    * vacates whatever slot the clue held before. Refused once it is out of
@@ -829,6 +837,11 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     holdClue: (clueKey) =>
       set((s) => ({
         investigation: { ...s.investigation, heldClueKey: clueKey },
+      })),
+
+    setExitConfirmOpen: (open) =>
+      set((s) => ({
+        investigation: { ...s.investigation, exitConfirmOpen: open },
       })),
 
     // Reads through `get()` rather than inside the `set()` updater so the
