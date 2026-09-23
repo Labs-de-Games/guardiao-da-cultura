@@ -31,6 +31,16 @@ function ClueChip({ clue, index }: { clue: InvestigationClue; index: number }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
 
+  // The keyboard cursor sitting on this row, and whether this is the clue it
+  // is carrying.
+  const focused = useGameUIStore((s) => {
+    const cursor = s.investigation.cursor;
+    return cursor?.zone === "rail" && cursor.clueIndex === index;
+  });
+  const carried = useGameUIStore(
+    (s) => s.investigation.heldClueKey === clue.key,
+  );
+
   // The walkthrough asks for one drop and then holds the board still, so no
   // second clue can be picked up while its remaining steps play out.
   const frozen = useGameUIStore(
@@ -65,7 +75,10 @@ function ClueChip({ clue, index }: { clue: InvestigationClue; index: number }) {
       ref={rowRef}
       data-tutorial="clue-chip"
       data-clue-key={clue.key}
-      sx={{ mb: 0.5 }}
+      // Focusable by the cursor but not by Tab: the keyboard cursor moves focus
+      // here itself, which is what opens this clue's tooltip as it passes.
+      tabIndex={-1}
+      sx={{ mb: 0.5, outline: "none" }}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}
@@ -80,7 +93,9 @@ function ClueChip({ clue, index }: { clue: InvestigationClue; index: number }) {
             ? `${clue.title}. Sem usos restantes, fixada em ${holderName ?? "um suspeito"}.`
             : held
               ? `${clue.title}. Em uso com ${holderName}. Remova-a do espaço para levá-la a outro suspeito.`
-              : `${clue.title}. ${hearts} usos restantes. Arraste para um espaço do suspeito.`
+              : carried
+                ? `${clue.title}. Em mãos. Escolha um espaço livre e confirme.`
+                : `${clue.title}. ${hearts} usos restantes. Arraste para um espaço do suspeito, ou confirme para pegá-la.`
         }
         sx={{
           display: "flex",
@@ -91,9 +106,14 @@ function ClueChip({ clue, index }: { clue: InvestigationClue; index: number }) {
           cursor: grabbable ? "grab" : "not-allowed",
           userSelect: "none",
           touchAction: "none",
-          bgcolor: hovered ? colors.bgTertiary : "transparent",
-          border: `2px solid ${hovered ? colors.accentGold : "transparent"}`,
+          bgcolor: hovered || focused ? colors.bgTertiary : "transparent",
+          border: `2px solid ${
+            hovered || focused || carried ? colors.accentGold : "transparent"
+          }`,
           borderRadius: `${radius.small}px`,
+          // The cursor's own ring, so it reads as a position rather than as
+          // another hover.
+          boxShadow: focused ? `0 0 0 2px ${colors.accentGoldMuted}` : "none",
           // A held clue is dimmed but not greyed like a spent one: it is still
           // in play, just not here.
           opacity: isDragging ? 0.3 : spent ? 0.5 : held ? 0.65 : 1,
@@ -167,6 +187,20 @@ function ClueChip({ clue, index }: { clue: InvestigationClue; index: number }) {
           </Typography>
           <Box sx={{ mt: 0.4 }}>
             <ClueHearts hearts={hearts} />
+            {carried ? (
+              <Typography
+                sx={{
+                  fontFamily: fonts.display,
+                  fontSize: "0.8rem",
+                  color: colors.accentGold,
+                  lineHeight: 1.2,
+                  mt: 0.3,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                EM MÃOS
+              </Typography>
+            ) : null}
             {holderName && (
               <Typography
                 sx={{

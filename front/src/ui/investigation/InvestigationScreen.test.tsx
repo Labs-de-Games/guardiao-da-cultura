@@ -952,4 +952,131 @@ describe("InvestigationScreen", () => {
       expect(investigation().result).not.toBeNull();
     });
   });
+  describe("keyboard play", () => {
+    const press = (key: string) => fireEvent.keyDown(window, { key });
+    const cursor = () => investigation().cursor;
+
+    it("summons the cursor onto the rail without acting on the first press", () => {
+      render(<InvestigationScreen />);
+
+      press("ArrowDown");
+
+      expect(cursor()).toEqual({ zone: "rail", clueIndex: 0 });
+      expect(investigation().heldClueKey).toBeNull();
+    });
+
+    it("picks a clue up off the rail and lands it on a seat", () => {
+      render(<InvestigationScreen />);
+
+      press("ArrowDown");
+      press("Enter");
+
+      expect(investigation().heldClueKey).toBe(VARNISH.key);
+      // Carrying it is free; the cursor drops to the first slot that will take it.
+      expect(investigation().clueHearts[VARNISH.key]).toBe(
+        INVESTIGATION_CLUE_HEARTS,
+      );
+      expect(cursor()).toEqual({
+        zone: "slot",
+        suspectIndex: 0,
+        slotIndex: 0,
+      });
+
+      press(" ");
+
+      expect(investigation().boards.augusto_vale.slots[0]).toBe(VARNISH.key);
+      expect(investigation().heldClueKey).toBeNull();
+      expect(investigation().clueHearts[VARNISH.key]).toBe(
+        INVESTIGATION_CLUE_HEARTS - 1,
+      );
+      expect(screen.getByText("Quente")).toBeInTheDocument();
+    });
+
+    it("takes a clue back off a seat, at the same price the × button charges", () => {
+      render(<InvestigationScreen />);
+      press("ArrowDown");
+      press("Enter");
+      press("Enter");
+
+      // The cursor is still on the slot it just filled.
+      press("Enter");
+
+      expect(investigation().boards.augusto_vale.slots[0]).toBeNull();
+      // The heart it spent getting there stays spent.
+      expect(investigation().clueHearts[VARNISH.key]).toBe(
+        INVESTIGATION_CLUE_HEARTS - 1,
+      );
+      expect(investigation().heldClueKey).toBeNull();
+    });
+
+    /** A clue never displaces another one — the player takes the first one off. */
+    it("skips past a slot that is already taken", () => {
+      render(<InvestigationScreen />);
+      place("augusto_vale", 0, VARNISH.key);
+
+      press("ArrowDown");
+      press("ArrowDown");
+      press("Enter");
+
+      expect(investigation().heldClueKey).toBe(CACHIMBO.key);
+      expect(cursor()).toEqual({
+        zone: "slot",
+        suspectIndex: 0,
+        slotIndex: 1,
+      });
+
+      press("Enter");
+
+      expect(investigation().boards.augusto_vale.slots).toEqual([
+        VARNISH.key,
+        CACHIMBO.key,
+        null,
+      ]);
+    });
+
+    it("puts a carried clue back for nothing, without leaving the phase", () => {
+      const exited = jest.fn();
+      const off = EventBus.on("investigation:exit", exited);
+      render(<InvestigationScreen />);
+
+      press("ArrowDown");
+      press("Enter");
+      press("Escape");
+
+      expect(investigation().heldClueKey).toBeNull();
+      expect(investigation().clueHearts[VARNISH.key]).toBe(
+        INVESTIGATION_CLUE_HEARTS,
+      );
+      expect(exited).not.toHaveBeenCalled();
+
+      press("Escape");
+      expect(exited).toHaveBeenCalled();
+      off();
+    });
+
+    it("accuses from the board, starting on the safe half of the gate", () => {
+      render(<InvestigationScreen />);
+      place("augusto_vale", 0, VARNISH.key);
+
+      // Rail → slots → the accuse button under the first seat.
+      press("ArrowDown");
+      press("ArrowRight");
+      press("ArrowDown");
+      press("Enter");
+
+      expect(screen.getByText("Tem certeza?")).toBeInTheDocument();
+
+      // ENTER on the gate as it opens cancels: the star-burning half has to be
+      // reached on purpose.
+      press("Enter");
+      expect(investigation().pendingAccusationId).toBeNull();
+      expect(investigation().result).toBeNull();
+
+      press("Enter");
+      press("ArrowRight");
+      press("Enter");
+
+      expect(investigation().result).toEqual({ stars: 5, correct: true });
+    });
+  });
 });

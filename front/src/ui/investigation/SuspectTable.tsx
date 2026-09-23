@@ -8,6 +8,7 @@ import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 import { ClueSlot } from "./ClueSlot";
 import { HoverPopover } from "./HoverPopover";
+import { clueImageSrc } from "./investigation-dnd";
 import {
   CORK,
   NAMEPLATE,
@@ -15,25 +16,11 @@ import {
   ROOM_ASPECT,
   ROOM_COVER_WIDTH,
   ROOM_LIFT,
+  SEATS,
 } from "./investigation-layout";
 import { SuspectPortrait } from "./SuspectPortrait";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
-
-/**
- * Where each suspect is pinned on the corkboard, in percentages of the cork.
- *
- * Three across the top, two below, all inset from the frame. The seats size
- * themselves off the board too (see `--portrait` and friends), so a suspect
- * never drifts off the cork no matter how large the room is drawn.
- */
-const SEATS = [
-  { left: "17%", edge: "top" },
-  { left: "50%", edge: "top" },
-  { left: "83%", edge: "top" },
-  { left: "32%", edge: "bottom" },
-  { left: "68%", edge: "bottom" },
-] as const;
 
 /**
  * Seat metrics, all relative to the corkboard's width (`cqw`), clamped so they
@@ -109,6 +96,15 @@ function SuspectSeat({
   const portraitRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
 
+  const cursor = useGameUIStore((s) => s.investigation.cursor);
+  const heldClue = useGameUIStore((s) => {
+    const key = s.investigation.heldClueKey;
+    if (!key) return null;
+    return s.investigation.payload?.clues.find((c) => c.key === key) ?? null;
+  });
+  const onThisSeat =
+    cursor?.zone !== "rail" && cursor?.suspectIndex === seatIndex;
+
   const cleared = wrongSuspectIds.includes(suspect.id);
 
   const seat = SEATS[seatIndex % SEATS.length];
@@ -126,7 +122,7 @@ function SuspectSeat({
     <Box
       sx={{
         position: "absolute",
-        left: seat.left,
+        left: `${seat.left}%`,
         [seat.edge]: "1%",
         transform: "translateX(-50%)",
       }}
@@ -161,9 +157,21 @@ function SuspectSeat({
             bgcolor: "transparent",
             cursor: "help",
             lineHeight: 0,
-            border: `3px solid ${cleared ? "#6b6767" : colors.accentGoldMuted}`,
+            border: `3px solid ${
+              onThisSeat && cursor?.zone === "portrait"
+                ? colors.accentGold
+                : cleared
+                  ? "#6b6767"
+                  : colors.accentGoldMuted
+            }`,
             borderRadius: `${radius.small}px`,
-            boxShadow: cleared ? "none" : "0 6px 16px rgba(0,0,0,0.55)",
+            outline: "none",
+            boxShadow:
+              onThisSeat && cursor?.zone === "portrait"
+                ? `0 0 0 3px ${colors.accentGoldMuted}`
+                : cleared
+                  ? "none"
+                  : "0 6px 16px rgba(0,0,0,0.55)",
             opacity: cleared ? 0.4 : 1,
             filter: cleared ? "grayscale(1) brightness(0.55)" : "none",
             transition: "border-color 120ms linear",
@@ -200,19 +208,34 @@ function SuspectSeat({
           data-suspect={suspect.id}
           sx={{ display: "flex", gap: "4%" }}
         >
-          {slots.map((clueKey, i) => (
-            <ClueSlot
-              key={`${suspect.id}-slot-${i}`}
-              suspectId={suspect.id}
-              index={i}
-              clue={payload?.clues.find((c) => c.key === clueKey) ?? null}
-              verdict={clueKey ? (board?.verdicts[clueKey] ?? null) : null}
-              locked={clueKey ? (clueHearts[clueKey] ?? 0) <= 0 : false}
-              disabled={cleared}
-              frozen={frozen}
-              onClear={() => clearSlot(suspect.id, i)}
-            />
-          ))}
+          {slots.map((clueKey, i) => {
+            const focused =
+              onThisSeat && cursor?.zone === "slot" && cursor.slotIndex === i;
+            // A clue in hand can only land on an empty slot of a live seat:
+            // nothing it lands on is ever displaced.
+            const targetable = Boolean(heldClue) && !cleared && !clueKey;
+
+            return (
+              <ClueSlot
+                key={`${suspect.id}-slot-${i}`}
+                suspectId={suspect.id}
+                index={i}
+                clue={payload?.clues.find((c) => c.key === clueKey) ?? null}
+                verdict={clueKey ? (board?.verdicts[clueKey] ?? null) : null}
+                locked={clueKey ? (clueHearts[clueKey] ?? 0) <= 0 : false}
+                disabled={cleared}
+                frozen={frozen}
+                focused={focused}
+                targetable={targetable}
+                heldPreview={
+                  focused && targetable && heldClue
+                    ? clueImageSrc(heldClue)
+                    : null
+                }
+                onClear={() => clearSlot(suspect.id, i)}
+              />
+            );
+          })}
         </Box>
 
         <Box
@@ -234,6 +257,11 @@ function SuspectSeat({
             cursor: accusable ? "pointer" : "not-allowed",
             bgcolor: canAccuse ? "#8c3b3b" : colors.bgTertiary,
             color: canAccuse ? colors.textPrimary : colors.textSecondary,
+            outline: "none",
+            boxShadow:
+              onThisSeat && cursor?.zone === "accuse"
+                ? `0 0 0 3px ${colors.accentGold}`
+                : "none",
             fontFamily: fonts.display,
             fontSize: "var(--seat-text)",
             letterSpacing: "0.05em",

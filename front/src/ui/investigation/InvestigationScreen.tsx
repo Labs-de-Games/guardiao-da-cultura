@@ -29,6 +29,7 @@ import { hasSeenInvestigationTutorial } from "./investigation-tutorial-storage";
 import { MusicToggle } from "./MusicToggle";
 import { StarTracker } from "./StarTracker";
 import { SuspectTable } from "./SuspectTable";
+import { useInvestigationKeyboard } from "./useInvestigationKeyboard";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
 
@@ -63,11 +64,6 @@ const BOTTOM_BUTTON = {
  */
 export function InvestigationScreen() {
   const payload = useGameUIStore((s) => s.investigation.payload);
-  const result = useGameUIStore((s) => s.investigation.result);
-  const pendingAccusationId = useGameUIStore(
-    (s) => s.investigation.pendingAccusationId,
-  );
-  const requestAccusation = useGameUIStore((s) => s.requestAccusation);
   const placeClueInSlot = useGameUIStore((s) => s.placeClueInSlot);
   const setHoveredClue = useGameUIStore((s) => s.setHoveredClue);
   const tutorialActive = useGameUIStore((s) => s.investigation.tutorial.active);
@@ -124,36 +120,9 @@ export function InvestigationScreen() {
     if (!hasSeenInvestigationTutorial()) startTutorial();
   }, [payload, startTutorial]);
 
-  // ESC backs out one level: a pending accusation first, then the whole phase.
-  // Once the run is resolved the result panel owns the exit, so ESC would skip
-  // the stars.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      // The walkthrough owns ESC while it is up — it backs out of the lesson,
-      // not out of the phase.
-      if (e.key !== "Escape" || result || tutorialActive) return;
-      e.preventDefault();
-      // The alibi is the outermost thing on screen, so it backs out first.
-      if (lastWrongSuspectId) {
-        returnCluesHome();
-        return;
-      }
-      if (pendingAccusationId) {
-        requestAccusation(null);
-        return;
-      }
-      EventBus.emit("investigation:exit", undefined);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    result,
-    pendingAccusationId,
-    requestAccusation,
-    tutorialActive,
-    lastWrongSuspectId,
-    returnCluesHome,
-  ]);
+  // Arrows/WASD, ENTER/SPACE and ESC — the whole phase is playable without a
+  // mouse, and ESC still backs out one layer at a time.
+  useInvestigationKeyboard({ onDismissWrongAccusation: returnCluesHome });
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -225,13 +194,23 @@ export function InvestigationScreen() {
             borderTop: `2px solid ${colors.bgTertiary}`,
           }}
         >
-          <Typography sx={{ fontSize: "0.88rem", color: colors.textSecondary }}>
-            {payload.collectedCount} de {payload.clues.length}{" "}
-            {payload.clues.length === 1 ? "pista" : "pistas"} recolhidas em
-            campo
-            {payload.previousStars > 0 &&
-              ` · melhor resultado: ${payload.previousStars} ⭐`}
-          </Typography>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              sx={{ fontSize: "0.88rem", color: colors.textSecondary }}
+            >
+              {payload.collectedCount} de {payload.clues.length}{" "}
+              {payload.clues.length === 1 ? "pista" : "pistas"} recolhidas em
+              campo
+              {payload.previousStars > 0 &&
+                ` · melhor resultado: ${payload.previousStars} ⭐`}
+            </Typography>
+            <Typography
+              sx={{ fontSize: "0.8rem", color: colors.textSecondary, mt: 0.3 }}
+            >
+              Setas ou WASD para navegar · ENTER ou ESPAÇO para pegar, soltar e
+              remover uma pista
+            </Typography>
+          </Box>
 
           <StarTracker />
 

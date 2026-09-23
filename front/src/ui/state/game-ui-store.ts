@@ -15,6 +15,7 @@ import type {
   TraitValue,
 } from "@/game/types/InvestigationTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import type { InvestigationCursor } from "@/ui/investigation/investigation-keyboard";
 import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
@@ -44,6 +45,8 @@ const EMPTY_INVESTIGATION = {
   boards: {},
   clueHearts: {},
   hoveredClueKey: null,
+  cursor: null,
+  heldClueKey: null,
   pendingAccusationId: null,
   lastWrongSuspectId: null,
   wrongAttempts: 0,
@@ -240,6 +243,19 @@ export interface GameUIState {
     /** Drops each clue has left. At zero the clue is nailed where it sits. */
     clueHearts: Record<string, number>;
     hoveredClueKey: string | null;
+    /**
+     * Where the keyboard cursor sits, or `null` while nobody has touched a key.
+     *
+     * View state, like `hoveredClueKey` — it lives here so the rail, the seats
+     * and the slots can each light their own cell without the screen threading
+     * a cursor down through three layers of props.
+     */
+    cursor: InvestigationCursor | null;
+    /**
+     * The clue the keyboard is carrying. Picking one up is free; only landing
+     * it on a seat spends a heart, exactly as a drag does.
+     */
+    heldClueKey: string | null;
     /** Suspect awaiting "tem certeza?" confirmation. */
     pendingAccusationId: string | null;
     /**
@@ -357,6 +373,10 @@ export interface GameUIState {
   openInvestigation: (payload: InvestigationPayload) => void;
   closeInvestigation: () => void;
   setHoveredClue: (key: string | null) => void;
+  /** Moves the keyboard cursor, or hides it again with `null`. */
+  setCursor: (cursor: InvestigationCursor | null) => void;
+  /** Picks a clue up off the rail, or puts down whatever is in hand. */
+  holdClue: (clueKey: string | null) => void;
   /**
    * Drops a clue onto a suspect: costs a heart, grades it on the spot, and
    * vacates whatever slot the clue held before. Refused once it is out of
@@ -781,6 +801,14 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         investigation: { ...s.investigation, hoveredClueKey: key },
       })),
 
+    setCursor: (cursor) =>
+      set((s) => ({ investigation: { ...s.investigation, cursor } })),
+
+    holdClue: (clueKey) =>
+      set((s) => ({
+        investigation: { ...s.investigation, heldClueKey: clueKey },
+      })),
+
     // Reads through `get()` rather than inside the `set()` updater so the
     // analytics call is a side effect of the action, not of the reducer.
     placeClueInSlot: (suspectId, slotIndex, clueKey) => {
@@ -824,6 +852,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
           ...s.investigation,
           boards: { ...boards, [suspectId]: { slots, verdicts } },
           clueHearts: { ...clueHearts, [clueKey]: heartsLeft },
+          // However it got here — dragged or carried — the hand is empty now.
+          heldClueKey: null,
           // The walkthrough's later steps explain this very drop, so they
           // follow the seat and the clue the player actually chose.
           tutorial: tutorial.active
@@ -911,6 +941,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
             lastWrongSuspectId: null,
             boards: {},
             clueHearts: fullHearts(s.investigation.payload?.clues ?? []),
+            heldClueKey: null,
           },
         };
       }),
