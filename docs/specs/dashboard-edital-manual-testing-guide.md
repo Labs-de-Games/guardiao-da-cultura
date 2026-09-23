@@ -177,9 +177,24 @@ no confirmation of whether the email was new or a duplicate.
 (magic-link style, 15-minute expiry) was sent — this is new behavior on
 this branch; the old flow auto-verified with no email step.
 
+With `EMAIL_PROVIDER=mock` (the local default) nothing is actually emailed;
+the link is printed to the backend console instead:
+
+```bash
+docker compose -f compose.development.yaml logs back | grep MockEmail
+# or: docker logs gameplate-back-1 | grep MockEmail
+```
+
+Look for a line like:
+
+```
+[MockEmail] Verification to nova-escola@example.com: http://localhost/confirm-verification?token=<token>
+```
+
 #### 2.2 Consume the confirmation link
 
-Copy the token from the logged/mocked email link and confirm it both
+Copy the `token` query parameter from the `[MockEmail] Verification to …`
+log line (see 2.1) and confirm it both
 verifies **and logs in** in one call:
 
 ```bash
@@ -203,7 +218,15 @@ curl -s -X POST http://localhost:3001/api/v1/auth/password/reset/request \
   -H "Content-Type: application/json" -d '{"email":"nova-escola@example.com"}'
 ```
 
-Follow the emailed link to `/reset-institution-password?token=…`, then:
+With the mock provider, the reset link is logged under the **magic link**
+label, not a dedicated reset label:
+
+```bash
+docker compose -f compose.development.yaml logs back | grep MockEmail
+# [MockEmail] Magic link to nova-escola@example.com: http://localhost/reset-institution-password?token=<token>
+```
+
+Follow that link to `/reset-institution-password?token=…`, then:
 
 ```bash
 curl -s -X POST http://localhost:3001/api/v1/auth/password/reset/confirm \
@@ -284,11 +307,23 @@ upstream PostHog call — it's a cheap local check.
 
 1. Navigate to `/register`, fill email/password/institution name.
 2. **Expected:** generic success message, no auto-login.
-3. Check the mock/real email inbox for the confirmation link.
-4. Click the link.
+3. Get the confirmation link. Locally (`EMAIL_PROVIDER=mock`) no email is
+   sent — the link only appears in the backend logs:
+
+   ```bash
+   docker compose -f compose.development.yaml logs back | grep MockEmail
+   # [MockEmail] Verification to <email>: http://localhost/confirm-verification?token=<token>
+   ```
+
+   With a real provider, check the inbox instead.
+4. Open the link in the same browser.
 5. **Expected:** account verified and the browser lands authenticated on
    `/institution` (or an onboarding step if no slug was captured at
    registration time).
+6. **Password reset via UI:** request a reset from the login page, then grab
+   the link the same way — it is logged as
+   `[MockEmail] Magic link to <email>: http://localhost/reset-institution-password?token=<token>`.
+   Open it, set a new password, and sign in with it.
 
 ### 3. Institution Dashboard
 
@@ -547,7 +582,14 @@ server-only key, distinct from the client-side `POSTHOG_API_KEY`.
 ### Confirmation email never arrives
 
 Check `EMAIL_PROVIDER` — if `mock`, the link is logged to the backend
-console (`docker compose -f compose.development.yaml logs back`), not actually emailed.
+console, not actually emailed:
+
+```bash
+docker compose -f compose.development.yaml logs back | grep MockEmail
+```
+
+Confirmation links appear as `[MockEmail] Verification to …`; password-reset
+links appear as `[MockEmail] Magic link to …`.
 
 ### CSV opens with garbled accents in Excel
 
