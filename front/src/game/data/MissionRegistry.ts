@@ -28,6 +28,7 @@ export const MissionRequirements = [
       MissionKeys.DANCE_DONE,
       MissionKeys.SWITCHES_DONE,
       MissionKeys.STAGE_DONE,
+      MissionKeys.GENIUS_DONE,
     ],
   },
 ];
@@ -101,6 +102,11 @@ export const MissionRegistry: Record<string, MissionDef> = {
         infoKey: MissionKeys.STAGE_DONE,
         text: "Montar a banda de forró no palco",
         categoryType: InteractiveType.BAND,
+      },
+      {
+        infoKey: MissionKeys.GENIUS_DONE,
+        text: "Afinar o acordeon",
+        categoryType: InteractiveType.GENIUS_SEQUENCE,
       },
     ],
   },

@@ -357,6 +357,50 @@ export const LEVEL_ASSETS = {
         frameWidth: 68,
         frameHeight: 46,
       },
+      {
+        key: "accordion_frame001",
+        path: "artworks/accordion_animation/accordion_frame001.png",
+      },
+      {
+        key: "accordion_frame002",
+        path: "artworks/accordion_animation/accordion_frame002.png",
+      },
+      {
+        key: "accordion_frame003",
+        path: "artworks/accordion_animation/accordion_frame003.png",
+      },
+      {
+        key: "accordion_frame004",
+        path: "artworks/accordion_animation/accordion_frame004.png",
+      },
+      {
+        key: "accordion_frame005",
+        path: "artworks/accordion_animation/accordion_frame005.png",
+      },
+      {
+        key: "accordion_frame006",
+        path: "artworks/accordion_animation/accordion_frame006.png",
+      },
+      {
+        key: "accordion_frame007",
+        path: "artworks/accordion_animation/accordion_frame007.png",
+      },
+      {
+        key: "accordion_frame008",
+        path: "artworks/accordion_animation/accordion_frame008.png",
+      },
+      {
+        key: "accordion_frame009",
+        path: "artworks/accordion_animation/accordion_frame009.png",
+      },
+      {
+        key: "note01",
+        path: "misc/note01.png",
+      },
+      {
+        key: "note02",
+        path: "misc/note02.png",
+      },
     ],
     COLLECTIBLES: [],
     CONTENT: {

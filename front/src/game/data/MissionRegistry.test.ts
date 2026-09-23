@@ -17,20 +17,22 @@ describe("missao_curador_l3", () => {
   );
   const mission = MissionRegistry[MissionIds.CURATOR_L3];
 
-  it("requires the dance, switches, and stage objectives", () => {
+  it("requires the dance, switches, stage, and genius sequence objectives", () => {
     expect(requirement?.requiredInfos).toEqual([
       MissionKeys.DANCE_DONE,
       MissionKeys.SWITCHES_DONE,
       MissionKeys.STAGE_DONE,
+      MissionKeys.GENIUS_DONE,
     ]);
   });
 
-  it("exposes a step for each of those keys", () => {
-    expect(mission.steps).toHaveLength(3);
+  it("exposes a step for each required key", () => {
+    expect(mission.steps).toHaveLength(4);
     expect(mission.steps.map((s) => s.infoKey)).toEqual([
       MissionKeys.DANCE_DONE,
       MissionKeys.SWITCHES_DONE,
       MissionKeys.STAGE_DONE,
+      MissionKeys.GENIUS_DONE,
     ]);
   });
 
@@ -144,6 +146,15 @@ describe("step_sequence placeholder assets", () => {
 
   it("finds at least one step_sequence placeholder in the level 3 map", () => {
     expect(placeholders.length).toBeGreaterThan(0);
+  });
+
+  it("finds at least one genius_sequence placeholder in the level 3 map", () => {
+    const geniusPlaceholders = collectObjects(map.layers ?? []).filter((obj) =>
+      obj.properties?.some(
+        (p) => p.name === "type" && p.value === "genius_sequence",
+      ),
+    );
+    expect(geniusPlaceholders.length).toBeGreaterThan(0);
   });
 
   // The card and slot images are resolved by convention from the ids authored
