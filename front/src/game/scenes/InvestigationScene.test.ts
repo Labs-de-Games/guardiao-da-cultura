@@ -1,8 +1,12 @@
 import Cookies from "js-cookie";
-import { INVESTIGATION_LEVEL_ID } from "@/game/constants/Investigation";
+import {
+  INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_MUSIC_VOLUME,
+} from "@/game/constants/Investigation";
 import { SceneNames } from "@/game/constants/SceneNames";
 import { createGamePersistence } from "@/lib/persistence/gamePersistence";
 import { EventBus } from "@/shared/events/event-bus";
+import { AudioManager } from "../audio";
 import type { InvestigationPayload } from "../types/InvestigationTypes";
 import type { UserProgressState } from "../types/ProgressionTypes";
 import { InvestigationScene } from "./InvestigationScene";
@@ -25,6 +29,11 @@ jest.mock("js-cookie", () => ({
 
 jest.mock("@/lib/persistence/gamePersistence", () => ({
   createGamePersistence: jest.fn(),
+}));
+
+jest.mock("../audio", () => ({
+  AudioManager: { init: jest.fn(), setMusicVolume: jest.fn() },
+  loadGlobalAudio: jest.fn(),
 }));
 
 const SUSPECTS = {
@@ -193,6 +202,18 @@ describe("InvestigationScene", () => {
       scene.shutdown();
     }
     jest.clearAllMocks();
+  });
+
+  describe("audio", () => {
+    it("drops the music to the phase's own level on every entry", () => {
+      const { scene } = buildScene();
+
+      scene.create();
+
+      expect(AudioManager.setMusicVolume).toHaveBeenCalledWith(
+        INVESTIGATION_MUSIC_VOLUME,
+      );
+    });
   });
 
   describe("dossier assembly", () => {

@@ -15,6 +15,7 @@ import {
   INVESTIGATION_LEVEL_ID,
   INVESTIGATION_LEVEL_NUMBER,
   INVESTIGATION_MIN_CLUES,
+  INVESTIGATION_MUSIC_VOLUME,
 } from "../constants/Investigation";
 import { SceneNames } from "../constants/SceneNames";
 import { getOrderedLevelIds, LEVEL_REGISTRY } from "../data/LevelConfig";
@@ -105,6 +106,11 @@ export class InvestigationScene extends Scene {
     // The React screen covers the canvas, but it still plays the game's sound
     // effects — the singleton has to point at a live scene for that to work.
     AudioManager.init(this);
+
+    // Quieter than a level, and re-applied on every entry rather than once:
+    // the phase's mute button moves this setting, and so can the player
+    // between visits.
+    AudioManager.setMusicVolume(INVESTIGATION_MUSIC_VOLUME);
 
     const userId = this.game.registry.get("userId") as string | null;
     const isGuest = this.game.registry.get("isGuest") as boolean;
