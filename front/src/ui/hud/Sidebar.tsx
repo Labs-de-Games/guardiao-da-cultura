@@ -2,7 +2,7 @@
 
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
-import { Box, ButtonBase, Paper } from "@mui/material";
+import { Box, ButtonBase, Collapse, Paper } from "@mui/material";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
@@ -15,6 +15,7 @@ import { ObjectiveList } from "./ObjectiveList";
 import { PhaseInfoCard } from "./PhaseInfoCard";
 
 const SIDEBAR_WIDTH = 217;
+const SIDEBAR_TRANSITION_MS = 200;
 const TOGGLE_WIDTH = 24;
 const TOGGLE_HEIGHT = 48;
 const TOGGLE_OFFSET_TOP = 16;
@@ -57,7 +58,19 @@ export function Sidebar() {
       >
         {sidebarOpen ? <ArrowRightIcon /> : <ArrowLeftIcon />}
       </ButtonBase>
-      {sidebarOpen && (
+      <Collapse
+        in={sidebarOpen}
+        orientation="horizontal"
+        timeout={SIDEBAR_TRANSITION_MS}
+        unmountOnExit
+        sx={{
+          height: "100%",
+          pointerEvents: "auto",
+          "& .MuiCollapse-wrapper, & .MuiCollapse-wrapperInner": {
+            height: "100%",
+          },
+        }}
+      >
         <Paper
           square
           sx={{
@@ -90,7 +103,7 @@ export function Sidebar() {
             <PhaseInfoCard sx={{ mt: "auto" }} />
           </Box>
         </Paper>
-      )}
+      </Collapse>
     </Box>
   );
 }

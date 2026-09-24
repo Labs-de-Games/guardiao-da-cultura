@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { Sidebar } from "./Sidebar";
@@ -34,7 +34,7 @@ describe("Sidebar", () => {
     ).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("toggles the sidebar through the store when the tab is clicked", () => {
+  it("toggles the sidebar through the store when the tab is clicked", async () => {
     render(<Sidebar />);
 
     act(() => {
@@ -47,6 +47,8 @@ describe("Sidebar", () => {
       fireEvent.click(screen.getByRole("button", { name: "Fechar painel" }));
     });
     expect(useGameUIStore.getState().sidebarOpen).toBe(false);
-    expect(screen.queryByTestId("sidebar-content")).toBeNull();
+    await waitFor(() =>
+      expect(screen.queryByTestId("sidebar-content")).toBeNull(),
+    );
   });
 });
