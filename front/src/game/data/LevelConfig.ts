@@ -39,9 +39,9 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     activeMissions: ["missao_curador"],
     map: {
       key: "map_level_01",
-      json: "maps/museum-mvp/map.json",
+      json: "maps/inhotim/map.json",
       tileset: "tiles_level_01",
-      tilesetImg: "maps/museum-mvp/spritesheet.png",
+      tilesetImg: "maps/inhotim/spritesheet.png",
       tilesetName: "museum",
     },
     data: {
