@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
+import { useEffect } from "react";
 import { INVESTIGATION_MAX_WRONG_ATTEMPTS } from "@/game/constants/Investigation";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
@@ -25,6 +26,24 @@ export function AccuseFeedback({ onDismiss }: { onDismiss: () => void }) {
   const wrongAttempts = useGameUIStore((s) => s.investigation.wrongAttempts);
 
   const suspect = payload?.suspects.find((s) => s.id === lastWrongSuspectId);
+
+  // CONTINUAR is the only thing on this panel, so ENTER and SPACE reach it
+  // directly. Asking the focus ring for it is not enough: the phase moves DOM
+  // focus around the board itself, so the panel cannot count on being handed
+  // it. ESC is the screen's own — it dismisses this panel from out there.
+  useEffect(() => {
+    if (!suspect) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      onDismiss();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [suspect, onDismiss]);
+
   if (!suspect) return null;
 
   const attemptsLeft = INVESTIGATION_MAX_WRONG_ATTEMPTS - wrongAttempts;
