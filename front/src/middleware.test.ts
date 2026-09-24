@@ -188,3 +188,58 @@ describe("middleware — durable anonymous-player cookie", () => {
     expect(config.matcher).toContain("/game/:path*");
   });
 });
+
+async function loadMiddleware(maintenanceMode: boolean) {
+  jest.resetModules();
+  process.env.NEXT_PUBLIC_MAINTENANCE_MODE = maintenanceMode ? "true" : "";
+  return (await import("./middleware")).middleware;
+}
+
+function requestFor(path: string, cookie = "") {
+  return new NextRequest(new URL(path, "http://localhost"), {
+    headers: cookie ? { cookie } : {},
+  });
+}
+
+describe("middleware — maintenance mode", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue(null);
+  });
+
+  afterAll(() => {
+    delete process.env.NEXT_PUBLIC_MAINTENANCE_MODE;
+  });
+
+  it.each([
+    "/",
+    "/game",
+    "/game/level",
+  ])("rewrites game route %s to /game/maintenance with 503 in maintenance mode", async (path) => {
+    const middleware = await loadMiddleware(true);
+    const response = await middleware(requestFor(path));
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "http://localhost/game/maintenance",
+    );
+  });
+
+  it.each([
+    "/login",
+    "/institution",
+  ])("does not rewrite non-game route %s in maintenance mode", async (path) => {
+    const middleware = await loadMiddleware(true);
+    const response = await middleware(requestFor(path));
+
+    expect(response.status).not.toBe(503);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+
+  it("does not rewrite the maintenance page to itself", async () => {
+    const middleware = await loadMiddleware(true);
+    const response = await middleware(requestFor("/game/maintenance"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+});
