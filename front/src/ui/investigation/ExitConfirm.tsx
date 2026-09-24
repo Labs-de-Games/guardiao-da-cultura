@@ -152,8 +152,7 @@ export function ExitConfirm() {
             lineHeight: 1.5,
           }}
         >
-          A próxima visita você
-          recomeça com todas as pistas na barra lateral.
+          A próxima visita você recomeça com todas as pistas na barra lateral.
         </Typography>
         <Box sx={{ display: "flex", gap: 1.5 }}>
           <ChoiceButton
