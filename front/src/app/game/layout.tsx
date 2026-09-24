@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
+import { MobileBlocker } from "@/ui/mobile/MobileBlocker";
 
 export default function GameLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function GameLayout({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <MobileBlocker />
     </div>
   );
 }
