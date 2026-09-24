@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { AudioManager } from "@/game/audio/AudioManager";
 import type { Sound } from "@/game/audio/types";
 import { INVESTIGATION_STARS_BY_WRONG_ATTEMPTS } from "@/game/constants/Investigation";
@@ -40,6 +40,31 @@ export function InvestigationResult() {
       siren?.stop();
     };
   }, [visible]);
+
+  // VER DESFECHO is the only way on from here, so ENTER and SPACE reach it
+  // directly rather than through the focus ring — the phase moves DOM focus
+  // around the board, so this panel cannot count on being handed it. ESC is
+  // deliberately not a way out: the stars are not something to skip past.
+  const handedOver = useRef(false);
+  const showOutro = useCallback(() => {
+    if (handedOver.current) return;
+    handedOver.current = true;
+    EventBus.emit("investigation:outro", undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    handedOver.current = false;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      showOutro();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [visible, showOutro]);
 
   if (!result || !visible) return null;
 
@@ -179,7 +204,7 @@ export function InvestigationResult() {
           // The one thing left to do on this panel, so ENTER finds it without
           // the player hunting for it.
           autoFocus
-          onClick={() => EventBus.emit("investigation:outro", undefined)}
+          onClick={showOutro}
           sx={{
             mt: 1,
             px: 3,

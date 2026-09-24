@@ -428,6 +428,22 @@ describe("InvestigationScreen", () => {
       EventBus.off("investigation:exit", exit);
     });
 
+    it("takes ENTER and SPACE on the result, and hands off once", () => {
+      const outro = jest.fn();
+      EventBus.on("investigation:outro", outro);
+      render(<InvestigationScreen />);
+
+      accuse("augusto_vale", "Augusto Vale");
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      expect(outro).toHaveBeenCalledTimes(1);
+
+      // A second press cannot start the ending twice.
+      fireEvent.keyDown(window, { key: " " });
+      expect(outro).toHaveBeenCalledTimes(1);
+      EventBus.off("investigation:outro", outro);
+    });
+
     it("offers the same ending after four misses", () => {
       const outro = jest.fn();
       EventBus.on("investigation:outro", outro);
@@ -496,6 +512,20 @@ describe("InvestigationScreen", () => {
       fireEvent.click(screen.getByRole("button", { name: `Acusar ${name}` }));
       fireEvent.click(screen.getByText("Sim, acusar"));
     };
+
+    it("takes ENTER and SPACE on the alibi, not just a click", () => {
+      render(<InvestigationScreen />);
+      accuseOnly("helena_marques", "Helena Marques");
+
+      // The panel cannot count on holding focus — the phase moves it around the
+      // board — so it answers for these keys itself.
+      fireEvent.keyDown(window, { key: "Enter" });
+      expect(investigation().lastWrongSuspectId).toBeNull();
+
+      accuseOnly("bruno_tavares", "Bruno Tavares");
+      fireEvent.keyDown(window, { key: " " });
+      expect(investigation().lastWrongSuspectId).toBeNull();
+    });
 
     it("plays the game's error sound", () => {
       render(<InvestigationScreen />);
