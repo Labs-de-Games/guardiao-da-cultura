@@ -5,7 +5,7 @@
     {
       "src": "arrested.png",
       "sliceWidth": 350,
-      "sliceStart": 300,
+      "sliceStart": 110,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
@@ -25,7 +25,7 @@
     {
       "src": "handshake.png",
       "sliceWidth": 350,
-      "sliceStart": 300,
+      "sliceStart": 315,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
