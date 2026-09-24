@@ -34,6 +34,16 @@ export const INVESTIGATION_MAX_WRONG_ATTEMPTS = 4;
  */
 export const INVESTIGATION_MIN_CLUES = 4;
 
+/**
+ * Music volume while the identification phase is on screen.
+ *
+ * The phase is a reading screen — dossiers, alibis and clue text — so the score
+ * sits back further than it does in a level. Applied on every entry, since the
+ * phase's own mute button and any later change to the setting both leave it
+ * somewhere else.
+ */
+export const INVESTIGATION_MUSIC_VOLUME = 0.3;
+
 /** Clues a player can confront a single suspect with at once. */
 export const INVESTIGATION_SLOTS = 3;
 
