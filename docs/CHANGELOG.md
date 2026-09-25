@@ -129,7 +129,7 @@ See [VERSIONING.md](./VERSIONING.md) for the release process and branching model
 - Migrated quiz data to first-option-is-correct convention
 - Sculpture placeholders repositioned (yOffset decreased, moved downwards)
 - Delayed audio and camera shake in ladder cinematic to sync with ladder hitting ground
-- Updated museum-mvp tilemap with ladder layers
+- Updated Inhotim tilemap with ladder layers
 
 ### Chore
 
@@ -262,7 +262,7 @@ See [VERSIONING.md](./VERSIONING.md) for the release process and branching model
 - Collected clues destroyed and Pistas panel synced on reload
 - Collectibles saved on collection via `PersistenceBridge`
 - Voice names mapped to language codes in TTS route
-- Painting placeholder scales normalized in museum-mvp map
+- Painting placeholder scales normalized in Inhotim map
 - `secret_clues_collected` reset on scene create
 - Badge `changedata` listener registered after initialize completes
 - Badge toast removed from intro and map screens
