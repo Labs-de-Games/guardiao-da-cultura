@@ -10,17 +10,17 @@
       ]
     },
     {
-      "question": "Qual passo da quadrilha forma um corredor de pares?",
-      "options": ["Túnel", "Cumprimento", "Balancê", "Giro individual"]
+      "question": "Na quadrilha, o que os pares fazem no balancê?",
+      "options": [
+        "Gingam no lugar",
+        "Dão um pulo alto",
+        "Formam uma fila",
+        "Trocam de roupa"
+      ]
     },
     {
-      "question": "Qual passo encerra a quadrilha nesta fase?",
-      "options": [
-        "Grande roda",
-        "Caminho da roça",
-        "Cumprimento",
-        "Entrada dos pares"
-      ]
+      "question": "Qual passo encerra a sequência de dança desta fase?",
+      "options": ["Pulo caipira", "Balancê", "Passo lateral", "Giro"]
     }
   ],
   "stage_done": [
@@ -59,10 +59,10 @@
     {
       "question": "Como a sanfona produz som?",
       "options": [
-        "Com o ar do fole",
-        "Com cordas vibrando",
-        "Soprando num bocal",
-        "Batendo com baquetas"
+        "Ar do fole",
+        "Cordas vibrando",
+        "Sopro num bocal",
+        "Batida de baquetas"
       ]
     }
   ]
