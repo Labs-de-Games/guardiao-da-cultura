@@ -8,6 +8,18 @@ jest.mock("../../../auth", () => ({
   auth: () => mockAuth(),
 }));
 
+const mockResolveDateRange = jest.fn();
+jest.mock("./period", () => {
+  const actual = jest.requireActual("./period");
+  return {
+    ...actual,
+    resolveDateRange: (...args: unknown[]) =>
+      mockResolveDateRange.getMockImplementation()
+        ? mockResolveDateRange(...args)
+        : actual.resolveDateRange(...args),
+  };
+});
+
 import { NextRequest } from "next/server";
 import { resolveEditalRequestContext } from "./routeGuard";
 
@@ -18,6 +30,7 @@ function makeRequest(query = ""): NextRequest {
 describe("resolveEditalRequestContext", () => {
   beforeEach(() => {
     mockAuth.mockReset();
+    mockResolveDateRange.mockReset();
   });
 
   it("returns unauthenticated when there is no session", async () => {
@@ -133,5 +146,18 @@ describe("resolveEditalRequestContext", () => {
     if (ctx.kind === "ok") {
       expect(ctx.turmaSource).toBeUndefined();
     }
+  });
+
+  it("propagates a server config error instead of reporting invalid-params", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: "escola-teste" },
+    });
+    mockResolveDateRange.mockImplementation(() => {
+      throw new Error("config broken");
+    });
+
+    await expect(
+      resolveEditalRequestContext(makeRequest("?dateRange=30d")),
+    ).rejects.toThrow("config broken");
   });
 });
