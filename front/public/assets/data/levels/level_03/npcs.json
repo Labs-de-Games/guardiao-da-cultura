@@ -5,10 +5,10 @@
       "missionId": "missao_curador_l3",
       "dialogues": {
         "intro": [
-          "Oxente, chegou na hora! Sanfona, zabumba e triângulo estão fora do lugar. Ninguém arrumou o palco do São João.",
-          "Sem o trio completo, a festa nem começa. Leve cada instrumento até o músico certo no palco.",
-          "Acenda o holofote de cada músico para conferir. Se errar, a plateia reclama, visse?",
-          "Vá organizar essa zoada, que eu fico de olho na fogueira."
+          "Oxente, chegou na hora! Bagunçaram o São João de Campina Grande. Sem dança e sem música, a festa nem começa.",
+          "Esta é a última chance de achar as pistas que faltam sobre o vândalo. Fique de olho em tudo, visse?",
+          "Organize os passos da quadrilha, conserte as luzes do palco, monte o trio de forró e afine a sanfona.",
+          "Vou ficar perto da fogueira… só esquentando as ideias. Me procure quando acabar. E não esqueça de ler as placas."
         ],
         "collecting": [
           "Ainda falta gente no palco! Os holofotes apagados ainda esperam o instrumento certo.",
