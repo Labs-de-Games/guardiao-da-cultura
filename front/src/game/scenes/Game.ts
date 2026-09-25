@@ -1505,9 +1505,9 @@ export class Game extends Scene implements GameDataAccessor {
         LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM,
         LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
       );
-      // Play magnifying glass zoom-in sound only for quiz/puzzle panels
-      if (source === "quiz" || source === "puzzle") {
-        AudioManager.playSfx("sfx.magnifying.up");
+      // Play UI zoom-in sound only for puzzle panels
+      if (source === "puzzle") {
+        AudioManager.playSfx("sfx.ui.click");
       }
       this.effects.setZoom(1.2, 400);
     });
@@ -1540,9 +1540,9 @@ export class Game extends Scene implements GameDataAccessor {
           1.0,
           LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
         );
-        // Play magnifying glass zoom-out sound only for quiz/puzzle panels
-        if (data?.source === "quiz" || data?.source === "puzzle") {
-          AudioManager.playSfx("sfx.magnifying.down");
+        // Play UI zoom-out sound only for puzzle panels
+        if (data?.source === "puzzle") {
+          AudioManager.playSfx("sfx.ui.click");
         }
         this.effects.setZoom(1.0, 400);
       },

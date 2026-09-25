@@ -63,14 +63,8 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   // Rat
   { key: "sfx.rat.squeak", path: "sound/sfx/rat.squeak.mp3" },
   { key: "sfx.rat.flee", path: "sound/sfx/rat.flee.mp3" },
-  // Magnifying glass
-  { key: "sfx.magnifying.up", path: "sound/sfx/magnifying.up.mp3" },
-  { key: "sfx.magnifying.down", path: "sound/sfx/magnifying.down.mp3" },
-  // UI feedback
-  { key: "sfx.ui.click", path: "sound/sfx/placeholder.mp3" },
-  { key: "sfx.ui.hover", path: "sound/sfx/placeholder.mp3" },
-  { key: "sfx.ui.modal_open", path: "sound/sfx/placeholder.mp3" },
-  { key: "sfx.ui.modal_close", path: "sound/sfx/placeholder.mp3" },
+  // UI feedback (also used for quiz/puzzle magnifying glass zoom in/out)
+  { key: "sfx.ui.click", path: "sound/ui.ogg" },
   // Puzzle/quiz
   { key: "sfx.puzzle.success", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.puzzle.failure", path: "sound/sfx/puzzle.error.mp3" },

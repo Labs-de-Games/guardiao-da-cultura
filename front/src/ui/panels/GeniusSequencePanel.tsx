@@ -75,7 +75,7 @@ const STATUS_LABEL: Record<Phase, string> = {
 export function GeniusSequencePanel() {
   const { geniusSequenceOpen, geniusSequenceData, closeGeniusSequence } =
     useGameUIStore();
-  const { playModalOpen, playModalClose, playGeniusNote } = useSound();
+  const { playGeniusNote } = useSound();
 
   const instanceId = geniusSequenceData?.instanceId ?? "";
 
@@ -112,7 +112,6 @@ export function GeniusSequencePanel() {
     setFocusedColor("green");
     inputIndexRef.current = 0;
     attemptCountRef.current = 0;
-    playModalOpen();
     schedule(() => setPhase("playback"), INITIAL_DELAY_MS);
     return () => {
       clearTimeouts();
@@ -164,8 +163,7 @@ export function GeniusSequencePanel() {
     clearTimeouts();
     EventBus.emit("ui:genius-sequence-close", undefined);
     closeGeniusSequence();
-    playModalClose();
-  }, [clearTimeouts, closeGeniusSequence, playModalClose]);
+  }, [clearTimeouts, closeGeniusSequence]);
 
   const handlePress = useCallback(
     (color: GeniusColor) => {
@@ -208,7 +206,6 @@ export function GeniusSequencePanel() {
           schedule(() => {
             EventBus.emit("ui:genius-sequence-close", undefined);
             closeGeniusSequence();
-            playModalClose();
           }, COMPLETE_CLOSE_DELAY_MS);
         } else {
           // Wait for the last note's sound/flash to finish before
@@ -226,15 +223,7 @@ export function GeniusSequencePanel() {
         }
       }
     },
-    [
-      phase,
-      sequence,
-      round,
-      schedule,
-      instanceId,
-      closeGeniusSequence,
-      playModalClose,
-    ],
+    [phase, sequence, round, schedule, instanceId, closeGeniusSequence],
   );
 
   // Keyboard navigation: WASD/arrows move focus, Enter/Space presses, Esc closes.
