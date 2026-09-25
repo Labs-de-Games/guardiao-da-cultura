@@ -14,6 +14,8 @@ import {
   fetchInstitutionCount,
   fetchTurmaCount,
 } from "@/lib/edital/server/globalMetrics";
+import { HogQLNotConfiguredError } from "@/lib/edital/server/hogql";
+import type { ResolvedDateRange } from "@/lib/edital/server/period";
 import { resolveDateRange } from "@/lib/edital/server/period";
 import type { PublicDashboardResponse } from "@/lib/edital/types";
 
@@ -26,17 +28,42 @@ import type { PublicDashboardResponse } from "@/lib/edital/types";
  * numbers. No `?slug=`/`?turma=` params exist on this route at all.
  */
 export async function GET(request: NextRequest): Promise<Response> {
-  let range: ReturnType<typeof resolveDateRange>;
+  // Only the query-string parse is user input — a config error inside
+  // resolveDateRange (it reads serverEnv) must be a 500, not a 400.
+  let dateRange: ReturnType<typeof parseDateRangeParams>;
   try {
-    const params = Object.fromEntries(request.nextUrl.searchParams);
-    const dateRange = parseDateRangeParams(params);
-    range = resolveDateRange(dateRange);
+    dateRange = parseDateRangeParams(
+      Object.fromEntries(request.nextUrl.searchParams),
+    );
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Invalid query parameters";
     return NextResponse.json({ error: message }, { status: 400 });
   }
+  const range = resolveDateRange(dateRange);
 
+  try {
+    return NextResponse.json(await buildPublicDashboard(range));
+  } catch (err) {
+    // Public, unauthenticated route: log the cause server-side, never echo
+    // err.message to the client.
+    console.error("[public-dashboard] failed to load metrics", err);
+    if (err instanceof HogQLNotConfiguredError) {
+      return NextResponse.json(
+        { error: "Dashboard indisponível" },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      { error: "Erro ao carregar dashboard" },
+      { status: 502 },
+    );
+  }
+}
+
+async function buildPublicDashboard(
+  range: ResolvedDateRange,
+): Promise<PublicDashboardResponse> {
   const [
     playersUnique,
     institutionsActive,
@@ -61,7 +88,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     fetchGlobalSessionDuration(range),
   ]);
 
-  const body: PublicDashboardResponse = {
+  return {
     playersUnique,
     institutionsActive,
     turmasActive,
@@ -74,5 +101,4 @@ export async function GET(request: NextRequest): Promise<Response> {
     playerTrend,
     sessionDuration,
   };
-  return NextResponse.json(body);
 }
