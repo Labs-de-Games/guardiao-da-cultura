@@ -59,30 +59,6 @@
          "objects":[
                 {
                  "height":0,
-                 "id":53,
-                 "name":"I3",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"collectible_id",
-                         "type":"string",
-                         "value":"message"
-                        }, 
-                        {
-                         "name":"collectible_type",
-                         "type":"string",
-                         "value":"clue_villain"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":758.080740678956,
-                 "y":240.48502794228
-                }, 
-                {
-                 "height":0,
                  "id":67,
                  "name":"I2",
                  "opacity":1,

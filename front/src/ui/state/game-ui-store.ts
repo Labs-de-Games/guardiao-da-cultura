@@ -1,6 +1,21 @@
 import posthog from "posthog-js";
 import { create } from "zustand";
+import {
+  INVESTIGATION_CLUE_HEARTS,
+  INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_MAX_WRONG_ATTEMPTS,
+  INVESTIGATION_SLOTS,
+  starsForWrongAttempts,
+} from "@/game/constants/Investigation";
+import type {
+  ClueVerdict,
+  InvestigationClue,
+  InvestigationPayload,
+  SuspectBoard,
+  TraitValue,
+} from "@/game/types/InvestigationTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
+import type { InvestigationCursor } from "@/ui/investigation/investigation-keyboard";
 import { DEFAULT_MAP_MARKER } from "../../game/constants/MapMarkers";
 import type { BadgeConfig } from "../../lib/badgesApi";
 import { fetchBadges, fetchUserBadges } from "../../lib/badgesApi";
@@ -18,6 +33,112 @@ const QUIZ_RETRY_MESSAGES = [
   "Essa não é a resposta correta. Tente novamente.",
   "Quase lá. Observe as informações com atenção e tente novamente.",
 ];
+
+/**
+ * A fresh investigation run. Wrong attempts deliberately reset on every entry,
+ * so returning from the map always offers a shot at the full five stars; only
+ * the best result survives, and that lives in progression, not here.
+ */
+const EMPTY_INVESTIGATION = {
+  open: false,
+  payload: null,
+  boards: {},
+  clueHearts: {},
+  hoveredClueKey: null,
+  cursor: null,
+  heldClueKey: null,
+  exitConfirmOpen: false,
+  pendingAccusationId: null,
+  lastWrongSuspectId: null,
+  wrongAttempts: 0,
+  wrongSuspectIds: [],
+  revealed: false,
+  result: null,
+  tutorial: {
+    active: false,
+    stepIndex: 0,
+    focusSuspectId: null,
+    focusClueKey: null,
+    restoresBoard: false,
+    demoPlaced: false,
+  },
+} satisfies GameUIState["investigation"];
+
+function emptyBoard(): SuspectBoard {
+  return {
+    slots: Array.from({ length: INVESTIGATION_SLOTS }, () => null),
+    verdicts: {},
+  };
+}
+
+/** A suspect's board, created lazily the first time a clue lands on them. */
+function boardFor(
+  boards: Record<string, SuspectBoard>,
+  suspectId: string,
+): SuspectBoard {
+  return boards[suspectId] ?? emptyBoard();
+}
+
+/** An accusation needs something behind it: at least one clue on the seat. */
+function hasSlottedClue(
+  boards: Record<string, SuspectBoard>,
+  suspectId: string,
+): boolean {
+  return (boards[suspectId]?.slots ?? []).some((k) => k !== null);
+}
+
+/** Every clue back to full lives — the state a run, or a retry, starts from. */
+function fullHearts(clues: InvestigationClue[]): Record<string, number> {
+  return Object.fromEntries(
+    clues.map((c) => [c.key, INVESTIGATION_CLUE_HEARTS]),
+  );
+}
+
+/**
+ * Which suspect, if any, is holding a clue.
+ *
+ * A clue is one physical object: it sits on at most one suspect at a time, and
+ * a clue already on the board cannot be dragged straight to another seat — it
+ * has to be taken off the first one, deliberately, before it can move.
+ */
+export function holderOf(
+  boards: Record<string, SuspectBoard>,
+  clueKey: string,
+): string | null {
+  for (const [suspectId, board] of Object.entries(boards)) {
+    if (board.slots.includes(clueKey)) return suspectId;
+  }
+  return null;
+}
+
+/**
+ * The seat the walkthrough demonstrates on.
+ *
+ * The first suspect, which is the one its highlight points at. The exception is
+ * a seat with no room left, which only a player replaying the lesson mid-run can
+ * arrive at: the rehearsed drop has to be possible, because nothing but doing it
+ * gets past that step.
+ */
+function tutorialSeatId(
+  suspects: InvestigationPayload["suspects"],
+  boards: Record<string, SuspectBoard>,
+  wrongSuspectIds: string[],
+): string | null {
+  const open = suspects.find(
+    (suspect) =>
+      !wrongSuspectIds.includes(suspect.id) &&
+      (boards[suspect.id]?.slots ?? []).filter((k) => k !== null).length <
+        INVESTIGATION_SLOTS,
+  );
+  return open?.id ?? suspects[0]?.id ?? null;
+}
+
+/** The dossier's answer for a trait, turned into check feedback. */
+function verdictFor(value: TraitValue | undefined): ClueVerdict {
+  if (value === "sim") return "quente";
+  if (value === "nao") return "frio";
+  return "morno";
+}
 
 export interface ToastEntry {
   id: string;
@@ -133,6 +254,74 @@ export interface GameUIState {
   evidenceBoardSelectedClueId: string | null;
   creditsOpen: boolean;
 
+  /**
+   * Suspect identification phase. Kept apart from the components that render it
+   * so the investigation's progress is plain state, not view state.
+   */
+  investigation: {
+    open: boolean;
+    payload: InvestigationPayload | null;
+    /** Slotted clues and their verdicts, per suspect. */
+    boards: Record<string, SuspectBoard>;
+    /** Drops each clue has left. At zero the clue is nailed where it sits. */
+    clueHearts: Record<string, number>;
+    hoveredClueKey: string | null;
+    /**
+     * Where the keyboard cursor sits, or `null` while nobody has touched a key.
+     *
+     * View state, like `hoveredClueKey` — it lives here so the rail, the seats
+     * and the slots can each light their own cell without the screen threading
+     * a cursor down through three layers of props.
+     */
+    cursor: InvestigationCursor | null;
+    /**
+     * The clue the keyboard is carrying. Picking one up is free; only landing
+     * it on a seat spends a heart, exactly as a drag does.
+     */
+    heldClueKey: string | null;
+    /**
+     * The "quer mesmo sair?" gate. Leaving forfeits the board as it stands —
+     * a fresh entry starts from an empty one — so VOLTAR and ESC ask first.
+     */
+    exitConfirmOpen: boolean;
+    /** Suspect awaiting "tem certeza?" confirmation. */
+    pendingAccusationId: string | null;
+    /**
+     * The suspect just accused by mistake. Holds their alibi panel open, and
+     * holds the board still behind it: the clues only go home once the player
+     * dismisses the panel, so the reset is something they watch happen.
+     */
+    lastWrongSuspectId: string | null;
+    wrongAttempts: number;
+    wrongSuspectIds: string[];
+    /** True once four wrong accusations forced the answer into the open. */
+    revealed: boolean;
+    result: { stars: number; correct: boolean } | null;
+    /**
+     * The coach-mark walkthrough, which runs on the real board rather than a
+     * mock one. It follows whichever seat and clue the player used for the
+     * demonstration drop, so the later steps point at their own move.
+     */
+    tutorial: {
+      active: boolean;
+      stepIndex: number;
+      focusSuspectId: string | null;
+      focusClueKey: string | null;
+      /**
+       * Whether closing it should undo the demonstration. True only when it
+       * opened on an untouched board — replaying it mid-run must not hand the
+       * player back the hearts they already spent.
+       */
+      restoresBoard: boolean;
+      /**
+       * Set by the one drop the walkthrough asks for. From then until it
+       * closes, the board is frozen: the lesson is a single rehearsed move, not
+       * an open sandbox with a caption over it.
+       */
+      demoPlaced: boolean;
+    };
+  };
+
   quiz: {
     isVisible: boolean;
     phase: "questioning" | "performance";
@@ -208,6 +397,48 @@ export interface GameUIState {
   setEvidenceBoardOpen: (open: boolean) => void;
   setEvidenceBoardSelectedClueId: (id: string | null) => void;
   setCreditsOpen: (open: boolean) => void;
+
+  openInvestigation: (payload: InvestigationPayload) => void;
+  closeInvestigation: () => void;
+  setHoveredClue: (key: string | null) => void;
+  /** Moves the keyboard cursor, or hides it again with `null`. */
+  setCursor: (cursor: InvestigationCursor | null) => void;
+  /** Picks a clue up off the rail, or puts down whatever is in hand. */
+  holdClue: (clueKey: string | null) => void;
+  /** Opens or dismisses the "quer mesmo sair?" gate. */
+  setExitConfirmOpen: (open: boolean) => void;
+  /**
+   * Drops a clue onto a suspect: costs a heart, grades it on the spot, and
+   * vacates whatever slot the clue held before. Refused once it is out of
+   * hearts, or when the target slot is already nailed shut.
+   */
+  placeClueInSlot: (
+    suspectId: string,
+    slotIndex: number,
+    clueKey: string,
+  ) => void;
+  /** Pulls a clue back to the rail. Refused once its last heart is spent. */
+  clearSlot: (suspectId: string, slotIndex: number) => void;
+  requestAccusation: (suspectId: string | null) => void;
+  /**
+   * Closes the alibi panel and settles the cost of the wrong accusation: the
+   * board empties and every clue comes back at full hearts, so the next try is
+   * a real second run rather than the leftovers of the first.
+   */
+  dismissWrongAccusation: () => void;
+  /** Opens the walkthrough at its first step. */
+  startTutorial: () => void;
+  advanceTutorial: () => void;
+  /**
+   * Closes the walkthrough and undoes it: the demonstration drop is lifted and
+   * every clue gets its hearts back, so the lesson costs the player nothing. A
+   * run that already reached a verdict is left exactly as it stands.
+   */
+  endTutorial: () => void;
+  /** Returns the outcome so the caller can emit it; null when already resolved. */
+  accuseSuspect: (
+    suspectId: string,
+  ) => { stars: number; correct: boolean; wrongAttempts: number } | null;
 
   startQuiz: (
     questions: QuizQuestion[],
@@ -321,6 +552,8 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     evidenceBoardOpen: false,
     evidenceBoardSelectedClueId: null,
     creditsOpen: false,
+
+    investigation: { ...EMPTY_INVESTIGATION },
 
     quiz: {
       isVisible: false,
@@ -579,6 +812,381 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     setEvidenceBoardSelectedClueId: (id) =>
       set({ evidenceBoardSelectedClueId: id }),
     setCreditsOpen: (open) => set({ creditsOpen: open }),
+
+    openInvestigation: (payload) =>
+      set({
+        investigation: {
+          ...EMPTY_INVESTIGATION,
+          open: true,
+          payload,
+          clueHearts: fullHearts(payload.clues),
+        },
+      }),
+
+    closeInvestigation: () =>
+      set({ investigation: { ...EMPTY_INVESTIGATION } }),
+
+    setHoveredClue: (key) =>
+      set((s) => ({
+        investigation: { ...s.investigation, hoveredClueKey: key },
+      })),
+
+    setCursor: (cursor) =>
+      set((s) => ({ investigation: { ...s.investigation, cursor } })),
+
+    holdClue: (clueKey) =>
+      set((s) => ({
+        investigation: { ...s.investigation, heldClueKey: clueKey },
+      })),
+
+    setExitConfirmOpen: (open) =>
+      set((s) => ({
+        investigation: { ...s.investigation, exitConfirmOpen: open },
+      })),
+
+    // Reads through `get()` rather than inside the `set()` updater so the
+    // analytics call is a side effect of the action, not of the reducer.
+    placeClueInSlot: (suspectId, slotIndex, clueKey) => {
+      const { investigation } = get();
+      const { payload, clueHearts, wrongSuspectIds, tutorial, boards } =
+        investigation;
+      const suspect = payload?.suspects.find((x) => x.id === suspectId);
+      const clue = payload?.clues.find((c) => c.key === clueKey);
+      if (!suspect || !clue) return;
+
+      // A cleared suspect is out of the game, and a clue with no hearts left
+      // has already been committed somewhere it can never leave.
+      if (wrongSuspectIds.includes(suspectId)) return;
+      if ((clueHearts[clueKey] ?? 0) <= 0) return;
+
+      // The walkthrough asks for exactly one drop and then stops taking them.
+      if (tutorial.active && tutorial.demoPlaced) return;
+
+      // And it asks for that drop on one seat: the one it is pointing at. A
+      // clue cannot land where the highlight is not, whether it was dragged
+      // there or carried there.
+      if (
+        tutorial.active &&
+        tutorial.focusSuspectId &&
+        suspectId !== tutorial.focusSuspectId
+      ) {
+        return;
+      }
+
+      // Already pinned to a suspect: it has to come off that seat first.
+      if (holderOf(boards, clueKey)) return;
+
+      const board = boardFor(boards, suspectId);
+
+      // The slot may already hold a clue. It gives way — unless it is out of
+      // hearts, in which case it owns that slot for the rest of the run.
+      const occupant = board.slots[slotIndex];
+      if (occupant && (clueHearts[occupant] ?? 0) <= 0) return;
+
+      const slots = [...board.slots];
+      slots[slotIndex] = clueKey;
+
+      const verdicts = { ...board.verdicts };
+      if (occupant) delete verdicts[occupant];
+      const verdict = verdictFor(suspect.traits[clue.traitId]);
+      verdicts[clueKey] = verdict;
+
+      const heartsLeft = clueHearts[clueKey] - 1;
+
+      set((s) => ({
+        investigation: {
+          ...s.investigation,
+          boards: { ...boards, [suspectId]: { slots, verdicts } },
+          clueHearts: { ...clueHearts, [clueKey]: heartsLeft },
+          // However it got here — dragged or carried — the hand is empty now.
+          heldClueKey: null,
+          // The walkthrough's later steps explain this very drop, so they
+          // follow the seat and the clue the player actually chose.
+          tutorial: tutorial.active
+            ? {
+                ...tutorial,
+                focusSuspectId: suspectId,
+                focusClueKey: clueKey,
+                demoPlaced: true,
+              }
+            : tutorial,
+        },
+      }));
+
+      posthog.capture("investigation_clue_placed", {
+        level_id: INVESTIGATION_LEVEL_ID,
+        clue_key: clueKey,
+        clue_source: clue.source,
+        trait_id: clue.traitId,
+        suspect_id: suspectId,
+        slot_index: slotIndex,
+        verdict,
+        hearts_left: heartsLeft,
+        // The clue this drop pushed out of the slot, when it landed on a full
+        // one — `null` on an empty slot.
+        replaced_clue_key: occupant,
+        // Which run at the board this is; a wrong accusation starts a new one.
+        attempt_number: investigation.wrongAttempts + 1,
+        // The walkthrough scripts exactly one drop. Without this flag it would
+        // read as ordinary play and inflate every placement metric.
+        is_tutorial: tutorial.active,
+      });
+    },
+
+    clearSlot: (suspectId, slotIndex) =>
+      set((s) => {
+        // The demonstration drop stays put until the walkthrough is done with
+        // it — its remaining steps are all pointing at it.
+        if (s.investigation.tutorial.active) return s;
+
+        const board = boardFor(s.investigation.boards, suspectId);
+        const clueKey = board.slots[slotIndex];
+        if (clueKey === null) return s;
+        if ((s.investigation.clueHearts[clueKey] ?? 0) <= 0) return s;
+
+        const slots = [...board.slots];
+        slots[slotIndex] = null;
+        const { [clueKey]: _gone, ...verdicts } = board.verdicts;
+
+        return {
+          investigation: {
+            ...s.investigation,
+            boards: {
+              ...s.investigation.boards,
+              [suspectId]: { slots, verdicts },
+            },
+          },
+        };
+      }),
+
+    requestAccusation: (suspectId) =>
+      set((s) => {
+        // The walkthrough's last step points at a live ACUSAR button to show
+        // what lights it up. It stays a demonstration: nobody burns a star on
+        // a move the tutorial put under their cursor. Cancelling still works.
+        if (suspectId !== null && s.investigation.tutorial.active) return s;
+
+        return {
+          investigation: { ...s.investigation, pendingAccusationId: suspectId },
+        };
+      }),
+
+    dismissWrongAccusation: () =>
+      set((s) => {
+        if (!s.investigation.lastWrongSuspectId) return s;
+        // On the last miss there is no next round to clear the board for —
+        // dismissing just hands the screen over to the result panel.
+        if (s.investigation.result) {
+          return {
+            investigation: { ...s.investigation, lastWrongSuspectId: null },
+          };
+        }
+        return {
+          investigation: {
+            ...s.investigation,
+            lastWrongSuspectId: null,
+            boards: {},
+            clueHearts: fullHearts(s.investigation.payload?.clues ?? []),
+            heldClueKey: null,
+          },
+        };
+      }),
+
+    startTutorial: () =>
+      set((s) => ({
+        investigation: {
+          ...s.investigation,
+          tutorial: {
+            active: true,
+            stepIndex: 0,
+            focusSuspectId: tutorialSeatId(
+              s.investigation.payload?.suspects ?? [],
+              s.investigation.boards,
+              s.investigation.wrongSuspectIds,
+            ),
+            focusClueKey: s.investigation.payload?.clues[0]?.key ?? null,
+            // Nothing has been spent yet, so the lesson can be given back.
+            restoresBoard: Object.values(s.investigation.clueHearts).every(
+              (hearts) => hearts === INVESTIGATION_CLUE_HEARTS,
+            ),
+            demoPlaced: false,
+          },
+        },
+      })),
+
+    advanceTutorial: () =>
+      set((s) =>
+        s.investigation.tutorial.active
+          ? {
+              investigation: {
+                ...s.investigation,
+                tutorial: {
+                  ...s.investigation.tutorial,
+                  stepIndex: s.investigation.tutorial.stepIndex + 1,
+                },
+              },
+            }
+          : s,
+      ),
+
+    endTutorial: () =>
+      set((s) => {
+        const tutorial = {
+          active: false,
+          stepIndex: 0,
+          focusSuspectId: null,
+          focusClueKey: null,
+          restoresBoard: false,
+          demoPlaced: false,
+        };
+
+        // Once the run is decided the board is the record of it, not a sandbox,
+        // and a walkthrough opened mid-run is a re-read of the rules, not a
+        // free reset of everything spent so far.
+        if (s.investigation.result || !s.investigation.tutorial.restoresBoard) {
+          return { investigation: { ...s.investigation, tutorial } };
+        }
+
+        return {
+          investigation: {
+            ...s.investigation,
+            tutorial,
+            boards: {},
+            clueHearts: fullHearts(s.investigation.payload?.clues ?? []),
+            pendingAccusationId: null,
+            lastWrongSuspectId: null,
+          },
+        };
+      }),
+
+    accuseSuspect: (suspectId) => {
+      const { investigation } = get();
+      const suspects = investigation.payload?.suspects;
+      if (!suspects || investigation.result) return null;
+
+      const accused = suspects.find((s) => s.id === suspectId);
+      if (!accused) return null;
+      if (investigation.wrongSuspectIds.includes(suspectId)) return null;
+      // Nobody is accused on a hunch: the seat has to carry evidence.
+      if (!hasSlottedClue(investigation.boards, suspectId)) return null;
+
+      // What the player was looking at when they committed. `hot` is the part
+      // worth watching: an accusation made against cold evidence is a guess,
+      // and that reads very differently from one the board actually supports.
+      const board = investigation.boards[suspectId];
+      const slotted = board?.slots.filter((k): k is string => k !== null) ?? [];
+      const evidence = {
+        clues_on_suspect: slotted.length,
+        hot_clues: slotted.filter((k) => board?.verdicts[k] === "quente")
+          .length,
+        cold_clues: slotted.filter((k) => board?.verdicts[k] === "frio").length,
+      };
+
+      /** Every accusation reports, resolved or not. `stars` is null mid-run. */
+      const captureAccusation = (props: {
+        is_correct: boolean;
+        wrong_attempts: number;
+        stars: number | null;
+        revealed: boolean;
+      }) =>
+        posthog.capture("investigation_suspect_accused", {
+          level_id: INVESTIGATION_LEVEL_ID,
+          suspect_id: suspectId,
+          // 1-based: the first accusation of this run is attempt 1.
+          attempt_number: investigation.wrongAttempts + 1,
+          ...evidence,
+          ...props,
+        });
+
+      if (accused.isCulprit) {
+        const stars = starsForWrongAttempts(investigation.wrongAttempts);
+        set((s) => ({
+          investigation: {
+            ...s.investigation,
+            pendingAccusationId: null,
+            result: { stars, correct: true },
+          },
+        }));
+
+        captureAccusation({
+          is_correct: true,
+          wrong_attempts: investigation.wrongAttempts,
+          stars,
+          revealed: false,
+        });
+        // A dedicated success event: the phase is won here, and the funnel
+        // should not have to filter the accusation stream to find that out.
+        posthog.capture("investigation_suspect_identified", {
+          level_id: INVESTIGATION_LEVEL_ID,
+          suspect_id: suspectId,
+          stars,
+          wrong_attempts: investigation.wrongAttempts,
+          attempt_number: investigation.wrongAttempts + 1,
+          ...evidence,
+          // How much evidence the player actually brought in from the levels,
+          // before the curator topped it up.
+          clues_collected: investigation.payload?.collectedCount ?? 0,
+          clues_available: investigation.payload?.clues.length ?? 0,
+        });
+
+        return {
+          stars,
+          correct: true,
+          wrongAttempts: investigation.wrongAttempts,
+        };
+      }
+
+      const wrongAttempts = investigation.wrongAttempts + 1;
+      const wrongSuspectIds = [...investigation.wrongSuspectIds, suspectId];
+
+      // Out of attempts: the curator names the culprit, and the run closes on
+      // the consolation star rather than leaving the player stuck.
+      if (wrongAttempts >= INVESTIGATION_MAX_WRONG_ATTEMPTS) {
+        const stars = starsForWrongAttempts(wrongAttempts);
+        set((s) => ({
+          investigation: {
+            ...s.investigation,
+            wrongAttempts,
+            wrongSuspectIds,
+            revealed: true,
+            pendingAccusationId: null,
+            // The last miss is still a miss: the suspect answers back before
+            // the result panel takes over and names the real culprit.
+            lastWrongSuspectId: suspectId,
+            result: { stars, correct: false },
+          },
+        }));
+
+        captureAccusation({
+          is_correct: false,
+          wrong_attempts: wrongAttempts,
+          stars,
+          revealed: true,
+        });
+        return { stars, correct: false, wrongAttempts };
+      }
+
+      // A wrong name costs a star and shadows that seat. The board is left
+      // exactly as the player arranged it — `dismissWrongAccusation` clears it
+      // once they have read the alibi, so the clues can be seen going home.
+      set((s) => ({
+        investigation: {
+          ...s.investigation,
+          wrongAttempts,
+          wrongSuspectIds,
+          pendingAccusationId: null,
+          lastWrongSuspectId: suspectId,
+        },
+      }));
+
+      captureAccusation({
+        is_correct: false,
+        wrong_attempts: wrongAttempts,
+        stars: null,
+        revealed: false,
+      });
+      return null;
+    },
 
     startQuiz: (
       questions,

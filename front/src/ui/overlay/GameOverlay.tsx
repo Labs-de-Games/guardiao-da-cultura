@@ -11,6 +11,7 @@ import { ScorePanel } from "@/ui/hud/ScorePanel";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
 import { IntroSequence } from "@/ui/intro/IntroSequence";
+import { InvestigationScreen } from "@/ui/investigation/InvestigationScreen";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
 import { BandSelectorPanel } from "@/ui/panels/BandSelectorPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
@@ -98,6 +99,7 @@ function OverlayContent({
   const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const creditsOpen = useGameUIStore((s) => s.creditsOpen);
   const setCreditsOpen = useGameUIStore((s) => s.setCreditsOpen);
+  const investigationOpen = useGameUIStore((s) => s.investigation.open);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
@@ -360,7 +362,29 @@ function OverlayContent({
           pointerEvents: "auto",
         }}
       >
-        <CreditsScreen onClose={() => setCreditsOpen(false)} />
+        <CreditsScreen
+          onClose={() => {
+            setCreditsOpen(false);
+            // Announced, not just applied: the investigation's ending waits on
+            // this to know the crawl is done and the map should come back.
+            EventBus.emit("credits:close", undefined);
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (investigationOpen) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: UI_Z_INDEX.OVERLAY + 1000,
+          pointerEvents: "auto",
+        }}
+      >
+        <InvestigationScreen />
       </div>
     );
   }

@@ -1,0 +1,38 @@
+{
+  "panels": [
+    {
+      "src": "comic_L4P1.png",
+      "sliceWidth": 350,
+      "sliceStart": 50,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "CHEGAMOS AO FIM",
+      "caption": "Durante nossas viagens, você encontrou várias pistas deixadas pelo vândalo."
+    },
+    {
+      "src": "comic_L4P2.png",
+      "sliceWidth": 350,
+      "sliceStart": 300,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "CINCO SUSPEITOS",
+      "caption": "Compare o que descobrimos com o que sabemos sobre cada um."
+    },
+    {
+      "src": "comic_L4P3.png",
+      "sliceWidth": 350,
+      "sliceStart": 345,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "USE AS PISTAS",
+      "caption": "Não escolha apenas pelo que parece suspeito. Use as pistas."
+    }
+  ],
+  "revealIconMask": "reveal_icon_mask_L4.png",
+  "loadingImage": "loading_L4.png",
+  "captionImage": "caption_L4_investigation.png",
+  "skipEnabled": true
+}

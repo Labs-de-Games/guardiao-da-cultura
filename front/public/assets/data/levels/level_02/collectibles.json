@@ -18,47 +18,27 @@
         },
         "board": {
           "position": { "x": 30, "y": 15, "rotation": -2 },
-          "connectedTo": ["varnish", "notes"]
+          "connectedTo": ["varnish", "cachimbo"]
         }
       },
-      "notes": {
-        "id": "notes",
+      "cachimbo": {
+        "id": "cachimbo",
         "metadata": {
-          "title": "Notas do vândalo"
+          "title": "Cachimbo esquecido"
         },
         "educational": {
-          "description": "Uma anotação do vândalo dizendo: \"Vocês organizaram as peças para contar uma história. Eu apenas devolvi a elas a história que vocês esconderam.\"",
-          "medium": "Papel",
-          "opinion": "Ele não estava interessado apenas nas obras, estava interessado na maneira como nós contamos a história delas."
+          "description": "Um cachimbo de madeira esquecido nos bastidores, com fumo ainda queimado no fornilho.",
+          "medium": "Madeira",
+          "opinion": "O fumo ainda estava fresco. Quem deixou isso aqui não foi um visitante de passagem — e fuma cachimbo, o que não é hábito de qualquer um."
         },
         "assets": {
-          "sprite": "notes",
-          "scaleOnMap": 5,
+          "sprite": "cachimbo",
+          "scaleOnMap": 2.5,
           "scaleOnInspect": 5
         },
         "board": {
           "position": { "x": 55, "y": 15, "rotation": -2 },
           "connectedTo": ["document", "signature"]
-        }
-      },
-      "signature": {
-        "id": "signature",
-        "metadata": {
-          "title": "Assinatura do Vândalo"
-        },
-        "educational": {
-          "description": "Documento de conservação assinado por A.V.",
-          "medium": "Papel",
-          "opinion": "A mesma caligrafia, o mesmo conhecimento sobre as peças, e agora temos uma inicial."
-        },
-        "assets": {
-          "sprite": "signature",
-          "scaleOnMap": 5,
-          "scaleOnInspect": 5
-        },
-        "board": {
-          "position": { "x": 76, "y": 40, "rotation": -2 },
-          "connectedTo": ["notes", "message"]
         }
       }
     }

@@ -1,3 +1,5 @@
+import { INVESTIGATION_LEVEL_ID } from "./Investigation";
+
 export type MapMarker = {
   id: string;
   shortlocation: string;
@@ -39,6 +41,19 @@ export const MAP_MARKERS: MapMarker[] = [
     location: "Campina Grande, Paraíba",
     image: "/assets/ui/map-cards/festa-sao-joao.png",
     levelId: "level_03",
+  },
+  {
+    // Final phase: the suspect identification screen, not a playable level.
+    // TODO(art): placeholder position and card image — needs a dedicated pin
+    // location and artwork for the curator's investigation room.
+    id: "sala-de-investigacao",
+    shortlocation: "Sala de Investigação",
+    x: 0.62,
+    y: 0.52,
+    title: "Identificação do Suspeito",
+    location: "Sala de Investigação",
+    image: "/assets/ui/map-cards/investigation-room.png",
+    levelId: INVESTIGATION_LEVEL_ID,
   },
 ];
 

@@ -3,4 +3,5 @@ export const SceneNames = {
   GAME: "Game",
   UI: "UIScene",
   LEVEL_CINEMATIC: "LevelCinematic",
+  INVESTIGATION: "Investigation",
 } as const;
