@@ -69,10 +69,19 @@ describe("HogQL query builders — non-negotiable rules (issue #742)", () => {
   )("%s: binds slug/from_ts/to_ts as values, not string concatenation", (_name, build) => {
     const { values } = build(scope, range);
     expect(values).toEqual({
+      // test-setup.ts runs the suite as "development", with no AUTH_URL.
+      environment: "development",
       slug: "escola-teste",
       from_ts: range.from.toISOString(),
       to_ts: range.to.toISOString(),
     });
+  });
+
+  it.each(
+    ALL_BUILDERS,
+  )("%s: narrows to the current deployment's own events", (_name, build) => {
+    const { query } = build(scope, range);
+    expect(query).toContain("properties.environment = {environment}");
   });
 
   it.each(

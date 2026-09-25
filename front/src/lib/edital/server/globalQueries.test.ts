@@ -49,3 +49,18 @@ describe("public dashboard queries — unset optional properties", () => {
     );
   });
 });
+
+describe("public dashboard query builders", () => {
+  it("covers every exported builder", () => {
+    expect(BUILDERS.length).toBeGreaterThan(0);
+  });
+
+  it.each(
+    BUILDERS,
+  )("%s: narrows to the current deployment's own events", (_name, build) => {
+    const { query, values } = build(range);
+    expect(query).toContain("properties.environment = {environment}");
+    // test-setup.ts runs the suite as "development", with no AUTH_URL.
+    expect(values).toMatchObject({ environment: "development" });
+  });
+});

@@ -1,4 +1,5 @@
 import "server-only";
+import { environmentPredicate, environmentValues } from "./environmentScope";
 import { ORDERED_LEVELS } from "./levels";
 import type { ResolvedDateRange } from "./period";
 import type { HogQLQueryPlan } from "./queries";
@@ -14,13 +15,17 @@ import type { HogQLQueryPlan } from "./queries";
  * everyone, no institution/turma filter, ever.
  */
 
-/** Same shape as queries.ts's commonPredicate, minus the institution filter. */
+/**
+ * Same shape as queries.ts's commonPredicate, minus the institution filter
+ * — including the per-deployment narrowing (environmentScope.ts).
+ */
 function commonGlobalPredicate(): string {
-  return `timestamp >= toDateTime({from_ts}) AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != ''`;
+  return `timestamp >= toDateTime({from_ts}) AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != '' AND ${environmentPredicate()}`;
 }
 
 function baseValues(range: ResolvedDateRange) {
   return {
+    ...environmentValues(),
     from_ts: range.from.toISOString(),
     to_ts: range.to.toISOString(),
   };
