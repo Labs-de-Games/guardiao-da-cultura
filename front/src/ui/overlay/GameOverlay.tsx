@@ -357,6 +357,18 @@ function OverlayContent() {
     dialogueMode === "confirmation" &&
     dialogueCallbackId === STAGE_EXIT_CALLBACK_ID;
 
+  // Phaser scene ops (pause/resume/stop/start) are all queued and only
+  // applied together on the next frame — they are NOT synchronous. On
+  // confirm, UIScene's "stage:exit-confirmed" handler queues a resume(UI) +
+  // stop(GAME); a generic "game:resume-requested" firing after that (from
+  // this effect's cleanup, which runs asynchronously once React commits)
+  // would queue an extra resume(GAME) behind the stop. Phaser's
+  // Systems.resume() only checks the scene isn't currently active — true
+  // for an already-shut-down scene too — so that resume revives GAME into
+  // RUNNING with its camera already torn down, crashing on the next
+  // update(). This ref lets the confirm path suppress that resume-request.
+  const stageExitConfirmedRef = useRef(false);
+
   useEffect(() => {
     if (!isStageExitConfirmOpen) return;
     // Freezes the world (movement, tweens, timers) while the player decides
@@ -364,7 +376,12 @@ function OverlayContent() {
     // GAME+UI the same way while open.
     EventBus.emit("game:pause-requested", { reason: "stage-exit-confirm" });
     return () => {
-      EventBus.emit("game:resume-requested", { reason: "stage-exit-confirm" });
+      if (!stageExitConfirmedRef.current) {
+        EventBus.emit("game:resume-requested", {
+          reason: "stage-exit-confirm",
+        });
+      }
+      stageExitConfirmedRef.current = false;
     };
   }, [isStageExitConfirmOpen]);
 
@@ -372,6 +389,7 @@ function OverlayContent() {
     (callbackId: string, confirmed?: boolean) => {
       if (callbackId === STAGE_EXIT_CALLBACK_ID) {
         if (confirmed) {
+          stageExitConfirmedRef.current = true;
           EventBus.emit("stage:exit-confirmed", undefined);
         }
         return;
