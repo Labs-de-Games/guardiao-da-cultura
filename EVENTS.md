@@ -202,6 +202,11 @@ minigames, quizzes e carregamento do jogo.
 | `level_failed` | `level_id`, `level_number`, `mission_id`, `score`, `total_questions` | `QuizManager.ts` |
 | `progress_updated` | `level_id`, `level_number`, `current_level`, `total_stars`, `completed_levels_count`, `mission_id`, `passed`, `score`, `total_questions` | `QuizManager.ts` |
 | `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
+| `investigation_opened` | `collected_clues`, `shown_clues`, `previous_stars` | `InvestigationScene.ts` (`buildAndEmitPayload`) |
+| `investigation_clue_placed` | `level_id`, `clue_key`, `clue_source` (`player`/`curator`), `trait_id`, `suspect_id`, `slot_index`, `verdict` (`quente`/`morno`/`frio`), `hearts_left`, `replaced_clue_key`, `attempt_number`, `is_tutorial` | `game-ui-store.ts` (`placeClueInSlot`) |
+| `investigation_suspect_accused` | `level_id`, `suspect_id`, `attempt_number`, `clues_on_suspect`, `hot_clues`, `cold_clues`, `is_correct`, `wrong_attempts`, `stars`, `revealed` | `game-ui-store.ts` (`accuseSuspect`) |
+| `investigation_suspect_identified` | `level_id`, `suspect_id`, `stars`, `wrong_attempts`, `attempt_number`, `clues_on_suspect`, `hot_clues`, `cold_clues`, `clues_collected`, `clues_available` | `game-ui-store.ts` (`accuseSuspect`, acerto) |
+| `investigation_completed` | `stars`, `wrong_attempts`, `total_stars` | `InvestigationScene.ts` (`recordResult`) |
 | `nudge_pulse_shown_{costume,spotlight,step_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
 | `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
 
@@ -225,6 +230,63 @@ Necessário para interpretar os eventos `nudge_*`:
   entrar em `COLLECTING` — considerar antes de agrupar por esse campo.
 - `PHOTO` e `PHOTO_CHUNK` mapeiam para o mesmo `nudge_hint_shown_photo`: 7 tipos interativos,
   6 nomes distintos de evento de dica.
+
+## Investigação (fase 4) — regras de disparo
+
+A fase de identificação do suspeito (`level_04`) não é um nível jogável: o jogador arrasta
+pistas da barra lateral para os espaços de cada suspeito e acusa um deles. Necessário para
+interpretar os eventos `investigation_*`:
+
+- **`investigation_clue_placed` conta solturas, não pistas distintas.** Cada pista tem 3 usos
+  (`INVESTIGATION_CLUE_HEARTS`) e cada soltura gasta um — `hearts_left` é o saldo **depois** do
+  gasto, e `hearts_left: 0` significa que a pista ficou presa naquele suspeito até o fim da
+  partida. A mesma pista pode aparecer em até 3 eventos por partida.
+- **`is_tutorial: true` marca a soltura roteirizada do tutorial**, que roda sozinho na primeira
+  visita e pode ser repetido pelo botão COMO JOGAR. Não é jogo de verdade: **filtre
+  `is_tutorial: false`** em qualquer métrica de uso de pistas, ou a primeira soltura de todo
+  jogador entra na conta.
+- **`verdict` é a avaliação do dossiê, não um julgamento do jogador**: `quente` quando o traço
+  provado pela pista bate com o suspeito, `frio` quando contradiz, `morno` quando o dossiê nada
+  diz. O jogo não valida as escolhas — a leitura do tabuleiro é do jogador.
+- **`attempt_number` é 1-based e reinicia a cada entrada na fase.** Uma acusação errada limpa o
+  tabuleiro e devolve todas as pistas com os usos cheios, então é a rodada dentro da mesma
+  partida, não o número de partidas.
+- **`investigation_suspect_accused` dispara em toda acusação confirmada** (o diálogo "Tem
+  certeza?" já foi aceito). `stars` é `null` enquanto a partida continua e só é preenchido
+  quando ela se resolve — no acerto, ou em `revealed: true`.
+- **`revealed: true`** é a 4ª acusação errada (`INVESTIGATION_MAX_WRONG_ATTEMPTS`): a curadora
+  revela o culpado e a partida fecha com 1 estrela de consolação.
+- **`investigation_suspect_identified` é redundante por desenho.** Todo acerto emite os dois
+  eventos; o dedicado existe para o funil não precisar filtrar o fluxo de acusações. Para
+  contar vitórias use ele; para taxa de acerto use `investigation_suspect_accused`.
+- **`clues_collected` vs `clues_available`:** o primeiro é quanto o jogador realmente coletou
+  nas fases 1–3; o segundo inclui o complemento da curadora, que entra automaticamente abaixo
+  de `INVESTIGATION_MIN_CLUES` para a dedução continuar possível. `clues_collected <
+  clues_available` identifica quem chegou com pouca evidência.
+- **Estrelas são por partida, mas o mapa guarda o melhor resultado.** `stars` é o resultado
+  daquela partida; `ProgressionManager.recordLevelCompleted` mantém o `max`, então a média
+  desses eventos não bate com o que o mapa exibe.
+- **`investigation_opened` conta entradas na fase, não jogadores.** Dispara a cada entrada,
+  depois de montar o dossiê e antes da tela aparecer. `previous_stars > 0` identifica uma
+  rejogada — a fase é replayável para melhorar a nota.
+- **`shown_clues - collected_clues` é o complemento da curadora**, adicionado automaticamente
+  quando o jogador chega com menos de `INVESTIGATION_MIN_CLUES`. É a mesma distinção que
+  `clues_collected` vs `clues_available` em `investigation_suspect_identified`, medida na
+  entrada em vez de na vitória.
+- **`investigation_completed` fecha a partida pelo lado da cena**, disparado por
+  `investigation:completed` logo depois de `ProgressionManager.recordLevelCompleted`. Sai nos
+  **dois** desfechos — acerto e revelação na 4ª errada —, então serve para contar partidas
+  concluídas; para separar vitória de derrota use `is_correct`/`revealed` em
+  `investigation_suspect_accused`.
+- **`total_stars` é o total do jogo inteiro, não da fase**, lido de
+  `ProgressionManager.getState()` já com o resultado desta partida somado. Só `stars` se
+  refere à investigação.
+- **O evento não garante que o progresso foi salvo.** É emitido antes do `saveProgress`, que
+  está num `try/catch` — uma falha de rede registra o `investigation_completed` mesmo assim.
+  Divergências com o progresso do backend são esperadas nessa margem.
+- **Uma rejogada pior também emite `investigation_completed`.** O mapa guarda o `max`, o evento
+  guarda a partida: contar esses eventos não dá número de jogadores que concluíram a fase, e a
+  média de `stars` fica abaixo do que o mapa exibe.
 
 `browser`/`operating_system` are not sent as custom properties — PostHog
 autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`

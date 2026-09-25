@@ -28,7 +28,8 @@ export type SfxKey =
   | "sfx.genius.green"
   | "sfx.genius.red"
   | "sfx.genius.yellow"
-  | "sfx.genius.blue";
+  | "sfx.genius.blue"
+  | "sfx.police.siren";
 
 /** Semantic keys for music tracks.
  * Level-specific music follows pattern: "music.level_{id}.main" */

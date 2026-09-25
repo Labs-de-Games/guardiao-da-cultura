@@ -180,6 +180,7 @@ export interface CanvasViewportData {
 }
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
+import type { InvestigationPayload } from "@/game/types/InvestigationTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import type { IntroConfig } from "@/ui/intro/types";
 
@@ -347,4 +348,16 @@ export interface GameEventMap {
   "ui:evidence-board-open-with-clue": { clueId: string | null };
   "credits:open": undefined;
   "credits:close": undefined;
+  /** InvestigationScene → React: open the identification screen with its dossier. */
+  "investigation:start": InvestigationPayload;
+  /** React → InvestigationScene: the accusation resolved; persist the result. */
+  "investigation:completed": { stars: number; wrongAttempts: number };
+  /** React → InvestigationScene: leave the identification screen for the map. */
+  "investigation:exit": undefined;
+  /**
+   * React → InvestigationScene: the player read their result and wants the
+   * ending. Starts the closing cinematic, which is followed by the credits on
+   * a first completion and by the map either way.
+   */
+  "investigation:outro": undefined;
 }

@@ -4,6 +4,7 @@ import { EventBus } from "../../shared/events/event-bus";
 import type { IntroConfig } from "../../ui/intro/types";
 import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager, loadGlobalAudio, loadLevelAudio } from "../audio";
+import { INVESTIGATION_LEVEL_ID } from "../constants/Investigation";
 import { SceneNames } from "../constants/SceneNames";
 
 /**
@@ -96,9 +97,19 @@ export class LevelCinematic extends Scene {
   }
 
   /**
-   * Transition to the Game scene
+   * Transition to whatever this level's content actually is.
+   *
+   * The suspect identification phase is an investigation screen rather than a
+   * playable level, but it still enters through this cinematic so the player
+   * gets the same loading screen, comic panels and mask reveal as every other
+   * phase. Only the final hop differs.
    */
   private transitionToGame() {
+    if (this.levelId === INVESTIGATION_LEVEL_ID) {
+      this.scene.start(SceneNames.INVESTIGATION);
+      return;
+    }
+
     this.scene.start(SceneNames.GAME, { levelId: this.levelId });
   }
 

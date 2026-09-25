@@ -158,5 +158,19 @@ describe("MapIntroScene", () => {
       expect((scene as any).isMarkerAvailable(1)).toBe(false);
       expect((scene as any).isMarkerAvailable(0)).toBe(true);
     });
+
+    it("unlocks the identification phase once level 03 is completed", () => {
+      // Finishing level_03 pushes currentLevel to 4, which is what opens
+      // marker index 3 — the suspect identification phase.
+      const scene = buildScene(4);
+
+      expect((scene as any).isMarkerAvailable(3)).toBe(true);
+    });
+
+    it("keeps the identification phase locked before level 03 is completed", () => {
+      const scene = buildScene(3);
+
+      expect((scene as any).isMarkerAvailable(3)).toBe(false);
+    });
   });
 });

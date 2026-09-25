@@ -1,0 +1,37 @@
+{
+  "_comment": "TEXTO PROVISÓRIO — títulos e legendas são mock, a reescrever. Um único roteiro serve aos dois finais (acerto e revelação após quatro erros), por isso as falas não dizem como o jogador chegou lá. `sliceStart` é o recorte que sobra de cada painel na tira final; ajustar olhando a arte.",
+  "assetDir": "suspect-arrested",
+  "panels": [
+    {
+      "src": "arrested.png",
+      "sliceWidth": 350,
+      "sliceStart": 110,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "O VÂNDALO É PRESO",
+      "caption": "Com as pistas reunidas, a polícia teve o que precisava. Augusto Vale foi detido."
+    },
+    {
+      "src": "on-jail.png",
+      "sliceWidth": 350,
+      "sliceStart": 300,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "RESPONDE PELO QUE FEZ",
+      "caption": "Ele queria provar um ponto. Mas patrimônio não se discute quebrando."
+    },
+    {
+      "src": "handshake.png",
+      "sliceWidth": 350,
+      "sliceStart": 315,
+      "revealMs": 1000,
+      "holdMs": 5000,
+      "shrinkMs": 1200,
+      "title": "O ACERVO VOLTA AO LUGAR",
+      "caption": "As peças retornam às salas. Obrigada por cuidar disso com a gente."
+    }
+  ],
+  "skipEnabled": true
+}

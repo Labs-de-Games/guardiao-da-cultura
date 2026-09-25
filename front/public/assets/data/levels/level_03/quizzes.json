@@ -1,3 +1,90 @@
 {
-  "missao_curador_l3": []
+  "_comment": "PLACEHOLDER COPY. Provisional questions so the level_03 final quiz can be completed and hand off to the identification phase. Replace with the final script. Authoring convention: the first option is always the correct answer — prepareQuizQuestions() shuffles them at runtime.",
+  "missao_curador_l3": [
+    {
+      "id": "q1",
+      "category": "São João",
+      "question": "Por que Campina Grande é conhecida como “O Maior São João do Mundo”?",
+      "options": [
+        "Pelo tamanho e pela duração da festa, que ocupa a cidade por todo o mês de junho",
+        "Por ter sido a primeira cidade brasileira a celebrar o São João",
+        "Por concentrar as maiores fogueiras já registradas no país",
+        "Por ser a única cidade onde a quadrilha é dançada ao ar livre"
+      ],
+      "explanation": "O título vem da escala da festa: mais de trinta dias de programação, com o Parque do Povo recebendo milhões de visitantes.",
+      "hints": [
+        "Não é sobre ter vindo primeiro.",
+        "Pense no tamanho e em quantos dias a festa dura."
+      ],
+      "tags": ["saojoao", "paraiba", "campinagrande", "festajunina"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q2",
+      "category": "São João",
+      "question": "Qual instrumento forma o trio tradicional do forró pé de serra, ao lado da zabumba e do triângulo?",
+      "options": ["Sanfona", "Viola caipira", "Cavaquinho", "Pandeiro"],
+      "explanation": "Sanfona, zabumba e triângulo formam o trio consagrado por Luiz Gonzaga como base do forró pé de serra.",
+      "hints": [
+        "É um instrumento de fole, tocado com as duas mãos.",
+        "Luiz Gonzaga ficou conhecido tocando esse instrumento."
+      ],
+      "tags": ["forro", "musica", "nordeste", "lgonzaga"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q3",
+      "category": "São João",
+      "question": "O que a quadrilha junina brasileira tem em comum com a dança europeia que a originou?",
+      "options": [
+        "A formação em pares conduzida por um marcador que anuncia os passos",
+        "O uso obrigatório de fogueira no centro do salão",
+        "A execução exclusivamente instrumental, sem canto",
+        "A proibição de improviso durante a apresentação"
+      ],
+      "explanation": "A quadrille francesa, dançada em pares e guiada por um condutor que anunciava as figuras, chegou ao Brasil no século XIX e foi reinventada como festa popular.",
+      "hints": [
+        "Repare em quem grita os comandos durante a dança.",
+        "A origem está nos salões europeus do século XIX."
+      ],
+      "tags": ["quadrilha", "danca", "historia", "franca"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q4",
+      "category": "São João",
+      "question": "Na tradição junina, o que representa o “casamento matuto” encenado durante a quadrilha?",
+      "options": [
+        "Uma paródia teatral dos casamentos roceiros, encenada com humor",
+        "Um ritual religioso obrigatório para abrir a festa",
+        "Uma homenagem formal aos padroeiros da cidade",
+        "Uma competição entre os pares para eleger o melhor dançarino"
+      ],
+      "explanation": "O casamento matuto é uma encenação cômica que satiriza costumes do casamento no interior — noivo fujão, noiva grávida e delegado incluídos.",
+      "hints": [
+        "O público costuma rir durante a cena.",
+        "Não é um ritual de verdade: é teatro."
+      ],
+      "tags": ["quadrilha", "casamentomatuto", "teatro", "tradicao"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q5",
+      "category": "Investigação",
+      "question": "Reunindo o que foi encontrado nos três acervos, o que as pistas dizem sobre o vândalo?",
+      "options": [
+        "Conhece técnicas de conservação e tinha acesso autorizado às obras",
+        "Agiu por impulso, sem qualquer conhecimento sobre o acervo",
+        "Queria destruir as peças para revendê-las no mercado ilegal",
+        "Entrou à força nos três locais, arrombando as portas"
+      ],
+      "explanation": "Verniz de conservação, autorização de acesso e anotações sobre a posição das obras apontam para alguém com formação técnica e entrada permitida no acervo.",
+      "hints": [
+        "Lembre da lata de verniz e do documento de autorização.",
+        "Nada foi arrombado: ele podia entrar."
+      ],
+      "tags": ["investigacao", "pistas", "vandalo"],
+      "difficulty": "medium"
+    }
+  ]
 }
