@@ -18,7 +18,6 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
 import { EventBus } from "@/shared/events/event-bus";
-import { useSound } from "@/ui/hooks/useSound";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -64,8 +63,6 @@ export function StepSequencePanel() {
   const stepSequenceOpen = useGameUIStore((s) => s.stepSequenceOpen);
   const stepSequenceData = useGameUIStore((s) => s.stepSequenceData);
   const closeStepSequence = useGameUIStore((s) => s.closeStepSequence);
-
-  const { playModalOpen, playModalClose } = useSound();
 
   const [state, dispatch] = useReducer(reducer, buildInitialState([], [], 0));
   const stateRef = useRef(state);
@@ -124,15 +121,13 @@ export function StepSequencePanel() {
     if (!stepSequenceOpen) return;
 
     EventBus.emit("game:pause-requested", { reason: "step-sequence" });
-    playModalOpen();
 
     return () => {
       EventBus.emit("game:resume-requested", { reason: "step-sequence" });
-      playModalClose();
       const canvas = document.querySelector("canvas");
       canvas?.focus();
     };
-  }, [stepSequenceOpen, playModalOpen, playModalClose]);
+  }, [stepSequenceOpen]);
 
   useEffect(() => {
     if (!stepSequenceOpen) return;

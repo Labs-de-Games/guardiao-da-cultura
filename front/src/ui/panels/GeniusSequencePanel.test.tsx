@@ -217,9 +217,6 @@ describe("GeniusSequencePanel", () => {
 
     expect(emitSpy).toHaveBeenCalledWith("ui:genius-sequence-close", undefined);
     expect(useGameUIStore.getState().geniusSequenceOpen).toBe(false);
-    // Regression check: winning used to skip the modal-close sfx that every
-    // other close path plays.
-    expect(emitSpy).toHaveBeenCalledWith("ui:sound-modal-close", undefined);
   });
 
   it("closes on Escape", () => {

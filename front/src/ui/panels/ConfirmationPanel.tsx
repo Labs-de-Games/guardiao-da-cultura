@@ -25,17 +25,10 @@ export function ConfirmationPanel({
   );
   const closeDialogue = useDialogueStore((s) => s.closeDialogue);
 
-  const { playModalOpen, playModalClose, playClick } = useSound();
+  const { playClick } = useSound();
 
   const simButtonRef = useRef<HTMLButtonElement>(null);
   const naoButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    playModalOpen();
-    return () => {
-      playModalClose();
-    };
-  }, [playModalOpen, playModalClose]);
 
   useEffect(() => {
     const target =
