@@ -235,7 +235,7 @@ export const emailTemplates = {
       html: baseTemplate(
         "Novo acesso detectado",
         `<p>Olá, </p>
-        <p>detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
+        <p>Detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
         <p>Se foi você, pode ignorar este e-mail com segurança.</p>
         <p style="text-align: center;">
           <a href="${escapeHtml(frontendUrl)}" class="button">Acessar conta</a>
