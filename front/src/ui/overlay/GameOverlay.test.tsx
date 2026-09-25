@@ -606,7 +606,7 @@ describe("GameOverlay", () => {
       emitSpy.mockRestore();
     });
 
-    it("resumes GAME+UI once the confirmation closes", () => {
+    it("resumes GAME+UI when the confirmation closes without confirming (cancel/dismiss)", () => {
       const emitSpy = jest.spyOn(EventBus, "emit");
 
       const { rerender } = render(<GameOverlay />);
@@ -615,6 +615,30 @@ describe("GameOverlay", () => {
       rerender(<GameOverlay />);
 
       expect(emitSpy).toHaveBeenCalledWith("game:resume-requested", {
+        reason: "stage-exit-confirm",
+      });
+      emitSpy.mockRestore();
+    });
+
+    it("does not emit a generic game:resume-requested when the player confirms", () => {
+      // Phaser scene ops are queued, not synchronous. UIScene's
+      // "stage:exit-confirmed" handler already resumes UI explicitly
+      // before stopping GAME; a late generic resume-request landing in the
+      // queue behind that stop would revive the already-shut-down GAME
+      // scene into RUNNING with a torn-down camera (crashes on the next
+      // frame's update()). See the ref-suppression comment in GameOverlay.
+      const emitSpy = jest.spyOn(EventBus, "emit");
+
+      const { rerender } = render(<GameOverlay />);
+
+      act(() => {
+        fireEvent.click(screen.getByText("confirm-yes"));
+      });
+
+      mockDialogueState.dialogueOpen = false;
+      rerender(<GameOverlay />);
+
+      expect(emitSpy).not.toHaveBeenCalledWith("game:resume-requested", {
         reason: "stage-exit-confirm",
       });
       emitSpy.mockRestore();
