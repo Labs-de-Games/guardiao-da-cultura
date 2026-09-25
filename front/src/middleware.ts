@@ -11,6 +11,7 @@ import {
 } from "./lib/edital/anonymousPlayer";
 
 const INSTITUTION_ROUTE_PREFIX = "/institution";
+const ONBOARDING_PATH = `${INSTITUTION_ROUTE_PREFIX}/onboarding`;
 
 function isInstitutionRoute(path: string): boolean {
   return (
@@ -76,13 +77,18 @@ export async function middleware(request: NextRequest) {
     // Self-serve replacement for #744's admin seed-script step (no admin
     // role/workflow exists in this project) — an institution account with
     // no slug yet must onboard before it can reach the dashboard.
-    if (
-      !session.user.institutionSlug &&
-      path !== `${INSTITUTION_ROUTE_PREFIX}/onboarding`
-    ) {
+    if (!session.user.institutionSlug && path !== ONBOARDING_PATH) {
       return withAnonymousPlayerCookie(
         request,
-        NextResponse.redirect(new URL("/institution/onboarding", request.url)),
+        NextResponse.redirect(new URL(ONBOARDING_PATH, request.url)),
+      );
+    }
+    // Already onboarded — never show the name form again (back button,
+    // stale tab), which would only end in a 403 "already onboarded".
+    if (session.user.institutionSlug && path === ONBOARDING_PATH) {
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(new URL(INSTITUTION_ROUTE_PREFIX, request.url)),
       );
     }
     return withAnonymousPlayerCookie(request, NextResponse.next());

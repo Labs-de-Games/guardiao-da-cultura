@@ -82,6 +82,21 @@ describe("middleware — institution routes gated by NextAuth session", () => {
     expect(response.status).toBe(200);
   });
 
+  it("redirects an already-onboarded institution away from the onboarding page", async () => {
+    mockAuth.mockResolvedValue({
+      user: { role: "institution", institutionSlug: "escola-teste" },
+    });
+
+    const response = await middleware(makeRequest("/institution/onboarding"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/institution");
+    expect(
+      response.cookies.get(ANONYMOUS_PLAYER_COOKIE_NAME)?.value,
+    ).toBeDefined();
+  });
+
   it("also gates institution sub-routes", async () => {
     mockAuth.mockResolvedValue(null);
 
