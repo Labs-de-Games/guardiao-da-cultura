@@ -81,6 +81,15 @@ const serverSchema = z
      * the three vars above; declared here purely for the boot-time guard.
      */
     authTrustHost: z.string().optional(),
+
+    /**
+     * The app's public origin (e.g. https://staging.example.com). NextAuth
+     * reads it from process.env by its own convention; declared here for
+     * the boot-time guard. Without it, behind nginx NextAuth builds its
+     * redirect_uri from the container's own HOSTNAME (http://0.0.0.0:3000)
+     * and Google rejects the sign-in with 400 invalid_request.
+     */
+    authUrl: z.string().url().optional(),
   })
   .refine(
     (data) => env.client.env === "development" || Boolean(data.authSecret),
@@ -110,26 +119,49 @@ const serverSchema = z
       message: "AUTH_TRUST_HOST is required outside development",
       path: ["authTrustHost"],
     },
-  );
+  )
+  .refine((data) => env.client.env === "development" || Boolean(data.authUrl), {
+    message: "AUTH_URL is required outside development",
+    path: ["authUrl"],
+  })
+  .refine((data) => !data.authUrl || new URL(data.authUrl).pathname === "/", {
+    // NextAuth treats a path in AUTH_URL as its basePath, which would
+    // silently move every /api/auth/* route.
+    message: "AUTH_URL must be an origin only (no path)",
+    path: ["authUrl"],
+  });
 
 let _serverEnv: z.infer<typeof serverSchema> | null = null;
+
+/**
+ * Compose passes optional vars as `${VAR:-}`, so an unset var reaches the
+ * container as "" rather than undefined. Zod's `.default()` only fires on
+ * undefined, and `z.coerce` turns "" into 0 / Invalid Date — so without
+ * this, an unset POSTHOG_QUERY_CACHE_TTL_MS fails `.positive()` instead of
+ * falling back to its default. Treat "" as unset for every field.
+ */
+function readEnv(name: string): string | undefined {
+  const value = process.env[name];
+  return value === "" ? undefined : value;
+}
 
 function getServerEnv() {
   if (!_serverEnv) {
     _serverEnv = serverSchema.parse({
-      responsivevoiceApiKey: process.env.RESPONSIVEVOICE_API_KEY,
-      responsivevoiceApiUrl: process.env.RESPONSIVEVOICE_API_URL,
-      editalPosthogPersonalApiKey: process.env.POSTHOG_PERSONAL_API_KEY,
-      editalPosthogProjectId: process.env.POSTHOG_PROJECT_ID,
-      editalPosthogQueryHost: process.env.POSTHOG_QUERY_HOST,
-      editalQueryCacheTtlMs: process.env.POSTHOG_QUERY_CACHE_TTL_MS,
-      editalPeriodStart: process.env.EDITAL_PERIOD_START,
-      authOauthUpsertToken: process.env.AUTH_OAUTH_UPSERT_TOKEN,
-      backendInternalUrl: process.env.BACKEND_INTERNAL_URL,
-      authSecret: process.env.AUTH_SECRET,
-      authGoogleId: process.env.AUTH_GOOGLE_ID,
-      authGoogleSecret: process.env.AUTH_GOOGLE_SECRET,
-      authTrustHost: process.env.AUTH_TRUST_HOST,
+      responsivevoiceApiKey: readEnv("RESPONSIVEVOICE_API_KEY"),
+      responsivevoiceApiUrl: readEnv("RESPONSIVEVOICE_API_URL"),
+      editalPosthogPersonalApiKey: readEnv("POSTHOG_PERSONAL_API_KEY"),
+      editalPosthogProjectId: readEnv("POSTHOG_PROJECT_ID"),
+      editalPosthogQueryHost: readEnv("POSTHOG_QUERY_HOST"),
+      editalQueryCacheTtlMs: readEnv("POSTHOG_QUERY_CACHE_TTL_MS"),
+      editalPeriodStart: readEnv("EDITAL_PERIOD_START"),
+      authOauthUpsertToken: readEnv("AUTH_OAUTH_UPSERT_TOKEN"),
+      backendInternalUrl: readEnv("BACKEND_INTERNAL_URL"),
+      authSecret: readEnv("AUTH_SECRET"),
+      authGoogleId: readEnv("AUTH_GOOGLE_ID"),
+      authGoogleSecret: readEnv("AUTH_GOOGLE_SECRET"),
+      authTrustHost: readEnv("AUTH_TRUST_HOST"),
+      authUrl: readEnv("AUTH_URL"),
     });
   }
   return _serverEnv;

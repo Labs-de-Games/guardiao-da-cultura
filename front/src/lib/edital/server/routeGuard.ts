@@ -54,18 +54,24 @@ export async function resolveEditalRequestContext(
     return { kind: "unlinked" };
   }
 
+  // Only the query-string parse is user input — keep the try that narrow.
+  // resolveDateRange reads serverEnv, and a config error there must surface
+  // as a 500, not be misreported to the client as a 400.
+  let dateRange: ReturnType<typeof parseDateRangeParams>;
   try {
-    const params = Object.fromEntries(request.nextUrl.searchParams);
-    const dateRange = parseDateRangeParams(params);
-    const range = resolveDateRange(dateRange);
-    const turmaSource = resolveTurmaSource(
-      request.nextUrl.searchParams.get("turma"),
+    dateRange = parseDateRangeParams(
+      Object.fromEntries(request.nextUrl.searchParams),
     );
-    return { kind: "ok", scope, range, turmaSource };
   } catch (err) {
     return {
       kind: "invalid-params",
       message: err instanceof Error ? err.message : "Invalid query parameters",
     };
   }
+
+  const range = resolveDateRange(dateRange);
+  const turmaSource = resolveTurmaSource(
+    request.nextUrl.searchParams.get("turma"),
+  );
+  return { kind: "ok", scope, range, turmaSource };
 }
