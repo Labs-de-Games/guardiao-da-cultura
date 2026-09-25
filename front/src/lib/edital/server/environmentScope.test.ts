@@ -26,42 +26,34 @@ describe("environmentScope", () => {
     delete mockEnv.server.authUrl;
   });
 
-  it("filters by environment only when AUTH_URL is unset (local dev)", () => {
+  it("filters by environment when AUTH_URL is unset (local dev)", () => {
     expect(environmentPredicate()).toBe(
       "properties.environment = {environment}",
     );
     expect(environmentValues()).toEqual({ environment: "development" });
   });
 
-  it("also filters by the deployment's own host when AUTH_URL is set", () => {
+  it("filters by the deployment's own host only when AUTH_URL is set", () => {
     mockEnv.client.env = "staging";
     mockEnv.server.authUrl = "https://development-guardiaodacultura.42.rio";
 
-    expect(environmentPredicate()).toBe(
-      "properties.environment = {environment} AND properties.$host = {host}",
-    );
+    expect(environmentPredicate()).toBe("properties.$host = {host}");
     expect(environmentValues()).toEqual({
-      environment: "staging",
       host: "development-guardiaodacultura.42.rio",
     });
   });
 
-  it("keeps old staging plays (tagged production) out of production via the host", () => {
+  it("does not depend on the environment tag once deployed (old staging events say production)", () => {
     mockEnv.client.env = "production";
     mockEnv.server.authUrl = "https://guardiaodacultura.42.rio";
 
-    expect(environmentValues()).toEqual({
-      environment: "production",
-      host: "guardiaodacultura.42.rio",
-    });
+    expect(environmentPredicate()).not.toContain("environment");
+    expect(environmentValues()).toEqual({ host: "guardiaodacultura.42.rio" });
   });
 
   it("never string-interpolates the values into the predicate", () => {
-    mockEnv.client.env = "production";
     mockEnv.server.authUrl = "https://guardiaodacultura.42.rio";
 
-    const predicate = environmentPredicate();
-    expect(predicate).not.toContain("production");
-    expect(predicate).not.toContain("guardiaodacultura");
+    expect(environmentPredicate()).not.toContain("guardiaodacultura");
   });
 });
