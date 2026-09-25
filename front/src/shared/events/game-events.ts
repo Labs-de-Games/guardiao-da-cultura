@@ -330,6 +330,7 @@ export interface GameEventMap {
   "quiz:close": undefined;
   "quiz:retry": undefined;
   "quiz:next-level": undefined;
+  "stage:exit-confirmed": undefined;
   "map:marker-changed": MapMarkerChangedData | null;
   "map:auto-start-tick": AutoStartTickData;
   "map:auto-start-canceled": undefined;
