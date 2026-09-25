@@ -1446,6 +1446,11 @@
                          "value":"accordion_frame001"
                         }, 
                         {
+                         "name":"id",
+                         "type":"string",
+                         "value":"accordion_tuning"
+                        }, 
+                        {
                          "name":"type",
                          "type":"string",
                          "value":"genius_sequence"
@@ -1461,6 +1466,151 @@
                  "width":0,
                  "x":551.694429207,
                  "y":170.196583516
+                }, 
+                {
+                 "height":0,
+                 "id":136,
+                 "name":"L_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_1"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":528,
+                 "y":632
+                }, 
+                {
+                 "height":0,
+                 "id":137,
+                 "name":"L_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_2"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":553,
+                 "y":632
+                }, 
+                {
+                 "height":0,
+                 "id":138,
+                 "name":"L_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_3"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":578,
+                 "y":632
+                }, 
+                {
+                 "height":0,
+                 "id":139,
+                 "name":"L_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_4"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":946,
+                 "y":640
+                }, 
+                {
+                 "height":0,
+                 "id":140,
+                 "name":"L_5",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_5"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":2.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":572,
+                 "y":170
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1611,7 +1761,7 @@
          "y":0
         }],
  "nextlayerid":26,
- "nextobjectid":136,
+ "nextobjectid":141,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.2",
