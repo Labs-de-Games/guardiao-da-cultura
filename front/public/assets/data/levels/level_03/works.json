@@ -1,63 +1,23 @@
 {
   "BAND": {
-    "zabumba": {
-      "id": "zabumba",
-      "type": "Instrument",
+    "band": {
+      "id": "band",
+      "type": "Band",
       "metadata": {
-        "title": "Zabumba",
+        "title": "Trio de forró",
         "author": "Cultura popular",
         "year": "",
         "place": "Nordeste do Brasil"
       },
       "educational": {
-        "description": "Tambor grande, tocado com uma baqueta de um lado e uma vareta do outro.\n\nMarca o ritmo do forró com a sanfona e o triângulo.",
-        "medium": "Madeira e couro",
-        "opinion": "Um tambor enorme! Cada batida faz o chão tremer. É o coração do forró.",
-        "feedbackError": "Aqui deve ter um tambor grande que marca o ritmo.",
-        "hint": ""
-      },
-      "assets": {
-        "sprite": "band_zabumba"
-      }
-    },
-    "accordion": {
-      "id": "accordion",
-      "type": "Instrument",
-      "metadata": {
-        "title": "Sanfona",
-        "author": "Cultura popular",
-        "year": "",
-        "place": "Nordeste do Brasil"
-      },
-      "educational": {
-        "description": "Instrumento de fole e teclas. O ar entra e sai do fole e faz o som.\n\nÉ a principal do trio de forró: puxa a melodia.",
-        "medium": "Madeira, metal e couro",
-        "opinion": "Uma sanfona! Ela abre e fecha como se respirasse. Parece a chefe do palco.",
-        "feedbackError": "Aqui deve ter um instrumento de fole que puxa a melodia.",
+        "description": "Sanfona, zabumba e triângulo formam o trio de forró.\n\nA sanfona é a principal e puxa a melodia. Zabumba e triângulo marcam o ritmo.",
+        "medium": "Madeira, couro e metal",
+        "opinion": "Três instrumentos e um palco só. Sem um deles, o forró não anda.",
+        "feedbackError": "Esse instrumento não faz parte do trio de forró.",
         "hint": ""
       },
       "assets": {
         "sprite": "band_accordion"
-      }
-    },
-    "triangle": {
-      "id": "triangle",
-      "type": "Instrument",
-      "metadata": {
-        "title": "Triângulo",
-        "author": "Cultura popular",
-        "year": "",
-        "place": "Nordeste do Brasil"
-      },
-      "educational": {
-        "description": "Barra de metal dobrada em três lados, tocada com outra barra.\n\nCom a sanfona e a zabumba, forma o trio do forró pé de serra.",
-        "medium": "Metal",
-        "opinion": "Parece simples, mas esse som agudo não para nunca. Tim, tim, tim!",
-        "feedbackError": "Aqui deve ter um instrumento pequeno de metal com som agudo.",
-        "hint": ""
-      },
-      "assets": {
-        "sprite": "band_triangle"
       }
     }
   },
