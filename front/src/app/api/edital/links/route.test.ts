@@ -42,6 +42,10 @@ function makeSession(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function makeGetRequest(): NextRequest {
+  return new NextRequest("http://localhost:3000/api/edital/links");
+}
+
 function makePostRequest(body: unknown): NextRequest {
   return new NextRequest("http://localhost:3000/api/edital/links", {
     method: "POST",
@@ -58,7 +62,7 @@ describe("GET /api/edital/links", () => {
   it("returns 401 when there is no session", async () => {
     mockAuth.mockResolvedValue(null);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
 
     expect(response.status).toBe(401);
     expect(mockListCampaignLinks).not.toHaveBeenCalled();
@@ -67,7 +71,7 @@ describe("GET /api/edital/links", () => {
   it("returns linked:false with zero upstream calls for a player-role session", async () => {
     mockAuth.mockResolvedValue(makeSession({ role: "player" }));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     const data = await response.json();
 
     expect(data).toEqual({ linked: false, data: null });
@@ -77,7 +81,7 @@ describe("GET /api/edital/links", () => {
   it("returns linked:false for an unlinked institution account", async () => {
     mockAuth.mockResolvedValue(makeSession({ institutionSlug: null }));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     const data = await response.json();
 
     expect(data).toEqual({ linked: false, data: null });
@@ -95,7 +99,7 @@ describe("GET /api/edital/links", () => {
       },
     ]);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     const data = await response.json();
 
     expect(data.linked).toBe(true);
@@ -103,7 +107,8 @@ describe("GET /api/edital/links", () => {
       {
         id: "id-1",
         source: "group-a",
-        url: "https://guardiaodacultura.42.rio/?utm_institution=escola-teste&utm_source=group-a",
+        // No AUTH_URL in development, so the request origin is used.
+        url: "http://localhost:3000/?utm_institution=escola-teste&utm_source=group-a",
         createdAt: "2026-01-01T00:00:00.000Z",
       },
     ]);

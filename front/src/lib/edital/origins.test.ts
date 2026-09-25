@@ -2,7 +2,6 @@ import {
   buildTrackingUrl,
   CAMPAIGN_ORIGINS,
   isValidOriginSlug,
-  LANDING_BASE_URL,
   ORIGIN_SLUG_PATTERN,
   resolveOriginLabel,
 } from "./origins";
@@ -55,33 +54,45 @@ describe("resolveOriginLabel", () => {
 });
 
 describe("buildTrackingUrl", () => {
-  it("points at the landing page with utm_institution set", () => {
-    const url = buildTrackingUrl({ slug: "escola-teste" });
-    expect(url).toBe(`${LANDING_BASE_URL}?utm_institution=escola-teste`);
+  const baseUrl = "https://staging.example.com";
+
+  it("points at the given environment's landing page with utm_institution set", () => {
+    const url = buildTrackingUrl({ baseUrl, slug: "escola-teste" });
+    expect(url).toBe(
+      "https://staging.example.com/?utm_institution=escola-teste",
+    );
   });
 
-  it("URL-encodes a slug that needs it", () => {
+  it("uses whatever origin it is given — never a hardcoded domain", () => {
+    expect(
+      buildTrackingUrl({
+        baseUrl: "http://localhost:3000",
+        slug: "escola-teste",
+      }),
+    ).toBe("http://localhost:3000/?utm_institution=escola-teste");
+  });
+
+  it("always targets the landing page root, even if baseUrl has a path", () => {
     const url = buildTrackingUrl({
+      baseUrl: "https://staging.example.com/game",
       slug: "escola-teste",
     });
-    const parsed = new URL(url);
-    expect(parsed.searchParams.get("utm_institution")).toBe("escola-teste");
-  });
-
-  it("always targets the landing page, never /game directly", () => {
-    const url = buildTrackingUrl({ slug: "escola-teste" });
-    expect(url.startsWith(LANDING_BASE_URL)).toBe(true);
+    expect(new URL(url).pathname).toBe("/");
     expect(url).not.toContain("/game");
   });
 
   it("omits utm_source when no source is given", () => {
-    const url = buildTrackingUrl({ slug: "escola-teste" });
+    const url = buildTrackingUrl({ baseUrl, slug: "escola-teste" });
     const parsed = new URL(url);
     expect(parsed.searchParams.has("utm_source")).toBe(false);
   });
 
   it("includes utm_source alongside utm_institution when a source is given", () => {
-    const url = buildTrackingUrl({ slug: "escola-teste", source: "group-a" });
+    const url = buildTrackingUrl({
+      baseUrl,
+      slug: "escola-teste",
+      source: "group-a",
+    });
     const parsed = new URL(url);
     expect(parsed.searchParams.get("utm_institution")).toBe("escola-teste");
     expect(parsed.searchParams.get("utm_source")).toBe("group-a");
