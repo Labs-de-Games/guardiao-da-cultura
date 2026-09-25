@@ -100,3 +100,119 @@ describe("env-server — edital fields", () => {
     expect(serverEnv.server.editalPosthogProjectId).toBe("second");
   });
 });
+
+describe("env-server — empty-string env vars", () => {
+  const ORIGINAL_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...ORIGINAL_ENV, RESPONSIVEVOICE_API_KEY: "test-key" };
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it("falls back to the default cache TTL when POSTHOG_QUERY_CACHE_TTL_MS is empty", async () => {
+    process.env.POSTHOG_QUERY_CACHE_TTL_MS = "";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.editalQueryCacheTtlMs).toBe(300000);
+  });
+
+  it("falls back to the default query host when POSTHOG_QUERY_HOST is empty", async () => {
+    process.env.POSTHOG_QUERY_HOST = "";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.editalPosthogQueryHost).toBe(
+      "https://us.posthog.com",
+    );
+  });
+
+  it("treats an empty EDITAL_PERIOD_START as unset", async () => {
+    process.env.EDITAL_PERIOD_START = "";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.editalPeriodStart).toBeUndefined();
+  });
+
+  it("still rejects an empty required RESPONSIVEVOICE_API_KEY", async () => {
+    process.env.RESPONSIVEVOICE_API_KEY = "";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(() => serverEnv.server).toThrow();
+  });
+});
+
+describe("env-server — AUTH_URL guard", () => {
+  const ORIGINAL_ENV = process.env;
+
+  function setNonDevelopmentAuthEnv(): void {
+    process.env.NEXT_PUBLIC_ENV = "staging";
+    process.env.AUTH_SECRET = "secret";
+    process.env.AUTH_GOOGLE_ID = "google-id";
+    process.env.AUTH_GOOGLE_SECRET = "google-secret";
+    process.env.AUTH_TRUST_HOST = "true";
+  }
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...ORIGINAL_ENV, RESPONSIVEVOICE_API_KEY: "test-key" };
+    delete process.env.AUTH_URL;
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it("is optional in development", async () => {
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.authUrl).toBeUndefined();
+  });
+
+  it("is required outside development", async () => {
+    setNonDevelopmentAuthEnv();
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(() => serverEnv.server).toThrow(
+      "AUTH_URL is required outside development",
+    );
+  });
+
+  it("treats an empty AUTH_URL as missing outside development", async () => {
+    setNonDevelopmentAuthEnv();
+    process.env.AUTH_URL = "";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(() => serverEnv.server).toThrow(
+      "AUTH_URL is required outside development",
+    );
+  });
+
+  it("rejects an AUTH_URL with a path", async () => {
+    setNonDevelopmentAuthEnv();
+    process.env.AUTH_URL = "https://staging.example.com/app";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(() => serverEnv.server).toThrow(
+      "AUTH_URL must be an origin only (no path)",
+    );
+  });
+
+  it("accepts an origin-only AUTH_URL outside development", async () => {
+    setNonDevelopmentAuthEnv();
+    process.env.AUTH_URL = "https://staging.example.com";
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(serverEnv.server.authUrl).toBe("https://staging.example.com");
+  });
+});
