@@ -125,6 +125,66 @@ describe("GameOverlay", () => {
     expect(useGameUIStore.getState().sidebarOpen).toBe(true);
   });
 
+  it("closes the sidebar when the level-start controls panel is dismissed", () => {
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
+    });
+    expect(useGameUIStore.getState().sidebarOpen).toBe(true);
+
+    act(() => {
+      useGameUIStore.setState({ controlsOpen: false });
+    });
+    expect(useGameUIStore.getState().sidebarOpen).toBe(false);
+  });
+
+  it("does not close the sidebar on later controls panel dismissals", () => {
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
+    });
+    act(() => {
+      useGameUIStore.setState({ controlsOpen: false });
+    });
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(useGameUIStore.getState().sidebarOpen).toBe(true);
+
+    act(() => {
+      useGameUIStore.setState({ controlsOpen: true });
+    });
+    act(() => {
+      useGameUIStore.setState({ controlsOpen: false });
+    });
+    expect(useGameUIStore.getState().sidebarOpen).toBe(true);
+  });
+
+  it("re-arms the level-start auto-close for the next level", () => {
+    render(<GameOverlay entryFlow="map" />);
+
+    act(() => {
+      useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
+    });
+    act(() => {
+      useGameUIStore.setState({ controlsOpen: false });
+    });
+    act(() => {
+      useGameUIStore.getState().endGame();
+    });
+
+    act(() => {
+      useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
+    });
+    expect(useGameUIStore.getState().sidebarOpen).toBe(true);
+
+    act(() => {
+      useGameUIStore.setState({ controlsOpen: false });
+    });
+    expect(useGameUIStore.getState().sidebarOpen).toBe(false);
+  });
+
   it("closes the label when Escape is pressed while a label is open", () => {
     useGameUIStore.setState({
       gameStarted: true,

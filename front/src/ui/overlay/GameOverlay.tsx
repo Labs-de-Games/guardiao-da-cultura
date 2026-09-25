@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { EntryFlow } from "@/game/main";
 import { getGuestId } from "@/lib/api/client";
 import { EventBus } from "@/shared/events/event-bus";
@@ -110,11 +110,26 @@ function OverlayContent({
     setAuthState(false, getGuestId());
   }, [setAuthState]);
 
+  // Armed at level start so that dismissing the initial ControlsPanel also
+  // collapses the sidebar; consumed on the first close, then Tab-only again.
+  const levelStartControlsRef = useRef(false);
+  const prevControlsOpenRef = useRef(controlsOpen);
+
   useEffect(() => {
+    levelStartControlsRef.current = gameStarted;
     if (gameStarted && !useGameUIStore.getState().sidebarOpen) {
       setSidebarOpen(true);
     }
   }, [gameStarted, setSidebarOpen]);
+
+  useEffect(() => {
+    const wasOpen = prevControlsOpenRef.current;
+    prevControlsOpenRef.current = controlsOpen;
+    if (wasOpen && !controlsOpen && levelStartControlsRef.current) {
+      levelStartControlsRef.current = false;
+      setSidebarOpen(false);
+    }
+  }, [controlsOpen, setSidebarOpen]);
 
   useEffect(() => {
     const unsubControls = EventBus.on("ui:controls-overlay", (data) => {
