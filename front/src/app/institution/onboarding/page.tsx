@@ -1,9 +1,13 @@
 "use client";
 
 import { Alert, Box, Button, TextField, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { type FormEvent, useState } from "react";
+import { hardNavigate } from "@/lib/hardNavigate";
+
+const DASHBOARD_PATH = "/institution";
+const SUBMIT_ERROR_MESSAGE =
+  "Não foi possível concluir o cadastro. Tente novamente.";
 
 /**
  * One-time step for a freshly-created institution account
@@ -13,7 +17,6 @@ import { type FormEvent, useState } from "react";
  * has no slug yet, for any /institution/* route except this one.
  */
 export default function InstitutionOnboardingPage() {
-  const router = useRouter();
   const { update } = useSession();
   const [institutionName, setInstitutionName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,22 +26,40 @@ export default function InstitutionOnboardingPage() {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+
+    let response: Response;
     try {
-      const response = await fetch("/api/institution/onboarding", {
+      response = await fetch("/api/institution/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ institutionName }),
       });
-      if (!response.ok) {
-        setError("Não foi possível concluir o cadastro. Tente novamente.");
-        return;
-      }
-      const data = (await response.json()) as { institutionSlug: string };
-      await update({ institutionSlug: data.institutionSlug });
-      router.push("/institution");
-    } finally {
+    } catch {
+      setError(SUBMIT_ERROR_MESSAGE);
       setIsSubmitting(false);
+      return;
     }
+
+    if (!response.ok) {
+      setError(SUBMIT_ERROR_MESSAGE);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Onboarding is idempotent: an already-onboarded account gets its
+    // existing slug back too, so this update() also repairs a session
+    // cookie that missed an earlier update.
+    const data = (await response.json()) as { institutionSlug: string };
+    try {
+      await update({ institutionSlug: data.institutionSlug });
+    } catch {
+      // The name is saved server-side; a resubmit returns the same slug and
+      // retries this update, so navigating on is still the right call.
+    }
+    // Full navigation, not router.push: a soft navigation can replay the
+    // client router's cached "/institution → onboarding" redirect and keep
+    // the stale SessionProvider session, leaving the user stuck here.
+    hardNavigate(DASHBOARD_PATH);
   }
 
   return (
