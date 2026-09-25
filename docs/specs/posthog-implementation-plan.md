@@ -171,6 +171,18 @@ POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
 
 **Note:** The project API key (`phc_...`) is a public write-only key. It is safe to use in both frontend and backend. Never use a personal API key in application code.
 
+**Exception (added by #738/#748):** the edital dashboard's HogQL Query API
+(`front/src/lib/edital/server/hogql.ts`) genuinely requires a **personal**
+API key with `query:read` scope — the project key above cannot run
+arbitrary HogQL. That key (`POSTHOG_PERSONAL_API_KEY`) is confined to
+files that `import "server-only"` (enforced at build time — `server-only`
+throws if such a module is ever bundled into client code), is read
+through `env-server.ts` only, and must never appear in a `NEXT_PUBLIC_*`
+variable or a Docker build arg (those are visible in the built image and
+in the browser bundle respectively). The write-key/read-key paths never
+share code or a config getter — see `back/src/modules/posthog/*`, which
+this exception does not touch.
+
 ---
 
 ## Frontend Implementation

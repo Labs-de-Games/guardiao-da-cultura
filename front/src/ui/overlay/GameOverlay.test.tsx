@@ -12,12 +12,6 @@ jest.mock("phaser", () => ({
   Events: { EventEmitter: jest.requireActual("eventemitter3") },
 }));
 
-jest.mock("@/lib/auth/useAuth", () => ({
-  useAuth: () => ({
-    isAuthenticated: true,
-  }),
-}));
-
 jest.mock("@/ui/hooks/useEventBridge", () => ({
   useEventBridge: jest.fn(),
 }));

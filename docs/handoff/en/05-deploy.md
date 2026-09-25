@@ -162,14 +162,46 @@ PostHog keys are variables, not secrets, because they ship in the browser bundle
 regardless.
 
 Coolify runtime holds `JWT_SECRET`, `MAGIC_LINK_SECRET`, `DATABASE_URL`,
-Postgres and Gmail credentials, `POSTHOG_API_KEY`, `RESPONSIVEVOICE_API_KEY` and
-`CLOUDFLARE_TUNNEL_TOKEN`.
+Postgres and Gmail credentials, `POSTHOG_API_KEY`, `RESPONSIVEVOICE_API_KEY`,
+`CLOUDFLARE_TUNNEL_TOKEN`, `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID`,
+`POSTHOG_QUERY_HOST`, `POSTHOG_QUERY_CACHE_TTL_MS`, `AUTH_SECRET`,
+`AUTH_TRUST_HOST`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and
+`AUTH_OAUTH_UPSERT_TOKEN`.
 
 `JWT_SECRET` and `MAGIC_LINK_SECRET` ship as `change-me-in-production` in
 `.env.example`. They must be rotated values in staging and production.
 
 `RESPONSIVEVOICE_API_KEY` is not passed by any CD workflow. It exists only in
 the Coolify runtime. Check there first when text to speech fails.
+
+`POSTHOG_PERSONAL_API_KEY` is a personal `phx_` PostHog key (Query API, not the
+ingestion `phc_` write key above) used only by the `/institution` edital
+dashboard's Next.js route handlers — server-only, never `NEXT_PUBLIC_*`. It is
+a front-service runtime secret, same shape as `RESPONSIVEVOICE_API_KEY`: not
+passed by any CD workflow, exists only in the Coolify runtime.
+`POSTHOG_PROJECT_ID` and `POSTHOG_QUERY_HOST` are its non-secret companions
+(project id, and the Query API host — **not** the same as `POSTHOG_HOST`
+above, which is the ingestion host and doesn't serve `/api/projects/*`).
+`POSTHOG_QUERY_CACHE_TTL_MS` calibrates the edital dashboard's per-instance
+cache; see the open question below about replica count before tuning it.
+
+`AUTH_SECRET` and `AUTH_TRUST_HOST` are NextAuth.js requirements for the same
+dashboard; `AUTH_TRUST_HOST` must be set because the app runs behind the
+nginx reverse proxy — this project uses `AUTH_TRUST_HOST` instead of setting
+`AUTH_URL` explicitly, since NextAuth v5 derives the canonical URL from the
+proxy's forwarded headers once trusted. `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET`
+are the Google OAuth client credentials for institution sign-in.
+`AUTH_OAUTH_UPSERT_TOKEN` is a shared secret **required on both the front and
+back services** for the institution-account upsert endpoint — the front
+sends it, the back verifies it with a constant-time compare. See
+`docs/specs/dashboard-edital-implementation-plan.md` step 1 for the full
+rationale.
+
+**Open question, not yet answered:** how many front replicas does Coolify run
+in production? The edital dashboard's query cache is per Next.js instance
+(see #742), so replica count directly multiplies upstream PostHog query
+volume and should inform `POSTHOG_QUERY_CACHE_TTL_MS`. Check the Coolify
+service configuration and record the answer here.
 
 ## Who dispatches
 

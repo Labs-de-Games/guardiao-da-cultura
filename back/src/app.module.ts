@@ -12,6 +12,7 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { RolesGuard } from "./modules/auth/guards/roles.guard";
 import { BadgesModule } from "./modules/badges/badges.module";
+import { CampaignLinksModule } from "./modules/campaign-links/campaign-links.module";
 import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { GameModule } from "./modules/game/game.module";
 import { PostHogModule } from "./modules/posthog/posthog.module";
@@ -35,6 +36,7 @@ import { UsersModule } from "./modules/users/users.module";
     BadgesModule,
     ScoringModule,
     AnalyticsModule,
+    CampaignLinksModule,
     UserInterestedModule,
     DashboardModule,
     HealthModule,

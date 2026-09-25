@@ -12,6 +12,13 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     posthog.captureException(error);
+    // Issue #741's fourth critical_error_occurred hook: the root layout
+    // itself crashed — the whole app is down, always blocking.
+    posthog.capture("critical_error_occurred", {
+      error_code: "react_error_boundary",
+      is_blocking: true,
+      boundary: "app/global-error.tsx",
+    });
   }, [error]);
 
   return (

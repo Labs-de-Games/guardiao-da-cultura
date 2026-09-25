@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import type { EntryFlow } from "@/game/main";
 import { getGuestId } from "@/lib/api/client";
-import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
 import { CreditsScreen } from "@/ui/credits/CreditsScreen";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
@@ -103,11 +102,11 @@ function OverlayContent({
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
 
-  const { isAuthenticated } = useAuth();
+  // Players never authenticate (#738: no player login/registration) — the
+  // game is always played as a guest, identified by getGuestId().
   useEffect(() => {
-    const guestId = !isAuthenticated ? getGuestId() : null;
-    setAuthState(isAuthenticated, guestId);
-  }, [isAuthenticated, setAuthState]);
+    setAuthState(false, getGuestId());
+  }, [setAuthState]);
 
   useEffect(() => {
     if (gameStarted && !useGameUIStore.getState().sidebarOpen) {

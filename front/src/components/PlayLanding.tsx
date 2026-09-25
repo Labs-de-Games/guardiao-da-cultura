@@ -12,17 +12,52 @@ export default function PlayLanding() {
   const enteredAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    posthog.capture("landing_page_viewed");
+    // referrer: issue #741's dual-emit table asks for it specifically on
+    // this event (the funnel's first step). Empty string for direct
+    // visits/new tabs is a legitimate value, not omitted.
+    posthog.capture("landing_page_viewed", {
+      referrer: document.referrer,
+    });
     const enteredAt = enteredAtRef.current;
-    return () => {
+
+    // The effect-cleanup capture below only fires on unmount, which is
+    // unreliable on real navigations (tab close, back/forward cache, a
+    // hard reload) — the browser can tear the page down without React
+    // ever running cleanup. pagehide/visibilitychange fire in those cases
+    // too, so the dwell-time capture is duplicated onto both, guarded by a
+    // single-fire flag. See discovery §5.2.
+    let sent = false;
+    const sendDwellTime = () => {
+      if (sent) return;
+      sent = true;
       posthog.capture("landing_page_dwell_time", {
         dwell_ms: Date.now() - enteredAt,
       });
     };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") sendDwellTime();
+    };
+
+    window.addEventListener("pagehide", sendDwellTime);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", sendDwellTime);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      sendDwellTime();
+    };
   }, []);
 
   const handlePlay = () => {
+    // Legacy — unchanged.
     posthog.capture("landing_page_play_clicked");
+    // Canonical funnel step (step 2 of 7) — see
+    // docs/specs/edital-onepager.md. dwell_ms per issue #741's dual-emit
+    // table ("+ dwell_ms").
+    posthog.capture("play_clicked", {
+      dwell_ms: Date.now() - enteredAtRef.current,
+    });
     const query = searchParams.toString();
     router.push(query ? `/game?${query}` : "/game");
   };

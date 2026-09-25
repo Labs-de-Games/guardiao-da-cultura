@@ -1,10 +1,10 @@
 import Script from "next/script";
 import type { ReactNode } from "react";
+import { OfflineGate } from "@/components/OfflineGate";
 import PostHogPageView from "@/components/PostHogPageView";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
 import { ToastProvider } from "@/components/ToastProvider";
-import { AuthProvider } from "@/lib/auth/AuthContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -26,12 +26,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <PostHogProvider>
           <ThemeRegistry>
-            <AuthProvider>
-              <ToastProvider>
-                <PostHogPageView />
-                {children}
-              </ToastProvider>
-            </AuthProvider>
+            <ToastProvider>
+              <PostHogPageView />
+              <OfflineGate>{children}</OfflineGate>
+            </ToastProvider>
           </ThemeRegistry>
         </PostHogProvider>
         <Script
