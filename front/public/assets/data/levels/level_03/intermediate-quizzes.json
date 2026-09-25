@@ -57,12 +57,12 @@
       "options": ["Forró pé de serra", "Frevo", "Chorinho", "Bossa nova"]
     },
     {
-      "question": "Qual artista ficou famoso como “Rei do Baião” tocando sanfona?",
+      "question": "Como a sanfona produz som?",
       "options": [
-        "Luiz Gonzaga",
-        "Dominguinhos",
-        "Jackson do Pandeiro",
-        "Alceu Valença"
+        "Com o ar do fole",
+        "Com cordas vibrando",
+        "Soprando num bocal",
+        "Batendo com baquetas"
       ]
     }
   ]
