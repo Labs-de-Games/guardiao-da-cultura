@@ -7,6 +7,12 @@ const schema = z
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // Deployment environment, distinct from NODE_ENV: staging runs with
+    // NODE_ENV=production (optimized build) but must still tag its PostHog
+    // events as "staging" — staging and production share one project.
+    APP_ENV: z
+      .enum(["development", "staging", "production"])
+      .default("development"),
     DATABASE_URL: z.string().url(),
     JWT_SECRET: z.string().min(1),
     JWT_EXPIRATION: z.string().default("15m"),
@@ -60,6 +66,7 @@ export class ConfigService {
     this.config = schema.parse({
       BACKEND_PORT: process.env.BACKEND_PORT,
       NODE_ENV: process.env.NODE_ENV,
+      APP_ENV: process.env.APP_ENV,
       DATABASE_URL: process.env.DATABASE_URL,
       JWT_SECRET: process.env.JWT_SECRET,
       JWT_EXPIRATION: process.env.JWT_EXPIRATION,
@@ -83,6 +90,9 @@ export class ConfigService {
   }
   get nodeEnv() {
     return this.config.NODE_ENV;
+  }
+  get appEnv() {
+    return this.config.APP_ENV;
   }
   get databaseUrl() {
     return this.config.DATABASE_URL;
