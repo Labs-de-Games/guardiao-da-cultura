@@ -17,14 +17,6 @@ export function useSound() {
     EventBus.emit("ui:sound-hover", undefined);
   }, []);
 
-  const playModalOpen = useCallback(() => {
-    EventBus.emit("ui:sound-modal-open", undefined);
-  }, []);
-
-  const playModalClose = useCallback(() => {
-    EventBus.emit("ui:sound-modal-close", undefined);
-  }, []);
-
   const playBadgeUnlock = useCallback(() => {
     EventBus.emit("ui:sound-badge-unlock", undefined);
   }, []);
@@ -40,8 +32,6 @@ export function useSound() {
   return {
     playClick,
     playHover,
-    playModalOpen,
-    playModalClose,
     playBadgeUnlock,
     playLevelComplete,
     playGeniusNote,

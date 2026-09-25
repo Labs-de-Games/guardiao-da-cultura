@@ -308,8 +308,6 @@ export interface GameEventMap {
   "ui:toast-show": ToastShowData;
   "ui:sound-click": undefined;
   "ui:sound-hover": undefined;
-  "ui:sound-modal-open": undefined;
-  "ui:sound-modal-close": undefined;
   "ui:sound-badge-unlock": undefined;
   "ui:sound-level-complete": undefined;
   "dialogue:show": DialogueShowData;
