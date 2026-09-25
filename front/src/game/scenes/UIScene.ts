@@ -247,15 +247,7 @@ export class UIScene extends Scene {
     });
 
     const unsubSoundHover = EventBus.on("ui:sound-hover", () => {
-      AudioManager.playSfx("sfx.ui.hover");
-    });
-
-    const unsubSoundModalOpen = EventBus.on("ui:sound-modal-open", () => {
-      AudioManager.playSfx("sfx.ui.modal_open");
-    });
-
-    const unsubSoundModalClose = EventBus.on("ui:sound-modal-close", () => {
-      AudioManager.playSfx("sfx.ui.modal_close");
+      AudioManager.playSfx("sfx.ui.click");
     });
 
     const unsubSoundBadgeUnlock = EventBus.on("ui:sound-badge-unlock", () => {
@@ -292,8 +284,6 @@ export class UIScene extends Scene {
       unsubDialogueDequeueStarted();
       unsubSoundClick();
       unsubSoundHover();
-      unsubSoundModalOpen();
-      unsubSoundModalClose();
       unsubSoundBadgeUnlock();
       unsubSoundLevelComplete();
       unsubSoundGeniusNote();

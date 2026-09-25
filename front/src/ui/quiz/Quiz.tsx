@@ -182,7 +182,7 @@ export default function QuizPanel() {
   const selectOption = useGameUIStore((s) => s.selectOption);
   const continueAfterReveal = useGameUIStore((s) => s.continueAfterReveal);
   const { speak } = useAudioAccessibility();
-  const { playModalOpen, playModalClose, playClick } = useSound();
+  const { playClick } = useSound();
 
   const [selectedNavIndex, setSelectedNavIndex] = useState(1);
 
@@ -394,14 +394,6 @@ export default function QuizPanel() {
       cardRef.current.focus();
     }
   }, [quiz.isVisible]);
-
-  useEffect(() => {
-    if (quiz.isVisible) {
-      playModalOpen();
-    } else {
-      playModalClose();
-    }
-  }, [quiz.isVisible, playModalOpen, playModalClose]);
 
   if (!quiz.isVisible || (!currentQuestion && !isPerformance)) return null;
 
