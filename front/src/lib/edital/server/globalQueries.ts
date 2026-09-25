@@ -69,7 +69,7 @@ export function buildInstitutionCountQuery(
   const query = `
 SELECT uniqExact(properties.campaign_source) AS institutions
 FROM events
-WHERE ${commonGlobalPredicate()} AND properties.campaign_source != ''`.trim();
+WHERE ${commonGlobalPredicate()} AND coalesce(properties.campaign_source, '') != ''`.trim();
 
   return { query, values: baseValues(range) };
 }
@@ -82,7 +82,7 @@ export function buildTurmaCountQuery(range: ResolvedDateRange): HogQLQueryPlan {
   const query = `
 SELECT uniqExact(properties.turma_source) AS turmas
 FROM events
-WHERE ${commonGlobalPredicate()} AND properties.turma_source != ''`.trim();
+WHERE ${commonGlobalPredicate()} AND coalesce(properties.turma_source, '') != ''`.trim();
 
   return { query, values: baseValues(range) };
 }
@@ -199,14 +199,20 @@ GROUP BY level_id`.trim();
  * "institucional" iff it carries a non-empty `campaign_source`
  * (first-touch `?utm_institution=`); everything else is "espontânea"
  * (direct access to the game, no institution link).
+ *
+ * `campaign_source` is simply never set without a link, so it reads as
+ * NULL — and HogQL's null-safe comparisons make `NULL != ''` true and
+ * `NULL = ''` false, which counted every no-link player as institutional.
+ * `coalesce(…, '')` folds NULL into "no link" for every optional-property
+ * comparison in this file.
  */
 export function buildGlobalOriginSplitQuery(
   range: ResolvedDateRange,
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started' AND properties.campaign_source != '') AS institutional,
-  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started' AND properties.campaign_source = '') AS spontaneous
+  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started' AND coalesce(properties.campaign_source, '') != '') AS institutional,
+  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started' AND coalesce(properties.campaign_source, '') = '') AS spontaneous
 FROM events
 WHERE ${commonGlobalPredicate()}`.trim();
 
