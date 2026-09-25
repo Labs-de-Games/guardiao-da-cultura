@@ -1,12 +1,36 @@
 import { createTheme } from "@mui/material/styles";
 
+declare module "@mui/material/styles" {
+  interface Palette {
+    custom: {
+      sidebarBg: string;
+      footerMutedText: string;
+      highlight: string;
+      sidebarAccent: string;
+      sidebarAccentText: string;
+    };
+  }
+  interface PaletteOptions {
+    custom: {
+      sidebarBg: string;
+      footerMutedText: string;
+      highlight: string;
+      sidebarAccent: string;
+      sidebarAccentText: string;
+    };
+  }
+}
+
 export const theme = createTheme({
   palette: {
-    mode: "dark",
+    mode: "light",
     primary: {
-      main: "#6366f1",
-      light: "#818cf8",
-      dark: "#4f46e5",
+      // Matches the approved login/register CTA color (#1a1a1a), not the
+      // indigo used there only for text links — keeps buttons/highlights
+      // across the app consistent with the approved design.
+      main: "#1a1a1a",
+      light: "#333333",
+      dark: "#000000",
       contrastText: "#ffffff",
     },
     secondary: {
@@ -16,13 +40,14 @@ export const theme = createTheme({
       contrastText: "#ffffff",
     },
     background: {
-      default: "#0f172a",
-      paper: "#1e293b",
+      default: "#fffdf6",
+      paper: "#ffffff",
     },
     text: {
-      primary: "#f8fafc",
-      secondary: "#94a3b8",
+      primary: "#1a1a1a",
+      secondary: "#7a756a",
     },
+    divider: "#e0dcd0",
     error: {
       main: "#ef4444",
     },
@@ -34,6 +59,22 @@ export const theme = createTheme({
     },
     info: {
       main: "#3b82f6",
+    },
+    // One-off tones that don't fit a standard palette slot — named here
+    // instead of left as unlabeled hex in components.
+    custom: {
+      sidebarBg: "#f5f0e8",
+      footerMutedText: "rgba(255,255,255,0.6)",
+      // Lovable reference's accent (oklch(0.68 0.11 61), a warm amber)
+      // for kickers/eyebrows and featured-card accents.
+      highlight: "#c17f3e",
+      // Lovable reference's --sidebar-accent/--sidebar-accent-foreground
+      // (oklch(0.88 0.035 325) / oklch(0.23 0.025 325)) — low-chroma
+      // (0.035), so it reads as a neutral warm grey, not pink. A
+      // *different* token from `highlight`, used only for the active
+      // sidebar nav item.
+      sidebarAccent: "#e4dfd6",
+      sidebarAccentText: "#2b2b2b",
     },
   },
   typography: {
@@ -95,7 +136,10 @@ export const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          backgroundColor: "#ffffff",
+          border: "1px solid #e0dcd0",
+          borderRadius: 12,
+          boxShadow: "none",
         },
       },
     },

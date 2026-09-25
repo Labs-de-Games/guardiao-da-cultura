@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { sendGameEvent } from "../../lib/analyticsApi";
 import { AudioManager } from "../audio";
 import { GameEvents } from "../constants/GameEvents";
 import {
@@ -89,6 +90,30 @@ export class QuizManager {
           .emit(GameEvents.SHOW_DIALOGUE_REQUEST, [
             "[Erro de Sistema] Não há perguntas cadastradas para esta missão.",
           ]);
+
+        // Issue #741's third critical_error_occurred hook: without quiz
+        // data the player is stuck on this mission and can't progress —
+        // always blocking.
+        {
+          const criticalMetadata = {
+            error_code: "quiz_data_missing",
+            is_blocking: true,
+            mission_id: missionId,
+            level_id: this.context.getLevelId(),
+          };
+          posthog.capture("critical_error_occurred", criticalMetadata);
+          sendGameEvent({
+            userId: this.context.getRegistry().get("userId"),
+            type: GameEventType.EVENT_LOGGED,
+            timestamp: new Date().toISOString(),
+            metadata: { severity: "critical", ...criticalMetadata },
+          }).catch((err) => {
+            console.error(
+              "[QuizManager] Failed to log critical_error_occurred:",
+              err,
+            );
+          });
+        }
         return;
       }
 
@@ -197,6 +222,10 @@ export class QuizManager {
               }
 
               const scoringPayload = this.scoreManager.getPayload();
+              // quiz_result/duration_seconds per issue #741's dual-emit
+              // table ("+ quiz_result, duration_seconds") — this row is
+              // separate from chapter_1_completed below and was missed in
+              // the first pass at this fix.
               posthog.capture("quiz_completed", {
                 level_id: levelId,
                 mission_id: missionId,
@@ -205,7 +234,34 @@ export class QuizManager {
                 total_questions: shuffledQuestions.length,
                 accuracy_percent: scoringPayload.quiz.accuracyPercent,
                 passed: isSuccess,
+                quiz_result: isSuccess ? "passed" : "failed",
+                duration_seconds:
+                  this.quizStartedAt !== null
+                    ? Math.round((Date.now() - this.quizStartedAt) / 1000)
+                    : null,
               });
+
+              // Canonical funnel step — only chapter 1 has one; see the
+              // 7-step funnel in docs/specs/edital-onepager.md. Emitted
+              // after quiz_completed above, never before: the issue's own
+              // acceptance criterion orders the funnel
+              // "...quiz_completed → chapter_1_completed", and this used
+              // to fire earlier (inside the isSuccess branch, before
+              // quiz_completed was even captured), silently breaking that
+              // order.
+              if (isSuccess && levelDef.levelNumber === 1) {
+                const chapter1Payload = this.scoreManager.getPayload();
+                posthog.capture("chapter_1_completed", {
+                  level_id: levelId,
+                  score: chapter1Payload.totalQuarters,
+                  stars: chapter1Payload.totalStars,
+                  duration_seconds: Math.round(
+                    (Date.now() -
+                      new Date(chapter1Payload.startedAt).getTime()) /
+                      1000,
+                  ),
+                });
+              }
 
               void this.persistenceBridge.sendQuizOutcome({
                 type: isSuccess ? "quiz.completed" : "quiz.failed",

@@ -629,11 +629,28 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         ? quiz.wrongAttempts
         : quiz.wrongAttempts + 1;
 
+      const questionId = `${quiz.quizNumber ?? "regular"}-${quiz.currentQuestionIndex}`;
+      const quizResult: "correct" | "incorrect" = isCorrect
+        ? "correct"
+        : "incorrect";
+
+      // Legacy — unchanged.
       posthog.capture("quiz_answer_submitted", {
         quiz_number: quiz.quizNumber,
-        question_id: `${quiz.quizNumber ?? "regular"}-${quiz.currentQuestionIndex}`,
+        question_id: questionId,
         selected_answer: quiz.selectedOptionIndex,
         is_correct: isCorrect,
+        attempt_number: quiz.attemptNumber,
+        wrong_attempt_number: wrongAttempts,
+      });
+      // Canonical funnel step — see issue #741's dual-emit table
+      // ("+ quiz_result").
+      posthog.capture("quiz_answered", {
+        quiz_number: quiz.quizNumber,
+        question_id: questionId,
+        selected_answer: quiz.selectedOptionIndex,
+        is_correct: isCorrect,
+        quiz_result: quizResult,
         attempt_number: quiz.attemptNumber,
         wrong_attempt_number: wrongAttempts,
       });

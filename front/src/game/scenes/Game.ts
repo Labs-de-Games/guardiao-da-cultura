@@ -2,6 +2,8 @@ import * as Phaser from "phaser";
 import { Scene, WEBGL } from "phaser";
 import posthog from "posthog-js";
 
+import { chapterIdFor } from "../../lib/edital/events";
+import { setChapterId } from "../../lib/posthog/eventContext";
 import { EventBus } from "../../shared/events/event-bus";
 import type { GameEventMap } from "../../shared/events/game-events";
 import { useDialogueStore } from "../../ui/state/dialogue-store";
@@ -60,6 +62,7 @@ import { AnalyticsSystem } from "../systems/AnalyticsSystem";
 import { BadgeSystem } from "../systems/BadgeSystem";
 import { ChandelierLightSystem } from "../systems/ChandelierLightSystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
+import { captureOncePerSession } from "../systems/captureOncePerSession";
 import { DisappearingPlatformTracker } from "../systems/DisappearingPlatformTracker";
 import { processModularData } from "../systems/GameDataLoader";
 import { HintKeySystem } from "../systems/HintKeySystem";
@@ -758,9 +761,23 @@ export class Game extends Scene implements GameDataAccessor {
       this.progressionManager?.removeAllListeners(
         ProgressionEvents.PROGRESSION_UPDATED,
       );
+      // Issue #741: clear chapter_id when this level's scene shuts down —
+      // whether that's chapter 1 ending or any other level, so a stale
+      // chapter_id from a previous level never leaks onto later events.
+      setChapterId(null);
     });
 
+    // Legacy — unchanged, still fires once per level (scene restart per
+    // LevelCinematic.ts).
     posthog.capture("game_started", {
+      level_id: this.levelId,
+      level_number: this.levelDef.levelNumber,
+    });
+
+    // Canonical funnel step — must fire exactly once per session, unlike
+    // the legacy event above ("gameplay_started fires exactly once under
+    // StrictMode").
+    captureOncePerSession("gameplay_started", {
       level_id: this.levelId,
       level_number: this.levelDef.levelNumber,
     });
@@ -1130,6 +1147,17 @@ export class Game extends Scene implements GameDataAccessor {
           levelNumber: this.levelDef.levelNumber,
         },
       );
+
+      // Canonical funnel step — only chapter 1 has one; other levels have
+      // no corresponding canonical step (see the 7-step funnel in
+      // docs/specs/edital-onepager.md).
+      if (this.levelDef.levelNumber === 1) {
+        posthog.capture("chapter_1_started", { level_id: this.levelId });
+        // Issue #741: every event after level entry should carry
+        // chapter_id — this is the only producer for the singleton
+        // before_send (beforeSend.ts) reads from.
+        setChapterId(chapterIdFor(this.levelDef.levelNumber));
+      }
     }
     this.setupCameras(map);
 

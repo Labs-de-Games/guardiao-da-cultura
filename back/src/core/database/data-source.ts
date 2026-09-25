@@ -29,5 +29,6 @@ export const AppDataSource = new DataSource({
     ? ["dist/core/database/migrations/*.js"]
     : ["src/core/database/migrations/*.ts"],
   migrationsTableName: "migrations",
+  migrationsTransactionMode: "each",
   synchronize: false,
 });
