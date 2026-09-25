@@ -5,23 +5,25 @@
       "missionId": "missao_curador_l3",
       "dialogues": {
         "intro": [
-          "Ei, moço! Chegou bem na hora. Olha só esse forró: sanfona, zabumba e triângulo tudo fora do lugar, ninguém arrumou o palco pro São João.",
-          "Sem o trio arrumado direito, a festa nem começa. Bota cada instrumento no músico certo lá no palco.",
-          "Acende o holofote de cada um pra ver se acertou. Se não bater, o bicho vai reclamar bonito.",
-          "Vai lá organizar essa zoada, que eu fico de olho na fogueira."
+          "Oxente, chegou na hora! Sanfona, zabumba e triângulo estão fora do lugar. Ninguém arrumou o palco do São João.",
+          "Sem o trio completo, a festa nem começa. Leve cada instrumento até o músico certo no palco.",
+          "Acenda o holofote de cada músico para conferir. Se errar, a plateia reclama, visse?",
+          "Vá organizar essa zoada, que eu fico de olho na fogueira."
         ],
         "collecting": [
-          "Ainda falta gente no palco! Olha os holofotes: os que tão apagados ainda esperam o instrumento certo.",
+          "Ainda falta gente no palco! Os holofotes apagados ainda esperam o instrumento certo.",
           "Sanfona, zabumba e triângulo, cada um no seu canto. Erra e o povo vaia, viu?"
         ],
         "ready": [
-          "Rapaz, acho que já é só conferir se ficou tudo nos trinques.",
+          "Vixe, acho que só falta conferir se ficou tudo nos trinques.",
           "Bora ver se o trio tá completo antes de soltar o forró."
         ],
         "completed": [
-          "Aí sim! Palco pronto, trio completo, agora é só o São João estourar."
+          "Aí sim! Palco pronto e trio completo. Agora o São João pode começar!"
         ],
-        "success": ["Show de bola! Você entende mesmo de forró de raiz."],
+        "success": [
+          "Arretado! Você entende mesmo de forró. E nem precisou de cola."
+        ],
         "failure": [
           "Ainda não foi dessa vez, não. Presta atenção nos instrumentos e tenta de novo."
         ],

@@ -4,14 +4,14 @@
     {
       "id": "q1",
       "category": "São João",
-      "question": "Por que Campina Grande é conhecida como “O Maior São João do Mundo”?",
+      "question": "Por que Campina Grande tem o título de “O Maior São João do Mundo”?",
       "options": [
-        "Pelo tamanho e pela duração da festa, que ocupa a cidade por todo o mês de junho",
-        "Por ter sido a primeira cidade brasileira a celebrar o São João",
-        "Por concentrar as maiores fogueiras já registradas no país",
-        "Por ser a única cidade onde a quadrilha é dançada ao ar livre"
+        "Festa grande e longa",
+        "Primeira festa do Brasil",
+        "Maiores fogueiras do país",
+        "Quadrilhas ao ar livre"
       ],
-      "explanation": "O título vem da escala da festa: mais de trinta dias de programação, com o Parque do Povo recebendo milhões de visitantes.",
+      "explanation": "A festa dura mais de 30 dias, e o Parque do Povo recebe milhões de visitantes.",
       "hints": [
         "Não é sobre ter vindo primeiro.",
         "Pense no tamanho e em quantos dias a festa dura."
@@ -37,12 +37,12 @@
       "category": "São João",
       "question": "O que a quadrilha junina brasileira tem em comum com a dança europeia que a originou?",
       "options": [
-        "A formação em pares conduzida por um marcador que anuncia os passos",
-        "O uso obrigatório de fogueira no centro do salão",
-        "A execução exclusivamente instrumental, sem canto",
-        "A proibição de improviso durante a apresentação"
+        "Pares guiados por marcador",
+        "Fogueira no salão",
+        "Só música, sem canto",
+        "Proibido improvisar"
       ],
-      "explanation": "A quadrille francesa, dançada em pares e guiada por um condutor que anunciava as figuras, chegou ao Brasil no século XIX e foi reinventada como festa popular.",
+      "explanation": "A quadrille francesa, dançada em pares com um marcador, chegou ao Brasil no século 19 e virou festa popular.",
       "hints": [
         "Repare em quem grita os comandos durante a dança.",
         "A origem está nos salões europeus do século XIX."
@@ -55,10 +55,10 @@
       "category": "São João",
       "question": "Na tradição junina, o que representa o “casamento matuto” encenado durante a quadrilha?",
       "options": [
-        "Uma paródia teatral dos casamentos roceiros, encenada com humor",
-        "Um ritual religioso obrigatório para abrir a festa",
-        "Uma homenagem formal aos padroeiros da cidade",
-        "Uma competição entre os pares para eleger o melhor dançarino"
+        "Paródia de casamento roceiro",
+        "Ritual religioso obrigatório",
+        "Homenagem aos padroeiros",
+        "Disputa de dançarinos"
       ],
       "explanation": "O casamento matuto é uma encenação cômica que satiriza costumes do casamento no interior — noivo fujão, noiva grávida e delegado incluídos.",
       "hints": [
@@ -73,14 +73,14 @@
       "category": "Investigação",
       "question": "Reunindo o que foi encontrado nos três acervos, o que as pistas dizem sobre o vândalo?",
       "options": [
-        "Conhece técnicas de conservação e tinha acesso autorizado às obras",
-        "Agiu por impulso, sem qualquer conhecimento sobre o acervo",
-        "Queria destruir as peças para revendê-las no mercado ilegal",
-        "Entrou à força nos três locais, arrombando as portas"
+        "Técnico com acesso liberado",
+        "Agiu por impulso",
+        "Queria revender as peças",
+        "Arrombou as portas"
       ],
-      "explanation": "Verniz de conservação, autorização de acesso e anotações sobre a posição das obras apontam para alguém com formação técnica e entrada permitida no acervo.",
+      "explanation": "Verniz, autorização de acesso e anotações sobre as obras apontam para alguém da área, com entrada liberada.",
       "hints": [
-        "Lembre da lata de verniz e do documento de autorização.",
+        "Lembre-se da lata de verniz e do documento de autorização.",
         "Nada foi arrombado: ele podia entrar."
       ],
       "tags": ["investigacao", "pistas", "vandalo"],
