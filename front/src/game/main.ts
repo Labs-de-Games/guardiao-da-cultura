@@ -6,8 +6,6 @@ import { LevelCinematic } from "./scenes/LevelCinematic";
 import { MapIntroScene } from "./scenes/MapIntroScene";
 import { UIScene } from "./scenes/UIScene";
 
-export type EntryFlow = "map" | "direct";
-
 // Find out more information about the Game Config at:
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const baseConfig: Types.Core.GameConfig = {
@@ -36,24 +34,22 @@ const baseConfig: Types.Core.GameConfig = {
   render: { maxLights: 32 },
 };
 
-function getScenes(entryFlow: EntryFlow) {
-  return entryFlow === "direct"
-    ? [LevelCinematic, MainGame, UIScene, MapIntroScene, InvestigationScene]
-    : [MapIntroScene, LevelCinematic, MainGame, UIScene, InvestigationScene];
-}
+// Phaser boots the first scene in the list: the game always enters through
+// the world map.
+const scenes = [
+  MapIntroScene,
+  LevelCinematic,
+  MainGame,
+  UIScene,
+  InvestigationScene,
+];
 
-const StartGame = (
-  parent: string,
-  userId: string,
-  isGuest = false,
-  entryFlow: EntryFlow = "map",
-) => {
-  const game = new Game({ ...baseConfig, parent, scene: getScenes(entryFlow) });
+const StartGame = (parent: string, userId: string, isGuest = false) => {
+  const game = new Game({ ...baseConfig, parent, scene: scenes });
   if (userId) {
     game.registry.set("userId", userId);
   }
   game.registry.set("isGuest", isGuest);
-  game.registry.set("entryFlow", entryFlow);
   return game;
 };
 
