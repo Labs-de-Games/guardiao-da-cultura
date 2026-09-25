@@ -26,7 +26,7 @@ Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
 const EXISTING_LINK = {
   id: "id-1",
   source: "group-a",
-  url: "https://guardiaodacultura.42.rio/?utm_institution=escola-teste&utm_source=group-a",
+  url: "https://staging.example.com/?utm_institution=escola-teste&utm_source=group-a",
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
@@ -95,7 +95,7 @@ describe("InstitutionLinksPage", () => {
       data: {
         id: "id-2",
         source: "group-b",
-        url: "https://guardiaodacultura.42.rio/?utm_institution=escola-teste&utm_source=group-b",
+        url: "https://staging.example.com/?utm_institution=escola-teste&utm_source=group-b",
         createdAt: "2026-01-02T00:00:00.000Z",
       },
     });

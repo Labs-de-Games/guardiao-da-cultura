@@ -7,6 +7,7 @@ import {
   createCampaignLink,
   listCampaignLinks,
 } from "@/lib/edital/server/campaignLinks";
+import { resolveLandingBaseUrl } from "@/lib/edital/server/landingUrl";
 import { resolveScope } from "@/lib/edital/server/scope";
 import type {
   EditalLinksCreateResponse,
@@ -19,7 +20,7 @@ import type {
  * Same session/scope discipline though: institutionSlug always comes from
  * `resolveScope(session)`, never from the request body.
  */
-export async function GET(): Promise<Response> {
+export async function GET(request: NextRequest): Promise<Response> {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,12 +33,17 @@ export async function GET(): Promise<Response> {
   }
 
   const records = await listCampaignLinks(scope);
+  const baseUrl = resolveLandingBaseUrl(request);
   const body: EditalLinksListResponse = {
     linked: true,
     data: records.map((record) => ({
       id: record.id,
       source: record.source,
-      url: buildTrackingUrl({ slug: scope.slug, source: record.source }),
+      url: buildTrackingUrl({
+        baseUrl,
+        slug: scope.slug,
+        source: record.source,
+      }),
       createdAt: record.createdAt,
     })),
   };
@@ -74,7 +80,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       data: {
         id: record.id,
         source: record.source,
-        url: buildTrackingUrl({ slug: scope.slug, source: record.source }),
+        url: buildTrackingUrl({
+          baseUrl: resolveLandingBaseUrl(request),
+          slug: scope.slug,
+          source: record.source,
+        }),
         createdAt: record.createdAt,
       },
     };

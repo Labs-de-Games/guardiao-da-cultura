@@ -128,7 +128,7 @@ export interface EditalCampaignsResponse {
 export interface CampaignLink {
   id: string;
   source: string;
-  /** Full tracking URL, e.g. https://guardiaodacultura.42.rio/?utm_institution=<slug>&utm_source=<source> */
+  /** Full tracking URL, e.g. <origin>/?utm_institution=<slug>&utm_source=<source>, where <origin> is the current environment's domain */
   url: string;
   createdAt: string;
 }

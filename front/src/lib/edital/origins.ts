@@ -8,13 +8,6 @@
  */
 
 /**
- * The landing page itself, per issue #746: pointing tracking links here
- * (not /game directly) preserves the first two funnel steps
- * (landing_page_viewed, play_clicked) for every campaign-sourced player.
- */
-export const LANDING_BASE_URL = "https://guardiaodacultura.42.rio/";
-
-/**
  * Institution slugs are lowercase alphanumeric with single internal
  * hyphens — the same shape a URL path segment and a `?utm_institution=`
  * value both tolerate without encoding. No leading/trailing/double
@@ -65,18 +58,27 @@ export function resolveOriginLabel(slug: string): string {
 }
 
 export interface BuildTrackingUrlParams {
+  /**
+   * The environment's own public origin (e.g. https://staging.example.com)
+   * — never a hardcoded domain, so a link generated on staging or locally
+   * doesn't send players into production's funnel. Resolved server-side by
+   * `resolveLandingBaseUrl`.
+   */
+  baseUrl: string;
   slug: string;
   /** Group/class label within the institution — emitted as utm_source. */
   source?: string;
 }
 
 /**
- * `https://guardiaodacultura.42.rio/?utm_institution=<slug>&utm_source=…`
- * — per issue #746's exact spec. Empty/undefined UTM fields are omitted
- * rather than sent as empty strings.
+ * `<baseUrl>/?utm_institution=<slug>&utm_source=…` — per issue #746's
+ * spec. Always the landing page (`/`), not /game directly: that preserves
+ * the first two funnel steps (landing_page_viewed, play_clicked) for every
+ * campaign-sourced player. Empty/undefined UTM fields are omitted rather
+ * than sent as empty strings.
  */
 export function buildTrackingUrl(params: BuildTrackingUrlParams): string {
-  const url = new URL(LANDING_BASE_URL);
+  const url = new URL("/", params.baseUrl);
   url.searchParams.set("utm_institution", params.slug);
   if (params.source) {
     url.searchParams.set("utm_source", params.source);
