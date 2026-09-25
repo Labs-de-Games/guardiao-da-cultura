@@ -6,26 +6,26 @@ import type { HogQLValues } from "./hogql";
  * Staging and production share one PostHog project, so every dashboard
  * query must be narrowed to the current deployment's own events.
  *
- * - `properties.environment` — the super-property every client event
- *   carries (eventContext.ts), from the build-time NEXT_PUBLIC_ENV.
- * - `properties.$host` — posthog-js's own hostname property, bound only
- *   when AUTH_URL is set (staging/production). Events from before
- *   NEXT_PUBLIC_ENV was baked per environment all say "production",
- *   including staging's, so the host is what keeps old staging plays out
- *   of production's numbers.
+ * - Deployed (AUTH_URL set): `properties.$host`, posthog-js's own hostname
+ *   property, present on every client event. The host is the reliable
+ *   discriminator: events from before NEXT_PUBLIC_ENV was baked per
+ *   environment all say environment "production" — staging's included —
+ *   so filtering by host keeps staging's history on staging and old
+ *   staging plays out of production, without depending on that tag.
+ * - Local (no AUTH_URL): `properties.environment`, since the host there is
+ *   just localhost.
  *
- * Both are bound HogQL values, never string-interpolated.
+ * The value is always bound, never string-interpolated.
  */
 export function environmentPredicate(): string {
-  const base = "properties.environment = {environment}";
-  return currentHost() ? `${base} AND properties.$host = {host}` : base;
+  return currentHost()
+    ? "properties.$host = {host}"
+    : "properties.environment = {environment}";
 }
 
 export function environmentValues(): HogQLValues {
   const host = currentHost();
-  const values: HogQLValues = { environment: serverEnv.client.env };
-  if (host) values.host = host;
-  return values;
+  return host ? { host } : { environment: serverEnv.client.env };
 }
 
 function currentHost(): string | undefined {

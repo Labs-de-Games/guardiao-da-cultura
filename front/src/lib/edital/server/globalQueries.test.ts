@@ -3,6 +3,8 @@
  */
 jest.mock("server-only", () => ({}));
 
+import { resetServerEnv } from "../../env-server";
+
 import * as globalQueries from "./globalQueries";
 import {
   buildGlobalOriginSplitQuery,
@@ -62,5 +64,32 @@ describe("public dashboard query builders", () => {
     expect(query).toContain("properties.environment = {environment}");
     // test-setup.ts runs the suite as "development", with no AUTH_URL.
     expect(values).toMatchObject({ environment: "development" });
+  });
+});
+
+describe("deployed environment (AUTH_URL set)", () => {
+  const ORIGINAL_AUTH_URL = process.env.AUTH_URL;
+
+  beforeEach(() => {
+    process.env.AUTH_URL = "https://development-guardiaodacultura.42.rio";
+    resetServerEnv();
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_AUTH_URL === undefined) delete process.env.AUTH_URL;
+    else process.env.AUTH_URL = ORIGINAL_AUTH_URL;
+    resetServerEnv();
+  });
+
+  it.each(
+    BUILDERS,
+  )("%s: scopes by the deployment's host, not the environment tag", (_name, build) => {
+    const { query, values } = build(range);
+    expect(query).toContain("properties.$host = {host}");
+    expect(query).not.toContain("properties.environment");
+    expect(values).toMatchObject({
+      host: "development-guardiaodacultura.42.rio",
+    });
+    expect(values).not.toHaveProperty("environment");
   });
 });

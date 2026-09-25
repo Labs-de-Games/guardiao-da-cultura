@@ -3,6 +3,8 @@
  */
 jest.mock("server-only", () => ({}));
 
+import { resetServerEnv } from "../../env-server";
+
 import {
   buildCampaignsQuery,
   buildCompletionRateQuery,
@@ -293,5 +295,32 @@ describe("buildCompletionRateQuery (issue #807)", () => {
     const turmaScoped = buildCompletionRateQuery(scope, range, 3, "group-a");
     expect(turmaScoped.values.source).toBe("group-a");
     expect(turmaScoped.query).toContain("properties.turma_source = {source}");
+  });
+});
+
+describe("deployed environment (AUTH_URL set)", () => {
+  const ORIGINAL_AUTH_URL = process.env.AUTH_URL;
+
+  beforeEach(() => {
+    process.env.AUTH_URL = "https://development-guardiaodacultura.42.rio";
+    resetServerEnv();
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_AUTH_URL === undefined) delete process.env.AUTH_URL;
+    else process.env.AUTH_URL = ORIGINAL_AUTH_URL;
+    resetServerEnv();
+  });
+
+  it.each(
+    ALL_BUILDERS,
+  )("%s: scopes by the deployment's host, not the environment tag", (_name, build) => {
+    const { query, values } = build(scope, range);
+    expect(query).toContain("properties.$host = {host}");
+    expect(query).not.toContain("properties.environment");
+    expect(values).toMatchObject({
+      host: "development-guardiaodacultura.42.rio",
+    });
+    expect(values).not.toHaveProperty("environment");
   });
 });
