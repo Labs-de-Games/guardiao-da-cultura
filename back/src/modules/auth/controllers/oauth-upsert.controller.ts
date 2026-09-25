@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   ForbiddenException,
+  Inject,
   NotFoundException,
   Post,
   UseGuards,
@@ -18,6 +19,9 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
+import { PinoLogger } from "nestjs-pino";
+import { EMAIL_SERVICE } from "../../../core/email/email.constants";
+import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
 import { Role } from "../../users/enums/role.enum";
 import { UserService } from "../../users/user.service";
 import { Public } from "../decorators/public.decorator";
@@ -42,7 +46,12 @@ const INSTITUTION_DATE_OF_BIRTH_SENTINEL = new Date(0);
 @ApiTags("Auth — OAuth upsert")
 @Controller("auth/oauth")
 export class OAuthUpsertController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly logger: PinoLogger,
+    private readonly userService: UserService,
+    @Inject(EMAIL_SERVICE)
+    private readonly emailService: IEmailService,
+  ) {}
 
   /**
    * Server-to-server only: called from the front's NextAuth `signIn`
@@ -121,12 +130,14 @@ export class OAuthUpsertController {
     summary: "Set institution name/slug once, on first login",
   })
   @ApiSecurity("oauth-upsert-token")
-  @ApiOkResponse({ type: InstitutionOnboardingResponseDto })
+  @ApiOkResponse({
+    type: InstitutionOnboardingResponseDto,
+    description:
+      "Onboarded now, or already onboarded (idempotent — returns the existing slug)",
+  })
   @ApiUnauthorizedResponse({ description: "Missing/invalid upsert token" })
   @ApiNotFoundResponse({ description: "User not found" })
-  @ApiForbiddenResponse({
-    description: "Not an institution account, or already onboarded",
-  })
+  @ApiForbiddenResponse({ description: "Not an institution account" })
   async onboarding(
     @Body() dto: InstitutionOnboardingDto,
   ): Promise<InstitutionOnboardingResponseDto> {
@@ -137,8 +148,15 @@ export class OAuthUpsertController {
     if (user.role !== Role.Institution) {
       throw new ForbiddenException("Not an institution account");
     }
+    // Idempotent: a resubmit (stale tab, or a session cookie whose
+    // update() never landed) gets the existing slug back, so the front can
+    // repair its session instead of looping back to the onboarding form.
+    // No welcome email on this path — it was sent when onboarding happened.
     if (user.institutionSlug) {
-      throw new ForbiddenException("Institution already onboarded");
+      return {
+        institutionSlug: user.institutionSlug,
+        institutionName: user.institutionName ?? dto.institutionName,
+      };
     }
 
     const base = slugify(dto.institutionName);
@@ -149,6 +167,17 @@ export class OAuthUpsertController {
       dto.institutionName,
       institutionSlug,
     );
+
+    // Google sign-ups skip the email-verification step, which is where the
+    // password flow sends its welcome email — so onboarding (once: the
+    // already-onboarded path above returns early) is the Google flow's
+    // equivalent. Not awaited: SMTP latency must not hold the response,
+    // and a mail failure must never undo a completed onboarding.
+    void this.emailService
+      .sendWelcomeEmail(user.email, dto.institutionName)
+      .catch((err: unknown) => {
+        this.logger.error({ err, userId: user.id }, "Welcome email failed");
+      });
 
     return { institutionSlug, institutionName: dto.institutionName };
   }
