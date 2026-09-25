@@ -37,6 +37,7 @@ export class UIScene extends Scene {
   private unsubQuizRetry: (() => void) | null = null;
   private unsubQuizNextLevel: (() => void) | null = null;
   private unsubQuizVisibilityWatcher: (() => void) | null = null;
+  private unsubStageExit: (() => void) | null = null;
 
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
     new Set();
@@ -63,6 +64,7 @@ export class UIScene extends Scene {
     this.setupKeyboardListeners();
     this.setupQuizCloseListener();
     this.setupQuizVisibilityWatcher();
+    this.setupStageExitListener();
     registerScene(this);
 
     this.layout();
@@ -292,6 +294,7 @@ export class UIScene extends Scene {
       this.unsubQuizRetry?.();
       this.unsubQuizNextLevel?.();
       this.unsubQuizVisibilityWatcher?.();
+      this.unsubStageExit?.();
       this.callbackRegistry.cleanup();
 
       if (gameScene?.events) {
@@ -410,6 +413,24 @@ export class UIScene extends Scene {
       const gameScene = this.scene.get(SceneNames.GAME);
       useGameUIStore.getState().closeQuiz();
       gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { source: "quiz" });
+    });
+  }
+
+  private setupStageExitListener() {
+    this.unsubStageExit = EventBus.on("stage:exit-confirmed", () => {
+      // The confirmation prompt paused GAME+UI while it was open. GAME is
+      // stopped below, so resuming it first is unnecessary — worse, doing so
+      // re-arms its update() loop for a tick while the scene is mid-teardown,
+      // which throws (this.cameras.main is transiently unset). UI is never
+      // stopped here, so it alone needs resuming — explicitly, rather than
+      // relying on the "game:resume-requested" React cleanup, which fires
+      // after this stop and would be dropped (Game.ts unsubscribes its own
+      // EventBus listeners on shutdown).
+      this.scene.resume(SceneNames.UI);
+
+      EventBus.emit("game:ended", undefined);
+      this.scene.stop(SceneNames.GAME);
+      this.scene.start(SceneNames.INTRO);
     });
   }
 
