@@ -30,11 +30,11 @@ const brandStyles = `
 
 /**
  * Styles for the Guardião da Cultura-branded templates (registration
- * confirmation, password reset) — a distinct header/footer/button look
- * from `brandStyles` above, matching the product's own Figma template
- * rather than the generic "42 Rio" one `welcome`/`loginNotification`
- * still use. Kept as its own block instead of editing `brandStyles` so
- * those two templates are untouched.
+ * confirmation, password reset, welcome) — a distinct header/footer/button
+ * look from `brandStyles` above, matching the product's own Figma template
+ * rather than the generic "42 Rio" one `loginNotification` still uses.
+ * Kept as its own block instead of editing `brandStyles` so that template
+ * is untouched.
  */
 const brandedStyles = `
   <style>
@@ -89,7 +89,7 @@ function baseTemplate(title: string, body: string): string {
 
 /**
  * Guardião da Cultura-branded layout (registration confirmation,
- * password reset) — logo + title + subtitle in the dark header, gold
+ * password reset, welcome) — logo + title + subtitle in the dark header, gold
  * pill button, and a compact logo+text footer with the Lei Rouanet
  * incentive line, matching the product's own Figma template. `logoUrl`
  * is built from `frontendUrl` since email clients fetch images over the
@@ -201,19 +201,30 @@ export const emailTemplates = {
     };
   },
 
-  welcome(email: string, nickname: string, frontendUrl: string): EmailTemplate {
+  /**
+   * Sent once per institution account: after email verification (password
+   * flow) or after onboarding (Google flow). `displayName` is the
+   * institution name on the Google path and the nickname on the password
+   * path — user input either way, so always escaped.
+   */
+  welcome(
+    email: string,
+    displayName: string,
+    frontendUrl: string,
+  ): EmailTemplate {
+    const dashboardUrl = `${frontendUrl}/institution`;
     return {
-      subject: "Boas-vindas ao ambiente de testes da 42 Rio!",
-      html: baseTemplate(
-        "Boas-vindas!",
-        `<p>Olá, <strong>${escapeHtml(nickname)}</strong>,</p>
-        <p>ficamos felizes em ter você aqui no <strong>ambiente de testes da 42 Rio</strong>!</p>
-        <p>Sua conta <strong>${escapeHtml(email)}</strong> foi criada com sucesso e você já pode começar sua jornada de aprendizado.</p>
+      subject: "Boas-vindas ao Guardião da Cultura!",
+      html: brandedTemplate(
+        "Cadastro concluído",
+        `<p>Olá, <strong>${escapeHtml(displayName)}</strong>!</p>
+        <p>Que bom ter você no <strong>Guardião da Cultura</strong>! A conta <strong>${escapeHtml(email)}</strong> foi criada com sucesso e já está pronta para uso.</p>
+        <p>No painel da instituição você acompanha o progresso dos seus jogadores, cria links de campanha para suas turmas e consulta os relatórios de participação.</p>
         <p style="text-align: center;">
-          <a href="${escapeHtml(frontendUrl)}" class="button">Começar agora</a>
+          <a href="${escapeHtml(dashboardUrl)}" class="gold-button">Acessar o painel</a>
         </p>
-        <hr class="divider">
-        <p style="font-size: 14px; color: #666;">Esperamos que seja divertido! Lembre-se de dar sua opinião ao final, queremos saber como foi sua experiência!</p>`,
+        <p>Se você não criou esta conta, pode ignorar esta mensagem.</p>`,
+        frontendUrl,
       ),
     };
   },
@@ -224,7 +235,7 @@ export const emailTemplates = {
       html: baseTemplate(
         "Novo acesso detectado",
         `<p>Olá, </p>
-        <p>detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
+        <p>Detectamos um novo acesso à sua conta <strong>${escapeHtml(email)}</strong>.</p>
         <p>Se foi você, pode ignorar este e-mail com segurança.</p>
         <p style="text-align: center;">
           <a href="${escapeHtml(frontendUrl)}" class="button">Acessar conta</a>

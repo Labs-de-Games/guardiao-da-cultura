@@ -4,6 +4,9 @@ import { ConfigService } from "../../config/config.service";
 import type { IEmailService } from "../interfaces/email-service.interface";
 import { emailTemplates } from "../templates/email-templates";
 
+/** Per-stage SMTP timeout (connect, greeting, idle socket). */
+const SMTP_TIMEOUT_MS = 10_000;
+
 @Injectable()
 export class NodemailerEmailService implements IEmailService, OnModuleInit {
   private readonly logger = new Logger(NodemailerEmailService.name);
@@ -16,6 +19,11 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
+      // Nodemailer's defaults allow minutes per stage; fail fast instead
+      // so a stuck SMTP server can't pile up pending sends.
+      connectionTimeout: SMTP_TIMEOUT_MS,
+      greetingTimeout: SMTP_TIMEOUT_MS,
+      socketTimeout: SMTP_TIMEOUT_MS,
       auth: {
         user: this.config.gmailUser,
         pass: this.config.gmailAppPassword,
