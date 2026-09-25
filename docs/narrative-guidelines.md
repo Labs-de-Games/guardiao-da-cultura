@@ -153,7 +153,7 @@ O jogo possui diferentes categorias de texto, cada uma com características espe
 ```json
     {
       "id": "q2",
-      "category": "MVP Pintura",
+      "category": "Inhotim Pintura",
       "question": "As pinturas de Abdias Nascimento têm forte influência de qual religião?",
       "options": ["umbanda", "protestantismo", "islamismo", "budismo"],
       "correctOptionIndex": 0,
@@ -167,7 +167,7 @@ O jogo possui diferentes categorias de texto, cada uma com características espe
     },
     {
       "id": "q4",
-      "category": "MVP Fotografia",
+      "category": "Inhotim Fotografia",
       "question": "Qual fotógrafa foi ativa na luta pela demarcação das terras yanomamis?",
       "options": [
         "Luisa Dörr",

@@ -31,7 +31,7 @@ const baseConfig: Types.Core.GameConfig = {
   // Phaser's LightsManager defaults to 10 and silently drops the
   // farthest-from-camera lights beyond that cap. Levels combine light
   // bars, chandeliers and spotlights that can exceed 10 at once (e.g.
-  // museum-mvp: 8 light bars + 9 chandeliers), so raise the ceiling
+  // inhotim: 8 light bars + 9 chandeliers), so raise the ceiling
   // with headroom above the highest current per-level light count.
   render: { maxLights: 32 },
 };
