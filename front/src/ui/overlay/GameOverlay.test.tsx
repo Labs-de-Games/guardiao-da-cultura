@@ -116,7 +116,7 @@ describe("GameOverlay", () => {
   it("opens the sidebar when the game is already started on mount", async () => {
     useGameUIStore.setState({ gameStarted: true, sidebarOpen: false });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -126,7 +126,7 @@ describe("GameOverlay", () => {
   });
 
   it("closes the sidebar when the level-start controls panel is dismissed", () => {
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
@@ -140,7 +140,7 @@ describe("GameOverlay", () => {
   });
 
   it("does not close the sidebar on later controls panel dismissals", () => {
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
@@ -162,7 +162,7 @@ describe("GameOverlay", () => {
   });
 
   it("re-arms the level-start auto-close for the next level", () => {
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
@@ -191,7 +191,7 @@ describe("GameOverlay", () => {
       labelData: { title: "Obra", author: "Art", description: "Desc" },
     });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       fireEvent.keyDown(window, { key: "Escape" });
@@ -206,7 +206,7 @@ describe("GameOverlay", () => {
       labelData: { title: "Obra", author: "Art", description: "Desc" },
     });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       fireEvent.keyDown(window, { key: "e" });
@@ -221,7 +221,7 @@ describe("GameOverlay", () => {
       labelData: { title: "Obra", author: "Art", description: "Desc" },
     });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       fireEvent.keyDown(window, { key: " " });
@@ -237,7 +237,7 @@ describe("GameOverlay", () => {
       labelData: { title: "Obra", author: "Art", description: "Desc" },
     });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       fireEvent.keyDown(window, { key: "e" });
@@ -250,7 +250,7 @@ describe("GameOverlay", () => {
   it("keeps showing labels after a scene-scoped subscriber unsubscribes", () => {
     useGameUIStore.setState({ gameStarted: true, labelData: null });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     // The Game scene subscribes to ui:label-show too and drops its listener on
     // SHUTDOWN. Tearing that listener down must not detach the overlay's, or the
@@ -278,7 +278,7 @@ describe("GameOverlay", () => {
   it("does not close the label when E is pressed and no label is open", () => {
     useGameUIStore.setState({ gameStarted: true, labelData: null });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       fireEvent.keyDown(window, { key: "e" });
@@ -291,7 +291,7 @@ describe("GameOverlay", () => {
   it("does not close the label when SPACE is pressed and no label is open", () => {
     useGameUIStore.setState({ gameStarted: true, labelData: null });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     act(() => {
       fireEvent.keyDown(window, { key: " " });
@@ -303,7 +303,7 @@ describe("GameOverlay", () => {
   it("does not render ToastNotification when gameStarted is false", () => {
     useGameUIStore.setState({ gameStarted: false });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     expect(screen.queryByTestId("toast-notification")).toBeNull();
   });
@@ -311,7 +311,7 @@ describe("GameOverlay", () => {
   it("renders the credits button on the map screen", () => {
     useGameUIStore.setState({ gameStarted: false });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     expect(screen.queryByRole("button", { name: "Créditos" })).not.toBeNull();
   });
@@ -322,7 +322,7 @@ describe("GameOverlay", () => {
       levelTransitionActive: true,
     });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     expect(screen.queryByRole("button", { name: "Créditos" })).toBeNull();
   });
@@ -330,7 +330,7 @@ describe("GameOverlay", () => {
   it("renders ToastNotification when gameStarted is true", () => {
     useGameUIStore.setState({ gameStarted: true });
 
-    render(<GameOverlay entryFlow="map" />);
+    render(<GameOverlay />);
 
     expect(screen.queryByTestId("toast-notification")).toBeDefined();
   });

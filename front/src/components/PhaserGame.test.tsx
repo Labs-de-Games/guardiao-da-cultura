@@ -36,10 +36,6 @@ jest.mock("@/ui/overlay/GameOverlay", () => ({
   default: () => null,
 }));
 
-jest.mock("../lib/posthog/useEntryFlow", () => ({
-  useEntryFlow: () => ({ entryFlow: "map", isLoading: false }),
-}));
-
 describe("PhaserGame", () => {
   it("renders without crashing", async () => {
     const { container } = render(<PhaserGame />);
