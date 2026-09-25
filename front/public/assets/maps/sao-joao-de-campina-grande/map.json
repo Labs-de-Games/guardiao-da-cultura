@@ -327,6 +327,16 @@
                          "value":"professor_curador_l3"
                         }, 
                         {
+                         "name":"finalPositionX",
+                         "type":"int",
+                         "value":444
+                        }, 
+                        {
+                         "name":"finalPositionY",
+                         "type":"int",
+                         "value":612
+                        }, 
+                        {
                          "name":"flipX",
                          "type":"bool",
                          "value":false
@@ -341,7 +351,7 @@
                  "visible":true,
                  "width":0,
                  "x":64,
-                 "y":656
+                 "y":661
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -365,7 +375,7 @@
                  "visible":true,
                  "width":0,
                  "x":32,
-                 "y":656
+                 "y":661
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1601,10 +1611,10 @@
          "y":0
         }],
  "nextlayerid":26,
- "nextobjectid":134,
+ "nextobjectid":136,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {
