@@ -54,6 +54,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
             NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
+            NEXT_PUBLIC_ENV=staging
 
       - name: Build and push back image
         uses: docker/build-push-action@v5
