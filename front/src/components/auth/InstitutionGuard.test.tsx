@@ -37,7 +37,7 @@ describe("InstitutionGuard", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("redirects to /login when unauthenticated", () => {
+  it("shows the session-expired screen with a login link when unauthenticated", () => {
     (useSession as jest.Mock).mockReturnValue({
       data: null,
       status: "unauthenticated",
@@ -49,7 +49,13 @@ describe("InstitutionGuard", () => {
       </InstitutionGuard>,
     );
 
-    expect(pushMock).toHaveBeenCalledWith("/login");
+    expect(screen.getByText("Sua sessão expirou")).toBeInTheDocument();
+    expect(screen.getByText("Entrar novamente").closest("a")).toHaveAttribute(
+      "href",
+      "/login",
+    );
+    expect(screen.queryByText("protected content")).toBeNull();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("redirects to / when the session role is not institution", () => {
