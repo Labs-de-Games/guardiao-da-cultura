@@ -4,12 +4,12 @@
       "signature": {
         "id": "signature",
         "metadata": {
-          "title": "Assinatura do Vândalo"
+          "title": "Assinatura do vândalo"
         },
         "educational": {
-          "description": "Documento de conservação assinado por A.V.",
+          "description": "Um documento de conservação assinado por A.V.",
           "medium": "Papel",
-          "opinion": "A mesma caligrafia, o mesmo conhecimento sobre as peças, e agora temos uma inicial."
+          "opinion": "A mesma letra das outras pistas, o mesmo saber sobre as peças. E agora temos as iniciais: A.V.!"
         },
         "assets": {
           "sprite": "signature",
@@ -27,7 +27,7 @@
           "title": "Itinerário de viagem"
         },
         "educational": {
-          "description": "Um itinerário com as três cidades marcadas — Brumadinho, Manaus e Campina Grande — nas mesmas semanas de cada incidente.",
+          "description": "Um itinerário com três cidades marcadas: Brumadinho, Manaus e Campina Grande. As datas batem com cada ataque.",
           "medium": "Papel",
           "opinion": "Três cidades, três datas, três acervos desorganizados. Não foi coincidência: foi roteiro."
         },

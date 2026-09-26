@@ -1,6 +1,68 @@
 {
-  "SCULPTURES": [],
-  "PAINTINGS": [],
-  "POSTERS": [],
-  "COSTUMES": []
+  "BAND": {
+    "band": {
+      "id": "band",
+      "type": "Band",
+      "metadata": {
+        "title": "Trio de forró",
+        "author": "Cultura popular",
+        "year": "",
+        "place": "Nordeste do Brasil"
+      },
+      "educational": {
+        "description": "Sanfona, zabumba e triângulo formam o trio de forró.\n\nA sanfona é a principal e puxa a melodia. Zabumba e triângulo marcam o ritmo.",
+        "medium": "Madeira, couro e metal",
+        "opinion": "Três instrumentos e um palco só. Sem um deles, o forró não anda.",
+        "feedbackError": "Esse instrumento não faz parte do trio de forró.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "band_accordion"
+      }
+    }
+  },
+  "ACCORDION": {
+    "accordion_tuning": {
+      "id": "accordion_tuning",
+      "type": "Instrument",
+      "metadata": {
+        "title": "Sanfona de oito baixos (pé de bode)",
+        "author": "Cultura popular",
+        "year": "",
+        "place": "Nordeste do Brasil"
+      },
+      "educational": {
+        "description": "Sanfona pequena, com oito botões de baixo. A nota muda se o fole abre ou fecha.\n\nÉ muito tocada no forró pé de serra.",
+        "medium": "Madeira, metal e couro",
+        "opinion": "Essa sanfona está desafinada. Se eu repetir as notas na ordem certa, talvez ela volte a tocar.",
+        "feedbackError": "Essa nota não bate. Melhor ouvir a sequência de novo.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "accordion_frame001"
+      }
+    }
+  },
+  "DANCES": {
+    "balance": {
+      "id": "balance",
+      "type": "Dance",
+      "metadata": {
+        "title": "Quadrilha junina",
+        "author": "Cultura popular",
+        "year": "",
+        "place": "Festas juninas do Brasil"
+      },
+      "educational": {
+        "description": "Dança em pares das festas juninas, com passos em ordem.\n\nNo balancê, os pares gingam no lugar. Tem ainda passo lateral, giro e pulo caipira.",
+        "medium": "",
+        "opinion": "Quanta gente dançando junta! Se eu errar um passo, piso no pé de alguém.",
+        "feedbackError": "Esse passo não vem agora. Melhor rever a dança.",
+        "hint": ""
+      },
+      "assets": {
+        "sprite": "step_sequence_ph"
+      }
+    }
+  }
 }

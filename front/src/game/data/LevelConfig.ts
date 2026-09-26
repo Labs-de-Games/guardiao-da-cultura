@@ -330,6 +330,7 @@ export const LEVEL_ASSETS = {
         frameHeight: 20,
       },
       { key: "stage-band-ph", path: "misc/stage-band-placeholder.png" },
+      { key: "wood_label", path: "misc/wood_label.png" },
       {
         key: "band_accordion",
         path: "band/animations/accordion.png",
