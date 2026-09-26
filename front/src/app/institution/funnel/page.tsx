@@ -12,7 +12,7 @@ import { FunnelInsights } from "@/components/dashboard/FunnelInsights";
 import { Section } from "@/components/dashboard/Section";
 import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
 import { getFunnel } from "@/lib/api/edital";
-import type { EditalFunnelResponse } from "@/lib/edital/types";
+import type { EditalFunnelResponse, FunnelStepCount } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
 import {
@@ -103,21 +103,27 @@ const FUNNEL_SKELETON = (
   </Box>
 );
 
+/** Loaded, but nobody entered the funnel in the selected period. */
+function isFunnelEmpty(steps: FunnelStepCount[] | null | undefined): boolean {
+  return !steps || steps.every((step) => step.value === 0);
+}
+
 function InstitutionFunnelContent() {
   const { dateRange, setDateRange } = useEditalFilters();
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
   const { turma, setTurma } = useTurmaFilter();
 
-  const { data, loading, error, retry } = useAsyncData<EditalFunnelResponse>(
-    () => getFunnel(dateRange, turma),
-    [
-      turma,
-      dateRange.type,
-      dateRange.type === "custom" ? dateRange.start : "",
-      dateRange.type === "custom" ? dateRange.end : "",
-    ],
-    isDateRangeValid(dateRange),
-  );
+  const { data, loading, error, errorKind, retry } =
+    useAsyncData<EditalFunnelResponse>(
+      () => getFunnel(dateRange, turma),
+      [
+        turma,
+        dateRange.type,
+        dateRange.type === "custom" ? dateRange.start : "",
+        dateRange.type === "custom" ? dateRange.end : "",
+      ],
+      isDateRangeValid(dateRange),
+    );
 
   return (
     <Box>
@@ -139,9 +145,11 @@ function InstitutionFunnelContent() {
       <DashboardState
         loading={loading}
         error={error}
+        errorKind={errorKind}
         onRetry={retry}
         linked={data?.linked ?? true}
         skeleton={FUNNEL_SKELETON}
+        empty={isFunnelEmpty(data?.data)}
       >
         {data
           ? (() => {

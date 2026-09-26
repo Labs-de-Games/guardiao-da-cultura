@@ -4,7 +4,9 @@ export type ErrorPageType =
   | "not_found"
   | "server_error"
   | "maintenance"
-  | "asset_load";
+  | "asset_load"
+  | "connection"
+  | "session_expired";
 
 export interface ErrorPageContext {
   digest?: string;

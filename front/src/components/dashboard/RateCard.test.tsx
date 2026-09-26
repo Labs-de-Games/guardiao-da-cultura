@@ -31,4 +31,16 @@ describe("RateCard", () => {
     );
     expect(screen.queryByText(/Meta/)).toBeNull();
   });
+
+  it("shows a no-data placeholder instead of 0% when the denominator is 0", () => {
+    render(
+      <RateCard
+        title="Taxa de entrada"
+        rate={{ value: 0, numerator: 0, denominator: 0 }}
+      />,
+    );
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("Sem dados no período")).toBeInTheDocument();
+    expect(screen.queryByText("0%")).toBeNull();
+  });
 });

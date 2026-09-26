@@ -132,8 +132,12 @@ describe("InstitutionOverviewPage", () => {
     render(<InstitutionOverviewPage />);
 
     await waitFor(() =>
-      expect(screen.getByText("Falha ao carregar")).toBeInTheDocument(),
+      expect(
+        screen.getByText("Não foi possível carregar os dados"),
+      ).toBeInTheDocument(),
     );
+    // The raw error message never reaches the screen.
+    expect(screen.queryByText("Falha ao carregar")).toBeNull();
 
     (getSummary as jest.Mock).mockResolvedValueOnce(SUMMARY_DATA);
     (getReport as jest.Mock).mockResolvedValueOnce(REPORT_DATA);
@@ -141,7 +145,9 @@ describe("InstitutionOverviewPage", () => {
     fireEvent.click(screen.getByText("Tentar novamente"));
 
     await waitFor(() =>
-      expect(screen.queryByText("Falha ao carregar")).toBeNull(),
+      expect(
+        screen.queryByText("Não foi possível carregar os dados"),
+      ).toBeNull(),
     );
     await waitFor(() =>
       expect(

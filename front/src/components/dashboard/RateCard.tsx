@@ -19,7 +19,21 @@ function formatPercent(value: number): string {
  * defines no official thresholds (the FUNNEL_TARGETS-style constants
  * this replaces are being removed for exactly that reason).
  */
+const NO_DATA_VALUE = "—";
+const NO_DATA_SUBTITLE = "Sem dados no período";
+
 export function RateCard({ title, rate }: RateCardProps) {
+  // 0/0 isn't 0% — it's a metric nobody has generated yet.
+  if (rate.denominator <= 0) {
+    return (
+      <KPICard
+        title={title}
+        value={NO_DATA_VALUE}
+        subtitle={NO_DATA_SUBTITLE}
+      />
+    );
+  }
+
   return (
     <KPICard
       title={title}
