@@ -9,7 +9,6 @@ import { sendGameEvent } from "../lib/analyticsApi";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
-import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import { EventBus } from "../shared/events/event-bus";
 import LoadingGameScreen from "./LoadingGameScreen";
 import LoadingScreen from "./LoadingScreen";
@@ -25,7 +24,6 @@ const GameOverlay = dynamic(
 const MIN_LEVEL_LOADING_MS = 5000;
 
 export default function PhaserGame() {
-  const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasViewportCleanupRef = useRef<(() => void) | null>(null);
@@ -134,15 +132,14 @@ export default function PhaserGame() {
 
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
-    if (isFlowLoading) return;
 
     // Registered only once all early-return guards above have passed, and
     // always paired with the cleanup below in the same effect run. Adding
     // these before the guards (as before) meant every early-bail re-render
-    // (e.g. while isFlowLoading was still true) leaked a duplicate listener
-    // set with no matching cleanup — each real phaser-loading-error would
-    // then fire handleLoadingError once per leaked listener, multiplying
-    // critical_error_occurred captures and game_event writes.
+    // (e.g. one where the game was already initializing) leaked a duplicate
+    // listener set with no matching cleanup — each real phaser-loading-error
+    // would then fire handleLoadingError once per leaked listener,
+    // multiplying critical_error_occurred captures and game_event writes.
     window.addEventListener("phaser-loading-start", handleLoadingStart);
     window.addEventListener("phaser-loading-progress", handleLoadingProgress);
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
@@ -172,7 +169,7 @@ export default function PhaserGame() {
         const { default: StartGame } = await import("../game/main");
 
         stage = "phaser_init";
-        const game = StartGame("game-container", playerId, true, entryFlow);
+        const game = StartGame("game-container", playerId, true);
         gameRef.current = game;
 
         const emitCanvasViewport = () => {
@@ -293,7 +290,7 @@ export default function PhaserGame() {
     // player identity a synchronous, middleware-set durable cookie —
     // getOrCreateGuestSessionId already prefers the existing persisted
     // guest id over any argument.
-  }, [entryFlow, isFlowLoading]);
+  }, []);
 
   return (
     <div
@@ -316,9 +313,7 @@ export default function PhaserGame() {
         ) : (
           <LoadingScreen />
         ))}
-      {overlayMounted && (
-        <GameOverlay entryFlow={entryFlow} isEntryFlowLoading={isFlowLoading} />
-      )}
+      {overlayMounted && <GameOverlay />}
     </div>
   );
 }
