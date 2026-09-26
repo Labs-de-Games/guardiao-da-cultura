@@ -787,14 +787,15 @@ const OVERVIEW_SKELETON = (
 function PublicDashboardContent() {
   const [dateRange, setDateRange] = useState<DateRange>({ type: "30d" });
 
-  const { data, loading, error, retry } = useAsyncData<PublicDashboardResponse>(
-    () => getPublicDashboard(dateRange),
-    [
-      dateRange.type,
-      dateRange.type === "custom" ? dateRange.start : "",
-      dateRange.type === "custom" ? dateRange.end : "",
-    ],
-  );
+  const { data, loading, error, errorKind, retry } =
+    useAsyncData<PublicDashboardResponse>(
+      () => getPublicDashboard(dateRange),
+      [
+        dateRange.type,
+        dateRange.type === "custom" ? dateRange.start : "",
+        dateRange.type === "custom" ? dateRange.end : "",
+      ],
+    );
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
@@ -905,9 +906,11 @@ function PublicDashboardContent() {
       <DashboardState
         loading={loading}
         error={error}
+        errorKind={errorKind}
         onRetry={retry}
         linked
         skeleton={OVERVIEW_SKELETON}
+        empty={data ? data.playersUnique === 0 : false}
       >
         {data ? (
           <>

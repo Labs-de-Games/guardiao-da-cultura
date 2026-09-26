@@ -1,20 +1,30 @@
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import {
+  DashboardEmptyState,
+  type DashboardEmptyStateProps,
+  DashboardInlineError,
+} from "@/components/errors/DashboardErrorPages";
+import type { ErrorKind } from "@/lib/errors/classifyError";
 
 interface DashboardStateProps {
   loading: boolean;
   error: string | null;
+  /** Picks the error screen; the raw `error` message is never shown. */
+  errorKind?: ErrorKind | null;
   onRetry: () => void;
   /** false when the account has no institutionSlug — the "awaiting linkage" state. */
   linked: boolean;
   /** Optional content-shaped placeholder shown instead of the generic spinner while loading. */
   skeleton?: ReactNode;
+  /** true when the data loaded fine but has nothing to show for the filters. */
+  empty?: boolean;
+  emptyState?: DashboardEmptyStateProps;
   children: ReactNode;
 }
 
 /**
- * Loading/error/empty(unlinked)/content in one place, so the three
+ * Loading/error/unlinked/empty/content in one place, so the three
  * screens (#745) don't each hand-roll the artisanal blocks
  * institution/page.tsx:81-100 used to. Never unmounts the surrounding
  * page chrome — callers wrap only the data-dependent region in this,
@@ -24,9 +34,12 @@ interface DashboardStateProps {
 export function DashboardState({
   loading,
   error,
+  errorKind,
   onRetry,
   linked,
   skeleton,
+  empty = false,
+  emptyState,
   children,
 }: DashboardStateProps) {
   if (loading) {
@@ -47,21 +60,7 @@ export function DashboardState({
 
   if (error) {
     return (
-      <Box sx={{ textAlign: "center", py: 8 }}>
-        <Typography sx={{ mb: 2, color: "error.main" }}>{error}</Typography>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={onRetry}
-          sx={{
-            color: "text.primary",
-            borderColor: "divider",
-            "&:hover": { borderColor: "text.secondary" },
-          }}
-        >
-          Tentar novamente
-        </Button>
-      </Box>
+      <DashboardInlineError kind={errorKind ?? "unknown"} onRetry={onRetry} />
     );
   }
 
@@ -81,6 +80,10 @@ export function DashboardState({
         </Typography>
       </Box>
     );
+  }
+
+  if (empty) {
+    return <DashboardEmptyState {...emptyState} />;
   }
 
   return <>{children}</>;

@@ -56,6 +56,7 @@ function InstitutionLinksContent() {
     data: linksData,
     loading: linksLoading,
     error: linksError,
+    errorKind: linksErrorKind,
     retry: retryLinks,
   } = useAsyncData(() => listCampaignLinks(), []);
 
@@ -108,10 +109,11 @@ function InstitutionLinksContent() {
     }
   }
 
-  const { data, loading, error, retry } = useAsyncData<EditalCampaignsResponse>(
-    () => getCampaigns({ type: "30d" }),
-    [],
-  );
+  const { data, loading, error, errorKind, retry } =
+    useAsyncData<EditalCampaignsResponse>(
+      () => getCampaigns({ type: "30d" }),
+      [],
+    );
 
   return (
     <Box>
@@ -184,6 +186,7 @@ function InstitutionLinksContent() {
         <DashboardState
           loading={linksLoading}
           error={linksError}
+          errorKind={linksErrorKind}
           onRetry={retryLinks}
           linked={linksData?.linked ?? true}
         >
@@ -230,6 +233,7 @@ function InstitutionLinksContent() {
         <DashboardState
           loading={loading}
           error={error}
+          errorKind={errorKind}
           onRetry={retry}
           linked={data?.linked ?? true}
         >

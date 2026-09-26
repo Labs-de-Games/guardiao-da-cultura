@@ -156,7 +156,7 @@ function InstitutionReportContent() {
     dateRange.type === "custom" ? dateRange.end : "",
   ]);
 
-  const { data, loading, error, retry } = useAsyncData<ReportData>(
+  const { data, loading, error, errorKind, retry } = useAsyncData<ReportData>(
     async () => {
       const [report, summary] = await Promise.all([
         getReport(dateRange, turma),
@@ -243,9 +243,13 @@ function InstitutionReportContent() {
       <DashboardState
         loading={loading}
         error={error}
+        errorKind={errorKind}
         onRetry={retry}
         linked={data?.report.linked ?? true}
         skeleton={REPORT_SKELETON}
+        empty={
+          data ? !data.report.data?.sessionDuration.sessionsStarted : false
+        }
       >
         {data?.report.data ? (
           <>
