@@ -206,6 +206,30 @@ The NestJS backend will be heavily simplified for now. Its primary responsibilit
 
 The gameplay itself will operate mostly as a client-side application (Next.js + Phaser) with periodic state synchronization to the backend.
 
+### Game Error & Fallback Pages
+Game-styled error screens apply only to player-facing routes: the landing (`/`) and `/game`, grouped under `front/src/app/(game)/` (the route group does not change URLs). `isGameRoute` (`front/src/lib/navigation/gameRoutes.ts`) defines that scope for the middleware and the API client. All screens share `ErrorPageLayout` (`front/src/components/errors/`) and report through `reportErrorPage` (`front/src/lib/errors/reportError.ts`), tagging PostHog events with `error_page_type`.
+
+| Scenario | Route / trigger | `error_page_type` |
+|----------|-----------------|-------------------|
+| Unknown `/game/*` route | `app/(game)/game/[...slug]` calls `notFound()` → `app/(game)/game/not-found.tsx` | `not_found` |
+| Uncaught render error on `/` or `/game` | `app/(game)/error.tsx` | `server_error` |
+| Backend down on a game route | Network error or 502/503/504 plus a failed `GET /api/v1/health` check redirects to `/game/maintenance?next=…` | `maintenance` |
+| Planned maintenance | `NEXT_PUBLIC_MAINTENANCE_MODE=true`: middleware rewrites `/` and `/game/*` to `/game/maintenance` with HTTP 503. Build-time: set in `.env` locally, passed as a Docker build arg by the CD workflows (GitHub variable). Redeploy to toggle | `maintenance` |
+| Game init failure | `PhaserGame` shows `GameLoadErrorScreen` with retry | — (`game_load_failed`) |
+| Single asset load error | Reported only; game keeps running | `asset_load` |
+
+`next` params are sanitized by `getSafeRedirectPath`: control characters, whitespace and backslashes are rejected, and the value must resolve to the current origin.
+
+The maintenance page knows why it is shown:
+- **scheduled** (flag on): planned-maintenance copy; polls `GET /api/maintenance` (`{ active }`) and returns to the game once a redeploy turns the flag off. No reload loop while the flag stays on.
+- **outage** (flag off): polls the backend health endpoint, checking immediately on load, so a direct visit while everything is healthy returns to the game.
+
+Polling (`useMaintenanceRecovery`) backs off 30 s → 60 s → … up to 5 min with ±30 % jitter and pauses while the tab is hidden. The page is reported once per session per reason. When the player's own connection drops (`navigator.onLine === false`) there is no redirect; `OfflineNotice` shows a toast instead. The middleware reads the flag through `lib/maintenance.ts`, not the full env schema.
+
+Other areas (auth, institution dashboard) keep the generic boundaries (`app/error.tsx`, `app/(auth)/error.tsx`, `app/global-error.tsx`) and the Next.js default 404 until their own designed pages exist; maintenance mode and outage redirects don't affect them.
+
+The front container healthcheck targets `GET /api/health` (`front/src/app/api/health/route.ts`), not `/`. It only proves the Next.js server answers: it doesn't call the backend and sits outside the middleware, so maintenance mode (which answers game routes with 503) never marks the front unhealthy or keeps nginx from starting.
+
 ## 5. Resolved & Pending Architecture Decisions
 
 ### Resolved
