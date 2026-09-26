@@ -8,8 +8,10 @@ import { GameEventType } from "../game/types/AnalyticsTypes";
 import { sendGameEvent } from "../lib/analyticsApi";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
+import { reportErrorPage } from "../lib/errors/reportError";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
 import { EventBus } from "../shared/events/event-bus";
+import { GameLoadErrorScreen } from "./errors/ErrorPages";
 import LoadingGameScreen from "./LoadingGameScreen";
 import LoadingScreen from "./LoadingScreen";
 
@@ -33,6 +35,8 @@ export default function PhaserGame() {
   const [loadingLevelId, setLoadingLevelId] = useState<string | undefined>();
   const [loadingProgress, setLoadingProgress] = useState<number | undefined>();
   const [overlayMounted, setOverlayMounted] = useState(false);
+  const [hasInitError, setHasInitError] = useState(false);
+  const [initAttempt, setInitAttempt] = useState(0);
   const loadingStartedAtRef = useRef<number | null>(null);
   const currentLevelIdRef = useRef<string | undefined>(undefined);
   const minLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -127,6 +131,11 @@ export default function PhaserGame() {
           "[PhaserGame] Failed to log critical_error_occurred:",
           err,
         );
+      });
+      reportErrorPage("asset_load", undefined, {
+        stage: customEvent.detail?.stage,
+        asset_key: customEvent.detail?.key,
+        level_id: currentLevelIdRef.current,
       });
     };
 
@@ -247,6 +256,7 @@ export default function PhaserGame() {
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
         setIsLoading(false);
+        setHasInitError(true);
       }
     };
 
@@ -290,7 +300,15 @@ export default function PhaserGame() {
     // player identity a synchronous, middleware-set durable cookie —
     // getOrCreateGuestSessionId already prefers the existing persisted
     // guest id over any argument.
-  }, []);
+    // initAttempt only triggers a clean re-init after an init failure.
+  }, [initAttempt]);
+
+  const handleRetryInit = () => {
+    gameLoadFailedSentRef.current = false;
+    setHasInitError(false);
+    setIsLoading(true);
+    setInitAttempt((attempt) => attempt + 1);
+  };
 
   return (
     <div
@@ -304,6 +322,7 @@ export default function PhaserGame() {
         backgroundColor: "#000000",
       }}
     >
+      {hasInitError && <GameLoadErrorScreen onRetry={handleRetryInit} />}
       {isLoading &&
         (loadingLevelId ? (
           <LoadingGameScreen

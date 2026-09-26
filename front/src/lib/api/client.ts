@@ -2,7 +2,11 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import posthog from "posthog-js";
 import { clearAuthStatusCookie } from "@/lib/auth/cookies";
 import { broadcastAuthEvent } from "@/lib/auth/sync";
-import { env } from "@/lib/env";
+import {
+  handleBackendUnavailable,
+  isBackendUnavailableError,
+} from "./backendAvailability";
+import { API_BASE_URL } from "./baseUrl";
 import {
   AuthError,
   InvalidCredentialsError,
@@ -95,10 +99,8 @@ function handleAuthError(error: AxiosError): never {
   throw new AuthError(message, status);
 }
 
-const baseURL = env.client.apiUrl ? `${env.client.apiUrl}/api/v1` : "/api/v1";
-
 export const apiClient = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -141,6 +143,11 @@ apiClient.interceptors.response.use(
     ) {
       forceLogout();
       handleAuthError(error);
+    }
+
+    if (isBackendUnavailableError(error)) {
+      void handleBackendUnavailable();
+      return Promise.reject(error);
     }
 
     if (!originalRequest || error.response?.status !== 401) {

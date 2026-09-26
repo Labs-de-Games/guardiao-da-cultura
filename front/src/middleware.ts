@@ -1,5 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { isMaintenanceModeEnabled } from "@/lib/maintenance";
+import {
+  GAME_MAINTENANCE_PATH,
+  isGameRoute,
+} from "@/lib/navigation/gameRoutes";
 import { auth } from "./auth.config";
 import {
   ANONYMOUS_PLAYER_COOKIE_MAX_AGE_SECONDS,
@@ -10,6 +15,7 @@ import {
   isValidAnonymousPlayerId,
 } from "./lib/edital/anonymousPlayer";
 
+const SERVICE_UNAVAILABLE_STATUS = 503;
 const INSTITUTION_ROUTE_PREFIX = "/institution";
 const ONBOARDING_PATH = `${INSTITUTION_ROUTE_PREFIX}/onboarding`;
 
@@ -58,6 +64,19 @@ function withAnonymousPlayerCookie(
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  if (
+    isMaintenanceModeEnabled() &&
+    isGameRoute(path) &&
+    path !== GAME_MAINTENANCE_PATH
+  ) {
+    return withAnonymousPlayerCookie(
+      request,
+      NextResponse.rewrite(new URL(GAME_MAINTENANCE_PATH, request.url), {
+        status: SERVICE_UNAVAILABLE_STATUS,
+      }),
+    );
+  }
 
   // Institution routes are gated by a NextAuth session (a signed JWT
   // cookie) with role "institution". Players never authenticate at all
