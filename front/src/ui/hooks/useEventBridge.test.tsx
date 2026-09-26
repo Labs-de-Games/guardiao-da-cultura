@@ -56,28 +56,14 @@ describe("useEventBridge", () => {
     });
   };
 
-  it("should initialize gameStarted to true on mount if entryFlow is direct", async () => {
-    renderHook(() => useEventBridge({ entryFlow: "direct" }));
-    await flushEffects();
-    expect(useGameUIStore.getState().gameStarted).toBe(true);
-  });
-
-  it("should not initialize gameStarted to true on mount if entryFlow is map", async () => {
-    renderHook(() => useEventBridge({ entryFlow: "map" }));
-    await flushEffects();
-    expect(useGameUIStore.getState().gameStarted).toBe(false);
-  });
-
-  it("should not initialize gameStarted while entry flow is still loading", async () => {
-    renderHook(() =>
-      useEventBridge({ entryFlow: "direct", isEntryFlowLoading: true }),
-    );
+  it("should not initialize gameStarted to true on mount", async () => {
+    renderHook(() => useEventBridge());
     await flushEffects();
     expect(useGameUIStore.getState().gameStarted).toBe(false);
   });
 
   it("should set gameStarted to true when game:started event is emitted", async () => {
-    renderHook(() => useEventBridge({ entryFlow: "map" }));
+    renderHook(() => useEventBridge());
     await flushEffects();
     expect(useGameUIStore.getState().gameStarted).toBe(false);
 
@@ -107,7 +93,7 @@ describe("useEventBridge", () => {
         },
       ],
     });
-    renderHook(() => useEventBridge({ entryFlow: "map" }));
+    renderHook(() => useEventBridge());
     await flushEffects();
 
     await act(async () => {
@@ -120,7 +106,7 @@ describe("useEventBridge", () => {
   });
 
   it("should update sidebarOpen when sidebar:toggled event is emitted", async () => {
-    renderHook(() => useEventBridge({ entryFlow: "map" }));
+    renderHook(() => useEventBridge());
     await flushEffects();
     expect(useGameUIStore.getState().sidebarOpen).toBe(false);
 
@@ -136,7 +122,7 @@ describe("useEventBridge", () => {
   });
 
   it("should sync stars when player:stars-changed event is emitted", async () => {
-    renderHook(() => useEventBridge({ entryFlow: "map" }));
+    renderHook(() => useEventBridge());
     await flushEffects();
 
     await act(async () => {
@@ -152,7 +138,7 @@ describe("useEventBridge", () => {
   });
 
   it("should update mission progress when quest:progress-changed event is emitted", async () => {
-    renderHook(() => useEventBridge({ entryFlow: "map" }));
+    renderHook(() => useEventBridge());
     await flushEffects();
 
     await act(async () => {
@@ -171,7 +157,7 @@ describe("useEventBridge", () => {
   });
 
   it("should unsubscribe from events on unmount", async () => {
-    const { unmount } = renderHook(() => useEventBridge({ entryFlow: "map" }));
+    const { unmount } = renderHook(() => useEventBridge());
     await flushEffects();
     unmount();
     await flushEffects();
