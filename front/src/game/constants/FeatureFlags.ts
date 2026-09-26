@@ -20,13 +20,8 @@
 export const LEVEL_ENABLED: Record<string, boolean> = {
   level_01: true,
   level_02: true,
-  // Playable, but its curator dialogue and both quizzes are still placeholder
-  // copy (see the `_comment` in each level_03 data file).
-  level_03: false,
-  // Suspect identification phase. Not a playable level (see
-  // `constants/Investigation.ts`); it unlocks through the same flag +
-  // `currentLevel` gate, once level_03 is completed.
-  level_04: false,
+  level_03: true,
+  level_04: true,
 };
 
 export function isLevelEnabled(levelId: string): boolean {

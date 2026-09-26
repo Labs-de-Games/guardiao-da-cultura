@@ -4,87 +4,77 @@
     {
       "id": "q1",
       "category": "São João",
-      "question": "Por que Campina Grande é conhecida como “O Maior São João do Mundo”?",
-      "options": [
-        "Pelo tamanho e pela duração da festa, que ocupa a cidade por todo o mês de junho",
-        "Por ter sido a primeira cidade brasileira a celebrar o São João",
-        "Por concentrar as maiores fogueiras já registradas no país",
-        "Por ser a única cidade onde a quadrilha é dançada ao ar livre"
-      ],
-      "explanation": "O título vem da escala da festa: mais de trinta dias de programação, com o Parque do Povo recebendo milhões de visitantes.",
+      "question": "Qual destas danças é típica das festas juninas?",
+      "options": ["Quadrilha", "Frevo", "Samba", "Tango"],
+      "explanation": "A quadrilha é a dança das festas juninas. Os pares seguem passos em ordem, como o balancê.",
       "hints": [
-        "Não é sobre ter vindo primeiro.",
-        "Pense no tamanho e em quantos dias a festa dura."
+        "É dançada em pares, com vários passos.",
+        "Você acabou de organizar os passos dela."
       ],
-      "tags": ["saojoao", "paraiba", "campinagrande", "festajunina"],
+      "tags": ["quadrilha", "danca", "festajunina"],
       "difficulty": "easy"
     },
     {
       "id": "q2",
       "category": "São João",
-      "question": "Qual instrumento forma o trio tradicional do forró pé de serra, ao lado da zabumba e do triângulo?",
-      "options": ["Sanfona", "Viola caipira", "Cavaquinho", "Pandeiro"],
-      "explanation": "Sanfona, zabumba e triângulo formam o trio consagrado por Luiz Gonzaga como base do forró pé de serra.",
-      "hints": [
-        "É um instrumento de fole, tocado com as duas mãos.",
-        "Luiz Gonzaga ficou conhecido tocando esse instrumento."
+      "question": "No trio de forró, quais instrumentos marcam o ritmo?",
+      "options": [
+        "Zabumba e triângulo",
+        "Sanfona e zabumba",
+        "Só a sanfona",
+        "Sanfona e triângulo"
       ],
-      "tags": ["forro", "musica", "nordeste", "lgonzaga"],
-      "difficulty": "easy"
+      "explanation": "A sanfona puxa a melodia. A zabumba e o triângulo marcam o ritmo do forró.",
+      "hints": [
+        "A sanfona cuida da melodia.",
+        "Um é tambor e o outro é de metal."
+      ],
+      "tags": ["forro", "musica", "trio"],
+      "difficulty": "medium"
     },
     {
       "id": "q3",
       "category": "São João",
-      "question": "O que a quadrilha junina brasileira tem em comum com a dança europeia que a originou?",
-      "options": [
-        "A formação em pares conduzida por um marcador que anuncia os passos",
-        "O uso obrigatório de fogueira no centro do salão",
-        "A execução exclusivamente instrumental, sem canto",
-        "A proibição de improviso durante a apresentação"
-      ],
-      "explanation": "A quadrille francesa, dançada em pares e guiada por um condutor que anunciava as figuras, chegou ao Brasil no século XIX e foi reinventada como festa popular.",
+      "question": "Qual é o apelido da sanfona de oito baixos?",
+      "options": ["Pé de bode", "Pé de serra", "Pé de moleque", "Pé de pano"],
+      "explanation": "A sanfona de oito baixos também é chamada de pé de bode. Pé de serra é um estilo de forró.",
       "hints": [
-        "Repare em quem grita os comandos durante a dança.",
-        "A origem está nos salões europeus do século XIX."
+        "O nome lembra um animal.",
+        "Leia de novo a plaquinha da sanfona."
       ],
-      "tags": ["quadrilha", "danca", "historia", "franca"],
+      "tags": ["sanfona", "forro", "musica"],
       "difficulty": "medium"
     },
     {
       "id": "q4",
       "category": "São João",
-      "question": "Na tradição junina, o que representa o “casamento matuto” encenado durante a quadrilha?",
+      "question": "Por que os passos da quadrilha seguem uma ordem certa?",
       "options": [
-        "Uma paródia teatral dos casamentos roceiros, encenada com humor",
-        "Um ritual religioso obrigatório para abrir a festa",
-        "Uma homenagem formal aos padroeiros da cidade",
-        "Uma competição entre os pares para eleger o melhor dançarino"
+        "Os pares dançam juntos",
+        "Cada passo é sorteado",
+        "A música muda sempre",
+        "Ninguém nota erros"
       ],
-      "explanation": "O casamento matuto é uma encenação cômica que satiriza costumes do casamento no interior — noivo fujão, noiva grávida e delegado incluídos.",
+      "explanation": "Na quadrilha, muitos pares dançam ao mesmo tempo. Com todos no mesmo passo, ninguém se esbarra.",
       "hints": [
-        "O público costuma rir durante a cena.",
-        "Não é um ritual de verdade: é teatro."
+        "Muitos pares dançam ao mesmo tempo.",
+        "Imagine um par girando enquanto o outro pula."
       ],
-      "tags": ["quadrilha", "casamentomatuto", "teatro", "tradicao"],
-      "difficulty": "medium"
+      "tags": ["quadrilha", "danca", "festajunina"],
+      "difficulty": "hard"
     },
     {
       "id": "q5",
-      "category": "Investigação",
-      "question": "Reunindo o que foi encontrado nos três acervos, o que as pistas dizem sobre o vândalo?",
-      "options": [
-        "Conhece técnicas de conservação e tinha acesso autorizado às obras",
-        "Agiu por impulso, sem qualquer conhecimento sobre o acervo",
-        "Queria destruir as peças para revendê-las no mercado ilegal",
-        "Entrou à força nos três locais, arrombando as portas"
-      ],
-      "explanation": "Verniz de conservação, autorização de acesso e anotações sobre a posição das obras apontam para alguém com formação técnica e entrada permitida no acervo.",
+      "category": "São João",
+      "question": "Se a sanfona sair do trio de forró, o que a música perde?",
+      "options": ["A melodia", "O ritmo", "A dança", "O palco"],
+      "explanation": "A sanfona puxa a melodia. Sem ela, a zabumba e o triângulo seguem só com o ritmo.",
       "hints": [
-        "Lembre da lata de verniz e do documento de autorização.",
-        "Nada foi arrombado: ele podia entrar."
+        "A zabumba e o triângulo cuidam do ritmo.",
+        "Pense em quem puxa a música no trio."
       ],
-      "tags": ["investigacao", "pistas", "vandalo"],
-      "difficulty": "medium"
+      "tags": ["forro", "sanfona", "trio", "musica"],
+      "difficulty": "hard"
     }
   ]
 }
