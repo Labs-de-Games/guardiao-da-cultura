@@ -361,7 +361,10 @@ For each page:
    live against `ORIGIN_SLUG_PATTERN` (`/^[a-z0-9]+(-[a-z0-9]+)*$/`:
    lowercase letters, digits, single hyphens, no leading/trailing hyphen).
 2. Click "Criar link" → list refreshes, a tracking URL appears in the form
-   `https://guardiaodacultura.42.rio/?utm_institution=<slug>&utm_source=<source>`.
+   `<origin>/?utm_institution=<slug>&utm_source=<source>`, where `<origin>`
+   is the current environment's own domain: `AUTH_URL` on staging and
+   production (e.g. `https://guardiaodacultura.42.rio` in production), the
+   request origin (`http://localhost:3000`) locally.
 3. Click the copy button → clipboard receives the URL, a confirmation
    snackbar appears.
 4. Click delete on a link → confirm the dialog → link disappears from the
