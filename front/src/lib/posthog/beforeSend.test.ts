@@ -31,6 +31,34 @@ describe("createBeforeSend", () => {
     expect(result?.properties.anonymous_player_id).toBe("explicit");
   });
 
+  it("stamps environment from the registered super property when missing", () => {
+    const client = new PostHogStub();
+    client.register({ environment: "staging" });
+    const beforeSend = createBeforeSend(client, { environment: "production" });
+
+    const result = beforeSend(makeEvent());
+
+    expect(result?.properties.environment).toBe("staging");
+  });
+
+  it("falls back to the configured environment when nothing is registered yet", () => {
+    const client = new PostHogStub();
+    const beforeSend = createBeforeSend(client, { environment: "staging" });
+
+    const result = beforeSend(makeEvent());
+
+    expect(result?.properties.environment).toBe("staging");
+  });
+
+  it("does not overwrite an explicit environment", () => {
+    const client = new PostHogStub();
+    const beforeSend = createBeforeSend(client, { environment: "staging" });
+
+    const result = beforeSend(makeEvent({ environment: "production" }));
+
+    expect(result?.properties.environment).toBe("production");
+  });
+
   it("stamps campaign_source from the registered super property when missing", () => {
     const client = new PostHogStub();
     client.register({ campaign_source: "escola-teste" });
