@@ -1,5 +1,6 @@
 import "server-only";
 import { LEVEL_REGISTRY } from "../../../game/data/LevelConfig";
+import { environmentPredicate, environmentValues } from "./environmentScope";
 import type { HogQLValues } from "./hogql";
 import type { ResolvedDateRange } from "./period";
 import type { Scope } from "./scope";
@@ -29,9 +30,12 @@ export interface HogQLQueryPlan {
  * super-property from campaign.ts's `applyFirstTouchTurmaSource`, not
  * the raw last-touch `utm_source` `buildCampaignsQuery` uses — that
  * distinction is the actual fix #807 needed, not a stylistic choice.
+ *
+ * It also narrows to the current deployment's own events (staging and
+ * production share one PostHog project) — see environmentScope.ts.
  */
 function commonPredicate(turmaSource?: string): string {
-  const base = `timestamp >= toDateTime({from_ts}) AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != '' AND properties.campaign_source = {slug}`;
+  const base = `timestamp >= toDateTime({from_ts}) AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != '' AND properties.campaign_source = {slug} AND ${environmentPredicate()}`;
   return turmaSource ? `${base} AND properties.turma_source = {source}` : base;
 }
 
@@ -41,6 +45,7 @@ function baseValues(
   turmaSource?: string,
 ): HogQLValues {
   const values: HogQLValues = {
+    ...environmentValues(),
     slug: scope.slug,
     from_ts: range.from.toISOString(),
     to_ts: range.to.toISOString(),
