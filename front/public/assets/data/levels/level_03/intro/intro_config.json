@@ -8,7 +8,7 @@
       "holdMs": 5000,
       "shrinkMs": 1200,
       "title": "FESTA DO INTERIOR",
-      "caption": "O tradicional São João de Campina Grande é celebrado com música, dança e alegria."
+      "caption": "Campina Grande celebra o tradicional São João com música, dança e alegria."
     },
     {
       "src": "comic_L3P2.png",
@@ -28,7 +28,7 @@
       "holdMs": 5000,
       "shrinkMs": 1200,
       "title": "OLHA A PISTA!",
-      "caption": "Chamado outra vez, tente descobrir o que está por trás desses ataques à cultura."
+      "caption": "De volta ao caso, descubra quem está por trás dos ataques à cultura."
     }
   ],
   "revealIconMask": "reveal_icon_mask_L3.png",

@@ -12,8 +12,8 @@ type PostHogLike = Pick<
  * The total, never-throwing backstop half of the property-injection design.
  * `register()` covers the common path for stable properties; this stamps the per-event
  * properties (issue #740's own table: `session_id`, `event_name`,
- * `event_timestamp`, `chapter_id`) plus a backstop for `anonymous_player_id`
- * and `campaign_source` onto ANY event that reaches send — including the
+ * `event_timestamp`, `chapter_id`) plus a backstop for `anonymous_player_id`,
+ * `campaign_source` and `environment` onto ANY event that reaches send — including the
  * 31 game-code call sites that import the posthog-js singleton directly
  * and bypass the provider entirely, and library-internal events
  * (`$pageview`, `$web_vitals`, `$dead_click`, `$exception`) that never go
@@ -29,6 +29,7 @@ type PostHogLike = Pick<
  */
 export function createBeforeSend(
   client: PostHogLike,
+  options: { environment?: string } = {},
 ): (event: CaptureResult | null) => CaptureResult | null {
   return (event) => {
     try {
@@ -49,6 +50,16 @@ export function createBeforeSend(
         const campaignSource = client.get_property("campaign_source");
         if (typeof campaignSource === "string" && campaignSource.length > 0) {
           properties.campaign_source = campaignSource;
+        }
+      }
+
+      // Staging and production share one PostHog project; an event that
+      // escaped register() without `environment` would be unattributable.
+      if (!properties.environment) {
+        const environment =
+          client.get_property("environment") ?? options.environment;
+        if (typeof environment === "string" && environment.length > 0) {
+          properties.environment = environment;
         }
       }
 

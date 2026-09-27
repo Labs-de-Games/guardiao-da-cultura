@@ -8,9 +8,10 @@ import { GameEventType } from "../game/types/AnalyticsTypes";
 import { sendGameEvent } from "../lib/analyticsApi";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
+import { reportErrorPage } from "../lib/errors/reportError";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
-import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import { EventBus } from "../shared/events/event-bus";
+import { GameLoadErrorScreen } from "./errors/ErrorPages";
 import LoadingGameScreen from "./LoadingGameScreen";
 import LoadingScreen from "./LoadingScreen";
 
@@ -25,7 +26,6 @@ const GameOverlay = dynamic(
 const MIN_LEVEL_LOADING_MS = 5000;
 
 export default function PhaserGame() {
-  const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasViewportCleanupRef = useRef<(() => void) | null>(null);
@@ -35,6 +35,8 @@ export default function PhaserGame() {
   const [loadingLevelId, setLoadingLevelId] = useState<string | undefined>();
   const [loadingProgress, setLoadingProgress] = useState<number | undefined>();
   const [overlayMounted, setOverlayMounted] = useState(false);
+  const [hasInitError, setHasInitError] = useState(false);
+  const [initAttempt, setInitAttempt] = useState(0);
   const loadingStartedAtRef = useRef<number | null>(null);
   const currentLevelIdRef = useRef<string | undefined>(undefined);
   const minLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -130,19 +132,23 @@ export default function PhaserGame() {
           err,
         );
       });
+      reportErrorPage("asset_load", undefined, {
+        stage: customEvent.detail?.stage,
+        asset_key: customEvent.detail?.key,
+        level_id: currentLevelIdRef.current,
+      });
     };
 
     if (typeof window === "undefined" || !containerRef.current) return;
     if (isInitializingRef.current || gameRef.current) return;
-    if (isFlowLoading) return;
 
     // Registered only once all early-return guards above have passed, and
     // always paired with the cleanup below in the same effect run. Adding
     // these before the guards (as before) meant every early-bail re-render
-    // (e.g. while isFlowLoading was still true) leaked a duplicate listener
-    // set with no matching cleanup — each real phaser-loading-error would
-    // then fire handleLoadingError once per leaked listener, multiplying
-    // critical_error_occurred captures and game_event writes.
+    // (e.g. one where the game was already initializing) leaked a duplicate
+    // listener set with no matching cleanup — each real phaser-loading-error
+    // would then fire handleLoadingError once per leaked listener,
+    // multiplying critical_error_occurred captures and game_event writes.
     window.addEventListener("phaser-loading-start", handleLoadingStart);
     window.addEventListener("phaser-loading-progress", handleLoadingProgress);
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
@@ -172,7 +178,7 @@ export default function PhaserGame() {
         const { default: StartGame } = await import("../game/main");
 
         stage = "phaser_init";
-        const game = StartGame("game-container", playerId, true, entryFlow);
+        const game = StartGame("game-container", playerId, true);
         gameRef.current = game;
 
         const emitCanvasViewport = () => {
@@ -250,6 +256,7 @@ export default function PhaserGame() {
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
         setIsLoading(false);
+        setHasInitError(true);
       }
     };
 
@@ -293,7 +300,15 @@ export default function PhaserGame() {
     // player identity a synchronous, middleware-set durable cookie —
     // getOrCreateGuestSessionId already prefers the existing persisted
     // guest id over any argument.
-  }, [entryFlow, isFlowLoading]);
+    // initAttempt only triggers a clean re-init after an init failure.
+  }, [initAttempt]);
+
+  const handleRetryInit = () => {
+    gameLoadFailedSentRef.current = false;
+    setHasInitError(false);
+    setIsLoading(true);
+    setInitAttempt((attempt) => attempt + 1);
+  };
 
   return (
     <div
@@ -307,6 +322,7 @@ export default function PhaserGame() {
         backgroundColor: "#000000",
       }}
     >
+      {hasInitError && <GameLoadErrorScreen onRetry={handleRetryInit} />}
       {isLoading &&
         (loadingLevelId ? (
           <LoadingGameScreen
@@ -316,9 +332,7 @@ export default function PhaserGame() {
         ) : (
           <LoadingScreen />
         ))}
-      {overlayMounted && (
-        <GameOverlay entryFlow={entryFlow} isEntryFlowLoading={isFlowLoading} />
-      )}
+      {overlayMounted && <GameOverlay />}
     </div>
   );
 }

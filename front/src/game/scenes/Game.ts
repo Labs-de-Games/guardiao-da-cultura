@@ -1774,10 +1774,10 @@ export class Game extends Scene implements GameDataAccessor {
         const placeholder = this.placeholderSystem.getPlaceholderByInstanceId(
           label.placeholderId,
         );
-        const workId = resolveWorkIdFromPlaceholder(
-          placeholder?.id,
-          this.contentData,
-        );
+        // A label may name its own work, e.g. one label shared by several placeholders
+        const workId =
+          label.workId ??
+          resolveWorkIdFromPlaceholder(placeholder?.id, this.contentData);
         const work = workId ? findWorkDataById(workId, this.contentData) : null;
         if (work) {
           const labelDist = Phaser.Math.Distance.Between(

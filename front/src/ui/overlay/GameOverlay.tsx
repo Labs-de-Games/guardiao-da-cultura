@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { EntryFlow } from "@/game/main";
 import { getGuestId } from "@/lib/api/client";
 import { EventBus } from "@/shared/events/event-bus";
 import { CreditsScreen } from "@/ui/credits/CreditsScreen";
@@ -32,13 +31,7 @@ import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
 import { EvidenceBoardOverlay } from "./EvidenceBoardOverlay";
 
-export default function GameOverlay({
-  entryFlow = "map",
-  isEntryFlowLoading = false,
-}: {
-  entryFlow?: EntryFlow;
-  isEntryFlowLoading?: boolean;
-}) {
+export default function GameOverlay() {
   return (
     <div
       id="game-overlay"
@@ -49,21 +42,12 @@ export default function GameOverlay({
         zIndex: UI_Z_INDEX.OVERLAY,
       }}
     >
-      <OverlayContent
-        entryFlow={entryFlow}
-        isEntryFlowLoading={isEntryFlowLoading}
-      />
+      <OverlayContent />
     </div>
   );
 }
 
-function OverlayContent({
-  entryFlow,
-  isEntryFlowLoading,
-}: {
-  entryFlow: EntryFlow;
-  isEntryFlowLoading: boolean;
-}) {
+function OverlayContent() {
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
@@ -81,7 +65,7 @@ function OverlayContent({
   const introData = useGameUIStore((s) => s.introData);
   const setIntroData = useGameUIStore((s) => s.setIntroData);
 
-  useEventBridge({ entryFlow, isEntryFlowLoading });
+  useEventBridge();
   const { emitComplete, emitDismiss } = useDialogueBridge();
   const setBadgeGalleryOpen = useGameUIStore((s) => s.setBadgeGalleryOpen);
   const addUnlockedBadge = useGameUIStore((s) => s.addUnlockedBadge);

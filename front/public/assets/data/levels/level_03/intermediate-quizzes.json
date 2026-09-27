@@ -1,31 +1,26 @@
 {
   "dance_done": [
     {
-      "question": "Qual é a função da sequência em uma apresentação de quadrilha?",
+      "question": "Para que serve a sequência na quadrilha?",
       "options": [
-        "Organizar a progressão dos movimentos da apresentação",
-        "Não existe uma ordem específica",
-        "Definir apenas as músicas",
+        "Ordenar os passos",
+        "Não há ordem certa",
+        "Definir as músicas",
         "Escolher os instrumentos"
       ]
     },
     {
-      "question": "Qual movimento representa uma formação coletiva?",
+      "question": "Na quadrilha, o que os pares fazem no balancê?",
       "options": [
-        "Túnel",
-        "Cumprimento",
-        "Entrada dos pares",
-        "Giro individual"
+        "Gingam no lugar",
+        "Dão um pulo alto",
+        "Formam uma fila",
+        "Trocam de roupa"
       ]
     },
     {
-      "question": "Qual elemento aparece como encerramento da sequência proposta?",
-      "options": [
-        "Grande roda",
-        "Caminho da roça",
-        "Cumprimento",
-        "Entrada dos pares"
-      ]
+      "question": "Qual passo encerra a sequência de dança desta fase?",
+      "options": ["Pulo caipira", "Balancê", "Passo lateral", "Giro"]
     }
   ],
   "stage_done": [
@@ -54,20 +49,20 @@
   ],
   "genius_done": [
     {
-      "question": "Qual instrumento é o protagonista dos trios de forró na Festa de São João de Campina Grande?",
-      "options": ["Sanfona (acordeon)", "Violão", "Cavaquinho", "Berimbau"]
+      "question": "Qual instrumento é o principal nos trios de forró do São João de Campina Grande?",
+      "options": ["Sanfona", "Violão", "Cavaquinho", "Berimbau"]
     },
     {
       "question": "A sanfona de oito baixos é mais associada a qual estilo tocado nas festas de São João?",
-      "options": ["Forró pé-de-serra", "Piano", "Chorinho", "Bossa nova"]
+      "options": ["Forró pé de serra", "Frevo", "Chorinho", "Bossa nova"]
     },
     {
-      "question": "Além da sanfona, quais instrumentos completam o trio tradicional de forró na festa?",
+      "question": "Como a sanfona produz som?",
       "options": [
-        "Zabumba e triângulo",
-        "Bateria e baixo",
-        "Flauta e violino",
-        "Teclado e guitarra"
+        "Ar do fole",
+        "Cordas vibrando",
+        "Sopro num bocal",
+        "Batida de baquetas"
       ]
     }
   ]
