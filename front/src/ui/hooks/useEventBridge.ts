@@ -2,18 +2,11 @@
 
 import { useEffect } from "react";
 
-import type { EntryFlow } from "@/game/main";
 import { EventBus } from "@/shared/events/event-bus";
 import type { GameEventMap } from "@/shared/events/game-events";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 
-export function useEventBridge({
-  entryFlow = "map",
-  isEntryFlowLoading = false,
-}: {
-  entryFlow?: EntryFlow;
-  isEntryFlowLoading?: boolean;
-} = {}) {
+export function useEventBridge() {
   const startGame = useGameUIStore((s) => s.startGame);
   const endGame = useGameUIStore((s) => s.endGame);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
@@ -30,11 +23,6 @@ export function useEventBridge({
   const openInvestigation = useGameUIStore((s) => s.openInvestigation);
 
   useEffect(() => {
-    const currentStatus = useGameUIStore.getState().gameStarted;
-    if (!currentStatus && !isEntryFlowLoading && entryFlow === "direct") {
-      startGame();
-    }
-
     const safeSubscribe = <K extends keyof GameEventMap>(
       event: K,
       fn: (data: GameEventMap[K]) => void,
@@ -127,8 +115,6 @@ export function useEventBridge({
       unsubInvestigationStart();
     };
   }, [
-    entryFlow,
-    isEntryFlowLoading,
     startGame,
     endGame,
     setSidebarOpen,

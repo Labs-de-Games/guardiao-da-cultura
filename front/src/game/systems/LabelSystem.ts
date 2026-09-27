@@ -6,6 +6,7 @@ export interface LabelInstance {
   sprite: Phaser.GameObjects.Sprite;
   instanceId: string;
   placeholderId: string;
+  workId?: string;
   x: number;
   y: number;
 }
@@ -15,6 +16,7 @@ export interface LabelConfig {
   y: number;
   instanceId: string;
   placeholderId: string;
+  workId?: string;
   texture?: string;
   scale?: number;
 }
@@ -46,6 +48,7 @@ export class LabelSystem {
         "placeholder_id",
       ) as string;
 
+      const workId = TiledUtils.getProperty(obj, "work_id");
       const texture = TiledUtils.getProperty(obj, "texture");
       const rawScale = TiledUtils.getProperty(obj, "scale");
 
@@ -63,6 +66,7 @@ export class LabelSystem {
         y: scaled.y,
         instanceId: obj.name || Phaser.Math.RND.uuid(),
         placeholderId,
+        workId: workId ? String(workId) : undefined,
         texture: texture as string | undefined,
         scale: rawScale !== undefined ? Number(rawScale) : undefined,
       });
@@ -80,6 +84,7 @@ export class LabelSystem {
       sprite,
       instanceId: config.instanceId,
       placeholderId: config.placeholderId,
+      workId: config.workId,
       x: config.x,
       y: config.y,
     };

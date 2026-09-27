@@ -113,7 +113,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         distinctID: cookieDistinctId ?? undefined,
         featureFlags: {},
       },
-      before_send: createBeforeSend(posthog),
+      before_send: createBeforeSend(posthog, { environment }),
       loaded: (ph) => {
         if (environment === "development") {
           ph.debug();

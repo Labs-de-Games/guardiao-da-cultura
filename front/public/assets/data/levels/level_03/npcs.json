@@ -5,23 +5,26 @@
       "missionId": "missao_curador_l3",
       "dialogues": {
         "intro": [
-          "Ei, moço! Chegou bem na hora. Olha só esse forró: sanfona, zabumba e triângulo tudo fora do lugar, ninguém arrumou o palco pro São João.",
-          "Sem o trio arrumado direito, a festa nem começa. Bota cada instrumento no músico certo lá no palco.",
-          "Acende o holofote de cada um pra ver se acertou. Se não bater, o bicho vai reclamar bonito.",
-          "Vai lá organizar essa zoada, que eu fico de olho na fogueira."
+          "Oxente, chegou na hora! Bagunçaram o São João de Campina Grande. Sem dança e sem música, a festa nem começa.",
+          "Esta é a última chance de achar as pistas que faltam sobre o vândalo. Fique de olho em tudo, visse?",
+          "Organize os passos da quadrilha, conserte as luzes do palco, monte o trio de forró e afine a sanfona.",
+          "Vou ficar perto da fogueira… só esquentando as ideias. Me procure quando acabar. E não esqueça de ler as placas."
         ],
         "collecting": [
-          "Ainda falta gente no palco! Olha os holofotes: os que tão apagados ainda esperam o instrumento certo.",
-          "Sanfona, zabumba e triângulo, cada um no seu canto. Erra e o povo vaia, viu?"
+          "Ainda tem coisa fora do lugar. Quadrilha, luzes, trio e sanfona: tudo precisa ficar pronto para a festa.",
+          "Quem fez isso conhece o São João por dentro. Bagunçou justo o que faz a festa acontecer.",
+          "Leia as placas antes de mexer em tudo. Elas ajudam mais do que parece, visse?"
         ],
         "ready": [
-          "Rapaz, acho que já é só conferir se ficou tudo nos trinques.",
+          "Vixe, acho que só falta conferir se ficou tudo nos trinques.",
           "Bora ver se o trio tá completo antes de soltar o forró."
         ],
         "completed": [
-          "Aí sim! Palco pronto, trio completo, agora é só o São João estourar."
+          "Aí sim! Palco pronto e trio completo. Agora o São João pode começar!"
         ],
-        "success": ["Show de bola! Você entende mesmo de forró de raiz."],
+        "success": [
+          "Arretado! Você entende mesmo de forró. E nem precisou de cola."
+        ],
         "failure": [
           "Ainda não foi dessa vez, não. Presta atenção nos instrumentos e tenta de novo."
         ],
@@ -29,7 +32,7 @@
           "Bora testar o que você aprendeu sobre o trio?"
         ],
         "intermediateQuiz": [
-          "Antes de acender de vez a festa, me diz: você prestou atenção no trio que montou?"
+          "Antes de acender de vez a festa, me diz: você prestou atenção nos detalhes?"
         ]
       }
     }

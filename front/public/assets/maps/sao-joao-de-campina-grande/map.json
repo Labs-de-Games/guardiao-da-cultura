@@ -327,6 +327,16 @@
                          "value":"professor_curador_l3"
                         }, 
                         {
+                         "name":"finalPositionX",
+                         "type":"int",
+                         "value":444
+                        }, 
+                        {
+                         "name":"finalPositionY",
+                         "type":"int",
+                         "value":612
+                        }, 
+                        {
                          "name":"flipX",
                          "type":"bool",
                          "value":false
@@ -341,7 +351,7 @@
                  "visible":true,
                  "width":0,
                  "x":64,
-                 "y":656
+                 "y":661
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -365,7 +375,7 @@
                  "visible":true,
                  "width":0,
                  "x":32,
-                 "y":656
+                 "y":661
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1426,6 +1436,11 @@
                          "value":1
                         }, 
                         {
+                         "name":"id",
+                         "type":"string",
+                         "value":"accordion_tuning"
+                        }, 
+                        {
                          "name":"scale",
                          "type":"float",
                          "value":2.5
@@ -1451,6 +1466,98 @@
                  "width":0,
                  "x":551.694429207,
                  "y":170.196583516
+                }, 
+                {
+                 "height":0,
+                 "id":137,
+                 "name":"L_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_2"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":6.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"wood_label"
+                        }, 
+                        {
+                         "name":"work_id",
+                         "type":"string",
+                         "value":"band"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":351.5,
+                 "y":663
+                }, 
+                {
+                 "height":0,
+                 "id":139,
+                 "name":"L_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_4"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":6.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"wood_label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":917,
+                 "y":663
+                }, 
+                {
+                 "height":0,
+                 "id":140,
+                 "name":"L_5",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"placeholder_id",
+                         "type":"string",
+                         "value":"PH_5"
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":6.5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"wood_label"
+                        }],
+                 "rotation":0,
+                 "type":"Label",
+                 "visible":true,
+                 "width":0,
+                 "x":622.5,
+                 "y":167.5
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1601,10 +1708,10 @@
          "y":0
         }],
  "nextlayerid":26,
- "nextobjectid":134,
+ "nextobjectid":141,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.12.1",
+ "tiledversion":"1.12.2",
  "tileheight":16,
  "tilesets":[
         {
