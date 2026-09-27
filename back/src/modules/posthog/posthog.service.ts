@@ -75,7 +75,7 @@ export class PostHogService implements OnModuleDestroy {
       ...options,
       properties: {
         ...options.properties,
-        environment: this.config.nodeEnv,
+        environment: this.config.appEnv,
       },
     });
   }
@@ -95,7 +95,7 @@ export class PostHogService implements OnModuleDestroy {
     }
     this.client.captureException(error, distinctId, {
       ...properties,
-      environment: this.config.nodeEnv,
+      environment: this.config.appEnv,
     });
   }
 
