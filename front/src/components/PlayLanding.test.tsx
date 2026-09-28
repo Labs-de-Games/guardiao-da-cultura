@@ -27,6 +27,12 @@ describe("PlayLanding", () => {
     );
   });
 
+  it("renders the footer below the hero", () => {
+    render(<PlayLanding />);
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+    expect(screen.getByAltText("Lei Rouanet")).toBeInTheDocument();
+  });
+
   it("dual-emits both the legacy and canonical click events", () => {
     render(<PlayLanding />);
     fireEvent.click(screen.getByText("Jogar"));
