@@ -11,6 +11,13 @@ export interface CreditSection {
 
 /**
  * Source: https://github.com/Labs-de-Games/gameplate/issues/618#issuecomment-5285581428
+ *
+ * This list and `CREDITS.md` at the repository root are the same attribution
+ * obligation rendered twice: one for players, one for anyone reusing the
+ * assets. Several of the works here were cleared for publication on the
+ * condition that credit is always given, so the two must never drift apart —
+ * change both in the same pull request, and update `ASSETS-LICENSE.md` when the
+ * licence terms of an entry change.
  */
 export const CREDITS_SECTIONS: CreditSection[] = [
   {
@@ -204,6 +211,11 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         url: "https://www.youtube.com/watch?v=oFcxie-e944",
         license: "Creative Commons Attribution license CC0 / Royalty-Free",
       },
+      {
+        name: "Cricket Ambience, Remix, A por Moulaythami",
+        url: "https://freesound.org/people/Moulaythami/sounds/536930/",
+        license: "Attribution 4.0",
+      },
     ],
   },
   {
@@ -247,6 +259,16 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         license: "Sampling+",
       },
       { name: "Whoosh por Editors Keys", url: "https://www.editorskeys.com/" },
+      {
+        name: "Interface Sounds por Kenney",
+        url: "https://kenney.nl/assets/interface-sounds",
+        license: "Creative Commons 0",
+      },
+      {
+        name: "UI Audio por Kenney",
+        url: "https://kenney.nl/assets/ui-audio",
+        license: "Creative Commons 0",
+      },
     ],
   },
   {
@@ -277,6 +299,11 @@ export const CREDITS_SECTIONS: CreditSection[] = [
       {
         name: "Fogueira por CityPNG",
         url: "https://www.citypng.com/photo/15015/hd-black-bonfire-campfire-firewood-icon-png",
+      },
+      {
+        name: "Color Switches por Jan Schneider",
+        url: "https://jan-schneider.itch.io/color-switches",
+        license: "CC BY 4.0",
       },
     ],
   },
