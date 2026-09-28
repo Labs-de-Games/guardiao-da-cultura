@@ -1,3 +1,5 @@
+import { writeConsent } from "./consent/consentStorage";
+
 const mockApi = { count: 0 };
 
 jest.mock("./api/client", () => ({
@@ -16,6 +18,9 @@ beforeEach(() => {
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:3001";
   mockApi.count = 0;
   window.localStorage.clear();
+  // The queue only exists for players who authorised collection (#864);
+  // the refusal paths have their own cases at the bottom of this file.
+  writeConsent("accepted");
 });
 
 afterEach(() => {
@@ -111,5 +116,83 @@ describe("gameEventsApi", () => {
 
     expect(mockApi.count).toBe(0);
     expect(window.localStorage.getItem("gameplate:eventQueue:v1")).toBe("[]");
+  });
+
+  describe("analytics consent (#864)", () => {
+    it("sends nothing when the player has not decided", async () => {
+      window.localStorage.clear();
+      const { sendQuizOutcomeEvent } = await import("./gameEventsApi");
+
+      await sendQuizOutcomeEvent({
+        type: "quiz.completed",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        metadata: {
+          missionId: "m1",
+          score: 3,
+          totalQuestions: 4,
+          accuracyPercent: 75,
+          quartersEarned: 1,
+          passed: true,
+        },
+      });
+
+      expect(mockApi.count).toBe(0);
+    });
+
+    it("does not bank the event for later when the player refuses", async () => {
+      writeConsent("declined");
+      const { sendQuizOutcomeEvent } = await import("./gameEventsApi");
+
+      await sendQuizOutcomeEvent({
+        type: "quiz.completed",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        metadata: {
+          missionId: "m1",
+          score: 3,
+          totalQuestions: 4,
+          accuracyPercent: 75,
+          quartersEarned: 1,
+          passed: true,
+        },
+      });
+
+      expect(mockApi.count).toBe(0);
+      expect(window.localStorage.getItem("gameplate:eventQueue:v1")).toBeNull();
+    });
+
+    it("discards a queue banked before the decision instead of flushing it", async () => {
+      // A queue left over from an older build, or from before the player
+      // answered. Accepting authorises collection from that moment on — it
+      // must never backfill.
+      window.localStorage.setItem(
+        "gameplate:eventQueue:v1",
+        JSON.stringify([
+          {
+            id: "old-1",
+            createdAt: Date.now(),
+            attempts: 0,
+            payload: {
+              type: "quiz.completed",
+              timestamp: "2026-01-01T00:00:00.000Z",
+              metadata: {
+                missionId: "m1",
+                score: 1,
+                totalQuestions: 1,
+                accuracyPercent: 100,
+                quartersEarned: 1,
+                passed: true,
+              },
+            },
+          },
+        ]),
+      );
+      writeConsent("declined");
+
+      const { flushGameEventQueue } = await import("./gameEventsApi");
+      await flushGameEventQueue();
+
+      expect(mockApi.count).toBe(0);
+      expect(window.localStorage.getItem("gameplate:eventQueue:v1")).toBeNull();
+    });
   });
 });
