@@ -345,6 +345,18 @@ rm -rf package-lock.json front/package-lock.json back/package-lock.json
 npm ci
 ```
 
+### Narration (Text-to-Speech)
+
+`RESPONSIVEVOICE_API_KEY` is optional. Leave it empty (`RESPONSIVEVOICE_API_KEY=`, as in `.env.example`) and `/api/tts/synthesize` answers `503`, so the game narrates with the browser's Web Speech API. Do not use a placeholder value: any non-empty value is treated as a real key and ResponsiveVoice rejects it, so the route answers `502` on every line.
+
+The browser voice depends on the operating system and the browser, and it does not always work out of the box. Some systems, notably Linux, need a speech engine installed at the OS level, or the browser started with a specific flag or setting, before any voice is available. To check, run this in the browser console:
+
+```js
+speechSynthesis.getVoices();
+```
+
+An empty list means the browser has no voices and narration will be silent. Install or enable a speech engine for your system and browser, then reload the page.
+
 ## Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
