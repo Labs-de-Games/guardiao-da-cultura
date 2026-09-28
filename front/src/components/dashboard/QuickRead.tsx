@@ -35,7 +35,7 @@ export function QuickRead({ quizPassRate }: QuickReadProps) {
         borderColor: "divider",
         borderLeftWidth: 4,
         borderLeftColor: "custom.highlight",
-        backgroundColor: "secondary.light",
+        backgroundColor: "custom.sidebarBg",
         px: 3.5,
         py: 3,
       }}
