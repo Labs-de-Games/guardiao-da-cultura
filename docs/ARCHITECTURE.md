@@ -2,6 +2,9 @@
 
 This document outlines the architectural decisions, structural boundaries, and technology stack for the Gameplate project. It serves as the single source of truth for the system's technical design, replacing older structural drafts to reflect the current, modernized tooling and practical constraints of the project.
 
+In short: a Next.js frontend with the game itself rendered by Phaser, a NestJS
+API over PostgreSQL, and a React HUD layered over the game canvas.
+
 ## Table of Contents
 
 - [1. Context & Requirements](#1-context--requirements)
@@ -13,7 +16,9 @@ This document outlines the architectural decisions, structural boundaries, and t
   - [Workspace & Tooling](#workspace--tooling)
   - [Frontend](#frontend)
   - [Backend](#backend)
+  - [Optional Integrations](#optional-integrations)
 - [4. Architectural Patterns & Boundaries](#4-architectural-patterns--boundaries)
+  - [Deployment Topology](#deployment-topology)
   - [The Modular Monolith Approach](#the-modular-monolith-approach)
   - [Directory Structure](#directory-structure)
   - [Simplified Backend Strategy](#simplified-backend-strategy)
@@ -125,12 +130,13 @@ flowchart TB
 
 ### Workspace & Tooling
 - **Package Manager & Runtime:** [Node.js](https://nodejs.org/) (v24+) with npm.
+- **Versions:** `next`, `react` and `@nestjs/core` track `latest` in their `package.json`; Phaser is pinned (`4.2.1` in `front/package.json`); PostgreSQL runs as `postgres:16-alpine` in every Compose stack.
 - **Monorepo Orchestration:** [Turborepo](https://turbo.build/) for task caching and parallel execution.
 - **Linting & Formatting:** [Biome](https://biomejs.dev/) (replaces ESLint and Prettier for unified, fast code validation).
 - **Testing:** [Jest](https://jestjs.io/) as the universal test runner across the workspace.
 
 ### Frontend (`/front`)
-- **Framework:** Next.js with React.
+- **Framework:** Next.js with React, using the App Router (file-based routing with React Server Components).
 - **Game Engine:** Phaser 3 (encapsulated entirely within `src/game`).
 - **Styling:** Material UI (MUI) v9 with Emotion for CSS-in-JS.
 - **State Management:** React hooks and Zustand for UI overlay and HUD state.
@@ -141,12 +147,44 @@ flowchart TB
 - **Framework:** NestJS with Express.
 - **Database:** PostgreSQL.
 - **ORM:** TypeORM with migrations managed via CLI.
+- **API:** REST endpoints with DTO validation via `class-validator`.
 - **Authentication:** Passport JWT strategy, custom magic-link service, opaque refresh tokens with SHA-256 hashing.
 - **Rate Limiting:** `@nestjs/throttler` with per-email and per-IP throttling.
 - **Observability:** PostHog Node SDK with custom exception interceptor.
 - **Infrastructure:** Docker & Docker Compose for local environments; GitHub Actions for building/pushing to GitHub Container Registry (GHCR); Coolify for Deployment (CD).
 
+### Optional Integrations
+
+Both are off by default in `.env.example` and the game runs fully without them.
+
+| Integration | Variable | Without it |
+|---|---|---|
+| **ResponsiveVoice** (text-to-speech) | `RESPONSIVEVOICE_API_KEY` | `/api/tts/synthesize` reports itself unavailable and narration uses the browser's own `SpeechSynthesis`, in `pt-BR`. ResponsiveVoice is a paid, NonCommercial (CC BY-NC-ND) service, so the game deliberately does not depend on it. See [TTS Route Handler](#tts-route-handler-apittssynthesize). |
+| **PostHog** (product analytics) | `NEXT_PUBLIC_POSTHOG_KEY`, `POSTHOG_API_KEY` | The frontend swaps in a console-logging stub and the backend skips event capture. No data leaves the machine. |
+
 ## 4. Architectural Patterns & Boundaries
+
+### Deployment Topology
+
+Every request from the browser goes through nginx. PostHog is optional on both
+sides (see [Optional Integrations](#optional-integrations)).
+
+```mermaid
+flowchart LR
+    Client["Client (Browser)"] --> nginx["nginx (Reverse Proxy)"]
+    nginx --> Front["Next.js (Frontend)"]
+    Front --> Back["NestJS (Backend API)"]
+    Back --> DB["PostgreSQL (Database)"]
+    Front -.->|"Optional"| PostHog["PostHog"]
+    Back -.->|"Optional"| PostHog
+
+    style Client fill:#e1f5fe
+    style nginx fill:#fff3e0
+    style Front fill:#e8f5e9
+    style Back fill:#fce4ec
+    style DB fill:#f3e5f5
+    style PostHog fill:#fff9c4
+```
 
 ### The Modular Monolith Approach
 The codebase is structured as a **Modular Monolith**.
@@ -266,11 +304,12 @@ The front container healthcheck targets `GET /api/health` (`front/src/app/api/he
 - **Server-Side TTS Proxy:** The ResponsiveVoice API key is stored as a server-only env var (`RESPONSIVEVOICE_API_KEY`) in the frontend deployment. A Next.js Route Handler (`/api/tts/synthesize`) proxies requests to ResponsiveVoice v1 REST API, returning `audio/mpeg`. This eliminates domain whitelist concerns since the proxy runs server-side. The frontend falls back to native Web Speech API (`window.speechSynthesis`) on error.
 - **Contextual Nudge System (PR #733):** Anti-blocking assistance driven by player inactivity. Responsibility is split so the timing rules stay testable: `NudgeManager` (`front/src/game/systems/NudgeManager.ts`) owns *when* to nudge — a dependency-free class whose `evaluate(now, isPlayerBusy)` returns a boolean, governed by a 15s inactivity threshold, a 1s evaluation throttle, a global 5-minute cooldown, and a per-mission reset — while `Game.ts` owns *which kind* of nudge, chosen by proximity rather than by escalation (the delay is identical for both kinds). A pulse fires via `PlaceholderSystem.pulseNearestPlaceholder()` or `SpotlightSystem.pulseNearestSpotlight()` when an incomplete costume placeholder or spotlight sits within ~500px; otherwise the nearest artwork's `educational.hint` (from the level's `works.json`) is surfaced through the existing `ui:toast-show` EventBus event, so no bespoke overlay UI was introduced. Because `NudgeManager` has no imports, it is unit-tested in isolation (`NudgeManager.test.ts`, 11 cases covering threshold, busy suppression, timer reset, cooldown window and expiry, throttle, and per-mission reset); the `Game.ts` wiring is verified manually. Telemetry is emitted straight to PostHog as `nudge_pulse_shown_*` and `nudge_hint_shown_*`, with the firing rules documented in `EVENTS.md` (§ *Nudge — regras de disparo*).
 
+- **Institutional Dashboard:** The `dashboard` module serves aggregated metrics to the `institution` and `admin` roles, and the educator-facing frontend lives under `/institution/*`, with a public view under `/public-dashboard/*`.
+
 ### Pending
 
 - **Shared Contracts:** How to share TypeScript types and interfaces between `/front` and `/back` (e.g., creating a `packages/shared` workspace in Turborepo vs. duplication) is yet to be established.
 - **Quiz Module:** A final quiz validation module is planned but not yet implemented.
-- **Institutional Dashboard:** Admin dashboards for educators to track player progress are planned but not yet implemented.
 
 ## 6. API Contracts
 
@@ -381,7 +420,6 @@ The key is optional, and an empty value counts as unset. Without it, the route a
 | Module | Status | Description |
 |--------|--------|-------------|
 | Quiz Final | Not implemented | End-of-journey knowledge validation. |
-| Institutional Dashboard | Partially implemented | The `dashboard` module serves aggregated metrics to the `institution` and `admin` roles; the educator-facing frontend is still in progress. |
 
 ### Technical Notes
 
