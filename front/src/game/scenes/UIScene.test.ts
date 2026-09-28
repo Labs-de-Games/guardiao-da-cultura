@@ -35,17 +35,20 @@ function buildScene(currentLevelId = "level_01") {
       remove: registryRemove,
     },
   });
+  const sceneResume = jest.fn();
   Object.defineProperty(scene, "scene", {
     value: {
       start: sceneStart,
       stop: sceneStop,
+      resume: sceneResume,
       get: () => ({ events: { emit: jest.fn() } }),
     },
   });
 
   (scene as any).setupQuizCloseListener();
+  (scene as any).setupStageExitListener();
 
-  return { scene, sceneStart, sceneStop, registryRemove };
+  return { scene, sceneStart, sceneStop, sceneResume, registryRemove };
 }
 
 describe("UIScene quiz navigation", () => {
@@ -72,6 +75,7 @@ describe("UIScene quiz navigation", () => {
       (scene as any).unsubQuizClose?.();
       (scene as any).unsubQuizRetry?.();
       (scene as any).unsubQuizNextLevel?.();
+      (scene as any).unsubStageExit?.();
     });
   }
 
@@ -192,6 +196,25 @@ describe("UIScene quiz navigation", () => {
 
     EventBus.emit("quiz:close", undefined);
 
+    expect(sceneStop).toHaveBeenCalledWith(SceneNames.GAME);
+    expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
+  });
+
+  it("resumes UI (but not GAME) then returns to the map on stage:exit-confirmed", () => {
+    const { scene, sceneStart, sceneStop, sceneResume } =
+      buildScene("level_01");
+    track(scene);
+
+    EventBus.emit("stage:exit-confirmed", undefined);
+
+    // UI persists across this transition and must not stay stuck paused:
+    // once GAME is stopped it unsubscribes its own "game:resume-requested"
+    // listener, so a later resume request (from the React modal's cleanup
+    // effect) would otherwise be silently dropped. GAME is deliberately NOT
+    // resumed first — it's stopped right below, and resuming it first
+    // re-arms its update() loop for a tick mid-teardown, which throws.
+    expect(sceneResume).toHaveBeenCalledWith(SceneNames.UI);
+    expect(sceneResume).not.toHaveBeenCalledWith(SceneNames.GAME);
     expect(sceneStop).toHaveBeenCalledWith(SceneNames.GAME);
     expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
   });

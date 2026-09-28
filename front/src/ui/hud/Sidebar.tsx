@@ -1,10 +1,12 @@
 "use client";
 
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
-import { Box, ButtonBase, Collapse, Paper } from "@mui/material";
+import { Box, Button, ButtonBase, Collapse, Paper } from "@mui/material";
 
 import { LayoutConfig } from "@/game/constants/LayoutConfig";
+import { useRequestStageExit } from "@/ui/hooks/useStageExit";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -23,6 +25,7 @@ const TOGGLE_OFFSET_TOP = 16;
 export function Sidebar() {
   const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
+  const requestStageExit = useRequestStageExit();
 
   return (
     <Box
@@ -100,7 +103,26 @@ export function Sidebar() {
             <ObjectiveList />
             <ControlsSubpanel />
             <AudioSubpanel />
-            <PhaseInfoCard sx={{ mt: "auto" }} />
+            <PhaseInfoCard />
+            <Button
+              fullWidth
+              startIcon={<ArrowBackIcon />}
+              onClick={requestStageExit}
+              sx={{
+                fontFamily: LayoutConfig.FONTS.BODY,
+                fontWeight: 700,
+                fontSize: "12px",
+                textTransform: "none",
+                color: LayoutConfig.COLORS.INFO_TITLE,
+                bgcolor: LayoutConfig.COLORS.PANEL_INNER_BG_CSS,
+                borderRadius: "12px",
+                py: 1,
+                mt: "auto",
+                "&:hover": { bgcolor: "#232424" },
+              }}
+            >
+              VOLTAR AO MAPA
+            </Button>
           </Box>
         </Paper>
       </Collapse>
