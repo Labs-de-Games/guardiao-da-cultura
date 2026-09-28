@@ -19,6 +19,25 @@
 > Um print de qualquer uma das stacks 2–4 **não** representa o número do
 > edital — só a stack 1 (PostHog) faz isso.
 
+> ## ⚠️ PostHog depende de consentimento (#864)
+>
+> Desde a issue #864, o `posthog.init()` só roda depois que o jogador aceita a
+> coleta de dados de uso. Consequências para todo número deste documento:
+>
+> - **A stack 1 passa a contar apenas quem consentiu.** Quem recusa, e quem
+>   ainda não decidiu, não gera nenhum evento PostHog.
+> - **`landing_page_viewed` é o mais afetado**: é o passo 1 do funil e o
+>   denominador da "Taxa de entrada na gameplay", e acontece exatamente na tela
+>   onde o banner aparece — ou seja, antes da decisão na maioria das visitas.
+>   Espere uma queda de patamar, não um bug.
+> - **Não há coleta retroativa.** O posthog-js descarta capturas feitas antes
+>   do `init()`, então eventos anteriores ao aceite não são enviados depois.
+> - **A stack 2 (pipeline Postgres) não é afetada** — continua registrando
+>   todos os jogadores. Onde a contagem absoluta importar mais que o
+>   detalhamento, ela é a fonte sem viés de consentimento.
+> - Eventos do backend (`match_ended`, exceções) também respeitam a escolha,
+>   via o cookie `gp_analytics_consent`.
+
 Este documento descreve:
 - **Métricas do dashboard** e quais eventos alimentam cada card/visão.
 - **Eventos já emitidos** no front e consumidos pelo back.

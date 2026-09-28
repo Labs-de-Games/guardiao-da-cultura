@@ -2,7 +2,13 @@
 
 ## Overview
 
-This document outlines the implementation plan for integrating PostHog into the Gameplate monorepo. We will enable **Product Analytics**, **Web Analytics**, **Session Replay** (with canvas recording), and **Surveys** across both the Next.js frontend and NestJS backend.
+> **Superseded in part by issue #864 (analytics consent).** Two things in this
+> document are no longer true and are corrected inline below: Session Replay and
+> canvas recording are **disabled** (out of scope, per #864), and PostHog is
+> **not initialised until the player consents**. Treat every "enabled by
+> default" statement here as describing the pre-#864 design.
+
+This document outlines the implementation plan for integrating PostHog into the Gameplate monorepo. We enable **Product Analytics**, **Web Analytics** and **Surveys** across both the Next.js frontend and NestJS backend. ~~Session Replay (with canvas recording)~~ — removed by #864.
 
 **PostHog Instance:** PostHog Cloud (US Region)  
 **Project Structure:** Single shared project for frontend and backend  
@@ -51,8 +57,12 @@ This preserves existing game data infrastructure while adding product insights.
 - The `distinct_id` is the backend user UUID (not PII like email).
 - This enables proper retention cohorts, conversion funnels (anonymous -> signed up -> active player), and linked Session Replay.
 
-### 6. Canvas Recording Enabled
-`record_canvas: true` is enabled in `posthog-js` initialization. This allows Session Replay to capture actual Phaser canvas gameplay. **Warning:** This significantly increases replay data volume. Monitor PostHog billing and use `record_sessions_percent` for sampling if costs spike.
+### 6. Canvas Recording — REMOVED (#864)
+~~`record_canvas: true` is enabled in `posthog-js` initialization.~~
+
+Issue #864 puts session replay, session recording and canvas capture out of
+scope. `posthog.init()` now passes `disable_session_recording: true` and sets
+neither `record_sessions_percent` nor `record_canvas`.
 
 ### 7. Session Linking via Axios Interceptors
 To link backend events to frontend sessions:
@@ -98,7 +108,7 @@ PostHog behavior differs across **Development**, **Staging**, and **Production**
 Staging PostHog integration is documented here but **not yet implemented**. When staging is deployed:
 
 - **Initialization:** Active. Uses the **Staging PostHog project** (separate from Production).
-- **Session Replay:** Enabled with **10% sampling** (`record_sessions_percent: 0.1`). Canvas recording enabled for validation, but limited to keep costs low.
+- **Session Replay:** **Disabled** (#864).
 - **Surveys:** Enabled (`opt_in_site_apps: true`). Surveys are configured in the Staging PostHog project and target staging URLs only. QA can validate survey flow without affecting Production data.
 - **Error Tracking:** Enabled. Captures exceptions on both frontend and backend.
 - **Feature Flags:** Safe to test rollout percentages and targeting.
@@ -109,7 +119,8 @@ Staging PostHog integration is documented here but **not yet implemented**. When
 **Goal:** Full feature set.
 
 - **Initialization:** Active. Uses the **Production PostHog project**.
-- **Session Replay:** Enabled with **100% sampling** (`record_sessions_percent: 1.0`). Canvas recording enabled to capture Phaser gameplay. All users (anonymous and authenticated) are recorded. Monitor data usage weekly; reduce sampling via the `session_replay_sampling_rate` feature flag if costs spike.
+- **Session Replay:** **Disabled** (#864).
+- **Consent:** PostHog is initialised only after the player accepts the usage-data banner. Before that there is no `distinct_id`, no PostHog cookie or localStorage entry, and no events — and nothing from before the decision is sent afterwards.
 - **Surveys:** Enabled (`opt_in_site_apps: true`). Surveys are live for real players.
 - **Error Tracking:** Enabled. `minStatusToCapture` remains at `500` by default (can be lowered to `400` if needed).
 - **Data Destination:** Production PostHog project. Events are tagged with `environment: "production"`.
@@ -226,7 +237,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       api_host: host || "https://us.i.posthog.com",
       autocapture: false,
       capture_pageview: false,
-      record_canvas: env === "production",
+      // record_canvas / record_sessions_percent removed by #864.
       opt_in_site_apps: env === "production",
       __add_tracing_headers: [],
       bootstrap: {
@@ -600,7 +611,7 @@ To avoid flicker (where the default sampling rate applies before flags are fetch
 3. The response contains the user's `distinctId` and evaluated `featureFlags`.
 4. `posthog.init()` uses these bootstrapped values immediately, then refreshes in the background.
 
-**Anonymous users:** The game requires login to play, but auth pages (`/auth/login`, `/auth/register`) are tracked. Anonymous users do not bootstrap flags. They use the safe default (`record_sessions_percent: 1.0` at launch).
+**Anonymous users:** ~~The game requires login to play~~ — superseded by #738 (guest play only) and #864. Before the player consents, the bootstrap call withholds their `distinct_id` and the backend resolves `guest_play_enabled` under the constant server-side id instead.
 
 **Implementation in `PostHogProvider`:**
 
@@ -625,11 +636,14 @@ const recordSessionsPercent =
     ? (bootstrap.featureFlags.session_replay_sampling_rate as number)
     : 1.0;
 
+// NOTE (#864): the snippet below is the pre-consent-era design. The live code
+// gates `init()` on consent and passes `disable_session_recording: true`
+// instead of any `record_*` option. See front/src/components/PostHogProvider.tsx.
 posthog.init(key, {
   api_host: host || "https://us.i.posthog.com",
   autocapture: false,
   capture_pageview: false,
-  record_sessions_percent: recordSessionsPercent,
+  disable_session_recording: true,
   opt_in_site_apps: env === "production",
   __add_tracing_headers: [],
   bootstrap: {
@@ -845,9 +859,9 @@ Because both frontend and backend use the same PostHog project and the Axios int
    - [ ] Log in. Confirm `posthog.identify()` is called (check PostHog debugger or network tab).
    - [ ] Log out. Confirm `posthog.reset()` is called and subsequent events are anonymous.
 
-4. **Session Replay**
-   - [ ] Play a level. Confirm canvas is visible in PostHog Session Replay (may take a few minutes to process).
-   - [ ] Check replay shows Phaser canvas gameplay, not just a black box.
+4. **Session Replay — must stay OFF (#864)**
+   - [ ] Confirm no `/s/` (session-recording) requests are sent at all.
+   - [ ] Confirm no replay appears in PostHog for a played level.
 
 5. **Session Linking**
    - [ ] Make an API call from the game (e.g., save progress). Confirm `X-PostHog-Session-ID` and `X-PostHog-Distinct-ID` headers are present in the request.
@@ -879,11 +893,11 @@ Because both frontend and backend use the same PostHog project and the Axios int
 3. Implement backend authoritative events (`user_registered`, `user_logged_in`, `match_ended`).
 4. Validate session linking: confirm backend events share `session_id` with frontend.
 
-### Phase 3: Session Replay, Surveys & Feature Flags (Week 3)
-1. Enable `record_canvas: true` and validate Session Replay shows Phaser canvas.
+### Phase 3: Surveys & Feature Flags (Week 3)
+1. ~~Enable `record_canvas: true` and validate Session Replay shows Phaser canvas.~~ Dropped by #864.
 2. Implement first-star survey logic in `ScoreManager` and `ResultPanel`.
 3. Configure survey in PostHog UI with `first_star_earned` trigger.
-4. Create `session_replay_sampling_rate` feature flag in PostHog UI.
+4. ~~Create `session_replay_sampling_rate` feature flag in PostHog UI.~~ Dropped by #864.
 5. Implement server-side bootstrapping for authenticated users.
 6. Test survey timing and UX.
 
@@ -891,7 +905,7 @@ Because both frontend and backend use the same PostHog project and the Axios int
 1. Add frontend `global-error.tsx` with `posthog.captureException()`.
 2. Validate backend exception capture via interceptor.
 3. Run full `make lint` and `make test`.
-4. Monitor PostHog event volume and Session Replay data usage for 1 week.
+4. Monitor PostHog event volume for 1 week. Expect a step change in volume from #864: only consenting players are counted.
 5. Adjust `session_replay_sampling_rate` feature flag if needed.
 
 ---
