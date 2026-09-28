@@ -68,8 +68,15 @@ async function fetchBootstrap(
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  const [client, setClient] = useState<typeof posthog | PostHogStub | null>(
-    null,
+  // Never null. Swapping this value re-renders, but swapping between a
+  // `<PHProvider>` tree and a bare one would change the element type above
+  // `children` and make React tear the whole subtree down and rebuild it.
+  // That is a real hazard here, not a theoretical one: on /game the flip
+  // lands just after ConsentGuard mounts PhaserGame, so the Phaser instance
+  // gets destroy()ed mid-boot and its in-flight audio tween then writes
+  // volume to a freed sound. Keep the structure fixed; vary only the prop.
+  const [client, setClient] = useState<typeof posthog | PostHogStub>(
+    () => posthog,
   );
   const [bootstrapData, setBootstrapData] =
     useState<PostHogBootstrapData | null>(null);
@@ -89,9 +96,15 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       const bootstrap = await fetchBootstrap(cookieDistinctId);
-      setBootstrapData(bootstrap);
 
       if (bootstrap) {
+        // Only ever overwrite with a real result. This effect runs a second
+        // time when consent flips, and clearing good flags on a failed retry
+        // would send `guest_play_enabled` back to undefined — PlayerGuard
+        // would swap the running game for a LoadingScreen, unmounting a live
+        // Phaser instance and crashing its audio tween.
+        setBootstrapData(bootstrap);
+
         const guestPlayEnabled =
           bootstrap.featureFlags.guest_play_enabled === true;
         setGuestPlayCookie(guestPlayEnabled);
@@ -175,30 +188,28 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     captureAnonymousPlayerCreatedOnce(posthog, freshlySeeded);
   }, [consentState]);
 
-  // FeatureFlagProvider wraps `children` on every path, including the one
-  // where there is no PostHog client. Gating it on the client — as this
-  // component used to — would leave every pre-consent player on
-  // PlayerGuard's default `{}` and cost them its 5s LoadingScreen timeout.
-  const flags = (
-    <FeatureFlagProvider
-      initialData={
-        bootstrapData
-          ? {
-              distinctId: bootstrapData.distinctId,
-              featureFlags: bootstrapData.featureFlags,
-            }
-          : undefined
-      }
-    >
-      {children}
-    </FeatureFlagProvider>
-  );
-
-  if (!client) return flags;
-
+  // One fixed shape, on every path — no early return, no conditional
+  // wrapper. FeatureFlagProvider in particular must always be here: gating it
+  // on the client, as this component used to, left every pre-consent player
+  // on PlayerGuard's default `{}` and cost them its 5s LoadingScreen timeout.
+  //
+  // Passing `client` makes PHProvider inert (it only supplies context — it
+  // never calls init itself), so handing it the uninitialized singleton
+  // before consent is safe: `capture()` on it is a no-op.
   return (
     <PHProvider client={client as unknown as typeof posthog}>
-      {flags}
+      <FeatureFlagProvider
+        initialData={
+          bootstrapData
+            ? {
+                distinctId: bootstrapData.distinctId,
+                featureFlags: bootstrapData.featureFlags,
+              }
+            : undefined
+        }
+      >
+        {children}
+      </FeatureFlagProvider>
     </PHProvider>
   );
 }
