@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { ConsentProvider } from "../lib/consent/ConsentContext";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
+import { ConsentProvider, useConsent } from "../lib/consent/ConsentContext";
 import {
   CONSENT_STORAGE_KEY,
   writeConsent,
@@ -9,6 +10,7 @@ import {
   ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME,
 } from "../lib/edital/anonymousPlayer";
 import { ANONYMOUS_PLAYER_CREATED_EVENT } from "../lib/edital/events";
+import { useFeatureFlag } from "../lib/posthog/FeatureFlagContext";
 import { PostHogProvider } from "./PostHogProvider";
 
 const initMock = jest.fn();
@@ -219,5 +221,130 @@ describe("PostHogProvider", () => {
     expect(options.record_sessions_percent).toBeUndefined();
     expect(options.record_canvas).toBeUndefined();
     expect(options.disable_session_recording).toBe(true);
+  });
+
+  it("never remounts its children when the client appears", async () => {
+    // Regression: the component used to return a bare tree while `client`
+    // was null and a <PHProvider>-wrapped one afterwards. That is a different
+    // element type at the same position, so React tore the subtree down and
+    // rebuilt it — destroying the Phaser game ConsentGuard had just mounted
+    // and crashing its in-flight audio tween on a freed sound.
+    const mounts = jest.fn();
+    const unmounts = jest.fn();
+
+    function Child() {
+      useEffect(() => {
+        mounts();
+        return () => unmounts();
+      }, []);
+      return <div>child</div>;
+    }
+
+    writeConsent("accepted");
+    render(
+      <ConsentProvider>
+        <PostHogProvider>
+          <Child />
+        </PostHogProvider>
+      </ConsentProvider>,
+    );
+
+    // Wait past the point where the client is swapped in.
+    await waitFor(() => expect(initMock).toHaveBeenCalled());
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
+    expect(mounts).toHaveBeenCalledTimes(1);
+    expect(unmounts).not.toHaveBeenCalled();
+  });
+
+  it("does not remount children when consent flips from undecided to accepted", async () => {
+    const mounts = jest.fn();
+    const unmounts = jest.fn();
+
+    function Child() {
+      useEffect(() => {
+        mounts();
+        return () => unmounts();
+      }, []);
+      return <div>child</div>;
+    }
+
+    function Harness() {
+      const { state, accept } = useConsent();
+      return (
+        <PostHogProvider>
+          <button type="button" onClick={accept}>
+            aceitar
+          </button>
+          <span>{state}</span>
+          <Child />
+        </PostHogProvider>
+      );
+    }
+
+    render(
+      <ConsentProvider>
+        <Harness />
+      </ConsentProvider>,
+    );
+
+    await screen.findByText("undecided");
+    expect(mounts).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "aceitar" }));
+
+    await waitFor(() => expect(initMock).toHaveBeenCalled());
+    expect(unmounts).not.toHaveBeenCalled();
+    expect(mounts).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps working flags when the post-consent bootstrap retry fails", async () => {
+    // The bootstrap effect runs again when consent flips. A failed retry must
+    // not clear flags that already resolved: PlayerGuard would swap the
+    // running game for a LoadingScreen and unmount a live Phaser instance.
+    let call = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      call += 1;
+      if (call === 1) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            distinctId: "x",
+            featureFlags: { guest_play_enabled: true },
+          }),
+        });
+      }
+      return Promise.reject(new Error("network blip"));
+    });
+
+    function Flags() {
+      const flag = useFeatureFlag("guest_play_enabled");
+      return <span>flag:{String(flag)}</span>;
+    }
+
+    function Harness() {
+      const { accept } = useConsent();
+      return (
+        <PostHogProvider>
+          <button type="button" onClick={accept}>
+            aceitar
+          </button>
+          <Flags />
+        </PostHogProvider>
+      );
+    }
+
+    render(
+      <ConsentProvider>
+        <Harness />
+      </ConsentProvider>,
+    );
+
+    await screen.findByText("flag:true");
+
+    fireEvent.click(screen.getByRole("button", { name: "aceitar" }));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    expect(screen.getByText("flag:true")).toBeInTheDocument();
   });
 });
