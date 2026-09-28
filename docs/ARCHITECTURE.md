@@ -42,7 +42,7 @@ The scope of the project is a web-based educational game. Core features include:
 - **Contextual Assistance:** Inactivity-driven hints that keep players from getting blocked in a level without removing the sense of discovery.
 - **Thematic Tracks:** Curated content paths focused on art and culture.
 - **Role-Based Access:** Distinct areas and permissions for General Users, Educators/Institutions, and Administrators.
-- **Institutional Dashboard:** Aggregated data visualization for educators to track player progress.
+- **Institutional Dashboard:** Aggregated data visualization for educators to track player progress. The edital dashboards (institutional and public) read PostHog through HogQL; the levels they report on — the 3 in `LEVEL_REGISTRY` plus the investigation (level 4), which isn't in the registry — and the event behind each per-level metric are listed in `DASHBOARD_LEVELS` (`front/src/lib/edital/server/levels.ts`). See `EVENTS.md` → "Métricas por fase dos dashboards".
 
 ### Non-Functional Requirements
 - **Accessibility:** Native compliance in UI and content design.
