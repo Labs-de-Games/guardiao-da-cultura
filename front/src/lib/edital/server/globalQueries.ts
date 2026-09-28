@@ -1,6 +1,13 @@
 import "server-only";
 import { environmentPredicate, environmentValues } from "./environmentScope";
-import { ORDERED_LEVELS } from "./levels";
+import {
+  completedEventsPredicate,
+  DASHBOARD_LEVELS,
+  FINAL_LEVEL,
+  levelIdExpression,
+  phaseStarsQuery,
+  reachedEventsPredicate,
+} from "./levels";
 import type { ResolvedDateRange } from "./period";
 import type { HogQLQueryPlan } from "./queries";
 
@@ -94,28 +101,25 @@ WHERE ${commonGlobalPredicate()} AND coalesce(properties.turma_source, '') != ''
 
 /**
  * Taxa geral de conclusão (#808 P0) — same started/completed shape as
- * queries.ts's buildCompletionRateQuery, unscoped.
+ * queries.ts's buildCompletionRateQuery, unscoped: finishing the game is
+ * completing the final level (the investigation).
  */
 export function buildGlobalCompletionRateQuery(
   range: ResolvedDateRange,
-  finalLevelNumber: number,
 ): HogQLQueryPlan {
   const query = `
 SELECT
   uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS started,
-  uniqExactIf(properties.anonymous_player_id, event = 'level_completed' AND toInt(properties.level_number) = {final_level_number}) AS completed
+  uniqExactIf(properties.anonymous_player_id, ${FINAL_LEVEL.completedCondition}) AS completed
 FROM events
 WHERE ${commonGlobalPredicate()}`.trim();
 
-  return {
-    query,
-    values: { ...baseValues(range), final_level_number: finalLevelNumber },
-  };
+  return { query, values: baseValues(range) };
 }
 
 /**
  * Progressão agregada por fase (#808 P0) — "Iniciaram → Concluíram Fase
- * 1 → Fase 2 → Fase 3", one row, one column per step. Deliberately plain
+ * 1 → … → Fase 4", one row, one column per step. Deliberately plain
  * `uniqExactIf` per step (not `windowFunnel`'s strict ordering): #808
  * asks for "distribuição dos jogadores ao longo das fases", not the
  * institution dashboard's strict-order acquisition funnel.
@@ -125,9 +129,9 @@ export function buildGlobalPhaseProgressionQuery(
 ): HogQLQueryPlan {
   const stepSelects = [
     `uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS started`,
-    ...ORDERED_LEVELS.map(
+    ...DASHBOARD_LEVELS.map(
       (level) =>
-        `uniqExactIf(properties.anonymous_player_id, event = 'level_completed' AND toInt(properties.level_number) = ${level.levelNumber}) AS level_${level.levelNumber}_completed`,
+        `uniqExactIf(properties.anonymous_player_id, ${level.completedCondition}) AS level_${level.levelNumber}_completed`,
     ),
   ].join(",\n  ");
 
@@ -143,7 +147,7 @@ WHERE ${commonGlobalPredicate()}`.trim();
 /**
  * Aprovação agregada nos quizzes — por fase (#808 P0), unscoped. Only a
  * per-level breakdown exists here, deliberately — a single blended rate
- * across all 3 levels' quizzes would misrepresent 3 genuinely different
+ * across every level's quiz would misrepresent genuinely different
  * quizzes as one, same reasoning as the institution dashboard's
  * Relatório page dropping its own single "Aprovação no quiz" row for a
  * per-fase breakdown.
@@ -165,8 +169,8 @@ GROUP BY level_id`.trim();
 
 /**
  * Per-level "reached" count (queries.ts's buildPhaseReachedQuery,
- * unscoped) — unique players who entered each level, via `game_started`
- * (fires every level entry, carries `level_id`). Paired with
+ * unscoped) — unique players who entered each level, via each level's
+ * reached event (`game_started`, or `investigation_opened` for level 4). Paired with
  * buildGlobalPhaseCompletionQuery below to compute a per-level
  * completion rate for the level-switcher panel.
  */
@@ -175,10 +179,10 @@ export function buildGlobalPhaseReachedQuery(
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  properties.level_id AS level_id,
+  ${levelIdExpression()} AS level_id,
   uniqExact(properties.anonymous_player_id) AS players
 FROM events
-WHERE ${commonGlobalPredicate()} AND event = 'game_started'
+WHERE ${commonGlobalPredicate()} AND ${reachedEventsPredicate()}
 GROUP BY level_id`.trim();
 
   return { query, values: baseValues(range) };
@@ -190,13 +194,23 @@ export function buildGlobalPhaseCompletionQuery(
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  properties.level_id AS level_id,
+  ${levelIdExpression()} AS level_id,
   uniqExact(properties.anonymous_player_id) AS players
 FROM events
-WHERE ${commonGlobalPredicate()} AND event = 'level_completed'
+WHERE ${commonGlobalPredicate()} AND ${completedEventsPredicate()}
 GROUP BY level_id`.trim();
 
   return { query, values: baseValues(range) };
+}
+
+/** Stars per level (queries.ts's buildPhaseStarsQuery, unscoped). */
+export function buildGlobalPhaseStarsQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  return {
+    query: phaseStarsQuery(commonGlobalPredicate()),
+    values: baseValues(range),
+  };
 }
 
 /**

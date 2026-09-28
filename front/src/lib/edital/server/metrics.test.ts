@@ -14,6 +14,7 @@ import {
   fetchPhaseClueUsage,
   fetchPhaseProgress,
   fetchPhaseQuizPassRate,
+  fetchPhaseStars,
   fetchQuizPassRate,
   fetchSessionDuration,
   fetchSummary,
@@ -392,14 +393,80 @@ describe("#807 orchestration functions (fetchCompletionRate/fetchPhaseProgress/f
     }
   });
 
-  it("fetchPhaseClueUsage fills every level, defaulting to zero uses when absent", async () => {
+  it("fetchPhaseProgress includes level 4 (the investigation)", async () => {
+    mockRunHogQLQuery
+      .mockResolvedValueOnce({
+        columns: ["level_id", "players"],
+        results: [["level_04", 12]],
+      })
+      .mockResolvedValueOnce({
+        columns: ["level_id", "players"],
+        results: [["level_04", 9]],
+      });
+
+    const result = await fetchPhaseProgress(scope, range);
+
+    expect(result.map((row) => row.levelNumber)).toEqual([1, 2, 3, 4]);
+    expect(result[3]).toMatchObject({
+      levelId: "level_04",
+      reached: 12,
+      completed: 9,
+    });
+  });
+
+  it("fetchPhaseQuizPassRate leaves out the investigation, which has no quiz", async () => {
+    mockRunHogQLQuery.mockResolvedValue({ columns: [], results: [] });
+
+    const result = await fetchPhaseQuizPassRate(scope, range);
+
+    expect(result.map((row) => row.levelId)).not.toContain("level_04");
+  });
+
+  it("fetchPhaseClueUsage fills every level, level 4 included, defaulting to zero clues when absent", async () => {
     mockRunHogQLQuery.mockResolvedValue({ columns: [], results: [] });
 
     const result = await fetchPhaseClueUsage(scope, range);
 
-    expect(result.length).toBeGreaterThanOrEqual(3);
+    expect(result.map((row) => row.levelNumber)).toEqual([1, 2, 3, 4]);
     for (const row of result) {
-      expect(row.clueUses).toBe(0);
+      expect(row.clues).toBe(0);
     }
+  });
+
+  it("fetchPhaseStars maps average and players per level", async () => {
+    mockRunHogQLQuery.mockResolvedValue({
+      columns: ["level_id", "avg_stars", "players"],
+      results: [
+        ["level_01", 3.5, 10],
+        ["level_04", 4.2, 6],
+      ],
+    });
+
+    const result = await fetchPhaseStars(scope, range);
+
+    expect(result[0]).toMatchObject({
+      levelId: "level_01",
+      avgStars: 3.5,
+      players: 10,
+    });
+    expect(result[3]).toMatchObject({
+      levelId: "level_04",
+      avgStars: 4.2,
+      players: 6,
+    });
+  });
+
+  it("fetchPhaseStars still returns a row for a level nobody finished", async () => {
+    mockRunHogQLQuery.mockResolvedValue({
+      columns: ["level_id", "avg_stars", "players"],
+      results: [["level_02", 2.75, 4]],
+    });
+
+    const result = await fetchPhaseStars(scope, range);
+
+    expect(result.find((row) => row.levelId === "level_03")).toMatchObject({
+      avgStars: 0,
+      players: 0,
+    });
   });
 });

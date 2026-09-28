@@ -22,6 +22,7 @@ const mockFetchCompletionRate = jest.fn();
 const mockFetchPhaseProgress = jest.fn();
 const mockFetchPhaseQuizPassRate = jest.fn();
 const mockFetchPhaseClueUsage = jest.fn();
+const mockFetchPhaseStars = jest.fn();
 jest.mock("@/lib/edital/server/metrics", () => ({
   fetchSummary: (...args: unknown[]) => mockFetchSummary(...args),
   fetchCompletionRate: (...args: unknown[]) => mockFetchCompletionRate(...args),
@@ -29,6 +30,7 @@ jest.mock("@/lib/edital/server/metrics", () => ({
   fetchPhaseQuizPassRate: (...args: unknown[]) =>
     mockFetchPhaseQuizPassRate(...args),
   fetchPhaseClueUsage: (...args: unknown[]) => mockFetchPhaseClueUsage(...args),
+  fetchPhaseStars: (...args: unknown[]) => mockFetchPhaseStars(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -47,6 +49,7 @@ describe("GET /api/edital/summary", () => {
     mockFetchPhaseProgress.mockReset();
     mockFetchPhaseQuizPassRate.mockReset();
     mockFetchPhaseClueUsage.mockReset();
+    mockFetchPhaseStars.mockReset();
     mockFetchCompletionRate.mockResolvedValue({
       value: 0,
       numerator: 0,
@@ -55,6 +58,7 @@ describe("GET /api/edital/summary", () => {
     mockFetchPhaseProgress.mockResolvedValue([]);
     mockFetchPhaseQuizPassRate.mockResolvedValue([]);
     mockFetchPhaseClueUsage.mockResolvedValue([]);
+    mockFetchPhaseStars.mockResolvedValue([]);
   });
 
   it("returns 401 when there is no session", async () => {
@@ -113,6 +117,7 @@ describe("GET /api/edital/summary", () => {
       phaseProgress: [],
       quizPassRate: [],
       clueUsage: [],
+      phaseStars: [],
     });
     expect(mockFetchSummary).toHaveBeenCalledWith(scope, range, undefined);
   });
@@ -174,16 +179,23 @@ describe("GET /api/edital/summary", () => {
         reached: 40,
         completed: 20,
       },
+      {
+        levelId: "level_04",
+        levelNumber: 4,
+        label: "L4",
+        reached: 20,
+        completed: 10,
+      },
     ]);
 
     const response = await GET(makeRequest());
     const data = await response.json();
 
-    // (80+40+20) completions over 100 players * 3 levels = 140/300.
+    // (80+40+20+10) completions over 100 players * 4 levels = 150/400.
     expect(data.averageProgress).toEqual({
-      value: 140 / 300,
-      numerator: 140,
-      denominator: 300,
+      value: 150 / 400,
+      numerator: 150,
+      denominator: 400,
     });
   });
 });

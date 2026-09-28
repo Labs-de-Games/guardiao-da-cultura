@@ -10,8 +10,10 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { RateCard } from "@/components/dashboard/RateCard";
 import { Section } from "@/components/dashboard/Section";
 import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
+import { INVESTIGATION_LEVEL_ID } from "@/game/constants/Investigation";
 import { getReport, getSummary } from "@/lib/api/edital";
 import { safeRate } from "@/lib/edital/rate";
+import { formatStars } from "@/lib/edital/stars";
 import type {
   EditalReportResponse,
   EditalSummaryResponse,
@@ -40,9 +42,10 @@ interface ReportData {
 /**
  * "Detalhamento" table rows — all computed from the same summary/report
  * data already fetched for the cards above, nothing hardcoded. Quiz
- * approval gets one row per phase (not a single aggregate) since the
- * game has 3 separate final quizzes, one per level — a single "aprovação
- * no quiz" number would misrepresent that. No institutional-target
+ * approval gets one row per phase that has a quiz (not a single
+ * aggregate) since each level has its own final quiz — a single
+ * "aprovação no quiz" number would misrepresent that. Clues and stars also
+ * get one row per phase. No institutional-target
  * comparison column, same reason RateCard never shows one: no official
  * threshold is defined anywhere in this codebase.
  */
@@ -79,6 +82,24 @@ function toDetailRows(data: ReportData): ReactNode[][] {
       `Aprovação no quiz — Fase ${phase.levelNumber} — ${phase.label}`,
       formatPercent(phase.rate.value),
       `${phase.rate.numerator.toLocaleString("pt-BR")} / ${phase.rate.denominator.toLocaleString("pt-BR")} conclusões`,
+    ]);
+  }
+
+  for (const phase of data.summary.clueUsage ?? []) {
+    rows.push([
+      `Pistas — Fase ${phase.levelNumber} — ${phase.label}`,
+      phase.clues.toLocaleString("pt-BR"),
+      phase.levelId === INVESTIGATION_LEVEL_ID
+        ? "Pistas posicionadas no quadro (cada movimento conta)"
+        : "Pistas coletadas na fase",
+    ]);
+  }
+
+  for (const phase of data.summary.phaseStars ?? []) {
+    rows.push([
+      `Estrelas — Fase ${phase.levelNumber} — ${phase.label}`,
+      formatStars(phase),
+      `Média da melhor partida de ${phase.players.toLocaleString("pt-BR")} jogadores`,
     ]);
   }
 

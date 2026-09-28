@@ -31,6 +31,7 @@ import {
 } from "@/components/dashboard/FunnelChart";
 import { getPublicDashboard } from "@/lib/api/edital";
 import { EDITAL_ANNUAL_PLAYER_GOAL } from "@/lib/edital/rate";
+import { formatStars, starsFraction } from "@/lib/edital/stars";
 import type { DateRange, PublicDashboardResponse } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 
@@ -544,7 +545,21 @@ function PlayerTrendChart({
   );
 }
 
-function MiniBar({ label, percent }: { label: string; percent: number }) {
+/**
+ * `percent: null` means the metric doesn't apply or isn't known yet — the
+ * bar stays empty and the value reads "—" (or `valueLabel`), never a
+ * misleading 0%.
+ */
+function MiniBar({
+  label,
+  percent,
+  valueLabel,
+}: {
+  label: string;
+  percent: number | null;
+  valueLabel?: string;
+}) {
+  const width = percent === null ? 0 : Math.round(percent * 100);
   return (
     <Box sx={{ mb: 2.5 }}>
       <Box
@@ -565,14 +580,14 @@ function MiniBar({ label, percent }: { label: string; percent: number }) {
           variant="body2"
           sx={{ fontWeight: 700, color: "text.primary" }}
         >
-          {Math.round(percent * 100)}%
+          {valueLabel ?? (percent === null ? "—" : `${width}%`)}
         </Typography>
       </Box>
       <Box sx={{ height: 10, backgroundColor: "rgba(0,0,0,0.08)" }}>
         <Box
           sx={{
             height: "100%",
-            width: `${Math.round(percent * 100)}%`,
+            width: `${width}%`,
             backgroundColor: "custom.highlight",
           }}
         />
@@ -584,10 +599,11 @@ function MiniBar({ label, percent }: { label: string; percent: number }) {
 /**
  * The reference's "Desempenho por etapa" panel is hardcoded to a single
  * fictional "Capítulo 1" — this replaces that with a real level switcher
- * (1/2/3), each level's 3 bars computed from `phaseDetail`: entrada
- * (reached this level / all players who started gameplay), conclusão
- * (completed this level / reached this level), and the same quiz pass
- * rate already shown per-level above.
+ * (one button per level), each level's bars computed from `phaseDetail`:
+ * entrada (reached this level / all players who started gameplay),
+ * conclusão (completed this level / reached this level), the quiz pass
+ * rate (left out for the investigation, which has no quiz), and the
+ * average of each player's best stars, out of 5.
  */
 function LevelDetailPanel({
   phaseDetail,
@@ -681,7 +697,17 @@ function LevelDetailPanel({
       <Grid size={{ xs: 12, md: 8 }} sx={{ p: { xs: 2.5, md: 3 } }}>
         <MiniBar label="Entrada no nível" percent={entryRate} />
         <MiniBar label="Conclusão do nível" percent={completionRate} />
-        <MiniBar label="Aprovação no quiz" percent={level.quizPassRate.value} />
+        {level.quizPassRate ? (
+          <MiniBar
+            label="Aprovação no quiz"
+            percent={level.quizPassRate.value}
+          />
+        ) : null}
+        <MiniBar
+          label="Média de estrelas"
+          percent={starsFraction(level.stars)}
+          valueLabel={formatStars(level.stars)}
+        />
       </Grid>
     </Grid>
   );

@@ -44,7 +44,16 @@ const SUMMARY_DATA = {
     },
   ],
   clueUsage: [
-    { levelId: "level_01", levelNumber: 1, label: "Museu", clueUses: 42 },
+    { levelId: "level_01", levelNumber: 1, label: "Museu", clues: 42 },
+  ],
+  phaseStars: [
+    {
+      levelId: "level_01",
+      levelNumber: 1,
+      label: "Museu",
+      avgStars: 3.5,
+      players: 450,
+    },
   ],
 };
 
@@ -108,6 +117,12 @@ describe("InstitutionOverviewPage", () => {
     // Per-phase quiz pass-rate bar chart, one bar per level. The
     // reached→completed funnel now lives on the Funil page instead.
     expect(screen.getAllByText("Fase 1 — Museu").length).toBeGreaterThan(0);
+
+    // Stars per phase: the average of each player's best run, out of the max.
+    expect(
+      screen.getByText("Média de estrelas por jogador"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("3,5 / 5 ★")).toBeInTheDocument();
   });
 
   it("passes the selected turma through to getSummary/getReport", async () => {

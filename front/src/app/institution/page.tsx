@@ -16,10 +16,12 @@ import { Section } from "@/components/dashboard/Section";
 import { TurmaSelect } from "@/components/dashboard/TurmaSelect";
 import { getReport, getSummary } from "@/lib/api/edital";
 import { safeRate } from "@/lib/edital/rate";
+import { formatStars, starsFraction } from "@/lib/edital/stars";
 import type {
   EditalReportResponse,
   EditalSummaryResponse,
   PhaseQuizPassRateRow,
+  PhaseStarsRow,
 } from "@/lib/edital/types";
 import { useAsyncData } from "@/lib/edital/useAsyncData";
 import { useEditalFilters } from "@/lib/edital/useEditalFilters";
@@ -46,6 +48,19 @@ function toQuizPassRateBarSteps(
     label: `Fase ${row.levelNumber} — ${row.label}`,
     value: row.rate.value,
     count: row.rate.denominator,
+  }));
+}
+
+/**
+ * "Estrelas por fase": a bar per level with the average of each player's
+ * best stars, out of 5. The count is how many players finished.
+ */
+function toStarsBarSteps(phaseStars: PhaseStarsRow[]): FunnelStep[] {
+  return phaseStars.map((row) => ({
+    label: `Fase ${row.levelNumber} — ${row.label}`,
+    value: starsFraction(row),
+    count: row.players,
+    valueLabel: formatStars(row),
   }));
 }
 
@@ -218,6 +233,17 @@ function InstitutionOverviewContent() {
             >
               <FunnelChart
                 steps={toQuizPassRateBarSteps(data.summary.quizPassRate ?? [])}
+                highlightIndex={-1}
+              />
+            </Section>
+
+            <Section
+              variant="split"
+              eyebrow="Estrelas por fase"
+              title="Média de estrelas por jogador"
+            >
+              <FunnelChart
+                steps={toStarsBarSteps(data.summary.phaseStars ?? [])}
                 highlightIndex={-1}
               />
             </Section>
