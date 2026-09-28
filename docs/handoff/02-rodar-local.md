@@ -69,8 +69,19 @@ que o navegador baixa.
 tem efeito nenhum. É preciso reconstruir a imagem.
 
 **`RESPONSIVEVOICE_API_KEY` não pode ganhar o prefixo `NEXT_PUBLIC_`.** Ela é
-usada apenas no servidor, pela rota `/api/tts/synthesize`. Sem ela, a narração
-cai no Web Speech API do navegador.
+usada apenas no servidor, pela rota `/api/tts/synthesize`. Ela é opcional:
+deixe `RESPONSIVEVOICE_API_KEY=` vazia, como no `.env.example`, e a rota
+responde `503` (`tts_unavailable`). A narração então cai no Web Speech API do
+navegador. Não use um valor de exemplo como `xxxxxxxx`: a rota trata qualquer
+valor como chave real e responde `502` em cada fala.
+
+**A voz do navegador depende do sistema.** Sem a chave, quem fala é o
+sintetizador de voz do navegador, e ele nem sempre funciona de fábrica. Em
+alguns sistemas, principalmente Linux, pode ser preciso instalar um motor de
+voz no sistema operacional ou iniciar o navegador com uma flag ou configuração
+específica. Para conferir, rode `speechSynthesis.getVoices()` no console do
+navegador: uma lista vazia significa que não há vozes e a narração vai ficar
+muda.
 
 Em desenvolvimento, `EMAIL_PROVIDER=mock` faz o magic link de login aparecer no
 console em vez de ser enviado por e-mail.
@@ -111,3 +122,5 @@ que o hook não se aplica, como um commit só de documentação.
 | Container em estado inconsistente | `make clean && make up` |
 | Nada funciona | `make deep-clean && make up` |
 | Migration não aplicou | Confira se o container do back está de pé com `make development-ps` |
+| Narração muda | O navegador não tem vozes. Veja se `speechSynthesis.getVoices()` volta vazio e instale ou habilite um motor de voz |
+| `/api/tts/synthesize` responde `502` | Chave do ResponsiveVoice inválida (por exemplo `xxxxxxxx`). Deixe `RESPONSIVEVOICE_API_KEY=` vazia e reinicie o front |
