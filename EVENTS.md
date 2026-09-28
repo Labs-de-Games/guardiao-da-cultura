@@ -19,24 +19,30 @@
 > Um print de qualquer uma das stacks 2–4 **não** representa o número do
 > edital — só a stack 1 (PostHog) faz isso.
 
-> ## ⚠️ PostHog depende de consentimento (#864)
+> ## ⚠️ As stacks 1 e 2 dependem de consentimento (#864)
 >
-> Desde a issue #864, o `posthog.init()` só roda depois que o jogador aceita a
-> coleta de dados de uso. Consequências para todo número deste documento:
+> Desde a issue #864, **nenhum evento de analytics é coletado antes de o
+> jogador aceitar** — nem no PostHog, nem no pipeline Postgres. O diálogo é
+> bloqueante: ninguém chega ao jogo sem responder. Consequências para todo
+> número deste documento:
 >
-> - **A stack 1 passa a contar apenas quem consentiu.** Quem recusa, e quem
->   ainda não decidiu, não gera nenhum evento PostHog.
+> - **As stacks 1 e 2 passam a contar apenas quem consentiu.** Não existe mais
+>   "fonte sem viés de consentimento" neste repositório: quem recusa não gera
+>   evento em lugar nenhum.
 > - **`landing_page_viewed` é o mais afetado**: é o passo 1 do funil e o
->   denominador da "Taxa de entrada na gameplay", e acontece exatamente na tela
->   onde o banner aparece — ou seja, antes da decisão na maioria das visitas.
->   Espere uma queda de patamar, não um bug.
-> - **Não há coleta retroativa.** O posthog-js descarta capturas feitas antes
->   do `init()`, então eventos anteriores ao aceite não são enviados depois.
-> - **A stack 2 (pipeline Postgres) não é afetada** — continua registrando
->   todos os jogadores. Onde a contagem absoluta importar mais que o
->   detalhamento, ela é a fonte sem viés de consentimento.
-> - Eventos do backend (`match_ended`, exceções) também respeitam a escolha,
->   via o cookie `gp_analytics_consent`.
+>   denominador da "Taxa de entrada na gameplay". Espere uma queda de patamar,
+>   não um bug.
+> - **Não há coleta retroativa em nenhuma das duas.** O posthog-js descarta
+>   capturas feitas antes do `init()`; a fila em `gameplate:eventQueue:v1` é
+>   **descartada** sem consentimento, em vez de guardada — aceitar autoriza
+>   dali para frente, nunca para trás.
+> - **O progresso do jogador continua sendo gravado** (`/scores`,
+>   `/progression`): é o jogo salvo dele, não medição sobre ele. Só `/events`
+>   é bloqueado.
+> - O gate vale nos dois lados. O front não envia, e o backend descarta o que
+>   chegar sem o cookie `gp_analytics_consent` — inclusive o `session.end`
+>   entregue por `sendBeacon`. Eventos do backend (`match_ended`, exceções)
+>   seguem a mesma regra.
 
 Este documento descreve:
 - **Métricas do dashboard** e quais eventos alimentam cada card/visão.
