@@ -139,12 +139,25 @@ describe("env-server — empty-string env vars", () => {
     expect(serverEnv.server.editalPeriodStart).toBeUndefined();
   });
 
-  it("still rejects an empty required RESPONSIVEVOICE_API_KEY", async () => {
+  // Regression for #799: `cp .env.example .env` and Compose's `${VAR:-}` both
+  // hand the container "", which must mean "no key" (route answers 503), not
+  // a ZodError (route answers 500).
+  it("treats an empty RESPONSIVEVOICE_API_KEY as unset", async () => {
     process.env.RESPONSIVEVOICE_API_KEY = "";
 
     const { serverEnv } = await import("./env-server");
 
-    expect(() => serverEnv.server).toThrow();
+    expect(() => serverEnv.server).not.toThrow();
+    expect(serverEnv.server.responsivevoiceApiKey).toBeUndefined();
+  });
+
+  it("boots without RESPONSIVEVOICE_API_KEY at all", async () => {
+    delete process.env.RESPONSIVEVOICE_API_KEY;
+
+    const { serverEnv } = await import("./env-server");
+
+    expect(() => serverEnv.server).not.toThrow();
+    expect(serverEnv.server.responsivevoiceApiKey).toBeUndefined();
   });
 });
 
