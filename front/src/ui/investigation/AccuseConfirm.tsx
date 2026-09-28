@@ -83,6 +83,7 @@ export function AccuseConfirm() {
       EventBus.emit("investigation:completed", {
         stars: outcome.stars,
         wrongAttempts: outcome.wrongAttempts,
+        correct: outcome.correct,
       });
     }
   }, [accuseSuspect, suspect]);

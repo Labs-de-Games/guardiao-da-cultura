@@ -3,6 +3,7 @@ import { create } from "zustand";
 import {
   INVESTIGATION_CLUE_HEARTS,
   INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_LEVEL_NUMBER,
   INVESTIGATION_MAX_WRONG_ATTEMPTS,
   INVESTIGATION_SLOTS,
   starsForWrongAttempts,
@@ -915,6 +916,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
 
       posthog.capture("investigation_clue_placed", {
         level_id: INVESTIGATION_LEVEL_ID,
+        level_number: INVESTIGATION_LEVEL_NUMBER,
         clue_key: clueKey,
         clue_source: clue.source,
         trait_id: clue.traitId,

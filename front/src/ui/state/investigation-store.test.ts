@@ -2,6 +2,7 @@ import posthog from "posthog-js";
 import {
   INVESTIGATION_CLUE_HEARTS,
   INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_LEVEL_NUMBER,
   INVESTIGATION_SLOTS,
 } from "@/game/constants/Investigation";
 import type {
@@ -380,6 +381,7 @@ describe("investigation store", () => {
       expect(captured("investigation_clue_placed")).toEqual([
         {
           level_id: INVESTIGATION_LEVEL_ID,
+          level_number: INVESTIGATION_LEVEL_NUMBER,
           clue_key: VARNISH.key,
           clue_source: "player",
           trait_id: "conservation_technique",
