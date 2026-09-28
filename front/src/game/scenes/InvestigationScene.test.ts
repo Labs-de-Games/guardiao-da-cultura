@@ -1,6 +1,8 @@
 import Cookies from "js-cookie";
+import posthog from "posthog-js";
 import {
   INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_LEVEL_NUMBER,
   INVESTIGATION_MUSIC_VOLUME,
 } from "@/game/constants/Investigation";
 import { SceneNames } from "@/game/constants/SceneNames";
@@ -144,6 +146,7 @@ function buildScene({
   progress = null as UserProgressState | null,
 } = {}) {
   const saveProgress = jest.fn().mockResolvedValue(undefined);
+  const saveScore = jest.fn().mockResolvedValue(undefined);
   const persistence = {
     loadProgress: jest.fn().mockResolvedValue(progress),
     loadCollectibles: jest.fn(async (levelId: string) =>
@@ -153,6 +156,7 @@ function buildScene({
       })),
     ),
     saveProgress,
+    saveScore,
   };
   (createGamePersistence as jest.Mock).mockReturnValue(persistence);
 
@@ -179,7 +183,7 @@ function buildScene({
 
   liveScenes.push(scene);
 
-  return { scene, sceneStart, persistence, saveProgress };
+  return { scene, sceneStart, persistence, saveProgress, saveScore };
 }
 
 async function captureStartPayload(
@@ -303,22 +307,98 @@ describe("InvestigationScene", () => {
 
       expect(payload.previousStars).toBe(3);
     });
+
+    it("reports the opening with level metadata", async () => {
+      const { scene } = buildScene();
+      await captureStartPayload(() => scene.create());
+
+      expect(posthog.capture).toHaveBeenCalledWith(
+        "investigation_opened",
+        expect.objectContaining({
+          level_id: INVESTIGATION_LEVEL_ID,
+          level_number: INVESTIGATION_LEVEL_NUMBER,
+        }),
+      );
+    });
   });
 
   describe("persisting the result", () => {
     async function completeWith(
       stars: number,
       progress: UserProgressState | null = null,
+      { wrongAttempts = 0, correct = true } = {},
     ) {
-      const { scene, saveProgress } = buildScene({ progress });
+      const { scene, saveProgress, saveScore } = buildScene({ progress });
       await captureStartPayload(() => scene.create());
 
-      EventBus.emit("investigation:completed", { stars, wrongAttempts: 0 });
+      EventBus.emit("investigation:completed", {
+        stars,
+        wrongAttempts,
+        correct,
+      });
       // Let the persistence promise chain settle.
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      return { saveProgress, scene };
+      return { saveProgress, saveScore, scene };
     }
+
+    it("reports the finished game with level metadata", async () => {
+      await completeWith(5);
+
+      expect(posthog.capture).toHaveBeenCalledWith("investigation_completed", {
+        level_id: INVESTIGATION_LEVEL_ID,
+        level_number: INVESTIGATION_LEVEL_NUMBER,
+        stars: 5,
+        wrong_attempts: 0,
+        is_correct: true,
+        revealed: false,
+      });
+    });
+
+    it("reports a revealed ending as a finished game too", async () => {
+      await completeWith(1, null, { wrongAttempts: 4, correct: false });
+
+      expect(posthog.capture).toHaveBeenCalledWith(
+        "investigation_completed",
+        expect.objectContaining({
+          stars: 1,
+          is_correct: false,
+          revealed: true,
+        }),
+      );
+    });
+
+    it("reports the progress update like levels 1–3 do", async () => {
+      await completeWith(5);
+
+      expect(posthog.capture).toHaveBeenCalledWith("progress_updated", {
+        level_id: INVESTIGATION_LEVEL_ID,
+        level_number: INVESTIGATION_LEVEL_NUMBER,
+        current_level: 5,
+        total_stars: 5,
+        completed_levels_count: 1,
+      });
+    });
+
+    it("submits the score with only the stars filled in", async () => {
+      const { saveScore } = await completeWith(4);
+
+      expect(saveScore).toHaveBeenCalledWith({
+        levelId: INVESTIGATION_LEVEL_ID,
+        totalQuarters: 0,
+        totalStars: 4,
+        rating: "",
+        floors: [],
+        quiz: {
+          totalQuestions: 0,
+          correctAnswers: 0,
+          accuracyPercent: 0,
+          quartersEarned: 0,
+        },
+        intermediateQuizzes: { total: 0, passed: 0, quartersEarned: 0 },
+        collectedCollectibles: [],
+      });
+    });
 
     it("records the result and unlocks the phase on the map", async () => {
       const { saveProgress } = await completeWith(5);
