@@ -6,6 +6,7 @@ import {
   fetchPhaseClueUsage,
   fetchPhaseProgress,
   fetchPhaseQuizPassRate,
+  fetchPhaseStars,
   fetchSummary,
 } from "@/lib/edital/server/metrics";
 import { resolveEditalRequestContext } from "@/lib/edital/server/routeGuard";
@@ -26,14 +27,21 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const [funnelData, completionRate, phaseProgress, quizPassRate, clueUsage] =
-      await Promise.all([
-        fetchSummary(ctx.scope, ctx.range, ctx.turmaSource),
-        fetchCompletionRate(ctx.scope, ctx.range, ctx.turmaSource),
-        fetchPhaseProgress(ctx.scope, ctx.range, ctx.turmaSource),
-        fetchPhaseQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
-        fetchPhaseClueUsage(ctx.scope, ctx.range, ctx.turmaSource),
-      ]);
+    const [
+      funnelData,
+      completionRate,
+      phaseProgress,
+      quizPassRate,
+      clueUsage,
+      phaseStars,
+    ] = await Promise.all([
+      fetchSummary(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchCompletionRate(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchPhaseProgress(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchPhaseQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchPhaseClueUsage(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchPhaseStars(ctx.scope, ctx.range, ctx.turmaSource),
+    ]);
 
     /**
      * "Progresso médio" (issue #807) — total level-completions across all
@@ -60,6 +68,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       phaseProgress,
       quizPassRate,
       clueUsage,
+      phaseStars,
     };
     return NextResponse.json(body);
   } catch {

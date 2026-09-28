@@ -1,7 +1,15 @@
 import "server-only";
-import { LEVEL_REGISTRY } from "../../../game/data/LevelConfig";
 import { environmentPredicate, environmentValues } from "./environmentScope";
 import type { HogQLValues } from "./hogql";
+import {
+  clueEventsPredicate,
+  completedEventsPredicate,
+  DASHBOARD_LEVELS,
+  FINAL_LEVEL,
+  levelIdExpression,
+  phaseStarsQuery,
+  reachedEventsPredicate,
+} from "./levels";
 import type { ResolvedDateRange } from "./period";
 import type { Scope } from "./scope";
 
@@ -84,29 +92,26 @@ const ACQUISITION_STEPS: FunnelStepDef[] = [
 ];
 
 /**
- * One funnel step per real level (1, 2, 3 today), each requiring
- * `level_completed` with that level's own `level_number` — replaces the
- * old hardcoded `chapter_1_started`/`chapter_1_completed` pair, which
- * only ever covered level 1 (issue #807's explicit warning: "não
- * utilizar chapter_1_started/chapter_1_completed como base geral").
- * `levelNumber` is a compile-time constant from LEVEL_REGISTRY, not
- * request input, so interpolating it here is the same safe pattern as
- * the event-name literals above — never a user-controlled value.
+ * One funnel step per dashboard level (levels.ts), each using that level's
+ * own completion condition — `level_completed` with its `level_number` for
+ * levels 1–3, `investigation_completed` for level 4 — replacing the old
+ * hardcoded `chapter_1_started`/`chapter_1_completed` pair, which only
+ * ever covered level 1 (issue #807's explicit warning: "não utilizar
+ * chapter_1_started/chapter_1_completed como base geral"). The conditions
+ * are compile-time constants, not request input, so interpolating them
+ * here is the same safe pattern as the event-name literals above.
  */
 function levelCompletionSteps(): FunnelStepDef[] {
-  return Object.values(LEVEL_REGISTRY)
-    .sort((a, b) => a.levelNumber - b.levelNumber)
-    .map((level) => ({
-      label: `Concluiu Fase ${level.levelNumber} — ${level.title}`,
-      condition: `event = 'level_completed' AND toInt(properties.level_number) = ${level.levelNumber}`,
-    }));
+  return DASHBOARD_LEVELS.map((level) => ({
+    label: `Concluiu Fase ${level.levelNumber} — ${level.title}`,
+    condition: level.completedCondition,
+  }));
 }
 
 /**
  * The full funnel, in order: acquisition steps, then one completion step
- * per level — dynamic on LEVEL_REGISTRY's length, so a 4th level added to
- * the game extends this funnel automatically instead of needing a new
- * hardcoded step.
+ * per level — dynamic on DASHBOARD_LEVELS, so a level added there extends
+ * this funnel automatically instead of needing a new hardcoded step.
  */
 export function getFunnelSteps(): FunnelStepDef[] {
   return [...ACQUISITION_STEPS, ...levelCompletionSteps()];
@@ -288,42 +293,35 @@ ORDER BY unique_players DESC`.trim();
 }
 
 /**
- * #807 completion rate: players who completed the last level
- * (`level_completed` with the highest `level_number`, resolved by the
- * caller from LEVEL_REGISTRY — this query only takes the raw number so it
- * never hardcodes the game's level count) over players who started.
- * Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ * #807 completion rate: players who finished the game — completed the
+ * final dashboard level (levels.ts's FINAL_LEVEL, the investigation, in
+ * either ending) — over players who started. Institution-wide when
+ * `turmaSource` is absent, turma-scoped otherwise.
  */
 export function buildCompletionRateQuery(
   scope: Scope,
   range: ResolvedDateRange,
-  finalLevelNumber: number,
   turmaSource?: string,
 ): HogQLQueryPlan {
   const query = `
 SELECT
   uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS started,
-  uniqExactIf(properties.anonymous_player_id, event = 'level_completed' AND toInt(properties.level_number) = {final_level_number}) AS completed
+  uniqExactIf(properties.anonymous_player_id, ${FINAL_LEVEL.completedCondition}) AS completed
 FROM events
 WHERE ${commonPredicate(turmaSource)}`.trim();
 
-  return {
-    query,
-    values: {
-      ...baseValues(scope, range, turmaSource),
-      final_level_number: finalLevelNumber,
-    },
-  };
+  return { query, values: baseValues(scope, range, turmaSource) };
 }
 
 /**
  * #807 "progresso por fase" — the reached half: unique players who
- * entered each level, via `game_started` (fires every level entry,
- * carries `level_id`) — NOT `gameplay_started` (fires once per session
- * only, no per-level signal) and NOT the backend's own `LEVEL_STARTED`
- * (a different pipeline entirely: NestJS/Postgres `game_event`, which
- * this HogQL-only dashboard never queries). Paired with
- * `buildPhaseCompletionQuery` below (the completed half).
+ * entered each level, via each level's reached event (`game_started` for
+ * levels 1–3, `investigation_opened` for level 4) — NOT
+ * `gameplay_started` (fires once per session only, no per-level signal)
+ * and NOT the backend's own `LEVEL_STARTED` (a different pipeline
+ * entirely: NestJS/Postgres `game_event`, which this HogQL-only dashboard
+ * never queries). Paired with `buildPhaseCompletionQuery` below (the
+ * completed half).
  */
 export function buildPhaseReachedQuery(
   scope: Scope,
@@ -332,20 +330,21 @@ export function buildPhaseReachedQuery(
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  properties.level_id AS level_id,
+  ${levelIdExpression()} AS level_id,
   uniqExact(properties.anonymous_player_id) AS players
 FROM events
-WHERE ${commonPredicate(turmaSource)} AND event = 'game_started'
+WHERE ${commonPredicate(turmaSource)} AND ${reachedEventsPredicate()}
 GROUP BY level_id`.trim();
 
   return { query, values: baseValues(scope, range, turmaSource) };
 }
 
 /**
- * #807 "progresso por fase" — unique players who completed each level,
- * grouped by `properties.level_id` (not `level_number`: HogQL has no join
- * to LEVEL_REGISTRY, so the number/title mapping happens in metrics.ts
- * instead, which already has that registry client-side).
+ * #807 "progresso por fase" — unique players who completed each level
+ * (`level_completed` for levels 1–3, `investigation_completed` for level
+ * 4), grouped by level id (not `level_number`: HogQL has no join to
+ * DASHBOARD_LEVELS, so the number/title mapping happens in metrics.ts
+ * instead).
  */
 export function buildPhaseCompletionQuery(
   scope: Scope,
@@ -354,10 +353,10 @@ export function buildPhaseCompletionQuery(
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  properties.level_id AS level_id,
+  ${levelIdExpression()} AS level_id,
   uniqExact(properties.anonymous_player_id) AS players
 FROM events
-WHERE ${commonPredicate(turmaSource)} AND event = 'level_completed'
+WHERE ${commonPredicate(turmaSource)} AND ${completedEventsPredicate()}
 GROUP BY level_id`.trim();
 
   return { query, values: baseValues(scope, range, turmaSource) };
@@ -387,10 +386,13 @@ GROUP BY level_id`.trim();
 }
 
 /**
- * #807 P1 "uso de pistas por fase" — `clue_used` count per `level_id`. No
- * player-uniqueness claim here (issue asks for "quantidade média ou
- * percentual", left to the caller once real numbers are seen); this
- * returns the raw count per level, the least-assumption version.
+ * #807 P1 "pistas por fase" — raw clue-interaction count per level: clues
+ * collected (`clue_collected`) in levels 1–3, clues placed on the board
+ * (`investigation_clue_placed`, every drop, tutorial excluded) in level 4.
+ * Not `clue_used`: that fires when the game shows a hint on its own, not
+ * when the player does anything. No player-uniqueness claim here (issue
+ * asks for "quantidade média ou percentual", left to the caller once real
+ * numbers are seen); this returns the raw count per level.
  */
 export function buildPhaseClueUsageQuery(
   scope: Scope,
@@ -399,11 +401,27 @@ export function buildPhaseClueUsageQuery(
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  properties.level_id AS level_id,
-  count() AS clue_uses
+  ${levelIdExpression()} AS level_id,
+  count() AS clues
 FROM events
-WHERE ${commonPredicate(turmaSource)} AND event = 'clue_used'
+WHERE ${commonPredicate(turmaSource)} AND (${clueEventsPredicate()})
 GROUP BY level_id`.trim();
 
   return { query, values: baseValues(scope, range, turmaSource) };
+}
+
+/**
+ * Stars per level — each player's best run (replays keep the best result,
+ * same as progression), averaged across players. Every level is out of 5,
+ * so the ceiling isn't queried.
+ */
+export function buildPhaseStarsQuery(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): HogQLQueryPlan {
+  return {
+    query: phaseStarsQuery(commonPredicate(turmaSource)),
+    values: baseValues(scope, range, turmaSource),
+  };
 }
