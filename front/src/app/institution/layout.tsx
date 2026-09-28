@@ -31,7 +31,7 @@ import { usePathname } from "next/navigation";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import InstitutionGuard from "@/components/auth/InstitutionGuard";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { Footer } from "@/components/Footer";
 
 const DRAWER_WIDTH = 280;
 
@@ -295,7 +295,7 @@ export default function InstitutionLayout({
           >
             {isMobile ? <Toolbar /> : null}
             <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 } }}>{children}</Box>
-            <DashboardFooter />
+            <Footer />
           </Box>
         </Box>
       </InstitutionGuard>

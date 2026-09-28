@@ -22,13 +22,13 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardState } from "@/components/dashboard/DashboardState";
 import { DataTable } from "@/components/dashboard/DataTable";
 import {
   FunnelChart,
   type FunnelStep,
 } from "@/components/dashboard/FunnelChart";
+import { Footer } from "@/components/Footer";
 import { getPublicDashboard } from "@/lib/api/edital";
 import { EDITAL_ANNUAL_PLAYER_GOAL } from "@/lib/edital/rate";
 import type { DateRange, PublicDashboardResponse } from "@/lib/edital/types";
@@ -1201,7 +1201,7 @@ export default function PublicDashboardPage() {
   return (
     <Box>
       <PublicDashboardContent />
-      <DashboardFooter />
+      <Footer />
     </Box>
   );
 }
