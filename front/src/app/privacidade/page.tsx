@@ -67,17 +67,19 @@ export default function PrivacyNoticePage() {
 
         <h2>Dados de uso do jogo (depende da sua autorização)</h2>
         <p>
-          Com a sua autorização, registramos eventos de jogo no{" "}
-          <strong>PostHog</strong>: fases iniciadas e concluídas, respostas de
-          quiz, pontuação, tempo de jogo, interações com personagens e erros da
-          aplicação. Esses eventos ficam associados a um identificador aleatório
-          do navegador, não ao seu nome ou e-mail.
+          Com a sua autorização, registramos eventos de jogo: fases iniciadas e
+          concluídas, respostas de quiz, pontuação, tempo de jogo, interações
+          com personagens e erros da aplicação. Esses eventos ficam associados a
+          um identificador aleatório do navegador, não ao seu nome ou e-mail, e
+          vão para dois destinos: o <strong>PostHog</strong> e os{" "}
+          <strong>nossos próprios servidores</strong>.
         </p>
         <p>
           Enquanto você não autorizar, o PostHog <strong>não é iniciado</strong>
-          , nenhum evento é enviado e nenhum cookie ou registro dele é criado no
-          seu navegador. Eventos ocorridos antes da autorização{" "}
-          <strong>não</strong> são enviados depois.
+          , nenhum evento é enviado a nenhum dos dois destinos, e nenhum cookie
+          ou registro do PostHog é criado no seu navegador. Eventos ocorridos
+          antes da autorização <strong>não</strong> são enviados depois, nem
+          ficam guardados esperando por ela.
         </p>
         <p>
           Não fazemos gravação de sessão, <em>session replay</em> nem captura da
@@ -92,9 +94,10 @@ export default function PrivacyNoticePage() {
         </p>
         <ul>
           <li>
-            <strong>Progresso do jogo</strong> — pontuação, fases concluídas e
-            eventos de partida são gravados nos nossos próprios servidores para
-            que o jogo funcione e para relatórios agregados do projeto.
+            <strong>Seu progresso no jogo</strong> — pontuação, fases concluídas
+            e itens coletados são gravados para que você possa continuar de onde
+            parou. É o seu jogo salvo, não uma medição sobre você, e sem isso o
+            jogo não funciona.
           </li>
           <li>
             <strong>Contentsquare</strong> — serviço de terceiros que analisa a

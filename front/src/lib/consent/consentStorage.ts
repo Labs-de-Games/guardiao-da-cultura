@@ -93,6 +93,18 @@ export function writeConsent(status: ConsentStatus): ConsentRecord {
   return record;
 }
 
+/**
+ * Whether the player authorised usage-data collection.
+ *
+ * Plain function, not a hook, because the callers that need it most are
+ * outside React: Phaser systems and the API modules under `lib/`. Anything
+ * other than an explicit acceptance is false, so an undecided player is
+ * treated exactly like one who refused.
+ */
+export function hasAnalyticsConsent(): boolean {
+  return readConsent()?.status === "accepted";
+}
+
 /** Drop the stored decision entirely. For QA and tests. */
 export function clearConsent(): void {
   try {

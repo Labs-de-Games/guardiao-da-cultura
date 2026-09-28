@@ -1,5 +1,6 @@
 import type { GameEventPayload } from "../game/types/AnalyticsTypes";
 import { apiClient } from "./api/client";
+import { hasAnalyticsConsent } from "./consent/consentStorage";
 import { env } from "./env";
 
 const API_URL = env.client.apiUrl;
@@ -14,9 +15,23 @@ function getApiUrl(path: string): string {
   return path;
 }
 
+/**
+ * Post a gameplay event to our own Postgres pipeline (`POST /api/v1/events`).
+ *
+ * Gated on consent (issue #864), the same as PostHog. This is the single
+ * choke point for every caller, so the game code that emits events needs no
+ * changes — mirroring how deferring `posthog.init()` covers its call sites.
+ *
+ * Progress persistence is deliberately NOT gated: `/scores` and
+ * `/progression` hold the player's own saved game, which is a feature for
+ * them rather than analytics about them — "recursos necessários para o jogo
+ * funcionar", in the banner's words.
+ */
 export async function sendGameEvent(
   payload: GameEventPayload,
 ): Promise<boolean> {
+  if (!hasAnalyticsConsent()) return false;
+
   const url = getApiUrl("/api/v1/events");
 
   if (
