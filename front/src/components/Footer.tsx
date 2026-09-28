@@ -78,6 +78,14 @@ export function Footer() {
         maxWidth={{ xs: 100, sm: 130, md: 180 }}
       />
       <FooterLogoGroup
+        label="Patrocínio"
+        src="/images/auth/logo-bemobi.png"
+        alt="Bemobi"
+        width={1020}
+        height={183}
+        maxWidth={{ xs: 120, sm: 160, md: 240 }}
+      />
+      <FooterLogoGroup
         label="Realização"
         src="/images/auth/logo-minc.png"
         alt="Ministério da Cultura / Governo do Brasil"
