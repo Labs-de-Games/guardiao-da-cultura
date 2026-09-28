@@ -14,7 +14,7 @@
         "medium": "",
         "opinion": "Um homem com roupas nas cores azul, vermelho e branco. Ele é diferente das pessoas que vi por aqui no Amazonas.",
         "feedbackError": "Aqui deve ter um homem na posição de comando.",
-        "hint": "Observe as esculturas próximas"
+        "hint": "Observe as estátuas próximas"
       },
       "assets": {
         "sprite": "sam"
@@ -34,7 +34,7 @@
         "medium": "",
         "opinion": "Um soldado carregando uma caixa cheia de eletrônicos.",
         "feedbackError": "Aqui deve ter um homem obedecendo ordens.",
-        "hint": "Observe as esculturas próximas"
+        "hint": "Observe as estátuas próximas"
       },
       "assets": {
         "sprite": "soldado-caixa"
