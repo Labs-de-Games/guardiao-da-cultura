@@ -1,6 +1,7 @@
 {
   "name": "back",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "start:dev": "npx nest start --watch",
     "build": "tsc -p tsconfig.json",
