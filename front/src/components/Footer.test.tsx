@@ -17,10 +17,9 @@ describe("Footer", () => {
     ).toBeInTheDocument();
   });
 
-  it("labels the partner, sponsor and producer groups", () => {
+  it("labels the partner and producer groups", () => {
     render(<Footer />);
     expect(screen.getByText("Parceiro")).toBeInTheDocument();
-    expect(screen.getByText("Patrocínio")).toBeInTheDocument();
     expect(screen.getByText("Realização")).toBeInTheDocument();
   });
 });

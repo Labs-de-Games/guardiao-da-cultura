@@ -2,7 +2,7 @@ import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 
 interface FooterLogoGroupProps {
-  label: string;
+  label?: string;
   src: string;
   alt: string;
   width: number;
@@ -26,12 +26,14 @@ function FooterLogoGroup({
         alignItems: "flex-start",
       }}
     >
-      <Typography
-        variant="body1"
-        sx={{ color: "custom.footerMutedText", mb: 0.5 }}
-      >
-        {label}
-      </Typography>
+      {label && (
+        <Typography
+          variant="body1"
+          sx={{ color: "custom.footerMutedText", mb: 0.5 }}
+        >
+          {label}
+        </Typography>
+      )}
       <Box sx={{ width: maxWidth }}>
         <Image
           src={src}
@@ -78,7 +80,6 @@ export function Footer() {
         maxWidth={{ xs: 100, sm: 130, lg: 180 }}
       />
       <FooterLogoGroup
-        label="Patrocínio"
         src="/images/auth/logo-bemobi.png"
         alt="Bemobi"
         width={1020}
