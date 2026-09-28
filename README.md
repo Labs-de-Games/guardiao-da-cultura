@@ -22,8 +22,7 @@ run it, study it, adapt it and reuse its content.
 
 ## Play it
 
-<!-- TODO: public URL -->
-Play it in your browser at **[TODO: public URL]**. It works on a computer with a
+Play it in your browser at **[Guardião da Cultura](https://guardiaodacultura.42.rio/)**. It works on a computer with a
 keyboard.
 
 ## What's inside
