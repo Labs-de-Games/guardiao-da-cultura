@@ -3,6 +3,12 @@ import type * as Phaser from "phaser";
 const DUCK_VOLUME = 0.3;
 const DEFAULT_VOICE = "Brazilian Portuguese Female";
 
+/**
+ * Status /api/tts/synthesize returns when no ResponsiveVoice key is
+ * configured. Kept in sync with TTS_UNAVAILABLE_STATUS in that route.
+ */
+const TTS_UNAVAILABLE_STATUS = 503;
+
 class AudioAccessibilityServiceImpl {
   private static instance: AudioAccessibilityServiceImpl;
   private soundManager: Phaser.Sound.BaseSoundManager | null = null;
@@ -13,6 +19,7 @@ class AudioAccessibilityServiceImpl {
   private speakRequestId = 0;
   private voice: string = DEFAULT_VOICE;
   private volume: number = 1;
+  private ttsUnavailable = false;
 
   private constructor() {}
 
@@ -110,6 +117,12 @@ class AudioAccessibilityServiceImpl {
     this.stop();
     this.primeAudioContext();
 
+    // The server already told us it has no ResponsiveVoice key. Narrate with
+    // the browser voice and skip the round trip for every later utterance.
+    if (this.ttsUnavailable) {
+      return this.speakNative(text);
+    }
+
     const requestId = ++this.speakRequestId;
 
     // Raw fetch instead of apiClient: endpoint returns binary audio/mpeg,
@@ -125,6 +138,13 @@ class AudioAccessibilityServiceImpl {
       .then((response) => {
         if (requestId !== this.speakRequestId) return;
 
+        if (response.status === TTS_UNAVAILABLE_STATUS) {
+          // No key configured. An expected state on a fresh install, not a
+          // failure — remember it and let the next step use the browser voice.
+          this.ttsUnavailable = true;
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`TTS synthesis failed: ${response.status}`);
         }
@@ -132,7 +152,11 @@ class AudioAccessibilityServiceImpl {
         return response.blob();
       })
       .then((blob) => {
-        if (requestId !== this.speakRequestId || !blob) return;
+        if (requestId !== this.speakRequestId) return;
+
+        if (!blob) {
+          return this.ttsUnavailable ? this.speakNative(text) : undefined;
+        }
 
         return new Promise<void>((resolve) => {
           const url = URL.createObjectURL(blob);
