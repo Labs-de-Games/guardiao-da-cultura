@@ -239,7 +239,7 @@ Polling (`useMaintenanceRecovery`) backs off 30 s → 60 s → … up to 5 min w
 Auth pages keep the generic boundaries (`app/error.tsx`, `app/(auth)/error.tsx`, `app/global-error.tsx`); maintenance mode and outage redirects don't affect the dashboards or auth.
 
 ### Dashboard Error & Fallback Pages
-The institutional (`/institution/*`) and public (`/public-dashboard/*`) dashboards use dashboard-styled screens from `front/src/components/errors/DashboardErrorPages.tsx`. Full-page screens share `DashboardErrorLayout` (dashboard theme, faded game logo, `DashboardFooter` unless a layout already renders it); in-page states are rendered by `DashboardState` and never show raw error messages. Errors are sorted by `classifyError` (`front/src/lib/errors/classifyError.ts`) from the HTTP status or a fetch `TypeError`, and `useAsyncData` exposes the result as `errorKind`.
+The institutional (`/institution/*`) and public (`/public-dashboard/*`) dashboards use dashboard-styled screens from `front/src/components/errors/DashboardErrorPages.tsx`. Full-page screens share `DashboardErrorLayout` (dashboard theme, faded game logo, the shared `Footer` unless a layout already renders it); in-page states are rendered by `DashboardState` and never show raw error messages. Errors are sorted by `classifyError` (`front/src/lib/errors/classifyError.ts`) from the HTTP status or a fetch `TypeError`, and `useAsyncData` exposes the result as `errorKind`.
 
 | Scenario | Route / trigger | Screen |
 |----------|-----------------|--------|

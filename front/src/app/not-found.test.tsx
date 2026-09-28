@@ -4,8 +4,8 @@ import NotFound from "./not-found";
 
 jest.mock("next/navigation", () => ({ usePathname: jest.fn() }));
 jest.mock("@/lib/errors/reportError", () => ({ reportErrorPage: jest.fn() }));
-jest.mock("@/components/dashboard/DashboardFooter", () => ({
-  DashboardFooter: () => <footer>dashboard-footer</footer>,
+jest.mock("@/components/Footer", () => ({
+  Footer: () => <footer>dashboard-footer</footer>,
 }));
 
 describe("site-wide NotFound", () => {

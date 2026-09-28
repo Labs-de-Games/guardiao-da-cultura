@@ -11,8 +11,8 @@ jest.mock("@/lib/errors/reportError", () => ({
   reportErrorPage: jest.fn(),
 }));
 
-jest.mock("@/components/dashboard/DashboardFooter", () => ({
-  DashboardFooter: () => <footer>dashboard-footer</footer>,
+jest.mock("@/components/Footer", () => ({
+  Footer: () => <footer>dashboard-footer</footer>,
 }));
 
 describe("DashboardNotFoundPage", () => {
