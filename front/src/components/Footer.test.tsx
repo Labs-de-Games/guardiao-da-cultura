@@ -11,14 +11,16 @@ describe("Footer", () => {
     render(<Footer />);
     expect(screen.getByAltText("Lei Rouanet")).toBeInTheDocument();
     expect(screen.getByAltText("Galp")).toBeInTheDocument();
+    expect(screen.getByAltText("Bemobi")).toBeInTheDocument();
     expect(
       screen.getByAltText("Ministério da Cultura / Governo do Brasil"),
     ).toBeInTheDocument();
   });
 
-  it("labels the partner and producer groups", () => {
+  it("labels the partner, sponsor and producer groups", () => {
     render(<Footer />);
     expect(screen.getByText("Parceiro")).toBeInTheDocument();
+    expect(screen.getByText("Patrocínio")).toBeInTheDocument();
     expect(screen.getByText("Realização")).toBeInTheDocument();
   });
 });
