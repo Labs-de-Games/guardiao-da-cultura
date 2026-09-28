@@ -28,6 +28,7 @@ import { GeniusSequencePanel } from "@/ui/panels/GeniusSequencePanel";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { MapInfoBox } from "@/ui/panels/MapInfoBox";
 import { MapPinTooltip } from "@/ui/panels/MapPinTooltip";
+import { PrivacySettings } from "@/ui/panels/PrivacySettings";
 import { StepSequencePanel } from "@/ui/panels/StepSequencePanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
@@ -478,6 +479,7 @@ function OverlayContent() {
         <MapPinTooltip />
         <MapInfoBox />
         <CreditsButton />
+        <PrivacySettings />
       </>
     );
   }
