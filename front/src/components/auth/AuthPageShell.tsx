@@ -1,6 +1,6 @@
 import { Box, Paper } from "@mui/material";
 import type { ReactNode } from "react";
-import { AuthFooter } from "./AuthFooter";
+import { Footer } from "@/components/Footer";
 import { AuthIllustration } from "./AuthIllustration";
 
 interface AuthPageShellProps {
@@ -49,7 +49,7 @@ export function AuthPageShell({
           {children}
         </Paper>
       </Box>
-      <AuthFooter />
+      <Footer />
     </Box>
   );
 }
