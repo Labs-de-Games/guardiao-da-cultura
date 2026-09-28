@@ -35,7 +35,7 @@ describe("ControlsPanel", () => {
     expect(screen.getByText("Interagir")).toBeInTheDocument();
     expect(screen.getByText("Painel de status")).toBeInTheDocument();
     expect(screen.getByText("Galeria de conquistas")).toBeInTheDocument();
-    expect(screen.getByText("Fechar")).toBeInTheDocument();
+    expect(screen.getByText("Fechar controles")).toBeInTheDocument();
   });
 
   it("has correct accessibility (ARIA) attributes on the panel dialog", () => {
