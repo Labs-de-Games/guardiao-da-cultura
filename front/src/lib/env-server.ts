@@ -4,6 +4,11 @@ import { env } from "./env";
 
 const serverSchema = z
   .object({
+    // Optional on purpose. ResponsiveVoice is a paid, NonCommercial service, so
+    // a contributor cloning this repository will not have a key. Without one the
+    // TTS route reports itself unavailable and the client narrates with the
+    // browser's own speech synthesis. readEnv() below turns the "" that
+    // .env.example and Compose produce into undefined, which this accepts.
     responsivevoiceApiKey: z.string().min(1).optional(),
     responsivevoiceApiUrl: z
       .string()
