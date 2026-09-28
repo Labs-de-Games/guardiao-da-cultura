@@ -45,7 +45,7 @@ function FooterLogoGroup({
   );
 }
 
-export function DashboardFooter() {
+export function Footer() {
   return (
     <Box
       component="footer"
