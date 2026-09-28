@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { Footer } from "@/components/Footer";
 
 interface FullPageMessageProps {
   imageSrc: string;
@@ -54,7 +54,7 @@ export function FullPageMessage({
         </Typography>
         {children}
       </Box>
-      <DashboardFooter />
+      <Footer />
     </Box>
   );
 }

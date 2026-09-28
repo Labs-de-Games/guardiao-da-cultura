@@ -4,7 +4,7 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { Footer } from "@/components/Footer";
 
 export const DASHBOARD_ERROR_LOGO = "/images/auth/logo-jogo.png";
 /** Watermark strength for the background logo — low enough to keep text readable. */
@@ -29,7 +29,7 @@ export interface DashboardErrorLayoutProps {
   /** Support reference (e.g. Next.js error digest). Never pass raw messages. */
   reference?: string;
   /**
-   * Render DashboardFooter below the message. Off when a layout that
+   * Render Footer below the message. Off when a layout that
    * already renders the footer wraps this screen (institution/layout.tsx),
    * so the footer never shows twice.
    */
@@ -209,7 +209,7 @@ export function DashboardErrorLayout({
           )}
         </Box>
       </Box>
-      {withFooter && <DashboardFooter />}
+      {withFooter && <Footer />}
     </Box>
   );
 }
