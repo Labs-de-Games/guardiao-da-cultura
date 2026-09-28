@@ -14,7 +14,7 @@ const CONTROLS = [
   { key: "E", action: "Interagir" },
   { key: "TAB", action: "Painel de status" },
   { key: "B", action: "Galeria de conquistas" },
-  { key: "ESC", action: "Fechar" },
+  { key: "ESC", action: "Fechar controles" },
 ];
 
 const COLORS = {
