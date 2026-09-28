@@ -75,7 +75,7 @@ export const MissionRegistry: Record<string, MissionDef> = {
       },
       {
         infoKey: MissionKeys.SCULPTURES_DONE,
-        text: "Reorganizar as esculturas do palco",
+        text: "Reorganizar as estátuas do palco",
         categoryType: InteractiveType.SCULPTURE,
       },
       {
