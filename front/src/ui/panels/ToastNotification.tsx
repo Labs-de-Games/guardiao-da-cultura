@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { useCallback, useEffect, useRef } from "react";
 
 import { useGameUIStore } from "@/ui/state/game-ui-store";
-import { UI_LAYERS } from "@/ui/theme/tokens";
+import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 const EXIT_ANIMATION_MS = 250;
 
@@ -101,7 +101,7 @@ export function ToastItem({
         sx={{
           fontFamily: theme.typography.fontFamily,
           fontSize: "28px",
-          color: theme.palette.text.primary,
+          color: GAME_UI_TOKENS.colors.textPrimary,
           textAlign: "center",
           lineHeight: 1.3,
           wordBreak: "break-word",
