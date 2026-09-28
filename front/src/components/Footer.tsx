@@ -7,7 +7,7 @@ interface FooterLogoGroupProps {
   alt: string;
   width: number;
   height: number;
-  maxWidth: { xs: number; sm: number; md: number };
+  maxWidth: { xs: number; sm: number; lg: number };
 }
 
 function FooterLogoGroup({
@@ -60,7 +60,7 @@ export function Footer() {
         gap: 2,
       }}
     >
-      <Box sx={{ width: { xs: 140, sm: 180, md: 260 } }}>
+      <Box sx={{ width: { xs: 140, sm: 180, lg: 260 } }}>
         <Image
           src="/images/auth/logo-lei-rouanet.png"
           alt="Lei Rouanet"
@@ -75,7 +75,7 @@ export function Footer() {
         alt="Galp"
         width={180}
         height={60}
-        maxWidth={{ xs: 100, sm: 130, md: 180 }}
+        maxWidth={{ xs: 100, sm: 130, lg: 180 }}
       />
       <FooterLogoGroup
         label="Patrocínio"
@@ -83,7 +83,7 @@ export function Footer() {
         alt="Bemobi"
         width={1020}
         height={183}
-        maxWidth={{ xs: 120, sm: 160, md: 240 }}
+        maxWidth={{ xs: 120, sm: 160, lg: 240 }}
       />
       <FooterLogoGroup
         label="Realização"
@@ -91,7 +91,7 @@ export function Footer() {
         alt="Ministério da Cultura / Governo do Brasil"
         width={300}
         height={75}
-        maxWidth={{ xs: 160, sm: 210, md: 300 }}
+        maxWidth={{ xs: 160, sm: 210, lg: 300 }}
       />
     </Box>
   );
