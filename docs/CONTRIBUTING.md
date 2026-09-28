@@ -14,6 +14,8 @@ For AI agent collaboration guidelines, see [AGENTS.md](../AGENTS.md).
 - [Before you start](#before-you-start)
 - [Reporting an issue](#reporting-an-issue)
 - [Getting the project running](#getting-the-project-running)
+- [Commands](#commands)
+- [Known limitations](#known-limitations)
 - [Project structure](#project-structure)
 - [The contribution flow](#the-contribution-flow)
   - [1. Fork and branch](#1-fork-and-branch)
@@ -82,6 +84,73 @@ make development-logs
 To run without Docker: `make local-all`.
 
 If any of this does not work on a clean machine, that is a bug worth reporting.
+
+Services:
+
+- **Frontend** (Next.js): <http://localhost:3000>
+- **Backend** (NestJS): <http://localhost:3001>
+- **PostgreSQL**: localhost:5432
+- **nginx** (reverse proxy): <http://localhost:80>
+
+Level content lives in static JSON, so `make db-migrate` is all the database
+setup a playable install needs. See [`CONTENT-REUSE.md`](./CONTENT-REUSE.md).
+
+The optional integrations (ResponsiveVoice narration, PostHog analytics) are off
+in `.env.example`, and the game runs fully without them. See
+[`ARCHITECTURE.md`](./ARCHITECTURE.md#optional-integrations).
+
+## Commands
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `make setup` | Install dependencies and developer tooling |
+| `make development-up` (alias `make up`) | Start the development stack with hot reload (Docker) |
+| `make local-all` | Start front and back locally via Turbo (no Docker) |
+| `make down` | Stop development containers |
+| `make clean` | Stop containers and remove volumes |
+| `make deep-clean` | Full cleanup including images |
+
+### Code quality
+
+| Command | Description |
+|---------|-------------|
+| `make lint` | Run Biome linting and formatting checks |
+| `make test` | Run test suites |
+| `make check` | Lint and test in one go |
+| `npm run lint:fix` | Fix auto-fixable linting issues |
+
+### Database
+
+| Command | Description |
+|---------|-------------|
+| `make db-migrate` | Run pending TypeORM migrations |
+| `make db-migrate-generate` | Generate a new migration (`NAME=MigrationName`) |
+
+### Debug
+
+| Command | Description |
+|---------|-------------|
+| `make development-logs` | Follow development container logs |
+| `make development-ps` | List development containers |
+| `make development-shell-front` | Shell into the front container |
+| `make development-shell-back` | Shell into the back container |
+
+## Known limitations
+
+- **Portuguese only.** All narrative, quiz and UI copy is `pt-BR`. There is no
+  localisation layer yet.
+- **Desktop-first.** The game targets a keyboard and a reasonably wide viewport;
+  touch controls are not implemented.
+- **Level 3 is still in development** and levels 4 and 5 do not exist beyond a
+  loading screen. See `LEVEL_REGISTRY` in
+  `front/src/game/data/LevelConfig.ts` for the current state of each.
+- **A few bundled sound and image assets are not free for commercial reuse.**
+  They are listed individually in [`ASSETS-LICENSE.md`](../ASSETS-LICENSE.md) §5.
+- **Browser speech quality varies.** Without a ResponsiveVoice key, narration
+  uses whatever `pt-BR` voice the visitor's browser and operating system
+  provide. See [No narration](#troubleshooting).
 
 ## Project structure
 
