@@ -52,7 +52,18 @@ no effect. The image must be rebuilt.
 
 **`RESPONSIVEVOICE_API_KEY` must not gain the `NEXT_PUBLIC_` prefix.** It is
 server only, read by the `/api/tts/synthesize` route handler. It is also not
-passed by any CD workflow, so it exists only in the Coolify runtime.
+passed by any CD workflow, so it exists only in the Coolify runtime. It is
+optional: leave `RESPONSIVEVOICE_API_KEY=` empty, as in `.env.example`, and the
+route answers `503` (`tts_unavailable`), so narration uses the browser's Web
+Speech API. Do not use a placeholder such as `xxxxxxxx`. The route treats any
+value as a real key and answers `502` on every line.
+
+**The browser voice depends on the system.** Without the key, narration comes
+from the browser's own speech synthesizer, which does not always work out of
+the box. Some systems, notably Linux, need a speech engine installed at the OS
+level, or the browser started with a specific flag or setting. To check, run
+`speechSynthesis.getVoices()` in the browser console. An empty list means there
+are no voices and narration will be silent.
 
 For local development, `EMAIL_PROVIDER=mock` prints the login magic link to the
 console instead of sending mail.
@@ -97,3 +108,5 @@ commit.
 | Nothing works | `make deep-clean && make up` |
 | Migration did not apply | Check the back container is up with `make development-ps` |
 | Docker build fails from `front/` | Build context is the monorepo root, not the workspace directory |
+| Narration is silent | The browser has no voices. Check whether `speechSynthesis.getVoices()` is empty, then install or enable a speech engine |
+| `/api/tts/synthesize` returns `502` | Invalid ResponsiveVoice key (for example `xxxxxxxx`). Leave `RESPONSIVEVOICE_API_KEY=` empty and restart the front |
