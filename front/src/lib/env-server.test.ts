@@ -229,3 +229,48 @@ describe("env-server — AUTH_URL guard", () => {
     expect(serverEnv.server.authUrl).toBe("https://staging.example.com");
   });
 });
+
+describe("env-server — EDITAL_MOCK_DATA guard", () => {
+  const ORIGINAL_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...ORIGINAL_ENV, EDITAL_MOCK_DATA: "true" };
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  function setNodeEnv(value: string): void {
+    (process.env as Record<string, string>).NODE_ENV = value;
+  }
+
+  it("serves mock data under next dev", async () => {
+    setNodeEnv("development");
+    const { editalMockDataScenario, isEditalPosthogConfigured } = await import(
+      "./env-server"
+    );
+
+    expect(editalMockDataScenario()).toBe("default");
+    expect(isEditalPosthogConfigured()).toBe(true);
+  });
+
+  it.each([
+    "production",
+    "test",
+  ])("ignores EDITAL_MOCK_DATA under NODE_ENV=%s", async (nodeEnv) => {
+    setNodeEnv(nodeEnv);
+    const { editalMockDataScenario } = await import("./env-server");
+
+    expect(editalMockDataScenario()).toBeNull();
+  });
+
+  it("is off when EDITAL_MOCK_DATA is unset", async () => {
+    setNodeEnv("development");
+    delete process.env.EDITAL_MOCK_DATA;
+    const { editalMockDataScenario } = await import("./env-server");
+
+    expect(editalMockDataScenario()).toBeNull();
+  });
+});

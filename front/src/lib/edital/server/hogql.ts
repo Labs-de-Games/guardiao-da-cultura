@@ -1,5 +1,10 @@
 import "server-only";
-import { isEditalPosthogConfigured, serverEnv } from "../../env-server";
+import {
+  editalMockDataScenario,
+  isEditalPosthogConfigured,
+  serverEnv,
+} from "../../env-server";
+import { mockHogQLResult } from "./mockData";
 
 /** Matches the nginx proxy read timeout assumption — see discovery §7. */
 export const DEFAULT_HOGQL_TIMEOUT_MS = 25_000;
@@ -67,6 +72,11 @@ export async function runHogQLQuery(
   values: HogQLValues = {},
   options: RunHogQLQueryOptions = {},
 ): Promise<HogQLQueryResult> {
+  // Local development only — see mockData.ts.
+  if (editalMockDataScenario()) {
+    return await mockHogQLResult(query, values);
+  }
+
   if (!isEditalPosthogConfigured()) {
     throw new HogQLNotConfiguredError();
   }
