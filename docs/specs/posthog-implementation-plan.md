@@ -679,17 +679,24 @@ The `PostHogInterceptor` propagates the user's `distinct_id` from request header
 
 ### Frontend Events (Explicit Capture)
 
+> `EVENTS.md` at the repository root is the up-to-date event catalog; this
+> table is the original plan, updated only for the events the edital
+> dashboards read (#834).
+
 | Event Name | Trigger | Properties |
 |---|---|---|
 | `$pageview` | Route change | `$current_url`, `$referrer` |
 | `game_started` | Player clicks "Play" / level loads | `level_id`, `level_number` |
-| `level_completed` | Level ends successfully | `level_id`, `score`, `stars`, `time_spent_ms`, `attempts` |
+| `level_completed` | Level ends successfully | `level_id`, `level_number`, `score`, `stars`, `time_spent_ms`, `attempts` |
 | `level_failed` | Level ends unsuccessfully | `level_id`, `score`, `time_spent_ms`, `reason` |
 | `star_collected` | Player collects a collectible (star, clue, etc.) | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` |
 | `first_star_earned` | **First star ever** earned, captured at ResultPanel | `level_id`, `total_score` |
 | `badge_earned` | Player earns a badge | `badge_id`, `badge_name`, `level_id` |
 | `quiz_completed` | Quiz minigame ends | `quiz_id`, `score`, `correct_answers`, `total_questions` |
-| `clue_used` | Player uses a hint/clue | `level_id`, `clue_index` |
+| `clue_used` | Game shows a hint automatically (not a player action; not used by the edital dashboards) | `level_id`, `clue_index` |
+| `investigation_opened` | Level 4 (investigation) screen opens | `level_id`, `level_number`, `collected_clues`, `shown_clues`, `previous_stars` |
+| `investigation_clue_placed` | Clue dropped on a suspect's slot in level 4 | `level_id`, `level_number`, `clue_key`, `suspect_id`, `verdict`, `is_tutorial`, … |
+| `investigation_completed` | Level 4 ends — culprit identified or revealed; finishes the game | `level_id`, `level_number`, `stars`, `wrong_attempts`, `is_correct`, `revealed` |
 | `settings_opened` | Player opens settings menu | `from_screen` |
 | `button_clicked` | Semantic UI button clicks | `button_name`, `screen` |
 | `survey_submitted` | PostHog survey completed | `$survey_id`, `$survey_name` |
@@ -702,7 +709,7 @@ The `PostHogInterceptor` propagates the user's `distinct_id` from request header
 | `user_registered` | New account created | `method` (email/oauth) |
 | `user_verified` | Email verified | `method` |
 | `user_logged_in` | Successful login | `method` |
-| `match_ended` | Game session persisted | `level_id`, `score`, `stars`, `duration_ms`, `user_id` |
+| `match_ended` | Game session persisted (levels 1–4) | `level_id`, `score`, `stars`, `duration_ms`, `user_id` |
 | `$exception` | Unhandled error | `$exception_message`, `$exception_type`, stack trace |
 
 **Naming Convention:** Use `snake_case` with `.` namespacing for game events and `_` separation for product events. Be consistent.

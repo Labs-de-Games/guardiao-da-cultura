@@ -24,8 +24,10 @@ Derived from issue #741's own ordered acceptance list, internally consistent wit
 > **Superseded (issue #807):** the shipped funnel does not use this exact
 > list. `chapter_1_started`/`chapter_1_completed` only ever covered
 > level 1, so #807 replaced steps 4–7 with one dynamic `level_completed`
-> step per level in `LEVEL_REGISTRY` (currently 3 levels, so 6 steps
-> total today). See `EVENTS.md`'s "Funil canônico do edital" section and
+> step per level (#834: the 3 levels in `LEVEL_REGISTRY` plus the
+> investigation, level 4, via `DASHBOARD_LEVELS` — so 7 steps total today,
+> the last one `investigation_completed`, which is also what "concluiu o
+> jogo" means in the completion rate). See `EVENTS.md`'s "Funil canônico do edital" section and
 > `front/src/lib/edital/server/queries.ts`'s `getFunnelSteps()` for the
 > actual, current list. This section is left as-is below since it's the
 > historical assumption this epic started from, not a description of
