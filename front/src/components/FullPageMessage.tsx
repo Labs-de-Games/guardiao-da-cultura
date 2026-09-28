@@ -16,7 +16,15 @@ export function FullPageMessage({
   children,
 }: FullPageMessageProps) {
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    // Scrolls itself: the root layout locks body scroll for the game.
+    <Box
+      sx={{
+        height: "100dvh",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Box
         sx={{
           flex: 1,

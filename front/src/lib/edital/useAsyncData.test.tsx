@@ -21,7 +21,17 @@ describe("useAsyncData", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.error).toBe("boom");
+    expect(result.current.errorKind).toBe("unknown");
     expect(result.current.data).toBeNull();
+  });
+
+  it("classifies a fetch TypeError as a network error", async () => {
+    const fetcher = jest
+      .fn()
+      .mockRejectedValue(new TypeError("Failed to fetch"));
+    const { result } = renderHook(() => useAsyncData(fetcher, []));
+
+    await waitFor(() => expect(result.current.errorKind).toBe("network"));
   });
 
   it("retry clears the error and re-fetches", async () => {
@@ -42,6 +52,7 @@ describe("useAsyncData", () => {
     // any transient error instead of just showing `error` and letting a
     // retry clear it.
     await waitFor(() => expect(result.current.error).toBeNull());
+    expect(result.current.errorKind).toBeNull();
     await waitFor(() => expect(result.current.data).toBe("recovered"));
   });
 

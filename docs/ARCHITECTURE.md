@@ -236,7 +236,22 @@ The maintenance page knows why it is shown:
 
 Polling (`useMaintenanceRecovery`) backs off 30 s → 60 s → … up to 5 min with ±30 % jitter and pauses while the tab is hidden. The page is reported once per session per reason. When the player's own connection drops (`navigator.onLine === false`) there is no redirect; `OfflineNotice` shows a toast instead. The middleware reads the flag through `lib/maintenance.ts`, not the full env schema.
 
-Other areas (auth, institution dashboard) keep the generic boundaries (`app/error.tsx`, `app/(auth)/error.tsx`, `app/global-error.tsx`) and the Next.js default 404 until their own designed pages exist; maintenance mode and outage redirects don't affect them.
+Auth pages keep the generic boundaries (`app/error.tsx`, `app/(auth)/error.tsx`, `app/global-error.tsx`); maintenance mode and outage redirects don't affect the dashboards or auth.
+
+### Dashboard Error & Fallback Pages
+The institutional (`/institution/*`) and public (`/public-dashboard/*`) dashboards use dashboard-styled screens from `front/src/components/errors/DashboardErrorPages.tsx`. Full-page screens share `DashboardErrorLayout` (dashboard theme, faded game logo, `DashboardFooter` unless a layout already renders it); in-page states are rendered by `DashboardState` and never show raw error messages. Errors are sorted by `classifyError` (`front/src/lib/errors/classifyError.ts`) from the HTTP status or a fetch `TypeError`, and `useAsyncData` exposes the result as `errorKind`.
+
+| Scenario | Route / trigger | Screen |
+|----------|-----------------|--------|
+| Unknown `/public-dashboard/*` URL | `public-dashboard/[...slug]/page.tsx` calls `notFound()` → `public-dashboard/not-found.tsx` | `DashboardNotFoundPage` |
+| Unknown URL anywhere else, including `/institution/*` | `app/not-found.tsx` (site-wide, full page without the sidebar); `homeLinkFor` picks the dashboard or `/` for the button | `DashboardNotFoundPage` |
+| Uncaught render error | `institution/error.tsx`, `public-dashboard/error.tsx` | `DashboardRouteErrorPage` (connection copy for network errors, 500 otherwise) |
+| Session ended while on the dashboard | `InstitutionGuard` | `DashboardSessionExpiredPage` |
+| Data request failed | `DashboardState` with `errorKind` | `DashboardInlineError` (network, session, not found, bad filter, server) |
+| Loaded but nothing to show | `DashboardState` with `empty` | `DashboardEmptyState` |
+| Rate with no denominator | `RateCard` | "—" / "Sem dados no período" |
+
+Errors thrown by `institution/layout.tsx` itself fall through to `app/error.tsx`, which already uses the dashboard look and footer (`FullPageMessage`). Browser offline for any page is handled by `OfflineGate`.
 
 The front container healthcheck targets `GET /api/health` (`front/src/app/api/health/route.ts`), not `/`. It only proves the Next.js server answers: it doesn't call the backend and sits outside the middleware, so maintenance mode (which answers game routes with 503) never marks the front unhealthy or keeps nginx from starting.
 

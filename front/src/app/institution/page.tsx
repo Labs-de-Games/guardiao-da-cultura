@@ -100,12 +100,19 @@ const OVERVIEW_SKELETON = (
   </Grid>
 );
 
+/** Loaded, but no player activity at all in the selected period. */
+function isOverviewEmpty({ summary, report }: OverviewData): boolean {
+  const counts = Object.values(summary.data ?? {});
+  const sessions = report.data?.sessionDuration.sessionsStarted ?? 0;
+  return counts.every((count) => count === 0) && sessions === 0;
+}
+
 function InstitutionOverviewContent() {
   const { dateRange, setDateRange } = useEditalFilters();
   const filterBarProps = useFilterBarProps(dateRange, setDateRange);
   const { turma, setTurma } = useTurmaFilter();
 
-  const { data, loading, error, retry } = useAsyncData<OverviewData>(
+  const { data, loading, error, errorKind, retry } = useAsyncData<OverviewData>(
     async () => {
       const [summary, report] = await Promise.all([
         getSummary(dateRange, turma),
@@ -144,9 +151,11 @@ function InstitutionOverviewContent() {
       <DashboardState
         loading={loading}
         error={error}
+        errorKind={errorKind}
         onRetry={retry}
         linked={linked}
         skeleton={OVERVIEW_SKELETON}
+        empty={data ? isOverviewEmpty(data) : false}
       >
         {data ? (
           <>

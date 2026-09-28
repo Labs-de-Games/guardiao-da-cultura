@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { classifyError, type ErrorKind } from "@/lib/errors/classifyError";
 
 interface AsyncDataState<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
+  /** Set together with `error`, so callers can pick a screen without parsing the message. */
+  errorKind: ErrorKind | null;
   retry: () => void;
 }
 
@@ -24,18 +27,21 @@ export function useAsyncData<T>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
   const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     if (!enabled) {
       setLoading(false);
       setError(null);
+      setErrorKind(null);
       return;
     }
 
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setErrorKind(null);
 
     fetcher()
       .then((result) => {
@@ -44,6 +50,7 @@ export function useAsyncData<T>(
       .catch((err) => {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Erro desconhecido");
+          setErrorKind(classifyError(err));
         }
       })
       .finally(() => {
@@ -58,5 +65,5 @@ export function useAsyncData<T>(
 
   const retry = useCallback(() => setRetryToken((t) => t + 1), []);
 
-  return { data, loading, error, retry };
+  return { data, loading, error, errorKind, retry };
 }
