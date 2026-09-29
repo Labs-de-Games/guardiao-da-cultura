@@ -1,3 +1,5 @@
+🌐 English | [Português (Brasil)](../pt-BR/ARCHITECTURE.md)
+
 # Architecture Overview
 
 This document outlines the architectural decisions, structural boundaries, and technology stack for the Gameplate project. It serves as the single source of truth for the system's technical design, replacing older structural drafts to reflect the current, modernized tooling and practical constraints of the project.

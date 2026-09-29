@@ -1,3 +1,5 @@
+🌐 [English](../en/CONTRIBUTING.md) | Português (Brasil)
+
 # Como contribuir com Guardião da Cultura
 
 Contribuições são bem-vindas — relatos de bugs, correções, conteúdo novo para
@@ -214,6 +216,11 @@ O `<id>` é o número da issue, quando houver uma.
   próprios.
 - Adicione ou atualize testes para o comportamento que você alterar.
 - Rode `make check` (lint e testes) antes de fazer push.
+- A documentação fica em duas árvores, `docs/en/` e `docs/pt-BR/`, com os
+  mesmos nomes de arquivo. Quando as duas versões divergem, vale a em inglês.
+  Um pull request que altera um documento em um idioma atualiza o outro no
+  mesmo pull request, ou abre uma issue de acompanhamento com a label
+  `documentation`. As notas de trabalho em `notes/` não são traduzidas.
 
 ### 3. Mensagens de commit
 

@@ -1,3 +1,5 @@
+🌐 [English](../en/narrative-guidelines.md) | Português (Brasil)
+
 # Diretrizes de narrativa
 
 Este documento estabelece padrões para criação de narrativas, falas de personagens e conteúdos educativos do jogo, garantindo consistência, acessibilidade e respeito à diversidade cultural brasileira.

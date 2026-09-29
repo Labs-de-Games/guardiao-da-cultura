@@ -1,3 +1,5 @@
+🌐 [English](../en/VERSIONING.md) | Português (Brasil)
+
 # **Diretrizes e estrutura do processo de release — Rouanet Game**
 
 Este documento estabelece o padrão oficial para gerenciar, planejar e executar os releases do Rouanet Game, garantindo a estabilidade do ambiente de produção e a previsibilidade das entregas.
