@@ -1,6 +1,6 @@
 # Eventos de Analytics — Dashboard
 
-> **Existem quatro stacks de analytics neste repositório** (registrado
+> **Existem três stacks de analytics neste repositório** (registrado
 > aqui por #748 para que nenhuma delas seja confundida com "o" analytics
 > do produto):
 > 1. **PostHog** (`front/src/components/PostHogProvider.tsx`,
@@ -11,13 +11,43 @@
 >    mantido como fallback até as telas do edital (#745) rodarem um ciclo
 >    completo de apuração em produção (#748). Não é a fonte de verdade do
 >    edital.
-> 3. **Contentsquare** (`front/src/app/layout.tsx`, script `t.contentsquare.net`)
->    — sessão/heatmap de terceiros, fora do escopo deste documento.
-> 4. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
+> 3. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
 >    conversão de anúncios, fora do escopo deste documento.
 >
-> Um print de qualquer uma das stacks 2–4 **não** representa o número do
+> Um print de qualquer uma das stacks 2–3 **não** representa o número do
 > edital — só a stack 1 (PostHog) faz isso.
+>
+> Existia uma quarta stack, **Contentsquare** (script
+> `t.contentsquare.net/uxa/`, sessão/heatmap de terceiros), removida em
+> 2026-09-29. Ela nunca alimentou número nenhum deste documento. Vale saber
+> ao garimpar o histórico: o commit que a adicionou se chama "add hotjar
+> tracking script" — Hotjar é produto da Contentsquare, então buscar
+> "hotjar" na árvore não acha nada e buscar no log acha isto.
+
+> ## ⚠️ As stacks 1 e 2 dependem de consentimento (#864)
+>
+> Desde a issue #864, **nenhum evento de analytics é coletado antes de o
+> jogador aceitar** — nem no PostHog, nem no pipeline Postgres. O diálogo é
+> bloqueante: ninguém chega ao jogo sem responder. Consequências para todo
+> número deste documento:
+>
+> - **As stacks 1 e 2 passam a contar apenas quem consentiu.** Não existe mais
+>   "fonte sem viés de consentimento" neste repositório: quem recusa não gera
+>   evento em lugar nenhum.
+> - **`landing_page_viewed` é o mais afetado**: é o passo 1 do funil e o
+>   denominador da "Taxa de entrada na gameplay". Espere uma queda de patamar,
+>   não um bug.
+> - **Não há coleta retroativa em nenhuma das duas.** O posthog-js descarta
+>   capturas feitas antes do `init()`; a fila em `gameplate:eventQueue:v1` é
+>   **descartada** sem consentimento, em vez de guardada — aceitar autoriza
+>   dali para frente, nunca para trás.
+> - **O progresso do jogador continua sendo gravado** (`/scores`,
+>   `/progression`): é o jogo salvo dele, não medição sobre ele. Só `/events`
+>   é bloqueado.
+> - O gate vale nos dois lados. O front não envia, e o backend descarta o que
+>   chegar sem o cookie `gp_analytics_consent` — inclusive o `session.end`
+>   entregue por `sendBeacon`. Eventos do backend (`match_ended`, exceções)
+>   seguem a mesma regra.
 
 Este documento descreve:
 - **Métricas do dashboard** e quais eventos alimentam cada card/visão.

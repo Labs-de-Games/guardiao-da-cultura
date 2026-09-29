@@ -183,11 +183,18 @@ export class MapIntroScene extends Scene {
     const onCreditsOpen = () => this.cancelAutoStart("credits");
     EventBus.on("credits:open", onCreditsOpen, this);
 
+    // Reading the privacy notice is a deliberate pause, not idleness: the
+    // countdown must not keep running and drop the player into a level while
+    // they are deciding about consent (issue #864).
+    const onPrivacyOpen = () => this.cancelAutoStart("privacy");
+    EventBus.on("privacy:open", onPrivacyOpen, this);
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize);
       this.cancelAutoStart("shutdown");
       EventBus.off("progression:updated", onProgression, this);
       EventBus.off("credits:open", onCreditsOpen, this);
+      EventBus.off("privacy:open", onPrivacyOpen, this);
       posthog.capture("game_home_dwell_time", {
         dwell_ms: Date.now() - this.homeEnteredAtMs,
       });
@@ -200,18 +207,22 @@ export class MapIntroScene extends Scene {
   }
 
   /**
-   * The credits crawl is a full-screen React overlay, but Phaser's keyboard
-   * listeners are document-level, so map keys still fire behind it. Treat the
-   * credits screen as modal and ignore map input while it is up.
+   * The credits crawl and the privacy panel are full-screen React overlays,
+   * but Phaser's keyboard listeners are document-level, so map keys still fire
+   * behind them. Treat either one as modal and ignore map input while it is up
+   * — including the auto-start countdown, which would otherwise hand the
+   * player a level they are still reading a consent notice over, with the
+   * panel left holding focus so they cannot move.
    */
-  private isCreditsOpen(): boolean {
-    return useGameUIStore.getState().creditsOpen;
+  private isModalOpen(): boolean {
+    const { creditsOpen, privacyOpen } = useGameUIStore.getState();
+    return creditsOpen || privacyOpen;
   }
 
   private beginGame(
     source: "spacebar" | "confirm" | "marker_click" | "auto_start",
   ) {
-    if (this.isTransitioningToLevel || this.isCreditsOpen()) {
+    if (this.isTransitioningToLevel || this.isModalOpen()) {
       return;
     }
 
@@ -292,14 +303,17 @@ export class MapIntroScene extends Scene {
   }
 
   private cancelAutoStart(
-    reason: "started" | "cycled" | "shutdown" | "credits",
+    reason: "started" | "cycled" | "shutdown" | "credits" | "privacy",
   ) {
     if (!this.autoStartEvent) {
       return;
     }
     this.autoStartEvent.remove();
     this.autoStartEvent = undefined;
-    if (reason === "started" || reason === "cycled" || reason === "credits") {
+    // "shutdown" is the exception: the scene is going away and the React
+    // overlay is unmounting with it, so there is no progress bar left to
+    // clear and no player to inform.
+    if (reason !== "shutdown") {
       EventBus.emit("map:auto-start-canceled", undefined);
     }
   }
@@ -342,7 +356,7 @@ export class MapIntroScene extends Scene {
   }
 
   private cycleMarkerForward = () => {
-    if (this.isCreditsOpen()) {
+    if (this.isModalOpen()) {
       return;
     }
     this.cancelAutoStart("cycled");
@@ -351,7 +365,7 @@ export class MapIntroScene extends Scene {
   };
 
   private cycleMarkerBackward = () => {
-    if (this.isCreditsOpen()) {
+    if (this.isModalOpen()) {
       return;
     }
     this.cancelAutoStart("cycled");
