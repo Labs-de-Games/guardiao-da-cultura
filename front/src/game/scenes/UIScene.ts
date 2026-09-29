@@ -372,10 +372,15 @@ export class UIScene extends Scene {
         return;
       }
 
-      // No next playable level: keep the quiz open and invite the player to
-      // register interest in what comes next.
+      // No next playable level: the player has reached the end of the content,
+      // so close the quiz and hand them back to the world map — the same exit
+      // "quiz:close" performs. Previously this invited them to leave an email
+      // for new-phase notices; that collection was removed entirely.
       if (!nextLevelId || !isLevelEnabled(nextLevelId)) {
-        useGameUIStore.getState().openInterestDialog();
+        useGameUIStore.getState().closeQuiz();
+        EventBus.emit("game:ended", undefined);
+        this.scene.stop(SceneNames.GAME);
+        this.scene.start(SceneNames.INTRO);
         return;
       }
 

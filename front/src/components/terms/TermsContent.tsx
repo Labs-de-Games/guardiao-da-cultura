@@ -47,10 +47,31 @@ export function TermsContent() {
         onde uma instituição cadastrada acompanha, de forma agregada, o uso do
         jogo a partir dos seus próprios links de campanha.
       </p>
-      <p>
-        A identificação completa da controladora e o canal oficial de contato
-        serão confirmados na revisão jurídica.
-      </p>
+      <ul>
+        <li>
+          <strong>Instituto 42 Rio</strong> — Associação Privada, CNPJ
+          36.233.390/0001-97
+        </li>
+        <li>
+          <strong>Endereço</strong> — Avenida Oscar Niemeyer, nº 2000, Bloco 1,
+          Sala 301, Santo Cristo, Rio de Janeiro/RJ, CEP 20220-297
+        </li>
+        <li>
+          <strong>Suporte</strong> —{" "}
+          <a href="mailto:ana.carla@42.rio" style={linkStyle}>
+            ana.carla@42.rio
+          </a>
+        </li>
+        <li>
+          <strong>Privacidade e direitos do titular</strong> —{" "}
+          <a href="mailto:contato@42.rio" style={linkStyle}>
+            contato@42.rio
+          </a>
+        </li>
+        <li>
+          <strong>Encarregado (DPO)</strong> — não aplicável
+        </li>
+      </ul>
 
       <h2 style={h2}>Quem pode se cadastrar</h2>
       <p>
@@ -125,8 +146,11 @@ export function TermsContent() {
         </li>
       </ul>
       <p>
-        O descumprimento pode levar à suspensão do acesso. Os critérios e o
-        procedimento serão definidos na revisão jurídica.
+        Fraude, uso indevido, risco à segurança ou violação destes termos pode
+        levar à <strong>restrição ou suspensão proporcional</strong> do acesso,
+        sem prejuízo das medidas previstas em lei. As responsabilidades por
+        falhas, incidentes e danos são apuradas conforme a legislação aplicável
+        e a participação de cada parte.
       </p>
 
       <h2 style={h2}>Disponibilidade</h2>
@@ -177,10 +201,14 @@ export function TermsContent() {
 
       <h2 style={h2}>Encerramento da conta</h2>
       <p>
-        O procedimento para encerrar uma conta institucional e excluir os dados
-        associados ainda será definido — inclusive o prazo e o que acontece com
-        o histórico de aceites. Até lá, o pedido deve ser feito pelo canal de
-        contato que a revisão jurídica confirmar.
+        O encerramento e a exclusão de contas{" "}
+        <strong>ainda não existem como ação no painel</strong>, e o procedimento
+        — inclusive o prazo e o que acontece com o histórico de aceites — ainda
+        será definido. Até lá, o pedido deve ser feito por{" "}
+        <a href="mailto:contato@42.rio" style={linkStyle}>
+          contato@42.rio
+        </a>
+        , que também é o canal para os demais direitos do titular.
       </p>
       <p style={{ opacity: 0.75, fontSize: "0.875rem" }}>
         Exclusão de conta e revogação de consentimento ainda não estão
