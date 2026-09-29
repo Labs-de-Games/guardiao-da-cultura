@@ -25,17 +25,24 @@ const dt = { color: "#d9ad56" } as const;
  * matcher — reading the privacy notice must not itself mint the identity
  * cookie.
  *
- * Content derived from the Instituto 42 Rio legal draft (minuta v1.0), reduced
- * to what a *player* deciding on the consent gate needs. The institutional side
- * of that document (Termos de Uso, cadastro e dashboard institucional, licença
- * open source, resposta a incidentes) is deliberately not reproduced here — it
- * belongs to a Terms of Use page, not to this decision.
+ * Content derived from the Instituto 42 Rio legal document (V1.0, approved by
+ * Helder Galvão), reduced to what a *player* deciding on the consent gate
+ * needs. The institutional side of that document (Termos de Uso, cadastro e
+ * dashboard institucional, licença open source, resposta a incidentes) is
+ * deliberately not reproduced here — it belongs to the Terms of Use page, not
+ * to this decision.
  *
- * Every factual claim below was checked against the code, and where the draft
- * and the code disagree the code wins (see the Google Ads note in §"Coletas que
- * não dependem da sua escolha"). Keep it that way: the legal framing is what
- * review is expected to change, the behaviour described is not allowed to
- * drift.
+ * Every factual claim below was checked against the code, and where the legal
+ * text and the code disagree the code wins. Keep it that way: the legal framing
+ * is what review is expected to change, the behaviour described is not allowed
+ * to drift. Two live divergences, both verified in the code:
+ *
+ * - The legal text names **Google Analytics**. No GA4 or GTM container exists
+ *   anywhere in this repository; the only Google tag is `AW-18191558713`, a
+ *   Google Ads *conversion* tag. This page names Google Ads because that is
+ *   what the browser actually loads.
+ * - The legal text says no consent banner exists. One does, since issue #864 —
+ *   see §"Como alterar sua escolha".
  *
  * The draft's "Hotjar" and the Contentsquare tag this page used to disclose
  * were one and the same vendor — Hotjar is a Contentsquare product, and the
@@ -178,8 +185,40 @@ export default function PrivacyNoticePage() {
           quizzes e progressão por fase. Não existe relatório individual por
           jogador.
         </p>
-        <p style={{ opacity: 0.75, fontSize: "0.875rem" }}>
-          Base legal de cada finalidade: a definir em revisão jurídica.
+
+        <h2 style={h2}>Com que base legal tratamos cada dado</h2>
+        <p>
+          O tratamento se apoia nas hipóteses da Lei nº 13.709/2018 (LGPD)
+          aplicáveis a cada finalidade:
+        </p>
+        <ul>
+          <li>
+            <span style={dt}>Consentimento</span> — os dados de uso do jogo
+            (analytics). É a coleta que depende de você dizer sim, e que você
+            pode recusar ou revogar depois.
+          </li>
+          <li>
+            <span style={dt}>Legítimo interesse</span> — o que é estritamente
+            necessário à segurança, ao funcionamento técnico, à prevenção de
+            abuso e ao diagnóstico de falhas, observados os princípios da
+            necessidade, transparência e proporcionalidade.
+          </li>
+          <li>
+            <span style={dt}>Execução de contrato</span> — o cadastro, a
+            autenticação e as funcionalidades das contas institucionais. Não se
+            aplica a quem apenas joga: jogar não exige conta.
+          </li>
+          <li>
+            <span style={dt}>
+              Cumprimento de obrigação legal ou regulatória
+            </span>{" "}
+            — tratamentos especificamente necessários para essa finalidade,
+            incluindo a prestação de contas do projeto.
+          </li>
+        </ul>
+        <p>
+          Nos tratamentos que envolvam crianças e adolescentes, prevalece o seu
+          melhor interesse, conforme a legislação aplicável.
         </p>
 
         <h2 style={h2}>Para onde os dados vão</h2>
@@ -249,12 +288,49 @@ export default function PrivacyNoticePage() {
 
         <h2 style={h2}>Por quanto tempo guardamos</h2>
         <p>
-          O identificador <code>gp_distinct_id</code> tem validade de
-          aproximadamente 400 dias. A retenção dos eventos no PostHog segue a
-          configuração do painel. Os <strong>prazos definitivos</strong> de
-          retenção, exclusão e anonimização ainda serão definidos em revisão
-          jurídica — hoje não existe rotina automática de expurgo nas tabelas da
-          aplicação.
+          O projeto presta contas ao{" "}
+          <strong>Ministério da Cultura (MinC)</strong>. Por isso, os dados
+          necessários ao acompanhamento, à comprovação de resultados e à
+          prestação de contas podem ser conservados por{" "}
+          <strong>até 5 anos após o lançamento do projeto</strong>, limitados ao
+          que for necessário para essas finalidades. Os demais dados seguem
+          prazos próprios, conforme a finalidade e a necessidade de cada um.
+        </p>
+        <ul>
+          <li>
+            <span style={dt}>Eventos do jogo</span> — até 5 anos após o
+            lançamento, quando necessários para gerar e comprovar os indicadores
+            do projeto. Depois disso, anonimização ou exclusão, preferindo
+            manter apenas dados agregados.
+          </li>
+          <li>
+            <span style={dt}>Indicadores e relatórios</span> — até 5 anos após o
+            lançamento, para acompanhamento e prestação de contas. Depois,
+            conservação anonimizada ou exclusão.
+          </li>
+          <li>
+            <span style={dt}>
+              Eventos e erros do servidor, e logs de acesso
+            </span>{" "}
+            — até 5 anos, para segurança, diagnóstico e auditoria técnica.
+            Depois, exclusão ou anonimização.
+          </li>
+          <li>
+            <span style={dt}>Cópias de segurança (backups)</span> — conforme o
+            ciclo de backup, sem ultrapassar injustificadamente o prazo dos
+            dados de origem.
+          </li>
+          <li>
+            <span style={dt}>
+              Identificador do navegador (<code>gp_distinct_id</code>)
+            </span>{" "}
+            — validade de aproximadamente 400 dias.
+          </li>
+        </ul>
+        <p style={{ opacity: 0.75, fontSize: "0.875rem" }}>
+          Na prática: a retenção dos eventos no PostHog segue a configuração do
+          painel, e hoje não existe rotina automática de expurgo nas tabelas da
+          aplicação — a exclusão ao fim de cada prazo é feita sob demanda.
         </p>
 
         <h2 style={h2}>Como alterar sua escolha</h2>
@@ -283,11 +359,29 @@ export default function PrivacyNoticePage() {
 
         <h2 style={h2}>Crianças e adolescentes</h2>
         <p>
-          O jogo não pede idade, nome ou data de nascimento, e não possui
-          verificação etária nem fluxo específico para responsáveis legais. As
-          regras aplicáveis a crianças e adolescentes serão definidas em revisão
-          jurídica. Se você é responsável por uma criança que usa o jogo e tem
-          dúvidas, escreva para{" "}
+          O Guardião da Cultura é uma plataforma educativa que pode ser usada
+          por crianças e adolescentes. Nesses casos prevalece o{" "}
+          <strong>melhor interesse</strong> da criança e do adolescente, com as
+          medidas de proteção previstas na legislação aplicável.
+        </p>
+        <p>
+          Jogar <strong>não exige cadastro</strong> e o jogo não pede nome,
+          idade nem data de nascimento para liberar qualquer funcionalidade. A
+          participação não é condicionada a fornecer dados pessoais além do
+          estritamente necessário para o jogo funcionar.
+        </p>
+        <p>
+          A única coleta opcional é a dos dados de uso descritos acima, e a sua
+          finalidade é apresentada de forma clara antes da escolha. Tratando-se
+          de criança, e quando o tratamento depender de consentimento,
+          aplicam-se os requisitos específicos de consentimento dos pais ou do
+          responsável legal.
+        </p>
+        <p>
+          O jogo não possui verificação etária nem fluxo automatizado para
+          responsáveis legais: essa checagem não é feita pelo sistema. Se você é
+          responsável por uma criança que usa o jogo e quer retirar um
+          consentimento, escreva para{" "}
           <a href="mailto:contato@42.rio" style={{ color: "#d9ad56" }}>
             contato@42.rio
           </a>
