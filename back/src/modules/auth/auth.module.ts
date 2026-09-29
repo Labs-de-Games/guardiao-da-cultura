@@ -3,6 +3,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { EmailModule } from "../../core/email/email.module";
+import { ConsentModule } from "../consent/consent.module";
 import { UsersModule } from "../users/users.module";
 import { OAuthUpsertController } from "./controllers/oauth-upsert.controller";
 import { PasswordAuthController } from "./controllers/password-auth.controller";
@@ -22,6 +23,7 @@ import { JwtAccessStrategy } from "./strategies/jwt-access.strategy";
     JwtModule.register({}),
     TypeOrmModule.forFeature([RefreshToken, MagicLinkToken]),
     UsersModule,
+    ConsentModule,
     EmailModule,
   ],
   controllers: [OAuthUpsertController, PasswordAuthController],

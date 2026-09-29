@@ -1,4 +1,4 @@
-import { UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 import { MagicLinkTokenType } from "../../../src/modules/auth/enums/magic-link-token-type.enum";
 import { AuthService } from "../../../src/modules/auth/services/auth.service";
@@ -6,9 +6,12 @@ import { MagicLinkService } from "../../../src/modules/auth/services/magic-link.
 import { PasswordService } from "../../../src/modules/auth/services/password.service";
 import { PasswordAuthService } from "../../../src/modules/auth/services/password-auth.service";
 import { TokenService } from "../../../src/modules/auth/services/token.service";
+import { ConsentService } from "../../../src/modules/consent/consent.service";
+import { ConsentType } from "../../../src/modules/consent/enums/consent-type.enum";
 import { Role } from "../../../src/modules/users/enums/role.enum";
 import type { User } from "../../../src/modules/users/user.entity";
 import { UserService } from "../../../src/modules/users/user.service";
+import { INSTITUTION_TERMS_VERSION } from "../../../src/shared/consent/institution-terms";
 
 function buildService() {
   const userService = {
@@ -40,6 +43,10 @@ function buildService() {
 
   const configService = { frontendUrl: "https://front.example.com" } as never;
   const posthog = { capture: jest.fn() } as never;
+  const consentService = {
+    record: jest.fn().mockResolvedValue(undefined),
+    hasCurrentConsent: jest.fn().mockResolvedValue(true),
+  } as unknown as jest.Mocked<ConsentService>;
   const emailService = {
     sendMagicLinkEmail: jest.fn(),
     sendVerificationEmail: jest.fn(),
@@ -60,6 +67,7 @@ function buildService() {
     authService,
     configService,
     posthog,
+    consentService,
     emailService,
   );
 
@@ -72,6 +80,7 @@ function buildService() {
     authService,
     emailService,
     posthog,
+    consentService,
     logger,
   };
 }
@@ -89,6 +98,8 @@ describe("PasswordAuthService", () => {
         password: "password123456",
         institutionSlug: "escola-teste",
         nickname: "Escola Teste",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       expect(result).toEqual({ message: "Check your email" });
@@ -108,6 +119,8 @@ describe("PasswordAuthService", () => {
         password: "password123456",
         institutionSlug: "escola-nova",
         nickname: "Escola Nova",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       expect(passwordService.hash).toHaveBeenCalledWith("password123456");
@@ -136,6 +149,8 @@ describe("PasswordAuthService", () => {
         password: "password123456",
         institutionSlug: "escola-nova",
         nickname: "Escola Nova",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       expect(magicLinkService.createMagicLink).toHaveBeenCalledWith(
@@ -146,6 +161,70 @@ describe("PasswordAuthService", () => {
         "nova@example.com",
         expect.stringContaining("/confirm-verification?token=raw-token"),
       );
+    });
+
+    it("records the terms acceptance against the new account (issue #338)", async () => {
+      const { service, userService, consentService } = buildService();
+      userService.findByEmail.mockResolvedValue(null);
+      userService.create.mockResolvedValue({
+        id: "new-id",
+        email: "nova@example.com",
+      } as User);
+
+      await service.register({
+        email: "nova@example.com",
+        password: "password123456",
+        institutionSlug: "escola-nova",
+        nickname: "Escola Nova",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
+      });
+
+      expect(consentService.record).toHaveBeenCalledWith(
+        "new-id",
+        ConsentType.InstitutionTerms,
+        INSTITUTION_TERMS_VERSION,
+      );
+    });
+
+    it("refuses a stale terms version without creating the account", async () => {
+      const { service, userService, consentService } = buildService();
+      userService.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.register({
+          email: "nova@example.com",
+          password: "password123456",
+          institutionSlug: "escola-nova",
+          nickname: "Escola Nova",
+          termsAccepted: true,
+          termsVersion: "2020-01-01",
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      // The whole point of refusing: no account may exist without a consent
+      // row, so neither may be written when the version cannot be honoured.
+      expect(userService.create).not.toHaveBeenCalled();
+      expect(consentService.record).not.toHaveBeenCalled();
+    });
+
+    it("refuses a stale terms version even for an already-registered email", async () => {
+      // The version check runs before the anti-enumeration short-circuit, so
+      // a stale tab gets a real error it can act on (reload) rather than the
+      // "Check your email" that would leave it stuck retrying forever.
+      const { service, userService } = buildService();
+      userService.findByEmail.mockResolvedValue({ id: "existing" } as User);
+
+      await expect(
+        service.register({
+          email: "dup@example.com",
+          password: "password123456",
+          institutionSlug: "escola-teste",
+          nickname: "Escola Teste",
+          termsAccepted: true,
+          termsVersion: "2020-01-01",
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -241,6 +320,7 @@ describe("PasswordAuthService", () => {
           email: "i@example.com",
           role: Role.Institution,
           institutionSlug: "escola-teste",
+          termsAccepted: true,
         },
       });
     });
@@ -293,6 +373,7 @@ describe("PasswordAuthService", () => {
           email: "i@example.com",
           role: Role.Institution,
           institutionSlug: "escola-teste",
+          termsAccepted: true,
         },
       });
     });
@@ -432,6 +513,8 @@ describe("PasswordAuthService", () => {
         password: RAW_PASSWORD,
         institutionSlug: "escola-nova",
         nickname: "Escola Nova",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       assertNoLeak({ logger, posthog });
