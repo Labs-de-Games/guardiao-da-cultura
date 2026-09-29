@@ -59,6 +59,23 @@ function reconsentThreshold(): string {
 }
 
 /**
+ * A notice version rendered for a Brazilian player: `2026-09-29` → `29/09/2026`.
+ *
+ * Formatted from the string's own parts rather than through `Date`, which would
+ * read a bare `YYYY-MM-DD` as UTC midnight and then render it one day earlier
+ * everywhere in Brazil (UTC-3) — an off-by-one on the exact date being shown.
+ *
+ * A version that is not a well-formed date is returned untouched: the stored
+ * value is the honest thing to show, and `isNoticeVersionStale` has already
+ * decided such a record cannot count as consent anyway.
+ */
+export function formatNoticeVersion(noticeVersion: string): string {
+  if (!NOTICE_VERSION_PATTERN.test(noticeVersion)) return noticeVersion;
+  const [year, month, day] = noticeVersion.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+/**
  * Whether a decision taken under `noticeVersion` is too old to still stand.
  *
  * Fails closed: a version that is not a well-formed date — hand-edited, written
