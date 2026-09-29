@@ -5,13 +5,24 @@
 #   scripts/apply-rulesets.sh diff    show drift between GitHub and the committed files
 #
 # Needs the GitHub CLI logged in with admin rights on the repository, and jq.
-# Rulesets are only available on public repositories (or with GitHub Pro).
+# Rulesets are only available on public repositories (or on GitHub Team).
 
 set -euo pipefail
 
 RULESETS_DIR="$(cd "$(dirname "$0")/.." && pwd)/.github/rulesets"
 # Keys compared by `diff`. GitHub adds others (id, timestamps, links) that we ignore.
 KEYS='{name, target, enforcement, conditions, rules, bypass_actors}'
+# Keeps only the fields of the live ruleset that the committed file sets, so
+# defaults GitHub returns on its own (extra rule parameters) are not reported as
+# drift. A field the file sets but GitHub lacks, or a changed value, still shows.
+SHAPE='def shape($t):
+  if ($t | type) == "object" and type == "object" then
+    . as $o | reduce ($t | keys[]) as $k ({};
+      if $o | has($k) then .[$k] = ($o[$k] | shape($t[$k])) else . end)
+  elif ($t | type) == "array" and type == "array" and length == ($t | length) then
+    [range(length) as $i | .[$i] | shape($t[$i])]
+  else . end;
+shape($file[0])'
 
 usage() {
   echo "Usage: $0 apply|diff" >&2
@@ -33,7 +44,7 @@ REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 
 if ! LIVE="$(gh api "repos/$REPO/rulesets" 2>&1)"; then
   if grep -q "HTTP 403" <<<"$LIVE"; then
-    echo "error: rulesets need a public repository or GitHub Pro; apply them after the open-source switch" >&2
+    echo "error: rulesets need a public repository or GitHub Team; apply them after the open-source switch" >&2
   else
     echo "$LIVE" >&2
   fi
@@ -62,7 +73,7 @@ for file in "$RULESETS_DIR"/*.json; do
     continue
   fi
   if ! diff -u \
-    --label "github/$name" <(gh api "repos/$REPO/rulesets/$id" | jq -S "$KEYS") \
+    --label "github/$name" <(gh api "repos/$REPO/rulesets/$id" | jq -S --slurpfile file "$file" "$SHAPE | $KEYS") \
     --label "$file" <(jq -S "$KEYS" "$file"); then
     status=1
   fi
