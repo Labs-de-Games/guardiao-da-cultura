@@ -23,6 +23,7 @@ const mockFetchCompletionRate = jest.fn();
 const mockFetchPhaseProgress = jest.fn();
 const mockFetchPhaseQuizPassRate = jest.fn();
 const mockFetchPhaseClueUsage = jest.fn();
+const mockFetchPhaseStars = jest.fn();
 jest.mock("@/lib/edital/server/metrics", () => ({
   fetchSessionDuration: (...args: unknown[]) =>
     mockFetchSessionDuration(...args),
@@ -32,6 +33,7 @@ jest.mock("@/lib/edital/server/metrics", () => ({
   fetchPhaseQuizPassRate: (...args: unknown[]) =>
     mockFetchPhaseQuizPassRate(...args),
   fetchPhaseClueUsage: (...args: unknown[]) => mockFetchPhaseClueUsage(...args),
+  fetchPhaseStars: (...args: unknown[]) => mockFetchPhaseStars(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -53,11 +55,13 @@ describe("GET /api/edital/report.csv", () => {
     mockFetchPhaseProgress.mockReset();
     mockFetchPhaseQuizPassRate.mockReset();
     mockFetchPhaseClueUsage.mockReset();
+    mockFetchPhaseStars.mockReset();
     mockFetchQuizPassRate.mockResolvedValue(ZERO_RATE);
     mockFetchCompletionRate.mockResolvedValue(ZERO_RATE);
     mockFetchPhaseProgress.mockResolvedValue([]);
     mockFetchPhaseQuizPassRate.mockResolvedValue([]);
     mockFetchPhaseClueUsage.mockResolvedValue([]);
+    mockFetchPhaseStars.mockResolvedValue([]);
   });
 
   it("returns 401 when there is no session", async () => {
@@ -165,7 +169,16 @@ describe("GET /api/edital/report.csv", () => {
       },
     ]);
     mockFetchPhaseClueUsage.mockResolvedValue([
-      { levelId: "level_01", levelNumber: 1, label: "L1", clueUses: 7 },
+      { levelId: "level_01", levelNumber: 1, label: "L1", clues: 7 },
+    ]);
+    mockFetchPhaseStars.mockResolvedValue([
+      {
+        levelId: "level_01",
+        levelNumber: 1,
+        label: "L1",
+        avgStars: 3.5,
+        players: 10,
+      },
     ]);
 
     const response = await GET(makeRequest());
@@ -173,7 +186,55 @@ describe("GET /api/edital/report.csv", () => {
 
     expect(text).toContain("phase_1_reached;100");
     expect(text).toContain("phase_1_completed;80");
-    expect(text).toContain("phase_1_clue_uses;7");
+    expect(text).toContain("phase_1_clues;7");
+    expect(text).not.toContain("clue_uses");
+    expect(text).toContain("phase_1_avg_stars;3,5");
+    expect(text).not.toContain("max_stars");
+  });
+
+  it("leaves quiz empty for the investigation (level 4)", async () => {
+    const scope = __createScopeForTests("escola-teste");
+    const range = { from: new Date(0), to: new Date() };
+    mockResolveEditalRequestContext.mockResolvedValue({
+      kind: "ok",
+      scope,
+      range,
+    });
+    mockFetchSessionDuration.mockResolvedValue({
+      avgSeconds: 1,
+      medianSeconds: 1,
+      sessionsStarted: 1,
+    });
+    mockFetchPhaseProgress.mockResolvedValue([
+      {
+        levelId: "level_04",
+        levelNumber: 4,
+        label: "L4",
+        reached: 20,
+        completed: 10,
+      },
+    ]);
+    mockFetchPhaseClueUsage.mockResolvedValue([
+      { levelId: "level_04", levelNumber: 4, label: "L4", clues: 42 },
+    ]);
+    mockFetchPhaseStars.mockResolvedValue([
+      {
+        levelId: "level_04",
+        levelNumber: 4,
+        label: "L4",
+        avgStars: 4,
+        players: 10,
+      },
+    ]);
+
+    const response = await GET(makeRequest());
+    const text = await response.text();
+
+    const lines = text.split("\r\n");
+    expect(text).toContain("phase_4_completed;10");
+    expect(lines).toContain("phase_4_quiz_pass_rate;");
+    expect(text).toContain("phase_4_clues;42");
+    expect(text).toContain("phase_4_avg_stars;4");
   });
 
   it("never exceeds MAX_CSV_ROWS data rows", async () => {

@@ -407,7 +407,11 @@ describe("InvestigationScreen", () => {
 
       accuse("augusto_vale", "Augusto Vale");
 
-      expect(completed).toHaveBeenCalledWith({ stars: 5, wrongAttempts: 0 });
+      expect(completed).toHaveBeenCalledWith({
+        stars: 5,
+        wrongAttempts: 0,
+        correct: true,
+      });
       expect(screen.getByText("Mandado de prisão emitido")).toBeInTheDocument();
       EventBus.off("investigation:completed", completed);
     });
@@ -485,7 +489,11 @@ describe("InvestigationScreen", () => {
       accuse("helena_marques", "Helena Marques");
       accuse("augusto_vale", "Augusto Vale");
 
-      expect(completed).toHaveBeenCalledWith({ stars: 4, wrongAttempts: 1 });
+      expect(completed).toHaveBeenCalledWith({
+        stars: 4,
+        wrongAttempts: 1,
+        correct: true,
+      });
       EventBus.off("investigation:completed", completed);
     });
 
@@ -499,7 +507,11 @@ describe("InvestigationScreen", () => {
       accuse("renata_vilas", "Renata Vilas");
       accuse("anselmo_veiga", "Anselmo Veiga");
 
-      expect(completed).toHaveBeenCalledWith({ stars: 1, wrongAttempts: 4 });
+      expect(completed).toHaveBeenCalledWith({
+        stars: 1,
+        wrongAttempts: 4,
+        correct: false,
+      });
       expect(investigation().revealed).toBe(true);
       EventBus.off("investigation:completed", completed);
     });
