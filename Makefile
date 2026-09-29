@@ -18,7 +18,7 @@ DC_PROD    = -f compose.production.yaml
 .DEFAULT_GOAL := help
 
 # --- Phony Declarations ---
-.PHONY: install setup sync local-all local-front local-back development-up development-front development-back development-down development-build development-build-front development-build-back development-logs development-ps development-shell-front development-shell-back development-restart staging-up staging-down staging-logs staging-ps staging-shell-front staging-shell-back production-up production-down production-logs production-ps production-shell-front production-shell-back production-build lint test check db-migrate db-migrate-generate clean deep-clean clean-images help up down logs
+.PHONY: install setup sync local-all local-front local-back development-up development-front development-back development-down development-build development-build-front development-build-back development-logs development-ps development-shell-front development-shell-back development-restart staging-up staging-down staging-logs staging-ps staging-shell-front staging-shell-back production-up production-down production-logs production-ps production-shell-front production-shell-back production-build lint test check rulesets-apply rulesets-diff db-migrate db-migrate-generate clean deep-clean clean-images help up down logs
 
 # =============================================================================
 # Setup & Installation
@@ -152,6 +152,16 @@ test: ## Run tests via Turbo
 	@$(PKG) run test
 
 check: lint test ## Run lint and tests in one go
+
+# =============================================================================
+# Repository Settings (maintainers, needs admin rights)
+# =============================================================================
+
+rulesets-apply: ## Create or update branch rulesets from .github/rulesets/
+	@./scripts/apply-rulesets.sh apply
+
+rulesets-diff: ## Compare live branch rulesets with .github/rulesets/
+	@./scripts/apply-rulesets.sh diff
 
 # =============================================================================
 # Database
