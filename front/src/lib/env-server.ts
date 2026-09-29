@@ -46,10 +46,11 @@ const serverSchema = z
 
     /**
      * Local-only canned dashboard data (lib/edital/server/mockData.ts):
-     * "true" serves a small, hand-written player set instead of PostHog.
-     * Ignored outside development — see editalMockDataScenario().
+     * "true" for the default scenario, "no-level-4" for a period where
+     * nobody reached the investigation. Ignored outside development — see
+     * editalMockDataScenario().
      */
-    editalMockData: z.enum(["true"]).optional(),
+    editalMockData: z.enum(["true", "no-level-4"]).optional(),
     /**
      * With EDITAL_MOCK_DATA on: the one institution whose links the public
      * dashboard's mock counts as its active turmas. The public queries carry
@@ -204,9 +205,11 @@ export const serverEnv = {
  * EDITAL_MOCK_DATA even if it is set by mistake, so fake numbers can never
  * reach a real dashboard.
  */
-export function editalMockDataScenario(): "default" | null {
+export function editalMockDataScenario(): "default" | "no-level-4" | null {
   if (process.env.NODE_ENV !== "development") return null;
-  return getServerEnv().editalMockData === "true" ? "default" : null;
+  const value = getServerEnv().editalMockData;
+  if (value === "true") return "default";
+  return value ?? null;
 }
 
 /** True once all three edital PostHog fields are set — no partial config — or mock data is on. */

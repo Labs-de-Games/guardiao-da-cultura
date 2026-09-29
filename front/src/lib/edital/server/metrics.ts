@@ -1,9 +1,9 @@
 import "server-only";
 import { serverEnv } from "../../env-server";
 import { safeRate } from "../rate";
-import type { Rate } from "../types";
+import type { PhaseStars, Rate } from "../types";
 import { runHogQLQuery } from "./hogql";
-import { FINAL_LEVEL_NUMBER, ORDERED_LEVELS } from "./levels";
+import { DASHBOARD_LEVELS } from "./levels";
 import { toNumber } from "./numeric";
 import type { ResolvedDateRange } from "./period";
 import {
@@ -14,6 +14,7 @@ import {
   buildPhaseCompletionQuery,
   buildPhaseQuizPassRateQuery,
   buildPhaseReachedQuery,
+  buildPhaseStarsQuery,
   buildQuizPassRateQuery,
   buildSessionDurationQuery,
   buildSummaryQuery,
@@ -299,7 +300,6 @@ export async function fetchCompletionRate(
     const { query, values } = buildCompletionRateQuery(
       scope,
       range,
-      FINAL_LEVEL_NUMBER,
       turmaSource,
     );
     const result = await runHogQLQuery(query, values);
@@ -312,9 +312,9 @@ export interface PhaseBreakdown {
   levelId: string;
   levelNumber: number;
   label: string;
-  /** Unique players who entered this level (`game_started`). */
+  /** Unique players who entered this level (`game_started` / `investigation_opened`). */
   reached: number;
-  /** Unique players who finished this level (`level_completed`). */
+  /** Unique players who finished this level (`level_completed` / `investigation_completed`). */
   completed: number;
 }
 
@@ -329,22 +329,38 @@ export interface PhaseClueUsageBreakdown {
   levelId: string;
   levelNumber: number;
   label: string;
-  clueUses: number;
+  clues: number;
 }
 
+export interface PhaseStarsBreakdown extends PhaseStars {
+  levelId: string;
+  levelNumber: number;
+  label: string;
+}
+
+/** HogQL stars rows → `PhaseStars` per level id. Shared with globalMetrics.ts. */
+export function rowsToStarsMap(rows: unknown[][]): Map<string, PhaseStars> {
+  return rowsToLevelMap(rows, (row) => ({
+    avgStars: toNumber(row[1]),
+    players: toNumber(row[2]),
+  }));
+}
+
+export const EMPTY_PHASE_STARS: PhaseStars = { avgStars: 0, players: 0 };
+
 /**
- * Every level in LEVEL_REGISTRY (1, 2, 3 today), in order — the base
+ * Every level in DASHBOARD_LEVELS (1–4), in order — the base
  * every phase breakdown starts from, so a level with zero events for the
  * selected period still shows up as a zero row instead of silently
  * disappearing from a `GROUP BY` result that only returns levels with at
  * least one matching event.
  */
-function allLevelsBase(): Array<{
+function allLevelsBase(levels = DASHBOARD_LEVELS): Array<{
   levelId: string;
   levelNumber: number;
   label: string;
 }> {
-  return ORDERED_LEVELS.map((level) => ({
+  return levels.map((level) => ({
     levelId: level.id,
     levelNumber: level.levelNumber,
     label: level.title,
@@ -352,9 +368,9 @@ function allLevelsBase(): Array<{
 }
 
 /**
- * #807 "progresso por fase" — reached (`game_started`) and completed
- * (`level_completed`) per level, one row per level in LEVEL_REGISTRY
- * (1, 2, 3 today) always present, even at zero, ordered by level number.
+ * #807 "progresso por fase" — reached and completed per level, one row
+ * per level in DASHBOARD_LEVELS always present, even at zero, ordered by
+ * level number.
  * Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
  */
 export async function fetchPhaseProgress(
@@ -390,8 +406,10 @@ export async function fetchPhaseProgress(
 
 /**
  * #807 "taxa de aprovação nos quizzes por fase" — per-level pass rate,
- * one row per level in LEVEL_REGISTRY always present, ordered by level
- * number. Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ * one row per level that ends in a quiz always present, ordered by level
+ * number. The investigation has no quiz, so it has no row here rather
+ * than a misleading 0%. Institution-wide when `turmaSource` is absent,
+ * turma-scoped otherwise.
  */
 export async function fetchPhaseQuizPassRate(
   scope: Scope,
@@ -411,7 +429,7 @@ export async function fetchPhaseQuizPassRate(
       total: toNumber(row[2]),
     }));
 
-    return allLevelsBase()
+    return allLevelsBase(DASHBOARD_LEVELS.filter((level) => level.hasQuiz))
       .map((level) => {
         const entry = byLevel.get(level.levelId);
         return {
@@ -424,9 +442,10 @@ export async function fetchPhaseQuizPassRate(
 }
 
 /**
- * #807 P1 "uso de pistas por fase" — raw clue_used count per level, one
- * row per level in LEVEL_REGISTRY always present, ordered by level
- * number. Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ * #807 P1 "pistas por fase" — raw clue count per level (collected in
+ * levels 1–3, placed on the board in level 4), one row per level in
+ * DASHBOARD_LEVELS always present, ordered by level number.
+ * Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
  */
 export async function fetchPhaseClueUsage(
   scope: Scope,
@@ -446,7 +465,32 @@ export async function fetchPhaseClueUsage(
     return allLevelsBase()
       .map((level) => ({
         ...level,
-        clueUses: byLevel.get(level.levelId) ?? 0,
+        clues: byLevel.get(level.levelId) ?? 0,
+      }))
+      .sort((a, b) => a.levelNumber - b.levelNumber);
+  });
+}
+
+/**
+ * Stars per level — each player's best run, averaged — one row per level
+ * in DASHBOARD_LEVELS always present, ordered by level number.
+ * Institution-wide when `turmaSource` is absent, turma-scoped otherwise.
+ */
+export async function fetchPhaseStars(
+  scope: Scope,
+  range: ResolvedDateRange,
+  turmaSource?: string,
+): Promise<PhaseStarsBreakdown[]> {
+  const key = `phase-stars:${scopeKey(scope, range, turmaSource)}`;
+  return withCache(key, async () => {
+    const { query, values } = buildPhaseStarsQuery(scope, range, turmaSource);
+    const result = await runHogQLQuery(query, values);
+    const byLevel = rowsToStarsMap(result.results);
+
+    return allLevelsBase()
+      .map((level) => ({
+        ...level,
+        ...(byLevel.get(level.levelId) ?? EMPTY_PHASE_STARS),
       }))
       .sort((a, b) => a.levelNumber - b.levelNumber);
   });

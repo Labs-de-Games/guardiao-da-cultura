@@ -1,6 +1,6 @@
 # Eventos de Analytics — Dashboard
 
-> **Existem quatro stacks de analytics neste repositório** (registrado
+> **Existem três stacks de analytics neste repositório** (registrado
 > aqui por #748 para que nenhuma delas seja confundida com "o" analytics
 > do produto):
 > 1. **PostHog** (`front/src/components/PostHogProvider.tsx`,
@@ -11,13 +11,43 @@
 >    mantido como fallback até as telas do edital (#745) rodarem um ciclo
 >    completo de apuração em produção (#748). Não é a fonte de verdade do
 >    edital.
-> 3. **Contentsquare** (`front/src/app/layout.tsx`, script `t.contentsquare.net`)
->    — sessão/heatmap de terceiros, fora do escopo deste documento.
-> 4. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
+> 3. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
 >    conversão de anúncios, fora do escopo deste documento.
 >
-> Um print de qualquer uma das stacks 2–4 **não** representa o número do
+> Um print de qualquer uma das stacks 2–3 **não** representa o número do
 > edital — só a stack 1 (PostHog) faz isso.
+>
+> Existia uma quarta stack, **Contentsquare** (script
+> `t.contentsquare.net/uxa/`, sessão/heatmap de terceiros), removida em
+> 2026-09-29. Ela nunca alimentou número nenhum deste documento. Vale saber
+> ao garimpar o histórico: o commit que a adicionou se chama "add hotjar
+> tracking script" — Hotjar é produto da Contentsquare, então buscar
+> "hotjar" na árvore não acha nada e buscar no log acha isto.
+
+> ## ⚠️ As stacks 1 e 2 dependem de consentimento (#864)
+>
+> Desde a issue #864, **nenhum evento de analytics é coletado antes de o
+> jogador aceitar** — nem no PostHog, nem no pipeline Postgres. O diálogo é
+> bloqueante: ninguém chega ao jogo sem responder. Consequências para todo
+> número deste documento:
+>
+> - **As stacks 1 e 2 passam a contar apenas quem consentiu.** Não existe mais
+>   "fonte sem viés de consentimento" neste repositório: quem recusa não gera
+>   evento em lugar nenhum.
+> - **`landing_page_viewed` é o mais afetado**: é o passo 1 do funil e o
+>   denominador da "Taxa de entrada na gameplay". Espere uma queda de patamar,
+>   não um bug.
+> - **Não há coleta retroativa em nenhuma das duas.** O posthog-js descarta
+>   capturas feitas antes do `init()`; a fila em `gameplate:eventQueue:v1` é
+>   **descartada** sem consentimento, em vez de guardada — aceitar autoriza
+>   dali para frente, nunca para trás.
+> - **O progresso do jogador continua sendo gravado** (`/scores`,
+>   `/progression`): é o jogo salvo dele, não medição sobre ele. Só `/events`
+>   é bloqueado.
+> - O gate vale nos dois lados. O front não envia, e o backend descarta o que
+>   chegar sem o cookie `gp_analytics_consent` — inclusive o `session.end`
+>   entregue por `sendBeacon`. Eventos do backend (`match_ended`, exceções)
+>   seguem a mesma regra.
 
 Este documento descreve:
 - **Métricas do dashboard** e quais eventos alimentam cada card/visão.
@@ -197,16 +227,16 @@ minigames, quizzes e carregamento do jogo.
 | `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
-| `clue_used` | `level_id`, `clue_index` | `InteractionComponent.ts` — distinct from `clue_collected` above (collectible pickup vs. hint usage). No `level_number`; per-phase breakdowns (issue #807) resolve it via `level_id` → `LevelConfig.ts`'s `LEVEL_REGISTRY`, not a property on the event itself |
-| `level_completed` | `level_id`, `level_number`, `score`, `stars`, `rating`, `mission_id`, `time_spent_ms`, `attempts` | `QuizManager.ts` — general-purpose, all levels (unlike `chapter_1_completed` below, which only fires for level 1) |
+| `clue_used` | `level_id`, `clue_index` | `InteractionComponent.ts` (`showHint`) — distinct from `clue_collected` above. Fires when the game shows a hint on its own after the player lingers near an object, **not** when the player does anything with a clue; the edital dashboards don't use it since #834 (see "Métricas por fase dos dashboards") |
+| `level_completed` | `level_id`, `level_number`, `score`, `stars`, `rating`, `mission_id`, `time_spent_ms`, `attempts` | `QuizManager.ts` — general-purpose, levels 1–3 (unlike `chapter_1_completed` below, which only fires for level 1). `stars` can be fractional (quarters / 4); every level is out of 5 |
 | `level_failed` | `level_id`, `level_number`, `mission_id`, `score`, `total_questions` | `QuizManager.ts` |
-| `progress_updated` | `level_id`, `level_number`, `current_level`, `total_stars`, `completed_levels_count`, `mission_id`, `passed`, `score`, `total_questions` | `QuizManager.ts` |
+| `progress_updated` | `level_id`, `level_number`, `current_level`, `total_stars`, `completed_levels_count`, `mission_id`, `passed`, `score`, `total_questions` | `QuizManager.ts`; also `InvestigationScene.ts` (`recordResult`) for level 4 since #834, with only `level_id`, `level_number`, `current_level`, `total_stars`, `completed_levels_count` |
 | `pistas_board_opened` | — | `HintCard.tsx` (PostHog) |
-| `investigation_opened` | `collected_clues`, `shown_clues`, `previous_stars` | `InvestigationScene.ts` (`buildAndEmitPayload`) |
-| `investigation_clue_placed` | `level_id`, `clue_key`, `clue_source` (`player`/`curator`), `trait_id`, `suspect_id`, `slot_index`, `verdict` (`quente`/`morno`/`frio`), `hearts_left`, `replaced_clue_key`, `attempt_number`, `is_tutorial` | `game-ui-store.ts` (`placeClueInSlot`) |
+| `investigation_opened` | `level_id`, `level_number`, `collected_clues`, `shown_clues`, `previous_stars` | `InvestigationScene.ts` (`buildAndEmitPayload`) |
+| `investigation_clue_placed` | `level_id`, `level_number`, `clue_key`, `clue_source` (`player`/`curator`), `trait_id`, `suspect_id`, `slot_index`, `verdict` (`quente`/`morno`/`frio`), `hearts_left`, `replaced_clue_key`, `attempt_number`, `is_tutorial` | `game-ui-store.ts` (`placeClueInSlot`) |
 | `investigation_suspect_accused` | `level_id`, `suspect_id`, `attempt_number`, `clues_on_suspect`, `hot_clues`, `cold_clues`, `is_correct`, `wrong_attempts`, `stars`, `revealed` | `game-ui-store.ts` (`accuseSuspect`) |
 | `investigation_suspect_identified` | `level_id`, `suspect_id`, `stars`, `wrong_attempts`, `attempt_number`, `clues_on_suspect`, `hot_clues`, `cold_clues`, `clues_collected`, `clues_available` | `game-ui-store.ts` (`accuseSuspect`, acerto) |
-| `investigation_completed` | `stars`, `wrong_attempts`, `total_stars` | `InvestigationScene.ts` (`recordResult`) |
+| `investigation_completed` | `level_id`, `level_number`, `stars`, `wrong_attempts`, `is_correct`, `revealed` | `InvestigationScene.ts` (`recordResult`). `level_id`/`level_number`/`is_correct`/`revealed` added in #834; `total_stars` moved to `progress_updated` |
 | `nudge_pulse_shown_{costume,spotlight,step_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
 | `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
 
@@ -273,17 +303,22 @@ interpretar os eventos `investigation_*`:
   quando o jogador chega com menos de `INVESTIGATION_MIN_CLUES`. É a mesma distinção que
   `clues_collected` vs `clues_available` em `investigation_suspect_identified`, medida na
   entrada em vez de na vitória.
-- **`investigation_completed` fecha a partida pelo lado da cena**, disparado por
-  `investigation:completed` logo depois de `ProgressionManager.recordLevelCompleted`. Sai nos
-  **dois** desfechos — acerto e revelação na 4ª errada —, então serve para contar partidas
-  concluídas; para separar vitória de derrota use `is_correct`/`revealed` em
-  `investigation_suspect_accused`.
-- **`total_stars` é o total do jogo inteiro, não da fase**, lido de
-  `ProgressionManager.getState()` já com o resultado desta partida somado. Só `stars` se
-  refere à investigação.
+- **`investigation_completed` fecha a partida — e o jogo.** Disparado por
+  `investigation:completed` como primeira coisa de `recordResult`, antes de qualquer `await`,
+  para uma aba fechada durante o carregamento do progresso não perder o evento. Sai nos
+  **dois** desfechos — acerto e revelação na 4ª errada —, e os dois contam como "concluiu o
+  jogo" nos dashboards (#834). `is_correct`/`revealed` no próprio evento separam vitória de
+  revelação.
+- **`total_stars` (total do jogo inteiro) saiu deste evento em #834** e agora vem em
+  `progress_updated`, emitido logo depois de `ProgressionManager.recordLevelCompleted` com o
+  resultado desta partida já somado. Aqui, só `stars` (de 1 a 5) se refere à investigação.
 - **O evento não garante que o progresso foi salvo.** É emitido antes do `saveProgress`, que
   está num `try/catch` — uma falha de rede registra o `investigation_completed` mesmo assim.
   Divergências com o progresso do backend são esperadas nessa margem.
+- **A fase grava placar em `/scores` como as fases 1–3** (#834), depois do progresso:
+  `totalStars` é a nota da partida e os campos que a investigação não tem (quarters, andares,
+  quiz, quizzes intermediários, colecionáveis, `rating`) vão vazios ou zerados. Isso gera uma
+  linha em `user_score` e o `match_ended` do backend para `level_04`.
 - **Uma rejogada pior também emite `investigation_completed`.** O mapa guarda o `max`, o evento
   guarda a partida: contar esses eventos não dá número de jogadores que concluíram a fase, e a
   média de `stars` fica abaixo do que o mapa exibe.
@@ -305,11 +340,12 @@ autocaptures `$browser`/`$os` on every event regardless of `autocapture: false`
 
 # Funil canônico do edital (épico #738)
 
-Seis passos hoje (3 de aquisição + 1 por fase em `LEVEL_REGISTRY`, hoje 3
-fases), é o que `getFunnelSteps()` em `front/src/lib/edital/server/queries.ts`
-usa nas queries HogQL Q1 e Q4 (summary e funnel). Este funil é **dinâmico**:
-uma 4ª fase adicionada a `LEVEL_REGISTRY` ganha um 7º passo automaticamente,
-sem precisar de código novo.
+Sete passos hoje (3 de aquisição + 1 por fase em `DASHBOARD_LEVELS`, hoje 4
+fases — as 3 de `LEVEL_REGISTRY` mais a investigação), é o que
+`getFunnelSteps()` em `front/src/lib/edital/server/queries.ts` usa nas
+queries HogQL Q1 e Q4 (summary e funnel). Este funil é **dinâmico**: uma
+fase adicionada a `DASHBOARD_LEVELS` (`front/src/lib/edital/server/levels.ts`)
+ganha um passo automaticamente, sem precisar de código novo.
 
 > **Correção (issue #807):** este funil já foi hardcoded em torno de
 > `chapter_1_started`/`chapter_1_completed`, mas esse par só cobre a fase 1
@@ -327,6 +363,10 @@ sem precisar de código novo.
 | 4 | "Concluiu Fase 1" | `event = 'level_completed' AND level_number = 1` | `QuizManager.ts`, quiz de fim de fase 1 aprovado |
 | 5 | "Concluiu Fase 2" | `event = 'level_completed' AND level_number = 2` | `QuizManager.ts`, quiz de fim de fase 2 aprovado |
 | 6 | "Concluiu Fase 3" | `event = 'level_completed' AND level_number = 3` | `QuizManager.ts`, quiz de fim de fase 3 aprovado |
+| 7 | "Concluiu Fase 4" | `event = 'investigation_completed'` | `InvestigationScene.ts`, culpado identificado ou revelado (#834) |
+
+O passo 7 é também o que a "taxa de conclusão" conta como "concluiu o
+jogo" (`FINAL_LEVEL` em `levels.ts`), nos dois dashboards.
 
 `quiz_started`/`quiz_completed` são eventos reais (ver `QuizManager.ts`),
 mas **não são passos do funil** — o funil usa apenas `level_completed`
@@ -356,6 +396,38 @@ mecanismo (issue #741):
 | `quiz_answered` | `quiz_answer_submitted` | `game-ui-store.ts` — `+ quiz_result` ("correct"/"incorrect") |
 | `score_calculated` | `score_updated` | `PersistenceBridge.ts` — alto volume, não é denominador de card |
 | `badge_earned` | *(já canônico)* | `BadgeSystem.ts` — `+ chapter_id` |
+
+## Métricas por fase dos dashboards (#834)
+
+Cada fase responde as mesmas perguntas com eventos diferentes — a
+investigação (fase 4) não é um nível jogável e não está em
+`LEVEL_REGISTRY`. `DASHBOARD_LEVELS` em `front/src/lib/edital/server/levels.ts`
+guarda, por fase, qual evento responde cada uma; as queries de
+`queries.ts`/`globalQueries.ts` só leem essa lista.
+
+| Métrica | Fases 1–3 | Fase 4 (investigação) |
+|---|---|---|
+| Chegou à fase | `game_started` | `investigation_opened` |
+| Concluiu a fase | `level_completed` | `investigation_completed` (os dois desfechos) |
+| Pistas | `clue_collected` (pistas coletadas) | `investigation_clue_placed` com `is_tutorial = false` (pistas posicionadas no quadro — cada soltura conta, inclusive mover a mesma pista) |
+| Estrelas (de 5) | `stars` de `level_completed` | `stars` de `investigation_completed` |
+| Aprovação no quiz | `quiz_completed` | — (a fase não tem quiz; fica fora dos gráficos de quiz e vazia no CSV) |
+
+- **`clue_used` não entra mais.** Ele marca uma dica exibida automaticamente
+  pelo jogo, não uma pista usada pelo jogador. A coluna do CSV
+  `phase_N_clue_uses` virou `phase_N_clues`.
+- **Estrelas:** para cada jogador, a melhor partida da fase (rejogadas
+  guardam o melhor resultado, como o mapa); depois a média entre jogadores.
+  Toda fase vale no máximo 5 estrelas (o mesmo teto do card do mapa e da
+  investigação), então o painel mostra "3,4 / 5 ★" e o CSV traz
+  `phase_N_avg_stars`. Eventos anteriores a #834 também entram.
+- **Eventos antigos da investigação:** antes de #834,
+  `investigation_opened`/`investigation_completed` não tinham `level_id`.
+  As queries mapeiam os eventos exclusivos da fase 4 para `level_04` pelo
+  nome (`levelIdExpression()` em `levels.ts`), então o histórico também
+  conta.
+- **Progresso médio** divide pelo número de fases em `DASHBOARD_LEVELS`
+  (4, não mais 3), então o valor muda com o deploy.
 
 ## Mapa de dual-emit
 

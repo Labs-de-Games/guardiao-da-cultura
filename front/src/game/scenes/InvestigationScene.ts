@@ -120,7 +120,7 @@ export class InvestigationScene extends Scene {
     });
 
     this.unsubCompleted = EventBus.on("investigation:completed", (data) => {
-      void this.recordResult(data.stars, data.wrongAttempts);
+      void this.recordResult(data.stars, data.wrongAttempts, data.correct);
     });
 
     this.unsubExit = EventBus.on("investigation:exit", () => {
@@ -226,6 +226,10 @@ export class InvestigationScene extends Scene {
     this.creditsPending = payload.previousStars === 0;
 
     posthog.capture("investigation_opened", {
+      // Same keys every level carries, so the dashboards' per-level
+      // queries can count this as "reached level 4".
+      level_id: INVESTIGATION_LEVEL_ID,
+      level_number: INVESTIGATION_LEVEL_NUMBER,
       collected_clues: collectedClues.length,
       shown_clues: clues.length,
       previous_stars: payload.previousStars,
@@ -279,7 +283,22 @@ export class InvestigationScene extends Scene {
    * exactly the "preserve the best result" rule, and bumps `currentLevel` so the
    * map keeps the phase unlocked.
    */
-  private async recordResult(stars: number, wrongAttempts: number) {
+  private async recordResult(
+    stars: number,
+    wrongAttempts: number,
+    correct: boolean,
+  ) {
+    // Captured before the first await: this is the "game finished" event, and
+    // a player closing the tab during the progress round-trip must not drop it.
+    posthog.capture("investigation_completed", {
+      level_id: INVESTIGATION_LEVEL_ID,
+      level_number: INVESTIGATION_LEVEL_NUMBER,
+      stars,
+      wrong_attempts: wrongAttempts,
+      is_correct: correct,
+      revealed: !correct,
+    });
+
     const snapshot = await this.loadProgressSafely();
     if (snapshot) {
       this.progressionManager.hydrate(snapshot);
@@ -295,10 +314,13 @@ export class InvestigationScene extends Scene {
 
     const state = this.progressionManager.getState();
 
-    posthog.capture("investigation_completed", {
-      stars,
-      wrong_attempts: wrongAttempts,
+    // Mirrors QuizManager's post-level event, so level 4 reads like 1–3.
+    posthog.capture("progress_updated", {
+      level_id: INVESTIGATION_LEVEL_ID,
+      level_number: INVESTIGATION_LEVEL_NUMBER,
+      current_level: state.currentLevel,
       total_stars: state.totalStars,
+      completed_levels_count: Object.keys(state.completedLevels).length,
     });
 
     try {
@@ -312,6 +334,35 @@ export class InvestigationScene extends Scene {
 
     useGameUIStore.getState().setProgression(state);
     EventBus.emit("progression:updated", state);
+
+    await this.submitScore(stars);
+  }
+
+  /**
+   * Same `/scores` record levels 1–3 write. The phase has no floors, quizzes,
+   * quarters or collectibles of its own, so those go out empty — only the
+   * stars carry information.
+   */
+  private async submitScore(stars: number) {
+    try {
+      await this.persistence.saveScore({
+        levelId: INVESTIGATION_LEVEL_ID,
+        totalQuarters: 0,
+        totalStars: stars,
+        rating: "",
+        floors: [],
+        quiz: {
+          totalQuestions: 0,
+          correctAnswers: 0,
+          accuracyPercent: 0,
+          quartersEarned: 0,
+        },
+        intermediateQuizzes: { total: 0, passed: 0, quartersEarned: 0 },
+        collectedCollectibles: [],
+      });
+    } catch (error) {
+      console.error("[InvestigationScene] Failed to submit score", error);
+    }
   }
 
   private async loadProgressSafely(): Promise<UserProgressState | null> {

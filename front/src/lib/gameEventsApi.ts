@@ -1,4 +1,5 @@
 import { apiClient } from "./api/client";
+import { hasAnalyticsConsent } from "./consent/consentStorage";
 
 export type RegularQuizEventType = "quiz.completed" | "quiz.failed";
 export type IntermediateQuizEventType =
@@ -81,6 +82,15 @@ function setQueue(queue: QueuedEvent[]): void {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
 }
 
+function clearQueue(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Blocked store — there was nothing readable to flush anyway.
+  }
+}
+
 function randomId(): string {
   // Prefer crypto UUID if available.
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -114,6 +124,16 @@ let flushInFlight = false;
 
 export async function flushGameEventQueue(): Promise<void> {
   if (typeof window === "undefined") return;
+
+  // Without consent the queue is not merely held back, it is discarded
+  // (issue #864): "não armazenar eventos para envio retroativo". Anything
+  // banked before the player decided must never reach the server once they
+  // do — accepting authorises collection from that moment on, not backfill.
+  if (!hasAnalyticsConsent()) {
+    clearQueue();
+    return;
+  }
+
   if (flushInFlight) return;
   flushInFlight = true;
 
@@ -163,9 +183,20 @@ export function initGameEventQueue(): void {
   void flushGameEventQueue();
 }
 
+/**
+ * Send a quiz outcome to the Postgres pipeline, queueing it for retry if the
+ * request fails.
+ *
+ * Gated on consent (issue #864). The guard has to sit ahead of the queue as
+ * well as the request: enqueueing without consent would bank the event on
+ * disk and deliver it the moment the player accepted, which is exactly the
+ * retroactive collection the acceptance criteria forbid.
+ */
 export async function sendQuizOutcomeEvent(
   payload: GameEventPayload,
 ): Promise<void> {
+  if (!hasAnalyticsConsent()) return;
+
   try {
     await postEvent(payload);
   } catch {

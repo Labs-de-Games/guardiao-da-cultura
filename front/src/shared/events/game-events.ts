@@ -347,10 +347,22 @@ export interface GameEventMap {
   "ui:evidence-board-open-with-clue": { clueId: string | null };
   "credits:open": undefined;
   "credits:close": undefined;
+  /**
+   * Privacy settings panel on the map. Announced for the same reason credits
+   * is: the map's auto-start countdown has to stand down while the player is
+   * reading a consent decision, and Phaser cannot see React's local state.
+   */
+  "privacy:open": undefined;
+  "privacy:close": undefined;
   /** InvestigationScene → React: open the identification screen with its dossier. */
   "investigation:start": InvestigationPayload;
   /** React → InvestigationScene: the accusation resolved; persist the result. */
-  "investigation:completed": { stars: number; wrongAttempts: number };
+  "investigation:completed": {
+    stars: number;
+    wrongAttempts: number;
+    /** `true` when the player named the culprit; `false` when revealed. */
+    correct: boolean;
+  };
   /** React → InvestigationScene: leave the identification screen for the map. */
   "investigation:exit": undefined;
   /**

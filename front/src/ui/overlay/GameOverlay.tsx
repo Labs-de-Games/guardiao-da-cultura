@@ -28,6 +28,7 @@ import { GeniusSequencePanel } from "@/ui/panels/GeniusSequencePanel";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { MapInfoBox } from "@/ui/panels/MapInfoBox";
 import { MapPinTooltip } from "@/ui/panels/MapPinTooltip";
+import { PrivacySettings } from "@/ui/panels/PrivacySettings";
 import { StepSequencePanel } from "@/ui/panels/StepSequencePanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
@@ -100,6 +101,18 @@ function OverlayContent() {
   useEffect(() => {
     setAuthState(false, getGuestId());
   }, [setAuthState]);
+
+  /**
+   * The auto-start progress describes a Phaser timer, but it is stored in a
+   * module-level store that outlives any route change. Leaving the game (for
+   * `/privacidade`, say) destroys the timer while leaving its last value
+   * behind, so the map would come back showing a countdown already part-way
+   * through — one no live timer is driving. Clearing it on unmount keeps the
+   * displayed countdown tied to the timer that actually exists.
+   */
+  useEffect(() => {
+    return () => useGameUIStore.getState().setAutoStartProgress(null);
+  }, []);
 
   // Armed at level start so that dismissing the initial ControlsPanel also
   // collapses the sidebar; consumed on the first close, then Tab-only again.
@@ -478,6 +491,7 @@ function OverlayContent() {
         <MapPinTooltip />
         <MapInfoBox />
         <CreditsButton />
+        <PrivacySettings />
       </>
     );
   }

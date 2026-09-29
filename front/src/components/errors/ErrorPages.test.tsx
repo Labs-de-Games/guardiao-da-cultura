@@ -121,4 +121,12 @@ describe("ErrorPages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it("renders the shared sponsor footer outside the main landmark", () => {
+    render(<NotFoundPage />);
+
+    const footer = screen.getByRole("contentinfo");
+    expect(screen.getByRole("main")).not.toContainElement(footer);
+    expect(screen.getByAltText("Bemobi")).toBeInTheDocument();
+  });
 });

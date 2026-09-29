@@ -13,6 +13,7 @@ import {
   buildPhaseCompletionQuery,
   buildPhaseQuizPassRateQuery,
   buildPhaseReachedQuery,
+  buildPhaseStarsQuery,
   buildQuizPassRateQuery,
   buildSessionDurationQuery,
   buildSummaryQuery,
@@ -118,15 +119,22 @@ describe("HogQL query builders — non-negotiable rules (issue #742)", () => {
     expect(query).not.toContain("chapter_1_completed");
   });
 
-  it("getFunnelSteps has one completion step per level, ordered by levelNumber, using level_number not level_id", () => {
+  it("getFunnelSteps has one completion step per level 1–3, using level_number not level_id", () => {
     const steps = getFunnelSteps();
-    const levelSteps = steps.slice(3); // after the 3 acquisition steps
-    expect(levelSteps.length).toBeGreaterThanOrEqual(3);
+    const levelSteps = steps.slice(3, 6); // after the 3 acquisition steps
     levelSteps.forEach((step, index) => {
       expect(step.condition).toContain(
         `toInt(properties.level_number) = ${index + 1}`,
       );
     });
+  });
+
+  it("getFunnelSteps ends on finishing the investigation (level 4)", () => {
+    const steps = getFunnelSteps();
+    expect(steps).toHaveLength(7);
+    const last = steps[steps.length - 1];
+    expect(last.label).toContain("Concluiu Fase 4");
+    expect(last.condition).toBe("event = 'investigation_completed'");
   });
 
   it("buildSessionDurationQuery excludes sessions with no gameplay_started and guards duration bounds", () => {
@@ -229,6 +237,7 @@ describe("phase (per-level) query builders (issue #807)", () => {
     ["buildPhaseCompletionQuery", buildPhaseCompletionQuery],
     ["buildPhaseQuizPassRateQuery", buildPhaseQuizPassRateQuery],
     ["buildPhaseClueUsageQuery", buildPhaseClueUsageQuery],
+    ["buildPhaseStarsQuery", buildPhaseStarsQuery],
   ] as const;
 
   it.each(
@@ -243,16 +252,28 @@ describe("phase (per-level) query builders (issue #807)", () => {
     expect(turmaScoped.query).toContain("properties.turma_source = {source}");
   });
 
-  it("buildPhaseReachedQuery groups game_started players by level_id (not gameplay_started, not level_started)", () => {
+  it("buildPhaseReachedQuery groups game_started and investigation_opened players by level (not gameplay_started, not level_started)", () => {
     const { query } = buildPhaseReachedQuery(scope, range);
-    expect(query).toContain("event = 'game_started'");
+    expect(query).toContain(
+      "event IN ('game_started', 'investigation_opened')",
+    );
+    expect(query).not.toContain("gameplay_started");
     expect(query).toContain("GROUP BY level_id");
   });
 
-  it("buildPhaseCompletionQuery groups completed players by level_id", () => {
+  it("buildPhaseCompletionQuery groups level_completed and investigation_completed players by level", () => {
     const { query } = buildPhaseCompletionQuery(scope, range);
-    expect(query).toContain("event = 'level_completed'");
+    expect(query).toContain(
+      "event IN ('level_completed', 'investigation_completed')",
+    );
     expect(query).toContain("GROUP BY level_id");
+  });
+
+  it("maps investigation events to level_04 even without a level_id property", () => {
+    const { query } = buildPhaseCompletionQuery(scope, range);
+    expect(query).toContain(
+      "multiIf(event IN ('investigation_opened', 'investigation_completed', 'investigation_clue_placed'), 'level_04', properties.level_id) AS level_id",
+    );
   });
 
   it("buildPhaseQuizPassRateQuery groups per-attempt pass/total by level_id", () => {
@@ -264,10 +285,32 @@ describe("phase (per-level) query builders (issue #807)", () => {
     expect(query).toContain("GROUP BY level_id");
   });
 
-  it("buildPhaseClueUsageQuery counts clue_used grouped by level_id", () => {
+  it("buildPhaseClueUsageQuery counts collected clues (1–3) and board placements (4), never clue_used", () => {
     const { query } = buildPhaseClueUsageQuery(scope, range);
-    expect(query).toContain("event = 'clue_used'");
+    expect(query).toContain(
+      "event = 'clue_collected' AND properties.level_id = 'level_01'",
+    );
+    expect(query).toContain("event = 'investigation_clue_placed'");
+    expect(query).not.toContain("clue_used");
     expect(query).toContain("GROUP BY level_id");
+  });
+
+  it("buildPhaseClueUsageQuery excludes the tutorial's scripted drop", () => {
+    const { query } = buildPhaseClueUsageQuery(scope, range);
+    expect(query).toContain(
+      "NOT coalesce(toBool(properties.is_tutorial), false)",
+    );
+  });
+
+  it("buildPhaseStarsQuery averages each player's best stars per level", () => {
+    const { query } = buildPhaseStarsQuery(scope, range);
+    expect(query).toContain("max(toFloat(properties.stars)) AS best_stars");
+    expect(query).toContain("avg(best_stars) AS avg_stars");
+    expect(query).not.toContain("max_stars");
+    expect(query).toContain("GROUP BY level_id, player_id");
+    expect(query).toContain(
+      "event IN ('level_completed', 'investigation_completed')",
+    );
   });
 
   it("two turmas of the same institution never share a bound source value", () => {
@@ -279,20 +322,19 @@ describe("phase (per-level) query builders (issue #807)", () => {
 });
 
 describe("buildCompletionRateQuery (issue #807)", () => {
-  it("binds the final level number and never interpolates it into the query string", () => {
-    const { query, values } = buildCompletionRateQuery(scope, range, 3);
-    expect(values.final_level_number).toBe(3);
+  it("counts finishing the game as completing the investigation", () => {
+    const { query } = buildCompletionRateQuery(scope, range);
     expect(query).toContain(
-      "toInt(properties.level_number) = {final_level_number}",
+      "uniqExactIf(properties.anonymous_player_id, event = 'investigation_completed') AS completed",
     );
-    expect(query).not.toContain("= 3");
+    expect(query).not.toContain("level_completed");
   });
 
   it("is institution-wide by default, turma-scoped when a turmaSource is given", () => {
-    const institutionWide = buildCompletionRateQuery(scope, range, 3);
+    const institutionWide = buildCompletionRateQuery(scope, range);
     expect(institutionWide.values.source).toBeUndefined();
 
-    const turmaScoped = buildCompletionRateQuery(scope, range, 3, "group-a");
+    const turmaScoped = buildCompletionRateQuery(scope, range, "group-a");
     expect(turmaScoped.values.source).toBe("group-a");
     expect(turmaScoped.query).toContain("properties.turma_source = {source}");
   });

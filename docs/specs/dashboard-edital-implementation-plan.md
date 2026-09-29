@@ -219,8 +219,9 @@ still use.
 controllers) are deleted. The dead front wrapper `front/src/lib/api/analytics.ts` is deleted.
 `EVENTS.md` corrects the `game_load_failed`/asset-load claim as planned.
 `docs/specs/posthog-implementation-plan.md` carries the server-only personal-key exception. The
-four-coexisting-analytics-stacks note (PostHog, Postgres pipeline, Contentsquare, Google Ads gtag)
-is recorded in `EVENTS.md`, declaring PostHog the sole source of truth for the edital.
+coexisting-analytics-stacks note is recorded in `EVENTS.md`, declaring PostHog the sole source of
+truth for the edital. It listed four stacks when written (PostHog, Postgres pipeline, Contentsquare,
+Google Ads gtag); Contentsquare was removed in 2026-09-29 and the note now lists three.
 
 ---
 

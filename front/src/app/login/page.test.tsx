@@ -119,6 +119,12 @@ describe("LoginPage", () => {
     expect(link).toHaveAttribute("href", "/register");
   });
 
+  it("renders the shared sponsor footer", () => {
+    render(<LoginPage />);
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+    expect(screen.getByAltText("Bemobi")).toBeInTheDocument();
+  });
+
   it("shows forgot password form when link is clicked", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByText("Esqueci minha senha"));
