@@ -3,6 +3,7 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import { Footer } from "@/components/Footer";
 import { GAME_UI_TOKENS } from "@/ui/theme/tokens";
 
 const { colors, fonts, radius } = GAME_UI_TOKENS;
@@ -103,117 +104,128 @@ export function ErrorPageLayout({
 
   return (
     <Box
-      component="main"
       sx={{
         position: "fixed",
         inset: 0,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 3,
+        flexDirection: "column",
         overflowY: "auto",
         backgroundColor: colors.bgPrimary,
-        color: colors.textPrimary,
-        fontFamily: `${fonts.body}, sans-serif`,
       }}
     >
       <Box
-        role="alert"
-        aria-labelledby="error-page-title"
+        component="main"
         sx={{
-          width: "100%",
-          maxWidth: 520,
-          textAlign: "center",
-          p: { xs: 3, sm: 5 },
-          backgroundColor: colors.bgSecondary,
-          border: `2px solid ${colors.accentGold}`,
-          borderRadius: `${radius.panel}px`,
-          boxShadow: `0 0 0 4px ${colors.bgTertiary}`,
+          // Grow, never shrink, so a tall message scrolls instead of
+          // being squeezed by the footer.
+          flex: "1 0 auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 3,
+          color: colors.textPrimary,
+          fontFamily: `${fonts.body}, sans-serif`,
         }}
       >
-        {!illustrationFailed && (
-          <Box
-            component="img"
-            src={illustrationSrc}
-            alt=""
-            aria-hidden="true"
-            width={ILLUSTRATION_SIZE}
-            height={ILLUSTRATION_SIZE}
-            onError={() => setIllustrationFailed(true)}
-            sx={{
-              display: "block",
-              mx: "auto",
-              mb: 2,
-              imageRendering: "pixelated",
-            }}
-          />
-        )}
-
-        {code && (
-          <Typography
-            component="p"
-            sx={{
-              fontFamily: `${fonts.display}, sans-serif`,
-              fontSize: 56,
-              lineHeight: 1,
-              color: colors.accentGold,
-              mb: 1,
-            }}
-          >
-            {code}
-          </Typography>
-        )}
-
-        <Typography
-          id="error-page-title"
-          component="h1"
+        <Box
+          role="alert"
+          aria-labelledby="error-page-title"
           sx={{
-            fontFamily: `${fonts.display}, sans-serif`,
-            fontSize: 32,
-            color: colors.accentGold,
-            mb: 2,
+            width: "100%",
+            maxWidth: 520,
+            textAlign: "center",
+            p: { xs: 3, sm: 5 },
+            backgroundColor: colors.bgSecondary,
+            border: `2px solid ${colors.accentGold}`,
+            borderRadius: `${radius.panel}px`,
+            boxShadow: `0 0 0 4px ${colors.bgTertiary}`,
           }}
         >
-          {title}
-        </Typography>
+          {!illustrationFailed && (
+            <Box
+              component="img"
+              src={illustrationSrc}
+              alt=""
+              aria-hidden="true"
+              width={ILLUSTRATION_SIZE}
+              height={ILLUSTRATION_SIZE}
+              onError={() => setIllustrationFailed(true)}
+              sx={{
+                display: "block",
+                mx: "auto",
+                mb: 2,
+                imageRendering: "pixelated",
+              }}
+            />
+          )}
 
-        <Typography
-          component="div"
-          sx={{ fontSize: 16, lineHeight: 1.6, color: colors.textPrimary }}
-        >
-          {description}
-        </Typography>
+          {code && (
+            <Typography
+              component="p"
+              sx={{
+                fontFamily: `${fonts.display}, sans-serif`,
+                fontSize: 56,
+                lineHeight: 1,
+                color: colors.accentGold,
+                mb: 1,
+              }}
+            >
+              {code}
+            </Typography>
+          )}
 
-        {children}
-
-        {(primaryAction || secondaryAction) && (
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mt: 4, justifyContent: "center" }}
-          >
-            {primaryAction && (
-              <ActionButton
-                action={primaryAction}
-                variant="primary"
-                autoFocusRef={primaryRef}
-              />
-            )}
-            {secondaryAction && (
-              <ActionButton action={secondaryAction} variant="secondary" />
-            )}
-          </Stack>
-        )}
-
-        {reference && (
           <Typography
-            component="p"
-            sx={{ mt: 3, fontSize: 12, color: colors.textSecondary }}
+            id="error-page-title"
+            component="h1"
+            sx={{
+              fontFamily: `${fonts.display}, sans-serif`,
+              fontSize: 32,
+              color: colors.accentGold,
+              mb: 2,
+            }}
           >
-            Código de referência: {reference}
+            {title}
           </Typography>
-        )}
+
+          <Typography
+            component="div"
+            sx={{ fontSize: 16, lineHeight: 1.6, color: colors.textPrimary }}
+          >
+            {description}
+          </Typography>
+
+          {children}
+
+          {(primaryAction || secondaryAction) && (
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{ mt: 4, justifyContent: "center" }}
+            >
+              {primaryAction && (
+                <ActionButton
+                  action={primaryAction}
+                  variant="primary"
+                  autoFocusRef={primaryRef}
+                />
+              )}
+              {secondaryAction && (
+                <ActionButton action={secondaryAction} variant="secondary" />
+              )}
+            </Stack>
+          )}
+
+          {reference && (
+            <Typography
+              component="p"
+              sx={{ mt: 3, fontSize: 12, color: colors.textSecondary }}
+            >
+              Código de referência: {reference}
+            </Typography>
+          )}
+        </Box>
       </Box>
+      <Footer />
     </Box>
   );
 }
