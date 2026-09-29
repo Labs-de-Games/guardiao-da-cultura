@@ -175,7 +175,7 @@ in `.env.example`, and the game runs fully without them. See
 ├── nginx/                      # Reverse proxy configuration
 ├── Makefile                    # Common development commands
 └── docs/                       # Documentation
-    ├── en/                     # English docs, specs and notes
+    ├── en/                     # English docs and notes
     └── pt-BR/                  # Brazilian Portuguese docs and notes
 ```
 
