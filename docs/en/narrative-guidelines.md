@@ -1,3 +1,5 @@
+🌐 English | [Português (Brasil)](../pt-BR/narrative-guidelines.md)
+
 # Narrative guidelines
 
 This document sets standards for writing the game's narratives, character lines and educational content, ensuring consistency, accessibility and respect for Brazil's cultural diversity.

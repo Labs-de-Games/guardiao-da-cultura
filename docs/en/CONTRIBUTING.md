@@ -1,3 +1,5 @@
+🌐 English | [Português (Brasil)](../pt-BR/CONTRIBUTING.md)
+
 # Contributing to Guardião da Cultura
 
 Contributions are welcome — bug reports, fixes, new level content, translations,
@@ -211,6 +213,11 @@ The `<id>` is the issue number when there is one.
   own.
 - Add or update tests for behaviour you change.
 - Run `make check` (lint plus tests) before pushing.
+- Documentation lives in two trees, `docs/en/` and `docs/pt-BR/`, with the same
+  filenames. English is canonical when the two disagree. A pull request that
+  changes a doc in one language updates the other in the same pull request, or
+  opens a follow-up issue labelled `documentation`. Working notes under
+  `notes/` are not translated.
 
 ### 3. Commit messages
 
