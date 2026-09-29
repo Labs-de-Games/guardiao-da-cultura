@@ -1476,28 +1476,28 @@ export class Game extends Scene implements GameDataAccessor {
   }
 
   private setupEvents() {
-    this.events.on(
-      GameEvents.SWITCH_LIGHT_ACTIVATED,
-      (payload: { lightBarName: string }) => {
-        const lb = this.lightBarSystem?.getByInstanceId(payload.lightBarName);
-        if (!lb) return;
-        this.switchLightCinematicSystem.playCinematic(lb.x, lb.y, () => {
-          this.lightBarSystem?.fix(payload.lightBarName);
-          if (lb.placeholderId) {
-            this.placeholderSystem.unlockByInstanceId(lb.placeholderId);
-          }
-          this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
-          if (this.switchLightSystem?.allActivated()) {
-            this.events.emit(GameEvents.INFO_COLLECTED, {
-              missionId: MissionIds.CURATOR_L3,
-              infoKey: MissionKeys.SWITCHES_DONE,
-            });
-          }
-        });
-      },
-    );
+    // The scene instance and its event emitter survive scene restarts, so
+    // every listener added here must be removed on SHUTDOWN or it stacks up
+    // once per level played in the session.
+    const onSwitchLightActivated = (payload: { lightBarName: string }) => {
+      const lb = this.lightBarSystem?.getByInstanceId(payload.lightBarName);
+      if (!lb) return;
+      this.switchLightCinematicSystem.playCinematic(lb.x, lb.y, () => {
+        this.lightBarSystem?.fix(payload.lightBarName);
+        if (lb.placeholderId) {
+          this.placeholderSystem.unlockByInstanceId(lb.placeholderId);
+        }
+        this.events.emit(GameEvents.MISSION_PROGRESS_CHANGED);
+        if (this.switchLightSystem?.allActivated()) {
+          this.events.emit(GameEvents.INFO_COLLECTED, {
+            missionId: MissionIds.CURATOR_L3,
+            infoKey: MissionKeys.SWITCHES_DONE,
+          });
+        }
+      });
+    };
 
-    this.events.on(GameEvents.DIALOGUE_STARTED, (source?: string) => {
+    const onDialogueStarted = (source?: string) => {
       this.isDialogueOpen = true;
       this.tutorialSetDialogueOpen = false;
       if (this.player) {
@@ -1513,43 +1513,47 @@ export class Game extends Scene implements GameDataAccessor {
         AudioManager.playSfx("sfx.ui.click");
       }
       this.effects.setZoom(1.2, 400);
-    });
+    };
 
-    this.events.on(
-      GameEvents.DIALOGUE_ENDED,
-      (data?: { dismissed?: boolean; source?: string }) => {
-        this.isChunkSelectorOpen = false;
-        this.isDialogueOpen = false;
+    const onDialogueEnded = (data?: {
+      dismissed?: boolean;
+      source?: string;
+    }) => {
+      this.isChunkSelectorOpen = false;
+      this.isDialogueOpen = false;
 
-        const isDismissed = data?.dismissed === true;
-        const hasQueuedDialogue =
-          useDialogueStore.getState().dialogueQueue.length > 0;
+      const isDismissed = data?.dismissed === true;
+      const hasQueuedDialogue =
+        useDialogueStore.getState().dialogueQueue.length > 0;
 
-        if (isDismissed || !hasQueuedDialogue) {
-          this.quizManager.triggerPendingIntermediateQuiz();
-        }
+      if (isDismissed || !hasQueuedDialogue) {
+        this.quizManager.triggerPendingIntermediateQuiz();
+      }
 
-        this.time.delayedCall(200, () => {
-          this.checkDialogState();
+      this.time.delayedCall(200, () => {
+        this.checkDialogState();
 
-          if (this.npcs) {
-            for (const npc of this.npcs) {
-              npc.play("npc_idle_anim", true);
-            }
+        if (this.npcs) {
+          for (const npc of this.npcs) {
+            npc.play("npc_idle_anim", true);
           }
-        });
-
-        this.effects.setZoom(
-          1.0,
-          LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
-        );
-        // Play UI zoom-out sound only for puzzle panels
-        if (data?.source === "puzzle") {
-          AudioManager.playSfx("sfx.ui.click");
         }
-        this.effects.setZoom(1.0, 400);
-      },
-    );
+      });
+
+      this.effects.setZoom(
+        1.0,
+        LayoutConfig.GAME.CAMERA.DIALOGUE_ZOOM_DURATION,
+      );
+      // Play UI zoom-out sound only for puzzle panels
+      if (data?.source === "puzzle") {
+        AudioManager.playSfx("sfx.ui.click");
+      }
+      this.effects.setZoom(1.0, 400);
+    };
+
+    this.events.on(GameEvents.SWITCH_LIGHT_ACTIVATED, onSwitchLightActivated);
+    this.events.on(GameEvents.DIALOGUE_STARTED, onDialogueStarted);
+    this.events.on(GameEvents.DIALOGUE_ENDED, onDialogueEnded);
 
     const unsubControls = useGameUIStore.subscribe((state, prevState) => {
       if (state.controlsOpen !== prevState.controlsOpen) {
@@ -1563,6 +1567,12 @@ export class Game extends Scene implements GameDataAccessor {
     });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.events.off(
+        GameEvents.SWITCH_LIGHT_ACTIVATED,
+        onSwitchLightActivated,
+      );
+      this.events.off(GameEvents.DIALOGUE_STARTED, onDialogueStarted);
+      this.events.off(GameEvents.DIALOGUE_ENDED, onDialogueEnded);
       unsubControls();
     });
   }
