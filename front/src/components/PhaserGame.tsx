@@ -3,6 +3,9 @@
 import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
+// Type-only: the value is pulled in through the dynamic import below, so
+// Phaser stays out of the bundle this component ships with.
+import type { AudioManager as AudioManagerType } from "../game/audio";
 import { LayoutConfig } from "../game/constants/LayoutConfig";
 import { GameEventType } from "../game/types/AnalyticsTypes";
 import { sendGameEvent } from "../lib/analyticsApi";
@@ -29,7 +32,7 @@ export default function PhaserGame() {
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasViewportCleanupRef = useRef<(() => void) | null>(null);
-  const isInitializingRef = useRef(false);
+  const audioManagerRef = useRef<typeof AudioManagerType | null>(null);
   const resumeAudioRef = useRef<(() => void) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLevelId, setLoadingLevelId] = useState<string | undefined>();
@@ -140,21 +143,28 @@ export default function PhaserGame() {
     };
 
     if (typeof window === "undefined" || !containerRef.current) return;
-    if (isInitializingRef.current || gameRef.current) return;
 
-    // Registered only once all early-return guards above have passed, and
-    // always paired with the cleanup below in the same effect run. Adding
-    // these before the guards (as before) meant every early-bail re-render
-    // (e.g. one where the game was already initializing) leaked a duplicate
-    // listener set with no matching cleanup — each real phaser-loading-error
-    // would then fire handleLoadingError once per leaked listener,
-    // multiplying critical_error_occurred captures and game_event writes.
+    // Set by the cleanup below, read by the async boot. The previous guard
+    // here bailed out of a second effect run whenever an init was already in
+    // flight, and bailed out *before* returning a cleanup — so under React
+    // StrictMode (Next's dev default, which mounts, unmounts and remounts)
+    // the only surviving effect run owned no cleanup at all and the game was
+    // never destroyed. It kept running behind a detached canvas: music
+    // playing over /privacidade and /, and a second scene answering the same
+    // window-level arrow keys as the visible one once the player came back.
+    let cancelled = false;
+
+    // Registered only once the guard above has passed, so every run that
+    // adds these listeners also returns the cleanup that removes them. An
+    // earlier version registered them before an early-bail guard: each bail
+    // leaked a listener set with no matching cleanup, and one real
+    // phaser-loading-error then fired handleLoadingError once per leaked
+    // listener, multiplying critical_error_occurred captures and
+    // game_event writes.
     window.addEventListener("phaser-loading-start", handleLoadingStart);
     window.addEventListener("phaser-loading-progress", handleLoadingProgress);
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
     window.addEventListener("phaser-loading-error", handleLoadingError);
-
-    isInitializingRef.current = true;
 
     const initGame = async () => {
       let stage: "player_id_resolution" | "module_import" | "phaser_init" =
@@ -175,7 +185,23 @@ export default function PhaserGame() {
         }
 
         stage = "module_import";
-        const { default: StartGame } = await import("../game/main");
+        // Same chunk graph — the scenes already import the audio module —
+        // so this costs nothing beyond a reference the cleanup can use to
+        // silence the singleton without Phaser entering this bundle.
+        const [{ default: StartGame }, { AudioManager }] = await Promise.all([
+          import("../game/main"),
+          import("../game/audio"),
+        ]);
+
+        // The effect can be torn down while the imports above are still in
+        // flight — StrictMode does it on every dev mount, and so does a
+        // player who leaves during loading. Nothing would be left to own the
+        // game, so don't boot one: the alternative is an instance playing on
+        // unseen with no cleanup left to reach it. Checked here, with no
+        // await between this line and the assignment below, so the game is
+        // owned from the moment it exists.
+        if (cancelled) return;
+        audioManagerRef.current = AudioManager;
 
         stage = "phaser_init";
         const game = StartGame("game-container", playerId, true);
@@ -254,7 +280,6 @@ export default function PhaserGame() {
           });
         }
         console.error("[PhaserGame] Error initializing game:", err);
-        isInitializingRef.current = false;
         setIsLoading(false);
         setHasInitError(true);
       }
@@ -263,6 +288,7 @@ export default function PhaserGame() {
     void initGame();
 
     return () => {
+      cancelled = true;
       if (resumeAudioRef.current) {
         document.removeEventListener("click", resumeAudioRef.current);
         document.removeEventListener("keydown", resumeAudioRef.current);
@@ -286,10 +312,20 @@ export default function PhaserGame() {
         canvasViewportCleanupRef.current();
         canvasViewportCleanupRef.current = null;
       }
+      // Before the game, not after: AudioManager is a module-level singleton
+      // that outlives any one Phaser instance, and the sound handles it holds
+      // belong to the sound manager destroy() is about to tear down. Left
+      // alone, the next game's first playMusic() would stop a sound that no
+      // longer exists.
+      if (audioManagerRef.current) {
+        audioManagerRef.current.destroy();
+        audioManagerRef.current = null;
+      }
       if (gameRef.current) {
-        gameRef.current.destroy(false);
+        // removeCanvas: React is taking the container with it, and an
+        // orphaned canvas still holds a WebGL context.
+        gameRef.current.destroy(true);
         gameRef.current = null;
-        isInitializingRef.current = false;
         gameLoadFailedSentRef.current = false;
       }
     };
