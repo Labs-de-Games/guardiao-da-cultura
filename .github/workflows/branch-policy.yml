@@ -1,0 +1,43 @@
+name: Branch policy
+
+on:
+  pull_request:
+    # `edited` re-runs the check when the base branch of a pull request changes.
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  branch-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name and base
+        # Branch names come from the contributor, so they reach the script through
+        # env and are never interpolated into it.
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          guide="See docs/en/CONTRIBUTING.md, section \"1. Fork and branch\"."
+
+          if [[ "$HEAD_REF" == dependabot/* ]]; then
+            echo "Dependabot branch, skipping the naming rule."
+            exit 0
+          fi
+
+          if [[ "$BASE_REF" == master ]]; then
+            if [[ "$HEAD_REF" == develop || "$HEAD_REF" =~ ^(release|hotfix)/[a-z0-9._-]+$ ]]; then
+              echo "OK: $HEAD_REF -> master"
+              exit 0
+            fi
+            echo "::error::master only accepts pull requests from develop, release/* or hotfix/*. Retarget this pull request to develop. $guide"
+            exit 1
+          fi
+
+          pattern='^(feat|fix|docs|chore|refactor|test|style|ci|hotfix|release)/[a-z0-9._-]+$'
+          if [[ ! "$HEAD_REF" =~ $pattern ]]; then
+            echo "::error::Branch name '$HEAD_REF' does not match $pattern. $guide"
+            exit 1
+          fi
+
+          echo "OK: $HEAD_REF -> $BASE_REF"
