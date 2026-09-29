@@ -59,7 +59,6 @@ describe("UIScene quiz navigation", () => {
     unsubs = [];
     useGameUIStore.getState().resetQuiz();
     useGameUIStore.setState({
-      isInterestDialogOpen: false,
       levelTransitionActive: false,
     });
   });
@@ -91,7 +90,6 @@ describe("UIScene quiz navigation", () => {
     expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
       levelId: "level_02",
     });
-    expect(useGameUIStore.getState().isInterestDialogOpen).toBe(false);
   });
 
   it("seeds the next level's info after clearing the previous level's UI", () => {
@@ -125,7 +123,7 @@ describe("UIScene quiz navigation", () => {
     expect(useGameUIStore.getState().levelTransitionActive).toBe(true);
   });
 
-  it("opens the interest dialog when the next level is disabled", () => {
+  it("returns to the world map when the next level is disabled", () => {
     const previous = LEVEL_ENABLED.level_03;
     LEVEL_ENABLED.level_03 = false;
 
@@ -135,15 +133,17 @@ describe("UIScene quiz navigation", () => {
 
       EventBus.emit("quiz:next-level", undefined);
 
-      expect(useGameUIStore.getState().isInterestDialogOpen).toBe(true);
-      expect(sceneStart).not.toHaveBeenCalled();
-      expect(sceneStop).not.toHaveBeenCalled();
+      // End of the playable content: the quiz closes and the player is
+      // handed back to the map, the same exit "quiz:close" performs.
+      expect(useGameUIStore.getState().quiz.isVisible).toBe(false);
+      expect(sceneStop).toHaveBeenCalledWith(SceneNames.GAME);
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
     } finally {
       LEVEL_ENABLED.level_03 = previous;
     }
   });
 
-  it("opens the interest dialog when the identification phase is disabled", () => {
+  it("returns to the world map when the identification phase is disabled", () => {
     const previous = LEVEL_ENABLED.level_04;
     LEVEL_ENABLED.level_04 = false;
 
@@ -153,9 +153,11 @@ describe("UIScene quiz navigation", () => {
 
       EventBus.emit("quiz:next-level", undefined);
 
-      expect(useGameUIStore.getState().isInterestDialogOpen).toBe(true);
-      expect(sceneStart).not.toHaveBeenCalled();
-      expect(sceneStop).not.toHaveBeenCalled();
+      // End of the playable content: the quiz closes and the player is
+      // handed back to the map, the same exit "quiz:close" performs.
+      expect(useGameUIStore.getState().quiz.isVisible).toBe(false);
+      expect(sceneStop).toHaveBeenCalledWith(SceneNames.GAME);
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.INTRO);
     } finally {
       LEVEL_ENABLED.level_04 = previous;
     }
@@ -179,7 +181,6 @@ describe("UIScene quiz navigation", () => {
       expect(sceneStart).toHaveBeenCalledWith(SceneNames.LEVEL_CINEMATIC, {
         levelId: "level_04",
       });
-      expect(useGameUIStore.getState().isInterestDialogOpen).toBe(false);
       expect(useGameUIStore.getState().levelInfo).toEqual({
         title: "Identificação do Suspeito",
         location: "Sala de Investigação",
