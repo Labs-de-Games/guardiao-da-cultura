@@ -13,7 +13,7 @@ Human-readable credits for every third-party work are in [`CREDITS.md`](./CREDIT
 which mirrors the in-game credits screen. Institutional names and logos are
 covered separately by [`NOTICE`](./NOTICE) and are **not** licensed here. The
 evidence behind every row below — file paths, sources, and the open questions
-still being confirmed — is in [`docs/oss/asset-matrix.md`](./docs/oss/asset-matrix.md).
+still being confirmed — is in [`docs/en/notes/oss/asset-matrix.md`](./docs/en/notes/oss/asset-matrix.md).
 
 ---
 

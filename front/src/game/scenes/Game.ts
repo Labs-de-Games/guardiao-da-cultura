@@ -1150,7 +1150,7 @@ export class Game extends Scene implements GameDataAccessor {
 
       // Canonical funnel step — only chapter 1 has one; other levels have
       // no corresponding canonical step (see the 7-step funnel in
-      // docs/specs/edital-onepager.md).
+      // docs/en/specs/edital-onepager.md).
       if (this.levelDef.levelNumber === 1) {
         posthog.capture("chapter_1_started", { level_id: this.levelId });
         // Issue #741: every event after level entry should carry

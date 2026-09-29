@@ -13,11 +13,11 @@ what you must keep when you adapt them.
 > condition that credit is always given, and the original assets are CC BY 4.0,
 > which carries the same obligation. An adapted version must keep the credits
 > for every asset it still ships — in `CREDITS.md`, in the in-game credits
-> screen, or both. See [`../ASSETS-LICENSE.md`](../ASSETS-LICENSE.md). If you
+> screen, or both. See [`../../ASSETS-LICENSE.md`](../../ASSETS-LICENSE.md). If you
 > replace an asset entirely, remove its credit and add one for the replacement.
 > If you rebrand the game, you must also remove the sponsor logos and the
 > "Realização" credits section — those marks are not licensed. See
-> [`../NOTICE`](../NOTICE).
+> [`../../NOTICE`](../../NOTICE).
 
 ## Where everything lives
 

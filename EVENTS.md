@@ -162,7 +162,7 @@ O backend identifica “Sessão 1” via:
 - ✅ **Emitido** — `PhaserGame.tsx`'s `handleLoadingError` was a no-op until #741; it now
   captures `critical_error_occurred` to PostHog and mirrors an `event.logged` row with
   `severity: "critical"` on asset-load failures (Phaser `loaderror`). Closes the same
-  pendency `docs/EPIC-analytics-dashboard.md` tracked ("emit `event.logged` for critical
+  pendency `docs/pt-BR/notes/EPIC-analytics-dashboard.md` tracked ("emit `event.logged` for critical
   errors").
 
 ### Metadados de erro críticos aceitos pelo backend

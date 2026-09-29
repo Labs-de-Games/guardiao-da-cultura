@@ -54,7 +54,7 @@ export default function PlayLanding() {
     // Legacy — unchanged.
     posthog.capture("landing_page_play_clicked");
     // Canonical funnel step (step 2 of 7) — see
-    // docs/specs/edital-onepager.md. dwell_ms per issue #741's dual-emit
+    // docs/en/specs/edital-onepager.md. dwell_ms per issue #741's dual-emit
     // table ("+ dwell_ms").
     posthog.capture("play_clicked", {
       dwell_ms: Date.now() - enteredAtRef.current,
