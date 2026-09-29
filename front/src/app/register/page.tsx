@@ -19,11 +19,13 @@ import {
   fieldValidSx,
   iconSx,
 } from "@/components/auth/authStyles";
+import { TermsAcceptance } from "@/components/auth/TermsAcceptance";
 import { apiClient } from "@/lib/api/client";
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
 } from "@/lib/auth/passwordPolicy";
+import { INSTITUTION_TERMS_VERSION } from "@/lib/consent/institutionTerms";
 
 const NICKNAME_MAX_LENGTH = 200;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,6 +43,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [institutionSlug, setInstitutionSlug] = useState("");
   const [nickname, setNickname] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -80,6 +83,13 @@ export default function RegisterPage() {
       setError("As senhas não coincidem.");
       return;
     }
+    // The submit button is already disabled without this, and the backend
+    // refuses it too — but a form can still be submitted by pressing Enter in
+    // a field, which bypasses a disabled button.
+    if (!termsAccepted) {
+      setError("É necessário aceitar os Termos de Uso para se cadastrar.");
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
     try {
@@ -88,6 +98,12 @@ export default function RegisterPage() {
         password,
         institutionSlug,
         nickname,
+        termsAccepted,
+        // The version actually rendered, echoed back so the stored record says
+        // which text was on screen. The backend refuses anything but its own
+        // current version — a tab left open across a deploy gets an error and
+        // has to reload, rather than recording consent to unseen wording.
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
       setDone(true);
     } catch {
@@ -230,12 +246,19 @@ export default function RegisterPage() {
             confirmValid && fieldValidSx,
           ]}
         />
+        <TermsAcceptance
+          checked={termsAccepted}
+          onChange={setTermsAccepted}
+          disabled={isSubmitting}
+        />
         {error ? (
           <Alert severity="error" sx={{ borderRadius: "8px" }}>
             {error}
           </Alert>
         ) : null}
-        <AuthSubmitButton loading={isSubmitting}>Cadastrar</AuthSubmitButton>
+        <AuthSubmitButton loading={isSubmitting} disabled={!termsAccepted}>
+          Cadastrar
+        </AuthSubmitButton>
       </Box>
 
       <Typography

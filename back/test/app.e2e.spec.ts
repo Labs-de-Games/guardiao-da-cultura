@@ -9,6 +9,7 @@ import { RefreshToken } from "../src/modules/auth/entities/refresh-token.entity"
 import { Badge } from "../src/modules/badges/badge.entity";
 import { UserBadge } from "../src/modules/badges/user-badge.entity";
 import { CampaignLink } from "../src/modules/campaign-links/campaign-link.entity";
+import { UserConsent } from "../src/modules/consent/user-consent.entity";
 import { UserProgress } from "../src/modules/progression/user-progress.entity";
 import { UserCollectible } from "../src/modules/scoring/user-collectible.entity";
 import { UserScore } from "../src/modules/scoring/user-score.entity";
@@ -48,6 +49,8 @@ describe("AppController (e2e)", () => {
       .overrideProvider(getRepositoryToken(User))
       .useValue(repo)
       .overrideProvider(getRepositoryToken(UserProgress))
+      .useValue(repo)
+      .overrideProvider(getRepositoryToken(UserConsent))
       .useValue(repo)
       .overrideProvider(getRepositoryToken(GameEvent))
       .useValue(repo)

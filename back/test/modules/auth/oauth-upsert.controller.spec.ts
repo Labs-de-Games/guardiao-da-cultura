@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
@@ -8,9 +9,12 @@ import { PinoLogger } from "nestjs-pino";
 import { ConfigService } from "../../../src/core/config/config.service";
 import { EMAIL_SERVICE } from "../../../src/core/email/email.constants";
 import { OAuthUpsertController } from "../../../src/modules/auth/controllers/oauth-upsert.controller";
+import { ConsentService } from "../../../src/modules/consent/consent.service";
+import { ConsentType } from "../../../src/modules/consent/enums/consent-type.enum";
 import { Role } from "../../../src/modules/users/enums/role.enum";
 import type { User } from "../../../src/modules/users/user.entity";
 import { UserService } from "../../../src/modules/users/user.service";
+import { INSTITUTION_TERMS_VERSION } from "../../../src/shared/consent/institution-terms";
 
 /** Lets the controller's fire-and-forget email promise settle. */
 const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
@@ -26,6 +30,10 @@ describe("OAuthUpsertController", () => {
   };
   let mockEmailService: { sendWelcomeEmail: jest.Mock };
   let mockLogger: { error: jest.Mock };
+  let mockConsentService: {
+    record: jest.Mock;
+    hasCurrentConsent: jest.Mock;
+  };
 
   beforeEach(async () => {
     mockUserService = {
@@ -39,11 +47,17 @@ describe("OAuthUpsertController", () => {
       sendWelcomeEmail: jest.fn().mockResolvedValue(undefined),
     };
     mockLogger = { error: jest.fn() };
+    mockConsentService = {
+      record: jest.fn().mockResolvedValue(undefined),
+      // Default: nothing recorded yet, so recordTermsOnce actually writes.
+      hasCurrentConsent: jest.fn().mockResolvedValue(false),
+    };
 
     const moduleRef = await Test.createTestingModule({
       controllers: [OAuthUpsertController],
       providers: [
         { provide: UserService, useValue: mockUserService },
+        { provide: ConsentService, useValue: mockConsentService },
         { provide: EMAIL_SERVICE, useValue: mockEmailService },
         { provide: PinoLogger, useValue: mockLogger },
         {
@@ -83,6 +97,7 @@ describe("OAuthUpsertController", () => {
       role: Role.Institution,
       email: "escola@example.com",
       institutionSlug: null,
+      termsAccepted: false,
     });
   });
 
@@ -102,6 +117,7 @@ describe("OAuthUpsertController", () => {
       role: Role.Institution,
       email: "escola@example.com",
       institutionSlug: "escola-teste",
+      termsAccepted: false,
     });
   });
 
@@ -148,6 +164,8 @@ describe("OAuthUpsertController", () => {
       const result = await controller.onboarding({
         userId: "inst-id",
         institutionName: "Escola Teste",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       expect(result).toEqual({
@@ -173,6 +191,8 @@ describe("OAuthUpsertController", () => {
       const result = await controller.onboarding({
         userId: "inst-id",
         institutionName: "Escola Teste",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
       await flushPromises();
 
@@ -190,6 +210,8 @@ describe("OAuthUpsertController", () => {
       const result = await controller.onboarding({
         userId: "inst-id",
         institutionName: "Escola Teste",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       expect(result.institutionSlug).toBe("escola-teste");
@@ -205,6 +227,8 @@ describe("OAuthUpsertController", () => {
       const result = await controller.onboarding({
         userId: "inst-id",
         institutionName: "Outro Nome",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
       });
 
       expect(result).toEqual({
@@ -222,7 +246,12 @@ describe("OAuthUpsertController", () => {
       });
 
       await expect(
-        controller.onboarding({ userId: "inst-id", institutionName: "X" }),
+        controller.onboarding({
+          userId: "inst-id",
+          institutionName: "X",
+          termsAccepted: true,
+          termsVersion: INSTITUTION_TERMS_VERSION,
+        }),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(mockEmailService.sendWelcomeEmail).not.toHaveBeenCalled();
     });
@@ -231,9 +260,150 @@ describe("OAuthUpsertController", () => {
       mockUserService.findById.mockResolvedValue(null);
 
       await expect(
-        controller.onboarding({ userId: "missing", institutionName: "X" }),
+        controller.onboarding({
+          userId: "missing",
+          institutionName: "X",
+          termsAccepted: true,
+          termsVersion: INSTITUTION_TERMS_VERSION,
+        }),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(mockEmailService.sendWelcomeEmail).not.toHaveBeenCalled();
+    });
+
+    it("records the terms acceptance (issue #338)", async () => {
+      mockUserService.findById.mockResolvedValue(institutionUser);
+
+      await controller.onboarding({
+        userId: "inst-id",
+        institutionName: "Escola Teste",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
+      });
+
+      expect(mockConsentService.record).toHaveBeenCalledWith(
+        "inst-id",
+        ConsentType.InstitutionTerms,
+        INSTITUTION_TERMS_VERSION,
+      );
+    });
+
+    it("still records consent on the already-onboarded path", async () => {
+      // An account that got its slug before #338 shipped reaches onboarding
+      // with nothing to do but consent — the early return must not skip it.
+      mockUserService.findById.mockResolvedValue({
+        ...institutionUser,
+        institutionSlug: "escola-original",
+        institutionName: "Escola Original",
+      });
+
+      await controller.onboarding({
+        userId: "inst-id",
+        institutionName: "Outro Nome",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
+      });
+
+      expect(mockConsentService.record).toHaveBeenCalled();
+    });
+
+    it("refuses a stale terms version before touching the account", async () => {
+      mockUserService.findById.mockResolvedValue(institutionUser);
+
+      await expect(
+        controller.onboarding({
+          userId: "inst-id",
+          institutionName: "Escola Teste",
+          termsAccepted: true,
+          termsVersion: "2020-01-01",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(mockConsentService.record).not.toHaveBeenCalled();
+      expect(mockUserService.setInstitutionOnboarding).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("consent", () => {
+    const institutionUser = {
+      id: "inst-id",
+      email: "escola@example.com",
+      role: Role.Institution,
+      institutionSlug: "escola-teste",
+    } as User;
+
+    it("records the acceptance for an existing account", async () => {
+      mockUserService.findById.mockResolvedValue(institutionUser);
+
+      const result = await controller.consent({
+        userId: "inst-id",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
+      });
+
+      expect(result).toEqual({ termsAccepted: true });
+      expect(mockConsentService.record).toHaveBeenCalledWith(
+        "inst-id",
+        ConsentType.InstitutionTerms,
+        INSTITUTION_TERMS_VERSION,
+      );
+    });
+
+    it("does not add a second row when a live consent already stands", async () => {
+      // Append-only is for revisions, not for double-clicks: replaying the
+      // same acceptance must not pad the audit trail.
+      mockUserService.findById.mockResolvedValue(institutionUser);
+      mockConsentService.hasCurrentConsent.mockResolvedValue(true);
+
+      const result = await controller.consent({
+        userId: "inst-id",
+        termsAccepted: true,
+        termsVersion: INSTITUTION_TERMS_VERSION,
+      });
+
+      expect(result).toEqual({ termsAccepted: true });
+      expect(mockConsentService.record).not.toHaveBeenCalled();
+    });
+
+    it("refuses a stale terms version", async () => {
+      mockUserService.findById.mockResolvedValue(institutionUser);
+
+      await expect(
+        controller.consent({
+          userId: "inst-id",
+          termsAccepted: true,
+          termsVersion: "2020-01-01",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockConsentService.record).not.toHaveBeenCalled();
+    });
+
+    it("refuses a non-institution account", async () => {
+      mockUserService.findById.mockResolvedValue({
+        ...institutionUser,
+        role: Role.Player,
+      });
+
+      await expect(
+        controller.consent({
+          userId: "inst-id",
+          termsAccepted: true,
+          termsVersion: INSTITUTION_TERMS_VERSION,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(mockConsentService.record).not.toHaveBeenCalled();
+    });
+
+    it("refuses an unknown user", async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(
+        controller.consent({
+          userId: "missing",
+          termsAccepted: true,
+          termsVersion: INSTITUTION_TERMS_VERSION,
+        }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(mockConsentService.record).not.toHaveBeenCalled();
     });
   });
 });

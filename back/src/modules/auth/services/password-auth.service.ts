@@ -1,9 +1,17 @@
-import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import type { Response } from "express";
 import { PinoLogger } from "nestjs-pino";
 import { ConfigService } from "../../../core/config/config.service";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
+import { isCurrentTermsVersion } from "../../../shared/consent/institution-terms";
+import { ConsentService } from "../../consent/consent.service";
+import { ConsentType } from "../../consent/enums/consent-type.enum";
 import { PostHogService } from "../../posthog/posthog.service";
 import { Role } from "../../users/enums/role.enum";
 import { UserService } from "../../users/user.service";
@@ -43,11 +51,20 @@ export class PasswordAuthService {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly posthog: PostHogService,
+    private readonly consentService: ConsentService,
     @Inject(EMAIL_SERVICE)
     private readonly emailService: IEmailService,
   ) {}
 
   async register(dto: PasswordRegisterDto): Promise<{ message: string }> {
+    // Checked before the duplicate-email short-circuit below: a stale form is
+    // the caller's problem either way, and this is the one failure the client
+    // must be able to tell apart (it has to reload to get the current text),
+    // so it must not be hidden behind the anti-enumeration response.
+    if (!isCurrentTermsVersion(dto.termsVersion)) {
+      throw new BadRequestException("Outdated terms version");
+    }
+
     const existing = await this.userService.findByEmail(dto.email);
     if (existing) {
       this.logger.warn(
@@ -77,6 +94,16 @@ export class PasswordAuthService {
       isEmailVerified: false,
       isActive: true,
     });
+
+    // Immediately after the account exists and before anything else can fail:
+    // the account must never be reachable without the record that let it be
+    // created. Awaited, unlike the emails below — a consent that failed to
+    // persist is not a consent.
+    await this.consentService.record(
+      user.id,
+      ConsentType.InstitutionTerms,
+      dto.termsVersion,
+    );
 
     this.logger.info(
       { userId: user.id },
@@ -114,6 +141,7 @@ export class PasswordAuthService {
       email: string;
       role: Role;
       institutionSlug: string | null;
+      termsAccepted: boolean;
     };
   }> {
     const genericError = () =>
@@ -163,6 +191,13 @@ export class PasswordAuthService {
         email: user.email,
         role: user.role,
         institutionSlug: user.institutionSlug,
+        // Carried into the NextAuth JWT so middleware can gate the dashboard
+        // without a backend round-trip per request. Accounts created before
+        // #338 have no record and land on the terms page at their next visit.
+        termsAccepted: await this.consentService.hasCurrentConsent(
+          user.id,
+          ConsentType.InstitutionTerms,
+        ),
       },
     };
   }
@@ -184,6 +219,7 @@ export class PasswordAuthService {
       email: string;
       role: Role;
       institutionSlug: string | null;
+      termsAccepted: boolean;
     };
   }> {
     const token = await this.magicLinkService.validateTokenConsumption(
@@ -216,6 +252,13 @@ export class PasswordAuthService {
         email: user.email,
         role: user.role,
         institutionSlug: user.institutionSlug,
+        // Normally true: this link is only reachable after register() wrote
+        // the record. Read rather than assumed so a terms revision published
+        // between registration and the click is still honoured.
+        termsAccepted: await this.consentService.hasCurrentConsent(
+          user.id,
+          ConsentType.InstitutionTerms,
+        ),
       },
     };
   }
