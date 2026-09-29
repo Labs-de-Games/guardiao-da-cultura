@@ -5,8 +5,8 @@
 *                                       @anacarla-42
 
 # Docs
-/docs/                                  @hebaja @flpdorea ytower-bot
-/*.md                                   @hebaja @flpdorea ytower-bot
+/docs/                                  @hebaja @flpdorea @ytower-bot
+/*.md                                   @hebaja @flpdorea @ytower-bot
 
 # Frontend
 /front/src/components/                  @alesandroneri @hebaja @abgw204 @WicCaesar
@@ -24,11 +24,11 @@
 /back/src/modules/*/entities/           @alesandroneri @hebaja @flpdorea @anacarla-42
 
 # Infra and CI
-/.github/                               @flpdorea ytower-bot
-/nginx/                                 @flpdorea ytower-bot
-/compose.*.yaml                         @flpdorea ytower-bot
-/Makefile                               @flpdorea ytower-bot
-Dockerfile                              @flpdorea ytower-bot
+/.github/                               @flpdorea @ytower-bot
+/nginx/                                 @flpdorea @ytower-bot
+/compose.*.yaml                         @flpdorea @ytower-bot
+/Makefile                               @flpdorea @ytower-bot
+Dockerfile                              @flpdorea @ytower-bot
 
 # Licensing and credits
 /LICENSE                                @anacarla-42
