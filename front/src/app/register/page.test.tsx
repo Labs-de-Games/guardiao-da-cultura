@@ -1,4 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from "@testing-library/react";
+import { INSTITUTION_TERMS_VERSION } from "@/lib/consent/institutionTerms";
 import RegisterPage from "./page";
 
 const postMock = jest.fn();
@@ -25,6 +31,13 @@ function fillRequiredFields() {
   fireEvent.change(screen.getByLabelText("Slug da instituição *"), {
     target: { value: "escola-municipal" },
   });
+}
+
+/** The mandatory Terms of Use checkbox (issue #338). */
+function acceptTerms() {
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: "Li e aceito os Termos de Uso" }),
+  );
 }
 
 describe("RegisterPage", () => {
@@ -55,6 +68,7 @@ describe("RegisterPage", () => {
     fireEvent.change(screen.getByLabelText("Confirmar senha *"), {
       target: { value: "new-password-123" },
     });
+    acceptTerms();
     fireEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
 
     expect(
@@ -67,6 +81,88 @@ describe("RegisterPage", () => {
       password: "new-password-123",
       institutionSlug: "escola-municipal",
       nickname: "Escola Municipal",
+      termsAccepted: true,
+      termsVersion: INSTITUTION_TERMS_VERSION,
+    });
+  });
+
+  describe("terms acceptance (issue #338)", () => {
+    it("disables the submit button until the terms are accepted", () => {
+      render(<RegisterPage />);
+
+      expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
+
+      acceptTerms();
+
+      expect(
+        screen.getByRole("button", { name: "Cadastrar" }),
+      ).not.toBeDisabled();
+    });
+
+    it("does not register when the terms are left unchecked", async () => {
+      render(<RegisterPage />);
+
+      fillRequiredFields();
+      fireEvent.change(screen.getByLabelText("Senha *"), {
+        target: { value: "new-password-123" },
+      });
+      fireEvent.change(screen.getByLabelText("Confirmar senha *"), {
+        target: { value: "new-password-123" },
+      });
+      // Submitting the form directly, not clicking the button: pressing Enter
+      // in a field does exactly this, and a disabled button does not stop it.
+      fireEvent.submit(screen.getByRole("button", { name: "Cadastrar" }));
+
+      expect(
+        await screen.findByText(
+          "É necessário aceitar os Termos de Uso para se cadastrar.",
+        ),
+      ).toBeInTheDocument();
+      expect(postMock).not.toHaveBeenCalled();
+    });
+
+    it("opens the terms in a modal without leaving the form", () => {
+      render(<RegisterPage />);
+
+      fillRequiredFields();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Termos de Uso" }));
+
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toBeInTheDocument();
+      // Never a navigation: the half-filled form is still behind the modal.
+      expect(screen.getByLabelText("Nome da instituição *")).toHaveValue(
+        "Escola Municipal",
+      );
+    });
+
+    it("closes without having touched acceptance", async () => {
+      // The trigger sits beside the checkbox rather than inside its label —
+      // inside, a click would open the modal and silently tick the box, since
+      // a click anywhere in a <label> activates the control it names.
+      render(<RegisterPage />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Termos de Uso" }));
+      fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+      await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
+
+      expect(
+        screen.getByRole("checkbox", { name: "Li e aceito os Termos de Uso" }),
+      ).not.toBeChecked();
+      expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
+    });
+
+    it("offers no accept action inside the modal", () => {
+      // Acceptance is a single deliberate act on the form's own checkbox —
+      // the modal is read-only so the decision has one entry point.
+      render(<RegisterPage />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Termos de Uso" }));
+
+      expect(
+        screen.queryByRole("button", { name: /aceitar/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
