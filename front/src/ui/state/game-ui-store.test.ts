@@ -184,8 +184,23 @@ describe("game-ui-store level transition flag", () => {
     useGameUIStore.setState({
       levelTransitionActive: false,
       creditsOpen: false,
+      privacyOpen: false,
       gameStarted: false,
     });
+  });
+
+  /**
+   * A panel left mounted over a running level holds DOM focus and swallows
+   * the keys the player needs to move — the map-only UI has to die with the
+   * map, whatever started the hand-off.
+   */
+  it("dismisses the privacy panel when a hand-off starts", () => {
+    useGameUIStore.setState({ privacyOpen: true });
+
+    useGameUIStore.getState().setLevelTransitionActive(true);
+
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(true);
+    expect(useGameUIStore.getState().privacyOpen).toBe(false);
   });
 
   it("dismisses the credits screen when a hand-off starts", () => {

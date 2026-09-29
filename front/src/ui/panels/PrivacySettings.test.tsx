@@ -3,6 +3,8 @@ import posthog from "posthog-js";
 import { ConsentProvider } from "@/lib/consent/ConsentContext";
 import { readConsent, writeConsent } from "@/lib/consent/consentStorage";
 import { reloadPage } from "@/lib/consent/posthogTeardown";
+import { EventBus } from "@/shared/events/event-bus";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { PrivacySettings } from "./PrivacySettings";
 
 jest.mock("posthog-js", () => ({
@@ -42,6 +44,7 @@ describe("PrivacySettings", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.cookie = "gp_analytics_consent=; path=/; Max-Age=0";
+    useGameUIStore.setState({ privacyOpen: false });
     jest.clearAllMocks();
   });
 
@@ -55,6 +58,46 @@ describe("PrivacySettings", () => {
   it("reports that no choice has been made yet", async () => {
     await openPanel();
     expect(screen.getByText(/ainda não escolheu/i)).toBeInTheDocument();
+  });
+
+  /**
+   * The map's 10s auto-start countdown can only stand down if it hears about
+   * the panel. Without this the player reading a consent notice was dropped
+   * into level 01 mid-sentence, with the panel still holding focus so their
+   * movement keys went nowhere.
+   */
+  it("announces that it is open so the map can halt its countdown", async () => {
+    const emit = jest.spyOn(EventBus, "emit");
+    await openPanel();
+
+    expect(emit).toHaveBeenCalledWith("privacy:open", undefined);
+    expect(useGameUIStore.getState().privacyOpen).toBe(true);
+  });
+
+  it("announces that it closed", async () => {
+    await openPanel();
+    const emit = jest.spyOn(EventBus, "emit");
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+
+    expect(emit).toHaveBeenCalledWith("privacy:close", undefined);
+    expect(useGameUIStore.getState().privacyOpen).toBe(false);
+  });
+
+  /**
+   * Following "Ler o Aviso de Privacidade" leaves the game entirely. The open
+   * flag lives in a module-level store that survives client-side navigation,
+   * so without a cleanup it would still read true on the player's return and
+   * the map would boot with an invisible modal blocking every way to start.
+   */
+  it("releases the open flag when it is unmounted mid-navigation", async () => {
+    const { unmount } = renderPanel();
+    fireEvent.click(await screen.findByRole("button", { name: "Privacidade" }));
+    expect(useGameUIStore.getState().privacyOpen).toBe(true);
+
+    unmount();
+
+    expect(useGameUIStore.getState().privacyOpen).toBe(false);
   });
 
   it("lets a player who refused authorise later", async () => {

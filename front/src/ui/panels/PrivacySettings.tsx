@@ -2,9 +2,11 @@
 
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { type ConsentState, useConsent } from "@/lib/consent/ConsentContext";
 import { PRIVACY_NOTICE_PATH } from "@/lib/consent/privacyNotice";
+import { EventBus } from "@/shared/events/event-bus";
+import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
 const TITLE_ID = "privacy-settings-title";
@@ -48,11 +50,27 @@ const STATUS_LABEL: Record<ConsentState, string> = {
  * escolha" requirement of issue #864.
  */
 export function PrivacySettings() {
-  const [open, setOpen] = useState(false);
+  const open = useGameUIStore((s) => s.privacyOpen);
+  const setPrivacyOpen = useGameUIStore((s) => s.setPrivacyOpen);
   const { state, record, accept, revoke } = useConsent();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const close = useCallback(() => setOpen(false), []);
+  /**
+   * Announced on the EventBus as well as written to the store: the store is
+   * what `MapIntroScene` polls synchronously, while the event is what lets it
+   * cancel the auto-start countdown at the moment the panel opens. Opening
+   * this panel is the player pausing to make a consent decision — the map must
+   * not start a level underneath them while they read (issue #864).
+   */
+  const openPanel = useCallback(() => {
+    setPrivacyOpen(true);
+    EventBus.emit("privacy:open", undefined);
+  }, [setPrivacyOpen]);
+
+  const close = useCallback(() => {
+    setPrivacyOpen(false);
+    EventBus.emit("privacy:close", undefined);
+  }, [setPrivacyOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -70,12 +88,25 @@ export function PrivacySettings() {
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [open, close]);
 
+  /**
+   * The open flag now lives in a module-level store, which outlives this
+   * component: leaving the game by following the "Ler o Aviso de Privacidade"
+   * link unmounts the panel but would otherwise leave `privacyOpen` stuck at
+   * true, so the next visit to the map would boot with an invisible modal
+   * blocking every start. Unmount is the one moment the panel is provably
+   * gone, so clear the flag there — without announcing a close the player
+   * never performed.
+   */
+  useEffect(() => {
+    return () => useGameUIStore.getState().setPrivacyOpen(false);
+  }, []);
+
   return (
     <>
       <Box
         component="button"
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openPanel}
         sx={{
           position: "absolute",
           bottom: "15px",
