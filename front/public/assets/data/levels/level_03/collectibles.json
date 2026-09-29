@@ -1,3 +1,46 @@
 {
-  "collectibles": []
+  "collectibles": {
+    "CLUE_VILLAIN": {
+      "signature": {
+        "id": "signature",
+        "metadata": {
+          "title": "Assinatura do vândalo"
+        },
+        "educational": {
+          "description": "Um documento de conservação assinado por A.V.",
+          "medium": "Papel",
+          "opinion": "A mesma letra das outras pistas, o mesmo saber sobre as peças. E agora temos as iniciais: A.V.!"
+        },
+        "assets": {
+          "sprite": "signature",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 76, "y": 40, "rotation": -2 },
+          "connectedTo": ["cachimbo", "itinerary"]
+        }
+      },
+      "itinerary": {
+        "id": "itinerary",
+        "metadata": {
+          "title": "Itinerário de viagem"
+        },
+        "educational": {
+          "description": "Um itinerário com três cidades marcadas: Brumadinho, Manaus e Campina Grande. As datas batem com cada ataque.",
+          "medium": "Papel",
+          "opinion": "Três cidades, três datas, três acervos desorganizados. Não foi coincidência: foi roteiro."
+        },
+        "assets": {
+          "sprite": "itinerary",
+          "scaleOnMap": 5,
+          "scaleOnInspect": 5
+        },
+        "board": {
+          "position": { "x": 60, "y": 65, "rotation": -2 },
+          "connectedTo": ["signature", "paper"]
+        }
+      }
+    }
+  }
 }

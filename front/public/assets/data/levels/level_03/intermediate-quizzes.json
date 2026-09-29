@@ -1,1 +1,69 @@
-{}
+{
+  "dance_done": [
+    {
+      "question": "Para que serve a sequência na quadrilha?",
+      "options": [
+        "Ordenar os passos",
+        "Não há ordem certa",
+        "Definir as músicas",
+        "Escolher os instrumentos"
+      ]
+    },
+    {
+      "question": "Na quadrilha, o que os pares fazem no balancê?",
+      "options": [
+        "Gingam no lugar",
+        "Dão um pulo alto",
+        "Formam uma fila",
+        "Trocam de roupa"
+      ]
+    },
+    {
+      "question": "Qual passo encerra a sequência de dança desta fase?",
+      "options": ["Pulo caipira", "Balancê", "Passo lateral", "Giro"]
+    }
+  ],
+  "stage_done": [
+    {
+      "question": "Quais instrumentos formam o trio tradicional de forró?",
+      "options": [
+        "Sanfona, zabumba e triângulo",
+        "Guitarra, bateria e teclado",
+        "Violão, pandeiro e saxofone",
+        "Piano, bateria e baixo"
+      ]
+    },
+    {
+      "question": "Qual destes instrumentos não pertence ao trio tradicional apresentado na fase?",
+      "options": ["Guitarra elétrica", "Sanfona", "Zabumba", "Triângulo"]
+    },
+    {
+      "question": "O que os instrumentos ajudam a construir dentro do forró?",
+      "options": [
+        "Estrutura musical e rítmica",
+        "Decoração da festa",
+        "O cenário",
+        "Apresentações teatrais"
+      ]
+    }
+  ],
+  "genius_done": [
+    {
+      "question": "Qual instrumento é o principal nos trios de forró do São João de Campina Grande?",
+      "options": ["Sanfona", "Violão", "Cavaquinho", "Berimbau"]
+    },
+    {
+      "question": "A sanfona de oito baixos é mais associada a qual estilo tocado nas festas de São João?",
+      "options": ["Forró pé de serra", "Frevo", "Chorinho", "Bossa nova"]
+    },
+    {
+      "question": "Como a sanfona produz som?",
+      "options": [
+        "Ar do fole",
+        "Cordas vibrando",
+        "Sopro num bocal",
+        "Batida de baquetas"
+      ]
+    }
+  ]
+}

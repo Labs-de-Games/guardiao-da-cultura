@@ -5,6 +5,7 @@ import type {
 } from "@nestjs/common";
 import { Observable, throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
+import { readAnalyticsConsent } from "../../shared/consent/analytics-consent";
 import type { PostHogService } from "./posthog.service";
 
 interface HttpArgumentsHost {
@@ -93,6 +94,11 @@ export class PostHogExceptionInterceptor implements NestInterceptor {
     >;
     const { sessionId, distinctId } = getPostHogTracingHeaderValues(headers);
 
+    // Issue #864: the consent text names "erros" explicitly, so error
+    // telemetry is part of what a player authorises. Fails closed — an absent
+    // cookie means no capture.
+    const analyticsConsent = readAnalyticsConsent(request);
+
     const properties: Record<string, any> = {};
     const addProperty = (key: string, value: unknown) => {
       if (value !== undefined && value !== null) {
@@ -139,6 +145,7 @@ export class PostHogExceptionInterceptor implements NestInterceptor {
               : new Error(String(exception)),
             distinctId,
             additionalProperties,
+            analyticsConsent,
           );
           return throwError(() => exception);
         }),

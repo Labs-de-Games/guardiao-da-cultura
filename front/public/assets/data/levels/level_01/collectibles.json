@@ -18,7 +18,7 @@
         },
         "board": {
           "position": { "x": 30, "y": 65, "rotation": -2 },
-          "connectedTo": ["varnish"]
+          "connectedTo": ["varnish", "itinerary"]
         }
       },
       "varnish": {
@@ -39,26 +39,6 @@
         "board": {
           "position": { "x": 10, "y": 40, "rotation": -2 },
           "connectedTo": ["document", "paper"]
-        }
-      },
-      "message": {
-        "id": "message",
-        "metadata": {
-          "title": "Mensagem do Vândalo"
-        },
-        "educational": {
-          "description": "Uma mensagem do Vândalo dizendo: \"Nada está fora do lugar. Apenas foi colocado no lugar errado.\"",
-          "medium": "Papel",
-          "opinion": "\"Nada está fora do lugar. Apenas foi colocado no lugar errado\". Então, ele queria que encontrássemos isso."
-        },
-        "assets": {
-          "sprite": "message",
-          "scaleOnMap": 5,
-          "scaleOnInspect": 5
-        },
-        "board": {
-          "position": { "x": 60, "y": 65, "rotation": -2 },
-          "connectedTo": ["paper", "signature"]
         }
       }
     }

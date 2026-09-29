@@ -39,9 +39,9 @@ export const LEVEL_REGISTRY: Record<string, LevelDefinition> = {
     activeMissions: ["missao_curador"],
     map: {
       key: "map_level_01",
-      json: "maps/museum-mvp/map.json",
+      json: "maps/inhotim/map.json",
       tileset: "tiles_level_01",
-      tilesetImg: "maps/museum-mvp/spritesheet.png",
+      tilesetImg: "maps/inhotim/spritesheet.png",
       tilesetName: "museum",
     },
     data: {
@@ -176,8 +176,6 @@ export const LEVEL_ASSETS = {
       { key: "light_bar", path: "misc/spotlights/light_bar.png" },
     ],
     COLLECTIBLES: [
-      { key: "cachimbo", path: "collectibles/cachimbo.png" },
-      { key: "message", path: "collectibles/message.png" },
       { key: "paper", path: "collectibles/paper.png" },
       { key: "varnish", path: "collectibles/varnish.png" },
     ],
@@ -302,22 +300,112 @@ export const LEVEL_ASSETS = {
     ],
     COLLECTIBLES: [
       { key: "document", path: "collectibles/document.png" },
-      { key: "notes", path: "collectibles/notes.png" },
-      { key: "signature", path: "collectibles/signature.png" },
+      { key: "cachimbo", path: "collectibles/cachimbo.png" },
     ],
     CONTENT: {
       key: "content",
       path: "data/content.json",
     },
   },
-  // Mock level: no artwork of its own yet, only the tilemap.
+  // Mock level: no artwork/collectibles of its own yet, only the tilemap
+  // plus the LightBars/PlaceHolder layers.
   level_03: {
     MAP: LEVEL_REGISTRY.level_03.map,
     SCULPTURES: [],
     PAINTINGS: [],
     CHUNKS: [],
-    OTHERS: [],
-    COLLECTIBLES: [],
+    OTHERS: [
+      {
+        key: "step_sequence_ph",
+        path: "artworks/dance/sequence_step_placeholder.png",
+      },
+      {
+        key: "light_bar",
+        path: "misc/spotlights/light_bar.png",
+      },
+      {
+        key: "switch_light",
+        path: "misc/switch_light.png",
+        frameWidth: 32,
+        frameHeight: 20,
+      },
+      { key: "stage-band-ph", path: "misc/stage-band-placeholder.png" },
+      { key: "wood_label", path: "misc/wood_label.png" },
+      {
+        key: "band_accordion",
+        path: "band/animations/accordion.png",
+        frameWidth: 68,
+        frameHeight: 47,
+      },
+      {
+        key: "band_jam_block",
+        path: "band/animations/jam_block.png",
+        frameWidth: 68,
+        frameHeight: 47,
+      },
+      {
+        key: "band_triangle",
+        path: "band/animations/triangle.png",
+        frameWidth: 68,
+        frameHeight: 47,
+      },
+      {
+        key: "band_zabumba",
+        path: "band/animations/zabumba.png",
+        frameWidth: 68,
+        frameHeight: 46,
+      },
+      {
+        key: "accordion_frame001",
+        path: "artworks/accordion_animation/accordion_frame001.png",
+      },
+      {
+        key: "accordion_frame002",
+        path: "artworks/accordion_animation/accordion_frame002.png",
+      },
+      {
+        key: "accordion_frame003",
+        path: "artworks/accordion_animation/accordion_frame003.png",
+      },
+      {
+        key: "accordion_frame004",
+        path: "artworks/accordion_animation/accordion_frame004.png",
+      },
+      {
+        key: "accordion_frame005",
+        path: "artworks/accordion_animation/accordion_frame005.png",
+      },
+      {
+        key: "accordion_frame006",
+        path: "artworks/accordion_animation/accordion_frame006.png",
+      },
+      {
+        key: "accordion_frame007",
+        path: "artworks/accordion_animation/accordion_frame007.png",
+      },
+      {
+        key: "accordion_frame008",
+        path: "artworks/accordion_animation/accordion_frame008.png",
+      },
+      {
+        key: "accordion_frame009",
+        path: "artworks/accordion_animation/accordion_frame009.png",
+      },
+      {
+        key: "note01",
+        path: "misc/note01.png",
+      },
+      {
+        key: "note02",
+        path: "misc/note02.png",
+      },
+    ],
+    // TODO(art): `itinerary` reuses the level_02 notes sprite as a placeholder.
+    // Swap in dedicated artwork when available.
+    COLLECTIBLES: [
+      { key: "signature", path: "collectibles/signature.png" },
+      { key: "itinerary", path: "collectibles/itinerary.png" },
+    ],
     CONTENT: {
       key: "content",
       path: "data/content.json",

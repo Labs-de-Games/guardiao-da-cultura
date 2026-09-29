@@ -1,0 +1,84 @@
+NOTICE — Guardião da Cultura
+============================
+
+This file records obligations that travel with this repository and that are
+NOT granted by the MIT license in LICENSE.
+
+Read it together with:
+
+    LICENSE             MIT — source code only
+    ASSETS-LICENSE.md   terms for every file under front/public/assets/
+    CREDITS.md          human-readable credits, mirrors the in-game screen
+
+
+1. Trademarks and institutional identity — NOT LICENSED
+-------------------------------------------------------
+
+Guardião da Cultura was produced with public incentive funding under the
+Brazilian Lei Rouanet and with the support of the institutions below. Their
+names, logos, wordmarks and visual identities appear in the game and in this
+repository solely to identify the sponsors and realizers of THIS project:
+
+    Governo Federal
+    Lei Rouanet
+    Ministério da Cultura
+    Galp
+    Bemobi
+    42 Rio
+
+These marks are the property of their respective holders. They are **not**
+covered by the MIT license, **not** covered by ASSETS-LICENSE.md, and **no**
+right to use them is granted here.
+
+The authorization to display them applies to this project only. If you fork,
+redistribute, adapt or rebrand this game, you MUST remove every occurrence of
+these marks — including the sponsor logos and the "Realização" section of the
+credits screen — before publishing your version. Continued display of these
+marks in a derivative work would falsely imply sponsorship or endorsement.
+
+The project name "Guardião da Cultura" is likewise not licensed for use as the
+name of a derivative work. Rename your fork.
+
+
+2. Attribution is mandatory for the media assets
+------------------------------------------------
+
+The rights holders of the artworks reproduced in this game cleared their
+reproduction on the binding condition that **credit is always given**. The same
+condition applies to the CC BY music, sound effects and icons, and to the
+original assets produced by the project team, which are released under
+CC BY 4.0.
+
+Concretely: you may not satisfy the MIT license by shipping LICENSE alone and
+silently dropping the credits. If your build, fork or extraction includes any
+file from front/public/assets/, you must carry the corresponding attribution
+from CREDITS.md in a place your users can reach.
+
+The in-game credits screen (front/src/ui/credits/creditsData.ts) and CREDITS.md
+are the same obligation rendered twice. Keep them in sync; if you remove one,
+keep the other.
+
+
+3. Assets that are NOT free for commercial reuse
+------------------------------------------------
+
+Some third-party assets shipped here are licensed under terms that are not
+compatible with MIT and restrict commercial use:
+
+    Freesound "Sampling+"        front/public/assets/sound/sfx/camera.click.wav
+                                 and the "hmmm" cue — see ASSETS-LICENSE.md
+    HiClipart, CityPNG           personal use only — the "Máscaras" and
+                                 "Fogueira" graphics
+    ResponsiveVoice              CC BY-NC-ND 4.0, NonCommercial, paid key;
+                                 an optional runtime integration, not bundled
+
+If you intend to use this project commercially, review ASSETS-LICENSE.md and
+replace those files.
+
+
+4. Third-party software
+-----------------------
+
+Runtime and build dependencies carry their own licenses; see the respective
+package manifests and node_modules. Phaser 3, the game engine, is MIT
+(https://phaser.io/).

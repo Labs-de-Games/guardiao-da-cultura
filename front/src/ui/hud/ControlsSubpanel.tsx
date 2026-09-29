@@ -11,7 +11,7 @@ const CONTROLS = [
   { key: "E", action: "Interagir" },
   { key: "TAB", action: "Painel" },
   { key: "B", action: "Conquistas" },
-  { key: "ESC", action: "Fechar" },
+  { key: "ESC", action: "Voltar ao mapa" },
 ];
 
 const TITLE_BG = "#3B8C45";

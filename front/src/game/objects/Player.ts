@@ -52,6 +52,20 @@ export class Player
   /** Reference to the moving platform the player is standing on. */
   private standingPlatform: Phaser.Physics.Arcade.Sprite | null = null;
 
+  /** True while the body's max Y velocity is temporarily raised for a launch (e.g. trampoline). */
+  private launchMaxVelocityBoosted = false;
+
+  /**
+   * True from the moment launch() is called until the player actually
+   * leaves the ground. Suppresses the blocked.down -> hasJumped reset for
+   * that span, since the collider callback that calls launch() runs earlier
+   * in the same frame's physics step and blocked.down can still read true
+   * from that same contact. Tracking by "still touching ground" rather than
+   * velocity sign keeps this from misfiring while riding a platform upward,
+   * where velocity.y is legitimately negative every frame.
+   */
+  private suppressGroundedJumpReset = false;
+
   /**
    * Play an animation and, if it wasn't already playing, resync the hitbox
    * to the new anim's frame size (spritesheets have different dimensions).
@@ -140,6 +154,7 @@ export class Player
       PLAYER_PHYSICS.MAX_VELOCITY.X,
       PLAYER_PHYSICS.MAX_VELOCITY.Y,
     );
+    this.setCollideWorldBounds(true);
 
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     this.once(
@@ -345,8 +360,28 @@ export class Player
     }
 
     if (body.blocked.down) {
-      this.lastOnGroundTime = _ts;
-      this.hasJumped = false;
+      if (this.suppressGroundedJumpReset) {
+        // Still touching the surface that launched us this frame; hold off
+        // on re-arming jump until we've actually left the ground.
+      } else {
+        this.lastOnGroundTime = _ts;
+        this.hasJumped = false;
+      }
+    } else {
+      this.suppressGroundedJumpReset = false;
+    }
+
+    // Once the boosted launch has decayed back under the normal jump/fall
+    // speed, restore the regular max Y velocity so normal falls stay capped.
+    if (
+      this.launchMaxVelocityBoosted &&
+      body.velocity.y > -PLAYER_PHYSICS.MAX_VELOCITY.Y
+    ) {
+      body.setMaxVelocity(
+        PLAYER_PHYSICS.MAX_VELOCITY.X,
+        PLAYER_PHYSICS.MAX_VELOCITY.Y,
+      );
+      this.launchMaxVelocityBoosted = false;
     }
 
     const isJumpPlaying =
@@ -824,6 +859,36 @@ export class Player
     platform: Phaser.Physics.Arcade.Sprite | null,
   ): void {
     this.standingPlatform = platform;
+  }
+
+  /**
+   * Launches the player upward with the given velocity (negative = up),
+   * bypassing the normal jump-key/coyote-time gating. If the requested
+   * velocity exceeds the regular max Y velocity (e.g. a strong trampoline),
+   * temporarily raises the cap so the launch isn't clamped; it's restored
+   * once the boost decays back under the normal jump/fall speed.
+   */
+  public launch(velocityY: number): void {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    const requiredMaxY = Math.max(
+      PLAYER_PHYSICS.MAX_VELOCITY.Y,
+      Math.abs(velocityY),
+    );
+    if (requiredMaxY > body.maxVelocity.y) {
+      body.setMaxVelocity(body.maxVelocity.x, requiredMaxY);
+      this.launchMaxVelocityBoosted = true;
+    }
+
+    this.hasJumped = true;
+    this.suppressGroundedJumpReset = true;
+    this.standingPlatform = null;
+    this.setVelocityY(velocityY);
+    AudioManager.playSfx("sfx.player.jump", 0.4);
+
+    const jumpAnim = this.isCarrying
+      ? PLAYER_ANIMS.CARRY_JUMP.key
+      : PLAYER_ANIMS.JUMP.key;
+    this.playAnim(jumpAnim);
   }
 
   private releaseGrab() {

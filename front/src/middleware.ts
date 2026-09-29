@@ -1,22 +1,24 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { isMaintenanceModeEnabled } from "@/lib/maintenance";
+import {
+  GAME_MAINTENANCE_PATH,
+  isGameRoute,
+} from "@/lib/navigation/gameRoutes";
+import { auth } from "./auth.config";
+import {
+  ANONYMOUS_PLAYER_COOKIE_MAX_AGE_SECONDS,
+  ANONYMOUS_PLAYER_COOKIE_NAME,
+  ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME,
+  ANONYMOUS_PLAYER_SEEDED_MARKER_MAX_AGE_SECONDS,
+  generateAnonymousPlayerId,
+  isValidAnonymousPlayerId,
+} from "./lib/edital/anonymousPlayer";
 
-const AUTH_STATUS_COOKIE_NAME = "auth_status";
-const GUEST_PLAY_COOKIE_NAME = "gp_guest_play";
-
-const PROTECTED_ROUTES: string[] = [];
+const SERVICE_UNAVAILABLE_STATUS = 503;
 const INSTITUTION_ROUTE_PREFIX = "/institution";
-const GUEST_ROUTES = [
-  "/login",
-  "/register",
-  "/verify-email",
-  "/confirm-login",
-  "/confirm-verification",
-];
-
-function isProtectedRoute(path: string): boolean {
-  return PROTECTED_ROUTES.some((route) => path === route);
-}
+const ONBOARDING_PATH = `${INSTITUTION_ROUTE_PREFIX}/onboarding`;
+const TERMS_ACCEPT_PATH = `${INSTITUTION_ROUTE_PREFIX}/termos`;
 
 function isInstitutionRoute(path: string): boolean {
   return (
@@ -25,46 +27,120 @@ function isInstitutionRoute(path: string): boolean {
   );
 }
 
-function isGuestRoute(path: string): boolean {
-  return GUEST_ROUTES.some(
-    (route) => path === route || path.startsWith(`${route}?`),
+/**
+ * Stamp the durable anonymous-player cookie onto whichever response this
+ * request produces, unless it already carries a valid one. Runs in
+ * middleware (this app's own origin, ahead of any client JS) so the id is
+ * a server-set cookie with an explicit Max-Age, not a client
+ * `document.cookie` write on a session-scoped cookie.
+ */
+function withAnonymousPlayerCookie(
+  request: NextRequest,
+  response: NextResponse,
+): NextResponse {
+  const existing = request.cookies.get(ANONYMOUS_PLAYER_COOKIE_NAME)?.value;
+  if (isValidAnonymousPlayerId(existing)) {
+    return response;
+  }
+
+  response.cookies.set(
+    ANONYMOUS_PLAYER_COOKIE_NAME,
+    generateAnonymousPlayerId(),
+    {
+      maxAge: ANONYMOUS_PLAYER_COOKIE_MAX_AGE_SECONDS,
+      path: "/",
+      sameSite: "lax",
+    },
   );
+  // Signals to client JS, for one request only, that the cookie above was
+  // just minted — not a returning value — so the legacy-guest-id migration
+  // (lib/edital/anonymousPlayer.ts) knows it's safe to act.
+  response.cookies.set(ANONYMOUS_PLAYER_SEEDED_MARKER_COOKIE_NAME, "1", {
+    maxAge: ANONYMOUS_PLAYER_SEEDED_MARKER_MAX_AGE_SECONDS,
+    path: "/",
+    sameSite: "lax",
+  });
+  return response;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const authStatus = request.cookies.get(AUTH_STATUS_COOKIE_NAME)?.value;
-  const isAuthenticated = authStatus === "authenticated";
-  const guestPlayEnabled =
-    request.cookies.get(GUEST_PLAY_COOKIE_NAME)?.value === "1";
 
-  if (isInstitutionRoute(path) && !isAuthenticated) {
-    const redirectUrl = new URL("/login", request.url);
-    redirectUrl.searchParams.set("redirect", path);
-    return NextResponse.redirect(redirectUrl);
+  if (
+    isMaintenanceModeEnabled() &&
+    isGameRoute(path) &&
+    path !== GAME_MAINTENANCE_PATH
+  ) {
+    return withAnonymousPlayerCookie(
+      request,
+      NextResponse.rewrite(new URL(GAME_MAINTENANCE_PATH, request.url), {
+        status: SERVICE_UNAVAILABLE_STATUS,
+      }),
+    );
   }
 
-  if (isProtectedRoute(path) && !isAuthenticated && !guestPlayEnabled) {
-    const redirectUrl = new URL("/register", request.url);
-    redirectUrl.searchParams.set("redirect", path);
-    return NextResponse.redirect(redirectUrl);
+  // Institution routes are gated by a NextAuth session (a signed JWT
+  // cookie) with role "institution". Players never authenticate at all
+  // (#738: no player login/registration, guest play only via campaign
+  // link) — /login and /register are institution-only now, so there is
+  // no separate "guest route" redirect logic left to run here.
+  if (isInstitutionRoute(path)) {
+    const session = await auth();
+    if (session?.user?.role !== "institution") {
+      const redirectUrl = new URL("/login", request.url);
+      redirectUrl.searchParams.set("redirect", path);
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(redirectUrl),
+      );
+    }
+    // Self-serve replacement for #744's admin seed-script step (no admin
+    // role/workflow exists in this project) — an institution account with
+    // no slug yet must onboard before it can reach the dashboard.
+    if (!session.user.institutionSlug) {
+      // Onboarding itself must stay reachable here without falling through
+      // to the terms gate below: a brand-new account has not accepted yet
+      // either, and bouncing it to the terms page (which sends slug-less
+      // accounts back here) is a redirect loop.
+      return withAnonymousPlayerCookie(
+        request,
+        path === ONBOARDING_PATH
+          ? NextResponse.next()
+          : NextResponse.redirect(new URL(ONBOARDING_PATH, request.url)),
+      );
+    }
+    // Already onboarded — never show the name form again (back button,
+    // stale tab), which would only end in a 403 "already onboarded".
+    if (session.user.institutionSlug && path === ONBOARDING_PATH) {
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(new URL(INSTITUTION_ROUTE_PREFIX, request.url)),
+      );
+    }
+    // Terms gate (#338). Deliberately *after* the slug gate: a brand-new
+    // account has neither, and onboarding collects the acceptance along with
+    // the name, so sending it through onboarding first means one form instead
+    // of two. What reaches here is an account that got its slug before the
+    // gate existed, or whose acceptance a material revision retired.
+    if (!session.user.termsAccepted && path !== TERMS_ACCEPT_PATH) {
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(new URL(TERMS_ACCEPT_PATH, request.url)),
+      );
+    }
+    // Already accepted — same reasoning as the onboarding guard above.
+    if (session.user.termsAccepted && path === TERMS_ACCEPT_PATH) {
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(new URL(INSTITUTION_ROUTE_PREFIX, request.url)),
+      );
+    }
+    return withAnonymousPlayerCookie(request, NextResponse.next());
   }
 
-  if (isGuestRoute(path) && isAuthenticated) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  return NextResponse.next();
+  return withAnonymousPlayerCookie(request, NextResponse.next());
 }
 
 export const config = {
-  matcher: [
-    "/",
-    "/login",
-    "/register",
-    "/verify-email",
-    "/confirm-login",
-    "/confirm-verification",
-    "/institution/:path*",
-  ],
+  matcher: ["/", "/login", "/register", "/institution/:path*", "/game/:path*"],
 };

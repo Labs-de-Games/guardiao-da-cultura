@@ -7,6 +7,12 @@ const schema = z
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // Deployment environment, distinct from NODE_ENV: staging runs with
+    // NODE_ENV=production (optimized build) but must still tag its PostHog
+    // events as "staging" — staging and production share one project.
+    APP_ENV: z
+      .enum(["development", "staging", "production"])
+      .default("development"),
     DATABASE_URL: z.string().url(),
     JWT_SECRET: z.string().min(1),
     JWT_EXPIRATION: z.string().default("15m"),
@@ -23,6 +29,10 @@ const schema = z
     LOG_LEVEL: z
       .enum(["trace", "debug", "info", "warn", "error", "fatal"])
       .default("debug"),
+    // Shared secret for the /auth/oauth/upsert endpoint (epic #738, #744).
+    // Optional so the app boots without it; the endpoint itself refuses
+    // every request when unset (see auth.controller.ts).
+    AUTH_OAUTH_UPSERT_TOKEN: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -37,6 +47,15 @@ const schema = z
       message:
         "GMAIL_USER and GMAIL_APP_PASSWORD are required when EMAIL_PROVIDER is 'nodemailer'",
     },
+  )
+  .refine(
+    (data) =>
+      data.NODE_ENV !== "production" || Boolean(data.AUTH_OAUTH_UPSERT_TOKEN),
+    {
+      message:
+        "AUTH_OAUTH_UPSERT_TOKEN is required in production — Google/institution sign-in silently fails without it",
+      path: ["AUTH_OAUTH_UPSERT_TOKEN"],
+    },
   );
 
 @Injectable()
@@ -47,6 +66,7 @@ export class ConfigService {
     this.config = schema.parse({
       BACKEND_PORT: process.env.BACKEND_PORT,
       NODE_ENV: process.env.NODE_ENV,
+      APP_ENV: process.env.APP_ENV,
       DATABASE_URL: process.env.DATABASE_URL,
       JWT_SECRET: process.env.JWT_SECRET,
       JWT_EXPIRATION: process.env.JWT_EXPIRATION,
@@ -61,6 +81,7 @@ export class ConfigService {
       POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
       POSTHOG_HOST: process.env.POSTHOG_HOST,
       LOG_LEVEL: process.env.LOG_LEVEL,
+      AUTH_OAUTH_UPSERT_TOKEN: process.env.AUTH_OAUTH_UPSERT_TOKEN,
     });
   }
 
@@ -69,6 +90,9 @@ export class ConfigService {
   }
   get nodeEnv() {
     return this.config.NODE_ENV;
+  }
+  get appEnv() {
+    return this.config.APP_ENV;
   }
   get databaseUrl() {
     return this.config.DATABASE_URL;
@@ -111,5 +135,8 @@ export class ConfigService {
   }
   get logLevel() {
     return this.config.LOG_LEVEL;
+  }
+  get authOauthUpsertToken() {
+    return this.config.AUTH_OAUTH_UPSERT_TOKEN;
   }
 }

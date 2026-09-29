@@ -1,6 +1,7 @@
 {
   "name": "back",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "start:dev": "npx nest start --watch",
     "build": "tsc -p tsconfig.json",
@@ -24,6 +25,7 @@
     "@nestjs/swagger": "^11.4.2",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
+    "argon2": "^0.45.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",

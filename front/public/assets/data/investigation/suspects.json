@@ -1,0 +1,105 @@
+{
+  "_comment": "Trait values are tri-state: \"sim\" (o dossiê confirma), \"nao\" (o dossiê contradiz) e \"desconhecido\" (não se sabe). Uma pista cujo traço é \"sim\" sai QUENTE na checagem, \"nao\" sai FRIO e \"desconhecido\" sai MORNO. Um suspeito é inocentado por qualquer traço \"nao\" — só o culpado não tem nenhum. O campo \"alibi\" é a resposta do suspeito quando é acusado por engano: uma fala que reafirma, na voz dele, um traço \"nao\" do próprio dossiê.",
+  "suspects": [
+    {
+      "id": "helena_marques",
+      "name": "Helena Marques",
+      "age": 45,
+      "role": "Curadora-assistente do museu",
+      "summary": "Divide os dias entre o catálogo e a reserva técnica, e sabe de cabeça em que sala cada peça dorme. Tem chave de tudo desde que entrou, há onze anos.",
+      "alibi": "Eu cuido de fichas e etiquetas, não de vernizes. Quando uma peça precisa de tratamento, eu chamo alguém de fora — nunca encostei numa sem luva de algodão.",
+      "relationWithCulture": "Trabalha há doze anos na instituição e assina boa parte das exposições recentes.",
+      "profile": "Defende publicamente o trabalho de curadoria: escreveu que a organização das peças é o que dá sentido à coleção.",
+      "portrait": "helena-marques.png",
+      "isCulprit": false,
+      "traits": {
+        "conservation_technique": "nao",
+        "authorized_access": "sim",
+        "knows_collection_layout": "sim",
+        "smokes": "nao",
+        "initials_av": "nao",
+        "traveled_all_three": "desconhecido"
+      }
+    },
+    {
+      "id": "augusto_vale",
+      "name": "Augusto Vale",
+      "age": 38,
+      "role": "Restaurador independente",
+      "summary": "Restaurador de ateliê próprio, acostumado a limpar e envernizar o que os museus não têm verba para tratar. Passou os últimos anos indo de acervo em acervo atrás de trabalho avulso.",
+      "alibi": "Eu só passo por esses acervos a trabalho. Se as peças mudaram de lugar, não fui eu que mudei.",
+      "relationWithCulture": "Já prestou serviços de conservação e restauração para instituições culturais da região, e esteve nos três acervos visitados nas semanas dos incidentes.",
+      "profile": "Não se considera um vândalo: desorganiza o acervo propositalmente para revelar relações históricas que, segundo ele, foram apagadas pela curadoria.",
+      "portrait": "augusto-vale.png",
+      "isCulprit": true,
+      "traits": {
+        "conservation_technique": "sim",
+        "authorized_access": "sim",
+        "knows_collection_layout": "sim",
+        "smokes": "sim",
+        "initials_av": "sim",
+        "traveled_all_three": "sim"
+      }
+    },
+    {
+      "id": "bruno_tavares",
+      "name": "Bruno Tavares",
+      "age": 29,
+      "role": "Segurança noturno terceirizado",
+      "summary": "Faz plantão noturno por empresa terceirizada, com crachá que abre qualquer porta do prédio. Nas madrugadas longas, o cachimbo é a única companhia.",
+      "alibi": "Eu ando pelos corredores, não pelas salas. Faz dois anos que só cubro este prédio — nunca pisei nos outros dois museus.",
+      "relationWithCulture": "Contratado por uma empresa de vigilância; começou no museu há cinco meses.",
+      "profile": "Passa as noites sozinho entre as salas. Só trabalhou na unidade de Brumadinho.",
+      "portrait": "bruno-tavares.png",
+      "isCulprit": false,
+      "traits": {
+        "conservation_technique": "desconhecido",
+        "authorized_access": "sim",
+        "knows_collection_layout": "nao",
+        "smokes": "sim",
+        "initials_av": "nao",
+        "traveled_all_three": "nao"
+      }
+    },
+    {
+      "id": "renata_vilas",
+      "name": "Renata Vilas",
+      "age": 34,
+      "role": "Jornalista de patrimônio",
+      "summary": "Seguiu os três acervos de cidade em cidade atrás da mesma reportagem, sempre chegando um pouco depois do estrago. Anda com gravador no bolso e uma lista de perguntas que ninguém quer responder.",
+      "alibi": "Eu cheguei depois, como sempre. Nunca passei da recepção sem alguém do museu do meu lado — confira o livro de visitas.",
+      "relationWithCulture": "Cobre política cultural há dez anos e acompanhou os três eventos como repórter.",
+      "profile": "Escreveu reportagens acusando os museus de higienizar a história ao decidir o que fica na reserva.",
+      "portrait": "renata-vilas.png",
+      "isCulprit": false,
+      "traits": {
+        "conservation_technique": "nao",
+        "authorized_access": "nao",
+        "knows_collection_layout": "desconhecido",
+        "smokes": "desconhecido",
+        "initials_av": "nao",
+        "traveled_all_three": "sim"
+      }
+    },
+    {
+      "id": "anselmo_veiga",
+      "name": "Anselmo Veiga",
+      "age": 52,
+      "role": "Marchand e colecionador",
+      "summary": "Caça peças raras para revenda e é recebido pela direção sempre que aparece. Esteve nos três estados no último ano, sempre de cachimbo na mão.",
+      "alibi": "Eu compro e vendo peça pronta. Nunca limpei uma tela na vida: para isso eu pago um restaurador, como todo mundo.",
+      "relationWithCulture": "Compra e revende acervos particulares; frequentou os três acervos como convidado.",
+      "profile": "Para ele a coleção só tem valor de mercado — quanto mais organizada e catalogada, mais cara.",
+      "portrait": "anselmo-veiga.png",
+      "isCulprit": false,
+      "traits": {
+        "conservation_technique": "nao",
+        "authorized_access": "sim",
+        "knows_collection_layout": "nao",
+        "smokes": "sim",
+        "initials_av": "sim",
+        "traveled_all_three": "sim"
+      }
+    }
+  ]
+}

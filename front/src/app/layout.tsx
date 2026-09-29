@@ -1,10 +1,11 @@
 import Script from "next/script";
 import type { ReactNode } from "react";
+import { OfflineGate } from "@/components/OfflineGate";
 import PostHogPageView from "@/components/PostHogPageView";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
 import { ToastProvider } from "@/components/ToastProvider";
-import { AuthProvider } from "@/lib/auth/AuthContext";
+import { ConsentProvider } from "@/lib/consent/ConsentContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -24,20 +25,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         style={{ margin: 0, padding: 0, height: "100vh", overflow: "hidden" }}
       >
-        <PostHogProvider>
-          <ThemeRegistry>
-            <AuthProvider>
+        <ConsentProvider>
+          <PostHogProvider>
+            <ThemeRegistry>
               <ToastProvider>
                 <PostHogPageView />
-                {children}
+                <OfflineGate>{children}</OfflineGate>
               </ToastProvider>
-            </AuthProvider>
-          </ThemeRegistry>
-        </PostHogProvider>
-        <Script
-          src="https://t.contentsquare.net/uxa/bb88b6a708c9e.js"
-          strategy="afterInteractive"
-        />
+            </ThemeRegistry>
+          </PostHogProvider>
+        </ConsentProvider>
         <Script
           async
           src="https://www.googletagmanager.com/gtag/js?id=AW-18191558713"

@@ -16,8 +16,40 @@ export class UserService {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  /**
+   * `passwordHash` is `select: false` on the entity — excluded from
+   * `findByEmail` above by design. This explicit `addSelect` is the only
+   * path that should ever pull it into memory (#747 password login).
+   */
+  async findByEmailWithPasswordHash(email: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder("user")
+      .addSelect("user.passwordHash")
+      .where("user.email = :email", { email })
+      .getOne();
+  }
+
+  async setPasswordHash(userId: string, passwordHash: string): Promise<void> {
+    await this.userRepository.update({ id: userId }, { passwordHash });
+  }
+
   async findById(id: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id } });
+  }
+
+  async findByInstitutionSlug(institutionSlug: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { institutionSlug } });
+  }
+
+  async setInstitutionOnboarding(
+    userId: string,
+    institutionName: string,
+    institutionSlug: string,
+  ): Promise<void> {
+    await this.userRepository.update(
+      { id: userId },
+      { institutionName, institutionSlug },
+    );
   }
 
   async findByNickname(nickname: string): Promise<User | null> {

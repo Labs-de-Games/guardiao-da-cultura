@@ -23,9 +23,13 @@ export const MissionRequirements = [
     ],
   },
   {
-    // Mock: placeholder objective until the level 3 map has real interactives.
     id: MissionIds.CURATOR_L3,
-    requiredInfos: [MissionKeys.SCULPTURES_DONE],
+    requiredInfos: [
+      MissionKeys.DANCE_DONE,
+      MissionKeys.SWITCHES_DONE,
+      MissionKeys.STAGE_DONE,
+      MissionKeys.GENIUS_DONE,
+    ],
   },
 ];
 
@@ -71,7 +75,7 @@ export const MissionRegistry: Record<string, MissionDef> = {
       },
       {
         infoKey: MissionKeys.SCULPTURES_DONE,
-        text: "Reorganizar as esculturas do palco",
+        text: "Reorganizar as estátuas do palco",
         categoryType: InteractiveType.SCULPTURE,
       },
       {
@@ -81,15 +85,28 @@ export const MissionRegistry: Record<string, MissionDef> = {
       },
     ],
   },
-  // Mock: single placeholder step, not yet reachable in the map.
   [MissionIds.CURATOR_L3]: {
     id: MissionIds.CURATOR_L3,
     title: "Festa de São João",
     steps: [
       {
-        infoKey: MissionKeys.SCULPTURES_DONE,
-        text: "Reorganizar as esculturas da festa",
-        categoryType: InteractiveType.SCULPTURE,
+        infoKey: MissionKeys.DANCE_DONE,
+        text: "Remontar a sequência de passos da quadrilha",
+        categoryType: InteractiveType.STEP_SEQUENCE,
+      },
+      {
+        infoKey: MissionKeys.SWITCHES_DONE,
+        text: "Consertar as luzes do palco",
+      },
+      {
+        infoKey: MissionKeys.STAGE_DONE,
+        text: "Montar a banda de forró no palco",
+        categoryType: InteractiveType.BAND,
+      },
+      {
+        infoKey: MissionKeys.GENIUS_DONE,
+        text: "Afinar o acordeon",
+        categoryType: InteractiveType.GENIUS_SEQUENCE,
       },
     ],
   },

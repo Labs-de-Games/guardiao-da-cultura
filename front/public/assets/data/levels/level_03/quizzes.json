@@ -1,3 +1,80 @@
 {
-  "missao_curador_l3": []
+  "_comment": "PLACEHOLDER COPY. Provisional questions so the level_03 final quiz can be completed and hand off to the identification phase. Replace with the final script. Authoring convention: the first option is always the correct answer — prepareQuizQuestions() shuffles them at runtime.",
+  "missao_curador_l3": [
+    {
+      "id": "q1",
+      "category": "São João",
+      "question": "Qual destas danças é típica das festas juninas?",
+      "options": ["Quadrilha", "Frevo", "Samba", "Tango"],
+      "explanation": "A quadrilha é a dança das festas juninas. Os pares seguem passos em ordem, como o balancê.",
+      "hints": [
+        "É dançada em pares, com vários passos.",
+        "Você acabou de organizar os passos dela."
+      ],
+      "tags": ["quadrilha", "danca", "festajunina"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q2",
+      "category": "São João",
+      "question": "No trio de forró, quais instrumentos marcam o ritmo?",
+      "options": [
+        "Zabumba e triângulo",
+        "Sanfona e zabumba",
+        "Só a sanfona",
+        "Sanfona e triângulo"
+      ],
+      "explanation": "A sanfona puxa a melodia. A zabumba e o triângulo marcam o ritmo do forró.",
+      "hints": [
+        "A sanfona cuida da melodia.",
+        "Um é tambor e o outro é de metal."
+      ],
+      "tags": ["forro", "musica", "trio"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q3",
+      "category": "São João",
+      "question": "Qual é o apelido da sanfona de oito baixos?",
+      "options": ["Pé de bode", "Pé de serra", "Pé de moleque", "Pé de pano"],
+      "explanation": "A sanfona de oito baixos também é chamada de pé de bode. Pé de serra é um estilo de forró.",
+      "hints": [
+        "O nome lembra um animal.",
+        "Leia de novo a plaquinha da sanfona."
+      ],
+      "tags": ["sanfona", "forro", "musica"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q4",
+      "category": "São João",
+      "question": "Por que os passos da quadrilha seguem uma ordem certa?",
+      "options": [
+        "Os pares dançam juntos",
+        "Cada passo é sorteado",
+        "A música muda sempre",
+        "Ninguém nota erros"
+      ],
+      "explanation": "Na quadrilha, muitos pares dançam ao mesmo tempo. Com todos no mesmo passo, ninguém se esbarra.",
+      "hints": [
+        "Muitos pares dançam ao mesmo tempo.",
+        "Imagine um par girando enquanto o outro pula."
+      ],
+      "tags": ["quadrilha", "danca", "festajunina"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "q5",
+      "category": "São João",
+      "question": "Se a sanfona sair do trio de forró, o que a música perde?",
+      "options": ["A melodia", "O ritmo", "A dança", "O palco"],
+      "explanation": "A sanfona puxa a melodia. Sem ela, a zabumba e o triângulo seguem só com o ritmo.",
+      "hints": [
+        "A zabumba e o triângulo cuidam do ritmo.",
+        "Pense em quem puxa a música no trio."
+      ],
+      "tags": ["forro", "sanfona", "trio", "musica"],
+      "difficulty": "hard"
+    }
+  ]
 }
