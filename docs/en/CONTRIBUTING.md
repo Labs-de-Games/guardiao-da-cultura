@@ -263,6 +263,8 @@ run for a fork.
 
 - A maintainer reviews and merges. Expect questions — they are about the code,
   not about you.
+- GitHub requests a review from the owners of the paths you change. The
+  mapping of areas to people lives in [`.github/CODEOWNERS`](../../.github/CODEOWNERS).
 - Push follow-up commits rather than force-pushing over the review, so the
   reviewer can see what changed.
 - Merges use "Squash and merge" or "Rebase and merge".
