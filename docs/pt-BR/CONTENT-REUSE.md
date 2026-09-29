@@ -1,3 +1,5 @@
+🌐 [English](../en/CONTENT-REUSE.md) | Português (Brasil)
+
 # Adaptando o conteúdo
 
 As fases de Guardião da Cultura são **dados, não código**. Quizzes, diálogos,

@@ -1,3 +1,5 @@
+🌐 [English](../en/ARCHITECTURE.md) | Português (Brasil)
+
 # Visão geral da arquitetura
 
 Este documento descreve as decisões de arquitetura, os limites estruturais e a stack tecnológica do projeto Gameplate. Ele é a fonte única de verdade para o design técnico do sistema e substitui rascunhos estruturais mais antigos, refletindo o ferramental atual e modernizado e as restrições práticas do projeto.
