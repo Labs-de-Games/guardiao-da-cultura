@@ -1,19 +1,26 @@
+import { Logger } from "@nestjs/common";
 import type { ConfigService } from "../../../src/core/config/config.service";
 import { PostHogService } from "../../../src/modules/posthog/posthog.service";
 
 const mockCapture = jest.fn();
 const mockCaptureException = jest.fn();
+const mockGetAllFlags = jest.fn();
 jest.mock("posthog-node", () => ({
   PostHog: jest.fn().mockImplementation(() => ({
     capture: mockCapture,
     captureException: mockCaptureException,
+    getAllFlags: mockGetAllFlags,
     shutdown: jest.fn(),
   })),
 }));
 
-function makeService(appEnv: string, nodeEnv = "production"): PostHogService {
+function makeService(
+  appEnv: string,
+  nodeEnv = "production",
+  posthogApiKey = "phc_test",
+): PostHogService {
   const config = {
-    posthogApiKey: "phc_test",
+    posthogApiKey,
     posthogHost: "https://us.i.posthog.com",
     appEnv,
     nodeEnv,
@@ -103,5 +110,87 @@ describe("PostHogService — environment tag", () => {
       expect(payload).not.toHaveProperty("consent");
       expect(payload.properties).not.toHaveProperty("consent");
     });
+  });
+});
+
+describe("PostHogService — guest_play_enabled kill switch (#880)", () => {
+  beforeEach(() => {
+    mockGetAllFlags.mockReset();
+  });
+
+  it("is unknown and fail-closed when there is no PostHog client", async () => {
+    const service = makeService("staging", "production", "");
+
+    expect(await service.getGuestPlayFlag()).toBeUndefined();
+    expect(await service.isGuestPlayEnabled()).toBe(false);
+    expect(mockGetAllFlags).not.toHaveBeenCalled();
+  });
+
+  it("is unknown and fail-closed when the PostHog call fails", async () => {
+    mockGetAllFlags.mockRejectedValue(new Error("network down"));
+    const service = makeService("staging");
+    const logError = jest
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+
+    expect(await service.getGuestPlayFlag()).toBeUndefined();
+    expect(await service.isGuestPlayEnabled()).toBe(false);
+    expect(logError).toHaveBeenCalled();
+    logError.mockRestore();
+  });
+
+  it("is unknown and fail-closed when the flag is not defined", async () => {
+    mockGetAllFlags.mockResolvedValue({});
+    const service = makeService("staging");
+
+    expect(await service.getGuestPlayFlag()).toBeUndefined();
+    expect(await service.isGuestPlayEnabled()).toBe(false);
+  });
+
+  it("is unknown when the flag is not a boolean", async () => {
+    mockGetAllFlags.mockResolvedValue({ guest_play_enabled: "variant-a" });
+
+    expect(await makeService("staging").getGuestPlayFlag()).toBeUndefined();
+  });
+
+  it("passes an explicit false through", async () => {
+    mockGetAllFlags.mockResolvedValue({ guest_play_enabled: false });
+    const service = makeService("staging");
+
+    expect(await service.getGuestPlayFlag()).toBe(false);
+    expect(await service.isGuestPlayEnabled()).toBe(false);
+  });
+
+  it("passes an explicit true through", async () => {
+    mockGetAllFlags.mockResolvedValue({ guest_play_enabled: true });
+    const service = makeService("staging");
+
+    expect(await service.getGuestPlayFlag()).toBe(true);
+    expect(await service.isGuestPlayEnabled()).toBe(true);
+  });
+
+  it("evaluates the flag under the server id, never a player id", async () => {
+    mockGetAllFlags.mockResolvedValue({ guest_play_enabled: true });
+
+    await makeService("staging").getGuestPlayFlag();
+
+    expect(mockGetAllFlags).toHaveBeenCalledWith("nestjs-server");
+  });
+
+  it("caches the answer, including an unknown one", async () => {
+    mockGetAllFlags.mockResolvedValue({});
+    const service = makeService("staging");
+
+    await service.getGuestPlayFlag();
+    await service.isGuestPlayEnabled();
+
+    expect(mockGetAllFlags).toHaveBeenCalledTimes(1);
+  });
+
+  it("is always enabled in development without asking PostHog", async () => {
+    const service = makeService("local", "development");
+
+    expect(await service.getGuestPlayFlag()).toBe(true);
+    expect(mockGetAllFlags).not.toHaveBeenCalled();
   });
 });
