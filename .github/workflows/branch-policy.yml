@@ -34,6 +34,13 @@ jobs:
             exit 1
           fi
 
+          # Back-merge after a release or hotfix, to bring master's merge commits
+          # into develop.
+          if [[ "$HEAD_REF" == master && "$BASE_REF" == develop ]]; then
+            echo "OK: back-merge master -> develop"
+            exit 0
+          fi
+
           pattern='^(feat|fix|docs|chore|refactor|test|style|ci|hotfix|release)/[a-z0-9._-]+$'
           if [[ ! "$HEAD_REF" =~ $pattern ]]; then
             echo "::error::Branch name '$HEAD_REF' does not match $pattern. $guide"
