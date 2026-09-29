@@ -6,7 +6,7 @@
  * the new text) whenever the wording in `/privacidade` changes at all —
  * including corrections too small to be worth re-asking about.
  */
-export const PRIVACY_NOTICE_VERSION = "2026-09-28";
+export const PRIVACY_NOTICE_VERSION = "2026-09-29";
 
 /**
  * The oldest notice version that still counts as valid consent.

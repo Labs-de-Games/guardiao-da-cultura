@@ -29,10 +29,15 @@ const dt = { color: "#d9ad56" } as const;
  * belongs to a Terms of Use page, not to this decision.
  *
  * Every factual claim below was checked against the code, and where the draft
- * and the code disagree the code wins (see the Contentsquare / Google Ads note
- * in §"Coletas que não dependem da sua escolha"). Keep it that way: the legal
- * framing is what review is expected to change, the behaviour described is not
- * allowed to drift.
+ * and the code disagree the code wins (see the Google Ads note in §"Coletas que
+ * não dependem da sua escolha"). Keep it that way: the legal framing is what
+ * review is expected to change, the behaviour described is not allowed to
+ * drift.
+ *
+ * The draft's "Hotjar" and the Contentsquare tag this page used to disclose
+ * were one and the same vendor — Hotjar is a Contentsquare product, and the
+ * commit that added `t.contentsquare.net/uxa/` called it "hotjar". Both are
+ * gone: the tag was removed from the root layout, so neither name belongs here.
  */
 export default function PrivacyNoticePage() {
   return (
@@ -213,10 +218,6 @@ export default function PrivacyNoticePage() {
             <strong>apenas no seu próprio navegador</strong>, não nos nossos
             servidores. É o seu jogo salvo, não uma medição sobre você, e limpar
             os dados do navegador apaga esse progresso.
-          </li>
-          <li>
-            <strong>Contentsquare</strong> — serviço de terceiros que analisa a
-            navegação nas páginas.
           </li>
           <li>
             <strong>Google Ads</strong> — medição de conversão de anúncios.
