@@ -311,6 +311,27 @@ export default function PrivacyNoticePage() {
           .
         </p>
 
+        <h2 style={h2}>Código aberto</h2>
+        <p>
+          O código do Guardião da Cultura é público, sob licença MIT, em{" "}
+          <a
+            href="https://github.com/Labs-de-Games/guardiao-da-cultura"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#d9ad56" }}
+          >
+            github.com/Labs-de-Games/guardiao-da-cultura
+          </a>
+          . Ou seja: tudo o que este aviso descreve pode ser conferido por
+          qualquer pessoa, no próprio código — quais eventos são enviados, para
+          onde, e o que acontece quando você recusa.
+        </p>
+        <p>
+          O repositório contém código e conteúdo do jogo. Ele{" "}
+          <strong>não</strong> contém dados de jogadores: nada do que é coletado
+          durante o jogo é publicado ali.
+        </p>
+
         <h2 style={h2}>Alterações deste aviso</h2>
         <p>
           Mudanças relevantes indicarão nova versão e data de vigência e, quando

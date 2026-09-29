@@ -156,6 +156,31 @@ export function TermsContent() {
         de funcionalidade e correções sem aviso prévio.
       </p>
 
+      <h2 style={h2}>Código aberto e licença</h2>
+      <p>
+        O código do Guardião da Cultura é público, sob licença MIT, em{" "}
+        <a
+          href="https://github.com/Labs-de-Games/guardiao-da-cultura"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={linkStyle}
+        >
+          github.com/Labs-de-Games/guardiao-da-cultura
+        </a>
+        . A licença cobre o código; marcas, identidade visual e conteúdo de
+        terceiros seguem as condições indicadas no próprio repositório.
+      </p>
+      <p>
+        O repositório é público, mas a sua conta e os números do painel não são:
+        nada de cadastro, credencial ou dado de uso da sua instituição é
+        publicado ali.
+      </p>
+      <p>
+        Ser aberto não transfere a operação do serviço. Estes termos valem para
+        o painel operado pela responsável identificada acima, não para cópias
+        que terceiros venham a hospedar por conta própria.
+      </p>
+
       <h2 style={h2}>Alterações destes termos</h2>
       <p>
         Estes termos podem ser revisados. Cada versão é identificada pela sua

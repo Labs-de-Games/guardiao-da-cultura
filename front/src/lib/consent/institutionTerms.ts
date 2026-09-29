@@ -13,7 +13,7 @@
  * shared package between front and back, the same deliberate duplication
  * already documented for INSTITUTION_SLUG_PATTERN.
  */
-export const INSTITUTION_TERMS_VERSION = "2026-09-28";
+export const INSTITUTION_TERMS_VERSION = "2026-09-29";
 
 /**
  * The oldest accepted version that still counts as valid consent.
@@ -28,7 +28,7 @@ export const INSTITUTION_TERMS_VERSION = "2026-09-28";
  * back/src/shared/consent/institution-terms.ts — the backend is the side that
  * actually enforces it.
  */
-export const TERMS_RECONSENT_REQUIRED_FROM = "2026-09-28";
+export const TERMS_RECONSENT_REQUIRED_FROM = "2026-09-29";
 
 /** Route of the Terms of Use, linked from every acceptance checkbox. */
 export const INSTITUTION_TERMS_PATH = "/termos";

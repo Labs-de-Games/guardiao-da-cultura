@@ -21,7 +21,7 @@ export const PRIVACY_NOTICE_VERSION = "2026-09-29";
  * Both constants are ISO `YYYY-MM-DD` dates, so a lexicographic `<` is also a
  * chronological one.
  */
-export const RECONSENT_REQUIRED_FROM = "2026-09-28";
+export const RECONSENT_REQUIRED_FROM = "2026-09-29";
 
 /** Route of the privacy notice, linked from the banner and the settings panel. */
 export const PRIVACY_NOTICE_PATH = "/privacidade";

@@ -13,7 +13,7 @@
  * duplication already documented for INSTITUTION_SLUG_PATTERN and for the
  * analytics notice constants.
  */
-export const INSTITUTION_TERMS_VERSION = "2026-09-28";
+export const INSTITUTION_TERMS_VERSION = "2026-09-29";
 
 /**
  * The oldest accepted version that still counts as valid consent.
@@ -30,7 +30,7 @@ export const INSTITUTION_TERMS_VERSION = "2026-09-28";
  * MUST match TERMS_RECONSENT_REQUIRED_FROM in
  * front/src/lib/consent/institutionTerms.ts.
  */
-export const TERMS_RECONSENT_REQUIRED_FROM = "2026-09-28";
+export const TERMS_RECONSENT_REQUIRED_FROM = "2026-09-29";
 
 const TERMS_VERSION_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
