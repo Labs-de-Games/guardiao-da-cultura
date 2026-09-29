@@ -31,17 +31,19 @@ export class PostHogController {
 
     // Issue #864: before the player consents, no identifier of theirs may
     // reach PostHog. `guest_play_enabled` still has to be resolved — it is the
-    // kill switch deciding whether the game is playable at all, and blocking
-    // it would cost every undecided player PlayerGuard's 5s timeout. It is a
-    // global flag, so evaluating it under the constant server-side id returns
-    // the same answer, and `isGuestPlayEnabled()` additionally caches it for
-    // 30s — so most pre-consent page loads reach PostHog not at all.
+    // kill switch deciding whether the game is playable at all — so it is
+    // evaluated under the constant server-side id and cached for 30s.
+    //
+    // Issue #880: that id may not match the flag's rollout, or PostHog may be
+    // unreachable. An unknown value stays absent, exactly as in the consented
+    // branch below, so PlayerGuard's timeout lets the player in. Only an
+    // explicit `false` from PostHog blocks the game.
     if (!readAnalyticsConsent(request)) {
+      const guestPlay = await this.posthog.getGuestPlayFlag();
       return {
         distinctId: "",
-        featureFlags: {
-          guest_play_enabled: await this.posthog.isGuestPlayEnabled(),
-        },
+        featureFlags:
+          guestPlay === undefined ? {} : { guest_play_enabled: guestPlay },
       };
     }
 
