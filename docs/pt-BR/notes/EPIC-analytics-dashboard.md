@@ -79,4 +79,4 @@ Implicações:
 - `front/src/game/scenes/Game.ts`
 - `front/src/game/objects/InteractionComponent.ts`
 - `EVENTS.md`
-- `docs/EPIC-analytics-dashboard.md`
+- `docs/pt-BR/notes/EPIC-analytics-dashboard.md`

@@ -119,7 +119,7 @@ export default function PhaserGame() {
       // existing generic EVENT_LOGGED type — no new enum value needed —
       // so #748's "keep the legacy dashboard as a fallback" promise has
       // something to show. Closes the same pendency tracked in
-      // docs/EPIC-analytics-dashboard.md ("emit event.logged for critical
+      // docs/pt-BR/notes/EPIC-analytics-dashboard.md ("emit event.logged for critical
       // errors").
       sendGameEvent({
         userId: playerIdRef.current ?? undefined,

@@ -47,7 +47,7 @@ QA example: qa-v1.0.0 -> Validation version 1.0.0, \<Reason for the fix\>
 
 ### **Version and Deployment History**
 
-See [docs/CHANGELOG.md](./CHANGELOG.md) for the full per-version changelog. Deployment history lives in the Coolify dashboard; its address is internal and is shared with maintainers privately.
+See [docs/CHANGELOG.md](../CHANGELOG.md) for the full per-version changelog. Deployment history lives in the Coolify dashboard; its address is internal and is shared with maintainers privately.
 
 ## **4. Step-by-Step Execution Process**
 

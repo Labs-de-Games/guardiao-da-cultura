@@ -242,7 +242,7 @@ export class QuizManager {
               });
 
               // Canonical funnel step — only chapter 1 has one; see the
-              // 7-step funnel in docs/specs/edital-onepager.md. Emitted
+              // 7-step funnel in docs/en/specs/edital-onepager.md. Emitted
               // after quiz_completed above, never before: the issue's own
               // acceptance criterion orders the funnel
               // "...quiz_completed → chapter_1_completed", and this used

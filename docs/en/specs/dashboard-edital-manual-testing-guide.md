@@ -6,7 +6,7 @@
 > query/cache layer, the institution dashboard (overview/funnel/report/links),
 > per-turma campaign links, and the public aggregate dashboard.
 > **Target Audience:** QA / reviewers validating this branch before merge.
-> Mirrors the structure of `docs/specs/auth-manual-testing-guide.md`; read
+> Mirrors the structure of `docs/en/specs/auth-manual-testing-guide.md`; read
 > that guide first if you haven't tested the base auth system yet — this
 > guide assumes the reader already knows how NextAuth sessions, cookies, and
 > rate limiting work in this repo and focuses only on what's new here.

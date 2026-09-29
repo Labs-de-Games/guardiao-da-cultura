@@ -265,7 +265,7 @@ Push a trivial commit to `develop` and confirm the staging workflow builds and t
 1. **Set up backups on the new VPS before decommissioning anything.** The old server is the only backup until this exists. A nightly `pg_dump -Fc` to off-host storage (S3/R2/Backblaze) via cron, with a documented restore test, is the minimum. Coolify also has scheduled-backup support for Postgres services.
 2. **Keep the old server powered on but stopped for 7–14 days.** Cheap insurance: it holds the last known-good database and configuration. Do not delete its volumes until backups on the new host have been restore-tested at least once.
 3. **Keep the final dump file** archived off both hosts.
-4. **Update the docs to match reality.** `README.md` (CI/CD and Environment Variables sections) and `docs/ARCHITECTURE.md` (Infrastructure) describe the deployment; if anything about the new host differs (Coolify version, VPS provider, backup process, the manual migration step), record it. Also worth adding: a production-safe `db-migrate` Makefile target, since only the dev one exists today.
+4. **Update the docs to match reality.** `README.md` (CI/CD and Environment Variables sections) and `docs/en/ARCHITECTURE.md` (Infrastructure) describe the deployment; if anything about the new host differs (Coolify version, VPS provider, backup process, the manual migration step), record it. Also worth adding: a production-safe `db-migrate` Makefile target, since only the dev one exists today.
 5. **Decommission** the old server once the window has passed and backups are proven.
 
 ## Rollback

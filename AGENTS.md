@@ -10,8 +10,8 @@ AI agents accelerate development by handling scaffolding, configuration, and rep
 
 Before making any changes, read these documents in order:
 
-1. **[CONTRIBUTING.md](./docs/CONTRIBUTING.md)** — Development workflow, branch strategy, commit conventions, and code standards. This is the primary guide for how work is done in this repository.
-2. **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System architecture, domain model, and API contracts. Understand the structure before modifying code.
+1. **[CONTRIBUTING.md](./docs/en/CONTRIBUTING.md)** — Development workflow, branch strategy, commit conventions, and code standards. This is the primary guide for how work is done in this repository.
+2. **[ARCHITECTURE.md](./docs/en/ARCHITECTURE.md)** — System architecture, domain model, and API contracts. Understand the structure before modifying code.
 3. **Nearest `AGENTS.md`** — If working in `/front/` or `/back/`, read the respective `AGENTS.md` for package-specific conventions.
 
 Always follow the conventions in CONTRIBUTING.md unless the nearest AGENTS.md explicitly overrides them.
@@ -265,6 +265,6 @@ The nearest `AGENTS.md` in the directory tree takes precedence for context-speci
 
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [README.md](./README.md) - Project overview
-- [CONTRIBUTING.md](./docs/CONTRIBUTING.md) - Development workflow and standards
-- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - System architecture and API contracts
+- [CONTRIBUTING.md](./docs/en/CONTRIBUTING.md) - Development workflow and standards
+- [ARCHITECTURE.md](./docs/en/ARCHITECTURE.md) - System architecture and API contracts
 - [GitHub Issues](https://github.com/Labs-de-Games/gameplate/issues) - Issue tracker and project board

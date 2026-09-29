@@ -40,7 +40,7 @@ marked accounts verified immediately with no email step at all.
 
 ## Step 0 — Onepager + #739(a)(b)(c) answers — ✅ done
 
-`docs/specs/edital-onepager.md` exists, with the 7-step funnel and `EDITAL_PERIOD_START` both
+`docs/en/specs/edital-onepager.md` exists, with the 7-step funnel and `EDITAL_PERIOD_START` both
 recorded. The three spike questions were answered and are reflected in what was actually built:
 
 - **(a) `windowFunnel`**: implemented with an explicit fallback path — `queries.ts` uses
@@ -61,7 +61,7 @@ Attribution model (event property, not person property) shipped as decided — s
 All three compose files (`compose.development.yaml`, `compose.staging.yaml`,
 `compose.production.yaml`) carry `AUTH_TRUST_HOST` and `AUTH_OAUTH_UPSERT_TOKEN`. `.env.example`
 documents `POSTHOG_PERSONAL_API_KEY` (the `phx_` personal key, distinct from the `phc_` write key),
-`AUTH_TRUST_HOST`, and `AUTH_OAUTH_UPSERT_TOKEN`. `docs/specs/posthog-implementation-plan.md` was
+`AUTH_TRUST_HOST`, and `AUTH_OAUTH_UPSERT_TOKEN`. `docs/en/specs/posthog-implementation-plan.md` was
 amended with the server-only personal-key exception the plan called for. Replica count (1) and its
 implication for the module cache are recorded in code comments in `metrics.ts`, not left as a
 standalone issue note.
@@ -218,7 +218,7 @@ still use.
 `analytics.controller.ts` and `dashboard.controller.ts` (the hardcoded-fake-data and duplicate
 controllers) are deleted. The dead front wrapper `front/src/lib/api/analytics.ts` is deleted.
 `EVENTS.md` corrects the `game_load_failed`/asset-load claim as planned.
-`docs/specs/posthog-implementation-plan.md` carries the server-only personal-key exception. The
+`docs/en/specs/posthog-implementation-plan.md` carries the server-only personal-key exception. The
 coexisting-analytics-stacks note is recorded in `EVENTS.md`, declaring PostHog the sole source of
 truth for the edital. It listed four stacks when written (PostHog, Postgres pipeline, Contentsquare,
 Google Ads gtag); Contentsquare was removed in 2026-09-29 and the note now lists three.
