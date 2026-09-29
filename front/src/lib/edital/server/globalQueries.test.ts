@@ -7,7 +7,11 @@ import { resetServerEnv } from "../../env-server";
 
 import * as globalQueries from "./globalQueries";
 import {
+  buildGlobalCompletionRateQuery,
   buildGlobalOriginSplitQuery,
+  buildGlobalPhaseProgressionQuery,
+  buildGlobalPhaseReachedQuery,
+  buildGlobalPhaseStarsQuery,
   buildInstitutionCountQuery,
   buildTurmaCountQuery,
 } from "./globalQueries";
@@ -98,6 +102,32 @@ describe("public dashboard query builders", () => {
     expect(query).toContain("properties.environment = {environment}");
     // test-setup.ts runs the suite as "development", with no AUTH_URL.
     expect(values).toMatchObject({ environment: "development" });
+  });
+});
+
+describe("public dashboard — level 4 (the investigation)", () => {
+  it("counts finishing the game as completing the investigation", () => {
+    expect(buildGlobalCompletionRateQuery(range).query).toContain(
+      "uniqExactIf(properties.anonymous_player_id, event = 'investigation_completed') AS completed",
+    );
+  });
+
+  it("adds a level 4 step to the phase progression", () => {
+    expect(buildGlobalPhaseProgressionQuery(range).query).toContain(
+      "uniqExactIf(properties.anonymous_player_id, event = 'investigation_completed') AS level_4_completed",
+    );
+  });
+
+  it("counts investigation_opened as reaching level 4", () => {
+    expect(buildGlobalPhaseReachedQuery(range).query).toContain(
+      "event IN ('game_started', 'investigation_opened')",
+    );
+  });
+
+  it("builds the per-level stars query", () => {
+    expect(buildGlobalPhaseStarsQuery(range).query).toContain(
+      "avg(best_stars) AS avg_stars",
+    );
   });
 });
 

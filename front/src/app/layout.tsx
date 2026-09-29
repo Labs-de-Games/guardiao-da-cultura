@@ -5,6 +5,7 @@ import PostHogPageView from "@/components/PostHogPageView";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeRegistry } from "@/components/ThemeRegistry";
 import { ToastProvider } from "@/components/ToastProvider";
+import { ConsentProvider } from "@/lib/consent/ConsentContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -24,18 +25,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         style={{ margin: 0, padding: 0, height: "100vh", overflow: "hidden" }}
       >
-        <PostHogProvider>
-          <ThemeRegistry>
-            <ToastProvider>
-              <PostHogPageView />
-              <OfflineGate>{children}</OfflineGate>
-            </ToastProvider>
-          </ThemeRegistry>
-        </PostHogProvider>
-        <Script
-          src="https://t.contentsquare.net/uxa/bb88b6a708c9e.js"
-          strategy="afterInteractive"
-        />
+        <ConsentProvider>
+          <PostHogProvider>
+            <ThemeRegistry>
+              <ToastProvider>
+                <PostHogPageView />
+                <OfflineGate>{children}</OfflineGate>
+              </ToastProvider>
+            </ThemeRegistry>
+          </PostHogProvider>
+        </ConsentProvider>
         <Script
           async
           src="https://www.googletagmanager.com/gtag/js?id=AW-18191558713"

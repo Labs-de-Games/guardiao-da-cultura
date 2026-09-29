@@ -73,8 +73,9 @@ export async function runHogQLQuery(
   options: RunHogQLQueryOptions = {},
 ): Promise<HogQLQueryResult> {
   // Local development only — see mockData.ts.
-  if (editalMockDataScenario()) {
-    return await mockHogQLResult(query, values);
+  const mockScenario = editalMockDataScenario();
+  if (mockScenario) {
+    return await mockHogQLResult(query, values, mockScenario);
   }
 
   if (!isEditalPosthogConfigured()) {

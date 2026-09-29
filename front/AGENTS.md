@@ -9,7 +9,7 @@ This document defines frontend-specific conventions for AI agents working in `/f
 | Framework | Next.js (App Router) |
 | UI Library | Material UI (MUI) v9 |
 | Styling | Emotion (CSS-in-JS) |
-| Game Engine | Phaser 3.90 |
+| Game Engine | Phaser 4.2 |
 | State | React hooks + Context |
 | HTTP | Axios |
 | Forms | React Hook Form + Zod |
@@ -44,7 +44,7 @@ front/src/
 │   ├── auth/               # AuthContext, hooks, cookies, sync
 │   ├── env.ts              # Zod-validated environment variables
 │   └── theme.ts            # MUI theme configuration
-└── game/                   # Phaser 3 game domain (isolated from React)
+└── game/                   # Phaser game domain (isolated from React)
     ├── scenes/             # Game scenes
     ├── objects/            # Game objects, UI panels, managers
     ├── mechanics/          # Game mechanic handlers

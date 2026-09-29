@@ -5,6 +5,7 @@ import { ConfigService } from "../../core/config/config.service";
 import { CurrentUser } from "../../modules/auth/decorators/current-user.decorator";
 import { Public } from "../../modules/auth/decorators/public.decorator";
 import type { User } from "../../modules/users/user.entity";
+import { readAnalyticsConsent } from "../../shared/consent/analytics-consent";
 import { readAnonymousPlayerCookie } from "../../shared/edital/anonymous-player-cookie";
 import { PostHogBootstrapQueryDto } from "./dto/posthog-bootstrap-query.dto";
 import { PostHogService } from "./posthog.service";
@@ -27,6 +28,23 @@ export class PostHogController {
     featureFlags: Record<string, string | boolean | number>;
   }> {
     const client = this.posthog.getClient();
+
+    // Issue #864: before the player consents, no identifier of theirs may
+    // reach PostHog. `guest_play_enabled` still has to be resolved — it is the
+    // kill switch deciding whether the game is playable at all, and blocking
+    // it would cost every undecided player PlayerGuard's 5s timeout. It is a
+    // global flag, so evaluating it under the constant server-side id returns
+    // the same answer, and `isGuestPlayEnabled()` additionally caches it for
+    // 30s — so most pre-consent page loads reach PostHog not at all.
+    if (!readAnalyticsConsent(request)) {
+      return {
+        distinctId: "",
+        featureFlags: {
+          guest_play_enabled: await this.posthog.isGuestPlayEnabled(),
+        },
+      };
+    }
+
     // Precedence: authenticated user > the durable, server-set cookie >
     // the validated query parameter (needed for the cross-origin local-dev
     // gap the cookie can't cross, and for sendBeacon calls that can't set

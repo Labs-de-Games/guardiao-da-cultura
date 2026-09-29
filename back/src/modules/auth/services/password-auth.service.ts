@@ -91,6 +91,11 @@ export class PasswordAuthService {
     await this.emailService.sendVerificationEmail(user.email, verificationUrl);
 
     this.posthog.capture({
+      // Account-lifecycle event for a registered (institution) account, not
+      // the anonymous player the #864 banner addresses — a different data
+      // subject, who never sees the game's consent banner. Gating it on that
+      // cookie would suppress institution analytics outright.
+      consent: true,
       event: "user_registered",
       distinctId: user.id,
       properties: { method: "password" },
@@ -143,6 +148,8 @@ export class PasswordAuthService {
     await this.userService.updateLastLoginAt(user.id);
 
     this.posthog.capture({
+      // See the note on `user_registered` above.
+      consent: true,
       event: "user_logged_in",
       distinctId: user.id,
       properties: { method: "password" },
@@ -194,6 +201,8 @@ export class PasswordAuthService {
     await this.emailService.sendWelcomeEmail(user.email, user.nickname);
 
     this.posthog.capture({
+      // See the note on `user_registered` above.
+      consent: true,
       event: "user_verified",
       distinctId: user.id,
       properties: { method: "password" },
@@ -250,6 +259,8 @@ export class PasswordAuthService {
 
     this.logger.info({ userId: token.user.id }, "Password reset completed");
     this.posthog.capture({
+      // See the note on `user_registered` above.
+      consent: true,
       event: "password_reset_completed",
       distinctId: token.user.id,
       properties: {},

@@ -3,6 +3,7 @@ import { create } from "zustand";
 import {
   INVESTIGATION_CLUE_HEARTS,
   INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_LEVEL_NUMBER,
   INVESTIGATION_MAX_WRONG_ATTEMPTS,
   INVESTIGATION_SLOTS,
   starsForWrongAttempts,
@@ -253,6 +254,12 @@ export interface GameUIState {
   evidenceBoardOpen: boolean;
   evidenceBoardSelectedClueId: string | null;
   creditsOpen: boolean;
+  /**
+   * Privacy settings panel. Lives in the store rather than in the component so
+   * `MapIntroScene` can read it synchronously when deciding whether map input
+   * — including the auto-start countdown — is allowed to begin a level.
+   */
+  privacyOpen: boolean;
 
   /**
    * Suspect identification phase. Kept apart from the components that render it
@@ -397,6 +404,7 @@ export interface GameUIState {
   setEvidenceBoardOpen: (open: boolean) => void;
   setEvidenceBoardSelectedClueId: (id: string | null) => void;
   setCreditsOpen: (open: boolean) => void;
+  setPrivacyOpen: (open: boolean) => void;
 
   openInvestigation: (payload: InvestigationPayload) => void;
   closeInvestigation: () => void;
@@ -552,6 +560,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     evidenceBoardOpen: false,
     evidenceBoardSelectedClueId: null,
     creditsOpen: false,
+    privacyOpen: false,
 
     investigation: { ...EMPTY_INVESTIGATION },
 
@@ -581,9 +590,15 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     setLevelTransitionActive: (active) =>
       set(
         active
-          ? // The hand-off owns the screen: dismiss the credits crawl along
-            // with the rest of the map-only UI so it cannot outlive the map.
-            { levelTransitionActive: true, creditsOpen: false }
+          ? // The hand-off owns the screen: dismiss the credits crawl and the
+            // privacy panel along with the rest of the map-only UI so neither
+            // can outlive the map. A panel left mounted over a running level
+            // holds DOM focus and swallows the keys the player needs to move.
+            {
+              levelTransitionActive: true,
+              creditsOpen: false,
+              privacyOpen: false,
+            }
           : { levelTransitionActive: false },
       ),
     startGame: () => {
@@ -812,6 +827,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     setEvidenceBoardSelectedClueId: (id) =>
       set({ evidenceBoardSelectedClueId: id }),
     setCreditsOpen: (open) => set({ creditsOpen: open }),
+    setPrivacyOpen: (open) => set({ privacyOpen: open }),
 
     openInvestigation: (payload) =>
       set({
@@ -915,6 +931,7 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
 
       posthog.capture("investigation_clue_placed", {
         level_id: INVESTIGATION_LEVEL_ID,
+        level_number: INVESTIGATION_LEVEL_NUMBER,
         clue_key: clueKey,
         clue_source: clue.source,
         trait_id: clue.traitId,

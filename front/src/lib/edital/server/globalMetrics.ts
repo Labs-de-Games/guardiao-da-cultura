@@ -1,6 +1,6 @@
 import "server-only";
 import { safeRate } from "../rate";
-import type { Rate } from "../types";
+import type { PhaseStars, Rate } from "../types";
 import {
   buildGlobalCompletionRateQuery,
   buildGlobalEntryRateQuery,
@@ -9,6 +9,7 @@ import {
   buildGlobalPhaseProgressionQuery,
   buildGlobalPhaseQuizPassRateQuery,
   buildGlobalPhaseReachedQuery,
+  buildGlobalPhaseStarsQuery,
   buildGlobalPlayersQuery,
   buildGlobalPlayerTrendQuery,
   buildGlobalSessionDurationQuery,
@@ -16,8 +17,8 @@ import {
   buildTurmaCountQuery,
 } from "./globalQueries";
 import { runHogQLQuery } from "./hogql";
-import { FINAL_LEVEL_NUMBER, ORDERED_LEVELS } from "./levels";
-import { withCache } from "./metrics";
+import { DASHBOARD_LEVELS } from "./levels";
+import { EMPTY_PHASE_STARS, rowsToStarsMap, withCache } from "./metrics";
 import { toNumber } from "./numeric";
 import type { ResolvedDateRange } from "./period";
 import { rowsToLevelMap } from "./rows";
@@ -81,10 +82,7 @@ export async function fetchGlobalCompletionRate(
 ): Promise<Rate> {
   const key = `global:completion-rate:${rangeKey(range)}`;
   return withCache(key, async () => {
-    const { query, values } = buildGlobalCompletionRateQuery(
-      range,
-      FINAL_LEVEL_NUMBER,
-    );
+    const { query, values } = buildGlobalCompletionRateQuery(range);
     const result = await runHogQLQuery(query, values);
     const [started, completed] = result.results[0] ?? [0, 0];
     return safeRate(toNumber(completed), toNumber(started));
@@ -109,7 +107,7 @@ export interface GlobalPhaseProgressionStep {
   players: number;
 }
 
-/** #808 P0 — progressão agregada: Iniciaram → Fase 1 → Fase 2 → Fase 3. */
+/** #808 P0 — progressão agregada: Iniciaram → Fase 1 → … → Fase 4. */
 export async function fetchGlobalPhaseProgression(
   range: ResolvedDateRange,
 ): Promise<GlobalPhaseProgressionStep[]> {
@@ -125,7 +123,7 @@ export async function fetchGlobalPhaseProgression(
 
     return [
       { label: "Iniciaram o jogo", players: values_.started ?? 0 },
-      ...ORDERED_LEVELS.map((level) => ({
+      ...DASHBOARD_LEVELS.map((level) => ({
         label: `Concluíram Fase ${level.levelNumber}`,
         players: values_[`level_${level.levelNumber}_completed`] ?? 0,
       })),
@@ -137,19 +135,21 @@ export interface GlobalPhaseDetail {
   levelId: string;
   levelNumber: number;
   label: string;
-  /** Unique players who reached this level (game_started). */
+  /** Unique players who reached this level (game_started / investigation_opened). */
   reached: number;
-  /** Unique players who completed this level (level_completed). */
+  /** Unique players who completed this level (level_completed / investigation_completed). */
   completed: number;
-  quizPassRate: Rate;
+  /** `null` for a level with no quiz (the investigation). */
+  quizPassRate: Rate | null;
+  stars: PhaseStars;
 }
 
 /**
  * Per-level detail for the "Desempenho por nível" switcher panel
- * (reference's "Desempenho por etapa"): reached/completed counts plus
- * quiz pass rate, one entry per real level — never a single blended
- * "capítulo 1" panel like the reference, since the game has 3 levels,
- * not one chapter.
+ * (reference's "Desempenho por etapa"): reached/completed counts, quiz
+ * pass rate and stars, one entry per real level — never a single blended
+ * "capítulo 1" panel like the reference, since the game has several
+ * levels, not one chapter.
  */
 export async function fetchGlobalPhaseDetail(
   range: ResolvedDateRange,
@@ -159,11 +159,14 @@ export async function fetchGlobalPhaseDetail(
     const reachedPlan = buildGlobalPhaseReachedQuery(range);
     const completedPlan = buildGlobalPhaseCompletionQuery(range);
     const quizPlan = buildGlobalPhaseQuizPassRateQuery(range);
-    const [reachedResult, completedResult, quizResult] = await Promise.all([
-      runHogQLQuery(reachedPlan.query, reachedPlan.values),
-      runHogQLQuery(completedPlan.query, completedPlan.values),
-      runHogQLQuery(quizPlan.query, quizPlan.values),
-    ]);
+    const starsPlan = buildGlobalPhaseStarsQuery(range);
+    const [reachedResult, completedResult, quizResult, starsResult] =
+      await Promise.all([
+        runHogQLQuery(reachedPlan.query, reachedPlan.values),
+        runHogQLQuery(completedPlan.query, completedPlan.values),
+        runHogQLQuery(quizPlan.query, quizPlan.values),
+        runHogQLQuery(starsPlan.query, starsPlan.values),
+      ]);
 
     const reachedByLevel = rowsToLevelMap(reachedResult.results, (row) =>
       toNumber(row[1]),
@@ -176,7 +179,9 @@ export async function fetchGlobalPhaseDetail(
       total: toNumber(row[2]),
     }));
 
-    return ORDERED_LEVELS.map((level) => {
+    const starsByLevel = rowsToStarsMap(starsResult.results);
+
+    return DASHBOARD_LEVELS.map((level) => {
       const quiz = quizByLevel.get(level.id);
       return {
         levelId: level.id,
@@ -184,7 +189,10 @@ export async function fetchGlobalPhaseDetail(
         label: level.title,
         reached: reachedByLevel.get(level.id) ?? 0,
         completed: completedByLevel.get(level.id) ?? 0,
-        quizPassRate: safeRate(quiz?.passed ?? 0, quiz?.total ?? 0),
+        quizPassRate: level.hasQuiz
+          ? safeRate(quiz?.passed ?? 0, quiz?.total ?? 0)
+          : null,
+        stars: starsByLevel.get(level.id) ?? EMPTY_PHASE_STARS,
       };
     });
   });

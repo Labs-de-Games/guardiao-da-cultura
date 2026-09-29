@@ -11,6 +11,8 @@ export interface FunnelStep {
   count?: number;
   /** Step-over-step conversion (this step's count / previous step's), optional. */
   stepConversion?: number;
+  /** Replaces the default "NN%" text, for bars that aren't a rate (e.g. stars). */
+  valueLabel?: string;
 }
 
 interface FunnelChartProps {
@@ -79,7 +81,7 @@ export function FunnelChart({
                   color: "text.primary",
                 }}
               >
-                {Math.round(step.value * 100)}%
+                {step.valueLabel ?? `${Math.round(step.value * 100)}%`}
                 {typeof step.stepConversion === "number" ? (
                   <Typography
                     component="span"

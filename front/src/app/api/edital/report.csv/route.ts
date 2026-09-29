@@ -6,6 +6,7 @@ import {
   fetchPhaseClueUsage,
   fetchPhaseProgress,
   fetchPhaseQuizPassRate,
+  fetchPhaseStars,
   fetchQuizPassRate,
   fetchSessionDuration,
 } from "@/lib/edital/server/metrics";
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       phaseProgress,
       phaseQuizPassRate,
       phaseClueUsage,
+      phaseStars,
     ] = await Promise.all([
       fetchSessionDuration(ctx.scope, ctx.range, ctx.turmaSource),
       fetchQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
@@ -51,6 +53,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       fetchPhaseProgress(ctx.scope, ctx.range, ctx.turmaSource),
       fetchPhaseQuizPassRate(ctx.scope, ctx.range, ctx.turmaSource),
       fetchPhaseClueUsage(ctx.scope, ctx.range, ctx.turmaSource),
+      fetchPhaseStars(ctx.scope, ctx.range, ctx.turmaSource),
     ]);
 
     // Self-describing metadata rows — issue #807: a file downloaded for one
@@ -81,25 +84,28 @@ export async function GET(request: NextRequest): Promise<Response> {
       { metric: "started", value: completionRate.denominator },
     ];
 
-    // One block of rows per level — reached/completed/quiz pass rate/clue
-    // uses, the same per-phase breakdown Resumo Executivo shows, now
-    // actually exportable.
+    // One block of rows per level — reached/completed/quiz pass rate/clues/
+    // stars, the same per-phase breakdown Resumo Executivo shows, now
+    // actually exportable. A level with no quiz (the investigation) leaves
+    // those values empty rather than a misleading 0. Stars are out of 5.
     const phaseRows: ReportRow[] = phaseProgress.flatMap((phase) => {
       const quiz = phaseQuizPassRate.find(
         (row) => row.levelId === phase.levelId,
       );
       const clue = phaseClueUsage.find((row) => row.levelId === phase.levelId);
+      const stars = phaseStars.find((row) => row.levelId === phase.levelId);
       const prefix = `phase_${phase.levelNumber}`;
       return [
         { metric: `${prefix}_reached`, value: phase.reached },
         { metric: `${prefix}_completed`, value: phase.completed },
-        { metric: `${prefix}_quiz_pass_rate`, value: quiz?.rate.value ?? 0 },
-        { metric: `${prefix}_quiz_passed`, value: quiz?.rate.numerator ?? 0 },
+        { metric: `${prefix}_quiz_pass_rate`, value: quiz?.rate.value ?? "" },
+        { metric: `${prefix}_quiz_passed`, value: quiz?.rate.numerator ?? "" },
         {
           metric: `${prefix}_quiz_total_attempts`,
-          value: quiz?.rate.denominator ?? 0,
+          value: quiz?.rate.denominator ?? "",
         },
-        { metric: `${prefix}_clue_uses`, value: clue?.clueUses ?? 0 },
+        { metric: `${prefix}_clues`, value: clue?.clues ?? 0 },
+        { metric: `${prefix}_avg_stars`, value: stars?.avgStars ?? 0 },
       ];
     });
 

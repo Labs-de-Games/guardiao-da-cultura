@@ -44,9 +44,9 @@ export interface PhaseRow {
 }
 
 export interface PhaseProgressRow extends PhaseRow {
-  /** Unique players who entered this level (game_started). */
+  /** Unique players who entered this level (game_started / investigation_opened). */
   reached: number;
-  /** Unique players who finished this level (level_completed). */
+  /** Unique players who finished this level (level_completed / investigation_completed). */
   completed: number;
 }
 
@@ -55,8 +55,19 @@ export interface PhaseQuizPassRateRow extends PhaseRow {
 }
 
 export interface PhaseClueUsageRow extends PhaseRow {
-  clueUses: number;
+  /** Clues collected (levels 1–3) or placed on the board (level 4). */
+  clues: number;
 }
+
+/** Per-level stars — each player's best run, averaged across players, out of 5. */
+export interface PhaseStars {
+  /** Average of each player's best stars; 0 when nobody finished. */
+  avgStars: number;
+  /** Players with at least one finished run. */
+  players: number;
+}
+
+export interface PhaseStarsRow extends PhaseRow, PhaseStars {}
 
 /**
  * `linked: false` on every response below means the caller's account has
@@ -66,8 +77,8 @@ export interface PhaseClueUsageRow extends PhaseRow {
  * render the "awaiting linkage" empty state, not mistake it for zero
  * players.
  *
- * `completionRate`/`phaseProgress`/`quizPassRate`/`clueUsage` (issue
- * #807) are institution-wide by default and turma-scoped whenever the
+ * `completionRate`/`phaseProgress`/`quizPassRate`/`clueUsage`/`phaseStars`
+ * (issue #807) are institution-wide by default and turma-scoped whenever the
  * caller passes a valid `?turma=` — the same response shape either way,
  * so #745's Resumo Executivo screen doesn't need a second response type.
  */
@@ -84,8 +95,10 @@ export interface EditalSummaryResponse {
    */
   averageProgress?: Rate;
   phaseProgress?: PhaseProgressRow[];
+  /** Only levels that end in a quiz — the investigation doesn't. */
   quizPassRate?: PhaseQuizPassRateRow[];
   clueUsage?: PhaseClueUsageRow[];
+  phaseStars?: PhaseStarsRow[];
 }
 
 export interface FunnelStepCount {
@@ -157,14 +170,16 @@ export interface PublicDashboardResponse {
   completionRate: Rate;
   entryRate: Rate;
   phaseProgression: Array<{ label: string; players: number }>;
-  /** Per-level detail for the level-switcher panel — reached/completed counts plus quiz pass rate. */
+  /** Per-level detail for the level-switcher panel — reached/completed counts, quiz pass rate and stars. */
   phaseDetail: Array<{
     levelId: string;
     levelNumber: number;
     label: string;
     reached: number;
     completed: number;
-    quizPassRate: Rate;
+    /** `null` for a level with no quiz (the investigation). */
+    quizPassRate: Rate | null;
+    stars: PhaseStars;
   }>;
   originSplit: { institutional: number; spontaneous: number };
   playerTrend: Array<{ month: string; players: number }>;

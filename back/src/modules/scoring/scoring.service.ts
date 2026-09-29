@@ -17,7 +17,15 @@ export class ScoringService {
     private readonly posthog: PostHogService,
   ) {}
 
-  async submitScore(dto: SubmitScoreDto): Promise<UserScore> {
+  /**
+   * @param analyticsConsent the player's PostHog consent for this request
+   *   (issue #864). The score is persisted either way; only the analytics
+   *   event is gated.
+   */
+  async submitScore(
+    dto: SubmitScoreDto,
+    analyticsConsent: boolean,
+  ): Promise<UserScore> {
     const collected = dto.collectedCollectibles ?? [];
     await this.userCollectibleService.recordCollectibles(
       collected.map((collectible) => ({
@@ -43,6 +51,7 @@ export class ScoringService {
 
     this.posthog.capture({
       event: "match_ended",
+      consent: analyticsConsent,
       distinctId: dto.userId,
       properties: {
         level_id: dto.levelId,
