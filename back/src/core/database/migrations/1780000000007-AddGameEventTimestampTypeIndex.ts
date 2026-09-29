@@ -10,7 +10,7 @@ import type { MigrationInterface, QueryRunner } from "typeorm";
  * also carries the new EVENT_LOGGED{severity:"critical"} rows #741 starts
  * writing (see PhaserGame.tsx's critical_error_occurred mirror).
  *
- * Ref: docs/en/specs/dashboard-edital-implementation-plan.md step 3 (#741).
+ * Ref: #738 dashboard plan, step 3 (#741).
  *
  * Migration timestamp reserved ahead of #744/#747's migrations
  * (both also landing in this epic) to avoid a timestamp collision — see
