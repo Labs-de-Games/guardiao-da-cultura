@@ -30,14 +30,14 @@ describe("PostHogController — bootstrap identity precedence", () => {
   let controller: PostHogController;
   let mockPosthogService: {
     getClient: jest.Mock;
-    isGuestPlayEnabled: jest.Mock;
+    getGuestPlayFlag: jest.Mock;
   };
   let mockConfigService: { nodeEnv: string };
 
   beforeEach(async () => {
     mockPosthogService = {
       getClient: jest.fn().mockReturnValue(null),
-      isGuestPlayEnabled: jest.fn().mockResolvedValue(false),
+      getGuestPlayFlag: jest.fn().mockResolvedValue(undefined),
     };
     mockConfigService = { nodeEnv: "test" };
 
@@ -118,7 +118,7 @@ describe("PostHogController — bootstrap identity precedence", () => {
       );
 
       expect(getAllFlags).not.toHaveBeenCalled();
-      expect(mockPosthogService.isGuestPlayEnabled).toHaveBeenCalled();
+      expect(mockPosthogService.getGuestPlayFlag).toHaveBeenCalled();
     });
 
     it("returns no distinct id at all", async () => {
@@ -131,13 +131,33 @@ describe("PostHogController — bootstrap identity precedence", () => {
     });
 
     it("still resolves guest_play_enabled, so the game stays playable", async () => {
-      mockPosthogService.isGuestPlayEnabled.mockResolvedValue(true);
+      mockPosthogService.getGuestPlayFlag.mockResolvedValue(true);
       const result = await controller.bootstrap(
         undefined,
         {},
         makeRequestWithoutConsent(),
       );
-      expect(result.featureFlags.guest_play_enabled).toBe(true);
+      expect(result.featureFlags).toEqual({ guest_play_enabled: true });
+    });
+
+    it("passes an explicit false through, so the kill switch still works", async () => {
+      mockPosthogService.getGuestPlayFlag.mockResolvedValue(false);
+      const result = await controller.bootstrap(
+        undefined,
+        {},
+        makeRequestWithoutConsent(),
+      );
+      expect(result.featureFlags).toEqual({ guest_play_enabled: false });
+    });
+
+    it("leaves an unknown flag absent, like the consented branch (#880)", async () => {
+      mockPosthogService.getGuestPlayFlag.mockResolvedValue(undefined);
+      const result = await controller.bootstrap(
+        undefined,
+        {},
+        makeRequestWithoutConsent({ gp_analytics_consent: "0" }),
+      );
+      expect(result.featureFlags).toEqual({});
     });
 
     it("treats an explicit refusal exactly like no choice yet", async () => {
