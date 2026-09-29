@@ -69,6 +69,16 @@ describe("createBeforeSend", () => {
     expect(result?.properties.campaign_source).toBe("escola-teste");
   });
 
+  it("stamps entry_origin from the registered super property when missing", () => {
+    const client = new PostHogStub();
+    client.register({ entry_origin: "direct" });
+    const beforeSend = createBeforeSend(client);
+
+    const result = beforeSend(makeEvent());
+
+    expect(result?.properties.entry_origin).toBe("direct");
+  });
+
   it("passes null through untouched", () => {
     const client = new PostHogStub();
     const beforeSend = createBeforeSend(client);
