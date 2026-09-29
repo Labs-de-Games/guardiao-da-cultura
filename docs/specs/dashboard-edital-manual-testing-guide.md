@@ -168,11 +168,23 @@ disambiguated slug (`escola-teste-a1b2` or similar), not a collision error.
 ```bash
 curl -s -X POST http://localhost:3001/api/v1/auth/password/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"nova-escola@example.com","password":"SenhaForte123!","institutionSlug":"nova-escola","nickname":"Nova Escola"}'
+  -d '{"email":"nova-escola@example.com","password":"SenhaForte123!","institutionSlug":"nova-escola","nickname":"Nova Escola","termsAccepted":true,"termsVersion":"2026-09-28"}'
 ```
 
 **Expected Response (200/201):** generic `{"message":"Check your email"}` —
 no confirmation of whether the email was new or a duplicate.
+
+`termsAccepted` and `termsVersion` are mandatory (issue #338). Omitting
+either is a 400 from the DTO, and `termsVersion` must equal the backend's
+`INSTITUTION_TERMS_VERSION` — a value from an older text is refused rather
+than re-stamped, so this example needs updating whenever that constant moves.
+A successful registration also writes one `user_consent` row:
+
+```bash
+docker compose -f compose.development.yaml exec postgres \
+  psql -U postgres -d template -c \
+  'SELECT "userId", type, version, "acceptedAt" FROM user_consent;'
+```
 
 **Verify in backend logs / mock email provider:** a confirmation email
 (magic-link style, 15-minute expiry) was sent — this is new behavior on
@@ -307,8 +319,14 @@ upstream PostHog call — it's a cheap local check.
 ### 2. Password Registration Flow
 
 1. Navigate to `/register`, fill email/password/institution name.
-2. **Expected:** generic success message, no auto-login.
-3. Get the confirmation link. Locally (`EMAIL_PROVIDER=mock`) no email is
+2. **Expected:** "Cadastrar" is disabled until the Terms of Use checkbox is
+   ticked (issue #338). "Termos de Uso" opens a scrollable modal over the
+   form — no navigation, so the half-filled form survives reading it. The
+   modal is read-only (close button only); closing it must leave the checkbox
+   untouched. The same text is also served at `/termos` for linking.
+3. Tick the checkbox and submit.
+4. **Expected:** generic success message, no auto-login.
+5. Get the confirmation link. Locally (`EMAIL_PROVIDER=mock`) no email is
    sent — the link only appears in the backend logs:
 
    ```bash
@@ -317,14 +335,41 @@ upstream PostHog call — it's a cheap local check.
    ```
 
    With a real provider, check the inbox instead.
-4. Open the link in the same browser.
-5. **Expected:** account verified and the browser lands authenticated on
+6. Open the link in the same browser.
+7. **Expected:** account verified and the browser lands authenticated on
    `/institution` (or an onboarding step if no slug was captured at
-   registration time).
-6. **Password reset via UI:** request a reset from the login page, then grab
+   registration time). No terms prompt — the acceptance was recorded at
+   registration.
+8. **Password reset via UI:** request a reset from the login page, then grab
    the link the same way — it is logged as
    `[MockEmail] Magic link to <email>: http://localhost/reset-institution-password?token=<token>`.
    Open it, set a new password, and sign in with it.
+
+### 2b. Terms Gate for Existing Accounts (issue #338)
+
+Accounts created before the terms gate — or whose acceptance a material
+revision retired — are held at `/institution/termos` until they accept.
+There is no UI that produces this state, so simulate it by deleting the
+consent row of an account that already has a slug:
+
+```bash
+docker compose -f compose.development.yaml exec postgres \
+  psql -U postgres -d template -c \
+  "DELETE FROM user_consent WHERE \"userId\" = (SELECT id FROM \"user\" WHERE email = '<email>');"
+```
+
+The session still carries `termsAccepted: true` from sign-in, so sign out
+and back in to re-read it from the backend.
+
+1. Visit any `/institution/*` route.
+2. **Expected:** redirected to `/institution/termos`, whatever route you asked
+   for. "Continuar" is disabled until the checkbox is ticked.
+3. Accept.
+4. **Expected:** land on `/institution`, a new `user_consent` row exists, and
+   revisiting `/institution/termos` now redirects back to the dashboard.
+5. **A brand-new account is not affected:** with no slug *and* no consent it
+   goes to `/institution/onboarding`, which collects the acceptance alongside
+   the name — one form, not two.
 
 ### 3. Institution Dashboard
 
