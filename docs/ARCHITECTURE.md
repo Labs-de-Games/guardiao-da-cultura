@@ -31,7 +31,6 @@ API over PostgreSQL, and a React HUD layered over the game canvas.
   - [Progression Module](#progression-module)
   - [Scoring Module](#scoring-module)
   - [Badges Module](#badges-module)
-  - [Analytics Module](#analytics-module)
   - [PostHog Module](#posthog-module)
   - [Campaign Links Module](#campaign-links-module)
   - [TTS Module](#tts-module)
@@ -121,10 +120,10 @@ flowchart TB
 4. **Progression Engine:** Tracks player level completion, stars, clues, and chapter status. Collected clues are displayed on the evidence board overlay (Pistas).
 5. **Scoring:** Manages user scores, leaderboard data, and score history.
 6. **Badges:** Badge definitions, user-badge associations, and achievement tracking.
-7. **Analytics:** Internal module with no HTTP endpoint. Listens to `game.event`, stores raw game event logs (append-only) and computes the aggregates the dashboard serves.
+7. **Analytics:** Legacy Postgres store of game events, kept only as the fallback behind `GET /metrics` (see Dashboard Module). The dashboard itself reads PostHog.
 8. **PostHog Integration:** Server-side event forwarding to PostHog for product analytics and error tracking.
 9. **Admin:** Admin-only endpoints for user management (list, role updates, status toggle).
-10. **Dashboard:** Aggregated metrics for educators, restricted to the `institution` role.
+10. **Dashboard:** Aggregated metrics for educators, restricted to the `institution` role. The data comes from PostHog (see §5).
 11. **User Interested:** Public sign-up capturing interest in levels that do not exist yet.
 12. **Campaign Links:** Per-institution campaign links whose `source` label is emitted as `utm_source`, so the dashboard can group players by class or group.
 
@@ -163,6 +162,7 @@ Both are off by default in `.env.example` and the game runs fully without them.
 |---|---|---|
 | **ResponsiveVoice** (text-to-speech) | `RESPONSIVEVOICE_API_KEY` | `/api/tts/synthesize` reports itself unavailable and narration uses the browser's own `SpeechSynthesis`, in `pt-BR`. ResponsiveVoice is a paid, NonCommercial (CC BY-NC-ND) service, so the game deliberately does not depend on it. See [TTS Route Handler](#tts-route-handler-apittssynthesize). |
 | **PostHog** (product analytics) | `NEXT_PUBLIC_POSTHOG_KEY`, `POSTHOG_API_KEY` | The frontend swaps in a console-logging stub and the backend skips event capture. No data leaves the machine. |
+| **PostHog query API** (educator dashboard data) | `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_QUERY_HOST` | The `/api/edital/*` route handlers raise `HogQLNotConfiguredError` and the educator dashboard has no data. The game itself is unaffected. |
 
 ## 4. Architectural Patterns & Boundaries
 
@@ -252,7 +252,7 @@ gameplate/
 To accelerate development and reduce unnecessary complexity, **the Next.js frontend will handle the heavy lifting for the initial iterations of the game.** 
 The NestJS backend will be heavily simplified for now. Its primary responsibilities will be restricted to:
 1. Data persistence (TypeORM/PostgreSQL).
-2. Analytics aggregation for the Educator/Admin dashboards.
+2. Institution scoping for the educator dashboard (campaign links). The dashboard's numbers come from PostHog.
 3. Cross-cutting project scaffolding (global state validation that cannot be trusted to the client).
 
 The gameplay itself will operate mostly as a client-side application (Next.js + Phaser) with periodic state synchronization to the backend.
@@ -307,7 +307,7 @@ The front container healthcheck targets `GET /api/health` (`front/src/app/api/he
 - **Server-Side TTS Proxy:** The ResponsiveVoice API key is stored as a server-only env var (`RESPONSIVEVOICE_API_KEY`) in the frontend deployment. A Next.js Route Handler (`/api/tts/synthesize`) proxies requests to ResponsiveVoice v1 REST API, returning `audio/mpeg`. This eliminates domain whitelist concerns since the proxy runs server-side. The frontend falls back to native Web Speech API (`window.speechSynthesis`) on error.
 - **Contextual Nudge System (PR #733):** Anti-blocking assistance driven by player inactivity. Responsibility is split so the timing rules stay testable: `NudgeManager` (`front/src/game/systems/NudgeManager.ts`) owns *when* to nudge — a dependency-free class whose `evaluate(now, isPlayerBusy)` returns a boolean, governed by a 15s inactivity threshold, a 1s evaluation throttle, a global 5-minute cooldown, and a per-mission reset — while `Game.ts` owns *which kind* of nudge, chosen by proximity rather than by escalation (the delay is identical for both kinds). A pulse fires via `PlaceholderSystem.pulseNearestPlaceholder()` or `SpotlightSystem.pulseNearestSpotlight()` when an incomplete costume placeholder or spotlight sits within ~500px; otherwise the nearest artwork's `educational.hint` (from the level's `works.json`) is surfaced through the existing `ui:toast-show` EventBus event, so no bespoke overlay UI was introduced. Because `NudgeManager` has no imports, it is unit-tested in isolation (`NudgeManager.test.ts`, 11 cases covering threshold, busy suppression, timer reset, cooldown window and expiry, throttle, and per-mission reset); the `Game.ts` wiring is verified manually. Telemetry is emitted straight to PostHog as `nudge_pulse_shown_*` and `nudge_hint_shown_*`, with the firing rules documented in `EVENTS.md` (§ *Nudge — regras de disparo*).
 
-- **Institutional Dashboard:** The `dashboard` module serves aggregated metrics to the `institution` role, and the educator-facing frontend lives under `/institution/*`, with a public view under `/public-dashboard/*`.
+- **Institutional Dashboard:** The `dashboard` module serves aggregated metrics to the `institution` role, and the educator-facing frontend lives under `/institution/*`, with a public view under `/public-dashboard/*`. Its data comes from PostHog: the frontend's `/api/edital/*` and `/api/public/dashboard` route handlers run HogQL queries server-side (`front/src/lib/edital/server/`).
 
 ### Pending
 
@@ -379,10 +379,6 @@ Admin-only endpoints guarded by `RolesGuard`.
 | `GET` | `/badges` | Public | List all available badges. |
 | `GET` | `/badges/user` | JWT | Get badges earned by current user. |
 
-### Analytics Module
-
-Internal module with no HTTP endpoint. `AnalyticsService` listens to `game.event` (emitted by the Game module for every event it ingests), stores each one as a `GameEvent` row, and computes the aggregates that the Dashboard module serves.
-
 ### PostHog Module (`/posthog`)
 
 | Method | Path | Auth | Description |
@@ -401,7 +397,7 @@ Server-to-server only. The routes are `@Public()` to the JWT guard but require t
 
 ### Dashboard Module (`/metrics`)
 
-Restricted to the `institution` role.
+Restricted to the `institution` role. This is the legacy Postgres fallback, built on the Analytics module's stored events, and kept until the PostHog-backed dashboard (#745) runs a full cycle in production. The dashboard frontend does not call it.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
