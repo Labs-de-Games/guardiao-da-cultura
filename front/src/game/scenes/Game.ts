@@ -77,7 +77,10 @@ import { getInteractionConfig } from "../systems/placeholderInteraction";
 import { QuizManager } from "../systems/QuizManager";
 import { SpotlightSystem } from "../systems/SpotlightSystem";
 import { SwitchLightCinematicSystem } from "../systems/SwitchLightCinematicSystem";
-import { SwitchLightSystem } from "../systems/SwitchLightSystem";
+import {
+  SWITCH_LIGHT_ANIM_KEY,
+  SwitchLightSystem,
+} from "../systems/SwitchLightSystem";
 import {
   type DisappearingPlatformLayer,
   type MapData,
@@ -1570,67 +1573,73 @@ export class Game extends Scene implements GameDataAccessor {
     Enemy.createAnims(this);
     Trampoline.createAnims(this);
 
-    if (!this.anims.exists("placeholder_hint_anim")) {
-      this.anims.create({
-        key: "placeholder_hint_anim",
-        frames: this.anims.generateFrameNumbers("placeholder", {
-          start: 0,
-          end: 5,
-        }),
-        frameRate: 8,
-        repeat: -1,
-      });
-    }
+    // Animations live in the global AnimationManager and survive level
+    // transitions, while some textures are loaded per level. Creating an
+    // animation before its texture exists registers it with no frames forever,
+    // so every animation below waits until its texture is loaded.
+    this.createSheetAnim("placeholder_hint_anim", "placeholder", {
+      start: 0,
+      end: 5,
+      frameRate: 8,
+      repeat: -1,
+    });
 
-    if (!this.anims.exists("switch_light_anim")) {
-      this.anims.create({
-        key: "switch_light_anim",
-        frames: this.anims.generateFrameNumbers("switch_light", {
-          start: 0,
-          end: 3,
-        }),
-        frameRate: 8,
-        repeat: 0,
-      });
-    }
+    this.createSheetAnim(SWITCH_LIGHT_ANIM_KEY, "switch_light", {
+      start: 0,
+      end: 3,
+      frameRate: 8,
+      repeat: 0,
+    });
 
-    if (!this.anims.exists("star_anim")) {
-      this.anims.create({
-        key: "star_anim",
-        frames: this.anims.generateFrameNumbers("star", {
-          start: 0,
-          end: 31,
-        }),
-        frameRate: 10,
-        repeat: -1,
-      });
-    }
+    this.createSheetAnim("star_anim", "star", {
+      start: 0,
+      end: 31,
+      frameRate: 10,
+      repeat: -1,
+    });
 
     const bandMusicians = ["accordion", "jam_block", "triangle", "zabumba"];
     for (const musician of bandMusicians) {
-      const animKey = `band_${musician}_anim`;
-      if (!this.anims.exists(animKey)) {
-        this.anims.create({
-          key: animKey,
-          frames: this.anims.generateFrameNumbers(`band_${musician}`, {
-            start: 0,
-            end: 8,
-          }),
-          frameRate: 10,
-          repeat: -1,
-        });
-      }
-    }
-    if (!this.anims.exists("accordion_open_anim")) {
-      this.anims.create({
-        key: "accordion_open_anim",
-        frames: Array.from({ length: 9 }, (_, i) => ({
-          key: `accordion_frame${String(i + 1).padStart(3, "0")}`,
-        })),
+      this.createSheetAnim(`band_${musician}_anim`, `band_${musician}`, {
+        start: 0,
+        end: 8,
         frameRate: 10,
         repeat: -1,
       });
     }
+
+    const accordionFrameKeys = Array.from(
+      { length: 9 },
+      (_, i) => `accordion_frame${String(i + 1).padStart(3, "0")}`,
+    );
+    if (
+      !this.anims.exists("accordion_open_anim") &&
+      accordionFrameKeys.every((key) => this.textures.exists(key))
+    ) {
+      this.anims.create({
+        key: "accordion_open_anim",
+        frames: accordionFrameKeys.map((key) => ({ key })),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
+  }
+
+  private createSheetAnim(
+    key: string,
+    textureKey: string,
+    config: { start: number; end: number; frameRate: number; repeat: number },
+  ) {
+    if (this.anims.exists(key) || !this.textures.exists(textureKey)) return;
+    this.anims.create({
+      key,
+      frames: this.anims.generateFrameNumbers(textureKey, {
+        start: config.start,
+        end: config.end,
+      }),
+      frameRate: config.frameRate,
+      repeat: config.repeat,
+    });
   }
 
   private createEntities(mapData: MapData, contentJson?: ContentJson) {
