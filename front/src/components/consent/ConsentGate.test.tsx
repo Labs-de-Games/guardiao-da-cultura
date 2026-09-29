@@ -73,6 +73,36 @@ describe("ConsentGate", () => {
     }
   });
 
+  it("puts accept first and decline second", async () => {
+    // A product decision, and a departure from #864's "destaque visual
+    // equivalente" — pinned here so the order cannot drift back unnoticed.
+    renderGate();
+    await screen.findByRole("dialog");
+
+    const labels = screen
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+
+    expect(labels).toEqual([
+      "Aceitar dados de uso",
+      "Continuar sem dados de uso",
+    ]);
+  });
+
+  it("keeps both choices reachable and clickable despite the styling", async () => {
+    // Accept is visually dominant now; refusing must stay exactly as cheap —
+    // one click, same row, no extra step.
+    renderGate();
+
+    const decline = await screen.findByRole("button", {
+      name: "Continuar sem dados de uso",
+    });
+
+    fireEvent.click(decline);
+
+    expect(readConsent()?.status).toBe("declined");
+  });
+
   it("links to the privacy notice", async () => {
     renderGate();
 
@@ -120,8 +150,10 @@ describe("ConsentGate", () => {
 
       fireEvent.keyDown(link, { key: "Tab" });
 
+      // Wraps to the first control, which is the accept button — it leads the
+      // row now that the two choices are ordered accept-then-decline.
       expect(
-        screen.getByRole("button", { name: "Continuar sem dados de uso" }),
+        screen.getByRole("button", { name: "Aceitar dados de uso" }),
       ).toHaveFocus();
     });
 
@@ -129,12 +161,12 @@ describe("ConsentGate", () => {
       renderGate(<button type="button">Jogar</button>);
       await screen.findByRole("dialog");
 
-      const decline = screen.getByRole("button", {
-        name: "Continuar sem dados de uso",
+      const accept = screen.getByRole("button", {
+        name: "Aceitar dados de uso",
       });
-      decline.focus();
+      accept.focus();
 
-      fireEvent.keyDown(decline, { key: "Tab", shiftKey: true });
+      fireEvent.keyDown(accept, { key: "Tab", shiftKey: true });
 
       expect(screen.getByRole("link", { name: "Saiba mais" })).toHaveFocus();
     });
@@ -224,7 +256,7 @@ describe("ConsentGate", () => {
       expect(dialog).toHaveAccessibleDescription(/nada está sendo coletado/i);
     });
 
-    it("still offers both choices with equal weight", async () => {
+    it("still offers both choices, both usable", async () => {
       storeAgedAcceptance();
 
       renderGate();

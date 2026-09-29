@@ -18,22 +18,55 @@ const BODY_ID = "consent-gate-body";
 const GATE_Z_INDEX = UI_LAYERS.NOTIFICATION + 2000;
 
 /**
- * Both choices share one style and differ only in label — the acceptance
- * criteria require equal visual weight, and nothing may read as pre-selected.
+ * Geometry and type shared by both choices, so they stay the same size and
+ * sit on the same grid however they are coloured.
  */
-const choiceButtonSx = {
+const choiceButtonBaseSx = {
   flex: { xs: "1 1 100%", sm: "1 1 0" },
   px: 3,
   py: 1.5,
   borderRadius: `${GAME_UI_TOKENS.radius.small}px`,
-  border: `2px solid ${GAME_UI_TOKENS.colors.accentGoldMuted}`,
-  bgcolor: "transparent",
-  color: GAME_UI_TOKENS.colors.accentGold,
   fontFamily: GAME_UI_TOKENS.fonts.display,
   fontSize: "1.0625rem",
   letterSpacing: "0.04em",
   cursor: "pointer",
-  transition: "color 150ms ease, border-color 150ms ease",
+  transition:
+    "color 150ms ease, border-color 150ms ease, background-color 150ms ease",
+} as const;
+
+/**
+ * Accept: filled gold with dark text, first in the row.
+ *
+ * Note for anyone revisiting this — it is a deliberate product decision, asked
+ * for explicitly, and it departs from #864's "destaque visual equivalente".
+ * The two answers no longer carry equal weight, so if the consent flow is ever
+ * audited against that criterion, this is the line that fails it. Both answers
+ * do remain one click away, neither is preselected, and refusing still costs
+ * the player nothing.
+ */
+const acceptButtonSx = {
+  ...choiceButtonBaseSx,
+  border: `2px solid ${GAME_UI_TOKENS.colors.accentGold}`,
+  bgcolor: GAME_UI_TOKENS.colors.accentGold,
+  color: GAME_UI_TOKENS.colors.bgPrimary,
+  "&:hover": {
+    bgcolor: GAME_UI_TOKENS.colors.accentGoldHover,
+    borderColor: GAME_UI_TOKENS.colors.accentGoldHover,
+    color: GAME_UI_TOKENS.colors.bgPrimary,
+  },
+  "&:focus-visible": {
+    // Light, not gold: a gold ring on a gold fill is invisible.
+    outline: `3px solid ${GAME_UI_TOKENS.colors.textPrimary}`,
+    outlineOffset: "2px",
+  },
+} as const;
+
+/** Decline: outlined, gold on the panel's own dark ground. */
+const declineButtonSx = {
+  ...choiceButtonBaseSx,
+  border: `2px solid ${GAME_UI_TOKENS.colors.accentGoldMuted}`,
+  bgcolor: "transparent",
+  color: GAME_UI_TOKENS.colors.accentGold,
   "&:hover": {
     color: GAME_UI_TOKENS.colors.accentGoldHover,
     borderColor: GAME_UI_TOKENS.colors.accentGoldHover,
@@ -201,18 +234,18 @@ export function ConsentGate() {
           <Box
             component="button"
             type="button"
-            onClick={refuse}
-            sx={choiceButtonSx}
+            onClick={accept}
+            sx={acceptButtonSx}
           >
-            Continuar sem dados de uso
+            Aceitar dados de uso
           </Box>
           <Box
             component="button"
             type="button"
-            onClick={accept}
-            sx={choiceButtonSx}
+            onClick={refuse}
+            sx={declineButtonSx}
           >
-            Aceitar dados de uso
+            Continuar sem dados de uso
           </Box>
         </Stack>
 
