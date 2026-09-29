@@ -2,8 +2,8 @@ import type posthog from "posthog-js";
 import type { PostHogStub } from "../posthogStub";
 
 /**
- * Canonical edital funnel event names (interim, per
- * docs/specs/edital-onepager.md — pending the real onepager, #739). Kept
+ * Canonical edital funnel event names (interim, per the edital onepager
+ * spike — pending the real onepager, #739). Kept
  * as a single named export so call sites reference one source of truth
  * instead of retyping string literals across `Game.ts`/`QuizManager.ts`/
  * `PlayLanding.tsx` (#741 wires these to actual capture sites).

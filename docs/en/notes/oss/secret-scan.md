@@ -1,8 +1,7 @@
 # Secret scan over the full history — T2 #798
 
-This is the last remaining input to the history-rewrite decision in
-[`PLAN-open-source.md`](./PLAN-open-source.md) (§T2) and step 3 of
-[`SEQUENCING-sep-28.md`](./SEQUENCING-sep-28.md).
+This is the last remaining input to the history-rewrite decision for T2 of
+the open-source epic (#796).
 
 **Result: both scanners clean. No history rewrite is required.** The full commit
 history publishes intact.
@@ -68,6 +67,6 @@ in some older guidance.
   hold squad process documentation, not credentials.
 - The Coolify admin panel hostname was present at HEAD in five files, four of
   them inside `docs/handoff/`. Neither scanner flags a hostname. With that
-  directory deleted, `docs/VERSIONING.md` is the only remaining occurrence, and
+  directory deleted, `docs/en/VERSIONING.md` is the only remaining occurrence, and
   it is redacted in the commit that carries this document. The hostname remains
   in history, which is low severity and does not on its own justify a rewrite.

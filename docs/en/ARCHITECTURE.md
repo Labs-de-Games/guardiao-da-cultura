@@ -14,26 +14,26 @@ API over PostgreSQL, and a React HUD layered over the game canvas.
   - [Domain Modules](#domain-modules)
 - [3. Technology Stack](#3-technology-stack)
   - [Workspace & Tooling](#workspace--tooling)
-  - [Frontend](#frontend)
-  - [Backend](#backend)
+  - [Frontend](#frontend-front)
+  - [Backend](#backend-back)
   - [Optional Integrations](#optional-integrations)
 - [4. Architectural Patterns & Boundaries](#4-architectural-patterns--boundaries)
   - [Deployment Topology](#deployment-topology)
   - [The Modular Monolith Approach](#the-modular-monolith-approach)
   - [Directory Structure](#directory-structure)
-  - [Simplified Backend Strategy](#simplified-backend-strategy)
+  - [Simplified Backend Strategy](#simplified-backend-strategy-current-pivot)
 - [5. Resolved & Pending Architecture Decisions](#5-resolved--pending-architecture-decisions)
 - [6. API Contracts](#6-api-contracts)
-  - [Auth Module](#auth-module)
-  - [Users Module](#users-module)
-  - [Admin Module](#admin-module)
-  - [Game Module](#game-module)
-  - [Progression Module](#progression-module)
-  - [Scoring Module](#scoring-module)
-  - [Badges Module](#badges-module)
-  - [PostHog Module](#posthog-module)
-  - [Campaign Links Module](#campaign-links-module)
-  - [TTS Module](#tts-module)
+  - [Auth Module](#auth-module-auth)
+  - [Users Module](#users-module-users)
+  - [Admin Module](#admin-module-admin)
+  - [Game Module](#game-module-game)
+  - [Progression Module](#progression-module-progression)
+  - [Scoring Module](#scoring-module-scoring)
+  - [Badges Module](#badges-module-badges)
+  - [PostHog Module](#posthog-module-posthog)
+  - [Campaign Links Module](#campaign-links-module-campaign-links)
+  - [TTS Route Handler](#tts-route-handler-apittssynthesize)
   - [Planned Modules](#planned-modules)
   - [Technical Notes](#technical-notes)
 
@@ -300,8 +300,8 @@ The front container healthcheck targets `GET /api/health` (`front/src/app/api/he
 
 ### Resolved
 
-- **Authentication Module:** Implemented as passwordless magic-link authentication with JWT access tokens (15min expiry) and opaque refresh tokens (7-day rotation). See the auth implementation plan in `docs/authentication-authorization-implementation-plan.md`.
-- **Observability & Analytics:** PostHog is integrated on both frontend (`posthog-js`) and backend (`posthog-node`) for product analytics, session replay, and error tracking. See `docs/posthog-implementation-plan.md`.
+- **Authentication Module:** Implemented as passwordless magic-link authentication with JWT access tokens (15min expiry) and opaque refresh tokens (7-day rotation). See #112.
+- **Observability & Analytics:** PostHog is integrated on both frontend (`posthog-js`) and backend (`posthog-node`) for product analytics, session replay, and error tracking. See #602 and #864.
 - **Chunk Selector UI Migration (Phase 7):** The photo restoration ChunkSelector panel is implemented in React overlay, wired through the shared EventBus, and preserves keyboard interaction parity (Arrow keys + WASD for navigation, Enter/Space for confirm, Esc for close). The panel layout was refined to better balance inventory/frame space and includes automatic inventory scroll-on-navigation to keep keyboard-selected items visible.
 - **MapInfoBox & Map Progression (PR #517):** The `MapInfoBox` React panel exposes three UI states (available, completed, locked) driven by the `map:marker-changed` EventBus event. `MapIntroScene` dynamically computes marker availability from `progression.completedLevels`, so Phase N unlocks only after Phase N−1 is complete. The event payload (`MapMarkerChangedData`) includes `isCompleted?: boolean`, removing `MapInfoBox`'s need for a separate Zustand `progression` selector. To handle Turbopack module isolation and React mount-timing races (React overlay mounts after `StartGame()` returns), `MapIntroScene.emitMarkerChanged()` writes directly to the Zustand store via `useGameUIStore.getState().setActiveMapMarker()` in addition to emitting the EventBus event. A dev debug shortcut (`localStorage.setItem("gameplate:debug:completedLevels", ...)`) allows pre-seeding completion state without playing through levels.
 - **Server-Side TTS Proxy:** The ResponsiveVoice API key is stored as a server-only env var (`RESPONSIVEVOICE_API_KEY`) in the frontend deployment. A Next.js Route Handler (`/api/tts/synthesize`) proxies requests to ResponsiveVoice v1 REST API, returning `audio/mpeg`. This eliminates domain whitelist concerns since the proxy runs server-side. The frontend falls back to native Web Speech API (`window.speechSynthesis`) on error.
@@ -419,7 +419,7 @@ Server-side proxy for ResponsiveVoice text-to-speech, implemented as a Next.js R
 |--------|------|------|-------------|
 | `POST` | `/api/tts/synthesize` | Public | Convert text to speech. Body: `{ text: string, voice?: string, rate?: number, pitch?: number }`. Returns binary `audio/mpeg`, `503` when no key is configured, or `502` when the upstream service fails or times out. |
 
-The key is optional, and an empty value counts as unset. Without it, the route answers `503` with `code: "tts_unavailable"`, and the client (`AudioAccessibilityService`) switches to the browser's `window.speechSynthesis` for the rest of the session. If ResponsiveVoice fails (invalid key, outage, 10s timeout), the route answers `502`, and the client uses the browser voice for that line only. The browser voice depends on the operating system and may need a speech engine installed or enabled (see [CONTRIBUTING.md](./CONTRIBUTING.md#narration-text-to-speech)).
+The key is optional, and an empty value counts as unset. Without it, the route answers `503` with `code: "tts_unavailable"`, and the client (`AudioAccessibilityService`) switches to the browser's `window.speechSynthesis` for the rest of the session. If ResponsiveVoice fails (invalid key, outage, 10s timeout), the route answers `502`, and the client uses the browser voice for that line only. The browser voice depends on the operating system and may need a speech engine installed or enabled (see [CONTRIBUTING.md](./CONTRIBUTING.md#troubleshooting)).
 
 ### Planned Modules
 

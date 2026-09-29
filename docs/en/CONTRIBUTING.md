@@ -7,7 +7,7 @@ This guide is for anyone working on the project, whether or not you are on the
 core team. [@anacarla-42](https://github.com/anacarla-42) maintains the
 repository and reviews and merges pull requests.
 
-For AI agent collaboration guidelines, see [AGENTS.md](../AGENTS.md).
+For AI agent collaboration guidelines, see [AGENTS.md](../../AGENTS.md).
 
 ## Table of Contents
 
@@ -36,7 +36,7 @@ Two things are worth knowing up front.
 
 **The asset rules are not the code rules.** The source code is MIT. Everything
 under `front/public/assets/` is not — see
-[`ASSETS-LICENSE.md`](../ASSETS-LICENSE.md). If your contribution adds, removes
+[`ASSETS-LICENSE.md`](../../ASSETS-LICENSE.md). If your contribution adds, removes
 or changes an asset, read [Changing assets or credits](#changing-assets-or-credits)
 before you open the pull request.
 
@@ -53,7 +53,7 @@ Open an issue, and include enough for someone else to see what you saw:
 - Console output or a screenshot, if there is one.
 
 For a **security** problem, do not open an issue — follow
-[`SECURITY.md`](../SECURITY.md).
+[`SECURITY.md`](../../SECURITY.md).
 
 If you plan to work on something substantial, open an issue first so nobody
 duplicates the effort.
@@ -149,7 +149,7 @@ in `.env.example`, and the game runs fully without them. See
   `front/src/game/constants/Investigation.ts`). Which levels players can reach
   is set by `LEVEL_ENABLED` in `front/src/game/constants/FeatureFlags.ts`.
 - **A few bundled sound and image assets are not free for commercial reuse.**
-  They are listed individually in [`ASSETS-LICENSE.md`](../ASSETS-LICENSE.md) §5.
+  They are listed individually in [`ASSETS-LICENSE.md`](../../ASSETS-LICENSE.md) §5.
 - **Browser speech quality varies.** Without a ResponsiveVoice key, narration
   uses whatever `pt-BR` voice the visitor's browser and operating system
   provide. See [No narration](#troubleshooting).
@@ -175,6 +175,8 @@ in `.env.example`, and the game runs fully without them. See
 ├── nginx/                      # Reverse proxy configuration
 ├── Makefile                    # Common development commands
 └── docs/                       # Documentation
+    ├── en/                     # English docs and notes
+    └── pt-BR/                  # Brazilian Portuguese docs and notes
 ```
 
 ## The contribution flow
@@ -322,15 +324,15 @@ Assets carry obligations that code does not.
 
 - **Adding a third-party asset.** Check its licence allows redistribution. Add
   it to `front/src/ui/credits/creditsData.ts`, to
-  [`CREDITS.md`](../CREDITS.md) and to
-  [`ASSETS-LICENSE.md`](../ASSETS-LICENSE.md) **in the same pull request**.
+  [`CREDITS.md`](../../CREDITS.md) and to
+  [`ASSETS-LICENSE.md`](../../ASSETS-LICENSE.md) **in the same pull request**.
   Include the author, the source URL and the licence. A contribution that adds
   an uncredited asset will not be merged.
 - **Avoid NonCommercial and no-derivatives licences.** They are incompatible
   with the rest of the project. If you cannot find a suitable free asset, say so
   in the pull request rather than shipping a restricted one quietly.
 - **Do not add anything using the sponsor logos or marks.** They are not
-  licensed — see [`NOTICE`](../NOTICE).
+  licensed — see [`NOTICE`](../../NOTICE).
 - **`creditsData.ts` and `CREDITS.md` are the same obligation twice.** They must
   never drift apart.
 
