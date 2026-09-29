@@ -30,6 +30,7 @@ describe("MapIntroScene", () => {
     useGameUIStore.setState({
       levelTransitionActive: false,
       creditsOpen: false,
+      privacyOpen: false,
     });
   });
 
@@ -125,6 +126,81 @@ describe("MapIntroScene", () => {
 
     expect((scene as any).activeMarkerIndex).toBe(0);
     expect(cancelAutoStart).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The privacy panel is a consent decision, so the map owes the player the
+   * same courtesy it gives the credits crawl: do not start a level underneath
+   * them. The auto_start source is the one that bit — a countdown the player
+   * never triggered expiring while they read, dropping them into level 01 with
+   * the panel still holding focus and their keys going nowhere.
+   */
+  it("ignores an auto-start while the privacy panel is open", () => {
+    useGameUIStore.setState({ privacyOpen: true });
+    const { scene, sceneStart } = buildStartableScene();
+
+    (scene as any).beginGame("auto_start");
+
+    expect(sceneStart).not.toHaveBeenCalled();
+    expect(useGameUIStore.getState().levelTransitionActive).toBe(false);
+    // The panel stays up: only the player closes it.
+    expect(useGameUIStore.getState().privacyOpen).toBe(true);
+  });
+
+  it("ignores a keyboard start while the privacy panel is open", () => {
+    useGameUIStore.setState({ privacyOpen: true });
+    const { scene, sceneStart } = buildStartableScene();
+
+    (scene as any).beginGame("spacebar");
+
+    expect(sceneStart).not.toHaveBeenCalled();
+  });
+
+  it("ignores marker cycling while the privacy panel is open", () => {
+    useGameUIStore.setState({ privacyOpen: true });
+    const { scene, cancelAutoStart } = buildStartableScene();
+
+    (scene as any).cycleMarkerForward();
+    (scene as any).cycleMarkerBackward();
+
+    expect((scene as any).activeMarkerIndex).toBe(0);
+    expect(cancelAutoStart).not.toHaveBeenCalled();
+  });
+
+  describe("cancelAutoStart", () => {
+    function buildCountingScene() {
+      const scene = new MapIntroScene();
+      Object.defineProperty(scene, "autoStartEvent", {
+        value: { remove: jest.fn() },
+        writable: true,
+      });
+      return scene;
+    }
+
+    it("clears the countdown bar when the privacy panel opens", () => {
+      const scene = buildCountingScene();
+
+      (scene as any).cancelAutoStart("privacy");
+
+      expect(EventBus.emit).toHaveBeenCalledWith(
+        "map:auto-start-canceled",
+        undefined,
+      );
+      expect((scene as any).autoStartEvent).toBeUndefined();
+    });
+
+    it("stays silent on shutdown", () => {
+      // The scene and its React overlay are going away together, so there is
+      // no progress bar left to clear and nobody to tell.
+      const scene = buildCountingScene();
+
+      (scene as any).cancelAutoStart("shutdown");
+
+      expect(EventBus.emit).not.toHaveBeenCalledWith(
+        "map:auto-start-canceled",
+        undefined,
+      );
+    });
   });
 
   describe("isMarkerAvailable", () => {
