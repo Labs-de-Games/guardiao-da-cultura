@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./en/VERSIONING.md) for the release process and branching model.
 
+## [1.14.1] - 2026-09-29
+
+### Added
+
+- `CODEOWNERS` requesting review from the owning area on every pull request
+- Branch rulesets for `master` and `develop` (`.github/rulesets/`), an apply script and a `branch-policy` check that validates a pull request's base and head before it can merge
+- Branch rules documented in `CONTRIBUTING.md` (EN and pt-BR), including the merge-commit rule for `master`
+
+### Changed
+
+- Terms of Use and Privacy notice rewritten to match the approved legal opinion
+- "Aceitar dados de uso" is now a filled gold button and leads the consent gate row; refusing keeps the outlined treatment and still takes one click
+
+### Removed
+
+- The end-of-content e-mail collection for new-phase notices: the dialog, its API client, validation and UI state, and the whole `user-interested` module on the back end. A migration drops the `user_interested` table — **this deletes personal data irreversibly; export anything needed from production before deploying.** Finishing the last available phase now returns the player to the world map
+
+### Fixed
+
+- The Phaser game is destroyed when `PhaserGame` unmounts. Leaving the game left its music playing over the next page, and returning to `/game` ran a second, invisible scene that fought the visible one over the world-map pins
+- The privacy notice now returns to `/game` with "Voltar ao jogo", instead of sending a player mid-session back to the landing page
+- The production deploy workflow only runs from `master` and fails on any other ref
+
 ## [1.14.0] - 2026-09-29
 
 This is the release the repository is published from as open source.
