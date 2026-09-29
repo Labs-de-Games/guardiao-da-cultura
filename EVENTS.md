@@ -1,6 +1,6 @@
 # Eventos de Analytics — Dashboard
 
-> **Existem quatro stacks de analytics neste repositório** (registrado
+> **Existem três stacks de analytics neste repositório** (registrado
 > aqui por #748 para que nenhuma delas seja confundida com "o" analytics
 > do produto):
 > 1. **PostHog** (`front/src/components/PostHogProvider.tsx`,
@@ -11,13 +11,18 @@
 >    mantido como fallback até as telas do edital (#745) rodarem um ciclo
 >    completo de apuração em produção (#748). Não é a fonte de verdade do
 >    edital.
-> 3. **Contentsquare** (`front/src/app/layout.tsx`, script `t.contentsquare.net`)
->    — sessão/heatmap de terceiros, fora do escopo deste documento.
-> 4. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
+> 3. **Google Ads gtag** (`front/src/app/layout.tsx`, `AW-18191558713`) —
 >    conversão de anúncios, fora do escopo deste documento.
 >
-> Um print de qualquer uma das stacks 2–4 **não** representa o número do
+> Um print de qualquer uma das stacks 2–3 **não** representa o número do
 > edital — só a stack 1 (PostHog) faz isso.
+>
+> Existia uma quarta stack, **Contentsquare** (script
+> `t.contentsquare.net/uxa/`, sessão/heatmap de terceiros), removida em
+> 2026-09-29. Ela nunca alimentou número nenhum deste documento. Vale saber
+> ao garimpar o histórico: o commit que a adicionou se chama "add hotjar
+> tracking script" — Hotjar é produto da Contentsquare, então buscar
+> "hotjar" na árvore não acha nada e buscar no log acha isto.
 
 > ## ⚠️ As stacks 1 e 2 dependem de consentimento (#864)
 >

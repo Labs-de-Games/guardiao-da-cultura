@@ -36,10 +36,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </PostHogProvider>
         </ConsentProvider>
         <Script
-          src="https://t.contentsquare.net/uxa/bb88b6a708c9e.js"
-          strategy="afterInteractive"
-        />
-        <Script
           async
           src="https://www.googletagmanager.com/gtag/js?id=AW-18191558713"
           strategy="afterInteractive"

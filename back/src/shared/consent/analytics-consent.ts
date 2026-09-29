@@ -37,7 +37,7 @@ export const RECONSENT_REQUIRED_FROM = "2026-09-28";
  * (clamped, so it sends) and the backend (unclamped, so it discards)
  * disagreeing, and every event would vanish silently.
  */
-export const PRIVACY_NOTICE_VERSION = "2026-09-28";
+export const PRIVACY_NOTICE_VERSION = "2026-09-29";
 
 /** Never demand consent to a notice that has not been published. */
 function reconsentThreshold(): string {
