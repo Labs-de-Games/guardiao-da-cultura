@@ -27,10 +27,10 @@
       "parameters": {
         "required_approving_review_count": 1,
         "dismiss_stale_reviews_on_push": true,
-        "require_code_owner_review": true,
+        "require_code_owner_review": false,
         "require_last_push_approval": false,
         "required_review_thread_resolution": false,
-        "allowed_merge_methods": ["merge", "squash", "rebase"]
+        "allowed_merge_methods": ["merge"]
       }
     },
     {
@@ -40,10 +40,12 @@
         "strict_required_status_checks_policy": false,
         "required_status_checks": [
           {
-            "context": "ci"
+            "context": "ci",
+            "integration_id": 15368
           },
           {
-            "context": "branch-policy"
+            "context": "branch-policy",
+            "integration_id": 15368
           }
         ]
       }
