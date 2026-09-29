@@ -1,0 +1,38 @@
+# Each line maps a path to the people who review changes there.
+# The last matching pattern wins, so broad rules come first.
+
+# Fallback
+*                                       @anacarla-42
+
+# Docs
+/docs/                                  @hebaja @flpdorea ytower-bot
+/*.md                                   @hebaja @flpdorea ytower-bot
+
+# Frontend
+/front/src/components/                  @alesandroneri @hebaja @abgw204 @WicCaesar
+/front/src/app/                         @alesandroneri @hebaja @abgw204 @WicCaesar
+/front/src/lib/                         @alesandroneri @hebaja @abgw204 @WicCaesar
+/front/src/game/                        @alesandroneri @hebaja @abgw204 @WicCaesar
+/front/public/                          @alesandroneri @hebaja @abgw204 @WicCaesar
+
+# Backend
+/back/src/core/                         @alesandroneri @flpdorea
+/back/src/modules/                      @alesandroneri @hebaja @flpdorea
+
+# Migrations and entities (ask-first zone): backend owners plus the maintainer
+/back/src/core/database/migrations/     @alesandroneri @flpdorea @anacarla-42
+/back/src/modules/*/entities/           @alesandroneri @hebaja @flpdorea @anacarla-42
+
+# Infra and CI
+/.github/                               @flpdorea ytower-bot
+/nginx/                                 @flpdorea ytower-bot
+/compose.*.yaml                         @flpdorea ytower-bot
+/Makefile                               @flpdorea ytower-bot
+Dockerfile                              @flpdorea ytower-bot
+
+# Licensing and credits
+/LICENSE                                @anacarla-42
+/NOTICE                                 @anacarla-42
+/ASSETS-LICENSE.md                      @anacarla-42
+/CREDITS.md                             @anacarla-42
+/SECURITY.md                            @anacarla-42
