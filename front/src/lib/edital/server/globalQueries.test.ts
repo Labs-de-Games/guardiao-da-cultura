@@ -30,11 +30,9 @@ describe("public dashboard queries — unset optional properties", () => {
   it("classifies a player without campaign_source (NULL) as direct, not institutional", () => {
     const { query } = buildGlobalOriginSplitQuery(range);
     expect(query).toContain(
-      "coalesce(properties.campaign_source, '') != '') AS institutional",
+      "if(coalesce(properties.campaign_source, '') != '', 'institutional', 'direct')",
     );
-    expect(query).toContain(
-      "coalesce(properties.campaign_source, '') = '') AS spontaneous",
-    );
+    expect(query).toContain("coalesce(properties.entry_origin, '') != ''");
   });
 
   it("guards the institution and turma counts the same way", () => {
@@ -53,6 +51,42 @@ describe("public dashboard queries — unset optional properties", () => {
     expect(query).not.toMatch(
       /(?<!coalesce\()properties\.(campaign_source|turma_source)\s*!?=\s*''/,
     );
+  });
+});
+
+describe("buildGlobalOriginSplitQuery — first touch per player (#851)", () => {
+  const { query } = buildGlobalOriginSplitQuery(range);
+
+  it("classifies each player once, by their first gameplay_started", () => {
+    expect(query).toContain("GROUP BY player");
+    expect(query).toMatch(
+      /argMin\([\s\S]*tuple\(timestamp, uuid\)\s*\) AS first_origin/,
+    );
+    expect(query).toContain(
+      "countIf(first_origin = 'institutional') AS institutional",
+    );
+    expect(query).toContain(
+      "countIf(first_origin != 'institutional') AS spontaneous",
+    );
+  });
+
+  it("prefers entry_origin and falls back to campaign_source for legacy events", () => {
+    expect(query).toContain(
+      "if(coalesce(properties.entry_origin, '') != '', properties.entry_origin, if(coalesce(properties.campaign_source, '') != '', 'institutional', 'direct'))",
+    );
+  });
+
+  it("classifies over the whole history, counting only players active in the period", () => {
+    const inner = query.slice(
+      query.indexOf("FROM events"),
+      query.indexOf("GROUP BY"),
+    );
+    expect(inner).toContain("timestamp < toDateTime({to_ts})");
+    expect(inner).not.toContain("timestamp >= toDateTime({from_ts})");
+    expect(query).toContain(
+      "countIf(timestamp >= toDateTime({from_ts})) AS plays_in_period",
+    );
+    expect(query).toMatch(/WHERE plays_in_period > 0$/);
   });
 });
 

@@ -1,6 +1,7 @@
 import type posthog from "posthog-js";
 import {
   applyFirstTouchCampaignSource,
+  applyFirstTouchEntryOrigin,
   applyFirstTouchTurmaSource,
 } from "../edital/campaign";
 import type { PostHogStub } from "../posthogStub";
@@ -63,6 +64,8 @@ export function registerEventContext(
   },
 ): void {
   client.register({ environment: options.environment });
+  // Before campaign_source: it reads the entry origin (#851).
+  applyFirstTouchEntryOrigin(client, options.searchParams);
   applyFirstTouchCampaignSource(client, options.searchParams);
   applyFirstTouchTurmaSource(client, options.searchParams);
 
