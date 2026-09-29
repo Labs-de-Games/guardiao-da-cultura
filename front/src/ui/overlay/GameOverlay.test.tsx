@@ -28,10 +28,6 @@ jest.mock("@/ui/hud/Sidebar", () => ({
   Sidebar: () => null,
 }));
 
-jest.mock("@/ui/interest/InterestDialog", () => ({
-  InterestDialog: () => null,
-}));
-
 jest.mock("@/ui/intro/IntroSequence", () => ({
   IntroSequence: () => null,
 }));
@@ -138,7 +134,6 @@ describe("GameOverlay", () => {
       badgeGalleryOpen: false,
       chunkSelectorOpen: false,
       labelData: null,
-      isInterestDialogOpen: false,
       introData: null,
       creditsOpen: false,
       levelTransitionActive: false,
@@ -462,21 +457,6 @@ describe("GameOverlay", () => {
 
     it("does not show the confirmation while the controls panel is open", () => {
       useGameUIStore.setState({ gameStarted: true, controlsOpen: true });
-
-      renderWithNothingOpen();
-
-      act(() => {
-        fireEvent.keyDown(window, { key: "Escape" });
-      });
-
-      expect(mockDialogueState.showConfirmation).not.toHaveBeenCalled();
-    });
-
-    it("does not show the confirmation while the interest dialog is open", () => {
-      useGameUIStore.setState({
-        gameStarted: true,
-        isInterestDialogOpen: true,
-      });
 
       renderWithNothingOpen();
 

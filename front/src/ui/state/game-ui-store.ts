@@ -248,7 +248,6 @@ export interface GameUIState {
   badgeError: string | null;
   isAuthenticated: boolean;
   guestId: string | null;
-  isInterestDialogOpen: boolean;
   progression: UserProgressState | null;
   introData: { levelId: string; config: IntroConfig } | null;
   evidenceBoardOpen: boolean;
@@ -397,8 +396,6 @@ export interface GameUIState {
   setBadgeData: (badges: BadgeConfig[], unlockedIds: string[]) => void;
   loadBadgeData: () => Promise<void>;
   addUnlockedBadge: (badgeId: string) => void;
-  openInterestDialog: () => void;
-  closeInterestDialog: () => void;
   setProgression: (state: UserProgressState) => void;
   setIntroData: (data: { levelId: string; config: IntroConfig } | null) => void;
   setEvidenceBoardOpen: (open: boolean) => void;
@@ -554,7 +551,6 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
     badgeError: null,
     isAuthenticated: false,
     guestId: null,
-    isInterestDialogOpen: false,
     progression: null,
     introData: null,
     evidenceBoardOpen: false,
@@ -819,8 +815,6 @@ export const useGameUIStore = create<GameUIState>()((set, get) => {
         if (s.unlockedBadgeIds.includes(badgeId)) return s;
         return { unlockedBadgeIds: [...s.unlockedBadgeIds, badgeId] };
       }),
-    openInterestDialog: () => set({ isInterestDialogOpen: true }),
-    closeInterestDialog: () => set({ isInterestDialogOpen: false }),
     setProgression: (state) => set({ progression: state }),
     setIntroData: (data) => set({ introData: data }),
     setEvidenceBoardOpen: (open) => set({ evidenceBoardOpen: open }),
