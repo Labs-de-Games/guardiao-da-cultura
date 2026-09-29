@@ -298,9 +298,13 @@ o nome da branch e a branch de destino descritos em
 
 A `master` e a `develop` são protegidas por rulesets definidos em
 `.github/rulesets/`: sem push direto, sem force push nem exclusão, uma aprovação
-(incluindo um code owner) e as duas verificações verdes. Quem mantém o projeto
-aplica os rulesets com `make rulesets-apply` e confere mudanças feitas nas
-configurações do GitHub com `make rulesets-diff`.
+e as duas verificações verdes, reportadas pelo GitHub Actions. Na `develop` a
+aprovação precisa ser de um code owner. A `master` aceita apenas merge commits,
+para que o histórico continue alinhado com a `develop`. Depois de um release ou
+hotfix, um pull request da `master` para a `develop` traz os merge commits de
+volta. Uma correção para produção passa por uma branch `hotfix/*`, nunca direto
+na `master`. Quem mantém o projeto aplica os rulesets com `make rulesets-apply`
+e confere mudanças feitas nas configurações do GitHub com `make rulesets-diff`.
 
 Você pode rodar o mesmo conjunto do CI localmente:
 
