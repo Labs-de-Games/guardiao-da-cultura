@@ -10,9 +10,6 @@ env:
 
 jobs:
   build-and-push:
-    # Production deploys only from master. Without this, "Run workflow" would
-    # deploy whatever branch is selected, and it defaults to the default branch.
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,6 +19,19 @@ jobs:
       image_tag: ${{ steps.vars.outputs.image_tag }}
 
     steps:
+      # Production deploys only from master. Without this, "Run workflow" would
+      # deploy whatever branch is selected, and it defaults to the default branch.
+      # Failing here, instead of skipping the job, makes a wrong run visible.
+      # `deploy` needs this job, so it stops too.
+      - name: Require master
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ "$REF" != refs/heads/master ]]; then
+            echo "::error::Production deploys only run from master (got $REF)."
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -68,9 +78,6 @@ jobs:
 
   deploy:
     needs: build-and-push
-    # Production deploys only from master. Without this, "Run workflow" would
-    # deploy whatever branch is selected, and it defaults to the default branch.
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Coolify production deploy
