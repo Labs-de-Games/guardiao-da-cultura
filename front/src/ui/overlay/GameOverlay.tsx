@@ -12,7 +12,6 @@ import {
 } from "@/ui/hooks/useStageExit";
 import { ScorePanel } from "@/ui/hud/ScorePanel";
 import { Sidebar } from "@/ui/hud/Sidebar";
-import { InterestDialog } from "@/ui/interest/InterestDialog";
 import { IntroSequence } from "@/ui/intro/IntroSequence";
 import { InvestigationScreen } from "@/ui/investigation/InvestigationScreen";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
@@ -91,7 +90,6 @@ function OverlayContent() {
   const setCreditsOpen = useGameUIStore((s) => s.setCreditsOpen);
   const investigationOpen = useGameUIStore((s) => s.investigation.open);
   const quizVisible = useGameUIStore((s) => s.quiz.isVisible);
-  const isInterestDialogOpen = useGameUIStore((s) => s.isInterestDialogOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
@@ -313,8 +311,7 @@ function OverlayContent() {
           gameStarted &&
           !dialogueOpen &&
           !controlsOpen &&
-          !quizVisible &&
-          !isInterestDialogOpen
+          !quizVisible
         ) {
           // Sidebar no longer closes on Escape (TAB and the sidebar's own
           // pull-tab are its only toggles now) — Escape always opens the
@@ -354,7 +351,6 @@ function OverlayContent() {
     evidenceBoardOpen,
     setEvidenceBoardOpen,
     quizVisible,
-    isInterestDialogOpen,
     requestStageExit,
   ]);
 
@@ -520,7 +516,6 @@ function OverlayContent() {
       <BadgeGalleryPanel />
       <QuizPanel />
       <EvidenceBoardOverlay />
-      <InterestDialog />
     </>
   );
 }

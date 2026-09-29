@@ -205,8 +205,15 @@ Nomenclatura:
 - `docs/<description>` — documentação
 - `chore/<description>` — manutenção
 - `refactor/<description>` — refatoração
+- `test/<description>` — apenas testes
+- `style/<description>` — formatação, sem mudança de comportamento
+- `ci/<description>` — mudanças de CI e workflows
+- `hotfix/<description>`, `release/<version>` — apenas para quem mantém o
+  projeto, em pull requests para a `master`
 
-O `<id>` é o número da issue, quando houver uma.
+O `<id>` é o número da issue, quando houver uma. Depois do prefixo, use letras
+minúsculas, dígitos, `.`, `_` e `-`. A verificação `branch-policy` do CI reprova
+um pull request cuja branch não siga essas regras.
 
 ### 2. Faça suas alterações
 
@@ -253,22 +260,28 @@ Escreva a descrição no imperativo, em letras minúsculas e sem ponto final.
 ### 4. Abra um pull request
 
 1. Faça push da sua branch.
-2. Abra o pull request **contra a `develop`**.
+2. Abra o pull request **contra a `develop`**. A `master` só aceita pull
+   requests vindos da `develop`, de `release/*` ou de `hotfix/*`, e o CI reprova
+   qualquer outro.
 3. Descreva o que mudou e por quê. Se for uma mudança visível, anexe um
    screenshot ou uma gravação curta.
 4. Vincule a issue que ele fecha.
 5. Confirme que o CI está verde.
 
-Um pull request vindo de um fork roda apenas o `ci.yml`. Os workflows de deploy
+Um pull request vindo de um fork roda apenas o `ci.yml` e o `branch-policy.yml`. Os workflows de deploy
 nunca rodam para um fork.
 
 ### 5. Revisão
 
 - Uma pessoa mantenedora revisa e faz o merge. Espere perguntas — elas são sobre
   o código, não sobre você.
+- O GitHub pede revisão às pessoas responsáveis pelos caminhos que você alterou.
+  O mapa de áreas e pessoas fica em [`.github/CODEOWNERS`](../../.github/CODEOWNERS).
 - Faça push de commits de ajuste em vez de dar force push por cima da revisão,
   para que quem revisa consiga ver o que mudou.
-- Os merges usam "Squash and merge" ou "Rebase and merge".
+- Os merges na `develop` usam "Squash and merge" ou "Rebase and merge". Pull
+  requests de release, hotfix e back-merge usam "Create a merge commit", o único
+  método que a `master` aceita.
 - Apague a branch depois do merge.
 
 ## O que o CI executa
@@ -282,8 +295,22 @@ Todo pull request dispara o `.github/workflows/ci.yml`:
 | Build | `npm run build` |
 | Testes | `make test` |
 
-As quatro precisam passar antes de um merge. Você pode rodar o mesmo conjunto
-localmente:
+As quatro precisam passar antes de um merge. O
+`.github/workflows/branch-policy.yml` também roda em todo pull request e confere
+o nome da branch e a branch de destino descritos em
+[1. Fork e branch](#1-fork-e-branch).
+
+A `master` e a `develop` são protegidas por rulesets definidos em
+`.github/rulesets/`: sem push direto, sem force push nem exclusão, uma aprovação
+e as duas verificações verdes, reportadas pelo GitHub Actions. Na `develop` a
+aprovação precisa ser de um code owner. A `master` aceita apenas merge commits,
+para que o histórico continue alinhado com a `develop`. Depois de um release ou
+hotfix, um pull request da `master` para a `develop` traz os merge commits de
+volta. Uma correção para produção passa por uma branch `hotfix/*`, nunca direto
+na `master`. Quem mantém o projeto aplica os rulesets com `make rulesets-apply`
+e confere mudanças feitas nas configurações do GitHub com `make rulesets-diff`.
+
+Você pode rodar o mesmo conjunto do CI localmente:
 
 ```bash
 npm run typecheck && npm run lint && npm run build && npm run test
