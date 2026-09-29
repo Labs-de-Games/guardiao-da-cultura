@@ -14,26 +14,26 @@ API over PostgreSQL, and a React HUD layered over the game canvas.
   - [Domain Modules](#domain-modules)
 - [3. Technology Stack](#3-technology-stack)
   - [Workspace & Tooling](#workspace--tooling)
-  - [Frontend](#frontend)
-  - [Backend](#backend)
+  - [Frontend](#frontend-front)
+  - [Backend](#backend-back)
   - [Optional Integrations](#optional-integrations)
 - [4. Architectural Patterns & Boundaries](#4-architectural-patterns--boundaries)
   - [Deployment Topology](#deployment-topology)
   - [The Modular Monolith Approach](#the-modular-monolith-approach)
   - [Directory Structure](#directory-structure)
-  - [Simplified Backend Strategy](#simplified-backend-strategy)
+  - [Simplified Backend Strategy](#simplified-backend-strategy-current-pivot)
 - [5. Resolved & Pending Architecture Decisions](#5-resolved--pending-architecture-decisions)
 - [6. API Contracts](#6-api-contracts)
-  - [Auth Module](#auth-module)
-  - [Users Module](#users-module)
-  - [Admin Module](#admin-module)
-  - [Game Module](#game-module)
-  - [Progression Module](#progression-module)
-  - [Scoring Module](#scoring-module)
-  - [Badges Module](#badges-module)
-  - [PostHog Module](#posthog-module)
-  - [Campaign Links Module](#campaign-links-module)
-  - [TTS Module](#tts-module)
+  - [Auth Module](#auth-module-auth)
+  - [Users Module](#users-module-users)
+  - [Admin Module](#admin-module-admin)
+  - [Game Module](#game-module-game)
+  - [Progression Module](#progression-module-progression)
+  - [Scoring Module](#scoring-module-scoring)
+  - [Badges Module](#badges-module-badges)
+  - [PostHog Module](#posthog-module-posthog)
+  - [Campaign Links Module](#campaign-links-module-campaign-links)
+  - [TTS Route Handler](#tts-route-handler-apittssynthesize)
   - [Planned Modules](#planned-modules)
   - [Technical Notes](#technical-notes)
 
@@ -419,7 +419,7 @@ Server-side proxy for ResponsiveVoice text-to-speech, implemented as a Next.js R
 |--------|------|------|-------------|
 | `POST` | `/api/tts/synthesize` | Public | Convert text to speech. Body: `{ text: string, voice?: string, rate?: number, pitch?: number }`. Returns binary `audio/mpeg`, `503` when no key is configured, or `502` when the upstream service fails or times out. |
 
-The key is optional, and an empty value counts as unset. Without it, the route answers `503` with `code: "tts_unavailable"`, and the client (`AudioAccessibilityService`) switches to the browser's `window.speechSynthesis` for the rest of the session. If ResponsiveVoice fails (invalid key, outage, 10s timeout), the route answers `502`, and the client uses the browser voice for that line only. The browser voice depends on the operating system and may need a speech engine installed or enabled (see [CONTRIBUTING.md](./CONTRIBUTING.md#narration-text-to-speech)).
+The key is optional, and an empty value counts as unset. Without it, the route answers `503` with `code: "tts_unavailable"`, and the client (`AudioAccessibilityService`) switches to the browser's `window.speechSynthesis` for the rest of the session. If ResponsiveVoice fails (invalid key, outage, 10s timeout), the route answers `502`, and the client uses the browser voice for that line only. The browser voice depends on the operating system and may need a speech engine installed or enabled (see [CONTRIBUTING.md](./CONTRIBUTING.md#troubleshooting)).
 
 ### Planned Modules
 
