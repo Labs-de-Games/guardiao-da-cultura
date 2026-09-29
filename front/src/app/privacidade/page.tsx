@@ -4,6 +4,7 @@ import {
   formatNoticeVersion,
   PRIVACY_NOTICE_VERSION,
 } from "@/lib/consent/privacyNotice";
+import { GAME_ROUTE_PREFIX } from "@/lib/navigation/gameRoutes";
 
 export const metadata: Metadata = {
   title: "Aviso de Privacidade — Guardião da Cultura",
@@ -416,9 +417,12 @@ export default function PrivacyNoticePage() {
           tratada como autorização para novas finalidades.
         </p>
 
+        {/* Back to the game, not to the landing page: everyone who reaches
+            this notice arrives from the consent dialog or the in-game privacy
+            panel, both of which interrupt a session already in progress. */}
         <p style={{ marginTop: 40 }}>
-          <Link href="/" style={{ color: "#d9ad56" }}>
-            ← Voltar ao início
+          <Link href={GAME_ROUTE_PREFIX} style={{ color: "#d9ad56" }}>
+            ← Voltar ao jogo
           </Link>
         </p>
       </article>
