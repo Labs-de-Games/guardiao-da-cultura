@@ -62,17 +62,36 @@ export class PostHogService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Send a product-analytics event.
+   *
+   * `consent` is the player's analytics choice for the request this event
+   * belongs to (issue #864). It is required rather than optional and has no
+   * default: a caller that forgets it would otherwise silently send events for
+   * players who refused. Operational calls with no player attached pass
+   * `true` explicitly.
+   */
   capture(options: {
     event: string;
     distinctId?: string;
     properties?: Record<string, unknown>;
+    consent: boolean;
   }) {
+    if (!options.consent) {
+      this.logger.debug(
+        "[PostHog] capture suppressed — no analytics consent:",
+        options.event,
+      );
+      return;
+    }
     if (!this.client) {
       this.logger.debug("[PostHogStub] capture:", options);
       return;
     }
+    // `consent` is our own gating input, not an event property.
+    const { consent: _consent, ...payload } = options;
     this.client.capture({
-      ...options,
+      ...payload,
       properties: {
         ...options.properties,
         environment: this.config.appEnv,
@@ -82,9 +101,16 @@ export class PostHogService implements OnModuleDestroy {
 
   captureException(
     error: Error,
-    distinctId?: string,
-    properties?: Record<string, unknown>,
+    distinctId: string | undefined,
+    properties: Record<string, unknown> | undefined,
+    consent: boolean,
   ) {
+    if (!consent) {
+      this.logger.debug(
+        "[PostHog] captureException suppressed — no analytics consent",
+      );
+      return;
+    }
     if (!this.client) {
       this.logger.debug("[PostHogStub] captureException:", {
         error,
