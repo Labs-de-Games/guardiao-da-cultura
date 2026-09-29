@@ -97,10 +97,16 @@ export async function middleware(request: NextRequest) {
     // Self-serve replacement for #744's admin seed-script step (no admin
     // role/workflow exists in this project) — an institution account with
     // no slug yet must onboard before it can reach the dashboard.
-    if (!session.user.institutionSlug && path !== ONBOARDING_PATH) {
+    if (!session.user.institutionSlug) {
+      // Onboarding itself must stay reachable here without falling through
+      // to the terms gate below: a brand-new account has not accepted yet
+      // either, and bouncing it to the terms page (which sends slug-less
+      // accounts back here) is a redirect loop.
       return withAnonymousPlayerCookie(
         request,
-        NextResponse.redirect(new URL(ONBOARDING_PATH, request.url)),
+        path === ONBOARDING_PATH
+          ? NextResponse.next()
+          : NextResponse.redirect(new URL(ONBOARDING_PATH, request.url)),
       );
     }
     // Already onboarded — never show the name form again (back button,
