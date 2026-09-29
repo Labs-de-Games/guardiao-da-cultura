@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Box, Button, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Typography } from "@mui/material";
 import { useSession } from "next-auth/react";
 import { type FormEvent, useState } from "react";
 import { TermsAcceptance } from "@/components/auth/TermsAcceptance";
@@ -9,26 +9,30 @@ import { hardNavigate } from "@/lib/hardNavigate";
 
 const DASHBOARD_PATH = "/institution";
 const SUBMIT_ERROR_MESSAGE =
-  "Não foi possível concluir o cadastro. Tente novamente.";
+  "Não foi possível registrar o aceite. Tente novamente.";
+const STALE_VERSION_MESSAGE =
+  "Os termos foram atualizados enquanto esta página estava aberta. Recarregue para ver a versão atual.";
 
 /**
- * One-time step for a freshly-created institution account
- * (`institutionSlug === null`) — self-serve replacement for #744's
- * admin seed-script step (no admin role/workflow exists in this
- * project). middleware.ts redirects here whenever an institution session
- * has no slug yet, for any /institution/* route except this one.
+ * Blocking acceptance step for an institution account that predates the terms
+ * gate, or whose acceptance was retired by a material revision (issue #338).
+ *
+ * middleware.ts redirects here for any /institution/* route once the account
+ * has a slug but no current consent — the same shape the onboarding step
+ * already uses for a missing slug, and the reason this page must be reachable
+ * while the gate is closed.
+ *
+ * A brand-new account never lands here: it has no slug, so onboarding (which
+ * collects the acceptance itself) comes first.
  */
-export default function InstitutionOnboardingPage() {
+export default function InstitutionTermsPage() {
   const { update } = useSession();
-  const [institutionName, setInstitutionName] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    // Enter in the name field submits the form without going through the
-    // disabled button, so the guard cannot live on the button alone.
     if (!termsAccepted) {
       setError("É necessário aceitar os Termos de Uso para continuar.");
       return;
@@ -38,12 +42,11 @@ export default function InstitutionOnboardingPage() {
 
     let response: Response;
     try {
-      response = await fetch("/api/institution/onboarding", {
+      response = await fetch("/api/institution/terms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          institutionName,
-          termsAccepted,
+          termsAccepted: true,
           termsVersion: INSTITUTION_TERMS_VERSION,
         }),
       });
@@ -54,53 +57,41 @@ export default function InstitutionOnboardingPage() {
     }
 
     if (!response.ok) {
-      setError(SUBMIT_ERROR_MESSAGE);
+      // 400 means this tab is rendering a version the server has replaced.
+      // Retrying cannot help; only a reload can.
+      setError(
+        response.status === 400 ? STALE_VERSION_MESSAGE : SUBMIT_ERROR_MESSAGE,
+      );
       setIsSubmitting(false);
       return;
     }
 
-    // Onboarding is idempotent: an already-onboarded account gets its
-    // existing slug back too, so this update() also repairs a session
-    // cookie that missed an earlier update.
-    const data = (await response.json()) as { institutionSlug: string };
     try {
-      // termsAccepted travels with the slug: middleware gates on both, and a
-      // session refreshed with only the slug would bounce straight back here
-      // — or, once the slug is set, on to the terms page.
-      await update({
-        institutionSlug: data.institutionSlug,
-        termsAccepted: true,
-      });
+      await update({ termsAccepted: true });
     } catch {
-      // The name is saved server-side; a resubmit returns the same slug and
-      // retries this update, so navigating on is still the right call.
+      // Recorded server-side already; a resubmit is idempotent and repeats
+      // this update, so navigating on is still the right call.
     }
     // Full navigation, not router.push: a soft navigation can replay the
-    // client router's cached "/institution → onboarding" redirect and keep
-    // the stale SessionProvider session, leaving the user stuck here.
+    // client router's cached "/institution → terms" redirect and keep the
+    // stale SessionProvider session, leaving the user stuck here.
     hardNavigate(DASHBOARD_PATH);
   }
 
   return (
-    <Box sx={{ maxWidth: 480, mx: "auto", mt: 6 }}>
+    <Box sx={{ maxWidth: 560, mx: "auto", mt: 6 }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-        Complete o cadastro da instituição
+        Aceite os Termos de Uso
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-        Informe o nome da instituição para acessar o painel.
+        Para continuar usando o painel institucional, é necessário aceitar a
+        versão atual dos Termos de Uso.
       </Typography>
       <Box
         component="form"
         onSubmit={handleSubmit}
         sx={{ display: "flex", flexDirection: "column", gap: 3 }}
       >
-        <TextField
-          size="small"
-          label="Nome da instituição"
-          value={institutionName}
-          onChange={(e) => setInstitutionName(e.target.value)}
-          required
-        />
         <TermsAcceptance
           checked={termsAccepted}
           onChange={setTermsAccepted}

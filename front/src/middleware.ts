@@ -18,6 +18,7 @@ import {
 const SERVICE_UNAVAILABLE_STATUS = 503;
 const INSTITUTION_ROUTE_PREFIX = "/institution";
 const ONBOARDING_PATH = `${INSTITUTION_ROUTE_PREFIX}/onboarding`;
+const TERMS_ACCEPT_PATH = `${INSTITUTION_ROUTE_PREFIX}/termos`;
 
 function isInstitutionRoute(path: string): boolean {
   return (
@@ -105,6 +106,24 @@ export async function middleware(request: NextRequest) {
     // Already onboarded — never show the name form again (back button,
     // stale tab), which would only end in a 403 "already onboarded".
     if (session.user.institutionSlug && path === ONBOARDING_PATH) {
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(new URL(INSTITUTION_ROUTE_PREFIX, request.url)),
+      );
+    }
+    // Terms gate (#338). Deliberately *after* the slug gate: a brand-new
+    // account has neither, and onboarding collects the acceptance along with
+    // the name, so sending it through onboarding first means one form instead
+    // of two. What reaches here is an account that got its slug before the
+    // gate existed, or whose acceptance a material revision retired.
+    if (!session.user.termsAccepted && path !== TERMS_ACCEPT_PATH) {
+      return withAnonymousPlayerCookie(
+        request,
+        NextResponse.redirect(new URL(TERMS_ACCEPT_PATH, request.url)),
+      );
+    }
+    // Already accepted — same reasoning as the onboarding guard above.
+    if (session.user.termsAccepted && path === TERMS_ACCEPT_PATH) {
       return withAnonymousPlayerCookie(
         request,
         NextResponse.redirect(new URL(INSTITUTION_ROUTE_PREFIX, request.url)),

@@ -9,6 +9,7 @@ interface OAuthUpsertResponse {
   role: "player" | "institution" | "admin";
   email: string;
   institutionSlug: string | null;
+  termsAccepted: boolean;
 }
 
 interface PasswordLoginResponse {
@@ -18,6 +19,7 @@ interface PasswordLoginResponse {
     email: string;
     role: "player" | "institution" | "admin";
     institutionSlug: string | null;
+    termsAccepted: boolean;
   };
 }
 
@@ -86,6 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             backendId: data.user.id,
             backendRole: data.user.role,
             institutionSlug: data.user.institutionSlug,
+            termsAccepted: data.user.termsAccepted,
           };
         } catch (err) {
           console.error("[auth] password login request failed:", err);
@@ -132,6 +135,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             backendId: data.user.id,
             backendRole: data.user.role,
             institutionSlug: data.user.institutionSlug,
+            termsAccepted: data.user.termsAccepted,
           };
         } catch (err) {
           console.error(
@@ -204,6 +208,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           backendId: upserted.id,
           backendRole: upserted.role,
           institutionSlug: upserted.institutionSlug,
+          termsAccepted: upserted.termsAccepted,
         });
         return true;
       } catch (err) {
@@ -217,10 +222,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           backendId?: string;
           backendRole?: "player" | "institution" | "admin";
           institutionSlug?: string | null;
+          termsAccepted?: boolean;
         };
         token.userId = enriched.backendId;
         token.role = enriched.backendRole;
         token.institutionSlug = enriched.institutionSlug ?? null;
+        token.termsAccepted = enriched.termsAccepted ?? false;
       }
       // Triggered by the client's `update({ institutionSlug })` call right
       // after onboarding — lets the just-set slug land in the session
@@ -228,12 +235,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger === "update" && session?.institutionSlug) {
         token.institutionSlug = session.institutionSlug;
       }
+      // Same mechanism for the terms gate (#338): set by onboarding, which
+      // collects the acceptance alongside the name, and by the standalone
+      // terms page that existing accounts are redirected to. Only ever set
+      // true here — a session cannot talk itself out of a recorded consent,
+      // and retiring one is the backend's call at the next sign-in.
+      if (trigger === "update" && session?.termsAccepted === true) {
+        token.termsAccepted = true;
+      }
       return token;
     },
     async session({ session, token }) {
       if (token.userId) session.user.id = token.userId;
       if (token.role) session.user.role = token.role;
       session.user.institutionSlug = token.institutionSlug ?? null;
+      // Unconditional `?? false`: a JWT minted before #338 has no such claim,
+      // and an absent claim must read as "has not accepted" so the gate holds
+      // rather than falling open for every pre-existing session.
+      session.user.termsAccepted = token.termsAccepted ?? false;
       return session;
     },
   },

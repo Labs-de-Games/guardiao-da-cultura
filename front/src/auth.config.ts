@@ -27,19 +27,28 @@ export const authConfig = {
   },
   callbacks: {
     // Mirror the jwt/session callbacks from auth.ts so the Edge-side
-    // middleware can read `role` and `institutionSlug` from the session.
-    // auth.ts has the full version that also sets these on first sign-in;
-    // here we only need to pass them through from the already-signed JWT.
+    // middleware can read `role`, `institutionSlug` and `termsAccepted` from
+    // the session. auth.ts has the full version that also sets these on first
+    // sign-in; here we only need to pass them through from the already-signed
+    // JWT.
+    //
+    // Every field middleware gates on MUST be listed in the session callback
+    // below. This file is the only one middleware.ts imports, so a claim that
+    // auth.ts sets but this does not reads as `undefined` on every request —
+    // which for a boolean gate means "never satisfied", and the user is
+    // redirected in a loop they cannot escape by complying.
     jwt({ token, user }) {
       if (user) {
         const enriched = user as typeof user & {
           backendId?: string;
           backendRole?: "player" | "institution" | "admin";
           institutionSlug?: string | null;
+          termsAccepted?: boolean;
         };
         token.userId = enriched.backendId;
         token.role = enriched.backendRole;
         token.institutionSlug = enriched.institutionSlug ?? null;
+        token.termsAccepted = enriched.termsAccepted ?? false;
       }
       return token;
     },
@@ -47,6 +56,7 @@ export const authConfig = {
       if (token.userId) session.user.id = token.userId;
       if (token.role) session.user.role = token.role;
       session.user.institutionSlug = token.institutionSlug ?? null;
+      session.user.termsAccepted = token.termsAccepted ?? false;
       return session;
     },
   },

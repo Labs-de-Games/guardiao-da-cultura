@@ -51,7 +51,11 @@ describe("middleware — institution routes gated by NextAuth session", () => {
 
   it("allows the request through with a valid, linked institution session", async () => {
     mockAuth.mockResolvedValue({
-      user: { role: "institution", institutionSlug: "escola-exemplo" },
+      user: {
+        role: "institution",
+        institutionSlug: "escola-exemplo",
+        termsAccepted: true,
+      },
     });
 
     const response = await middleware(makeRequest("/institution"));
@@ -61,7 +65,7 @@ describe("middleware — institution routes gated by NextAuth session", () => {
 
   it("redirects to onboarding when the institution session has no slug yet", async () => {
     mockAuth.mockResolvedValue({
-      user: { role: "institution", institutionSlug: null },
+      user: { role: "institution", institutionSlug: null, termsAccepted: true },
     });
 
     const response = await middleware(makeRequest("/institution"));
@@ -74,7 +78,7 @@ describe("middleware — institution routes gated by NextAuth session", () => {
 
   it("lets an unlinked institution session reach the onboarding page itself", async () => {
     mockAuth.mockResolvedValue({
-      user: { role: "institution", institutionSlug: null },
+      user: { role: "institution", institutionSlug: null, termsAccepted: true },
     });
 
     const response = await middleware(makeRequest("/institution/onboarding"));
@@ -82,9 +86,91 @@ describe("middleware — institution routes gated by NextAuth session", () => {
     expect(response.status).toBe(200);
   });
 
-  it("redirects an already-onboarded institution away from the onboarding page", async () => {
+  it("redirects to the terms page when an onboarded institution has not accepted", async () => {
+    mockAuth.mockResolvedValue({
+      user: {
+        role: "institution",
+        institutionSlug: "escola-teste",
+        termsAccepted: false,
+      },
+    });
+
+    const response = await middleware(makeRequest("/institution/funnel"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/institution/termos");
+  });
+
+  it("lets an institution without consent reach the terms page itself", async () => {
+    mockAuth.mockResolvedValue({
+      user: {
+        role: "institution",
+        institutionSlug: "escola-teste",
+        termsAccepted: false,
+      },
+    });
+
+    const response = await middleware(makeRequest("/institution/termos"));
+
+    expect(response.status).toBe(200);
+  });
+
+  it("redirects an institution that already accepted away from the terms page", async () => {
+    mockAuth.mockResolvedValue({
+      user: {
+        role: "institution",
+        institutionSlug: "escola-teste",
+        termsAccepted: true,
+      },
+    });
+
+    const response = await middleware(makeRequest("/institution/termos"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/institution");
+  });
+
+  it("sends a brand-new account to onboarding, not to the terms page", async () => {
+    // Onboarding collects the acceptance alongside the name, so an account
+    // with neither must meet one form, not two. This is why the terms gate
+    // sits after the slug gate rather than before it.
+    mockAuth.mockResolvedValue({
+      user: {
+        role: "institution",
+        institutionSlug: null,
+        termsAccepted: false,
+      },
+    });
+
+    const response = await middleware(makeRequest("/institution"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain(
+      "/institution/onboarding",
+    );
+  });
+
+  it("treats a session minted before the terms gate as not accepted", async () => {
+    // A JWT issued before #338 carries no such claim; an absent claim must
+    // fail closed rather than leave every pre-existing session ungated.
     mockAuth.mockResolvedValue({
       user: { role: "institution", institutionSlug: "escola-teste" },
+    });
+
+    const response = await middleware(makeRequest("/institution"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/institution/termos");
+  });
+
+  it("redirects an already-onboarded institution away from the onboarding page", async () => {
+    mockAuth.mockResolvedValue({
+      user: {
+        role: "institution",
+        institutionSlug: "escola-teste",
+        termsAccepted: true,
+      },
     });
 
     const response = await middleware(makeRequest("/institution/onboarding"));
