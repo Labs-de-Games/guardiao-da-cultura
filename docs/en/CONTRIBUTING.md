@@ -202,8 +202,15 @@ Naming:
 - `docs/<description>` — documentation
 - `chore/<description>` — maintenance
 - `refactor/<description>` — refactoring
+- `test/<description>` — tests only
+- `style/<description>` — formatting, no behaviour change
+- `ci/<description>` — CI and workflow changes
+- `hotfix/<description>`, `release/<version>` — maintainers only, for pull
+  requests into `master`
 
-The `<id>` is the issue number when there is one.
+The `<id>` is the issue number when there is one. Use lower case letters, digits,
+`.`, `_` and `-` after the prefix. The `branch-policy` check in CI fails a pull
+request whose branch name does not follow these rules.
 
 ### 2. Make your changes
 
@@ -250,13 +257,14 @@ Write the description in the imperative, lower case, with no trailing period.
 ### 4. Open a pull request
 
 1. Push your branch.
-2. Open the pull request **against `develop`**.
+2. Open the pull request **against `develop`**. `master` only accepts pull
+   requests from `develop`, `release/*` or `hotfix/*`, and CI fails any other.
 3. Describe what changed and why. If it is a visible change, attach a screenshot
    or a short recording.
 4. Link the issue it closes.
 5. Make sure CI is green.
 
-A pull request from a fork runs `ci.yml` only. The deployment workflows never
+A pull request from a fork runs `ci.yml` and `branch-policy.yml` only. The deployment workflows never
 run for a fork.
 
 ### 5. Review
@@ -279,7 +287,16 @@ Every pull request triggers `.github/workflows/ci.yml`:
 | Build | `npm run build` |
 | Test | `make test` |
 
-All four must pass before a merge. You can run the same set locally:
+All four must pass before a merge. `.github/workflows/branch-policy.yml` also
+runs on every pull request and checks the branch name and base branch described
+in [1. Fork and branch](#1-fork-and-branch).
+
+`master` and `develop` are protected by rulesets defined in `.github/rulesets/`:
+no direct pushes, no force pushes or deletion, one approval (including a code
+owner), and both checks green. Maintainers apply them with `make rulesets-apply`
+and check for changes made in the GitHub settings with `make rulesets-diff`.
+
+You can run the CI set locally:
 
 ```bash
 npm run typecheck && npm run lint && npm run build && npm run test

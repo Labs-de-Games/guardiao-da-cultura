@@ -128,17 +128,24 @@ flowchart TB
 
 ### Branch Strategy
 
-1. Create short-lived branches from `master`:
+1. Create short-lived branches from `develop`:
 
    ```bash
+   git checkout develop && git pull
    git checkout -b docs/readme-improvements
    git checkout -b chore/update-dependencies
    git checkout -b fix/lint-errors
    ```
 
+   Allowed prefixes: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`, `test/`,
+   `style/`, `ci/`, plus `hotfix/` and `release/` for maintainers. The rest of the
+   name is lower case letters, digits, `.`, `_` and `-`. The `branch-policy` CI
+   check enforces this.
+
 2. Keep changes atomic and focused
 
-3. Open PR with clear description of what and why
+3. Open the PR against `develop` with a clear description of what and why.
+   `master` only accepts PRs from `develop`, `release/*` or `hotfix/*`.
 
 ### Commit Standards
 
