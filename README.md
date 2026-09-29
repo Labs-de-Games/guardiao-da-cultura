@@ -133,6 +133,7 @@ Then open <http://localhost:3000>.
 - [`docs/en/CONTRIBUTING.md`](./docs/en/CONTRIBUTING.md) — setup, commands, logging in, troubleshooting and the contribution flow
 - [`docs/en/ARCHITECTURE.md`](./docs/en/ARCHITECTURE.md) — tech stack, system design, optional integrations and API contracts
 - [`docs/en/CONTENT-REUSE.md`](./docs/en/CONTENT-REUSE.md) — adapting the levels, quizzes and narrative
+- [`docs/README.md`](./docs/README.md) — index of every doc, in English and Brazilian Portuguese
 - [`SECURITY.md`](./SECURITY.md) — reporting a vulnerability
 - [`AGENTS.md`](./AGENTS.md) — how AI agents are used in development
 - [`CREDITS.md`](./CREDITS.md), [`ASSETS-LICENSE.md`](./ASSETS-LICENSE.md), [`NOTICE`](./NOTICE) — credits, asset terms and trademarks

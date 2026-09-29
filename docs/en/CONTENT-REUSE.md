@@ -1,3 +1,5 @@
+🌐 English | [Português (Brasil)](../pt-BR/CONTENT-REUSE.md)
+
 # Adapting the content
 
 The levels in Guardião da Cultura are **data, not code**. Quizzes, dialogue,

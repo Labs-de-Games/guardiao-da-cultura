@@ -1,3 +1,5 @@
+🌐 English | [Português (Brasil)](../pt-BR/VERSIONING.md)
+
 # **Release Process Guidelines and Structure — Rouanet Game**
 
 This document establishes the official standard for managing, planning, and executing releases of the Rouanet Game, ensuring production environment stability and delivery predictability.
