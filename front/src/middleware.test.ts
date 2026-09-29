@@ -151,6 +151,23 @@ describe("middleware — institution routes gated by NextAuth session", () => {
     );
   });
 
+  it("lets a brand-new account reach onboarding without bouncing to the terms page", async () => {
+    // Onboarding collects the acceptance, so the terms gate must not fire
+    // on it — the terms page sends slug-less accounts back to onboarding,
+    // and the two would redirect into each other forever.
+    mockAuth.mockResolvedValue({
+      user: {
+        role: "institution",
+        institutionSlug: null,
+        termsAccepted: false,
+      },
+    });
+
+    const response = await middleware(makeRequest("/institution/onboarding"));
+
+    expect(response.status).toBe(200);
+  });
+
   it("treats a session minted before the terms gate as not accepted", async () => {
     // A JWT issued before #338 carries no such claim; an absent claim must
     // fail closed rather than leave every pre-existing session ungated.
