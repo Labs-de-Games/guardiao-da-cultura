@@ -5,6 +5,8 @@ import { LayoutConfig } from "../constants/LayoutConfig";
 import { InteractionComponent } from "../objects/InteractionComponent";
 import { TiledUtils } from "../utils/TiledUtils";
 
+export const SWITCH_LIGHT_ANIM_KEY = "switch_light_anim";
+
 export interface SwitchLightInstance {
   sprite: Phaser.GameObjects.Sprite;
   instanceId: string;
@@ -78,16 +80,26 @@ export class SwitchLightSystem {
   private activate(instance: SwitchLightInstance): void {
     if (instance.isActivated) return;
     instance.isActivated = true;
-    AudioManager.playSfx("sfx.switch");
-    instance.sprite.play("switch_light_anim");
     instance.interaction.destroy();
+    AudioManager.playSfx("sfx.switch");
 
-    instance.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+    const notify = () => {
       if (!instance.lightBarName) return;
       this.scene.events.emit(GameEvents.SWITCH_LIGHT_ACTIVATED, {
         lightBarName: instance.lightBarName,
       });
-    });
+    };
+
+    // An animation without frames (texture missing when it was registered)
+    // would throw on play and block progression, so skip straight to notify.
+    const anim = this.scene.anims.get(SWITCH_LIGHT_ANIM_KEY);
+    if (!anim || anim.frames.length === 0) {
+      notify();
+      return;
+    }
+
+    instance.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, notify);
+    instance.sprite.play(SWITCH_LIGHT_ANIM_KEY);
   }
 
   public setPlayerTracking(player: Phaser.Physics.Arcade.Sprite): void {
