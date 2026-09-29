@@ -10,8 +10,7 @@ does that row say that".
 
 - Tree swept: 259 files, 61 MB, under `front/public/assets/`.
 - `artworks/`: 56 files, 6.7 MB — the group cleared by the PO.
-- Companion documents: [`PLAN-open-source.md`](./PLAN-open-source.md),
-  [`SEQUENCING-sep-28.md`](./SEQUENCING-sep-28.md).
+- Parent epic: #796.
 
 ## Verdict vocabulary
 

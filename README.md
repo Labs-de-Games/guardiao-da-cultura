@@ -98,7 +98,7 @@ contributions, and is the responder for security reports.
 
 The quizzes, dialogue and works on display are kept apart from the game itself,
 so you can rewrite a quiz or retell a museum's story for your own students
-without programming. [`docs/CONTENT-REUSE.md`](./docs/CONTENT-REUSE.md) walks
+without programming. [`docs/en/CONTENT-REUSE.md`](./docs/en/CONTENT-REUSE.md) walks
 through each part and how to change it — including the one part that is not
 optional: an adapted version must keep the credits.
 
@@ -130,9 +130,9 @@ make db-migrate
 
 Then open <http://localhost:3000>.
 
-- [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md) — setup, commands, logging in, troubleshooting and the contribution flow
-- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — tech stack, system design, optional integrations and API contracts
-- [`docs/CONTENT-REUSE.md`](./docs/CONTENT-REUSE.md) — adapting the levels, quizzes and narrative
+- [`docs/en/CONTRIBUTING.md`](./docs/en/CONTRIBUTING.md) — setup, commands, logging in, troubleshooting and the contribution flow
+- [`docs/en/ARCHITECTURE.md`](./docs/en/ARCHITECTURE.md) — tech stack, system design, optional integrations and API contracts
+- [`docs/en/CONTENT-REUSE.md`](./docs/en/CONTENT-REUSE.md) — adapting the levels, quizzes and narrative
 - [`SECURITY.md`](./SECURITY.md) — reporting a vulnerability
 - [`AGENTS.md`](./AGENTS.md) — how AI agents are used in development
 - [`CREDITS.md`](./CREDITS.md), [`ASSETS-LICENSE.md`](./ASSETS-LICENSE.md), [`NOTICE`](./NOTICE) — credits, asset terms and trademarks
@@ -140,7 +140,7 @@ Then open <http://localhost:3000>.
 ## Contributing
 
 Contributions are welcome. Branch from `develop`, open your pull request against
-`develop`, and follow [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md).
+`develop`, and follow [`docs/en/CONTRIBUTING.md`](./docs/en/CONTRIBUTING.md).
 
 ## Security
 
