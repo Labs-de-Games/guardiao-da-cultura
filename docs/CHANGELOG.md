@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./en/VERSIONING.md) for the release process and branching model.
 
+## [1.14.0] - 2026-09-29
+
+This is the release the repository is published from as open source.
+
+### Added
+
+- Open-source licensing: MIT `LICENSE` for the source code, separate per-asset terms in `ASSETS-LICENSE.md`, `LICENSES/` texts (MIT, CC BY 3.0, CC BY 4.0, CC0 1.0), `CREDITS.md` mirroring the in-game credits screen, and a `NOTICE` stating that the institutional logos are not licensed for reuse
+- `SECURITY.md` pointing to GitHub private vulnerability reporting
+- Content-reuse guide (`docs/en/CONTENT-REUSE.md`, `docs/pt-BR/CONTENT-REUSE.md`) for adapting levels and narrative
+- Documentation split into `docs/en/` and `docs/pt-BR/` trees, with a docs index, language banners and a sync rule
+- Level 3 (São João de Campina Grande): map and platform mechanics, forró band restoration minigame, step-sequence minigame, memory-sequence minigame, cinematic, caption image, labels, quizzes and narrative review
+- Level 4 suspect identification phase in the investigation
+- Edital dashboard with per-institution metrics from PostHog, including level 3 and level 4 data, error pages and fallback states
+- Required consent to the usage-data collection and to the Terms of Use at institutional sign-up, disclosing that the repository is public
+- Mobile block with a desktop-only warning
+- Collapsible sidebar with auto-close at level start, a "VOLTAR AO MAPA" button and an ESC exit-stage confirmation
+- Error fallback pages and maintenance mode
+- Shared footer on the landing page, including the Bemobi sponsor logo
+- Rat sprite credit on the credits screen
+- Ladder in level 2 to improve level flow
+
+### Changed
+
+- ResponsiveVoice is now optional: without an API key, narration falls back to the browser's speech synthesis, so a fresh install works
+- Root package renamed from `template-clone` to `guardiao-da-cultura`, with `"license": "MIT"` declared in every `package.json`
+- Documentation rewritten for an external audience; the README now targets non-technical readers, and the narrative guidelines and core docs are translated
+- Squad-internal documents, screenshots and the daily team status workflow removed from the tree; internal infrastructure hostnames redacted
+- Museum MVP map renamed to Inhotim
+- UI click, hover and magnifying sound effects unified into one sound
+- Level 3 disappearing platform delay increased
+- Level 2 work type and the ESC action label in control panels renamed
+- `entry_flow_experiment` A/B flag removed
+
+### Fixed
+
+- `AUTH_URL` configuration hardening and public dashboard error handling
+- Institution onboarding flow and welcome email for Google sign-ups
+- Public dashboard: unset `campaign_source` treated as no link, queries scoped to the current environment, campaign links built from the environment's own domain, and each player counted once in the origin split
+- `NEXT_PUBLIC_ENV` baked per environment into the front image
+- PostHog events tagged with `APP_ENV` instead of `NODE_ENV`
+- Popup notification text contrast
+- Level-specific animations guarded and switch light activation hardened against soft locks
+- `guest_play_enabled` left absent when unknown before consent
+
 ## [1.13.0] - 2026-09-10
 
 ### Added
