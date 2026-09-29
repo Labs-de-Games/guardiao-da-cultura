@@ -13,6 +13,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { RolesGuard } from "./modules/auth/guards/roles.guard";
 import { BadgesModule } from "./modules/badges/badges.module";
 import { CampaignLinksModule } from "./modules/campaign-links/campaign-links.module";
+import { ConsentModule } from "./modules/consent/consent.module";
 import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { GameModule } from "./modules/game/game.module";
 import { PostHogModule } from "./modules/posthog/posthog.module";
@@ -29,6 +30,7 @@ import { UsersModule } from "./modules/users/users.module";
     DatabaseModule,
     PostHogModule,
     UsersModule,
+    ConsentModule,
     AuthModule,
     AdminModule,
     GameModule,

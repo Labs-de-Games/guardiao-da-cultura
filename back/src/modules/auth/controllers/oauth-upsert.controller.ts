@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -22,9 +23,13 @@ import {
 import { PinoLogger } from "nestjs-pino";
 import { EMAIL_SERVICE } from "../../../core/email/email.constants";
 import type { IEmailService } from "../../../core/email/interfaces/email-service.interface";
+import { isCurrentTermsVersion } from "../../../shared/consent/institution-terms";
+import { ConsentService } from "../../consent/consent.service";
+import { ConsentType } from "../../consent/enums/consent-type.enum";
 import { Role } from "../../users/enums/role.enum";
 import { UserService } from "../../users/user.service";
 import { Public } from "../decorators/public.decorator";
+import { InstitutionConsentDto } from "../dto/institution-consent.dto";
 import { InstitutionOnboardingDto } from "../dto/institution-onboarding.dto";
 import { InstitutionOnboardingResponseDto } from "../dto/institution-onboarding-response.dto";
 import { OAuthUpsertDto } from "../dto/oauth-upsert.dto";
@@ -49,6 +54,7 @@ export class OAuthUpsertController {
   constructor(
     private readonly logger: PinoLogger,
     private readonly userService: UserService,
+    private readonly consentService: ConsentService,
     @Inject(EMAIL_SERVICE)
     private readonly emailService: IEmailService,
   ) {}
@@ -92,6 +98,10 @@ export class OAuthUpsertController {
         role: existing.role,
         email: existing.email,
         institutionSlug: existing.institutionSlug,
+        termsAccepted: await this.consentService.hasCurrentConsent(
+          existing.id,
+          ConsentType.InstitutionTerms,
+        ),
       };
     }
 
@@ -111,6 +121,9 @@ export class OAuthUpsertController {
       role: created.role,
       email: created.email,
       institutionSlug: created.institutionSlug,
+      // Brand new: nothing has been accepted yet. Onboarding, which this
+      // account must pass before the dashboard, is where it accepts.
+      termsAccepted: false,
     };
   }
 
@@ -141,6 +154,10 @@ export class OAuthUpsertController {
   async onboarding(
     @Body() dto: InstitutionOnboardingDto,
   ): Promise<InstitutionOnboardingResponseDto> {
+    if (!isCurrentTermsVersion(dto.termsVersion)) {
+      throw new BadRequestException("Outdated terms version");
+    }
+
     const user = await this.userService.findById(dto.userId);
     if (!user) {
       throw new NotFoundException("User not found");
@@ -148,6 +165,13 @@ export class OAuthUpsertController {
     if (user.role !== Role.Institution) {
       throw new ForbiddenException("Not an institution account");
     }
+
+    // Recorded before the slug work and independently of it, so a resubmit
+    // that short-circuits below still leaves a consent behind. Guarded so a
+    // stale tab replaying this call cannot pad the audit trail with duplicate
+    // rows for the same text.
+    await this.recordTermsOnce(user.id, dto.termsVersion);
+
     // Idempotent: a resubmit (stale tab, or a session cookie whose
     // update() never landed) gets the existing slug back, so the front can
     // repair its session instead of looping back to the onboarding form.
@@ -180,6 +204,65 @@ export class OAuthUpsertController {
       });
 
     return { institutionSlug, institutionName: dto.institutionName };
+  }
+
+  /**
+   * Accept the terms for an account that already exists and already has a
+   * slug — so neither registration nor onboarding can ask it (issue #338).
+   * This is the endpoint behind the middleware redirect that holds existing
+   * institutions out of the dashboard until they accept.
+   */
+  @Public()
+  @UseGuards(OAuthUpsertTokenGuard)
+  @Post("consent")
+  @ApiOperation({ summary: "Record acceptance of the current Terms of Use" })
+  @ApiSecurity("oauth-upsert-token")
+  @ApiOkResponse({ description: "Consent recorded (idempotent)" })
+  @ApiUnauthorizedResponse({ description: "Missing/invalid upsert token" })
+  @ApiNotFoundResponse({ description: "User not found" })
+  @ApiForbiddenResponse({ description: "Not an institution account" })
+  async consent(
+    @Body() dto: InstitutionConsentDto,
+  ): Promise<{ termsAccepted: true }> {
+    if (!isCurrentTermsVersion(dto.termsVersion)) {
+      throw new BadRequestException("Outdated terms version");
+    }
+
+    const user = await this.userService.findById(dto.userId);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    if (user.role !== Role.Institution) {
+      throw new ForbiddenException("Not an institution account");
+    }
+
+    await this.recordTermsOnce(user.id, dto.termsVersion);
+    return { termsAccepted: true };
+  }
+
+  /**
+   * Write a consent row unless a live one already stands.
+   *
+   * The table is append-only so that a *revision* adds a row rather than
+   * overwriting one. Re-submitting the *same* text is a different thing — a
+   * double-click, a replayed tab — and recording it twice would make the
+   * history harder to read without making it any truer.
+   */
+  private async recordTermsOnce(
+    userId: string,
+    version: string,
+  ): Promise<void> {
+    const alreadyConsented = await this.consentService.hasCurrentConsent(
+      userId,
+      ConsentType.InstitutionTerms,
+    );
+    if (alreadyConsented) return;
+
+    await this.consentService.record(
+      userId,
+      ConsentType.InstitutionTerms,
+      version,
+    );
   }
 
   private async uniqueSlug(base: string): Promise<string> {
