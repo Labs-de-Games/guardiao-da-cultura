@@ -14,6 +14,10 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Never run from a fork. Once the repository is public, a fork would
+    # otherwise carry its own copy of this workflow and could reach the
+    # deployment secrets through it.
+    if: github.repository == 'Labs-de-Games/guardiao-da-cultura'
     permissions:
       contents: read
       packages: write
@@ -70,6 +74,10 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    # Never run from a fork. Once the repository is public, a fork would
+    # otherwise carry its own copy of this workflow and could reach the
+    # deployment secrets through it.
+    if: github.repository == 'Labs-de-Games/guardiao-da-cultura'
     steps:
       - name: Trigger Coolify staging deploy
         env:
