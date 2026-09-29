@@ -37,7 +37,7 @@ const serverSchema = z
     /**
      * The reportable window's start — an ISO date string (e.g.
      * "2026-04-01"), set once #740's actual deploy date is known (see
-     * implementation-plan step 5). Config, not a code constant: the date
+     * the #738 dashboard plan, step 5). Config, not a code constant: the date
      * can only be known after #740 ships, and ops setting an env var on
      * deploy day is safer than a PR racing to hardcode a guess. Unset
      * means "no clamp yet" — the only honest value before that day.
