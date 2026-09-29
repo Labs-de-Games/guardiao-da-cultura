@@ -33,6 +33,7 @@ API over PostgreSQL, and a React HUD layered over the game canvas.
   - [Badges Module](#badges-module)
   - [Analytics Module](#analytics-module)
   - [PostHog Module](#posthog-module)
+  - [Campaign Links Module](#campaign-links-module)
   - [TTS Module](#tts-module)
   - [Planned Modules](#planned-modules)
   - [Technical Notes](#technical-notes)
@@ -64,7 +65,7 @@ The system is designed around specific business domains. While physically struct
 flowchart TB
     subgraph Frontend["Frontend (Next.js + Phaser)"]
         UI["React UI / Auth Pages"]
-        Game["Phaser 3 Game"]
+        Game["Phaser 4 Game"]
         TTS["TTS Route Handler"]
     end
 
@@ -120,11 +121,12 @@ flowchart TB
 4. **Progression Engine:** Tracks player level completion, stars, clues, and chapter status. Collected clues are displayed on the evidence board overlay (Pistas).
 5. **Scoring:** Manages user scores, leaderboard data, and score history.
 6. **Badges:** Badge definitions, user-badge associations, and achievement tracking.
-7. **Analytics:** Stores raw game event logs (append-only) for funnel metrics and dashboards.
+7. **Analytics:** Internal module with no HTTP endpoint. Listens to `game.event`, stores raw game event logs (append-only) and computes the aggregates the dashboard serves.
 8. **PostHog Integration:** Server-side event forwarding to PostHog for product analytics and error tracking.
 9. **Admin:** Admin-only endpoints for user management (list, role updates, status toggle).
-10. **Dashboard:** Aggregated metrics for educators and administrators, restricted to the `institution` and `admin` roles.
+10. **Dashboard:** Aggregated metrics for educators, restricted to the `institution` role.
 11. **User Interested:** Public sign-up capturing interest in levels that do not exist yet.
+12. **Campaign Links:** Per-institution campaign links whose `source` label is emitted as `utm_source`, so the dashboard can group players by class or group.
 
 ## 3. Technology Stack
 
@@ -137,7 +139,7 @@ flowchart TB
 
 ### Frontend (`/front`)
 - **Framework:** Next.js with React, using the App Router (file-based routing with React Server Components).
-- **Game Engine:** Phaser 3 (encapsulated entirely within `src/game`).
+- **Game Engine:** Phaser 4 (encapsulated entirely within `src/game`).
 - **Styling:** Material UI (MUI) v9 with Emotion for CSS-in-JS.
 - **State Management:** React hooks and Zustand for UI overlay and HUD state.
 - **Analytics:** PostHog JS SDK with autocapture disabled, canvas recording enabled in production.
@@ -206,7 +208,7 @@ gameplate/
 │   │   ├── shared/           # Types and helpers used by both the game and the UI
 │   │   ├── lib/              # Utilities, API clients, env parsing, audio services
 │   │   ├── middleware.ts     # Route protection for authenticated pages
-│   │   └── game/             # Game Domain (Phaser 3)
+│   │   └── game/             # Game Domain (Phaser 4)
 │   │       ├── scenes/
 │   │       ├── objects/
 │   │       ├── mechanics/
@@ -228,10 +230,11 @@ gameplate/
     │   │
     │   ├── modules/          # Bounded Contexts (Domains)
     │   │   ├── admin/        # Admin user management
-    │   │   ├── analytics/    # Game event ingestion
+    │   │   ├── analytics/    # Game event storage & dashboard aggregates (no HTTP API)
     │   │   ├── auth/         # Authentication & Authorization
     │   │   ├── badges/       # Badge definitions & user badges
-    │   │   ├── dashboard/    # Aggregated metrics for educators and admins
+    │   │   ├── campaign-links/ # Institution campaign links (utm_source)
+    │   │   ├── dashboard/    # Aggregated metrics for educators
     │   │   ├── game/         # Gameplay event ingestion
     │   │   ├── posthog/      # PostHog server-side integration
     │   │   ├── progression/  # Player progression tracking
@@ -304,7 +307,7 @@ The front container healthcheck targets `GET /api/health` (`front/src/app/api/he
 - **Server-Side TTS Proxy:** The ResponsiveVoice API key is stored as a server-only env var (`RESPONSIVEVOICE_API_KEY`) in the frontend deployment. A Next.js Route Handler (`/api/tts/synthesize`) proxies requests to ResponsiveVoice v1 REST API, returning `audio/mpeg`. This eliminates domain whitelist concerns since the proxy runs server-side. The frontend falls back to native Web Speech API (`window.speechSynthesis`) on error.
 - **Contextual Nudge System (PR #733):** Anti-blocking assistance driven by player inactivity. Responsibility is split so the timing rules stay testable: `NudgeManager` (`front/src/game/systems/NudgeManager.ts`) owns *when* to nudge — a dependency-free class whose `evaluate(now, isPlayerBusy)` returns a boolean, governed by a 15s inactivity threshold, a 1s evaluation throttle, a global 5-minute cooldown, and a per-mission reset — while `Game.ts` owns *which kind* of nudge, chosen by proximity rather than by escalation (the delay is identical for both kinds). A pulse fires via `PlaceholderSystem.pulseNearestPlaceholder()` or `SpotlightSystem.pulseNearestSpotlight()` when an incomplete costume placeholder or spotlight sits within ~500px; otherwise the nearest artwork's `educational.hint` (from the level's `works.json`) is surfaced through the existing `ui:toast-show` EventBus event, so no bespoke overlay UI was introduced. Because `NudgeManager` has no imports, it is unit-tested in isolation (`NudgeManager.test.ts`, 11 cases covering threshold, busy suppression, timer reset, cooldown window and expiry, throttle, and per-mission reset); the `Game.ts` wiring is verified manually. Telemetry is emitted straight to PostHog as `nudge_pulse_shown_*` and `nudge_hint_shown_*`, with the firing rules documented in `EVENTS.md` (§ *Nudge — regras de disparo*).
 
-- **Institutional Dashboard:** The `dashboard` module serves aggregated metrics to the `institution` and `admin` roles, and the educator-facing frontend lives under `/institution/*`, with a public view under `/public-dashboard/*`.
+- **Institutional Dashboard:** The `dashboard` module serves aggregated metrics to the `institution` role, and the educator-facing frontend lives under `/institution/*`, with a public view under `/public-dashboard/*`.
 
 ### Pending
 
@@ -376,11 +379,9 @@ Admin-only endpoints guarded by `RolesGuard`.
 | `GET` | `/badges` | Public | List all available badges. |
 | `GET` | `/badges/user` | JWT | Get badges earned by current user. |
 
-### Analytics Module (`/analytics`)
+### Analytics Module
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/analytics/events` | JWT | Ingest raw analytics events. |
+Internal module with no HTTP endpoint. `AnalyticsService` listens to `game.event` (emitted by the Game module for every event it ingests), stores each one as a `GameEvent` row, and computes the aggregates that the Dashboard module serves.
 
 ### PostHog Module (`/posthog`)
 
@@ -388,14 +389,23 @@ Admin-only endpoints guarded by `RolesGuard`.
 |--------|------|------|-------------|
 | `GET` | `/posthog/bootstrap` | JWT | Get PostHog feature flags and distinct ID for bootstrapping. |
 
-### Dashboard Module (`/dashboard`, `/metrics`)
+### Campaign Links Module (`/campaign-links`)
 
-Restricted to the `institution` and `admin` roles. Both paths serve the same aggregated metrics; `/metrics` is an alias kept for the dashboard frontend.
+Server-to-server only. The routes are `@Public()` to the JWT guard but require the upsert token (`OAuthUpsertTokenGuard`). They are called from the front's `/api/edital/links` route handlers, which derive `institutionSlug` from the caller's NextAuth session, and are never reachable directly from a browser.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `GET` | `/dashboard/metrics` | JWT + role | Aggregated metrics for a date range. |
-| `GET` | `/metrics` | JWT + role | Same payload, alias route. |
+| `GET` | `/campaign-links?institutionSlug=` | Upsert token | List an institution's campaign links. |
+| `POST` | `/campaign-links` | Upsert token | Create a link. Body: `{ institutionSlug, source }`; `source` is the group label emitted as `utm_source`. |
+| `DELETE` | `/campaign-links/:id?institutionSlug=` | Upsert token | Delete one of the institution's links. `404` if it does not exist, `403` if it belongs to another institution. |
+
+### Dashboard Module (`/metrics`)
+
+Restricted to the `institution` role.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/metrics` | JWT + role | Aggregated metrics for a date range. |
 
 ### User Interested Module (`/user-interested`)
 

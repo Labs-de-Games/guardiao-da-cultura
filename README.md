@@ -27,7 +27,7 @@ keyboard.
 
 ## What's inside
 
-**Three places, three missions.**
+**Three places, three missions, one culprit.**
 
 - **Inhotim — the restoration room.** Someone has moved the sculptures and
   paintings and torn up a photograph. Put each work back where it belongs, find
@@ -39,6 +39,9 @@ keyboard.
   the accordion.
 
 Each place ends with a quiz about the art and culture you found along the way.
+
+- **The investigation.** Once the festival is saved, it is time to name who was
+  behind it all. The fewer wrong accusations you make, the more stars you earn.
 
 <img src="./docs/images/readme/inspetora-jarbas.gif" align="left" alt="Inspetora Cremilda Jarbas, a woman with white hair and glasses in a dark suit">
 
