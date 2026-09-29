@@ -63,7 +63,7 @@ flowchart TB
         App["app/ — Next.js App Router"]
         Components["components/ — React UI"]
         Lib["lib/ — API clients, auth, utils"]
-        Game["game/ — Phaser 3 domain"]
+        Game["game/ — Phaser domain"]
     end
 
     subgraph BackSrc["back/src/"]
