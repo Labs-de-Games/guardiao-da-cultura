@@ -34,6 +34,30 @@ describe("TermsDialog", () => {
     ).toBeInTheDocument();
   });
 
+  it("discloses the public repository", () => {
+    // Part of the text an institution is agreeing to, so it must survive
+    // edits: dropping it silently would leave accounts consenting to a
+    // version whose disclosures no longer match what they were shown.
+    render(<TermsDialog open onClose={jest.fn()} />);
+
+    const link = screen.getByRole("link", {
+      name: /github\.com\/Labs-de-Games\/guardiao-da-cultura/,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://github.com/Labs-de-Games/guardiao-da-cultura",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("says the repository holds no institutional data", () => {
+    render(<TermsDialog open onClose={jest.fn()} />);
+
+    expect(
+      screen.getByText(/nada de cadastro, credencial ou dado de uso/),
+    ).toBeInTheDocument();
+  });
+
   it("carries the pending-legal-review marker", () => {
     render(<TermsDialog open onClose={jest.fn()} />);
 

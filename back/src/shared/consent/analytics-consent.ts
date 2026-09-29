@@ -25,7 +25,7 @@ export const ANALYTICS_CONSENT_COOKIE_NAME = "gp_analytics_consent";
  * honouring those cookies on the very next request, without waiting for the
  * client to notice and rewrite them.
  */
-export const RECONSENT_REQUIRED_FROM = "2026-09-28";
+export const RECONSENT_REQUIRED_FROM = "2026-09-29";
 
 /**
  * The notice version the frontend currently stamps on new decisions.
