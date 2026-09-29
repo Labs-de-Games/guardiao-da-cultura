@@ -1,8 +1,44 @@
 import {
+  formatNoticeVersion,
   isNoticeVersionStale,
   PRIVACY_NOTICE_VERSION,
   RECONSENT_REQUIRED_FROM,
 } from "./privacyNotice";
+
+describe("formatNoticeVersion", () => {
+  it("renders an ISO version in Brazilian order", () => {
+    expect(formatNoticeVersion("2026-09-29")).toBe("29/09/2026");
+  });
+
+  /**
+   * The reason this does not go through `Date`: a bare `YYYY-MM-DD` parses as
+   * UTC midnight, so every Brazilian timezone (UTC-3) would render the day
+   * before — the notice version shown to the player would be off by one, and
+   * would disagree with the same constant printed on /privacidade.
+   */
+  it("does not shift the day in a negative UTC offset", () => {
+    expect(formatNoticeVersion("2026-01-01")).toBe("01/01/2026");
+    expect(formatNoticeVersion("2026-03-01")).toBe("01/03/2026");
+  });
+
+  it("keeps the padding of single-digit days and months", () => {
+    expect(formatNoticeVersion("2026-01-05")).toBe("05/01/2026");
+  });
+
+  it("returns a malformed version untouched", () => {
+    // Showing the stored value is the honest option; such a record has
+    // already been ruled out as consent by isNoticeVersionStale.
+    for (const value of ["", "v1", "2026-9-8", "2026/09/28", "latest"]) {
+      expect(formatNoticeVersion(value)).toBe(value);
+    }
+  });
+
+  it("formats the shipped constant", () => {
+    expect(formatNoticeVersion(PRIVACY_NOTICE_VERSION)).toMatch(
+      /^\d{2}\/\d{2}\/\d{4}$/,
+    );
+  });
+});
 
 describe("isNoticeVersionStale", () => {
   it("accepts a decision taken under the current notice", () => {

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PRIVACY_NOTICE_VERSION } from "@/lib/consent/privacyNotice";
+import {
+  formatNoticeVersion,
+  PRIVACY_NOTICE_VERSION,
+} from "@/lib/consent/privacyNotice";
 
 export const metadata: Metadata = {
   title: "Aviso de Privacidade — Guardião da Cultura",
@@ -88,7 +91,8 @@ export default function PrivacyNoticePage() {
           Aviso de Privacidade
         </h1>
         <p style={{ fontSize: "0.875rem", opacity: 0.75, marginTop: 0 }}>
-          Guardião da Cultura · Versão {PRIVACY_NOTICE_VERSION}
+          Guardião da Cultura · Versão{" "}
+          {formatNoticeVersion(PRIVACY_NOTICE_VERSION)}
         </p>
 
         <h2 style={h2}>Quem é responsável</h2>

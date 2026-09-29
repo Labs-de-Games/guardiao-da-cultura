@@ -4,7 +4,10 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import { useCallback, useEffect, useRef } from "react";
 import { type ConsentState, useConsent } from "@/lib/consent/ConsentContext";
-import { PRIVACY_NOTICE_PATH } from "@/lib/consent/privacyNotice";
+import {
+  formatNoticeVersion,
+  PRIVACY_NOTICE_PATH,
+} from "@/lib/consent/privacyNotice";
 import { EventBus } from "@/shared/events/event-bus";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
@@ -201,7 +204,7 @@ export function PrivacySettings() {
               >
                 Escolha registrada em{" "}
                 {new Date(record.decidedAt).toLocaleString("pt-BR")} (aviso
-                versão {record.noticeVersion}).
+                versão {formatNoticeVersion(record.noticeVersion)}).
               </Typography>
             )}
 
