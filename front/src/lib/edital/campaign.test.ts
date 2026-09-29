@@ -1,12 +1,105 @@
 import { PostHogStub } from "../posthogStub";
 import {
   applyFirstTouchCampaignSource,
+  applyFirstTouchEntryOrigin,
   applyFirstTouchTurmaSource,
   CAMPAIGN_SOURCE_PROPERTY,
+  ENTRY_ORIGIN_DIRECT,
+  ENTRY_ORIGIN_INSTITUTIONAL,
+  ENTRY_ORIGIN_PROPERTY,
   INSTITUTION_UTM_PARAM,
   TURMA_SOURCE_PROPERTY,
   TURMA_UTM_PARAM,
 } from "./campaign";
+
+describe("applyFirstTouchEntryOrigin (#851)", () => {
+  it("registers direct on a first visit without utm_institution", () => {
+    const client = new PostHogStub();
+
+    applyFirstTouchEntryOrigin(client, new URLSearchParams());
+
+    expect(client.get_property(ENTRY_ORIGIN_PROPERTY)).toBe(
+      ENTRY_ORIGIN_DIRECT,
+    );
+  });
+
+  it("registers institutional on a first visit with a valid utm_institution", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "escola-teste",
+    });
+
+    applyFirstTouchEntryOrigin(client, params);
+
+    expect(client.get_property(ENTRY_ORIGIN_PROPERTY)).toBe(
+      ENTRY_ORIGIN_INSTITUTIONAL,
+    );
+  });
+
+  it("registers direct when utm_institution is invalid", () => {
+    const client = new PostHogStub();
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "<script>alert(1)</script>",
+    });
+
+    applyFirstTouchEntryOrigin(client, params);
+
+    expect(client.get_property(ENTRY_ORIGIN_PROPERTY)).toBe(
+      ENTRY_ORIGIN_DIRECT,
+    );
+  });
+
+  it("does not overwrite a direct entry when an institution link is opened later", () => {
+    const client = new PostHogStub();
+    applyFirstTouchEntryOrigin(client, new URLSearchParams());
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "escola-teste",
+    });
+
+    applyFirstTouchEntryOrigin(client, params);
+    applyFirstTouchCampaignSource(client, params);
+
+    expect(client.get_property(ENTRY_ORIGIN_PROPERTY)).toBe(
+      ENTRY_ORIGIN_DIRECT,
+    );
+    expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBeUndefined();
+  });
+
+  it("registers institutional for a device already attributed to an institution, even without the link", () => {
+    const client = new PostHogStub();
+    client.register({ [CAMPAIGN_SOURCE_PROPERTY]: "escola-teste" });
+
+    applyFirstTouchEntryOrigin(client, new URLSearchParams());
+
+    expect(client.get_property(ENTRY_ORIGIN_PROPERTY)).toBe(
+      ENTRY_ORIGIN_INSTITUTIONAL,
+    );
+  });
+
+  it("keeps institutional and the first slug when a bare or different link follows", () => {
+    const client = new PostHogStub();
+    const first = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "escola-primeira",
+    });
+    applyFirstTouchEntryOrigin(client, first);
+    applyFirstTouchCampaignSource(client, first);
+
+    for (const later of [
+      new URLSearchParams(),
+      new URLSearchParams({ [INSTITUTION_UTM_PARAM]: "escola-segunda" }),
+    ]) {
+      applyFirstTouchEntryOrigin(client, later);
+      applyFirstTouchCampaignSource(client, later);
+    }
+
+    expect(client.get_property(ENTRY_ORIGIN_PROPERTY)).toBe(
+      ENTRY_ORIGIN_INSTITUTIONAL,
+    );
+    expect(client.get_property(CAMPAIGN_SOURCE_PROPERTY)).toBe(
+      "escola-primeira",
+    );
+  });
+});
 
 describe("applyFirstTouchCampaignSource", () => {
   it("registers campaign_source when utm_institution is present and none is set yet", () => {
@@ -133,6 +226,20 @@ describe("applyFirstTouchTurmaSource (#807)", () => {
       [TURMA_UTM_PARAM]: "<script>alert(1)</script>",
     });
 
+    applyFirstTouchTurmaSource(client, params);
+
+    expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBeUndefined();
+  });
+
+  it("does not register turma_source for a device whose first entry was direct (#851)", () => {
+    const client = new PostHogStub();
+    applyFirstTouchEntryOrigin(client, new URLSearchParams());
+    const params = new URLSearchParams({
+      [INSTITUTION_UTM_PARAM]: "escola-teste",
+      [TURMA_UTM_PARAM]: "group-a",
+    });
+
+    applyFirstTouchEntryOrigin(client, params);
     applyFirstTouchTurmaSource(client, params);
 
     expect(client.get_property(TURMA_SOURCE_PROPERTY)).toBeUndefined();

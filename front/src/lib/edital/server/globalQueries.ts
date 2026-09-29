@@ -214,10 +214,22 @@ export function buildGlobalPhaseStarsQuery(
 }
 
 /**
- * Origem institucional × espontânea (#808 P1) — a session/player is
- * "institucional" iff it carries a non-empty `campaign_source`
- * (first-touch `?utm_institution=`); everything else is "espontânea"
- * (direct access to the game, no institution link).
+ * Origem institucional × espontânea (#808 P1) — each player counted once,
+ * by first touch (#851): the origin of their first-ever `gameplay_started`
+ * decides the slice, and they never count for the other one. So
+ * institutional + spontaneous always equals `buildGlobalPlayersQuery`.
+ *
+ * - Who: players with a `gameplay_started` in the period (same set as the
+ *   unique-players card) — `plays_in_period > 0`.
+ * - How: `argMin` over the player's whole history up to `to_ts`, with no
+ *   lower date bound, so a player who entered directly months ago isn't
+ *   reclassified by a link they used inside the period. `uuid` breaks
+ *   same-timestamp ties deterministically.
+ * - Origin: `entry_origin`, locked client-side on the first visit
+ *   (lib/edital/campaign.ts). Events from before it existed fall back to
+ *   `campaign_source` — on a legacy player's first event, its absence
+ *   does mean they entered directly. `spontaneous` is "not
+ *   institutional", so the two slices always add up to the total.
  *
  * `campaign_source` is simply never set without a link, so it reads as
  * NULL — and HogQL's null-safe comparisons make `NULL != ''` true and
@@ -230,10 +242,21 @@ export function buildGlobalOriginSplitQuery(
 ): HogQLQueryPlan {
   const query = `
 SELECT
-  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started' AND coalesce(properties.campaign_source, '') != '') AS institutional,
-  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started' AND coalesce(properties.campaign_source, '') = '') AS spontaneous
-FROM events
-WHERE ${commonGlobalPredicate()}`.trim();
+  countIf(first_origin = 'institutional') AS institutional,
+  countIf(first_origin != 'institutional') AS spontaneous
+FROM (
+  SELECT
+    properties.anonymous_player_id AS player,
+    argMin(
+      if(coalesce(properties.entry_origin, '') != '', properties.entry_origin, if(coalesce(properties.campaign_source, '') != '', 'institutional', 'direct')),
+      tuple(timestamp, uuid)
+    ) AS first_origin,
+    countIf(timestamp >= toDateTime({from_ts})) AS plays_in_period
+  FROM events
+  WHERE event = 'gameplay_started' AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != '' AND ${environmentPredicate()}
+  GROUP BY player
+)
+WHERE plays_in_period > 0`.trim();
 
   return { query, values: baseValues(range) };
 }

@@ -13,7 +13,7 @@ type PostHogLike = Pick<
  * `register()` covers the common path for stable properties; this stamps the per-event
  * properties (issue #740's own table: `session_id`, `event_name`,
  * `event_timestamp`, `chapter_id`) plus a backstop for `anonymous_player_id`,
- * `campaign_source` and `environment` onto ANY event that reaches send — including the
+ * `campaign_source`, `entry_origin` and `environment` onto ANY event that reaches send — including the
  * 31 game-code call sites that import the posthog-js singleton directly
  * and bypass the provider entirely, and library-internal events
  * (`$pageview`, `$web_vitals`, `$dead_click`, `$exception`) that never go
@@ -50,6 +50,13 @@ export function createBeforeSend(
         const campaignSource = client.get_property("campaign_source");
         if (typeof campaignSource === "string" && campaignSource.length > 0) {
           properties.campaign_source = campaignSource;
+        }
+      }
+
+      if (!properties.entry_origin) {
+        const entryOrigin = client.get_property("entry_origin");
+        if (typeof entryOrigin === "string" && entryOrigin.length > 0) {
+          properties.entry_origin = entryOrigin;
         }
       }
 
