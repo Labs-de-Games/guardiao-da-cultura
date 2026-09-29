@@ -266,6 +266,8 @@ nunca rodam para um fork.
 
 - Uma pessoa mantenedora revisa e faz o merge. Espere perguntas — elas são sobre
   o código, não sobre você.
+- O GitHub pede revisão às pessoas responsáveis pelos caminhos que você alterou.
+  O mapa de áreas e pessoas fica em [`.github/CODEOWNERS`](../../.github/CODEOWNERS).
 - Faça push de commits de ajuste em vez de dar force push por cima da revisão,
   para que quem revisa consiga ver o que mudou.
 - Os merges usam "Squash and merge" ou "Rebase and merge".
