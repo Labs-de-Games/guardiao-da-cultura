@@ -58,12 +58,12 @@ describe("TermsDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("carries the pending-legal-review marker", () => {
+  it("no longer presents itself as a draft", () => {
     render(<TermsDialog open onClose={jest.fn()} />);
 
     expect(
-      screen.getByText(/Rascunho sujeito a revisão jurídica/),
-    ).toBeInTheDocument();
+      screen.queryByText(/Rascunho sujeito a revisão jurídica/),
+    ).not.toBeInTheDocument();
   });
 
   it("closes from the footer button", () => {

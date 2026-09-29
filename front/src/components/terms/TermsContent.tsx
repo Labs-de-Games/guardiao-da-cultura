@@ -25,9 +25,8 @@ const linkStyle = { color: "#6366f1" } as const;
  *
  * Colours are inherited from whatever renders it rather than set here, so the
  * same prose sits correctly on the cream page and inside a white dialog. Only
- * the accents that must not drift — the draft banner's border, the links — are
- * pinned, matching `authStyles.ts`'s own approved palette rather than
- * `theme.palette.*`.
+ * the accents that must not drift — the links — are pinned, matching
+ * `authStyles.ts`'s own approved palette rather than `theme.palette.*`.
  *
  * Every operational claim below was checked against the code. Keep it that
  * way: legal framing is what review is expected to change, described behaviour
@@ -36,25 +35,6 @@ const linkStyle = { color: "#6366f1" } as const;
 export function TermsContent() {
   return (
     <>
-      <p
-        style={{
-          border: "2px solid #1a1a1a",
-          borderRadius: 8,
-          padding: "12px 16px",
-          fontSize: "0.875rem",
-          marginBottom: 32,
-          backgroundColor: "#faf6ef",
-        }}
-      >
-        <strong>Rascunho sujeito a revisão jurídica.</strong> A descrição do que
-        o painel faz e de quais dados ele mostra já foi conferida com o código.
-        Continuam pendentes de definição jurídica: as{" "}
-        <strong>bases legais</strong> do tratamento feito pela instituição, os{" "}
-        <strong>prazos de retenção</strong>, as{" "}
-        <strong>responsabilidades em caso de incidente</strong> e as condições
-        de <strong>encerramento da conta</strong>.
-      </p>
-
       <p style={{ fontSize: "0.875rem", opacity: 0.7, marginTop: 0 }}>
         Painel institucional · Versão{" "}
         {formatNoticeVersion(INSTITUTION_TERMS_VERSION)}

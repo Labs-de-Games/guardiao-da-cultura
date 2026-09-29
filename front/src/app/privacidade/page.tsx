@@ -64,23 +64,6 @@ export default function PrivacyNoticePage() {
       }}
     >
       <article style={{ maxWidth: 760, margin: "0 auto", lineHeight: 1.7 }}>
-        <p
-          style={{
-            border: "2px solid #af7e2f",
-            borderRadius: 8,
-            padding: "12px 16px",
-            fontSize: "0.875rem",
-            marginBottom: 32,
-          }}
-        >
-          <strong>Rascunho sujeito a revisão jurídica.</strong> A identificação
-          da responsável e a descrição do que o sistema coleta já foram
-          conferidas com o produto. Continuam pendentes de definição jurídica:
-          as <strong>bases legais</strong> de cada finalidade, os{" "}
-          <strong>prazos de retenção</strong> e as regras aplicáveis a{" "}
-          <strong>crianças e adolescentes</strong>.
-        </p>
-
         <h1
           style={{
             fontFamily: '"Jockey One", sans-serif',
