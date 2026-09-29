@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import posthog from "posthog-js";
-import { act } from "react";
+import { act, StrictMode } from "react";
 import PhaserGame from "./PhaserGame";
 
 // This suite mounts PhaserGame repeatedly, and its effect registers window
@@ -20,11 +20,18 @@ jest.mock("../lib/analyticsApi", () => ({
   sendGameEvent: (...args: unknown[]) => sendGameEventMock(...args),
 }));
 
+const destroyGame = jest.fn();
 const mockStartGame = jest.fn(() => ({
-  destroy: () => {},
+  destroy: destroyGame,
   canvas: null,
   scale: { on: () => {}, off: () => {} },
   sound: {},
+}));
+
+const destroyAudioManager = jest.fn();
+jest.mock("../game/audio", () => ({
+  __esModule: true,
+  AudioManager: { destroy: () => destroyAudioManager() },
 }));
 
 jest.mock("../game/main", () => ({
@@ -115,15 +122,44 @@ describe("PhaserGame", () => {
     );
   });
 
-  it("cleans up the game instance on unmount", async () => {
+  it("destroys the game and silences the audio singleton on unmount", async () => {
+    destroyGame.mockClear();
+    destroyAudioManager.mockClear();
+
     const { unmount } = render(<PhaserGame />);
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
     unmount();
 
-    // The test asserts unmount doesn't throw; game destruction is mocked.
-    expect(true).toBe(true);
+    expect(destroyGame).toHaveBeenCalledTimes(1);
+    expect(destroyAudioManager).toHaveBeenCalledTimes(1);
+  });
+
+  // StrictMode is Next's dev default, and it mounts, tears down and remounts
+  // every effect. The teardown lands while the game's dynamic import is
+  // still in flight, which is precisely when an instance can escape its
+  // owner: the symptom was menu music still playing over /privacidade and
+  // /, and a second, invisible MapIntroScene answering the same window-level
+  // arrow keys as the visible one once the player returned to /game.
+  it("leaves no game running after a StrictMode mount cycle", async () => {
+    mockStartGame.mockClear();
+    destroyGame.mockClear();
+
+    const { unmount } = render(
+      <StrictMode>
+        <PhaserGame />
+      </StrictMode>,
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    unmount();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    expect(destroyGame).toHaveBeenCalledTimes(mockStartGame.mock.calls.length);
   });
 });
 
