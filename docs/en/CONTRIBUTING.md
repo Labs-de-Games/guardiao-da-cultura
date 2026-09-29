@@ -292,9 +292,14 @@ runs on every pull request and checks the branch name and base branch described
 in [1. Fork and branch](#1-fork-and-branch).
 
 `master` and `develop` are protected by rulesets defined in `.github/rulesets/`:
-no direct pushes, no force pushes or deletion, one approval (including a code
-owner), and both checks green. Maintainers apply them with `make rulesets-apply`
-and check for changes made in the GitHub settings with `make rulesets-diff`.
+no direct pushes, no force pushes or deletion, one approval, and both checks
+green, reported by GitHub Actions. On `develop` the approval must come from a
+code owner. `master` accepts merge commits only, so its history stays in line
+with `develop`. After a release or hotfix, a pull request from `master` into
+`develop` brings the merge commits back. A fix for production goes through a
+`hotfix/*` branch, never straight into `master`. Maintainers apply the rulesets
+with `make rulesets-apply` and check for changes made in the GitHub settings
+with `make rulesets-diff`.
 
 You can run the CI set locally:
 
