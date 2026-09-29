@@ -205,8 +205,15 @@ Nomenclatura:
 - `docs/<description>` — documentação
 - `chore/<description>` — manutenção
 - `refactor/<description>` — refatoração
+- `test/<description>` — apenas testes
+- `style/<description>` — formatação, sem mudança de comportamento
+- `ci/<description>` — mudanças de CI e workflows
+- `hotfix/<description>`, `release/<version>` — apenas para quem mantém o
+  projeto, em pull requests para a `master`
 
-O `<id>` é o número da issue, quando houver uma.
+O `<id>` é o número da issue, quando houver uma. Depois do prefixo, use letras
+minúsculas, dígitos, `.`, `_` e `-`. A verificação `branch-policy` do CI reprova
+um pull request cuja branch não siga essas regras.
 
 ### 2. Faça suas alterações
 
@@ -253,13 +260,15 @@ Escreva a descrição no imperativo, em letras minúsculas e sem ponto final.
 ### 4. Abra um pull request
 
 1. Faça push da sua branch.
-2. Abra o pull request **contra a `develop`**.
+2. Abra o pull request **contra a `develop`**. A `master` só aceita pull
+   requests vindos da `develop`, de `release/*` ou de `hotfix/*`, e o CI reprova
+   qualquer outro.
 3. Descreva o que mudou e por quê. Se for uma mudança visível, anexe um
    screenshot ou uma gravação curta.
 4. Vincule a issue que ele fecha.
 5. Confirme que o CI está verde.
 
-Um pull request vindo de um fork roda apenas o `ci.yml`. Os workflows de deploy
+Um pull request vindo de um fork roda apenas o `ci.yml` e o `branch-policy.yml`. Os workflows de deploy
 nunca rodam para um fork.
 
 ### 5. Revisão
@@ -282,8 +291,18 @@ Todo pull request dispara o `.github/workflows/ci.yml`:
 | Build | `npm run build` |
 | Testes | `make test` |
 
-As quatro precisam passar antes de um merge. Você pode rodar o mesmo conjunto
-localmente:
+As quatro precisam passar antes de um merge. O
+`.github/workflows/branch-policy.yml` também roda em todo pull request e confere
+o nome da branch e a branch de destino descritos em
+[1. Fork e branch](#1-fork-e-branch).
+
+A `master` e a `develop` são protegidas por rulesets definidos em
+`.github/rulesets/`: sem push direto, sem force push nem exclusão, uma aprovação
+(incluindo um code owner) e as duas verificações verdes. Quem mantém o projeto
+aplica os rulesets com `make rulesets-apply` e confere mudanças feitas nas
+configurações do GitHub com `make rulesets-diff`.
+
+Você pode rodar o mesmo conjunto do CI localmente:
 
 ```bash
 npm run typecheck && npm run lint && npm run build && npm run test
