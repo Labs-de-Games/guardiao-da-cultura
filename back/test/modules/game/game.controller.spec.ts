@@ -3,6 +3,7 @@ import type { Request } from "express";
 import { GameController } from "../../../src/modules/game/game.controller";
 import { GameService } from "../../../src/modules/game/game.service";
 import type { User } from "../../../src/modules/users/user.entity";
+import { RECONSENT_REQUIRED_FROM } from "../../../src/shared/consent/analytics-consent";
 import { GameEventType } from "../../../src/shared/events/game-events";
 
 /**
@@ -13,7 +14,10 @@ import { GameEventType } from "../../../src/shared/events/game-events";
  */
 function makeRequest(cookies: Record<string, string> = {}): Request {
   return {
-    cookies: { gp_analytics_consent: "1", ...cookies },
+    cookies: {
+      gp_analytics_consent: `1:${RECONSENT_REQUIRED_FROM}`,
+      ...cookies,
+    },
   } as unknown as Request;
 }
 

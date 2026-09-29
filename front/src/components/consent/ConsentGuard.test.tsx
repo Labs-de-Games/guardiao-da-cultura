@@ -1,6 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { ConsentProvider } from "@/lib/consent/ConsentContext";
-import { writeConsent } from "@/lib/consent/consentStorage";
+import {
+  CONSENT_STORAGE_KEY,
+  writeConsent,
+} from "@/lib/consent/consentStorage";
 import { ConsentGuard } from "./ConsentGuard";
 
 jest.mock("posthog-js", () => ({
@@ -42,6 +45,38 @@ describe("ConsentGuard", () => {
 
   it("mounts the game once the player refuses — refusal never blocks play", async () => {
     writeConsent("declined");
+
+    renderGuard();
+
+    expect(await screen.findByText("game")).toBeInTheDocument();
+  });
+
+  it("holds the game back again when the notice retires an acceptance", async () => {
+    // A stale decision has to block exactly like an absent one, or the
+    // renewal dialog would sit on top of a game that already booted.
+    window.localStorage.setItem(
+      CONSENT_STORAGE_KEY,
+      JSON.stringify({
+        status: "accepted",
+        decidedAt: "2020-01-01T00:00:00.000Z",
+        noticeVersion: "2020-01-01",
+      }),
+    );
+
+    renderGuard();
+
+    await waitFor(() => expect(screen.queryByText("game")).toBeNull());
+  });
+
+  it("keeps mounting the game for a stale refusal — refusals never age out", async () => {
+    window.localStorage.setItem(
+      CONSENT_STORAGE_KEY,
+      JSON.stringify({
+        status: "declined",
+        decidedAt: "2020-01-01T00:00:00.000Z",
+        noticeVersion: "2020-01-01",
+      }),
+    );
 
     renderGuard();
 

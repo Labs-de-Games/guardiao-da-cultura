@@ -1,6 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import posthog from "posthog-js";
 import { ConsentProvider } from "@/lib/consent/ConsentContext";
-import { readConsent, writeConsent } from "@/lib/consent/consentStorage";
+import {
+  CONSENT_STORAGE_KEY,
+  readConsent,
+  writeConsent,
+} from "@/lib/consent/consentStorage";
+import { reloadPage } from "@/lib/consent/posthogTeardown";
+import { PRIVACY_NOTICE_VERSION } from "@/lib/consent/privacyNotice";
 import { ConsentGate } from "./ConsentGate";
 
 jest.mock("posthog-js", () => ({
@@ -9,6 +16,13 @@ jest.mock("posthog-js", () => ({
     opt_out_capturing: jest.fn(),
     reset: jest.fn(),
   },
+}));
+
+// Refusing a renewal goes through `revoke`, which reloads the page — jsdom
+// cannot redefine `window.location`, so the seam is mocked instead.
+jest.mock("@/lib/consent/posthogTeardown", () => ({
+  ...jest.requireActual("@/lib/consent/posthogTeardown"),
+  reloadPage: jest.fn(),
 }));
 
 function renderGate(children?: React.ReactNode) {
@@ -24,6 +38,7 @@ describe("ConsentGate", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.cookie = "gp_analytics_consent=; path=/; Max-Age=0";
+    jest.clearAllMocks();
   });
 
   it("appears on a first visit", async () => {
@@ -167,5 +182,90 @@ describe("ConsentGate", () => {
     renderGate();
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  /**
+   * A material revision of the privacy notice retires every acceptance taken
+   * under the old text, and the gate comes back to ask again (issue #864).
+   */
+  describe("renewal after the notice changes", () => {
+    function storeAgedAcceptance() {
+      window.localStorage.setItem(
+        CONSENT_STORAGE_KEY,
+        JSON.stringify({
+          status: "accepted",
+          decidedAt: "2020-01-01T00:00:00.000Z",
+          noticeVersion: "2020-01-01",
+        }),
+      );
+    }
+
+    it("re-asks a player whose acceptance went stale", async () => {
+      storeAgedAcceptance();
+
+      renderGate();
+
+      expect(
+        await screen.findByRole("heading", {
+          name: "Atualizamos nosso aviso de privacidade",
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it("says why it is asking again, and that nothing is being collected", async () => {
+      storeAgedAcceptance();
+
+      renderGate();
+
+      const dialog = await screen.findByRole("dialog");
+      expect(dialog).toHaveAccessibleDescription(
+        /aviso de privacidade mudou desde a sua última escolha/i,
+      );
+      expect(dialog).toHaveAccessibleDescription(/nada está sendo coletado/i);
+    });
+
+    it("still offers both choices with equal weight", async () => {
+      storeAgedAcceptance();
+
+      renderGate();
+
+      expect(
+        await screen.findByRole("button", { name: "Aceitar dados de uso" }),
+      ).toBeEnabled();
+      expect(
+        screen.getByRole("button", { name: "Continuar sem dados de uso" }),
+      ).toBeEnabled();
+    });
+
+    it("re-stamps the current notice version on a renewed acceptance", async () => {
+      storeAgedAcceptance();
+
+      renderGate();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Aceitar dados de uso" }),
+      );
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(readConsent()?.noticeVersion).toBe(PRIVACY_NOTICE_VERSION);
+    });
+
+    it("wipes PostHog's storage when the renewal is refused", async () => {
+      // Unlike a first-time refusal, this player accepted once — identifiers
+      // from those earlier sessions are still in the browser and merely
+      // recording the new choice would leave them behind.
+      storeAgedAcceptance();
+
+      renderGate();
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "Continuar sem dados de uso",
+        }),
+      );
+
+      await waitFor(() => expect(readConsent()?.status).toBe("declined"));
+      expect(posthog.opt_out_capturing).toHaveBeenCalled();
+      expect(posthog.reset).toHaveBeenCalledWith(true);
+      expect(reloadPage).toHaveBeenCalled();
+    });
   });
 });

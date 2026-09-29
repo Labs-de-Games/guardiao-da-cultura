@@ -13,7 +13,9 @@ import {
 import { env } from "../env";
 import {
   type ConsentRecord,
+  isConsentStale,
   readConsent,
+  syncConsentCookie,
   writeConsent,
 } from "./consentStorage";
 import { clearPostHogStorage, reloadPage } from "./posthogTeardown";
@@ -23,8 +25,23 @@ import { clearPostHogStorage, reloadPage } from "./posthogTeardown";
  * localStorage, which cannot be read during SSR or the hydration pass without
  * producing a server/client HTML mismatch. Nothing renders the banner while
  * loading, so a returning player never sees it flash.
+ *
+ * `"stale"` is an acceptance that a material revision of the privacy notice has
+ * outdated. It is deliberately its own state rather than being folded into
+ * `"undecided"`: every consumer that gates on `=== "accepted"` already excludes
+ * it, but the dialog needs to know it is re-asking so it can say why.
  */
-export type ConsentState = "loading" | "undecided" | "accepted" | "declined";
+export type ConsentState =
+  | "loading"
+  | "undecided"
+  | "stale"
+  | "accepted"
+  | "declined";
+
+function stateFor(record: ConsentRecord | null): ConsentState {
+  if (!record) return "undecided";
+  return isConsentStale(record) ? "stale" : record.status;
+}
 
 interface ConsentContextValue {
   state: ConsentState;
@@ -48,7 +65,14 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setRecord(readConsent());
+    const stored = readConsent();
+    setRecord(stored);
+    // Re-mirror on every load, not just on a decision. Two jobs: it refreshes
+    // the cookie's 400-day Max-Age for returning players (localStorage never
+    // expires, so the pair would otherwise drift apart), and it is what
+    // demotes an acceptance the notice has just outdated to `0` — closing the
+    // window where the backend would still honour the old cookie.
+    if (stored) syncConsentCookie(stored);
     setLoaded(true);
   }, []);
 
@@ -81,7 +105,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<ConsentContextValue>(
     () => ({
-      state: !loaded ? "loading" : (record?.status ?? "undecided"),
+      state: !loaded ? "loading" : stateFor(record),
       record,
       accept,
       decline,

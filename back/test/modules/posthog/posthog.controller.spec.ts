@@ -4,6 +4,7 @@ import { ConfigService } from "../../../src/core/config/config.service";
 import { PostHogController } from "../../../src/modules/posthog/posthog.controller";
 import { PostHogService } from "../../../src/modules/posthog/posthog.service";
 import type { User } from "../../../src/modules/users/user.entity";
+import { RECONSENT_REQUIRED_FROM } from "../../../src/shared/consent/analytics-consent";
 
 /**
  * Requests carry the analytics-consent cookie by default: the identity
@@ -12,7 +13,10 @@ import type { User } from "../../../src/modules/users/user.entity";
  */
 function makeRequest(cookies: Record<string, string> = {}): Request {
   return {
-    cookies: { gp_analytics_consent: "1", ...cookies },
+    cookies: {
+      gp_analytics_consent: `1:${RECONSENT_REQUIRED_FROM}`,
+      ...cookies,
+    },
   } as unknown as Request;
 }
 
