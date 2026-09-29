@@ -626,8 +626,8 @@ Antes de finalizar, confirme mentalmente que:
 5. **Fase 5**: a definir
 
 ### Documentos relacionados
-- [CONTRIBUTING.md](../en/CONTRIBUTING.md) - Padrões de desenvolvimento
-- [ARCHITECTURE.md](../en/ARCHITECTURE.md) - Arquitetura do sistema
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Padrões de desenvolvimento
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Arquitetura do sistema
 - [AGENTS.md](../../AGENTS.md) - Diretrizes para agentes de IA
 
 ### Recursos externos
