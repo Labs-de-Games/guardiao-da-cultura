@@ -1,0 +1,311 @@
+import "server-only";
+import { environmentPredicate, environmentValues } from "./environmentScope";
+import {
+  completedEventsPredicate,
+  DASHBOARD_LEVELS,
+  FINAL_LEVEL,
+  levelIdExpression,
+  phaseStarsQuery,
+  reachedEventsPredicate,
+} from "./levels";
+import type { ResolvedDateRange } from "./period";
+import type { HogQLQueryPlan } from "./queries";
+
+/**
+ * Issue #808 — the public dashboard's queries, deliberately a sibling
+ * file to queries.ts rather than an edit to it: every builder there takes
+ * a `Scope` and is trusted (by every reviewer and by #742's own rule) to
+ * always filter to one institution. Mixing an unscoped builder into that
+ * file would make "does this leak cross-institution data" a per-function
+ * question instead of a per-file one. These builders NEVER take a
+ * `Scope` or a `turmaSource` — #808's whole point is aggregate-across-
+ * everyone, no institution/turma filter, ever.
+ */
+
+/**
+ * Same shape as queries.ts's commonPredicate, minus the institution filter
+ * — including the per-deployment narrowing (environmentScope.ts).
+ */
+function commonGlobalPredicate(): string {
+  return `timestamp >= toDateTime({from_ts}) AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != '' AND ${environmentPredicate()}`;
+}
+
+function baseValues(range: ResolvedDateRange) {
+  return {
+    ...environmentValues(),
+    from_ts: range.from.toISOString(),
+    to_ts: range.to.toISOString(),
+  };
+}
+
+/** Jogadores únicos totais (#808 P0 card 1). */
+export function buildGlobalPlayersQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS players
+FROM events
+WHERE ${commonGlobalPredicate()}`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Taxa de entrada na gameplay (reference's "Desempenho" section) —
+ * gameplay_started / landing_page_viewed, same formula the institution
+ * dashboard already uses (institution/page.tsx's `safeRate` call), just
+ * unscoped.
+ */
+export function buildGlobalEntryRateQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  uniqExactIf(properties.anonymous_player_id, event = 'landing_page_viewed') AS landing_page_viewed,
+  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS gameplay_started
+FROM events
+WHERE ${commonGlobalPredicate()}`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Instituições ativas (#808 P0 card 2) — distinct non-empty
+ * `campaign_source` values, the institution slug set on every event by
+ * `applyFirstTouchCampaignSource` (campaign.ts) whenever a player arrived
+ * via an institution's `?utm_institution=` link.
+ */
+export function buildInstitutionCountQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT uniqExact(properties.campaign_source) AS institutions
+FROM events
+WHERE ${commonGlobalPredicate()} AND coalesce(properties.campaign_source, '') != ''`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Turmas/links ativos (#808 P0 card 3) — distinct non-empty
+ * `turma_source` values (campaign.ts's `applyFirstTouchTurmaSource`).
+ */
+export function buildTurmaCountQuery(range: ResolvedDateRange): HogQLQueryPlan {
+  const query = `
+SELECT uniqExact(properties.turma_source) AS turmas
+FROM events
+WHERE ${commonGlobalPredicate()} AND coalesce(properties.turma_source, '') != ''`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Taxa geral de conclusão (#808 P0) — same started/completed shape as
+ * queries.ts's buildCompletionRateQuery, unscoped: finishing the game is
+ * completing the final level (the investigation).
+ */
+export function buildGlobalCompletionRateQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS started,
+  uniqExactIf(properties.anonymous_player_id, ${FINAL_LEVEL.completedCondition}) AS completed
+FROM events
+WHERE ${commonGlobalPredicate()}`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Progressão agregada por fase (#808 P0) — "Iniciaram → Concluíram Fase
+ * 1 → … → Fase 4", one row, one column per step. Deliberately plain
+ * `uniqExactIf` per step (not `windowFunnel`'s strict ordering): #808
+ * asks for "distribuição dos jogadores ao longo das fases", not the
+ * institution dashboard's strict-order acquisition funnel.
+ */
+export function buildGlobalPhaseProgressionQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const stepSelects = [
+    `uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS started`,
+    ...DASHBOARD_LEVELS.map(
+      (level) =>
+        `uniqExactIf(properties.anonymous_player_id, ${level.completedCondition}) AS level_${level.levelNumber}_completed`,
+    ),
+  ].join(",\n  ");
+
+  const query = `
+SELECT
+  ${stepSelects}
+FROM events
+WHERE ${commonGlobalPredicate()}`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Aprovação agregada nos quizzes — por fase (#808 P0), unscoped. Only a
+ * per-level breakdown exists here, deliberately — a single blended rate
+ * across every level's quiz would misrepresent genuinely different
+ * quizzes as one, same reasoning as the institution dashboard's
+ * Relatório page dropping its own single "Aprovação no quiz" row for a
+ * per-fase breakdown.
+ */
+export function buildGlobalPhaseQuizPassRateQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  properties.level_id AS level_id,
+  countIf(event = 'quiz_completed' AND toBool(properties.passed)) AS passed,
+  countIf(event = 'quiz_completed') AS total
+FROM events
+WHERE ${commonGlobalPredicate()}
+GROUP BY level_id`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Per-level "reached" count (queries.ts's buildPhaseReachedQuery,
+ * unscoped) — unique players who entered each level, via each level's
+ * reached event (`game_started`, or `investigation_opened` for level 4). Paired with
+ * buildGlobalPhaseCompletionQuery below to compute a per-level
+ * completion rate for the level-switcher panel.
+ */
+export function buildGlobalPhaseReachedQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  ${levelIdExpression()} AS level_id,
+  uniqExact(properties.anonymous_player_id) AS players
+FROM events
+WHERE ${commonGlobalPredicate()} AND ${reachedEventsPredicate()}
+GROUP BY level_id`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/** Per-level "completed" count (queries.ts's buildPhaseCompletionQuery, unscoped). */
+export function buildGlobalPhaseCompletionQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  ${levelIdExpression()} AS level_id,
+  uniqExact(properties.anonymous_player_id) AS players
+FROM events
+WHERE ${commonGlobalPredicate()} AND ${completedEventsPredicate()}
+GROUP BY level_id`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/** Stars per level (queries.ts's buildPhaseStarsQuery, unscoped). */
+export function buildGlobalPhaseStarsQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  return {
+    query: phaseStarsQuery(commonGlobalPredicate()),
+    values: baseValues(range),
+  };
+}
+
+/**
+ * Origem institucional × espontânea (#808 P1) — each player counted once,
+ * by first touch (#851): the origin of their first-ever `gameplay_started`
+ * decides the slice, and they never count for the other one. So
+ * institutional + spontaneous always equals `buildGlobalPlayersQuery`.
+ *
+ * - Who: players with a `gameplay_started` in the period (same set as the
+ *   unique-players card) — `plays_in_period > 0`.
+ * - How: `argMin` over the player's whole history up to `to_ts`, with no
+ *   lower date bound, so a player who entered directly months ago isn't
+ *   reclassified by a link they used inside the period. `uuid` breaks
+ *   same-timestamp ties deterministically.
+ * - Origin: `entry_origin`, locked client-side on the first visit
+ *   (lib/edital/campaign.ts). Events from before it existed fall back to
+ *   `campaign_source` — on a legacy player's first event, its absence
+ *   does mean they entered directly. `spontaneous` is "not
+ *   institutional", so the two slices always add up to the total.
+ *
+ * `campaign_source` is simply never set without a link, so it reads as
+ * NULL — and HogQL's null-safe comparisons make `NULL != ''` true and
+ * `NULL = ''` false, which counted every no-link player as institutional.
+ * `coalesce(…, '')` folds NULL into "no link" for every optional-property
+ * comparison in this file.
+ */
+export function buildGlobalOriginSplitQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  countIf(first_origin = 'institutional') AS institutional,
+  countIf(first_origin != 'institutional') AS spontaneous
+FROM (
+  SELECT
+    properties.anonymous_player_id AS player,
+    argMin(
+      if(coalesce(properties.entry_origin, '') != '', properties.entry_origin, if(coalesce(properties.campaign_source, '') != '', 'institutional', 'direct')),
+      tuple(timestamp, uuid)
+    ) AS first_origin,
+    countIf(timestamp >= toDateTime({from_ts})) AS plays_in_period
+  FROM events
+  WHERE event = 'gameplay_started' AND timestamp < toDateTime({to_ts}) AND properties.anonymous_player_id IS NOT NULL AND properties.anonymous_player_id != '' AND ${environmentPredicate()}
+  GROUP BY player
+)
+WHERE plays_in_period > 0`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Evolução de jogadores ao longo do tempo (#808 P1) — monthly-bucketed
+ * unique players, unscoped. `toStartOfMonth` per São Paulo civil time
+ * isn't needed here (this is a coarse trend chart, not an auditor-facing
+ * boundary like period.ts's day clamps) — HogQL's default UTC bucketing
+ * is precise enough for a monthly trend line.
+ */
+export function buildGlobalPlayerTrendQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  toStartOfMonth(timestamp) AS month,
+  uniqExactIf(properties.anonymous_player_id, event = 'gameplay_started') AS players
+FROM events
+WHERE ${commonGlobalPredicate()}
+GROUP BY month
+ORDER BY month`.trim();
+
+  return { query, values: baseValues(range) };
+}
+
+/**
+ * Sessões iniciadas / Tempo médio de sessão (#808 reference's "Alcance"
+ * side cards) — same shape as queries.ts's buildSessionDurationQuery,
+ * unscoped.
+ */
+export function buildGlobalSessionDurationQuery(
+  range: ResolvedDateRange,
+): HogQLQueryPlan {
+  const query = `
+SELECT
+  avg(duration_seconds) AS avg_seconds,
+  median(duration_seconds) AS median_seconds,
+  count() AS sessions_started
+FROM (
+  SELECT
+    properties.\`$session_id\` AS session_id,
+    dateDiff('second', min(timestamp), max(timestamp)) AS duration_seconds
+  FROM events
+  WHERE ${commonGlobalPredicate()}
+  GROUP BY session_id
+  HAVING countIf(event = 'gameplay_started') > 0
+     AND duration_seconds BETWEEN 1 AND 14400
+)`.trim();
+
+  return { query, values: baseValues(range) };
+}

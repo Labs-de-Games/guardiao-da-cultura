@@ -7,6 +7,10 @@ import { useGameUIStore } from "../../ui/state/game-ui-store";
 import { AudioManager } from "../audio";
 import { isLevelEnabled } from "../constants/FeatureFlags";
 import { GameEvents } from "../constants/GameEvents";
+import {
+  INVESTIGATION_LEVEL_ID,
+  INVESTIGATION_PREREQUISITE_LEVEL_ID,
+} from "../constants/Investigation";
 import { Actions } from "../constants/KeyBindings";
 import { LayoutConfig } from "../constants/LayoutConfig";
 import { MAP_MARKERS } from "../constants/MapMarkers";
@@ -33,6 +37,7 @@ export class UIScene extends Scene {
   private unsubQuizRetry: (() => void) | null = null;
   private unsubQuizNextLevel: (() => void) | null = null;
   private unsubQuizVisibilityWatcher: (() => void) | null = null;
+  private unsubStageExit: (() => void) | null = null;
 
   private activeInteractionPrompts: Set<Phaser.GameObjects.GameObject> =
     new Set();
@@ -59,6 +64,7 @@ export class UIScene extends Scene {
     this.setupKeyboardListeners();
     this.setupQuizCloseListener();
     this.setupQuizVisibilityWatcher();
+    this.setupStageExitListener();
     registerScene(this);
 
     this.layout();
@@ -243,15 +249,7 @@ export class UIScene extends Scene {
     });
 
     const unsubSoundHover = EventBus.on("ui:sound-hover", () => {
-      AudioManager.playSfx("sfx.ui.hover");
-    });
-
-    const unsubSoundModalOpen = EventBus.on("ui:sound-modal-open", () => {
-      AudioManager.playSfx("sfx.ui.modal_open");
-    });
-
-    const unsubSoundModalClose = EventBus.on("ui:sound-modal-close", () => {
-      AudioManager.playSfx("sfx.ui.modal_close");
+      AudioManager.playSfx("sfx.ui.click");
     });
 
     const unsubSoundBadgeUnlock = EventBus.on("ui:sound-badge-unlock", () => {
@@ -262,6 +260,13 @@ export class UIScene extends Scene {
       "ui:sound-level-complete",
       () => {
         AudioManager.playSfx("sfx.level.complete");
+      },
+    );
+
+    const unsubSoundGeniusNote = EventBus.on(
+      "ui:sound-genius-note",
+      ({ color }) => {
+        AudioManager.playSfx(`sfx.genius.${color}`);
       },
     );
 
@@ -281,15 +286,15 @@ export class UIScene extends Scene {
       unsubDialogueDequeueStarted();
       unsubSoundClick();
       unsubSoundHover();
-      unsubSoundModalOpen();
-      unsubSoundModalClose();
       unsubSoundBadgeUnlock();
       unsubSoundLevelComplete();
+      unsubSoundGeniusNote();
       unsubBadgeUnlocked();
       this.unsubQuizClose?.();
       this.unsubQuizRetry?.();
       this.unsubQuizNextLevel?.();
       this.unsubQuizVisibilityWatcher?.();
+      this.unsubStageExit?.();
       this.callbackRegistry.cleanup();
 
       if (gameScene?.events) {
@@ -330,6 +335,42 @@ export class UIScene extends Scene {
       const nextLevelId = currentLevelId
         ? getNextLevelId(currentLevelId)
         : undefined;
+
+      // Out of playable levels, but the investigation is the real ending:
+      // finishing the last phase hands straight off to the identification
+      // screen (through the cinematic, like any other phase).
+      if (
+        !nextLevelId &&
+        currentLevelId === INVESTIGATION_PREREQUISITE_LEVEL_ID &&
+        isLevelEnabled(INVESTIGATION_LEVEL_ID)
+      ) {
+        posthog.capture("level_next_started", {
+          from_level_id: currentLevelId,
+          to_level_id: INVESTIGATION_LEVEL_ID,
+        });
+
+        useGameUIStore.getState().closeQuiz();
+        EventBus.emit("game:ended", undefined);
+
+        const investigationMarker = MAP_MARKERS.find(
+          (m) => m.levelId === INVESTIGATION_LEVEL_ID,
+        );
+        if (investigationMarker) {
+          useGameUIStore.getState().setLevelInfo({
+            title: investigationMarker.title,
+            location: investigationMarker.location,
+            shortlocation: investigationMarker.shortlocation,
+          });
+        }
+        useGameUIStore.getState().setActiveMapMarker(null);
+
+        AudioManager.fadeOutMusic(350);
+        this.scene.stop(SceneNames.GAME);
+        this.scene.start(SceneNames.LEVEL_CINEMATIC, {
+          levelId: INVESTIGATION_LEVEL_ID,
+        });
+        return;
+      }
 
       // No next playable level: keep the quiz open and invite the player to
       // register interest in what comes next.
@@ -372,6 +413,24 @@ export class UIScene extends Scene {
       const gameScene = this.scene.get(SceneNames.GAME);
       useGameUIStore.getState().closeQuiz();
       gameScene.events.emit(GameEvents.DIALOGUE_ENDED, { source: "quiz" });
+    });
+  }
+
+  private setupStageExitListener() {
+    this.unsubStageExit = EventBus.on("stage:exit-confirmed", () => {
+      // The confirmation prompt paused GAME+UI while it was open. GAME is
+      // stopped below, so resuming it first is unnecessary — worse, doing so
+      // re-arms its update() loop for a tick while the scene is mid-teardown,
+      // which throws (this.cameras.main is transiently unset). UI is never
+      // stopped here, so it alone needs resuming — explicitly, rather than
+      // relying on the "game:resume-requested" React cleanup, which fires
+      // after this stop and would be dropped (Game.ts unsubscribes its own
+      // EventBus listeners on shutdown).
+      this.scene.resume(SceneNames.UI);
+
+      EventBus.emit("game:ended", undefined);
+      this.scene.stop(SceneNames.GAME);
+      this.scene.start(SceneNames.INTRO);
     });
   }
 

@@ -1,3 +1,4 @@
+import { SceneNames } from "@/game/constants/SceneNames";
 import { useGameUIStore } from "@/ui/state/game-ui-store";
 import { LevelCinematic } from "./LevelCinematic";
 
@@ -37,5 +38,35 @@ describe("LevelCinematic", () => {
     scene.init({ levelId: "level_01" });
 
     expect(useGameUIStore.getState().creditsOpen).toBe(false);
+  });
+
+  describe("transition target", () => {
+    function buildScene(levelId: string) {
+      const scene = new LevelCinematic();
+      const sceneStart = jest.fn();
+      scene.init({ levelId });
+      Object.defineProperty(scene, "scene", { value: { start: sceneStart } });
+      return { scene, sceneStart };
+    }
+
+    it("starts the Game scene for a playable level", () => {
+      const { scene, sceneStart } = buildScene("level_02");
+
+      (scene as unknown as { transitionToGame(): void }).transitionToGame();
+
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.GAME, {
+        levelId: "level_02",
+      });
+    });
+
+    it("starts the investigation screen for the identification phase", () => {
+      // The identification phase has no tilemap: the cinematic still plays, but
+      // it hands off to the investigation screen instead of the Game scene.
+      const { scene, sceneStart } = buildScene("level_04");
+
+      (scene as unknown as { transitionToGame(): void }).transitionToGame();
+
+      expect(sceneStart).toHaveBeenCalledWith(SceneNames.INVESTIGATION);
+    });
   });
 });

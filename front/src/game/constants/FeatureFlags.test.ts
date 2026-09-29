@@ -1,14 +1,17 @@
 import { isLevelEnabled, LEVEL_ENABLED } from "./FeatureFlags";
 
 describe("isLevelEnabled", () => {
-  it("enables the levels listed as true", () => {
+  it("enables the levels that ship playable", () => {
     expect(isLevelEnabled("level_01")).toBe(true);
     expect(isLevelEnabled("level_02")).toBe(true);
+    expect(isLevelEnabled("level_03")).toBe(true);
+    expect(isLevelEnabled("level_04")).toBe(true);
   });
 
-  it("keeps the mock level 03 disabled", () => {
-    expect(LEVEL_ENABLED.level_03).toBe(false);
-    expect(isLevelEnabled("level_03")).toBe(false);
+  it("agrees with the table for every level listed", () => {
+    for (const [levelId, enabled] of Object.entries(LEVEL_ENABLED)) {
+      expect(isLevelEnabled(levelId)).toBe(enabled);
+    }
   });
 
   it("denies levels that are not listed", () => {

@@ -4,6 +4,9 @@ import { ConfigService } from "../../config/config.service";
 import type { IEmailService } from "../interfaces/email-service.interface";
 import { emailTemplates } from "../templates/email-templates";
 
+/** Per-stage SMTP timeout (connect, greeting, idle socket). */
+const SMTP_TIMEOUT_MS = 10_000;
+
 @Injectable()
 export class NodemailerEmailService implements IEmailService, OnModuleInit {
   private readonly logger = new Logger(NodemailerEmailService.name);
@@ -16,6 +19,11 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
+      // Nodemailer's defaults allow minutes per stage; fail fast instead
+      // so a stuck SMTP server can't pile up pending sends.
+      connectionTimeout: SMTP_TIMEOUT_MS,
+      greetingTimeout: SMTP_TIMEOUT_MS,
+      socketTimeout: SMTP_TIMEOUT_MS,
       auth: {
         user: this.config.gmailUser,
         pass: this.config.gmailAppPassword,
@@ -47,7 +55,11 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
   }
 
   async sendMagicLinkEmail(email: string, magicLinkUrl: string): Promise<void> {
-    const template = emailTemplates.magicLink(email, magicLinkUrl);
+    const template = emailTemplates.passwordReset(
+      email,
+      magicLinkUrl,
+      this.config.frontendUrl,
+    );
     await this.send(email, template.subject, template.html);
   }
 
@@ -55,7 +67,11 @@ export class NodemailerEmailService implements IEmailService, OnModuleInit {
     email: string,
     verificationUrl: string,
   ): Promise<void> {
-    const template = emailTemplates.verification(email, verificationUrl);
+    const template = emailTemplates.verification(
+      email,
+      verificationUrl,
+      this.config.frontendUrl,
+    );
     await this.send(email, template.subject, template.html);
   }
 

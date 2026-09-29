@@ -115,6 +115,14 @@ export class PersistenceBridge {
           quarters_earned: payload.quiz.quartersEarned,
         },
       });
+      // Canonical dual-emit (issue #741). High volume, but not a card
+      // denominator — kept for completeness, not funnel math.
+      posthog.capture("score_calculated", {
+        level_id: payload.levelId,
+        total_quarters: payload.totalQuarters,
+        total_stars: payload.totalStars,
+        rating: payload.rating,
+      });
     } catch (err) {
       console.error(
         "[PersistenceBridge] Failed to save score in persistence layer:",

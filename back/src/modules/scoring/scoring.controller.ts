@@ -6,7 +6,10 @@ import {
   Param,
   Post,
   Query,
+  Req,
 } from "@nestjs/common";
+import type { Request } from "express";
+import { readAnalyticsConsent } from "../../shared/consent/analytics-consent";
 import { GuestPlay } from "../auth/decorators/guest-play.decorator";
 import { SaveCollectiblesDto } from "./dto/save-collectibles.dto";
 import { SubmitScoreDto } from "./dto/submit-score.dto";
@@ -28,12 +31,15 @@ export class ScoringController {
   async submitScore(
     @Body() dto: SubmitScoreDto,
     @Headers("x-guest-id") guestId: string | undefined,
+    @Req() request: Request,
   ): Promise<UserScore | { success: true; guest: true }> {
     if (guestId) {
       // Guest scores are not persisted; return success stub
       return { success: true, guest: true };
     }
-    return this.scoringService.submitScore(dto);
+    // The score itself is always persisted — it is the player's progress, not
+    // analytics. Only the PostHog `match_ended` event depends on consent.
+    return this.scoringService.submitScore(dto, readAnalyticsConsent(request));
   }
 
   @GuestPlay()

@@ -3,42 +3,32 @@
     {
       "src": "comic_L3P1.png",
       "sliceWidth": 350,
-      "sliceStart": 50,
+      "sliceStart": 200,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
-      "title": "VANDALISMO TOTAL",
-      "caption": "Na madrugada de ontem, vândalos invadiram o Inhotim e atacaram as obras."
+      "title": "FESTA DO INTERIOR",
+      "caption": "Campina Grande celebra o tradicional São João com música, dança e alegria."
     },
     {
       "src": "comic_L3P2.png",
       "sliceWidth": 350,
-      "sliceStart": 300,
+      "sliceStart": 635,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
-      "title": "A INVESTIGAÇÃO COMEÇA",
-      "caption": "A polícia chamou detetives da região para ajudar a investigar."
+      "title": "CAMINHO DA ROÇA",
+      "caption": "De repente, algo assusta todo o povo, que corre em disparada e esvazia a festa."
     },
     {
       "src": "comic_L3P3.png",
       "sliceWidth": 350,
-      "sliceStart": 345,
+      "sliceStart": 395,
       "revealMs": 1000,
       "holdMs": 5000,
       "shrinkMs": 1200,
-      "title": "MISSÃO: BUSCAR PISTAS",
-      "caption": "A inspetora-chefe pediu que você a acompanhasse no caso."
-    },
-    {
-      "src": "comic_L3P4.png",
-      "sliceWidth": 350,
-      "sliceStart": 170,
-      "revealMs": 1000,
-      "holdMs": 5000,
-      "shrinkMs": 1200,
-      "title": "DISFARCE PERFEITO",
-      "caption": "Com roupas de zelador, sua missão é procurar pistas enquanto organiza o lugar."
+      "title": "OLHA A PISTA!",
+      "caption": "De volta ao caso, descubra quem está por trás dos ataques à cultura."
     }
   ],
   "revealIconMask": "reveal_icon_mask_L3.png",

@@ -55,17 +55,19 @@ export function IntroSequence({
   const fitElRef = useRef<HTMLDivElement | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
 
+  const assetDir = config.assetDir ?? "intro";
+
   // Build panel configs with full asset paths
   const panels: PanelConfig[] = useMemo(() => {
     return config.panels.map((p: PanelConfig) => ({
       ...p,
-      src: `/assets/data/levels/${levelId}/intro/${p.src}`,
+      src: `/assets/data/levels/${levelId}/${assetDir}/${p.src}`,
     }));
-  }, [config.panels, levelId]);
+  }, [config.panels, levelId, assetDir]);
 
   // Asset paths
   const captionImage = config.captionImage
-    ? `/assets/data/levels/${levelId}/intro/${config.captionImage}`
+    ? `/assets/data/levels/${levelId}/${assetDir}/${config.captionImage}`
     : undefined;
 
   // Total stage width calculation

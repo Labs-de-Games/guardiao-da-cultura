@@ -1,0 +1,49 @@
+MIT License
+
+Copyright (c) 2026 Labs de Games / 42 Rio and the Guardião da Cultura contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+SCOPE OF THIS LICENSE — SOURCE CODE ONLY
+
+The MIT terms above cover the **source code** of this repository only.
+
+They do **not** cover the game's media assets. Every file under
+
+    front/public/assets/**
+
+— artwork reproductions, photographs, sculptures, posters, sprites, maps,
+music, sound effects, icons and level content — is governed by a separate
+document:
+
+    ASSETS-LICENSE.md
+
+Most of those assets require **attribution**. Some of them are licensed under
+terms that are **not** compatible with MIT and are **not** free for commercial
+reuse. Read ASSETS-LICENSE.md before redistributing, extracting or reusing any
+file under front/public/assets/.
+
+Institutional names and logos (Governo Federal, Lei Rouanet, Ministério da
+Cultura, Galp, Bemobi, 42 Rio) are trademarks and are **not** licensed by this
+file or by ASSETS-LICENSE.md. See NOTICE.
+
+Human-readable credits for every third-party work used in the game are in
+CREDITS.md, which mirrors the in-game credits screen.

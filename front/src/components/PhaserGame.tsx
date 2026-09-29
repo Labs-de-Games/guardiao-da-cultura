@@ -4,13 +4,14 @@ import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
 import { LayoutConfig } from "../game/constants/LayoutConfig";
+import { GameEventType } from "../game/types/AnalyticsTypes";
+import { sendGameEvent } from "../lib/analyticsApi";
 import { setGuestId } from "../lib/api/client";
 import { AudioAccessibilityService } from "../lib/audio";
-import { useAuth } from "../lib/auth/useAuth";
+import { reportErrorPage } from "../lib/errors/reportError";
 import { getOrCreateGuestSessionId } from "../lib/guestSession";
-import { usePostHogDistinctId } from "../lib/posthog/FeatureFlagContext";
-import { useEntryFlow } from "../lib/posthog/useEntryFlow";
 import { EventBus } from "../shared/events/event-bus";
+import { GameLoadErrorScreen } from "./errors/ErrorPages";
 import LoadingGameScreen from "./LoadingGameScreen";
 import LoadingScreen from "./LoadingScreen";
 
@@ -25,9 +26,6 @@ const GameOverlay = dynamic(
 const MIN_LEVEL_LOADING_MS = 5000;
 
 export default function PhaserGame() {
-  const { user } = useAuth();
-  const posthogDistinctId = usePostHogDistinctId();
-  const { entryFlow, isLoading: isFlowLoading } = useEntryFlow();
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasViewportCleanupRef = useRef<(() => void) | null>(null);
@@ -37,6 +35,8 @@ export default function PhaserGame() {
   const [loadingLevelId, setLoadingLevelId] = useState<string | undefined>();
   const [loadingProgress, setLoadingProgress] = useState<number | undefined>();
   const [overlayMounted, setOverlayMounted] = useState(false);
+  const [hasInitError, setHasInitError] = useState(false);
+  const [initAttempt, setInitAttempt] = useState(0);
   const loadingStartedAtRef = useRef<number | null>(null);
   const currentLevelIdRef = useRef<string | undefined>(undefined);
   const minLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -44,6 +44,7 @@ export default function PhaserGame() {
   );
   const gameLoadSuccessSentRef = useRef(false);
   const gameLoadFailedSentRef = useRef(false);
+  const playerIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleLoadingStart = (event: Event) => {
@@ -94,16 +95,64 @@ export default function PhaserGame() {
       }, remaining);
     };
 
-    const handleLoadingError = (_event: Event) => {};
+    // Previously a no-op: Game.ts's `loaderror` handler (scenes/Game.ts)
+    // dispatched this DOM event straight into nothing, so asset-load
+    // failures during actual gameplay (not just module import/init, which
+    // game_load_failed above already covers) were captured nowhere.
+    const handleLoadingError = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        stage?: string;
+        key?: string;
+      }>;
+      const errorCode = "asset_load_failed";
+      const metadata = {
+        error_code: errorCode,
+        is_blocking: true,
+        loading_stage: customEvent.detail?.stage,
+        asset_key: customEvent.detail?.key,
+        level_id: currentLevelIdRef.current,
+      };
 
+      posthog.capture("critical_error_occurred", metadata);
+
+      // Also mirrored into game_event (severity: "critical") via the
+      // existing generic EVENT_LOGGED type — no new enum value needed —
+      // so #748's "keep the legacy dashboard as a fallback" promise has
+      // something to show. Closes the same pendency tracked in
+      // docs/pt-BR/notes/EPIC-analytics-dashboard.md ("emit event.logged for critical
+      // errors").
+      sendGameEvent({
+        userId: playerIdRef.current ?? undefined,
+        type: GameEventType.EVENT_LOGGED,
+        timestamp: new Date().toISOString(),
+        metadata: { severity: "critical", ...metadata },
+      }).catch((err) => {
+        console.error(
+          "[PhaserGame] Failed to log critical_error_occurred:",
+          err,
+        );
+      });
+      reportErrorPage("asset_load", undefined, {
+        stage: customEvent.detail?.stage,
+        asset_key: customEvent.detail?.key,
+        level_id: currentLevelIdRef.current,
+      });
+    };
+
+    if (typeof window === "undefined" || !containerRef.current) return;
+    if (isInitializingRef.current || gameRef.current) return;
+
+    // Registered only once all early-return guards above have passed, and
+    // always paired with the cleanup below in the same effect run. Adding
+    // these before the guards (as before) meant every early-bail re-render
+    // (e.g. one where the game was already initializing) leaked a duplicate
+    // listener set with no matching cleanup — each real phaser-loading-error
+    // would then fire handleLoadingError once per leaked listener,
+    // multiplying critical_error_occurred captures and game_event writes.
     window.addEventListener("phaser-loading-start", handleLoadingStart);
     window.addEventListener("phaser-loading-progress", handleLoadingProgress);
     window.addEventListener("phaser-loading-complete", handleLoadingComplete);
     window.addEventListener("phaser-loading-error", handleLoadingError);
-
-    if (typeof window === "undefined" || !containerRef.current) return;
-    if (isInitializingRef.current || gameRef.current) return;
-    if (isFlowLoading) return;
 
     isInitializingRef.current = true;
 
@@ -111,18 +160,17 @@ export default function PhaserGame() {
       let stage: "player_id_resolution" | "module_import" | "phaser_init" =
         "player_id_resolution";
       try {
-        const activeUserId = user?.id ?? null;
-        const isGuest = !activeUserId;
-        const guestSessionId = isGuest
-          ? getOrCreateGuestSessionId(posthogDistinctId ?? null)
-          : null;
-        const playerId = activeUserId ?? guestSessionId;
+        // Players never authenticate (#738: no player login/registration)
+        // — always a guest, identified by the persisted guest session id.
+        const guestSessionId = getOrCreateGuestSessionId();
+        const playerId = guestSessionId;
 
         if (!playerId) {
           throw new Error("Player ID is required to start the game.");
         }
+        playerIdRef.current = playerId;
 
-        if (isGuest && guestSessionId) {
+        if (guestSessionId) {
           setGuestId(guestSessionId);
         }
 
@@ -130,7 +178,7 @@ export default function PhaserGame() {
         const { default: StartGame } = await import("../game/main");
 
         stage = "phaser_init";
-        const game = StartGame("game-container", playerId, isGuest, entryFlow);
+        const game = StartGame("game-container", playerId, true);
         gameRef.current = game;
 
         const emitCanvasViewport = () => {
@@ -183,10 +231,32 @@ export default function PhaserGame() {
             error_type: err instanceof Error ? err.name : "unknown",
             loading_stage: stage,
           });
+
+          // Issue #741's first critical_error_occurred hook: a boot
+          // failure means the player can't reach chapter_1_completed
+          // without reloading — always blocking.
+          const criticalMetadata = {
+            error_code: `game_boot_failed:${stage}`,
+            is_blocking: true,
+            loading_stage: stage,
+          };
+          posthog.capture("critical_error_occurred", criticalMetadata);
+          sendGameEvent({
+            userId: playerIdRef.current ?? undefined,
+            type: GameEventType.EVENT_LOGGED,
+            timestamp: new Date().toISOString(),
+            metadata: { severity: "critical", ...criticalMetadata },
+          }).catch((mirrorErr) => {
+            console.error(
+              "[PhaserGame] Failed to log critical_error_occurred:",
+              mirrorErr,
+            );
+          });
         }
         console.error("[PhaserGame] Error initializing game:", err);
         isInitializingRef.current = false;
         setIsLoading(false);
+        setHasInitError(true);
       }
     };
 
@@ -223,7 +293,22 @@ export default function PhaserGame() {
         gameLoadFailedSentRef.current = false;
       }
     };
-  }, [entryFlow, isFlowLoading, user?.id, posthogDistinctId]);
+    // posthogDistinctId deliberately excluded (#740): it transitions from
+    // null to a real value once the async bootstrap fetch resolves,
+    // causing a second, spurious run of this effect. It has been dead as
+    // an input to getOrCreateGuestSessionId since this same issue made
+    // player identity a synchronous, middleware-set durable cookie —
+    // getOrCreateGuestSessionId already prefers the existing persisted
+    // guest id over any argument.
+    // initAttempt only triggers a clean re-init after an init failure.
+  }, [initAttempt]);
+
+  const handleRetryInit = () => {
+    gameLoadFailedSentRef.current = false;
+    setHasInitError(false);
+    setIsLoading(true);
+    setInitAttempt((attempt) => attempt + 1);
+  };
 
   return (
     <div
@@ -237,6 +322,7 @@ export default function PhaserGame() {
         backgroundColor: "#000000",
       }}
     >
+      {hasInitError && <GameLoadErrorScreen onRetry={handleRetryInit} />}
       {isLoading &&
         (loadingLevelId ? (
           <LoadingGameScreen
@@ -246,9 +332,7 @@ export default function PhaserGame() {
         ) : (
           <LoadingScreen />
         ))}
-      {overlayMounted && (
-        <GameOverlay entryFlow={entryFlow} isEntryFlowLoading={isFlowLoading} />
-      )}
+      {overlayMounted && <GameOverlay />}
     </div>
   );
 }

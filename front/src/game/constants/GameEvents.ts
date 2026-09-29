@@ -23,4 +23,6 @@ export const GameEvents = {
 
   TUTORIAL_SHOWN: "tutorial-shown",
   TUTORIAL_DISMISSED: "tutorial-dismissed",
+
+  SWITCH_LIGHT_ACTIVATED: "switch-light-activated",
 } as const;

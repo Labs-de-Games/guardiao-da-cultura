@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
-import type { EntryFlow } from "@/game/main";
+import { useCallback, useEffect, useRef } from "react";
 import { getGuestId } from "@/lib/api/client";
-import { useAuth } from "@/lib/auth/useAuth";
 import { EventBus } from "@/shared/events/event-bus";
 import { CreditsScreen } from "@/ui/credits/CreditsScreen";
 import { useDialogueBridge } from "@/ui/hooks/useDialogueBridge";
 import { useEventBridge } from "@/ui/hooks/useEventBridge";
+import {
+  STAGE_EXIT_CALLBACK_ID,
+  useRequestStageExit,
+} from "@/ui/hooks/useStageExit";
 import { ScorePanel } from "@/ui/hud/ScorePanel";
 import { Sidebar } from "@/ui/hud/Sidebar";
 import { InterestDialog } from "@/ui/interest/InterestDialog";
 import { IntroSequence } from "@/ui/intro/IntroSequence";
+import { InvestigationScreen } from "@/ui/investigation/InvestigationScreen";
 import BadgeGalleryPanel from "@/ui/panels/BadgeGalleryPanel";
+import { BandSelectorPanel } from "@/ui/panels/BandSelectorPanel";
 import { ChunkSelectorPanel } from "@/ui/panels/ChunkSelectorPanel";
 import { ConfirmationPanel } from "@/ui/panels/ConfirmationPanel";
 import { ControlsPanel } from "@/ui/panels/ControlsPanel";
@@ -20,22 +24,19 @@ import { CostumeSelectorPanel } from "@/ui/panels/CostumeSelectorPanel";
 import { CreditsButton } from "@/ui/panels/CreditsButton";
 import { DialoguePanel } from "@/ui/panels/DialoguePanel";
 import { ErrorBoundary } from "@/ui/panels/ErrorBoundary";
+import { GeniusSequencePanel } from "@/ui/panels/GeniusSequencePanel";
 import { LabelPanel } from "@/ui/panels/LabelPanel";
 import { MapInfoBox } from "@/ui/panels/MapInfoBox";
 import { MapPinTooltip } from "@/ui/panels/MapPinTooltip";
+import { PrivacySettings } from "@/ui/panels/PrivacySettings";
+import { StepSequencePanel } from "@/ui/panels/StepSequencePanel";
 import { ToastNotification } from "@/ui/panels/ToastNotification";
 import QuizPanel from "@/ui/quiz/Quiz";
 import { useDialogueStore } from "@/ui/state/dialogue-store";
 import { UI_Z_INDEX, useGameUIStore } from "@/ui/state/game-ui-store";
 import { EvidenceBoardOverlay } from "./EvidenceBoardOverlay";
 
-export default function GameOverlay({
-  entryFlow = "map",
-  isEntryFlowLoading = false,
-}: {
-  entryFlow?: EntryFlow;
-  isEntryFlowLoading?: boolean;
-}) {
+export default function GameOverlay() {
   return (
     <div
       id="game-overlay"
@@ -46,27 +47,19 @@ export default function GameOverlay({
         zIndex: UI_Z_INDEX.OVERLAY,
       }}
     >
-      <OverlayContent
-        entryFlow={entryFlow}
-        isEntryFlowLoading={isEntryFlowLoading}
-      />
+      <OverlayContent />
     </div>
   );
 }
 
-function OverlayContent({
-  entryFlow,
-  isEntryFlowLoading,
-}: {
-  entryFlow: EntryFlow;
-  isEntryFlowLoading: boolean;
-}) {
-  const sidebarOpen = useGameUIStore((s) => s.sidebarOpen);
+function OverlayContent() {
   const controlsOpen = useGameUIStore((s) => s.controlsOpen);
   const gameStarted = useGameUIStore((s) => s.gameStarted);
   const levelTransitionActive = useGameUIStore((s) => s.levelTransitionActive);
   const dialogueOpen = useDialogueStore((s) => s.dialogueOpen);
   const dialogueMode = useDialogueStore((s) => s.dialogueMode);
+  const dialogueCallbackId = useDialogueStore((s) => s.dialogueCallbackId);
+  const requestStageExit = useRequestStageExit();
   const badgeGalleryOpen = useGameUIStore((s) => s.badgeGalleryOpen);
   const toggleSidebar = useGameUIStore((s) => s.toggleSidebar);
   const setSidebarOpen = useGameUIStore((s) => s.setSidebarOpen);
@@ -78,7 +71,7 @@ function OverlayContent({
   const introData = useGameUIStore((s) => s.introData);
   const setIntroData = useGameUIStore((s) => s.setIntroData);
 
-  useEventBridge({ entryFlow, isEntryFlowLoading });
+  useEventBridge();
   const { emitComplete, emitDismiss } = useDialogueBridge();
   const setBadgeGalleryOpen = useGameUIStore((s) => s.setBadgeGalleryOpen);
   const addUnlockedBadge = useGameUIStore((s) => s.addUnlockedBadge);
@@ -87,25 +80,60 @@ function OverlayContent({
   const chunkSelectorOpen = useGameUIStore((s) => s.chunkSelectorOpen);
   const openCostumeSelector = useGameUIStore((s) => s.openCostumeSelector);
   const costumeSelectorOpen = useGameUIStore((s) => s.costumeSelectorOpen);
+  const openStepSequence = useGameUIStore((s) => s.openStepSequence);
+  const stepSequenceOpen = useGameUIStore((s) => s.stepSequenceOpen);
+  const openBandPanel = useGameUIStore((s) => s.openBandPanel);
+  const openGeniusSequence = useGameUIStore((s) => s.openGeniusSequence);
+  const geniusSequenceOpen = useGameUIStore((s) => s.geniusSequenceOpen);
   const evidenceBoardOpen = useGameUIStore((s) => s.evidenceBoardOpen);
   const setEvidenceBoardOpen = useGameUIStore((s) => s.setEvidenceBoardOpen);
   const creditsOpen = useGameUIStore((s) => s.creditsOpen);
   const setCreditsOpen = useGameUIStore((s) => s.setCreditsOpen);
+  const investigationOpen = useGameUIStore((s) => s.investigation.open);
+  const quizVisible = useGameUIStore((s) => s.quiz.isVisible);
+  const isInterestDialogOpen = useGameUIStore((s) => s.isInterestDialogOpen);
   const _setGameStarted = useGameUIStore((s) => s.setGameStarted);
   const setActiveMapMarker = useGameUIStore((s) => s.setActiveMapMarker);
   const setAutoStartProgress = useGameUIStore((s) => s.setAutoStartProgress);
 
-  const { isAuthenticated } = useAuth();
+  // Players never authenticate (#738: no player login/registration) — the
+  // game is always played as a guest, identified by getGuestId().
   useEffect(() => {
-    const guestId = !isAuthenticated ? getGuestId() : null;
-    setAuthState(isAuthenticated, guestId);
-  }, [isAuthenticated, setAuthState]);
+    setAuthState(false, getGuestId());
+  }, [setAuthState]);
+
+  /**
+   * The auto-start progress describes a Phaser timer, but it is stored in a
+   * module-level store that outlives any route change. Leaving the game (for
+   * `/privacidade`, say) destroys the timer while leaving its last value
+   * behind, so the map would come back showing a countdown already part-way
+   * through — one no live timer is driving. Clearing it on unmount keeps the
+   * displayed countdown tied to the timer that actually exists.
+   */
+  useEffect(() => {
+    return () => useGameUIStore.getState().setAutoStartProgress(null);
+  }, []);
+
+  // Armed at level start so that dismissing the initial ControlsPanel also
+  // collapses the sidebar; consumed on the first close, then Tab-only again.
+  const levelStartControlsRef = useRef(false);
+  const prevControlsOpenRef = useRef(controlsOpen);
 
   useEffect(() => {
+    levelStartControlsRef.current = gameStarted;
     if (gameStarted && !useGameUIStore.getState().sidebarOpen) {
       setSidebarOpen(true);
     }
   }, [gameStarted, setSidebarOpen]);
+
+  useEffect(() => {
+    const wasOpen = prevControlsOpenRef.current;
+    prevControlsOpenRef.current = controlsOpen;
+    if (wasOpen && !controlsOpen && levelStartControlsRef.current) {
+      levelStartControlsRef.current = false;
+      setSidebarOpen(false);
+    }
+  }, [controlsOpen, setSidebarOpen]);
 
   useEffect(() => {
     const unsubControls = EventBus.on("ui:controls-overlay", (data) => {
@@ -144,6 +172,20 @@ function OverlayContent({
       },
     );
 
+    const unsubStepSequenceOpen = EventBus.on(
+      "ui:step-sequence-open",
+      (data) => {
+        openStepSequence(data);
+      },
+    );
+
+    const unsubGeniusSequenceOpen = EventBus.on(
+      "ui:genius-sequence-open",
+      (data) => {
+        openGeniusSequence(data);
+      },
+    );
+
     const unsubCostumeSelectorOpen = EventBus.on(
       "ui:costume-selector-open",
       (data) => {
@@ -155,6 +197,10 @@ function OverlayContent({
         });
       },
     );
+
+    const unsubBandPanelOpen = EventBus.on("ui:band-panel-open", (data) => {
+      openBandPanel(data);
+    });
 
     const unsubMapMarker = EventBus.on("map:marker-changed", (data) => {
       setActiveMapMarker(data);
@@ -198,6 +244,9 @@ function OverlayContent({
       unsubBadgeUnlocked();
       unsubChunkSelectorOpen();
       unsubCostumeSelectorOpen();
+      unsubStepSequenceOpen();
+      unsubBandPanelOpen();
+      unsubGeniusSequenceOpen();
       unsubMapMarker();
       unsubAutoStartTick();
       unsubAutoStartCanceled();
@@ -214,6 +263,9 @@ function OverlayContent({
     addUnlockedBadge,
     openChunkSelector,
     openCostumeSelector,
+    openStepSequence,
+    openBandPanel,
+    openGeniusSequence,
     setActiveMapMarker,
     setAutoStartProgress,
     setCreditsOpen,
@@ -221,7 +273,17 @@ function OverlayContent({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (chunkSelectorOpen || costumeSelectorOpen) {
+      if (
+        introData ||
+        chunkSelectorOpen ||
+        costumeSelectorOpen ||
+        stepSequenceOpen ||
+        geniusSequenceOpen
+      ) {
+        // IntroSequence owns the screen (and Escape) while a cinematic is
+        // playing — it has its own skip handler. gameStarted is already true
+        // by then, so without this bail-out the stage-exit branch below would
+        // fire on the same Escape press.
         return;
       }
 
@@ -247,8 +309,18 @@ function OverlayContent({
           e.preventDefault();
           setBadgeGalleryOpen(false);
           return;
-        } else if (sidebarOpen) {
-          setSidebarOpen(false);
+        } else if (
+          gameStarted &&
+          !dialogueOpen &&
+          !controlsOpen &&
+          !quizVisible &&
+          !isInterestDialogOpen
+        ) {
+          // Sidebar no longer closes on Escape (TAB and the sidebar's own
+          // pull-tab are its only toggles now) — Escape always opens the
+          // stage-exit prompt instead.
+          e.preventDefault();
+          requestStageExit();
         }
       }
       if ((e.key === " " || e.key === "e" || e.key === "E") && labelData) {
@@ -266,20 +338,24 @@ function OverlayContent({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
+    introData,
     labelData,
-    sidebarOpen,
     controlsOpen,
     dialogueOpen,
     gameStarted,
     badgeGalleryOpen,
     toggleSidebar,
-    setSidebarOpen,
     setLabelData,
     setBadgeGalleryOpen,
     chunkSelectorOpen,
     costumeSelectorOpen,
+    stepSequenceOpen,
+    geniusSequenceOpen,
     evidenceBoardOpen,
     setEvidenceBoardOpen,
+    quizVisible,
+    isInterestDialogOpen,
+    requestStageExit,
   ]);
 
   useEffect(() => {
@@ -288,6 +364,61 @@ function OverlayContent({
       dequeueDialogue();
     }
   }, [dialogueOpen, dequeueDialogue]);
+
+  const isStageExitConfirmOpen =
+    dialogueOpen &&
+    dialogueMode === "confirmation" &&
+    dialogueCallbackId === STAGE_EXIT_CALLBACK_ID;
+
+  // Phaser scene ops (pause/resume/stop/start) are all queued and only
+  // applied together on the next frame — they are NOT synchronous. On
+  // confirm, UIScene's "stage:exit-confirmed" handler queues a resume(UI) +
+  // stop(GAME); a generic "game:resume-requested" firing after that (from
+  // this effect's cleanup, which runs asynchronously once React commits)
+  // would queue an extra resume(GAME) behind the stop. Phaser's
+  // Systems.resume() only checks the scene isn't currently active — true
+  // for an already-shut-down scene too — so that resume revives GAME into
+  // RUNNING with its camera already torn down, crashing on the next
+  // update(). This ref lets the confirm path suppress that resume-request.
+  const stageExitConfirmedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isStageExitConfirmOpen) return;
+    // Freezes the world (movement, tweens, timers) while the player decides
+    // — mirrors the selector panels (e.g. ChunkSelectorPanel), which pause
+    // GAME+UI the same way while open.
+    EventBus.emit("game:pause-requested", { reason: "stage-exit-confirm" });
+    return () => {
+      if (!stageExitConfirmedRef.current) {
+        EventBus.emit("game:resume-requested", {
+          reason: "stage-exit-confirm",
+        });
+      }
+      stageExitConfirmedRef.current = false;
+    };
+  }, [isStageExitConfirmOpen]);
+
+  const handleConfirmationComplete = useCallback(
+    (callbackId: string, confirmed?: boolean) => {
+      if (callbackId === STAGE_EXIT_CALLBACK_ID) {
+        if (confirmed) {
+          stageExitConfirmedRef.current = true;
+          EventBus.emit("stage:exit-confirmed", undefined);
+        }
+        return;
+      }
+      emitComplete(callbackId, confirmed);
+    },
+    [emitComplete],
+  );
+
+  const handleConfirmationDismiss = useCallback(
+    (callbackId: string) => {
+      if (callbackId === STAGE_EXIT_CALLBACK_ID) return;
+      emitDismiss(callbackId);
+    },
+    [emitDismiss],
+  );
 
   if (introData) {
     return (
@@ -322,7 +453,29 @@ function OverlayContent({
           pointerEvents: "auto",
         }}
       >
-        <CreditsScreen onClose={() => setCreditsOpen(false)} />
+        <CreditsScreen
+          onClose={() => {
+            setCreditsOpen(false);
+            // Announced, not just applied: the investigation's ending waits on
+            // this to know the crawl is done and the map should come back.
+            EventBus.emit("credits:close", undefined);
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (investigationOpen) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: UI_Z_INDEX.OVERLAY + 1000,
+          pointerEvents: "auto",
+        }}
+      >
+        <InvestigationScreen />
       </div>
     );
   }
@@ -338,6 +491,7 @@ function OverlayContent({
         <MapPinTooltip />
         <MapInfoBox />
         <CreditsButton />
+        <PrivacySettings />
       </>
     );
   }
@@ -348,13 +502,19 @@ function OverlayContent({
       <Sidebar />
       <ChunkSelectorPanel />
       <CostumeSelectorPanel />
+      <StepSequencePanel />
+      <BandSelectorPanel />
+      <GeniusSequencePanel />
       <ToastNotification />
       <ErrorBoundary fallback={null}>
         <ControlsPanel />
       </ErrorBoundary>
       <DialoguePanel onComplete={emitComplete} onDismiss={emitDismiss} />
       {dialogueOpen && dialogueMode === "confirmation" && (
-        <ConfirmationPanel onComplete={emitComplete} onDismiss={emitDismiss} />
+        <ConfirmationPanel
+          onComplete={handleConfirmationComplete}
+          onDismiss={handleConfirmationDismiss}
+        />
       )}
       <LabelPanel />
       <BadgeGalleryPanel />

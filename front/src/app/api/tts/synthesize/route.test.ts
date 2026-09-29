@@ -16,19 +16,27 @@ if (typeof globalThis.TextDecoder === "undefined") {
 const mockFetch = jest.fn();
 (globalThis as Record<string, unknown>).fetch = mockFetch;
 
+// Mutable so a test can reproduce a cold-start install, where the contributor
+// has no ResponsiveVoice key. The old fixture hardcoded one, which is why the
+// suite stayed green while real key-less installs returned a 500.
+let mockApiKey: string | undefined = "test-api-key";
+
 jest.mock("@/lib/env-server", () => ({
   serverEnv: {
     client: {},
-    server: {
-      responsivevoiceApiKey: "test-api-key",
-      responsivevoiceApiUrl:
-        "https://texttospeech.responsivevoice.org/v1/text:synthesize",
+    get server() {
+      return {
+        responsivevoiceApiKey: mockApiKey,
+        responsivevoiceApiUrl:
+          "https://texttospeech.responsivevoice.org/v1/text:synthesize",
+      };
     },
   },
 }));
 
 beforeEach(() => {
   mockFetch.mockReset();
+  mockApiKey = "test-api-key";
 });
 
 jest.spyOn(console, "error").mockImplementation(() => {});
@@ -144,6 +152,35 @@ describe("POST /api/tts/synthesize", () => {
     });
   });
 
+  describe("without an API key", () => {
+    it("returns 503 instead of throwing", async () => {
+      mockApiKey = undefined;
+
+      const response = await POST(makeRequest({ text: "hello" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(data.code).toBe("tts_unavailable");
+      expect(data.error).toContain("RESPONSIVEVOICE_API_KEY");
+    });
+
+    it("never reaches the upstream service", async () => {
+      mockApiKey = undefined;
+
+      await POST(makeRequest({ text: "hello" }));
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("still rejects an invalid body with 400", async () => {
+      mockApiKey = undefined;
+
+      const response = await POST(makeRequest({ text: "" }));
+
+      expect(response.status).toBe(400);
+    });
+  });
+
   describe("upstream proxy", () => {
     it("returns 502 when upstream API fails", async () => {
       mockFetch.mockResolvedValueOnce({
@@ -157,6 +194,28 @@ describe("POST /api/tts/synthesize", () => {
 
       expect(response.status).toBe(502);
       expect(data.error).toContain("failed");
+    });
+
+    it("returns 502 when the upstream call throws", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+
+      const response = await POST(makeRequest({ text: "hello" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(502);
+      expect(data.error).toContain("unreachable");
+    });
+
+    it("aborts the upstream call on a timeout", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8)),
+      });
+
+      await POST(makeRequest({ text: "hello" }));
+
+      const options = mockFetch.mock.calls[0][1] as { signal?: AbortSignal };
+      expect(options.signal).toBeInstanceOf(AbortSignal);
     });
 
     it("returns 200 with audio/mpeg on success", async () => {

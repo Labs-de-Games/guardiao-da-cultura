@@ -105,6 +105,38 @@ export interface ChunkSlotRejectedData {
   itemId: string;
 }
 
+export interface StepSequenceOpenData {
+  instanceId: string;
+  videoPath: string;
+  availableSteps: { id: string; name: string; imagePath: string }[];
+  expectedSequence: string[];
+  filledSlots?: (string | null)[];
+}
+
+export interface StepSequenceSubmitData {
+  instanceId: string;
+  placedSteps: (string | null)[];
+}
+
+export interface StepSlotData {
+  instanceId: string;
+  slotIndex: number;
+  stepId: string;
+}
+
+/**
+ * One failed submit, not one wrong slot: a blind first try emits a
+ * `ui:step-rejected` per wrong slot, which would read as several failures.
+ * The player's unit of error on a sequence puzzle is the attempt.
+ */
+export interface StepSequenceRejectedData {
+  instanceId: string;
+  attemptNumber: number;
+  wrongCount: number;
+  correctCount: number;
+  totalSlots: number;
+}
+
 export interface ToastShowData {
   message: string;
   duration: number;
@@ -148,6 +180,7 @@ export interface CanvasViewportData {
 }
 
 import type { LabelInfoData } from "@/game/types/GameDataTypes";
+import type { InvestigationPayload } from "@/game/types/InvestigationTypes";
 import type { UserProgressState } from "@/game/types/ProgressionTypes";
 import type { IntroConfig } from "@/ui/intro/types";
 
@@ -192,6 +225,28 @@ export interface AutoStartTickData {
   totalMs: number;
 }
 
+export type GeniusColor = "green" | "red" | "yellow" | "blue";
+
+export interface GeniusSequenceOpenData {
+  instanceId: string;
+}
+
+export interface GeniusSequenceCompleteData {
+  instanceId: string;
+}
+
+export interface GeniusSequenceRejectedData {
+  instanceId: string;
+  attemptNumber: number;
+  wrongCount: number;
+  correctCount: number;
+  totalRounds: number;
+}
+
+export interface GeniusSoundNoteData {
+  color: GeniusColor;
+}
+
 export interface GameEventMap {
   "game:ready": { userId: string };
   "game:started": undefined;
@@ -213,6 +268,10 @@ export interface GameEventMap {
   "ui:chunk-selector-submit": ChunkSelectorSubmitData;
   "ui:costume-selector-open": CostumeSelectorOpenData;
   "ui:costume-selector-close": undefined;
+  "ui:band-panel-open": { instanceId: string; id: string; options: string[] };
+  "ui:band-panel-close": undefined;
+  "ui:band-choice-rejected": { instanceId: string; musicianId: string };
+  "ui:band-confirm": { instanceId: string; musicianId: string };
   "ui:costume-part-rejected": {
     instanceId: string;
     partType: string;
@@ -234,13 +293,22 @@ export interface GameEventMap {
       feet: string | null;
     };
   };
+  "ui:step-sequence-open": StepSequenceOpenData;
+  "ui:step-sequence-close": undefined;
+  "ui:step-sequence-submit": StepSequenceSubmitData;
+  "ui:step-placed": StepSlotData;
+  "ui:step-rejected": StepSlotData;
+  "ui:step-sequence-rejected": StepSequenceRejectedData;
+  "ui:genius-sequence-open": GeniusSequenceOpenData;
+  "ui:genius-sequence-close": undefined;
+  "ui:genius-sequence-complete": GeniusSequenceCompleteData;
+  "ui:genius-sequence-rejected": GeniusSequenceRejectedData;
+  "ui:sound-genius-note": GeniusSoundNoteData;
   "ui:chunk-slot-placed": ChunkSlotPlacedData;
   "ui:chunk-slot-rejected": ChunkSlotRejectedData;
   "ui:toast-show": ToastShowData;
   "ui:sound-click": undefined;
   "ui:sound-hover": undefined;
-  "ui:sound-modal-open": undefined;
-  "ui:sound-modal-close": undefined;
   "ui:sound-badge-unlock": undefined;
   "ui:sound-level-complete": undefined;
   "dialogue:show": DialogueShowData;
@@ -262,6 +330,7 @@ export interface GameEventMap {
   "quiz:close": undefined;
   "quiz:retry": undefined;
   "quiz:next-level": undefined;
+  "stage:exit-confirmed": undefined;
   "map:marker-changed": MapMarkerChangedData | null;
   "map:auto-start-tick": AutoStartTickData;
   "map:auto-start-canceled": undefined;
@@ -278,4 +347,28 @@ export interface GameEventMap {
   "ui:evidence-board-open-with-clue": { clueId: string | null };
   "credits:open": undefined;
   "credits:close": undefined;
+  /**
+   * Privacy settings panel on the map. Announced for the same reason credits
+   * is: the map's auto-start countdown has to stand down while the player is
+   * reading a consent decision, and Phaser cannot see React's local state.
+   */
+  "privacy:open": undefined;
+  "privacy:close": undefined;
+  /** InvestigationScene → React: open the identification screen with its dossier. */
+  "investigation:start": InvestigationPayload;
+  /** React → InvestigationScene: the accusation resolved; persist the result. */
+  "investigation:completed": {
+    stars: number;
+    wrongAttempts: number;
+    /** `true` when the player named the culprit; `false` when revealed. */
+    correct: boolean;
+  };
+  /** React → InvestigationScene: leave the identification screen for the map. */
+  "investigation:exit": undefined;
+  /**
+   * React → InvestigationScene: the player read their result and wants the
+   * ending. Starts the closing cinematic, which is followed by the credits on
+   * a first completion and by the map either way.
+   */
+  "investigation:outro": undefined;
 }

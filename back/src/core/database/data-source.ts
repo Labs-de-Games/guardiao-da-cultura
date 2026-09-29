@@ -4,6 +4,7 @@ import { MagicLinkToken } from "../../modules/auth/entities/magic-link-token.ent
 import { RefreshToken } from "../../modules/auth/entities/refresh-token.entity";
 import { Badge } from "../../modules/badges/badge.entity";
 import { UserBadge } from "../../modules/badges/user-badge.entity";
+import { UserConsent } from "../../modules/consent/user-consent.entity";
 import { UserProgress } from "../../modules/progression/user-progress.entity";
 import { UserCollectible } from "../../modules/scoring/user-collectible.entity";
 import { UserScore } from "../../modules/scoring/user-score.entity";
@@ -24,10 +25,12 @@ export const AppDataSource = new DataSource({
     RefreshToken,
     UserScore,
     UserCollectible,
+    UserConsent,
   ],
   migrations: isProduction
     ? ["dist/core/database/migrations/*.js"]
     : ["src/core/database/migrations/*.ts"],
   migrationsTableName: "migrations",
+  migrationsTransactionMode: "each",
   synchronize: false,
 });

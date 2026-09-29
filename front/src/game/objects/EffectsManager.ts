@@ -234,4 +234,75 @@ export class EffectsManager {
     this.spawnConfettiEmitter(x - offset, burstY, { min: 190, max: 270 });
     this.spawnConfettiEmitter(x + offset, burstY, { min: 270, max: 350 });
   }
+
+  private static readonly MUSIC_NOTE_TEXTURES = ["note01", "note02"];
+  private static readonly MUSIC_NOTE_OFFSETS_X = [-60, 0, 60];
+  private static readonly MUSIC_NOTE_DEPTH = 12;
+  private static readonly MUSIC_NOTE_LEG_DURATION = 500;
+  private static readonly MUSIC_NOTE_MAX_SPAWN_DELAY = 2500;
+
+  /**
+   * Spawns one note sprite that fades in, zig-zags upward, fades out at the
+   * top, then respawns at the same point after a fresh random delay —
+   * looping forever until the scene is torn down.
+   */
+  private spawnMusicNote(spawnX: number, spawnY: number) {
+    const delay = Phaser.Math.Between(
+      0,
+      EffectsManager.MUSIC_NOTE_MAX_SPAWN_DELAY,
+    );
+
+    this.scene.time.delayedCall(delay, () => {
+      const texture = Phaser.Math.RND.pick(EffectsManager.MUSIC_NOTE_TEXTURES);
+      const note = this.scene.add.sprite(spawnX, spawnY, texture);
+      note.setDepth(EffectsManager.MUSIC_NOTE_DEPTH);
+      note.setScale(1.5);
+      note.setAlpha(0);
+
+      const zigzagDir = Phaser.Math.RND.pick([-1, 1]);
+      const duration = EffectsManager.MUSIC_NOTE_LEG_DURATION;
+
+      this.scene.tweens.chain({
+        targets: note,
+        tweens: [
+          {
+            alpha: 1,
+            x: spawnX + 18 * zigzagDir,
+            y: spawnY - 30,
+            duration,
+            ease: "Sine.easeOut",
+          },
+          {
+            x: spawnX - 18 * zigzagDir,
+            y: spawnY - 60,
+            duration,
+            ease: "Sine.easeInOut",
+          },
+          {
+            x: spawnX + 10 * zigzagDir,
+            y: spawnY - 95,
+            alpha: 0,
+            duration,
+            ease: "Sine.easeIn",
+          },
+        ],
+        onComplete: () => {
+          note.destroy();
+          this.spawnMusicNote(spawnX, spawnY);
+        },
+      });
+    });
+  }
+
+  /** Kicks off 3 independently-looping music note animations, side by side above the given point. */
+  public playMusicNotesLoop(
+    centerX: number,
+    centerY: number,
+    verticalOffset: number = 160,
+  ) {
+    const spawnY = centerY - verticalOffset;
+    EffectsManager.MUSIC_NOTE_OFFSETS_X.forEach((offsetX) => {
+      this.spawnMusicNote(centerX + offsetX, spawnY);
+    });
+  }
 }

@@ -63,24 +63,28 @@ export const GLOBAL_SFX: AudioAssetDefinition[] = [
   // Rat
   { key: "sfx.rat.squeak", path: "sound/sfx/rat.squeak.mp3" },
   { key: "sfx.rat.flee", path: "sound/sfx/rat.flee.mp3" },
-  // Magnifying glass
-  { key: "sfx.magnifying.up", path: "sound/sfx/magnifying.up.mp3" },
-  { key: "sfx.magnifying.down", path: "sound/sfx/magnifying.down.mp3" },
-  // UI feedback
-  { key: "sfx.ui.click", path: "sound/sfx/placeholder.mp3" },
-  { key: "sfx.ui.hover", path: "sound/sfx/placeholder.mp3" },
-  { key: "sfx.ui.modal_open", path: "sound/sfx/placeholder.mp3" },
-  { key: "sfx.ui.modal_close", path: "sound/sfx/placeholder.mp3" },
+  // UI feedback (also used for quiz/puzzle magnifying glass zoom in/out)
+  { key: "sfx.ui.click", path: "sound/ui.ogg" },
   // Puzzle/quiz
   { key: "sfx.puzzle.success", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.puzzle.failure", path: "sound/sfx/puzzle.error.mp3" },
   // Camera/flash
   { key: "sfx.camera.click", path: "sound/sfx/camera.click.wav" },
+  // Closing the case
+  { key: "sfx.police.siren", path: "sound/sfx/police-siren.mp3" },
   // Rewards
   { key: "sfx.badge.unlock", path: "sound/sfx/badge.unlock.mp3" },
   { key: "sfx.level.complete", path: "sound/sfx/puzzle.succeed.ogg" },
   { key: "sfx.star.earned", path: "sound/sfx/star_sound.mp3" },
   { key: "sfx.object.drop", path: "sound/sfx/object.drop_5.mp3" },
+  // Switches
+  { key: "sfx.switch", path: "sound/sfx/switch.ogg" },
+  { key: "sfx.light_bar.fix", path: "sound/sfx/light_bar_fix.ogg" },
+  // Genius sequence minigame notes
+  { key: "sfx.genius.green", path: "sound/notes/C3.wav" },
+  { key: "sfx.genius.red", path: "sound/notes/D3.wav" },
+  { key: "sfx.genius.yellow", path: "sound/notes/E3.wav" },
+  { key: "sfx.genius.blue", path: "sound/notes/F3.wav" },
 ];
 
 /**
@@ -119,6 +123,39 @@ export const LEVEL_AUDIO_MANIFESTS: Record<string, LevelAudioManifest> = {
       loop: true,
     },
   },
+  level_03: {
+    levelId: "level_03",
+    music: {
+      key: "music.level_3.main",
+      path: "sound/music/level_3_cricket.ogg",
+      loop: true,
+    },
+    // Instrument stems for the band mechanic. All start muted at level load
+    // and are unlocked in place as each band member is confirmed, so they
+    // stay phase-locked to the same shared timeline.
+    musicLayers: [
+      {
+        key: "music.level_3.layer.zabumba",
+        path: "sound/music/level_3_zabumba.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.accordion",
+        path: "sound/music/level_3_accordion.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.triangle",
+        path: "sound/music/level_3_triangle.ogg",
+        loop: true,
+      },
+      {
+        key: "music.level_3.layer.jam_block",
+        path: "sound/music/level_3_jam_block.ogg",
+        loop: true,
+      },
+    ],
+  },
 };
 
 /**
@@ -151,6 +188,9 @@ export function getLevelAudioAssets(levelId: string): AudioAssetDefinition[] {
   const assets: AudioAssetDefinition[] = [];
   if (manifest.music) {
     assets.push(manifest.music);
+  }
+  if (manifest.musicLayers) {
+    assets.push(...manifest.musicLayers);
   }
   if (manifest.sfx) {
     assets.push(...manifest.sfx);
