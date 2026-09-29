@@ -143,9 +143,11 @@ in `.env.example`, and the game runs fully without them. See
   localisation layer yet.
 - **Desktop-first.** The game targets a keyboard and a reasonably wide viewport;
   touch controls are not implemented.
-- **Level 3 is still in development** and levels 4 and 5 do not exist beyond a
-  loading screen. See `LEVEL_REGISTRY` in
-  `front/src/game/data/LevelConfig.ts` for the current state of each.
+- **Four levels.** Levels 1–3 are map levels in `LEVEL_REGISTRY`
+  (`front/src/game/data/LevelConfig.ts`). Level 4 is the final investigation
+  screen, which is deliberately kept out of the registry (see
+  `front/src/game/constants/Investigation.ts`). Which levels players can reach
+  is set by `LEVEL_ENABLED` in `front/src/game/constants/FeatureFlags.ts`.
 - **A few bundled sound and image assets are not free for commercial reuse.**
   They are listed individually in [`ASSETS-LICENSE.md`](../ASSETS-LICENSE.md) §5.
 - **Browser speech quality varies.** Without a ResponsiveVoice key, narration
@@ -159,7 +161,7 @@ in `.env.example`, and the game runs fully without them. See
 ├── front/                      # Next.js application
 │   ├── src/
 │   │   ├── app/                # App Router pages, layouts and API routes
-│   │   ├── game/               # Phaser 3 game domain (scenes, objects, systems)
+│   │   ├── game/               # Phaser game domain (scenes, objects, systems)
 │   │   ├── ui/                 # React HUD and panels layered over the canvas
 │   │   └── lib/                # Utilities, env parsing, audio services
 │   └── public/assets/          # Game assets — SEPARATE LICENCE, see ASSETS-LICENSE.md
@@ -381,6 +383,6 @@ all. Read the link from `make development-logs`.
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [NestJS Documentation](https://docs.nestjs.com/)
-- [Phaser 3 Documentation](https://phaser.io/docs/)
+- [Phaser Documentation](https://phaser.io/docs/)
 - [Biome Documentation](https://biomejs.dev/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
