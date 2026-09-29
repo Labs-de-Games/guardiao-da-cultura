@@ -273,7 +273,9 @@ run for a fork.
   not about you.
 - Push follow-up commits rather than force-pushing over the review, so the
   reviewer can see what changed.
-- Merges use "Squash and merge" or "Rebase and merge".
+- Merges into `develop` use "Squash and merge" or "Rebase and merge". Release,
+  hotfix and back-merge pull requests use "Create a merge commit", the only
+  method `master` accepts.
 - Delete the branch after it merges.
 
 ## What CI runs
