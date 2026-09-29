@@ -357,7 +357,12 @@ export interface GameEventMap {
   /** InvestigationScene → React: open the identification screen with its dossier. */
   "investigation:start": InvestigationPayload;
   /** React → InvestigationScene: the accusation resolved; persist the result. */
-  "investigation:completed": { stars: number; wrongAttempts: number };
+  "investigation:completed": {
+    stars: number;
+    wrongAttempts: number;
+    /** `true` when the player named the culprit; `false` when revealed. */
+    correct: boolean;
+  };
   /** React → InvestigationScene: leave the identification screen for the map. */
   "investigation:exit": undefined;
   /**

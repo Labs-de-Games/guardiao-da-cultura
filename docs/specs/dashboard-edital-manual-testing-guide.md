@@ -28,6 +28,7 @@
   - [5. Public Dashboard](#5-public-dashboard)
   - [6. PostHog Instrumentation](#6-posthog-instrumentation)
   - [7. Full Funnel Playthrough](#7-full-funnel-playthrough)
+  - [8. Level 4 (Investigation) Metrics](#8-level-4-investigation-metrics)
 - [Edge Cases & Error Scenarios](#edge-cases--error-scenarios)
 - [Security Verification](#security-verification)
 - [Cross-Institution Isolation](#cross-institution-isolation)
@@ -332,9 +333,9 @@ All four pages live under `/institution/*`, behind `InstitutionGuard` +
 
 | Route | What to check |
 |---|---|
-| `/institution` | "Painel institucional" header, hero metric (`gameplay_started` count), KPI cards for sessões iniciadas / taxa de entrada / taxa de conclusão / tempo médio de sessão / progresso médio, a "Desempenho por fase" bar chart (quiz pass rate per level), and a `QuickRead` insights block. |
+| `/institution` | "Painel institucional" header, hero metric (`gameplay_started` count), KPI cards for sessões iniciadas / taxa de entrada / taxa de conclusão / tempo médio de sessão / progresso médio, a "Desempenho por fase" bar chart (quiz pass rate per level 1–3 — level 4 has no quiz), an "Estrelas por fase" bar chart (average of each player's best stars, levels 1–4), and a `QuickRead` insights block. |
 | `/institution/funnel` | "Progressão da jornada" — full acquisition-through-every-level funnel, plus an "Insights do funil" panel. Step labels for the 3 acquisition steps are human-readable pt-BR overrides (`STEP_LABELS`); level steps use the level's own title as sent by the server. |
-| `/institution/report` | KPI cards — "Sessões iniciadas", "Tempo médio de sessão" (with median subtitle), "Taxa de conclusão" — plus a consolidated `DataTable` with per-phase quiz-approval breakdown, and a CSV export button. |
+| `/institution/report` | KPI cards — "Sessões iniciadas", "Tempo médio de sessão" (with median subtitle), "Taxa de conclusão" — plus a consolidated `DataTable` with per-phase quiz-approval, clues and stars rows, and a CSV export button. |
 | `/institution/links` | Campaign Links CRUD — see §4 below. |
 
 For each page:
@@ -352,6 +353,10 @@ For each page:
    - Open the file in a spreadsheet app with pt-BR locale.
    - **Expected:** accented characters intact (UTF-8 BOM), `;` as the
      column delimiter, decimal commas (not dots) in numeric columns.
+   - **Expected (#834):** one `phase_N_*` block per level, `phase_4_*`
+     included; `phase_N_clues` (renamed from `phase_N_clue_uses`),
+     and `phase_N_avg_stars` present; the three `phase_4_quiz_*` values
+     are empty, not `0`.
 
 ### 4. Campaign Links Page
 
@@ -392,7 +397,11 @@ For each page:
 5. Confirm the annual-goal progress bar renders against
    `EDITAL_ANNUAL_PLAYER_GOAL`, the player-trend chart is monthly, and the
    origin-split table separates institutional vs. spontaneous traffic.
-6. **No automated test exists for this page yet** — this manual pass is
+6. In "Desempenho por nível", switch through **Nível 1–4**: each shows
+   entrada, conclusão, aprovação no quiz and média de estrelas. Nível 4 has
+   no quiz bar (the investigation has no quiz); stars read "X / 5 ★" on
+   every level.
+7. **No automated test exists for this page yet** — this manual pass is
    its only current coverage. Take extra care here.
 
 ### 6. PostHog Instrumentation
@@ -440,14 +449,17 @@ For each page:
 | 4 | "Concluiu Fase 1" | `event = 'level_completed' AND level_number = 1` | `QuizManager.ts`, level 1 quiz success |
 | 5 | "Concluiu Fase 2" | `event = 'level_completed' AND level_number = 2` | `QuizManager.ts`, level 2 quiz success |
 | 6 | "Concluiu Fase 3" | `event = 'level_completed' AND level_number = 3` | `QuizManager.ts`, level 3 quiz success |
+| 7 | "Concluiu Fase 4" | `event = 'investigation_completed'` | `InvestigationScene.ts`, culprit identified or revealed |
 
-This list is **dynamic on `LEVEL_REGISTRY`** — if a 4th level ships, the
-funnel gains a 7th step automatically; re-verify the step count matches
-`LEVEL_REGISTRY`'s length whenever a level is added or removed.
+This list is **dynamic on `DASHBOARD_LEVELS`** (`front/src/lib/edital/server/levels.ts`:
+`LEVEL_REGISTRY`'s levels plus the investigation) — re-verify the step
+count matches its length whenever a level is added or removed.
 
-Play through all 3 levels and confirm each `level_completed` step
+Play through all 4 levels and confirm each `level_completed` step
 increments only after that level's end-of-level quiz is passed (a failed
-quiz emits `level_failed` instead and must **not** advance the funnel).
+quiz emits `level_failed` instead and must **not** advance the funnel),
+and that step 7 increments once the investigation ends — in either
+ending.
 
 **Other real events to check, even though they don't feed the funnel
 query directly** — these still matter for the legacy Postgres dashboard
@@ -471,6 +483,56 @@ Also confirm:
 - Repeat the playthrough on a second device/browser with the same
   `?utm_institution=` — confirm `turma_source`/`campaign_source` are
   consistent per browser, independent per device.
+
+### 8. Level 4 (Investigation) Metrics
+
+Issue #834. The investigation isn't a playable level and fires its own
+events; `EVENTS.md` → "Métricas por fase dos dashboards" has the full
+mapping. With PostHog's Activity view open, play level 4 from the map:
+
+1. Opening the screen fires `investigation_opened` with
+   `level_id: "level_04"`, `level_number: 4`.
+   **Expected:** Nível 4 "reached" goes up by one player.
+2. Let the tutorial run its scripted drop, then place a few clues —
+   including moving one clue to another suspect.
+   **Expected:** every real drop fires `investigation_clue_placed`
+   (`is_tutorial: false`) and adds one to level 4's clues count (moves
+   count too); the tutorial drop (`is_tutorial: true`) doesn't.
+3. Name the culprit on the first try.
+   **Expected:** `investigation_completed` with `stars: 5`,
+   `is_correct: true`, `revealed: false`, then
+   `progress_updated` for `level_04`; a `POST /scores` request with
+   `levelId: "level_04"`, `totalStars: 5`, empty/zero other fields (logged
+   in only — guests write to localStorage). The taxa de conclusão and the
+   funnel's step 7 go up.
+4. Replay and make 4 wrong accusations.
+   **Expected:** `investigation_completed` with `stars: 1`,
+   `is_correct: false`, `revealed: true`; the player still counts as
+   having finished the game. Their level 4 stars stay at their best run
+   (5), not 1.
+5. "Estrelas por fase" shows "X / 5 ★" for every level, level 4 included.
+
+### Looking at the dashboards with mock data
+
+No PostHog keys needed. With `EDITAL_MOCK_DATA=true` in the root `.env`
+and the front running under `next dev` (`make local-all` or
+`make local-front`), every HogQL query is answered by
+`front/src/lib/edital/server/mockData.ts` instead of PostHog — everything
+else (routes, metrics, UI, CSV) runs for real. `EDITAL_MOCK_DATA=no-level-4`
+shows a period where nobody reached the investigation. It is ignored in
+production and test builds, even if set.
+
+The mock has one institution: the public dashboard counts everyone (600
+players, 450 through the institution's links and 150 direct), the
+institution dashboard its 450, split across the turma/campaign links it
+has created on `/institution/links` — each turma in the "Turma ou origem"
+filter shows its own share. Links are real (read from the back end, which
+needs `AUTH_OAUTH_UPSERT_TOKEN`); with none created, the institution still
+shows its 450 but no turma rows. Set `EDITAL_MOCK_INSTITUTION=<slug>` so
+the public dashboard's "Turmas ativas" counts that institution's links. Docker Compose doesn't pass the
+variable to the front container, so use the Turbo targets for this. The
+module cache keeps results for `POSTHOG_QUERY_CACHE_TTL_MS` (5 minutes by
+default): restart the dev server after switching scenarios.
 
 ## Edge Cases & Error Scenarios
 
@@ -663,7 +725,11 @@ very first page load.
 
 - [ ] All 3 acquisition steps (`landing_page_viewed`, `play_clicked`, `gameplay_started`) fire in order
 - [ ] Each level's `level_completed` (with correct `level_number`) fires on quiz success, advancing the funnel step for that level
-- [ ] Funnel step count matches `LEVEL_REGISTRY`'s length (3 acquisition + 1 per level)
+- [ ] Funnel step count matches `DASHBOARD_LEVELS`'s length (3 acquisition + 1 per level, 7 today)
+- [ ] Finishing the investigation (either ending) fires `investigation_completed` with `level_id`/`level_number`/`is_correct`/`revealed` and counts as finishing the game
+- [ ] Level 4 clues count only non-tutorial `investigation_clue_placed`; levels 1–3 count `clue_collected`, never `clue_used`
+- [ ] "Estrelas por fase" shows the average of each player's best run per level, out of 5
+- [ ] Level 4 submits a `/scores` record and fires `progress_updated`
 - [ ] `gameplay_started` fires exactly once per session, not per level
 - [ ] A failed end-of-level quiz emits `level_failed`, not `level_completed`, and does not advance the funnel
 - [ ] `critical_error_occurred` fires on a forced asset-load failure

@@ -45,6 +45,20 @@ const serverSchema = z
     editalPeriodStart: z.coerce.date().optional(),
 
     /**
+     * Local-only canned dashboard data (lib/edital/server/mockData.ts):
+     * "true" for the default scenario, "no-level-4" for a period where
+     * nobody reached the investigation. Ignored outside development — see
+     * editalMockDataScenario().
+     */
+    editalMockData: z.enum(["true", "no-level-4"]).optional(),
+    /**
+     * With EDITAL_MOCK_DATA on: the one institution whose links the public
+     * dashboard's mock counts as its active turmas. The public queries carry
+     * no slug, so there's no other way for the mock to know which one.
+     */
+    editalMockInstitution: z.string().optional(),
+
+    /**
      * Shared secret for POST /auth/oauth/upsert (epic #738, #744) — sent as
      * the x-oauth-upsert-token header from auth.ts's signIn callback.
      * Optional so the app boots without it; signIn refuses institution
@@ -160,6 +174,8 @@ function getServerEnv() {
       editalPosthogQueryHost: readEnv("POSTHOG_QUERY_HOST"),
       editalQueryCacheTtlMs: readEnv("POSTHOG_QUERY_CACHE_TTL_MS"),
       editalPeriodStart: readEnv("EDITAL_PERIOD_START"),
+      editalMockData: readEnv("EDITAL_MOCK_DATA"),
+      editalMockInstitution: readEnv("EDITAL_MOCK_INSTITUTION"),
       authOauthUpsertToken: readEnv("AUTH_OAUTH_UPSERT_TOKEN"),
       backendInternalUrl: readEnv("BACKEND_INTERNAL_URL"),
       authSecret: readEnv("AUTH_SECRET"),
@@ -183,8 +199,22 @@ export const serverEnv = {
   },
 };
 
-/** True once all three edital PostHog fields are set — no partial config. */
+/**
+ * The canned-data scenario to serve instead of PostHog, or `null`. Only
+ * ever active under `next dev`: a production or test build ignores
+ * EDITAL_MOCK_DATA even if it is set by mistake, so fake numbers can never
+ * reach a real dashboard.
+ */
+export function editalMockDataScenario(): "default" | "no-level-4" | null {
+  if (process.env.NODE_ENV !== "development") return null;
+  const value = getServerEnv().editalMockData;
+  if (value === "true") return "default";
+  return value ?? null;
+}
+
+/** True once all three edital PostHog fields are set — no partial config — or mock data is on. */
 export function isEditalPosthogConfigured(): boolean {
+  if (editalMockDataScenario()) return true;
   const s = getServerEnv();
   return Boolean(s.editalPosthogPersonalApiKey && s.editalPosthogProjectId);
 }

@@ -101,6 +101,68 @@ describe("env-server — edital fields", () => {
   });
 });
 
+describe("env-server — EDITAL_MOCK_DATA", () => {
+  const ORIGINAL_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...ORIGINAL_ENV, RESPONSIVEVOICE_API_KEY: "test-key" };
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  const setNodeEnv = (value: string) => {
+    // NODE_ENV is typed read-only; tests still need to flip it.
+    (process.env as Record<string, string>).NODE_ENV = value;
+  };
+
+  it("serves mock data under next dev", async () => {
+    setNodeEnv("development");
+    process.env.EDITAL_MOCK_DATA = "true";
+
+    const { editalMockDataScenario, isEditalPosthogConfigured } = await import(
+      "./env-server"
+    );
+
+    expect(editalMockDataScenario()).toBe("default");
+    expect(isEditalPosthogConfigured()).toBe(true);
+  });
+
+  it("supports the no-level-4 scenario", async () => {
+    setNodeEnv("development");
+    process.env.EDITAL_MOCK_DATA = "no-level-4";
+
+    const { editalMockDataScenario } = await import("./env-server");
+
+    expect(editalMockDataScenario()).toBe("no-level-4");
+  });
+
+  it("is ignored in production even when set", async () => {
+    setNodeEnv("production");
+    process.env.EDITAL_MOCK_DATA = "true";
+    process.env.POSTHOG_PERSONAL_API_KEY = undefined;
+    process.env.POSTHOG_PROJECT_ID = undefined;
+
+    const { editalMockDataScenario, isEditalPosthogConfigured } = await import(
+      "./env-server"
+    );
+
+    expect(editalMockDataScenario()).toBeNull();
+    expect(isEditalPosthogConfigured()).toBe(false);
+  });
+
+  it("is off when unset", async () => {
+    setNodeEnv("development");
+    process.env.EDITAL_MOCK_DATA = undefined;
+
+    const { editalMockDataScenario } = await import("./env-server");
+
+    expect(editalMockDataScenario()).toBeNull();
+  });
+});
+
 describe("env-server — empty-string env vars", () => {
   const ORIGINAL_ENV = process.env;
 
