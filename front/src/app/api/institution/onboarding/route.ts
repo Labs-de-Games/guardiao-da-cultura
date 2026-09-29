@@ -23,6 +23,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const body = (await request.json().catch(() => null)) as {
     institutionName?: unknown;
+    termsAccepted?: unknown;
+    termsVersion?: unknown;
   } | null;
   const institutionName =
     typeof body?.institutionName === "string"
@@ -34,6 +36,16 @@ export async function POST(request: NextRequest): Promise<Response> {
       { status: 400 },
     );
   }
+
+  // Rejected here as well as by the backend DTO, so a request that could never
+  // succeed never becomes a server-to-server call carrying the upsert token.
+  if (body?.termsAccepted !== true || typeof body.termsVersion !== "string") {
+    return NextResponse.json(
+      { error: "termsAccepted and termsVersion are required" },
+      { status: 400 },
+    );
+  }
+  const termsVersion = body.termsVersion;
 
   const token = serverEnv.server.authOauthUpsertToken;
   if (!token) {
@@ -51,7 +63,12 @@ export async function POST(request: NextRequest): Promise<Response> {
       "Content-Type": "application/json",
       "x-oauth-upsert-token": token,
     },
-    body: JSON.stringify({ userId: session.user.id, institutionName }),
+    body: JSON.stringify({
+      userId: session.user.id,
+      institutionName,
+      termsAccepted: true,
+      termsVersion,
+    }),
   });
 
   if (!response.ok) {
