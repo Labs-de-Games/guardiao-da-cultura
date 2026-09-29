@@ -3,7 +3,7 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useConsent } from "@/lib/consent/ConsentContext";
+import { type ConsentState, useConsent } from "@/lib/consent/ConsentContext";
 import { PRIVACY_NOTICE_PATH } from "@/lib/consent/privacyNotice";
 import { GAME_UI_TOKENS, UI_LAYERS } from "@/ui/theme/tokens";
 
@@ -30,10 +30,15 @@ const actionButtonSx = {
   },
 } as const;
 
-const STATUS_LABEL: Record<string, string> = {
+const STATUS_LABEL: Record<ConsentState, string> = {
   accepted: "Você autorizou a coleta de dados de uso.",
   declined: "Você não autorizou a coleta de dados de uso.",
   undecided: "Você ainda não escolheu.",
+  // A stale record is not a live authorisation, and must never be shown as
+  // one: nothing is being collected until the player confirms again.
+  stale:
+    "Nosso aviso de privacidade mudou desde a sua escolha. Nada está sendo " +
+    "coletado até você confirmar.",
   loading: "Carregando…",
 };
 

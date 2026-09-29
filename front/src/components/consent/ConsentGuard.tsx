@@ -19,7 +19,10 @@ import { useConsent } from "@/lib/consent/ConsentContext";
 export function ConsentGuard({ children }: { children: ReactNode }) {
   const { state } = useConsent();
 
-  if (state === "loading" || state === "undecided") return null;
+  // Allow-list rather than a block-list: a decision that has gone `"stale"`
+  // has to hold the game back exactly like an absent one, and writing it this
+  // way means a future state cannot leak through by being forgotten here.
+  if (state !== "accepted" && state !== "declined") return null;
 
   return <>{children}</>;
 }

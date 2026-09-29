@@ -53,10 +53,17 @@ const choiceButtonSx = {
  * no dismissal, and no Escape.
  */
 export function ConsentGate() {
-  const { state, accept, decline } = useConsent();
+  const { state, accept, decline, revoke } = useConsent();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const visible = state === "undecided";
+  const renewing = state === "stale";
+  const visible = state === "undecided" || renewing;
+
+  // Refusing at a renewal is not the same as refusing on a first visit: this
+  // player accepted once, so PostHog storage from those earlier sessions is
+  // still in the browser. `revoke` is the path that clears it — `decline`
+  // only records the choice, which is all a first-time refusal needs.
+  const refuse = renewing ? revoke : decline;
 
   // Self-contained focus trap. The repo has no shared utility, and this
   // dialog has exactly three controls, so a local cycle is enough.
@@ -159,7 +166,9 @@ export function ConsentGate() {
             mb: 1.5,
           }}
         >
-          Dados de uso do jogo
+          {renewing
+            ? "Atualizamos nosso aviso de privacidade"
+            : "Dados de uso do jogo"}
         </Typography>
 
         <Typography
@@ -172,10 +181,16 @@ export function ConsentGate() {
             mb: 3,
           }}
         >
-          Usamos recursos necessários para o jogo funcionar. Com sua
-          autorização, também coletamos dados de uso, como fases iniciadas e
-          concluídas, respostas, tempo de jogo e erros, para avaliar e melhorar
-          o jogo. Não usamos seu nome ou e-mail para essa finalidade.
+          {renewing
+            ? "Nosso aviso de privacidade mudou desde a sua última escolha. " +
+              "Para continuar coletando dados de uso, como fases iniciadas e " +
+              "concluídas, respostas, tempo de jogo e erros, precisamos da sua " +
+              "confirmação. Até lá, nada está sendo coletado."
+            : "Usamos recursos necessários para o jogo funcionar. Com sua " +
+              "autorização, também coletamos dados de uso, como fases " +
+              "iniciadas e concluídas, respostas, tempo de jogo e erros, para " +
+              "avaliar e melhorar o jogo. Não usamos seu nome ou e-mail para " +
+              "essa finalidade."}
         </Typography>
 
         <Stack
@@ -186,7 +201,7 @@ export function ConsentGate() {
           <Box
             component="button"
             type="button"
-            onClick={decline}
+            onClick={refuse}
             sx={choiceButtonSx}
           >
             Continuar sem dados de uso
