@@ -8,6 +8,12 @@ Todo documento de referência existe em inglês e em português do Brasil, no me
 caminho em [`en/`](./en/) e [`pt-BR/`](./pt-BR/). Quando as duas versões
 divergem, vale a em inglês.
 
+The repository home page, [`README.md`](../README.md), is in Brazilian
+Portuguese; its English version is [`README.en.md`](../README.en.md).
+
+A página inicial do repositório, [`README.md`](../README.md), está em português
+do Brasil; a versão em inglês é o [`README.en.md`](../README.en.md).
+
 ## Reference docs · Documentos de referência
 
 | Doc | English | Português (Brasil) |
