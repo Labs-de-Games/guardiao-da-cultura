@@ -109,7 +109,10 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         name: "Gabriel Salgado",
         url: "https://www.linkedin.com/in/abg2jz/",
       },
-      { name: "Tamir Nadav", url: "https://linkedin.com/in/aquajew" },
+      {
+        name: "Tamir Nadav (in memoriam)",
+        url: "https://linkedin.com/in/aquajew",
+      },
       { name: "Antônio Ibrahine", url: "https://www.antonioibrahine.com/" },
       { name: "Daniel Martins", url: "https://linktr.ee/dmaisumoficial" },
     ],
@@ -205,11 +208,6 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         name: "Chee Zee Jungle por Kevin MacLeod (incompetech.com)",
         url: "https://incompetech.com/music/royalty-free/music.html",
         license: "Creative Commons: By Attribution 4.0 License",
-      },
-      {
-        name: "Josefina por Quincas Moreira",
-        url: "https://www.youtube.com/watch?v=oFcxie-e944",
-        license: "Creative Commons Attribution license CC0 / Royalty-Free",
       },
       {
         name: "Cricket Ambience, Remix, A por Moulaythami",
@@ -322,6 +320,14 @@ export const CREDITS_SECTIONS: CreditSection[] = [
       { name: "Ipeafro", url: "https://ipeafro.org.br/" },
       { name: "Galeria Vermelho", url: "https://galeriavermelho.com.br/" },
     ],
+  },
+  {
+    heading: "",
+    entries: [{ name: "À memória de" }, { name: "Tamir Nadav" }],
+  },
+  {
+    heading: "",
+    entries: [{ name: "————————————————————————" }],
   },
   {
     heading: "",
