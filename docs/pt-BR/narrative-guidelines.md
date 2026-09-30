@@ -121,22 +121,22 @@ O jogo possui diferentes categorias de texto, cada uma com características espe
 - **Exemplo de output esperado**:
 ```json
     {
-      "imageSuggestion: "uma gangue de cinco encapuzados invadindo um museu na calada da noite, pixando paredes e destruindo pinturas",
+      "imageSuggestion": "uma gangue de cinco encapuzados invadindo um museu na calada da noite, pixando paredes e destruindo pinturas",
       "title": "VANDALISMO TOTAL",
       "caption": "Na madrugada de ontem, vândalos invadiram o Inhotim e atacaram as obras."
     },
     {
-      "imageSuggestion: "uma mão pega uma mensagem sendo impressa num aparelho de fax, com vários carimbos de confidencial, SOS, urgente",
+      "imageSuggestion": "uma mão pega uma mensagem sendo impressa num aparelho de fax, com vários carimbos de confidencial, SOS, urgente",
       "title": "A INVESTIGAÇÃO COMEÇA",
       "caption": "A polícia chamou detetives da região para ajudar a investigar."
     },
     {
-      "imageSuggestion: "um fusca preto avança numa estrada de terra, passando por uma placa onde se lê Inhotim, duas silhuetas são vistas dentro do carro",
+      "imageSuggestion": "um fusca preto avança numa estrada de terra, passando por uma placa onde se lê Inhotim, duas silhuetas são vistas dentro do carro",
       "title": "MISSÃO: BUSCAR PISTAS",
       "caption": "A inspetora-chefe pediu que você a acompanhasse no caso."
     },
     {
-      "imageSuggestion: "a inspetora, classuda, cabelos brancos e vestida de roxo, observa o detetive disfarçar-se calçando luvas de limpeza dentro de uma sala de zelador, com vários objetos de faxina ao redor",
+      "imageSuggestion": "a inspetora, classuda, cabelos brancos e vestida de roxo, observa o detetive disfarçar-se calçando luvas de limpeza dentro de uma sala de zelador, com vários objetos de faxina ao redor",
       "title": "DISFARCE PERFEITO",
       "caption": "Com roupas de zelador, sua missão é procurar pistas enquanto organiza o lugar."
     }
@@ -613,19 +613,19 @@ Antes de finalizar, confirme mentalmente que:
 ## Referências e recursos
 
 ### Níveis do jogo
-1. **Fase 1**: Inhotim (MG) - Referência inicial
-2. **Fase 2**: Teatro Amazonas (AM) - Em desenvolvimento
-3. **Fase 3**: São João de Campina Grande (PB) - Em desenvolvimento narrativo
-4. **Fase 4**: Teatro Guaíra (PR) - Em ideação
-5. **Fase 5**: Palácio Itamaraty (DF) - Em ideação
+1. **Fase 1**: Inhotim (MG) - Publicada, referência inicial
+2. **Fase 2**: Teatro Amazonas (AM) - Publicada
+3. **Fase 3**: São João de Campina Grande (PB) - Publicada
+4. **Fase 4**: "Identificação do Suspeito", a fase de investigação na Sala de Investigação - Publicada. Não é uma fase de plataforma: o jogador cruza as pistas reunidas nas fases 1 a 3 com cinco suspeitos e aponta o culpado
+
+As fases 1 a 3 são as entradas de `LEVEL_REGISTRY` (`front/src/game/data/LevelConfig.ts`). A fase 4 é o marcador de investigação em `front/src/game/constants/MapMarkers.ts`, e os suspeitos ficam em `front/public/assets/data/investigation/suspects.json`. O Teatro Guaíra (PR) e o Palácio Itamaraty (DF), antes previstos como fases 4 e 5, existem apenas como imagens de cartão do mapa em `front/public/assets/ui/map-cards/`; nenhuma fase ou marcador do mapa as usa.
 
 ### Objetivos narrativos e pedagógicos
 
 1. **Fase 1**: apresentar a diversidade artística do Inhotim e do Brasil, em sua contemporaneidade. Apresenta um artista gay cuja arte aborda questões do corpo e transformações, um artista negro cujo trabalho enaltece e educa a matriz africana e uma artista estrangeira que se naturalizou brasileira cuja arte retrata o povo e a cultura autóctone.
 2. **Fase 2**: abordar a riqueza cultural do povo e patrimônio amazonenses.Apresenta obras e temas locais como personagens históricas, dramaturgos e artistas da região, mas também doutras regiões do Brasil e até doutros países.
 3. **Fase 3**: valorizar a festa mais celebrada no Brasil, as festas juninas.
-4. **Fase 4**: a definir
-5. **Fase 5**: a definir
+4. **Fase 4**: encerrar o caso. O jogador lê o dossiê de cada suspeito, liga as pistas à pessoa certa e acusa o culpado, retomando o que aprendeu nas três fases.
 
 ### Documentos relacionados
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - Padrões de desenvolvimento
@@ -636,7 +636,8 @@ Antes de finalizar, confirme mentalmente que:
 - [Linguagem simples](https://www.linguagemsimples.com.br/)
 - [Manual de estilo da Wikipédia](https://pt.wikipedia.org/wiki/Wikipédia:Manual_de_estilo)
 - [Guia de acessibilidade digital](https://www.w3.org/WAI/)
-- [Relatório de acessibilidade do MVP](https://drive.google.com/file/d/1Hve9UIU57rbzffHo8T151RGWUC9bL8Az/view?usp=drive_link)
+
+Um relatório interno de acessibilidade do MVP também orientou estas diretrizes. Ele não é público.
 
 ---
 
@@ -666,7 +667,7 @@ Este documento deve ser atualizado quando:
 
 **Responsável pela manutenção**: César Augusto do Nascimento
 
-**Última atualização**: 29-06-2026
+**Última atualização**: 30-09-2026
 
-**Próxima revisão**: Após validação do nível 2
+**Próxima revisão**: Quando uma nova fase for planejada
 

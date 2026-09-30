@@ -119,22 +119,22 @@ The game has different categories of text, each with its own characteristics:
 - **Expected output example**:
 ```json
     {
-      "imageSuggestion: "uma gangue de cinco encapuzados invadindo um museu na calada da noite, pixando paredes e destruindo pinturas",
+      "imageSuggestion": "uma gangue de cinco encapuzados invadindo um museu na calada da noite, pixando paredes e destruindo pinturas",
       "title": "VANDALISMO TOTAL",
       "caption": "Na madrugada de ontem, vândalos invadiram o Inhotim e atacaram as obras."
     },
     {
-      "imageSuggestion: "uma mão pega uma mensagem sendo impressa num aparelho de fax, com vários carimbos de confidencial, SOS, urgente",
+      "imageSuggestion": "uma mão pega uma mensagem sendo impressa num aparelho de fax, com vários carimbos de confidencial, SOS, urgente",
       "title": "A INVESTIGAÇÃO COMEÇA",
       "caption": "A polícia chamou detetives da região para ajudar a investigar."
     },
     {
-      "imageSuggestion: "um fusca preto avança numa estrada de terra, passando por uma placa onde se lê Inhotim, duas silhuetas são vistas dentro do carro",
+      "imageSuggestion": "um fusca preto avança numa estrada de terra, passando por uma placa onde se lê Inhotim, duas silhuetas são vistas dentro do carro",
       "title": "MISSÃO: BUSCAR PISTAS",
       "caption": "A inspetora-chefe pediu que você a acompanhasse no caso."
     },
     {
-      "imageSuggestion: "a inspetora, classuda, cabelos brancos e vestida de roxo, observa o detetive disfarçar-se calçando luvas de limpeza dentro de uma sala de zelador, com vários objetos de faxina ao redor",
+      "imageSuggestion": "a inspetora, classuda, cabelos brancos e vestida de roxo, observa o detetive disfarçar-se calçando luvas de limpeza dentro de uma sala de zelador, com vários objetos de faxina ao redor",
       "title": "DISFARCE PERFEITO",
       "caption": "Com roupas de zelador, sua missão é procurar pistas enquanto organiza o lugar."
     }
@@ -611,19 +611,19 @@ Antes de finalizar, confirme mentalmente que:
 ## References and resources
 
 ### Game levels
-1. **Level 1**: Inhotim (MG) - Baseline reference
-2. **Level 2**: Teatro Amazonas (AM) - In development
-3. **Level 3**: São João de Campina Grande (PB) - Narrative in development
-4. **Level 4**: Teatro Guaíra (PR) - In ideation
-5. **Level 5**: Palácio Itamaraty (DF) - In ideation
+1. **Level 1**: Inhotim (MG) - Shipped, baseline reference
+2. **Level 2**: Teatro Amazonas (AM) - Shipped
+3. **Level 3**: São João de Campina Grande (PB) - Shipped
+4. **Level 4**: "Identificação do Suspeito", the investigation phase in the Sala de Investigação - Shipped. Not a platform level: the player matches the clues gathered in levels 1 to 3 against five suspects and names the culprit
+
+Levels 1 to 3 are the entries in `LEVEL_REGISTRY` (`front/src/game/data/LevelConfig.ts`). Level 4 is the investigation marker in `front/src/game/constants/MapMarkers.ts`, and its suspects live in `front/public/assets/data/investigation/suspects.json`. Teatro Guaíra (PR) and Palácio Itamaraty (DF), once planned as levels 4 and 5, exist only as map-card images in `front/public/assets/ui/map-cards/`; no level or map marker uses them.
 
 ### Narrative and teaching goals
 
 1. **Level 1**: present the artistic diversity of Inhotim and of Brazil in its contemporary form. It features a gay artist whose art deals with the body and transformation, a Black artist whose work celebrates and teaches about African heritage, and a foreign-born artist who became a naturalized Brazilian and whose art portrays Indigenous peoples and culture.
 2. **Level 2**: explore the cultural richness of the people and heritage of Amazonas. It features local works and themes such as historical figures, playwrights and artists from the region, but also from other regions of Brazil and even other countries.
 3. **Level 3**: celebrate the most widely celebrated festivity in Brazil, the festas juninas (the June festivals).
-4. **Level 4**: to be defined
-5. **Level 5**: to be defined
+4. **Level 4**: close the case. The player reads each suspect's dossier, ties the clues to the right person and accuses the culprit, recalling what was learned across the three levels.
 
 ### Related documents
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - Development standards
@@ -634,7 +634,8 @@ Antes de finalizar, confirme mentalmente que:
 - [Plain language (Linguagem simples)](https://www.linguagemsimples.com.br/)
 - [Wikipedia style manual](https://pt.wikipedia.org/wiki/Wikipédia:Manual_de_estilo)
 - [Digital accessibility guide](https://www.w3.org/WAI/)
-- [MVP accessibility report](https://drive.google.com/file/d/1Hve9UIU57rbzffHo8T151RGWUC9bL8Az/view?usp=drive_link)
+
+An internal accessibility report on the MVP also informed these guidelines. It is not published.
 
 ---
 
@@ -664,7 +665,7 @@ This document must be updated when:
 
 **Maintainer**: César Augusto do Nascimento
 
-**Last updated**: 29-06-2026
+**Last updated**: 30-09-2026
 
-**Next review**: After level 2 is validated
+**Next review**: When a new level is planned
 
