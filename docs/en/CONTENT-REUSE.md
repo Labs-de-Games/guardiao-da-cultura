@@ -4,8 +4,13 @@
 
 The levels in Guardião da Cultura are **data, not code**. Quizzes, dialogue,
 collectibles and the works on display are JSON files under
-`front/public/assets/data/`. An educator can replace a museum's works, rewrite a
+`front/public/assets/data/`. An educator can replace a level's works, rewrite a
 quiz, or change every line an NPC says without opening the game engine.
+
+Most of this guide covers levels 1 to 3, the three map-based levels: a museum
+(Inhotim), a theater (Teatro Amazonas) and a festival (São João de Campina
+Grande). Level 4, the final investigation, works differently and has
+[its own section](#the-investigation-level-4).
 
 This guide covers what each file does, how the pieces reference each other, and
 what you must keep when you adapt them.
@@ -27,7 +32,10 @@ what you must keep when you adapt them.
 front/src/game/data/LevelConfig.ts        which levels exist and what each one loads
 front/public/assets/data/
 ├── global/messages.json                  shared system dialogue, reused by every level
-└── levels/level_0N/
+├── investigation/
+│   ├── suspects.json                     level 4: the suspects and their dossiers
+│   └── clues.json                        level 4: the traits each collected clue proves
+└── levels/level_0N/                      levels 1 to 3 (level_04 holds only art; see below)
     ├── works.json                        the works on display and what they teach
     ├── quizzes.json                       the main mission quiz
     ├── intermediate-quizzes.json          short quizzes fired at milestones
@@ -41,10 +49,15 @@ front/public/assets/maps/<map-name>/
 └── spritesheet.png                       its tileset
 ```
 
+The maps in use are `inhotim` (level 1), `teatro-amazonas` (level 2) and
+`sao-joao-de-campina-grande` (level 3).
+
 ## The level registry
 
-`front/src/game/data/LevelConfig.ts` is the single source of truth for which
-levels exist. `LEVEL_REGISTRY` maps a level id to its map and its content files:
+`front/src/game/data/LevelConfig.ts` is the source of truth for the map-based
+levels, 1 to 3. The investigation (level 4) is deliberately left out of it,
+because it has no tilemap. `LEVEL_REGISTRY` maps a level id to its map and its
+content files:
 
 ```ts
 level_01: {
@@ -56,9 +69,9 @@ level_01: {
   activeMissions: ["missao_curador"],
   map: {
     key: "map_level_01",
-    json: "maps/museum-mvp/map.json",
+    json: "maps/inhotim/map.json",
     tileset: "tiles_level_01",
-    tilesetImg: "maps/museum-mvp/spritesheet.png",
+    tilesetImg: "maps/inhotim/spritesheet.png",
     tilesetName: "museum",     // must match the tileset name inside that map.json
   },
   data: {
@@ -78,8 +91,11 @@ Two fields are easy to get wrong:
 
 - **`tilesetName`** must match the tileset's `name` **inside** the Tiled
   `map.json`, not the file name. A mismatch loads a map with no tiles.
-- **`activeMissions`** must name a mission key that exists in both `quizzes.json`
-  and `npcs.json`. This is the thread that ties an NPC to the quiz they hand out.
+- **`activeMissions`** must name a mission id that exists in `quizzes.json`, in
+  `npcs.json`, in `MissionIds` (`front/src/game/constants/MissionConstants.ts`)
+  and in `MissionRegistry` (`front/src/game/data/MissionRegistry.ts`). This is
+  the thread that ties an NPC to the quiz they hand out and to the mission's
+  steps.
 
 `maxStars` and `initialGrayscale` are presentation: the score ceiling for the
 level, and how desaturated the world starts before the player restores it.
@@ -111,18 +127,30 @@ level, and how desaturated the world starts before the player restores it.
 - **The first option is the correct answer.** The game shuffles them at runtime.
 - `explanation` is shown after answering, right or wrong. It is where the
   teaching actually happens — write it even when the answer looks obvious.
-- `hints` are offered progressively when the player stalls.
-- `id` must be unique within its mission. `tags` and `difficulty` are metadata.
+- The game reads only `question`, `options` and `explanation`. `id`,
+  `category`, `hints`, `tags` and `difficulty` are authoring metadata: the game
+  ignores them, so they are optional. Keep `id` unique within its mission if you
+  use it.
+- Quiz `hints` are not shown to the player. The hints the player does see when
+  they stall come from each work's `educational.hint` in `works.json` (see
+  below).
 
-`intermediate-quizzes.json` has the same shape but no `id` or `hints`, and is
-keyed by the milestone that triggers it (`sculptures_done`, `paintings_done`).
-These are the short check-ins between stages of a level.
+`intermediate-quizzes.json` has the same shape, written with only `question`,
+`options` and `explanation`, and is keyed by the milestone that triggers it.
+These are the short check-ins between stages of a level. A key must be one of
+the `MissionKeys` in `front/src/game/constants/MissionConstants.ts`:
+`paintings_done`, `sculptures_done`, `photo_collected`, `photo_done`,
+`costumes_done`, `posters_done`, `spotlights_done`, `stage_done`, `dance_done`,
+`switches_done` or `genius_done`. Any other key never fires, and the loader logs
+a console warning naming it.
 
 ## Changing the works on display
 
-`works.json` groups works by type (`SCULPTURES`, `PAINTINGS`, `PHOTOS`,
-`POSTERS`). Each entry carries the metadata the player reads, the educational
-copy, and the sprite key:
+`works.json` groups works by type, and the groups depend on the level:
+`SCULPTURES`, `PAINTINGS` and `PHOTOS` in level 1; `SCULPTURES`, `PAINTINGS`,
+`POSTERS` and `COSTUMES` in level 2; `BAND`, `ACCORDION` and `DANCES` in
+level 3. Each group is an object keyed by work id. Each entry carries the
+metadata the player reads, the educational copy, and the sprite key:
 
 ```json
 {
@@ -147,6 +175,8 @@ copy, and the sprite key:
 
 - `assets.sprite` is a texture key registered in `LevelConfig.ts`, not a file
   path. Adding a new work means adding its image **and** registering the key.
+- `educational.hint` is the hint the game offers when the player stalls on a
+  work.
 - `feedbackError` is what the player hears when they place the work in the wrong
   spot, so it should hint at the right one without naming it.
 - `metadata.author` is the credit the player sees. If you swap in a different
@@ -184,8 +214,9 @@ changes, which is usually what you want for tone.
 
 ## Collectibles
 
-`collectibles.json` defines the clues the player gathers, grouped by category
-(`CLUE_VILLAIN` and so on). Beyond the usual `metadata` and `educational`
+`collectibles.json` defines the clues the player gathers. Everything sits under
+a top-level `collectibles` key, grouped by category (`CLUE_VILLAIN` is the only
+one in use), and each category is an object keyed by clue id. Beyond the usual `metadata` and `educational`
 blocks, each has:
 
 - `assets.scaleOnMap` / `scaleOnInspect` — how large the sprite is in the world
@@ -196,8 +227,8 @@ blocks, each has:
 
 ## The opening comic
 
-`intro/intro_config.json` drives the comic that opens a level: one entry per
-panel, naming an image in the same folder, the slice of it to reveal, the
+`intro/intro_config.json` drives the comic that opens a level. Its `panels`
+array has one entry per panel, naming an image in the same folder, the slice of it to reveal, the
 timings, and the caption.
 
 ```json
@@ -217,18 +248,50 @@ timings, and the caption.
 retuned for any replacement artwork. `holdMs` is how long the caption stays up —
 long enough to read aloud, not so long that a replay drags.
 
+## The investigation (level 4)
+
+Level 4 is the final investigation: the player reviews the clues and accuses a
+suspect. It is not a platform level. It has no map, is not in `LEVEL_REGISTRY`,
+and its whole interface is React, in `front/src/ui/investigation/`.
+`front/src/game/scenes/InvestigationScene.ts` draws nothing: it loads the data,
+hands it to the React UI over the EventBus, and records the result. The content
+lives in two files of its own:
+
+- `front/public/assets/data/investigation/suspects.json` — the suspects, and
+  for each one whether their dossier confirms, contradicts or says nothing
+  about each trait.
+- `front/public/assets/data/investigation/clues.json` — the traits, and which
+  trait each clue proves. A clue is referenced by its level id and its id in
+  that level's `collectibles.json`, so renaming a collectible means updating it
+  here too.
+
+`levels/level_04/` holds only its art: the opening comic in `intro/`, and the
+closing comic in `suspect-arrested/`, driven by `outro_config.json`.
+
+The game has these four levels and no others. `levels/level_05/intro/loading_L5.png`
+is a leftover from a planned fifth level; no code loads it.
+
 ## Adding a whole level
 
 1. Build the map in [Tiled](https://www.mapeditor.org/) and export `map.json`
    plus its `spritesheet.png` into `front/public/assets/maps/<your-map>/`.
 2. Create `front/public/assets/data/levels/level_0N/` with the five content
    files. Copying level 1's and editing is faster than starting empty.
-3. Add the level to `LEVEL_REGISTRY` in `front/src/game/data/LevelConfig.ts`,
+3. Add its mission id to `MissionIds`, and any new milestones to `MissionKeys`,
+   in `front/src/game/constants/MissionConstants.ts`.
+4. Add the mission and its steps to `front/src/game/data/MissionRegistry.ts`.
+5. Add the level to `LEVEL_REGISTRY` in `front/src/game/data/LevelConfig.ts`,
    with its map keys and content paths.
-4. Register any new sprite keys in `LEVEL_ASSETS` in the same file.
-5. Add the map marker so the level is reachable from the world map.
-6. Credit every new asset in `creditsData.ts`, `CREDITS.md` and
-   `ASSETS-LICENSE.md`, in the same pull request.
+6. Register any new sprite keys in `LEVEL_ASSETS` in the same file.
+7. Add the map marker to `MAP_MARKERS` in
+   `front/src/game/constants/MapMarkers.ts`, so the level is reachable from the
+   world map.
+8. Check the dashboards. `DASHBOARD_LEVELS` in
+   `front/src/lib/edital/server/levels.ts` picks up every level in
+   `LEVEL_REGISTRY` automatically; a level outside the registry, like the
+   investigation, has to be added there by hand.
+9. Credit every new asset in `front/src/ui/credits/creditsData.ts`,
+   `CREDITS.md` and `ASSETS-LICENSE.md`, in the same pull request.
 
 ## Checking your work
 
