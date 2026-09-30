@@ -207,11 +207,6 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         license: "Creative Commons: By Attribution 4.0 License",
       },
       {
-        name: "Josefina por Quincas Moreira",
-        url: "https://www.youtube.com/watch?v=oFcxie-e944",
-        license: "Creative Commons Attribution license CC0 / Royalty-Free",
-      },
-      {
         name: "Cricket Ambience, Remix, A por Moulaythami",
         url: "https://freesound.org/people/Moulaythami/sounds/536930/",
         license: "Attribution 4.0",
