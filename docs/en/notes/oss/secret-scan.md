@@ -1,5 +1,12 @@
 # Secret scan over the full history — T2 #798
 
+> **Historical snapshot.** Record of the scan run on 2026-09-22. Two references
+> below no longer resolve in the tree: `AUDITORIA-ESPECIALISTA-OPEN-SOURCE.md` was
+> never committed, and `back/src/modules/auth/controllers/auth.controller.ts` has
+> since been removed (auth now lives in `password-auth.controller.ts` and
+> `oauth-upsert.controller.ts`). The findings table still describes history as it
+> was scanned.
+
 This is the last remaining input to the history-rewrite decision for T2 of
 the open-source epic (#796).
 

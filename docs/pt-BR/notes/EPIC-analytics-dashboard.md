@@ -44,6 +44,7 @@ Com dados consistentes:
 
 ## O que **não** foi feito
 - Não foi implementado `event.logged` para erros críticos (ainda necessário para "Sessões sem erro").
+  - **Atualização (2026-09-30):** resolvido depois, em #741. `PhaserGame.tsx` agora emite `event.logged` com `severity: "critical"` em falhas de carregamento de assets. Ver `EVENTS.md`, seção "5) Saúde Técnica".
 - Não foram adicionados eventos para interações avançadas (drag/drop, puzzle etc.).
 
 ---
@@ -69,7 +70,7 @@ Implicações:
 ---
 
 ## Pendências (próximos passos)
-1) Emitir `event.logged` para erros críticos
+1) ~~Emitir `event.logged` para erros críticos~~ (feito em #741, ver `EVENTS.md`)
 2) Instrumentar interações avançadas (puzzles, drag/drop, etc.)
 3) (Opcional) criar painel de validação rápida dos eventos no back
 

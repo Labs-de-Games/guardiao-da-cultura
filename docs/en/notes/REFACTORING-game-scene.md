@@ -1,5 +1,9 @@
 # Game Scene Refactoring — Modular Architecture
 
+> **Historical snapshot.** Phase 1 split, committed 2026-07-07. The line
+> counts below describe that point in time: `front/src/game/scenes/Game.ts` has
+> since grown back to about 3113 lines as more levels were added.
+
 > **Branch:** `refactor/game-scene-split`
 > **Date:** July 2025
 > **Status:** Complete (Phase 1)

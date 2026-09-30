@@ -1,3 +1,8 @@
+> **Historical snapshot.** Review of the Phase 1 refactor, committed 2026-07-07
+> alongside [REFACTORING-game-scene.md](./REFACTORING-game-scene.md). File names,
+> test counts and line numbers reflect that branch and have not been kept up to
+> date; `Game.ts` is now about 3113 lines.
+
 1. Strengths & Weaknesses
 
 **Strengths:**
