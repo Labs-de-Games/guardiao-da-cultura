@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Labs-de-Games Discussion
-    url: https://github.com/Labs-de-Games/gameplate/discussions
-    about: Please ask questions here
+  - name: Report a security vulnerability
+    url: https://github.com/Labs-de-Games/guardiao-da-cultura/security/policy
+    about: Please report security problems privately, not in a public issue
+  - name: Project README
+    url: https://github.com/Labs-de-Games/guardiao-da-cultura#readme
+    about: How to play, run the project locally and contribute

@@ -120,8 +120,8 @@ You need Node.js 24+, Docker and Git. Nothing needs an API key, an email account
 or a paid service.
 
 ```bash
-git clone https://github.com/Labs-de-Games/gameplate.git
-cd gameplate
+git clone https://github.com/Labs-de-Games/guardiao-da-cultura.git
+cd guardiao-da-cultura
 cp .env.example .env
 make setup
 make development-up

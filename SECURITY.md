@@ -6,7 +6,7 @@
 
 Report it through GitHub's private vulnerability reporting:
 
-1. Go to the [Security tab](https://github.com/Labs-de-Games/gameplate/security)
+1. Go to the [Security tab](https://github.com/Labs-de-Games/guardiao-da-cultura/security)
    of this repository.
 2. Choose **Report a vulnerability**.
 3. Describe what you found, how to reproduce it, and what an attacker could do
