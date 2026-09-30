@@ -30,14 +30,10 @@ Working notes stay in the language they were written in and are not translated.
 
 As notas de trabalho ficam no idioma em que foram escritas e não são traduzidas.
 
-- English: [`en/notes/`](./en/notes/): game scene review and refactoring,
-  Phaser 4 upgrade, open-source asset matrix and secret scan
+- English: [`en/notes/`](./en/notes/): Phaser 4 upgrade, open-source asset
+  matrix and secret scan
 - Português: [`pt-BR/notes/`](./pt-BR/notes/): épico do dashboard de analytics
 
 ## Releases
 
 - [CHANGELOG.md](./CHANGELOG.md): per-version changelog · changelog por versão
-- [releases/](./releases/): historical release reports, kept for the record.
-  Only v1.13.0 has one, written in Portuguese; every other release is covered by the
-  changelog alone · relatórios de release históricos. Só a v1.13.0 tem um, em
-  português; as demais releases constam apenas no changelog
