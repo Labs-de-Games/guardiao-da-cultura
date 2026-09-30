@@ -18,11 +18,11 @@ Always follow the conventions in CONTRIBUTING.md unless the nearest AGENTS.md ex
 
 ## Repository Scope
 
-This is an **active game development project** being built by a squad. We are developing a 2D browser-based game using Next.js, NestJS, and Phaser.
+This is a **maintainer-led open-source game project**: a 2D browser-based game built with Next.js, NestJS, and Phaser. It started as a squad project; squad development ended on September 28, 2026, and the repository is now maintained by @anacarla-42 with contributions from the community.
 
 ### Project Status
 
-The game is currently in active development. Core infrastructure is in place, and the squad is implementing game features and mechanics.
+The game is playable and its core infrastructure is in place. Work now focuses on maintenance, bug fixes, and community contributions reviewed by the maintainer.
 
 ### Development Focus
 
@@ -51,12 +51,12 @@ These are the exact commands agents must use. Do not guess alternatives.
 
 ```mermaid
 flowchart TB
-    subgraph Root["gameplate/"]
+    subgraph Root["guardiao-da-cultura/"]
         direction TB
         Front["front/ — Next.js + Phaser"]
         Back["back/ — NestJS + TypeORM"]
         Infra["Docker, nginx, compose.*.yaml"]
-        Docs["docs/, README.md, ARCHITECTURE.md"]
+        Docs["docs/en/, docs/pt-BR/, README.md"]
     end
 
     subgraph FrontSrc["front/src/"]
@@ -64,11 +64,12 @@ flowchart TB
         Components["components/ — React UI"]
         Lib["lib/ — API clients, auth, utils"]
         Game["game/ — Phaser domain"]
+        UI["ui/ — in-game React UI and Zustand stores"]
     end
 
     subgraph BackSrc["back/src/"]
         Core["core/ — Config, DB, email, guards"]
-        Modules["modules/ — 9 feature domains"]
+        Modules["modules/ — 12 feature domains"]
     end
 
     Front --> FrontSrc
@@ -159,9 +160,9 @@ All commits must follow [Conventional Commits](https://www.conventionalcommits.o
 [optional footer]
 ```
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+Types (from `@commitlint/config-conventional`): `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
-Scopes: `front`, `back`, `infra`, `docs`, `ci`
+Scopes are conventional, not enforced. Common ones: `front`, `back`, `infra`, `docs`, `ci`
 
 Examples:
 
@@ -187,7 +188,7 @@ When working with agents:
 
 - **Never** commit secrets, tokens, or credentials
 - Use environment variables (`.env` files, not committed)
-- Store production secrets in GitHub/Coolify secret managers
+- Store production secrets in the CI/deployment secret stores
 - Rotate credentials if accidentally exposed
 
 ### Code Quality
@@ -274,4 +275,4 @@ The nearest `AGENTS.md` in the directory tree takes precedence for context-speci
 - [README.md](./README.md) - Project overview
 - [CONTRIBUTING.md](./docs/en/CONTRIBUTING.md) - Development workflow and standards
 - [ARCHITECTURE.md](./docs/en/ARCHITECTURE.md) - System architecture and API contracts
-- [GitHub Issues](https://github.com/Labs-de-Games/gameplate/issues) - Issue tracker and project board
+- [GitHub Issues](https://github.com/Labs-de-Games/guardiao-da-cultura/issues) - Issue tracker

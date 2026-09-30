@@ -80,5 +80,5 @@ replace those files.
 -----------------------
 
 Runtime and build dependencies carry their own licenses; see the respective
-package manifests and node_modules. Phaser 3, the game engine, is MIT
+package manifests and node_modules. Phaser 4, the game engine, is MIT
 (https://phaser.io/).

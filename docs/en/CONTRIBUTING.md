@@ -66,8 +66,8 @@ You need Node.js 24+, Docker with Docker Compose, and Git. No API key, email
 account or paid service is required.
 
 ```bash
-git clone https://github.com/<your-username>/gameplate.git
-cd gameplate
+git clone https://github.com/<your-username>/guardiao-da-cultura.git
+cd guardiao-da-cultura
 
 cp .env.example .env    # the defaults are a working local configuration
 make setup              # dependencies and pre-commit hooks
@@ -205,8 +205,8 @@ Naming:
 - `test/<description>` — tests only
 - `style/<description>` — formatting, no behaviour change
 - `ci/<description>` — CI and workflow changes
-- `hotfix/<description>`, `release/<version>` — maintainers only, for pull
-  requests into `master`
+- `hotfix/vX.Y.Z`, `release/vX.Y.Z` — maintainers only, for pull requests into
+  `master` (see [`VERSIONING.md`](./VERSIONING.md))
 
 The `<id>` is the issue number when there is one. Use lower case letters, digits,
 `.`, `_` and `-` after the prefix. The `branch-policy` check in CI fails a pull
@@ -229,8 +229,10 @@ request whose branch name does not follow these rules.
 ### 3. Commit messages
 
 Commits must follow [Conventional Commits](https://www.conventionalcommits.org/).
-This is enforced by `commitlint` in a git hook, so a malformed message is
-rejected locally before it reaches CI.
+The `commit-msg` git hook runs `commitlint` on every message. The hook only
+warns: if `commitlint` fails, it prints a message and the commit goes through
+anyway, and CI does not check commit messages. Treat the format as a rule that
+reviewers enforce, not one the tooling guarantees.
 
 ```
 <type>(<scope>): <description>
@@ -240,9 +242,13 @@ rejected locally before it reaches CI.
 [optional footer]
 ```
 
-**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
+**Types:** the full set from `@commitlint/config-conventional`: `build`,
+`chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`,
+`test`.
 
-**Scopes:** `front`, `back`, `infra`, `docs`, `ci`.
+**Scopes:** by convention `front`, `back`, `infra`, `docs` or `ci`. The scope is
+not checked (`commitlint.config.js` sets no scope rule), so use one that names
+the area you changed.
 
 Examples:
 
@@ -264,8 +270,8 @@ Write the description in the imperative, lower case, with no trailing period.
 4. Link the issue it closes.
 5. Make sure CI is green.
 
-A pull request from a fork runs `ci.yml` and `branch-policy.yml` only. The deployment workflows never
-run for a fork.
+A pull request from a fork runs `ci.yml` and `branch-policy.yml` only. The
+deployment workflows are not triggered by pull requests.
 
 ### 5. Review
 
@@ -275,21 +281,25 @@ run for a fork.
   mapping of areas to people lives in [`.github/CODEOWNERS`](../../.github/CODEOWNERS).
 - Push follow-up commits rather than force-pushing over the review, so the
   reviewer can see what changed.
-- Merges into `develop` use "Squash and merge" or "Rebase and merge". Release,
-  hotfix and back-merge pull requests use "Create a merge commit", the only
-  method `master` accepts.
+- The `develop` ruleset allows all three merge methods: "Create a merge
+  commit", "Squash and merge" and "Rebase and merge". `develop`'s history
+  already contains merge commits ("Merge pull request …"), so any of them is
+  fine for a feature branch. Release, hotfix and back-merge pull requests use
+  "Create a merge commit", the only method `master` accepts.
 - Delete the branch after it merges.
 
 ## What CI runs
 
-Every pull request triggers `.github/workflows/ci.yml`:
+Every pull request triggers `.github/workflows/ci.yml`, except while it is a
+draft; the job runs once the pull request is marked ready for review. After
+`npm ci`, it runs:
 
 | Stage | Command |
 |---|---|
 | Typecheck | `npm run typecheck` |
-| Lint | `make lint` |
+| Lint | `npm run lint` |
 | Build | `npm run build` |
-| Test | `make test` |
+| Test | `npm run test` |
 
 All four must pass before a merge. `.github/workflows/branch-policy.yml` also
 runs on every pull request and checks the branch name and base branch described
@@ -298,7 +308,8 @@ in [1. Fork and branch](#1-fork-and-branch).
 `master` and `develop` are protected by rulesets defined in `.github/rulesets/`:
 no direct pushes, no force pushes or deletion, one approval, and both checks
 green, reported by GitHub Actions. On `develop` the approval must come from a
-code owner. `master` accepts merge commits only, so its history stays in line
+code owner. Users with the Admin role on the repository can bypass both
+rulesets. `master` accepts merge commits only, so its history stays in line
 with `develop`. After a release or hotfix, a pull request from `master` into
 `develop` brings the merge commits back. A fix for production goes through a
 `hotfix/*` branch, never straight into `master`. Maintainers apply the rulesets
@@ -313,18 +324,29 @@ npm run typecheck && npm run lint && npm run build && npm run test
 
 Deployment is maintainer-only. Pushes to `develop` deploy to a staging
 environment, and production is a manual dispatch from `master`; both run against
-infrastructure that contributors do not have access to, and neither can be
-triggered from a fork.
+infrastructure that contributors do not have access to. In this repository the
+deployment workflows (`cd-staging.yml` and `cd-production.yml`) are triggered
+only by `push` and `workflow_dispatch`, so a pull request from a fork runs only
+`ci.yml` and `branch-policy.yml`. A guard that stops the deployment workflows
+from running outside this repository is proposed in
+[#816](https://github.com/Labs-de-Games/guardiao-da-cultura/pull/816).
 
 ## Git hooks
 
-Installed by `make setup` (which runs `npm run prepare`):
+[Husky](https://typicode.github.io/husky/) installs the hooks through npm's
+`prepare` lifecycle script, which runs when `make setup` calls `make install`
+(`npm ci`):
 
 | Hook | What it does |
 |---|---|
 | pre-commit | `npm run typecheck`, then Biome on staged files via `lint-staged` |
-| commit-msg | `commitlint` validates the message format |
+| commit-msg | `commitlint` checks the message format |
 | pre-push | runs the test suite |
+
+A failing typecheck stops the commit. The other checks only warn: when
+`lint-staged`, `commitlint` or the tests fail, the hook prints a message and
+lets the commit or push through. Run `make check` yourself before pushing, since
+CI runs lint and tests again.
 
 To bypass them in an emergency — not recommended, and CI will still run:
 

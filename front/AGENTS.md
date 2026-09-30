@@ -10,10 +10,10 @@ This document defines frontend-specific conventions for AI agents working in `/f
 | UI Library | Material UI (MUI) v9 |
 | Styling | Emotion (CSS-in-JS) |
 | Game Engine | Phaser 4.2 |
-| State | React hooks + Context |
+| State | React hooks + Zustand |
 | HTTP | Axios |
-| Forms | React Hook Form + Zod |
-| Testing | Jest + React Testing Library + Happy DOM |
+| Auth | Auth.js (`next-auth` v5) |
+| Testing | Jest + React Testing Library (jsdom) |
 
 ## Commands
 
@@ -31,19 +31,26 @@ This document defines frontend-specific conventions for AI agents working in `/f
 ```
 front/src/
 ├── app/                    # Next.js App Router
-│   ├── (auth)/             # Auth route group (login, register, confirm)
+│   ├── (game)/             # Route group for the landing/game entry (page.tsx)
+│   ├── login/, register/, confirm-verification/, reset-institution-password/
+│   │                       # Institution auth pages
 │   ├── layout.tsx          # Root layout with providers
-│   ├── page.tsx            # Game page (PhaserGame + AuthGuard)
-│   └── error.tsx           # Error boundaries
+│   ├── error.tsx           # Error boundary
+│   └── global-error.tsx    # Root-level error boundary
 ├── components/             # React components
 │   ├── auth/               # Auth-specific components
 │   ├── PhaserGame.tsx      # Phaser bootstrap component
 │   └── ...
 ├── lib/                    # Utilities and business logic
-│   ├── api/                # Axios client, auth API, error handling
-│   ├── auth/               # AuthContext, hooks, cookies, sync
+│   ├── api/                # Axios client, error classes, backend health
+│   ├── auth/               # Cookies, session sync, password policy
+│   ├── *Api.ts             # Feature API clients (badgesApi.ts, scoresApi.ts, ...)
 │   ├── env.ts              # Zod-validated environment variables
 │   └── theme.ts            # MUI theme configuration
+├── ui/                     # In-game React UI (HUD, panels, dialogs)
+│   └── state/              # Zustand stores (game-ui-store, dialogue-store)
+├── auth.ts, auth.config.ts # Auth.js (next-auth) configuration
+├── middleware.ts           # Route protection
 └── game/                   # Phaser game domain (isolated from React)
     ├── scenes/             # Game scenes
     ├── objects/            # Game objects, UI panels, managers
@@ -58,12 +65,13 @@ front/src/
 - `/front/src/components/` — React UI components and auth forms
 - `/front/src/lib/` — Utility functions, API clients, auth logic, validation schemas
 - `/front/src/game/` — Phaser game objects, scenes, mechanics, constants
-- `/front/src/app/(auth)/` — Auth pages and layouts
+- `/front/src/ui/` — In-game React UI and its Zustand stores
 
 ### Ask-First Zones
 
 - `/front/src/app/layout.tsx` — Root layout changes affect all pages
-- `/front/src/app/page.tsx` — Main game page structure
+- `/front/src/app/(game)/page.tsx` — Main game entry page
+- `/front/src/app/login/`, `/front/src/app/register/`, `/front/src/app/confirm-verification/`, `/front/src/app/reset-institution-password/` — Auth pages
 - `/front/src/middleware.ts` — Route protection logic
 - `/front/package.json` — Dependency changes
 - `/front/next.config.ts` — Next.js configuration
@@ -75,7 +83,7 @@ front/src/
 - Use **Server Components by default**. Only mark components `"use client"` when they need browser APIs, state, or effects.
 - Auth pages and Phaser integration require `"use client"`.
 - Use `loading.tsx` for loading states where appropriate.
-- Keep route groups (`(auth)`) for shared layouts.
+- Use route groups (such as `(game)`) for shared layouts.
 
 ### Phaser Integration
 
@@ -95,30 +103,31 @@ front/src/
 
 ### State Management
 
-- React state: `useState`, `useReducer`, `useContext` for UI state.
-- Auth state: `AuthContext` in `lib/auth/AuthContext.tsx`. Access via `useAuth()` hook.
+- React state: `useState`, `useReducer`, `useContext` for local UI state.
+- Shared UI state: the existing Zustand stores in `src/ui/state/` (`game-ui-store.ts`, `dialogue-store.ts`). Extend these rather than creating parallel state.
+- Auth state: Auth.js (`next-auth`) configured in `src/auth.ts` and `src/auth.config.ts`. Read the session with Auth.js APIs (see `components/auth/InstitutionGuard.tsx`).
 - Game state: Managed inside Phaser scenes via `scene.registry` and custom managers.
-- **Never** add Zustand, Redux, or Jotai without human approval.
+- **Never** add another state library (Redux, Jotai, etc.) without human approval.
 
 ### API Client
 
 - Use the Axios instance from `lib/api/client.ts` for all HTTP requests.
 - The client handles auth token attachment, 401 refresh queuing, and PostHog session headers.
-- Define API functions in `lib/api/*.ts` files (e.g., `auth.ts`, `badgesApi.ts`).
+- Define API functions in `lib/api/*.ts` or feature `lib/*Api.ts` files (e.g., `lib/api/edital.ts`, `lib/badgesApi.ts`).
 - Use Zod schemas for runtime validation of API responses where possible.
 
 ### Forms
 
-- Use `react-hook-form` with `@hookform/resolvers/zod` for all forms.
-- Validation schemas live in `lib/auth/validation.ts` or co-located with the form.
-- MUI `TextField`, `Button`, and form components are the standard.
+- Current forms (e.g., `app/register/page.tsx`) use controlled inputs with `useState` and validate on submit. Follow the pattern of the form you are editing.
+- Shared validation rules live in `lib/` (e.g., `lib/auth/passwordPolicy.ts`, `lib/edital/dateRangeSchema.ts`) or are co-located with the form.
+- MUI `TextField`, `Button`, and form components are the standard; auth pages reuse the building blocks in `components/auth/`.
 
 ### Testing
 
 - Co-locate tests with source: `Component.tsx` → `Component.test.tsx`.
 - Use React Testing Library for component tests.
 - Mock API calls with `jest.mock` or MSW.
-- Happy DOM is the test environment.
+- jsdom is the Jest test environment (`jest.config.ts`).
 
 ## Patterns
 
@@ -131,11 +140,10 @@ front/src/
 
 ### Adding a New Auth Page
 
-1. Create `front/src/app/(auth)/new-page/page.tsx`
+1. Create `front/src/app/new-page/page.tsx`
 2. Use `"use client"` directive
-3. Wrap with `useRedirectIfAuth()` if it should be guest-only
-4. Use MUI components and `react-hook-form` for forms
-5. Add route protection to `middleware.ts` if needed
+3. Build the page with `AuthPageShell` and the other components in `components/auth/`
+4. Add route protection to `middleware.ts` if needed (ask first)
 
 ### Adding a New API Endpoint Consumer
 
@@ -144,21 +152,15 @@ front/src/
 3. Handle errors using the custom error classes in `lib/api/errors.ts`
 4. Update `lib/env.ts` if new env vars are needed (ask first)
 
-## Implementing from Figma (MCP)
+## Implementing from a Design Spec
 
-When implementing a component from a Figma spec via the MCP server:
+When implementing a component from a design file (Figma or similar):
 
-1. **Always fetch the node in isolation first.** Use `get_screenshot` with the component's own `nodeId` (not the full-screen frame). This gives the true bounding box and avoids coordinate offset errors from the parent frame.
-
-2. **Figma coordinates are relative to the direct parent frame.** A child at `x=101, y=846` inside `text_box_fase` (which is at `x=33, y=784` inside the 1440px Home frame) does NOT mean 846px from the top of the screen. Always subtract the parent's origin when translating to CSS `top`/`left`.
-
-3. **Convert absolute coordinates to MUI `sx` with ±2px tolerance.** After converting, compare a browser screenshot to the Figma screenshot. Font rendering (Inter, Jockey One loaded via Google Fonts) introduces 1–4px shift versus Figma's engine. Never assume pixel-perfect match without browser verification.
-
-4. **The MCP reference code is Tailwind — convert to MUI `sx`.** The note in the response says "SUPER CRITICAL: convert to target stack." Do not copy Tailwind classes verbatim. Map `absolute top-10 left-12` → `sx={{ position: 'absolute', top: '40px', left: '45px' }}`.
-
-5. **Fonts must be loaded before measuring.** If a font is not in the Next.js layout (via `next/font` or `<link>` in `_document`), the browser falls back to `sans-serif` and all spacing shifts. Verify font loading before closing a spacing investigation.
-
-6. **For multi-state components, find ALL state frames before coding.** Ask the designer for the node IDs of each state (available, unavailable, completed, etc.) and fetch them separately. Do not infer state visuals from a single frame.
+- Measure from the component itself, not the full-screen frame: design-tool coordinates are relative to the parent frame.
+- Translate the spec into MUI `sx` or `styled()`. Do not copy generated Tailwind or other framework code verbatim.
+- Make sure the fonts are loaded before comparing spacing; a fallback font shifts every measurement.
+- For multi-state components, collect every state (available, unavailable, completed, etc.) before coding.
+- Verify the result in the browser against the spec; allow a few pixels of font-rendering difference.
 
 ## Escalation
 

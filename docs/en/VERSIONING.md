@@ -1,8 +1,8 @@
 🌐 English | [Português (Brasil)](../pt-BR/VERSIONING.md)
 
-# **Release Process Guidelines and Structure — Rouanet Game**
+# **Release Process Guidelines and Structure — Guardião da Cultura**
 
-This document establishes the official standard for managing, planning, and executing releases of the Rouanet Game, ensuring production environment stability and delivery predictability.
+This document establishes the official standard for managing, planning, and executing releases of Guardião da Cultura, ensuring production environment stability and delivery predictability.
 
 ## **1. Release Windows (Days and Times)**
 
@@ -17,8 +17,6 @@ To mitigate risk and guarantee support team availability, production releases mu
 | **Emergency (Hotfix)** | Any day (Subject to approval) | Immediately after validation, avoid end of day | Critical (Blocking bug fix) |
 
 *Note: Ordinary deploys are strictly prohibited on Fridays, the day before holidays, or periods of high public engagement, such as public announcement dates.*
-
-For more details on the game's usage window, see the [Technical Release Plan](https://docs.google.com/document/d/1-QBGFMwnMgHSds0LesnqVGQxeC38-H3ouVTGK2lNV1M/edit?usp=sharing).
 
 ## **2. Naming and Versioning**
 
@@ -45,11 +43,11 @@ Production example: v1.0.0 -> Version 1.0.0 with the following features:
 
 * Full description of the changes included in the version.
 
-QA example: qa-v1.0.0 -> Validation version 1.0.0, \<Reason for the fix\>
+Staging is not versioned with tags: every push to `develop` is deployed to staging by `cd-staging.yml`.
 
 ### **Version and Deployment History**
 
-See [docs/CHANGELOG.md](../CHANGELOG.md) for the full per-version changelog. Deployment history lives in the Coolify dashboard; its address is internal and is shared with maintainers privately.
+See [docs/CHANGELOG.md](../CHANGELOG.md) for the full per-version changelog. Maintainers deploy to production through the production CD workflow (`cd-production.yml`), so each production deploy is a run of that workflow in the repository's Actions tab.
 
 ## **4. Step-by-Step Execution Process**
 
@@ -79,7 +77,7 @@ If a release presents unsustainable instability during the Post-Release stage, t
 
 ### **Rollback Procedure**
 
-1. **Step 1:** Stop traffic to the new version, redirecting 100% of users to the cluster or container running the previous stable version (verify in history).
+1. **Step 1:** Return production to the previous stable version. `cd-production.yml` takes no inputs: it builds the current `master` commit, publishes the images as `master-<short-sha>` and `master`, and triggers the production deploy. To roll back, revert the faulty change on `master` through a `hotfix/vX.Y.Z` pull request and run `cd-production.yml` again. The images of earlier production builds stay in the container registry as `master-<short-sha>`; the tag of the previous release identifies the commit, and so the image, to return to.
 2. **Step 2:** If there was a database schema change (migrations), apply the corresponding reversion script, ensuring the integrity of data inserted during the interval.
 3. **Step 3:** Notify the team and stakeholders about the return to the previous version.
 4. **Step 4:** Open a Post-Mortem session within 24 hours to analyze the root cause of the failure.

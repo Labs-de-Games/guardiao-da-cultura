@@ -8,6 +8,12 @@ Todo documento de referência existe em inglês e em português do Brasil, no me
 caminho em [`en/`](./en/) e [`pt-BR/`](./pt-BR/). Quando as duas versões
 divergem, vale a em inglês.
 
+The repository home page, [`README.md`](../README.md), is in Brazilian
+Portuguese; its English version is [`README.en.md`](../README.en.md).
+
+A página inicial do repositório, [`README.md`](../README.md), está em português
+do Brasil; a versão em inglês é o [`README.en.md`](../README.en.md).
+
 ## Reference docs · Documentos de referência
 
 | Doc | English | Português (Brasil) |
@@ -24,11 +30,10 @@ Working notes stay in the language they were written in and are not translated.
 
 As notas de trabalho ficam no idioma em que foram escritas e não são traduzidas.
 
-- English: [`en/notes/`](./en/notes/): VPS migration, game scene review and
-  refactoring, Phaser 4 upgrade, open-source asset matrix and secret scan
+- English: [`en/notes/`](./en/notes/): Phaser 4 upgrade, open-source asset
+  matrix and secret scan
 - Português: [`pt-BR/notes/`](./pt-BR/notes/): épico do dashboard de analytics
 
 ## Releases
 
 - [CHANGELOG.md](./CHANGELOG.md): per-version changelog · changelog por versão
-- [releases/](./releases/): release reports · relatórios de release

@@ -62,6 +62,10 @@ This is the release the repository is published from as open source.
 - Level 2 work type and the ESC action label in control panels renamed
 - `entry_flow_experiment` A/B flag removed
 
+### Removed
+
+- The Contentsquare (Hotjar) tracking tag, which loaded on every route outside the consent gate. The privacy notice no longer lists Contentsquare; `PRIVACY_NOTICE_VERSION` moves to 2026-09-29 without sending players back through the consent gate
+
 ### Fixed
 
 - `AUTH_URL` configuration hardening and public dashboard error handling
@@ -482,6 +486,8 @@ This is the release the repository is published from as open source.
 - `AddIntermediateQuizScoreToUserScore`
 
 ## [1.1.0] - 2026-06-24
+
+This version has no git tag; tags start at `v1.2.0`.
 
 ### Added
 
