@@ -109,7 +109,10 @@ export const CREDITS_SECTIONS: CreditSection[] = [
         name: "Gabriel Salgado",
         url: "https://www.linkedin.com/in/abg2jz/",
       },
-      { name: "Tamir Nadav", url: "https://linkedin.com/in/aquajew" },
+      {
+        name: "Tamir Nadav (in memoriam)",
+        url: "https://linkedin.com/in/aquajew",
+      },
       { name: "Antônio Ibrahine", url: "https://www.antonioibrahine.com/" },
       { name: "Daniel Martins", url: "https://linktr.ee/dmaisumoficial" },
     ],
@@ -317,6 +320,14 @@ export const CREDITS_SECTIONS: CreditSection[] = [
       { name: "Ipeafro", url: "https://ipeafro.org.br/" },
       { name: "Galeria Vermelho", url: "https://galeriavermelho.com.br/" },
     ],
+  },
+  {
+    heading: "",
+    entries: [{ name: "À memória de" }, { name: "Tamir Nadav" }],
+  },
+  {
+    heading: "",
+    entries: [{ name: "————————————————————————" }],
   },
   {
     heading: "",
