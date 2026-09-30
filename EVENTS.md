@@ -38,8 +38,8 @@
 >   denominador da "Taxa de entrada na gameplay". Espere uma queda de patamar,
 >   não um bug.
 > - **Não há coleta retroativa em nenhuma das duas.** O posthog-js descarta
->   capturas feitas antes do `init()`; a fila em `gameplate:eventQueue:v1` é
->   **descartada** sem consentimento, em vez de guardada — aceitar autoriza
+>   capturas feitas antes do `init()`; a fila em `gameplate:eventQueue:v1`
+>   (nome legado, mantido por compatibilidade) é **descartada** sem consentimento, em vez de guardada — aceitar autoriza
 >   dali para frente, nunca para trás.
 > - **O progresso do jogador continua sendo gravado** (`/scores`,
 >   `/progression`): é o jogo salvo dele, não medição sobre ele. Só `/events`
@@ -217,6 +217,15 @@ minigames, quizzes e carregamento do jogo.
 | `minigame_completed` | `minigame_number`, `level_id`, `errors`, `quarters_earned` | `Game.ts` (`completeFloor`) |
 | `step_sequence_interacted` | `level_id` | `Game.ts` |
 | `step_sequence_failed_attempt` | `level_id`, `instance_id`, `attempt_number`, `wrong_count`, `correct_count`, `total_slots` | `Game.ts` |
+| `genius_sequence_interacted` | `level_id` | `Game.ts` (abertura do painel da sequência genius) |
+| `genius_sequence_failed_attempt` | `level_id`, `instance_id`, `attempt_number`, `wrong_count`, `correct_count`, `total_rounds` | `Game.ts` (`ui:genius-sequence-rejected`) |
+| `costume_interacted` | `level_id` | `Game.ts` (abertura do seletor de figurino) |
+| `band_interacted` | `level_id` | `Game.ts` (abertura do painel da banda) |
+| `label_interacted` | `label_title`, `label_author` | `Game.ts` (abertura da etiqueta de uma obra) |
+| `rat_interacted` | `level_id` | `Game.ts` (interação com o rato) |
+| `npc_interacted` | `npc_id` (nome do NPC), `mission_id`, `quest_status` | `Npc.ts` (`handleInteraction`) |
+| `level_next_started` | `from_level_id`, `to_level_id` | `UIScene.ts` — ao avançar para a próxima fase depois do quiz, inclusive para a investigação (fase 4); não dispara quando não há próxima fase jogável |
+| `settings_opened` | `from_screen` (hoje sempre `"game"`) | `UIScene.ts` (`toggleControls`, só ao abrir) |
 | `intermediate_quiz_started` | `quiz_number` (1=sculptures, 2=paintings, 3=photo), `level_id`, `info_key` | `QuizManager.ts` |
 | `intermediate_quiz_completed` | `quiz_number`, `level_id`, `info_key`, `score`, `total_questions`, `passed` | `QuizManager.ts` |
 | `quiz_started` | `level_id`, `mission_id`, `total_questions`, `attempt_number` | `QuizManager.ts` |
@@ -224,6 +233,7 @@ minigames, quizzes e carregamento do jogo.
 | `game_load_success` | `level_id`, `loading_time_ms` | `PhaserGame.tsx` |
 | `game_load_failed` | `error_message`, `error_type`, `loading_stage` (`player_id_resolution`/`module_import`/`phaser_init`) | `PhaserGame.tsx` (module import / Phaser init failures only — **not** asset `loaderror`; that is `critical_error_occurred` below. This row previously and incorrectly claimed asset-load coverage too — `handleLoadingError` was a no-op until #741) |
 | `critical_error_occurred` | `error_code` (e.g. `asset_load_failed`), `is_blocking`, `loading_stage`, `asset_key`, `level_id` | `PhaserGame.tsx` (`phaser-loading-error` — asset `loaderror`, dispatched from `Game.ts`'s `preload()`). Also mirrored into `game_event` with `severity: "critical"` via the `EVENT_LOGGED` type |
+| `error_page_viewed` | `error_page_type` (`not_found`/`server_error`/`maintenance`/`asset_load`/`connection`/`session_expired`), `path`, e conforme a página `digest`, `stage`, `asset_key`, `level_id`, `reason` | `lib/errors/reportError.ts` (`reportErrorPage`), chamado pelas páginas de erro e fallback. Quando há um `Error`, o mesmo payload vai por `posthog.captureException` em vez deste evento. `reportErrorPageOncePerSession` limita a 1x por sessão por motivo |
 | `player_scored` | `level_id`, `total_quarters`, `total_stars`, `quarters_earned` | `Game.ts` (`SCORE_UPDATED` handler) |
 | `star_collected` | `level_id`, `total_stars`, `previous_stars`, `total_quarters` | `Game.ts` (`SCORE_UPDATED` handler, star threshold crossed) |
 | `clue_collected` | `level_id`, `collectible_id`, `collectible_type`, `total_collected`, `total_available` | `CollectibleSystem.ts` |
@@ -237,8 +247,8 @@ minigames, quizzes e carregamento do jogo.
 | `investigation_suspect_accused` | `level_id`, `suspect_id`, `attempt_number`, `clues_on_suspect`, `hot_clues`, `cold_clues`, `is_correct`, `wrong_attempts`, `stars`, `revealed` | `game-ui-store.ts` (`accuseSuspect`) |
 | `investigation_suspect_identified` | `level_id`, `suspect_id`, `stars`, `wrong_attempts`, `attempt_number`, `clues_on_suspect`, `hot_clues`, `cold_clues`, `clues_collected`, `clues_available` | `game-ui-store.ts` (`accuseSuspect`, acerto) |
 | `investigation_completed` | `level_id`, `level_number`, `stars`, `wrong_attempts`, `is_correct`, `revealed` | `InvestigationScene.ts` (`recordResult`). `level_id`/`level_number`/`is_correct`/`revealed` added in #834; `total_stars` moved to `progress_updated` |
-| `nudge_pulse_shown_{costume,spotlight,step_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
-| `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
+| `nudge_pulse_shown_{costume,spotlight,step_sequence,genius_sequence}` | `level_id`, `mission_id` | `Game.ts` (branch de pulse do nudge) |
+| `nudge_hint_shown_{sculpture,painting,poster,photo,costume,spotlight,step_sequence,band,genius_sequence}` | `level_id`, `mission_id`, `hint_message` | `Game.ts` (branch de dica do nudge) |
 
 ---
 
@@ -249,17 +259,18 @@ Necessário para interpretar os eventos `nudge_*`:
 - **Gatilho:** ~15s de inatividade do jogador, avaliado no máximo 1x/s, e nunca enquanto o
   jogador está ocupado ou com painel/diálogo aberto.
 - **Tipo por proximidade, não por escalonamento:** o pulse dispara quando há um placeholder de
-  figurino ou um refletor incompleto num raio de ~500px; caso contrário, exibe-se o
+  figurino, de sequência de passos ou de sequência genius, ou um refletor incompleto, num raio
+  de ~500px; caso contrário, exibe-se o
   `educational.hint` da obra mais próxima como toast. Por isso as duas famílias de evento são
   mutuamente exclusivas por disparo — o atraso é o mesmo para as duas.
 - **Cooldown global de 5 minutos** após qualquer nudge, com reset a cada troca de missão. A
   contagem de eventos por sessão é baixa por design, não por falta de instrumentação.
-- Os dois eventos de pulse podem disparar no mesmo tick quando há um placeholder de figurino
-  **e** um refletor incompleto no raio.
+- Mais de um evento de pulse pode disparar no mesmo tick quando há vários desses alvos no
+  raio (por exemplo, um placeholder de figurino **e** um refletor incompleto).
 - `mission_id` vem de `NudgeManager.getCurrentMissionId()` e é `""` até a primeira missão
   entrar em `COLLECTING` — considerar antes de agrupar por esse campo.
-- `PHOTO` e `PHOTO_CHUNK` mapeiam para o mesmo `nudge_hint_shown_photo`: 7 tipos interativos,
-  6 nomes distintos de evento de dica.
+- `PHOTO` e `PHOTO_CHUNK` mapeiam para o mesmo `nudge_hint_shown_photo`: 10 tipos interativos,
+  9 nomes distintos de evento de dica (`NUDGE_HINT_EVENT_BY_TYPE` em `Game.ts`).
 
 ## Investigação (fase 4) — regras de disparo
 
@@ -455,7 +466,7 @@ boundary React, que não têm um `userId` de sessão de jogo disponível):
 | Falha no boot do Phaser | `PhaserGame.tsx` (catch do `initGame`) | `game_boot_failed:${stage}` | `true` |
 | Falha em asset obrigatório | `PhaserGame.tsx` (`handleLoadingError`, via `Game.ts`'s `loaderror`) | `asset_load_failed` | `true` |
 | Dados de quiz ausentes | `QuizManager.ts` (`startQuiz`) | `quiz_data_missing` | `true` |
-| Error boundary do React | `app/error.tsx`, `app/global-error.tsx`, `app/(auth)/error.tsx` | `react_error_boundary` | `true` / `true` / `false` |
+| Error boundary do React | `app/error.tsx`, `app/global-error.tsx` | `react_error_boundary` | `true` / `true` |
 
 ## Decisão: quizzes intermediários fora do denominador
 
