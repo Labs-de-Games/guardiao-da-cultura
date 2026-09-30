@@ -43,9 +43,12 @@ back/src/
 │
 ├── modules/                # Feature domains (bounded contexts)
 │   ├── admin/              # Admin user management
-│   ├── analytics/            # Game event ingestion
+│   ├── analytics/          # Game event ingestion
 │   ├── auth/               # Authentication & Authorization
 │   ├── badges/             # Badge definitions & user badges
+│   ├── campaign-links/     # Campaign links for guest play
+│   ├── consent/            # User consent (terms acceptance) records
+│   ├── dashboard/          # Public metrics endpoint
 │   ├── game/               # Gameplay event ingestion
 │   ├── posthog/            # PostHog server-side integration
 │   ├── progression/        # Player progression tracking
@@ -150,7 +153,7 @@ back/src/
 2. Create a DTO in `dto/` with validation decorators
 3. Implement business logic in the service
 4. Add unit tests for the service method
-5. Update `ARCHITECTURE.md` API contracts section
+5. Update the API contracts section in `docs/en/ARCHITECTURE.md` and `docs/pt-BR/ARCHITECTURE.md`
 
 ### Adding a Database Migration
 
@@ -166,7 +169,7 @@ back/src/
 1. Add to `/back/src/core/config/config.service.ts` Zod schema
 2. Add to `/.env.example` with a default or placeholder
 3. Add to `compose.development.yaml` if needed for local dev
-4. Document in README.md
+4. Document it with a comment in `/.env.example`; if it enables an optional integration, also describe it under Optional Integrations in `docs/en/ARCHITECTURE.md` and `docs/pt-BR/ARCHITECTURE.md`
 
 ## Escalation
 
