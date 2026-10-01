@@ -26,6 +26,25 @@ describe("captureOncePerSession", () => {
     expect(posthog.capture).toHaveBeenCalledTimes(1);
   });
 
+  it("marks the session only after capturing", () => {
+    // posthog-js discards a capture made before init() (the consent gate,
+    // #864). Marking first would spend the session's one chance on an event
+    // that never left the browser — the same class of silent loss as #899.
+    let markedWhenCaptured: string | null = null;
+    (posthog.capture as jest.Mock).mockImplementationOnce(() => {
+      markedWhenCaptured = sessionStorage.getItem(
+        "gp_session_once_gameplay_started",
+      );
+    });
+
+    captureOncePerSession("gameplay_started");
+
+    expect(markedWhenCaptured).toBeNull();
+    expect(sessionStorage.getItem("gp_session_once_gameplay_started")).toBe(
+      "1",
+    );
+  });
+
   it("tracks each event name independently", () => {
     captureOncePerSession("gameplay_started");
     captureOncePerSession("chapter_1_started");

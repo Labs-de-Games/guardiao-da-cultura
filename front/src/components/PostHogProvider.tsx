@@ -19,6 +19,7 @@ import {
   setAnonymousPlayerId,
 } from "../lib/posthog/eventContext";
 import { FeatureFlagProvider } from "../lib/posthog/FeatureFlagContext";
+import { PostHogReadyProvider } from "../lib/posthog/PostHogReadyContext";
 import { PostHogStub } from "../lib/posthogStub";
 
 interface PostHogBootstrapData {
@@ -80,6 +81,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   );
   const [bootstrapData, setBootstrapData] =
     useState<PostHogBootstrapData | null>(null);
+  // Set after init(), never derived from consent — see PostHogReadyContext and
+  // issue #899. This is what mount-time capture sites wait on.
+  const [ready, setReady] = useState(false);
   const { state: consentState } = useConsent();
 
   // Flags are needed whether or not the player has consented (PlayerGuard
@@ -126,12 +130,21 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     // instance rather than queueing it, so the ~60 modules that import the
     // singleton directly need no changes and nothing is sent retroactively
     // once consent arrives.
+    //
+    // The flip side, found in issue #899: a capture that fires on mount is
+    // dropped for *everyone*, because no descendant of this provider can have
+    // its effect run after this one. Those sites wait on `ready` below instead
+    // of firing once and hoping.
     if (consentState !== "accepted") return;
 
     if (!key) {
       console.warn(
         "[PostHog] No key set. Using PostHogStub. Events will be logged to console only.",
       );
+      // `ready` stays false: the singleton the capture sites import is still
+      // uninitialized, so telling them to fire would only log posthog's
+      // "you must initialize" warning. Nothing leaves the browser either way —
+      // PostHogStub only console.logs.
       setClient(new PostHogStub());
       return;
     }
@@ -181,6 +194,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           environment,
           searchParams: new URLSearchParams(window.location.search),
         });
+        // Last, and inside `loaded` rather than after init() returns, so the
+        // ordering is enforced by the code instead of a comment: every edital
+        // query filters on `properties.campaign_source` (queries.ts's
+        // COMMON_PREDICATE), and registerEventContext above is what stamps it.
+        // A `landing_page_viewed` released one line too early carries no
+        // campaign_source and is filtered out of every dashboard number — the
+        // tests would pass and the funnel would stay empty.
+        setReady(true);
       },
     } as Parameters<typeof posthog.init>[1]);
 
@@ -196,20 +217,26 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   // Passing `client` makes PHProvider inert (it only supplies context — it
   // never calls init itself), so handing it the uninitialized singleton
   // before consent is safe: `capture()` on it is a no-op.
+  //
+  // PostHogReadyProvider is rendered unconditionally for the same reason: only
+  // its `value` may vary. Making it conditional on `ready` would change the
+  // element type at this position and bring the Phaser teardown back.
   return (
     <PHProvider client={client as unknown as typeof posthog}>
-      <FeatureFlagProvider
-        initialData={
-          bootstrapData
-            ? {
-                distinctId: bootstrapData.distinctId,
-                featureFlags: bootstrapData.featureFlags,
-              }
-            : undefined
-        }
-      >
-        {children}
-      </FeatureFlagProvider>
+      <PostHogReadyProvider ready={ready}>
+        <FeatureFlagProvider
+          initialData={
+            bootstrapData
+              ? {
+                  distinctId: bootstrapData.distinctId,
+                  featureFlags: bootstrapData.featureFlags,
+                }
+              : undefined
+          }
+        >
+          {children}
+        </FeatureFlagProvider>
+      </PostHogReadyProvider>
     </PHProvider>
   );
 }
