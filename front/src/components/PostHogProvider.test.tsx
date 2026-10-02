@@ -11,15 +11,40 @@ import {
 } from "../lib/edital/anonymousPlayer";
 import { ANONYMOUS_PLAYER_CREATED_EVENT } from "../lib/edital/events";
 import { useFeatureFlag } from "../lib/posthog/FeatureFlagContext";
+import { usePostHogReady } from "../lib/posthog/PostHogReadyContext";
 import { PostHogProvider } from "./PostHogProvider";
 
-const initMock = jest.fn();
 const captureMock = jest.fn();
+
+/**
+ * Runs the `loaded:` callback the way posthog-js does — synchronously, before
+ * `init()` returns. PostHogProvider publishes readiness from inside it (issue
+ * #899), so a mock that skipped it would silently disable that path.
+ */
+const initMock = jest.fn(
+  (_key: string, options?: { loaded?: (ph: unknown) => void }) => {
+    options?.loaded?.(posthogMock);
+  },
+);
+
+const posthogMock = {
+  debug: jest.fn(),
+  register: jest.fn(),
+  get_distinct_id: () => "test-distinct-id",
+  get_property: () => undefined,
+  capture: (...args: unknown[]) => captureMock(...args),
+};
 
 jest.mock("posthog-js", () => ({
   __esModule: true,
   default: {
-    init: (...args: unknown[]) => initMock(...args),
+    init: (...args: unknown[]) =>
+      initMock(
+        args[0] as string,
+        args[1] as { loaded?: (ph: unknown) => void } | undefined,
+      ),
+    debug: jest.fn(),
+    register: jest.fn(),
     get_distinct_id: () => "test-distinct-id",
     get_property: () => undefined,
     capture: (...args: unknown[]) => captureMock(...args),
@@ -296,6 +321,97 @@ describe("PostHogProvider", () => {
     await waitFor(() => expect(initMock).toHaveBeenCalled());
     expect(unmounts).not.toHaveBeenCalled();
     expect(mounts).toHaveBeenCalledTimes(1);
+  });
+
+  describe("readiness (#899)", () => {
+    function Probe() {
+      return <span>ready:{String(usePostHogReady())}</span>;
+    }
+
+    it("is false before the player consents", async () => {
+      window.localStorage.removeItem(CONSENT_STORAGE_KEY);
+      render(
+        <ConsentProvider>
+          <PostHogProvider>
+            <Probe />
+          </PostHogProvider>
+        </ConsentProvider>,
+      );
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+      expect(screen.getByText("ready:false")).toBeInTheDocument();
+    });
+
+    it("is true once PostHog has initialized", async () => {
+      writeConsent("accepted");
+      render(
+        <ConsentProvider>
+          <PostHogProvider>
+            <Probe />
+          </PostHogProvider>
+        </ConsentProvider>,
+      );
+
+      await screen.findByText("ready:true");
+    });
+
+    it("stays false after an explicit refusal", async () => {
+      writeConsent("declined");
+      render(
+        <ConsentProvider>
+          <PostHogProvider>
+            <Probe />
+          </PostHogProvider>
+        </ConsentProvider>,
+      );
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+      expect(screen.getByText("ready:false")).toBeInTheDocument();
+    });
+
+    it("does not remount children when readiness flips", async () => {
+      // Same hazard as the two regressions above: PostHogReadyProvider is
+      // rendered unconditionally so only its value changes. Making it
+      // conditional on `ready` would change the element type at that position
+      // and destroy a booting Phaser instance.
+      const mounts = jest.fn();
+      const unmounts = jest.fn();
+
+      function Child() {
+        useEffect(() => {
+          mounts();
+          return () => unmounts();
+        }, []);
+        return <Probe />;
+      }
+
+      function Harness() {
+        const { accept } = useConsent();
+        return (
+          <PostHogProvider>
+            <button type="button" onClick={accept}>
+              aceitar
+            </button>
+            <Child />
+          </PostHogProvider>
+        );
+      }
+
+      render(
+        <ConsentProvider>
+          <Harness />
+        </ConsentProvider>,
+      );
+
+      await screen.findByText("ready:false");
+      expect(mounts).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole("button", { name: "aceitar" }));
+
+      await screen.findByText("ready:true");
+      expect(mounts).toHaveBeenCalledTimes(1);
+      expect(unmounts).not.toHaveBeenCalled();
+    });
   });
 
   it("keeps working flags when the post-consent bootstrap retry fails", async () => {

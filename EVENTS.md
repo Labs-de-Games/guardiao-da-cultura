@@ -35,8 +35,22 @@
 >   "fonte sem viés de consentimento" neste repositório: quem recusa não gera
 >   evento em lugar nenhum.
 > - **`landing_page_viewed` é o mais afetado**: é o passo 1 do funil e o
->   denominador da "Taxa de entrada na gameplay". Espere uma queda de patamar,
->   não um bug.
+>   denominador da "Taxa de entrada na gameplay". Espere uma queda de patamar
+>   em relação ao pré-#864 — mas leia o item seguinte antes de atribuir
+>   qualquer número a consentimento.
+> - **Nem toda queda é viés de consentimento (#899).** Entre 2026-09-28 e a
+>   correção da #899, `landing_page_viewed` e `$pageview` não chegavam ao
+>   PostHog para **ninguém**, nem para quem já tinha aceitado: eram disparados
+>   na montagem do componente, antes de o `init()` acontecer, e o posthog-js
+>   descarta captura pré-`init()`. Como o `windowFunnel` é estritamente
+>   ordenado, o funil inteiro ficava zerado. Esse período não tem reposição —
+>   os eventos nunca foram enviados.
+> - **Esses dois eventos agora disparam quando o PostHog inicializa**, não na
+>   montagem — ou seja, no instante em que o jogador aceita, se for a primeira
+>   visita (`usePostHogReady`, `lib/posthog/PostHogReadyContext.tsx`). Isso
+>   **não** é coleta retroativa: nada é guardado nem reenviado, e a página
+>   descrita pelo evento continua aberta na frente do jogador no momento da
+>   captura. Quem recusa continua não gerando evento nenhum.
 > - **Não há coleta retroativa em nenhuma das duas.** O posthog-js descarta
 >   capturas feitas antes do `init()`; a fila em `gameplate:eventQueue:v1`
 >   (nome legado, mantido por compatibilidade) é **descartada** sem consentimento, em vez de guardada — aceitar autoriza
@@ -206,7 +220,7 @@ minigames, quizzes e carregamento do jogo.
 
 | Evento | Propriedades | Onde é emitido |
 |---|---|---|
-| `landing_page_viewed` | — | `PlayLanding.tsx` |
+| `landing_page_viewed` | `referrer` | `PlayLanding.tsx` (ao PostHog inicializar, não na montagem — #899) |
 | `landing_page_play_clicked` | — | `PlayLanding.tsx` |
 | `landing_page_dwell_time` | `dwell_ms` | `PlayLanding.tsx` |
 | `game_home_viewed` | — | `MapIntroScene.ts` |
@@ -368,7 +382,7 @@ ganha um passo automaticamente, sem precisar de código novo.
 
 | # | Passo | Condição usada por `queries.ts` | Onde é emitido |
 |---|---|---|---|
-| 1 | `landing_page_viewed` | `event = 'landing_page_viewed'` | `PlayLanding.tsx` |
+| 1 | `landing_page_viewed` | `event = 'landing_page_viewed'` | `PlayLanding.tsx`, ao PostHog inicializar (#899) |
 | 2 | `play_clicked` | `event = 'play_clicked'` | `PlayLanding.tsx` (`handlePlay`) |
 | 3 | `gameplay_started` | `event = 'gameplay_started'` | `Game.ts` (`create()`, via `captureOncePerSession`) |
 | 4 | "Concluiu Fase 1" | `event = 'level_completed' AND level_number = 1` | `QuizManager.ts`, quiz de fim de fase 1 aprovado |

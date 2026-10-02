@@ -6,19 +6,34 @@ import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
 import { Footer } from "@/components/Footer";
+import { EDITAL_EVENTS } from "@/lib/edital/events";
+import { usePostHogReady } from "@/lib/posthog/PostHogReadyContext";
 
 export default function PlayLanding() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const enteredAtRef = useRef<number>(Date.now());
+  const posthogReady = usePostHogReady();
+  const landingViewSentRef = useRef(false);
 
+  // Waits for init rather than firing on mount (issue #899). On mount, consent
+  // is still being read from localStorage, so PostHog cannot be initialized yet
+  // and the capture was dropped for every player — zeroing the funnel's first
+  // step, and with it every step after it. Firing when PostHog becomes ready
+  // keeps the event honest: the player is still looking at this page, nothing
+  // was buffered, and a player who never accepts still sends nothing.
   useEffect(() => {
+    if (!posthogReady || landingViewSentRef.current) return;
+    landingViewSentRef.current = true;
     // referrer: issue #741's dual-emit table asks for it specifically on
     // this event (the funnel's first step). Empty string for direct
     // visits/new tabs is a legitimate value, not omitted.
-    posthog.capture("landing_page_viewed", {
+    posthog.capture(EDITAL_EVENTS.LANDING_PAGE_VIEWED, {
       referrer: document.referrer,
     });
+  }, [posthogReady]);
+
+  useEffect(() => {
     const enteredAt = enteredAtRef.current;
 
     // The effect-cleanup capture below only fires on unmount, which is
@@ -56,7 +71,7 @@ export default function PlayLanding() {
     // Canonical funnel step (step 2 of 7) — see the edital onepager
     // (#739). dwell_ms per issue #741's dual-emit
     // table ("+ dwell_ms").
-    posthog.capture("play_clicked", {
+    posthog.capture(EDITAL_EVENTS.PLAY_CLICKED, {
       dwell_ms: Date.now() - enteredAtRef.current,
     });
     const query = searchParams.toString();
