@@ -159,5 +159,3 @@ alguns arquivos não são livres para uso comercial. Os nomes e as logos
 institucionais (Governo Federal, Lei Rouanet, Ministério da Cultura, Galp,
 Bemobi, 42 Rio) são marcas e não são licenciados — um fork precisa removê-los.
 Veja o [`NOTICE`](./NOTICE).
-
-**End**
