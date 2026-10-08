@@ -76,7 +76,7 @@ places depicted, not as licensors of a file. No asset row depends on them.
 
 ---
 
-## 2. Music — `sound/music/`, `sound/succeed.ogg`
+## 2. Music — `sound/music/`
 
 | Path | Source | Licence | Verdict | Attribution text | Confidence |
 |---|---|---|---|---|---|
@@ -86,7 +86,6 @@ places depicted, not as licensors of a file. No asset row depends on them.
 | `sound/music/level_3_cricket.ogg` | [Moulaythami — Cricket Ambience, Remix, A](https://freesound.org/people/Moulaythami/sounds/536930/) | CC BY 4.0 | Ship — attribution mandatory | "Cricket Ambience, Remix, A por Moulaythami — CC BY 4.0" | Confirmed |
 | `sound/music/level_3_accordion.ogg`, `level_3_triangle.ogg`, `level_3_zabumba.ogg` | Band-mechanic instrument stems | Project team | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
 | `sound/notes/C3.wav`, `D3.wav`, `E3.wav`, `F3.wav` *(added 2026-09-30)* | Genius-sequence colour cues, loaded as `sfx.genius.*` in `registry.ts`. Added in `b151eedb` / `a64d2a51`; neither commit names a source | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
-| `sound/succeed.ogg` | *Josefina por Quincas Moreira* is credited as CC0 / royalty-free; mapping to this file is unverified | CC0 if that mapping holds | Ship — no obligation | none required | Inferred |
 
 **Defect found during the sweep:** `front/src/game/audio/registry.ts:152-155`
 loads `sound/music/level_3_jam_block.ogg`, which does not exist in the tree. The
@@ -110,9 +109,10 @@ what surfaced it.
 | unmapped — a transition whoosh | [Whoosh por Editors Keys](https://www.editorskeys.com/) | Platform terms | Ship — attribution mandatory | "Whoosh por Editors Keys" | Inferred |
 | `sound/sfx/switch.ogg` | [Kenney — Interface Sounds](https://kenney.nl/assets/interface-sounds) | CC0 | Ship — no obligation | none required | Confirmed |
 | `sound/sfx/light_bar_fix.ogg` | [Kenney — UI Audio](https://kenney.nl/assets/ui-audio) | CC0 | Ship — no obligation | none required | Confirmed |
+| `sound/succeed.ogg`, `sound/sfx/puzzle.succeed.ogg` | [Kenney](https://kenney.nl/assets) — pack not recorded (added in `fa661cc4`) | CC0 | Ship — no obligation | none required | Inferred |
 | `sound/ui.ogg` *(added 2026-09-30)* | Single UI click/hover/magnifying cue (`sfx.ui.click`). Added in `f104eb82`, which replaced the old magnifying and placeholder sounds; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
 | `sound/sfx/police-siren.mp3` *(added 2026-09-30)* | Siren when the investigation case closes (`sfx.police.siren`). Added in `ee68af39`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
-| `sound/sfx/clue.inspect_1..7.mp3`, `puzzle.succeed.ogg`, `puzzle.error.mp3`, `quiz.right.mp3`, `quiz.wrong.mp3`, `badge.unlock.mp3`, `star_sound.mp3`, `player.footstep.ogg`, `player.climb.mp3`, `sound/error.mp3`, `sound/magnifying_up.mp3`, `sound/magnifying_down.mp3` | Project team, or an unrecorded source (several arrived in the bulk `1a65b4f6` "add sound assets" commit) | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `sound/sfx/clue.inspect_1..7.mp3`, `puzzle.error.mp3`, `quiz.right.mp3`, `quiz.wrong.mp3`, `badge.unlock.mp3`, `star_sound.mp3`, `player.footstep.ogg`, `player.climb.mp3`, `sound/error.mp3`, `sound/magnifying_up.mp3`, `sound/magnifying_down.mp3` | Project team, or an unrecorded source (several arrived in the bulk `1a65b4f6` "add sound assets" commit) | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
 
 The loose files directly under `sound/` (`error.mp3`, `magnifying_up.mp3`,
 `magnifying_down.mp3`, `rat_squeak.mp3`, `rat_flee.mp3`, `succeed.ogg`) are
