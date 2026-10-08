@@ -120,7 +120,7 @@ Public domain dedication. No credit required, though it remains welcome.
 | `sound/sfx/light_bar_fix.ogg` | [Kenney — UI Audio](https://kenney.nl/assets/ui-audio) | [CC0 1.0](./LICENSES/CC0-1.0.txt) |
 | heavy stone door cue | [Freesound](https://freesound.org/s/578491/) | CC0 — Heavy stone door opens 2 por PostProdDog |
 | heavy book cue | [Freesound](https://freesound.org/s/648959/) | CC0 — Heavy Book por IENBA |
-| `sound/succeed.ogg` | [Josefina por Quincas Moreira](https://www.youtube.com/watch?v=oFcxie-e944) | CC0 / royalty-free. The match between this credit and the file is unverified, and the file is not loaded by the game (`front/src/game/audio/registry.ts` uses `sound/sfx/puzzle.succeed.ogg`) |
+| `sound/succeed.ogg`, `sound/sfx/puzzle.succeed.ogg` | [Kenney](https://kenney.nl/assets) — pack not recorded | [CC0 1.0](./LICENSES/CC0-1.0.txt) |
 
 ---
 
