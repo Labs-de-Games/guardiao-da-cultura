@@ -73,6 +73,11 @@ and dance-step assets — is released under
 [Creative Commons Attribution 4.0 International](./LICENSES/CC-BY-4.0.txt)
 (CC BY 4.0).
 
+This section does not cover files whose source is not recorded. The asset
+matrix marks those rows "Source unrecorded — PO to confirm before reuse" (for
+example `sound/ui.ogg`, `sound/sfx/police-siren.mp3`, `ui/suspects/` and some
+`misc/` graphics). Until a source is confirmed, do not assume CC BY 4.0 for them.
+
 You may share and adapt these for any purpose, including commercially, provided
 you give credit:
 
@@ -94,7 +99,7 @@ must stay.
 | `sound/music/level_3_cricket.ogg` | [Freesound](https://freesound.org/people/Moulaythami/sounds/536930/) | [CC BY 4.0](./LICENSES/CC-BY-4.0.txt) | Cricket Ambience, Remix, A por Moulaythami |
 | `sound/sfx/object.drop_*.mp3` | [Freesound](https://freesound.org/s/810170/) | [CC BY 4.0](./LICENSES/CC-BY-4.0.txt) | Heavy object drop por mokasza |
 | `sound/sfx/object.drag_loop.mp3` | [TunePocket Loop Maker](https://tunepocket.com/audio-loop-maker/) | Platform terms | Loop de arrasto criado com TunePocket Loop Maker |
-| `sound/sfx/player.jump*.wav`, `player.land.wav` | [itch.io](https://leohpaz.itch.io/90-retro-player-movement-sfx) | Asset-pack terms | Pulo por Leohpaz |
+| `sound/sfx/player.jump.wav`, `player.jump_2.mp3`, `player.land.wav` | [itch.io](https://leohpaz.itch.io/90-retro-player-movement-sfx) | Asset-pack terms | Pulo por Leohpaz |
 | `sound/sfx/rat.squeak.mp3`, `rat.flee.mp3` | [ElevenLabs](https://elevenlabs.io/sound-effects/rat) | Platform terms | High pitched rat squeaks por ElevenLabs |
 | transition whoosh cue | [Editors Keys](https://www.editorskeys.com/) | Platform terms | Whoosh por Editors Keys |
 | `animals/rat-walk.png` | [itch.io](https://carysaurus.itch.io/rat-sprites) | Asset-pack terms | Rat Sprites por Carysaurus |
@@ -115,7 +120,7 @@ Public domain dedication. No credit required, though it remains welcome.
 | `sound/sfx/light_bar_fix.ogg` | [Kenney — UI Audio](https://kenney.nl/assets/ui-audio) | [CC0 1.0](./LICENSES/CC0-1.0.txt) |
 | heavy stone door cue | [Freesound](https://freesound.org/s/578491/) | CC0 — Heavy stone door opens 2 por PostProdDog |
 | heavy book cue | [Freesound](https://freesound.org/s/648959/) | CC0 — Heavy Book por IENBA |
-| `sound/succeed.ogg` | [Josefina por Quincas Moreira](https://www.youtube.com/watch?v=oFcxie-e944) | CC0 / royalty-free |
+| `sound/succeed.ogg`, `sound/sfx/puzzle.succeed.ogg` | [Kenney](https://kenney.nl/assets) — pack not recorded | [CC0 1.0](./LICENSES/CC0-1.0.txt) |
 
 ---
 

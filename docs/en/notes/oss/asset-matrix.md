@@ -1,15 +1,22 @@
 # Asset matrix — T1 #797
 
+> **State:** first written 2026-09-22 for T1. Recounted on 2026-09-30 against
+> `develop` after about 35 files landed in the asset tree (the investigation
+> phase, the genius-sequence minigame and the level 4 outro). Rows added in that
+> pass are marked *(added 2026-09-30)*.
+
 Redistribution decision matrix for every file under `front/public/assets/`.
-Built from `front/src/ui/credits/creditsData.ts` (29 entries across 13 sections)
-and a full sweep of the asset tree performed for this document.
+Built from `front/src/ui/credits/creditsData.ts` (71 entries across 16 sections,
+counting the unnamed closing section) and a full sweep of the asset tree.
 
 This file is the **evidence** behind `ASSETS-LICENSE.md`. `ASSETS-LICENSE.md` is
 what a reuser reads; this is what a maintainer reads when the question is "why
 does that row say that".
 
-- Tree swept: 259 files, 61 MB, under `front/public/assets/`.
-- `artworks/`: 56 files, 6.7 MB — the group cleared by the PO.
+- Tree swept: 294 files, 72 MB, under `front/public/assets/` (2026-09-30).
+- `artworks/`: 65 files, 6.8 MB. The PO cleared the credited reproductions in
+  this group; the costume, dance, accordion and placeholder files alongside
+  them are not covered by that clearance (see the rows below).
 - Parent epic: #796.
 
 ## Verdict vocabulary
@@ -20,6 +27,7 @@ does that row say that".
 | **Ship — no obligation** | Public domain or CC0. No condition attached. |
 | **Ship — restricted reuse** | Ships in this repository, but the licence is not MIT-compatible and blocks commercial reuse. Flagged per file so a reuser is warned. |
 | **Not licensed** | Present in the tree but no reuse right is granted. Forks must remove it. |
+| **Source unrecorded — PO to confirm before reuse** | Present and in use, but neither `creditsData.ts` nor the commit that added it names where it came from. No licence is asserted. A reuser should not redistribute it until the PO records a source. |
 
 ## Confidence column
 
@@ -30,7 +38,7 @@ Mapping an entry to a path is therefore an inference in several cases.
 |---|---|
 | **Confirmed** | Path ↔ source is unambiguous (filename, or a source recorded in the plan). |
 | **Inferred** | Mapping is a strong reading of the filename or usage, not a recorded fact. |
-| **Unrecorded** | No credits entry exists. Treated as original project work — see §9. |
+| **Unrecorded** | No credits entry exists and no source is recorded anywhere. Images and data are treated as original project work (see §9); audio is not. |
 
 Every **Inferred** and **Unrecorded** row is repeated in §10 as an open item for
 the PO to confirm before the visibility flip.
@@ -60,6 +68,7 @@ use that carries the credit.
 | `artworks/costumes/**` (21 files) | Costume pieces for the dress-up puzzle (dummy, indian, malandro, soldier, warrior, pedestal) | Project team | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
 | `artworks/dance/dance_steps.mp4`, `artworks/dance/steps/*.gif`, `sequence_step_placeholder.png` | São João dance-step reference footage and loops (6 files, 6.2 MB) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 | `artworks/paintings/standard_painting_placeholder.png`, `artworks/sculptures/standard_sculpture_placeholder.png`, `sam.png`, `soldado-caixa.png` | Placeholder and original in-game objects | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+| `artworks/accordion_animation/accordion_frame001.png` … `009.png` (9 files) *(added 2026-09-30)* | Accordion loop for the genius-sequence minigame. Added in `95255c2d` ("loop accordion animation…"); no source named | unrecorded | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
 
 **Note on the two "Espaços Culturais" and cultural-institution entries**
 (Inhotim, Teatro Amazonas, São João de Campina Grande): these are credited as
@@ -67,7 +76,7 @@ places depicted, not as licensors of a file. No asset row depends on them.
 
 ---
 
-## 2. Music — `sound/music/`, `sound/succeed.ogg`
+## 2. Music — `sound/music/`
 
 | Path | Source | Licence | Verdict | Attribution text | Confidence |
 |---|---|---|---|---|---|
@@ -76,7 +85,7 @@ places depicted, not as licensors of a file. No asset row depends on them.
 | `sound/music/level_2.mp3` | [Chee Zee Jungle por Kevin MacLeod](https://incompetech.com/music/royalty-free/music.html) | CC BY 4.0 | Ship — attribution mandatory | "Chee Zee Jungle por Kevin MacLeod (incompetech.com) — CC BY 4.0" | Inferred |
 | `sound/music/level_3_cricket.ogg` | [Moulaythami — Cricket Ambience, Remix, A](https://freesound.org/people/Moulaythami/sounds/536930/) | CC BY 4.0 | Ship — attribution mandatory | "Cricket Ambience, Remix, A por Moulaythami — CC BY 4.0" | Confirmed |
 | `sound/music/level_3_accordion.ogg`, `level_3_triangle.ogg`, `level_3_zabumba.ogg` | Band-mechanic instrument stems | Project team | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
-| `sound/succeed.ogg` | *Josefina por Quincas Moreira* is credited as CC0 / royalty-free; mapping to this file is unverified | CC0 if that mapping holds | Ship — no obligation | none required | Inferred |
+| `sound/notes/C3.wav`, `D3.wav`, `E3.wav`, `F3.wav` *(added 2026-09-30)* | Genius-sequence colour cues, loaded as `sfx.genius.*` in `registry.ts`. Added in `b151eedb` / `a64d2a51`; neither commit names a source | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
 
 **Defect found during the sweep:** `front/src/game/audio/registry.ts:152-155`
 loads `sound/music/level_3_jam_block.ogg`, which does not exist in the tree. The
@@ -100,7 +109,10 @@ what surfaced it.
 | unmapped — a transition whoosh | [Whoosh por Editors Keys](https://www.editorskeys.com/) | Platform terms | Ship — attribution mandatory | "Whoosh por Editors Keys" | Inferred |
 | `sound/sfx/switch.ogg` | [Kenney — Interface Sounds](https://kenney.nl/assets/interface-sounds) | CC0 | Ship — no obligation | none required | Confirmed |
 | `sound/sfx/light_bar_fix.ogg` | [Kenney — UI Audio](https://kenney.nl/assets/ui-audio) | CC0 | Ship — no obligation | none required | Confirmed |
-| `sound/sfx/clue.inspect_1..7.mp3`, `magnifying.up/down.mp3`, `puzzle.succeed.ogg`, `puzzle.error.mp3`, `quiz.right.mp3`, `quiz.wrong.mp3`, `badge.unlock.mp3`, `star_sound.mp3`, `player.footstep.ogg`, `player.climb.mp3`, `placeholder.mp3`, `sound/error.mp3`, `sound/magnifying_up.mp3`, `sound/magnifying_down.mp3` | Project team, or an unrecorded source | CC BY 4.0 if team-produced | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
+| `sound/succeed.ogg`, `sound/sfx/puzzle.succeed.ogg` | [Kenney](https://kenney.nl/assets) — pack not recorded (added in `fa661cc4`) | CC0 | Ship — no obligation | none required | Inferred |
+| `sound/ui.ogg` *(added 2026-09-30)* | Single UI click/hover/magnifying cue (`sfx.ui.click`). Added in `f104eb82`, which replaced the old magnifying and placeholder sounds; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `sound/sfx/police-siren.mp3` *(added 2026-09-30)* | Siren when the investigation case closes (`sfx.police.siren`). Added in `ee68af39`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `sound/sfx/clue.inspect_1..7.mp3`, `puzzle.error.mp3`, `quiz.right.mp3`, `quiz.wrong.mp3`, `badge.unlock.mp3`, `star_sound.mp3`, `player.footstep.ogg`, `player.climb.mp3`, `sound/error.mp3`, `sound/magnifying_up.mp3`, `sound/magnifying_down.mp3` | Project team, or an unrecorded source (several arrived in the bulk `1a65b4f6` "add sound assets" commit) | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
 
 The loose files directly under `sound/` (`error.mp3`, `magnifying_up.mp3`,
 `magnifying_down.mp3`, `rat_squeak.mp3`, `rat_flee.mp3`, `succeed.ogg`) are
@@ -120,6 +132,10 @@ a cleanup item, not a licensing one.
 | unmapped — mask imagery in the São João level | [Máscaras por HiClipart](https://www.hiclipart.com/free-transparent-background-png-clipart-ouqbg) | HiClipart terms — **personal use only** | **Ship — restricted reuse** | "Máscaras por HiClipart" | Inferred |
 | unmapped — a bonfire/campfire graphic | [Fogueira por CityPNG](https://www.citypng.com/photo/15015/hd-black-bonfire-campfire-firewood-icon-png) | CityPNG terms — **personal use only** | **Ship — restricted reuse** | "Fogueira por CityPNG" | Inferred |
 | `ui/` rat icon usage | [Rat icons por G-CAT do Flaticon](https://www.flaticon.com/free-icon/rat_12634989) | Flaticon free licence — attribution mandatory | Ship — attribution mandatory | "Rat icons por G-CAT do Flaticon" | Inferred |
+| `misc/investigation-room.png` *(added 2026-09-30)* | Investigation-room backdrop for the suspect identification screen. Added in `ccf993a3`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `misc/note01.png`, `misc/note02.png` *(added 2026-09-30)* | Note artwork for the genius-sequence minigame. Added in `51d6ee1a`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `misc/wood_label.png` *(added 2026-09-30)* | Wood label sprite. Added in `2526ff07`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `ui/suspects/*.png` (5 files) *(added 2026-09-30)* | Suspect portraits for the investigation board. Added in `640070b3`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
 | `misc/**` remaining (exclamation, label, ladder, map, marker, placeholder-spritesheet, poster-label, questionmark-spritesheet, rec, spotlights/*, stage placeholders, star, trampoline) | Project team | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
 | `ui/**` remaining (backpack, map-cards/*, stars/*, tts-icon, vandal) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 
@@ -140,7 +156,7 @@ a cleanup item, not a licensing one.
 | `player/animations/**` (22 files) | Project team | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
 | `npcs/04_npc_female/**` (18 files) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 | `band/**` (16 files) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
-| `collectibles/**` (7 files) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+| `collectibles/**` (8 files) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 | `moving-platforms/p1.png` | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 
 ---
@@ -149,10 +165,16 @@ a cleanup item, not a licensing one.
 
 | Path | Source | Licence | Verdict | Attribution text | Confidence |
 |---|---|---|---|---|---|
-| `maps/museum-mvp/**`, `maps/teatro-amazonas/**`, `maps/sao-joao-de-campina-grande/**` (9 files) | Tiled maps and spritesheets, project team | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
-| `data/levels/level_0{1..5}/**` — `quizzes.json`, `npcs.json`, `works.json`, `collectibles.json`, `intermediate-quizzes.json`, `intro/*` (39 files, 27 MB) | Narrative, quiz and intro-comic content, project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+| `maps/inhotim/**` (including `INSTRUCTIONS.txt`), `maps/teatro-amazonas/**`, `maps/sao-joao-de-campina-grande/**` (9 files) | Tilemaps and spritesheets, project team. `maps/inhotim/` was `maps/museum-mvp/` until `373d6eaa`; its `INSTRUCTIONS.txt` is the stock export readme from the Sprite Fusion map editor, not project content | CC BY 4.0 | Ship — attribution mandatory | "Guardião da Cultura — Labs de Games / 42 Rio" | Unrecorded |
+| `data/levels/level_01/**` (13 files), `level_02/**` (12), `level_03/**` (12) — `quizzes.json`, `npcs.json`, `works.json`, `collectibles.json`, `intermediate-quizzes.json`, `intro/*` | Narrative, quiz and intro-comic content, project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+| `data/levels/level_04/intro/*` (7 files), `level_05/intro/loading_L5.png` (1 file) | Intro comic for level 4, project team, and `loading_L5.png`, a loading screen left from a planned fifth level that no code loads. Level 4 has no quiz, NPC or works JSON; there is no level 5 | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+| `data/levels/level_04/suspect-arrested/outro_config.json` *(added 2026-09-30)* | Arrest-cinematic panel config, written by the team in `aa96ea5f` | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+| `data/levels/level_04/suspect-arrested/arrested.png`, `handshake.png`, `on-jail.png` *(added 2026-09-30)* | Arrest-cinematic panels. Added in `aa96ea5f`; no source named | none asserted | **Source unrecorded — PO to confirm before reuse** | n/a | Unrecorded |
+| `data/investigation/clues.json`, `data/investigation/suspects.json` *(added 2026-09-30)* | Suspect dossiers and clue traits for the investigation phase, written by the team (`4504bfc4`, `941cff9b`, `640070b3`) | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 | `data/global/messages.json` | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
 | `data/badges/*.png` (5 files) | Project team | CC BY 4.0 | Ship — attribution mandatory | idem | Unrecorded |
+
+All of `data/levels/` together is 49 files, 34 MB.
 
 The level content is the part educators are most likely to adapt. T4's content-
 reuse guide points at exactly these paths, and is the natural place to restate
@@ -176,16 +198,25 @@ Recorded in `NOTICE`. Not covered by the artwork clearance and not covered by
 | Integration | Licence | Verdict |
 |---|---|---|
 | ResponsiveVoice (`front/src/app/api/tts/synthesize`) | CC BY-NC-ND 4.0, NonCommercial, paid key | Not bundled. Must be **optional** — see T3 #799. An MIT project must not hard-depend on it. |
-| Phaser 3 | MIT | Standard dependency, no action. |
+| Phaser 4 | MIT | Standard dependency, no action. |
 | PostHog | Optional, already stubbed | No action. |
 
 ---
 
 ## 9. Original project assets — the default
 
-Every path not claimed by a row above is treated as work produced by the project
-team and is released under **CC BY 4.0**, per the decision recorded for this
-task. That choice is deliberate:
+Every image, map or data path not claimed by a row above is treated as work
+produced by the project team and is released under **CC BY 4.0**, per the
+decision recorded for this task.
+
+The default does **not** apply to audio, or to any file whose row says
+**Source unrecorded**. Sound effects and music are the files most often pulled
+from third-party libraries, and the credits screen already names several such
+libraries without naming paths. Treating an unlabelled sound as team work would
+relicense it silently. Audio with no recorded source stays **Source unrecorded —
+PO to confirm before reuse** until someone records where it came from.
+
+The CC BY 4.0 choice for the team's own work is deliberate:
 
 - It is consistent with the epic's core obligation — attribution travels with
   the assets — instead of inventing a second, weaker rule for the team's own work.
@@ -218,21 +249,29 @@ Ordered by how much a wrong answer costs.
 4. **Every `Inferred` row** — the credits screen names works, not paths. The
    mappings above are strong readings, not records. Confirming them is a
    half-hour pass with the designer.
-5. **Every `Unrecorded` row** — these carry CC BY 4.0 on the assumption of team
-   authorship. Any asset in these groups that actually came from a third party
-   would be mislicensed. The costume, dance-step and NPC groups are the ones
-   worth a second look.
-6. **`sound/music/level_3_jam_block.ogg` is missing** from the tree while
+5. **Every `Unrecorded` row** — the image and data rows carry CC BY 4.0 on the
+   assumption of team authorship. Any asset in these groups that actually came
+   from a third party would be mislicensed. The costume, dance-step and NPC
+   groups are the ones worth a second look.
+6. **Every `Source unrecorded` row** — no licence is asserted for these. Most
+   are audio (`sound/ui.ogg`, `sound/sfx/police-siren.mp3`, `sound/notes/*.wav`
+   and the older unlabelled `sound/sfx/*` cues) or art added for the
+   investigation phase and the genius-sequence minigame. Each needs a recorded
+   source, or a statement from the PO that the team made it, before reuse.
+   `ASSETS-LICENSE.md` should not list them under CC BY 4.0 until then.
+7. **`sound/music/level_3_jam_block.ogg` is missing** from the tree while
    `registry.ts` loads it. §2.
-7. **Dead loose files under `sound/`** — six files superseded by `sound/sfx/`.
+8. **Dead loose files under `sound/`** — six files superseded by `sound/sfx/`.
    Cleanup, not licensing. §3.
 
 ## Verification
 
-- Every path under `front/public/assets/` maps to a row here: §1–§6 cover
-  `animals/`, `artworks/`, `band/`, `collectibles/`, `data/`, `maps/`, `misc/`,
-  `moving-platforms/`, `npcs/`, `player/`, `sound/`, `ui/` — the complete set of
-  top-level directories in the tree.
+- §1–§6 cover every top-level directory in the tree (`animals/`, `artworks/`,
+  `band/`, `collectibles/`, `data/`, `maps/`, `misc/`, `moving-platforms/`,
+  `npcs/`, `player/`, `sound/`, `ui/`). On 2026-09-30 each of the 294 files was
+  checked against the rows by hand and matched one of them, either by name or
+  through a "remaining" catch-all. Nothing enforces this: a file added later
+  will not show up here until someone repeats the sweep.
 - Every entry in `creditsData.ts` appears in `CREDITS.md` and vice versa.
 - `LICENSE` and `ASSETS-LICENSE.md` do not contradict each other on what MIT
   covers.

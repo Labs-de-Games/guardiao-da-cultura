@@ -161,6 +161,15 @@ export function buildSummaryQuery(
  * `DateTime64(6, 'UTC')` ("Illegal type DateTime64(6, 'UTC') of first
  * argument", confirmed directly against the PostHog Query API). Hence
  * the explicit `toDateTime(timestamp)` cast below; dropping it 400s.
+ *
+ * That cast is to *second* resolution, which makes the absent mode argument
+ * load-bearing: since issue #899, `landing_page_viewed` fires when PostHog
+ * initializes — i.e. the moment a first-time player accepts — so steps 1 and 2
+ * routinely land in the same second (the consent dialog blocks the page, so
+ * accept and "Jogar" are one reaction apart). Default `windowFunnel` tolerates
+ * equal timestamps and breaks ties by condition index, which is what keeps
+ * those players off depth 1. Do NOT add `'strict_order'` or `'strict_increase'`
+ * — they would truncate exactly the players this funnel exists to count.
  */
 export function buildFunnelQuery(
   scope: Scope,

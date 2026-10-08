@@ -1,5 +1,11 @@
 # Phaser 4 Upgrade: Benefits
 
+> **Historical snapshot.** Written 2026-08-26, before the upgrade landed. The
+> migration is done: `front/package.json` pins `phaser` 4.2.1, the custom
+> `ConeLightPipeline.ts` has been removed, and cone lights use the native Phaser 4
+> `Light` API (see the 1.13.0 entry in [CHANGELOG.md](../../CHANGELOG.md)). Read
+> the rest as the rationale at the time, not as pending work.
+
 Rationale for upgrading `front/` from Phaser 3.90.0 to Phaser 4.2.1. See the `phaser-4-migration` and `phaser-4-debug` agent skills for the migration procedure itself.
 
 ## Why upgrade

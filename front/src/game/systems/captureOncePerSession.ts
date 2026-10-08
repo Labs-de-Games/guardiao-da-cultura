@@ -26,6 +26,11 @@ export function captureOncePerSession(
 
   const key = `${SESSION_ONCE_PREFIX}${eventName}`;
   if (sessionStorage.getItem(key)) return;
-  sessionStorage.setItem(key, "1");
+  // Mark after capturing, never before. posthog-js drops a capture made before
+  // init() (the consent gate, #864), and marking first would spend the session's
+  // single chance on an event that was never sent — silently zeroing
+  // `gameplay_started`, funnel step 3, for the whole session. Same class of bug
+  // as #899.
   posthog.capture(eventName, properties);
+  sessionStorage.setItem(key, "1");
 }

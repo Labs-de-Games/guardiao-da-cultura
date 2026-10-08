@@ -1,8 +1,8 @@
 🌐 [English](../en/VERSIONING.md) | Português (Brasil)
 
-# **Diretrizes e estrutura do processo de release — Rouanet Game**
+# **Diretrizes e estrutura do processo de release — Guardião da Cultura**
 
-Este documento estabelece o padrão oficial para gerenciar, planejar e executar os releases do Rouanet Game, garantindo a estabilidade do ambiente de produção e a previsibilidade das entregas.
+Este documento estabelece o padrão oficial para gerenciar, planejar e executar os releases do Guardião da Cultura, garantindo a estabilidade do ambiente de produção e a previsibilidade das entregas.
 
 ## **1. Janelas de release (dias e horários)**
 
@@ -17,8 +17,6 @@ Para reduzir riscos e garantir a disponibilidade do time de suporte, os releases
 | **Emergência (Hotfix)** | Qualquer dia (sujeito a aprovação) | Imediatamente após a validação, evitando o fim do dia | Crítico (correção de bug bloqueante) |
 
 *Observação: deploys ordinários são estritamente proibidos às sextas-feiras, em vésperas de feriado ou em períodos de grande engajamento do público, como datas de divulgação pública.*
-
-Para mais detalhes sobre a janela de uso do jogo, veja o [Plano Técnico de Release](https://docs.google.com/document/d/1-QBGFMwnMgHSds0LesnqVGQxeC38-H3ouVTGK2lNV1M/edit?usp=sharing).
 
 ## **2. Nomenclatura e versionamento**
 
@@ -45,11 +43,11 @@ Exemplo de produção: v1.0.0 -> Versão 1.0.0 com as seguintes funcionalidades:
 
 * Descrição completa das mudanças incluídas na versão.
 
-Exemplo de QA: qa-v1.0.0 -> Versão de validação 1.0.0, \<Motivo da correção\>
+O staging não é versionado com tags: todo push na `develop` é publicado em staging pelo `cd-staging.yml`.
 
 ### **Histórico de versões e deploys**
 
-Veja [docs/CHANGELOG.md](../CHANGELOG.md) para o changelog completo por versão. O histórico de deploys fica no dashboard do Coolify; o endereço dele é interno e é compartilhado com os mantenedores de forma privada.
+Veja [docs/CHANGELOG.md](../CHANGELOG.md) para o changelog completo por versão. Quem mantém o projeto faz o deploy em produção pelo workflow de CD de produção (`cd-production.yml`), então cada deploy em produção é uma execução desse workflow na aba Actions do repositório.
 
 ## **4. Processo de execução passo a passo**
 
@@ -79,7 +77,7 @@ Se um release apresentar instabilidade insustentável durante a etapa de Pós-re
 
 ### **Procedimento de rollback**
 
-1. **Passo 1:** interromper o tráfego para a nova versão, redirecionando 100% dos usuários para o cluster ou container que roda a versão estável anterior (verificar no histórico).
+1. **Passo 1:** voltar a produção para a versão estável anterior. O `cd-production.yml` não recebe parâmetros: ele gera o build do commit atual da `master`, publica as imagens como `master-<short-sha>` e `master` e dispara o deploy em produção. Para fazer o rollback, reverta a mudança com defeito na `master` por meio de um pull request `hotfix/vX.Y.Z` e rode o `cd-production.yml` de novo. As imagens dos builds de produção anteriores continuam no registro de containers como `master-<short-sha>`; a tag do release anterior identifica o commit, e portanto a imagem, para onde voltar.
 2. **Passo 2:** se houve mudança no schema do banco de dados (migrations), aplicar o script de reversão correspondente, garantindo a integridade dos dados inseridos durante o intervalo.
 3. **Passo 3:** notificar o time e os stakeholders sobre o retorno à versão anterior.
 4. **Passo 4:** abrir uma sessão de Post-Mortem em até 24 horas para analisar a causa raiz da falha.
