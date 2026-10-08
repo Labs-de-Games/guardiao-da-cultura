@@ -54,7 +54,7 @@ para reuso. Veja [`NOTICE`](./NOTICE).*
 - [Matheus Viana](https://www.linkedin.com/in/matheus-viana-viuge-antunes-380587246/)
 - [Rodrigo Mendes](https://rodoes.art/3d-work)
 - [Gabriel Salgado](https://www.linkedin.com/in/abg2jz/)
-- [Tamir Nadav](https://linkedin.com/in/aquajew)
+- [Tamir Nadav (in memoriam)](https://linkedin.com/in/aquajew)
 - [Antônio Ibrahine](https://www.antonioibrahine.com/)
 - [Daniel Martins](https://linktr.ee/dmaisumoficial)
 
@@ -101,7 +101,6 @@ dado**. Quem reutilizar estes arquivos assume a mesma obrigação.
 - [Suco de Abacaxi por Guifrog](https://freemusicarchive.org/music/Guifrog/Suco_de_Abacaxi/Guifrog_-_Suco_de_Abacaxi/) — Attribution 3.0 International License
 - [Loop Suco de Abacaxi editado com Audjust](https://www.audjust.com/)
 - [Chee Zee Jungle por Kevin MacLeod (incompetech.com)](https://incompetech.com/music/royalty-free/music.html) — Creative Commons: By Attribution 4.0 License
-- [Josefina por Quincas Moreira](https://www.youtube.com/watch?v=oFcxie-e944) — Creative Commons Attribution license CC0 / Royalty-Free
 - [Cricket Ambience, Remix, A por Moulaythami](https://freesound.org/people/Moulaythami/sounds/536930/) — Attribution 4.0
 
 ## Efeitos Sonoros
@@ -135,6 +134,8 @@ dado**. Quem reutilizar estes arquivos assume a mesma obrigação.
 - [Letícia de Souza Barbosa](https://www.riolicenciamento.com.br/)
 - [Ipeafro](https://ipeafro.org.br/)
 - [Galeria Vermelho](https://galeriavermelho.com.br/)
+
+*À memória de Tamir Nadav*
 
 ---
 
