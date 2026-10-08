@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./en/VERSIONING.md) for the release process and branching model.
 
+## [1.14.2] - 2026-10-08
+
+### Added
+
+- A memorial to Tamir Nadav on the credits screen
+
+### Changed
+
+- The deployment workflows never run from a fork
+- Documentation aligned with the code after the open-source release: architecture, contributing guide, content-reuse guide, versioning, analytics events and asset matrix; security policy translated; the Portuguese README is now the repository home page
+- `CREDITS.md` matches the in-game credits screen
+- `ASSETS-LICENSE.md` credits the puzzle-success sound to Kenney (CC0)
+
+### Removed
+
+- The music credit for "Josefina" by Quincas Moreira from the credits screen
+- Obsolete game scene notes and the v1.13.0 release report
+
+### Fixed
+
+- `landing_page_viewed` now reaches PostHog. It was captured before PostHog finished initializing and was dropped for every player, which left the edital funnel empty. Events from 2026-09-28 until this deploy cannot be backfilled
+- `PostHogPageView` no longer drops the first `$pageview` of a consenting session or sends duplicates on re-render
+- `captureOncePerSession` writes its session marker only after the event is captured
+
 ## [1.14.1] - 2026-09-29
 
 ### Added
