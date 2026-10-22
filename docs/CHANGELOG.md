@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./en/VERSIONING.md) for the release process and branching model.
 
+## [1.14.3] - 2026-10-22
+
+### Changed
+
+- The README asset licence note is reworded in Portuguese and English, and the intro no longer says the artists and cultural spaces agreed to show their works
+
 ## [1.14.2] - 2026-10-08
 
 ### Added
