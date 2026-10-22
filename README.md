@@ -70,8 +70,7 @@ você ficar parado por um tempo, o jogo mostra o caminho.
 
 O Guardião da Cultura foi produzido pelo Labs de Games da 42 Rio, com recursos
 da **Lei Rouanet** e apoio do Governo Federal, do Ministério da Cultura, da Galp
-e da Bemobi. As obras vêm de artistas e espaços culturais que concordaram em
-mostrá-las no jogo. Todas as pessoas envolvidas estão listadas em
+e da Bemobi. Todas as pessoas envolvidas estão listadas em
 [`CREDITS.md`](./CREDITS.md), que espelha a tela de créditos do jogo.
 
 **Mantenedora:** [@anacarla-42](https://github.com/anacarla-42) revisa e aceita
@@ -82,11 +81,9 @@ contribuições e é a responsável por receber relatos de segurança.
 > Se você reutilizar qualquer obra, imagem ou som do jogo, precisa dar crédito
 > aos artistas e à equipe que os criou.
 >
-> O código-fonte é MIT. Os **assets não são**. As obras reproduzidas neste jogo
-> — de Abdias Nascimento, Claudia Andujar, Edgard de Souza e outros — foram
-> liberadas para publicação com a condição obrigatória de que **o crédito seja
-> sempre dado**, e os assets originais produzidos pela equipe são CC BY 4.0, que
-> traz a mesma obrigação.
+> O código-fonte é MIT. No entanto, os **assets não são**, por isso, as obras reproduzidas neste jogo
+> — de Abdias Nascimento, Claudia Andujar, Edgard de Souza, e os assets originais produzidos pela equipe são CC BY 4.0, que
+> traz a obrigação de que os créditos sejam dados.
 >
 > Se o seu fork, build ou extração incluir qualquer coisa de
 > `front/public/assets/`, leve junto os créditos de [`CREDITS.md`](./CREDITS.md)

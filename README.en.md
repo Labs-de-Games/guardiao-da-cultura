@@ -71,8 +71,7 @@ while the game points you in the right direction.
 
 Guardião da Cultura was produced by Labs de Games at 42 Rio, with funding from
 the Brazilian **Lei Rouanet** and the support of the Governo Federal, the
-Ministério da Cultura, Galp and Bemobi. The artworks come from artists and
-cultural spaces who agreed to have them shown in the game. Everyone involved is
+Ministério da Cultura, Galp and Bemobi. Everyone involved is
 listed in [`CREDITS.md`](./CREDITS.md), which mirrors the credits screen in the
 game.
 
@@ -84,11 +83,9 @@ contributions, and is the responder for security reports.
 > If you reuse any of the game's artworks, images or sounds, you must credit the
 > artists and the team who made them.
 >
-> The source code is MIT. The **assets are not**. The artworks reproduced in this
-> game — works by Abdias Nascimento, Claudia Andujar, Edgard de Souza and others
-> — were cleared for publication on the binding condition that **credit is
-> always given**, and the original assets produced by the team are CC BY 4.0,
-> which carries the same obligation.
+> The source code is MIT. However, the **assets are not**, so the artworks reproduced in this game
+> — by Abdias Nascimento, Claudia Andujar, Edgard de Souza, and the original assets produced by the team are CC BY 4.0, which
+> carries the obligation that credit be given.
 >
 > If your fork, build or extraction includes anything from
 > `front/public/assets/`, carry the credits from [`CREDITS.md`](./CREDITS.md)
