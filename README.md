@@ -15,7 +15,7 @@ conversando com quem trabalha ali e respondendo quizzes sobre o que encontra.
 
 O jogo foi produzido com recursos de incentivo público pela **Lei Rouanet** e é
 publicado como código aberto para que desenvolvedores e educadores possam
-executá-lo, estudá-lo, adaptá-lo e reutilizar o seu conteúdo.
+executá-lo, estudá-lo, adaptá-lo e reutilizar o seu conteúdo de forma GRATUITA.
 
 | Inhotim | Teatro Amazonas | São João de Campina Grande |
 |:---:|:---:|:---:|
