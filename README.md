@@ -99,8 +99,61 @@ alunos sem programar. O [`docs/pt-BR/CONTENT-REUSE.md`](./docs/pt-BR/CONTENT-REU
 explica cada parte e como alterá-la — inclusive a única parte que não é
 opcional: uma versão adaptada precisa manter os créditos.
 
-Escolas e instituições culturais também têm um painel que mostra como os seus
-jogadores estão avançando no jogo.
+### Painel público
+
+> **Todas as métricas do jogo podem ser acompanhadas em tempo real no
+> [painel público](https://guardiaodacultura.42.rio/public-dashboard).**
+
+O painel público mostra os números consolidados do Guardião da Cultura:
+alcance, progressão por fase, desempenho e origem dos acessos.
+
+![Painel público do Guardião da Cultura com indicadores de alcance, progressão e desempenho dos jogadores](./docs/images/readme/public-dashboard.gif)
+
+### Painel institucional
+
+Escolas e instituições culturais podem se cadastrar para acompanhar como os
+seus alunos estão se saindo no jogo: quantos começaram, até onde chegaram e
+como foram nos quizzes de cada fase.
+
+![Painel institucional com o resumo executivo, o funil e o relatório de uma instituição](./docs/images/readme/institutional-dashboard.gif)
+
+**Como se cadastrar**
+
+Acesse a [área institucional](https://guardiaodacultura.42.rio/login). Dá para
+se cadastrar com e-mail e senha ou com uma conta Google.
+
+![Tela de login da área institucional, com o botão Entrar com Google e o link Cadastre-se](./docs/images/readme/institution-login.png)
+
+*Com e-mail e senha*
+
+1. Clique em **Cadastre-se**.
+2. Preencha o nome da instituição, o e-mail, um identificador (slug) e uma
+   senha de 12 a 128 caracteres, marque **Li e aceito os Termos de Uso** e
+   clique em **Cadastrar**.
+
+   ![Formulário de cadastro de instituição, com campos para nome, e-mail, slug, senha e aceite dos Termos de Uso](./docs/images/readme/institution-signup.png)
+
+3. Confirme o cadastro pelo link enviado ao seu e-mail.
+4. Volte à [área institucional](https://guardiaodacultura.42.rio/login) e
+   entre com o seu e-mail e senha.
+
+*Com uma conta Google*
+
+1. Clique em **Entrar com Google** e escolha a sua conta.
+2. No primeiro acesso, informe o nome da instituição, marque **Li e aceito os
+   Termos de Uso** e clique em **Continuar**.
+
+**Como cadastrar uma turma**
+
+1. No painel, abra **Links de Campanha**.
+2. Em **Nome da turma/grupo**, escreva um nome para a turma (só letras
+   minúsculas, números e hífens) e clique em **Criar link**.
+3. Copie o link da turma em **Meus links**.
+
+![Criação de um link de turma em Links de Campanha e cópia do link em Meus links](./docs/images/readme/create-class-link.gif)
+
+> **Compartilhe o link da turma com os alunos.** Só os alunos que entrarem no
+> jogo por esse link aparecem no painel da sua instituição.
 
 ## Limitações conhecidas
 
