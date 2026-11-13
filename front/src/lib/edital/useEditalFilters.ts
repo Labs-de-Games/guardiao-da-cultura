@@ -29,7 +29,7 @@ export function useEditalFilters(): {
     if (type === "today" || type === "7d" || type === "all-time") {
       return { type };
     }
-    return { type: "30d" };
+    return { type: "all-time" };
   }, [searchParams]);
 
   const setDateRange = useCallback(

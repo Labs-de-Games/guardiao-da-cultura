@@ -14,7 +14,7 @@ const rawQuerySchema = z
   .object({
     dateRange: z
       .enum(["today", "7d", "30d", "90d", "all-time", "custom"])
-      .default("30d"),
+      .default("all-time"),
     from: z.string().regex(DATE_STRING_PATTERN).optional(),
     to: z.string().regex(DATE_STRING_PATTERN).optional(),
   })
