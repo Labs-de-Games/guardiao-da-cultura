@@ -1,8 +1,8 @@
 import { parseDateRangeParams } from "./dateRangeSchema";
 
 describe("parseDateRangeParams", () => {
-  it("defaults to 30d when dateRange is absent", () => {
-    expect(parseDateRangeParams({})).toEqual({ type: "30d" });
+  it("defaults to all-time when dateRange is absent", () => {
+    expect(parseDateRangeParams({})).toEqual({ type: "all-time" });
   });
 
   it("parses today/7d/30d/all-time", () => {
