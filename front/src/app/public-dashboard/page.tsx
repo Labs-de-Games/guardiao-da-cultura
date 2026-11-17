@@ -811,7 +811,7 @@ const OVERVIEW_SKELETON = (
 );
 
 function PublicDashboardContent() {
-  const [dateRange, setDateRange] = useState<DateRange>({ type: "30d" });
+  const [dateRange, setDateRange] = useState<DateRange>({ type: "all-time" });
 
   const { data, loading, error, errorKind, retry } =
     useAsyncData<PublicDashboardResponse>(
@@ -886,7 +886,7 @@ function PublicDashboardContent() {
           <FormControl size="small" fullWidth>
             <Select
               id="periodo-analisado"
-              value={dateRange.type === "custom" ? "30d" : dateRange.type}
+              value={dateRange.type === "custom" ? "all-time" : dateRange.type}
               onChange={(e) =>
                 setDateRange({
                   type: e.target.value as DateRange["type"],

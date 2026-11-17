@@ -28,7 +28,7 @@ function dateRangeToFilterBarValue(range: DateRange): string {
   if (range.type === "30d") return "last-30-days";
   if (range.type === "all-time") return "all-time";
   if (range.type === "custom") return "custom";
-  return "last-30-days";
+  return "all-time";
 }
 
 /**
