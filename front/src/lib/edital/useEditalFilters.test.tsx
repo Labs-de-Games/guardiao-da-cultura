@@ -15,9 +15,9 @@ describe("useEditalFilters", () => {
     mockSearchParams = new URLSearchParams();
   });
 
-  it("defaults to 30d when the URL has no dateRange", () => {
+  it("defaults to all-time when the URL has no dateRange", () => {
     const { result } = renderHook(() => useEditalFilters());
-    expect(result.current.dateRange).toEqual({ type: "30d" });
+    expect(result.current.dateRange).toEqual({ type: "all-time" });
   });
 
   it("reads a simple dateRange from the URL", () => {
@@ -50,10 +50,10 @@ describe("useEditalFilters", () => {
     });
   });
 
-  it("falls back to 30d for an unknown dateRange value", () => {
+  it("falls back to all-time for an unknown dateRange value", () => {
     mockSearchParams = new URLSearchParams({ dateRange: "bogus" });
     const { result } = renderHook(() => useEditalFilters());
-    expect(result.current.dateRange).toEqual({ type: "30d" });
+    expect(result.current.dateRange).toEqual({ type: "all-time" });
   });
 
   it("setDateRange writes dateRange into the URL via router.replace", () => {

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 See [VERSIONING.md](./en/VERSIONING.md) for the release process and branching model.
 
+## [1.15.0] - 2026-11-24
+
+### Added
+
+- Public and institutional dashboard sections in the Portuguese and English READMEs, with screenshots
+
+### Changed
+
+- The institution overview, funnel and report pages show the whole period when the URL has no `dateRange`; shared links that include one keep their period
+- The public dashboard opens with "Acumulado" selected instead of the last 30 days
+- The edital API route handlers default to the whole period when a request has no `dateRange`
+- The README states that content reuse is free
+
 ## [1.14.3] - 2026-10-22
 
 ### Changed

@@ -101,8 +101,64 @@ without programming. [`docs/en/CONTENT-REUSE.md`](./docs/en/CONTENT-REUSE.md) wa
 through each part and how to change it — including the one part that is not
 optional: an adapted version must keep the credits.
 
-Schools and cultural institutions also get a dashboard that shows how their
-players are progressing through the game.
+### Public dashboard
+
+> **All game metrics can be followed in real time on the
+> [public dashboard](https://guardiaodacultura.42.rio/public-dashboard).**
+
+The public dashboard shows Guardião da Cultura's consolidated numbers: reach,
+progression per level, performance and where players come from.
+
+![Guardião da Cultura's public dashboard with player reach, progression and performance indicators](./docs/images/readme/public-dashboard.gif)
+
+### Institutional dashboard
+
+Schools and cultural institutions can sign up to track how their students are
+doing in the game: how many started, how far they got and how they did on each
+level's quiz.
+
+![Institutional dashboard showing an institution's executive summary, funnel and report](./docs/images/readme/institutional-dashboard.gif)
+
+The site is in Portuguese, so the steps below use its labels as they appear on
+screen.
+
+**How to sign up**
+
+Go to the [institution area](https://guardiaodacultura.42.rio/login). You can
+sign up with an e-mail and password or with a Google account.
+
+![Institution area login screen, with the Entrar com Google button and the Cadastre-se link](./docs/images/readme/institution-login.png)
+
+*With e-mail and password*
+
+1. Click **Cadastre-se** (Sign up).
+2. Fill in the institution's name, e-mail, an identifier (slug) and a password
+   of 12 to 128 characters, tick **Li e aceito os Termos de Uso** (I have read
+   and accept the Terms of Use) and click **Cadastrar**.
+
+   ![Institution sign-up form with fields for name, e-mail, slug, password and Terms of Use acceptance](./docs/images/readme/institution-signup.png)
+
+3. Confirm your account through the link sent to your e-mail.
+4. Go back to the [institution area](https://guardiaodacultura.42.rio/login)
+   and sign in with your e-mail and password.
+
+*With a Google account*
+
+1. Click **Entrar com Google** (Sign in with Google) and pick your account.
+2. On your first sign-in, enter the institution's name, tick **Li e aceito os
+   Termos de Uso** and click **Continuar**.
+
+**How to register a class**
+
+1. In the dashboard, open **Links de Campanha**.
+2. Under **Nome da turma/grupo**, type a name for the class (lowercase letters,
+   numbers and hyphens only) and click **Criar link**.
+3. Copy the class link from **Meus links**.
+
+![Creating a class link in Links de Campanha and copying it from Meus links](./docs/images/readme/create-class-link.gif)
+
+> **Share the class link with your students.** Only students who open the game
+> through that link show up in your institution's dashboard.
 
 ## Known limitations
 
